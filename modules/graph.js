@@ -1,204 +1,174 @@
 // External modules
-var utilities = require('./utilities')();
-var database = require('./database')();
+var utilities = require('./utilities')()
+var database = require('./database')()
 
-var config = utilities.getConfig();
-var MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
+var config = utilities.getConfig()
+var MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH)
 
-module.exports = function(){
+module.exports = function () {
+  var graph = {
+    getVertices: function (queryObject, callback) {
+      queryString = 'FOR v IN ot_vertices '
 
-	var graph = {
-		getVertices: function(queryObject, callback){
+      if (utilities.isEmptyObject(queryObject) == false) {
+        queryString += 'FILTER '
 
-			queryString = "FOR v IN ot_vertices ";
+        var filters = []
 
-			if(utilities.isEmptyObject(queryObject) == false)
-			{
-				queryString += "FILTER ";
+        var params = {}
 
-				var filters = [];
+        var i = 1
+        for (key in queryObject) {
+          if (key.match(/^[\w\d]+$/g) == null) {
+            continue
+          }
 
-				var params = {};
+          var param = 'param' + i
+          filters.push('v.' + key + ' == @param' + i)
+          i++
 
-				var i = 1;
-				for(key in queryObject)
-				{
-					if(key.match(/^[\w\d]+$/g) == null)
-					{
-						continue;
-					}
+          params[param] = queryObject[key]
+        }
 
-					var param = "param" + i;
-					filters.push("v." + key + " == @param"+i);
-					i++;
+        queryString += filters.join(' AND ')
+      }
 
-					params[param] = queryObject[key];
-				}
+      queryString += ' RETURN v'
 
-				queryString += filters.join(" AND ");
-			}
+      database.runQuery(queryString, function (result) {
+        utilities.executeCallback(callback, result)
+      }, params)
+    },
 
-			
-			queryString += " RETURN v";
+    getTraversal: function (start_vertex, callback) {
+      if (start_vertex == undefined || start_vertex._id == undefined) {
+        utilities.executeCallback(callback, [])
+        return
+      }
 
-			database.runQuery(queryString, function(result)
-			{
-				utilities.executeCallback(callback, result);
-			}, params);
-		},
-
-		getTraversal: function(start_vertex, callback){
-			if(start_vertex == undefined || start_vertex._id == undefined)
-			{
-				utilities.executeCallback(callback, []);
-				return;
-			}
-
-			queryString = `FOR v, e, p IN 1 .. ${MAX_PATH_LENGTH}
+      queryString = `FOR v, e, p IN 1 .. ${MAX_PATH_LENGTH}
 					       OUTBOUND '${start_vertex._id}'
 					       GRAPH 'origintrail_graph'
-					       RETURN p`;
+					       RETURN p`
 
-			database.runQuery(queryString, callback);
-		},
+      database.runQuery(queryString, callback)
+    },
 
-		convertToVirtualGraph: function(raw_graph_data)
-		{
-		    var vertices = {};
-		    var edges = {};
-		    var list = {};
+    convertToVirtualGraph: function (raw_graph_data) {
+      var vertices = {}
+      var edges = {}
+      var list = {}
 
-		    for (i in raw_graph_data)
-		    {
-		       if(raw_graph_data[i].edges != undefined)
-		       {
-		        for(j in raw_graph_data[i].edges)
-		            if(raw_graph_data[i].edges[j] != null)
-		            {
-		                raw_graph_data[i].edges[j].key = raw_graph_data[i].edges[j]._key;
-		                raw_graph_data[i].edges[j].from = raw_graph_data[i].edges[j]._from.split("/")[1];
-		                raw_graph_data[i].edges[j].to = raw_graph_data[i].edges[j]._to.split("/")[1];
-		                delete raw_graph_data[i].edges[j]._key;
-		                delete raw_graph_data[i].edges[j]._id;
-		                delete raw_graph_data[i].edges[j]._rev;
-		                delete raw_graph_data[i].edges[j]._to;
-		                delete raw_graph_data[i].edges[j]._from;
-		                
-		                var key = raw_graph_data[i].edges[j].key;
+      for (i in raw_graph_data) {
+        if (raw_graph_data[i].edges != undefined) {
+          for (j in raw_graph_data[i].edges) {
+            if (raw_graph_data[i].edges[j] != null) {
+              raw_graph_data[i].edges[j].key = raw_graph_data[i].edges[j]._key
+              raw_graph_data[i].edges[j].from = raw_graph_data[i].edges[j]._from.split('/')[1]
+              raw_graph_data[i].edges[j].to = raw_graph_data[i].edges[j]._to.split('/')[1]
+              delete raw_graph_data[i].edges[j]._key
+              delete raw_graph_data[i].edges[j]._id
+              delete raw_graph_data[i].edges[j]._rev
+              delete raw_graph_data[i].edges[j]._to
+              delete raw_graph_data[i].edges[j]._from
 
-		                if(edges[key] == undefined)
-		                    edges[key] = raw_graph_data[i].edges[j];
-		            }
-		       }
-		       
-		       if(raw_graph_data[i].vertices != undefined)
-		       {
-		        for(j in raw_graph_data[i].vertices)
-		            if(raw_graph_data[i].vertices[j] != null)
-		            {
-		                raw_graph_data[i].vertices[j].key = raw_graph_data[i].vertices[j]._key;
-		                raw_graph_data[i].vertices[j].outbound = [];
-		                delete raw_graph_data[i].vertices[j]._key;
-		                delete raw_graph_data[i].vertices[j]._id;
-		                delete raw_graph_data[i].vertices[j]._rev;
+              var key = raw_graph_data[i].edges[j].key
 
-		                var key = raw_graph_data[i].vertices[j].key;
+              if (edges[key] == undefined) {
+                edges[key] = raw_graph_data[i].edges[j]
+              }
+            }
+          }
+        }
 
-		                if(vertices[key] == undefined)
-		                    vertices[key] = raw_graph_data[i].vertices[j];
-		            }
-		        }
-		    }
+        if (raw_graph_data[i].vertices != undefined) {
+          for (j in raw_graph_data[i].vertices) {
+            if (raw_graph_data[i].vertices[j] != null) {
+              raw_graph_data[i].vertices[j].key = raw_graph_data[i].vertices[j]._key
+              raw_graph_data[i].vertices[j].outbound = []
+              delete raw_graph_data[i].vertices[j]._key
+              delete raw_graph_data[i].vertices[j]._id
+              delete raw_graph_data[i].vertices[j]._rev
 
-		    for(i in vertices)
-		    {
-		        list[vertices[i].key] = vertices[i];
-		    }
+              var key = raw_graph_data[i].vertices[j].key
 
-		    for(i in edges)
-		    {
-		        list[edges[i].from].outbound.push(edges[i]);
-		    }
+              if (vertices[key] == undefined) {
+                vertices[key] = raw_graph_data[i].vertices[j]
+              }
+            }
+          }
+        }
+      }
 
-		    graph = {};
-		    graph['data'] = list;
+      for (i in vertices) {
+        list[vertices[i].key] = vertices[i]
+      }
 
-		    return graph;
+      for (i in edges) {
+        list[edges[i].from].outbound.push(edges[i])
+      }
 
-		
-		},
+      graph = {}
+      graph['data'] = list
 
-		BFS: function(trail, start_vertex_uid, restricted = false)
-		{
+      return graph
+    },
 
-			var visited = [];
-			var traversalArray = [];
+    BFS: function (trail, start_vertex_uid, restricted = false) {
+      var visited = []
+      var traversalArray = []
 
-			var start_vertex = null;
+      var start_vertex = null
 
-			for(var i in trail)
-	        {
-	            if(trail[i].uid == start_vertex_uid)
-	            {
-	                start_vertex = i;
-	                break;
-	            }
-	        }
+      for (var i in trail) {
+        if (trail[i].uid == start_vertex_uid) {
+          start_vertex = i
+          break
+        }
+      }
 
-	        if(start_vertex != null)
-	        {         
+      if (start_vertex != null) {
+        var queue = []
+        queue.push(start_vertex)
 
-	        	var queue = [];
-	        	queue.push(start_vertex)
+        visited[start_vertex] = true
 
-	        	visited[start_vertex] = true;
+        while (queue.length > 0) {
+          var curr = queue.shift()
 
-	        	while(queue.length > 0)
-	        	{
+          if (trail[curr] == undefined) {
+            continue
+          }
 
-	        		var curr = queue.shift();
+          traversalArray.push(trail[curr])
 
-	        		if(trail[curr] == undefined)
-	        			continue;
+          for (var i in trail[curr].outbound) {
+            var e = trail[curr].outbound[i]
+            var w = e.to
 
-	        		traversalArray.push(trail[curr])
+            if (e.edge_type != 'EVENT_CONNECTION') {
+              traversalArray.push(e)
+            }
 
-	        		for(var i in trail[curr].outbound)
-	        		{
-	        			var e = trail[curr].outbound[i];
-	        			var w = e.to;
+            if (visited[w] == undefined && trail[w] != undefined && (restricted == false || (restricted == true && trail[w].vertex_type != 'PRODUCT_BATCH' && e.edge_type != 'EVENT_CONNECTION'))) {
+              visited[w] = true
+              queue.push(w)
+            }
+          }
+        }
 
-	        			if(e.edge_type != 'EVENT_CONNECTION')
-	        				traversalArray.push(e);
+        for (i in traversalArray) {
+          if (traversalArray[i]._checked != undefined) {
+            delete traversalArray[i]._checked
+          }
+        }
 
-	        			if(visited[w] == undefined && trail[w] != undefined && (restricted == false || (restricted == true && trail[w].vertex_type != 'PRODUCT_BATCH' && e.edge_type != 'EVENT_CONNECTION')))
-	        			{
-	        				visited[w] = true;
-	        				queue.push(w);
-	        			}
+        return traversalArray
+      } else {
+        return traversalArray
+      }
+    }
+  }
 
-					}
-	        	}
-	        
-
-				for(i in traversalArray)
-				{
-					if(traversalArray[i]._checked != undefined)
-					{
-						delete traversalArray[i]._checked;
-					}
-				}
-
-				return traversalArray;
-			}
-			else
-			{
-				return traversalArray;
-			}
-		},
-	};
-
-	return graph;
-
-}	
-
+  return graph
+}

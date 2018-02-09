@@ -1,8 +1,8 @@
-module.exports = function (){
-	// TODO: IOTA interface
-	interface = {
+module.exports = function() {
+  // TODO: IOTA interface
+  interface = {
 
-	};
+  };
 
-	return interface; 
+  return interface;
 }
