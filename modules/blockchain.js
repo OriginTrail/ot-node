@@ -17,20 +17,20 @@ switch (chain) {
     console.log("ERROR: Couldn't load blockchain interaface, please check your config file.");
 }
 
-module.exports = function() {
+module.exports = function () {
 
   var blockchain = {
-    addFingerprint: function(batch_uid, batch_uid_hash, trail_hash) {
+    addFingerprint: function (batch_uid, batch_uid_hash, trail_hash) {
 
       console.log(batch_uid);
       console.log(batch_uid_hash)
       console.log(trail_hash);
       console.log('ovde');
 
-      chainInterface.addFingerprint(batch_uid, batch_uid_hash, trail_hash);
+      // chainInterface.addFingerprint(batch_uid, batch_uid_hash, trail_hash);
     },
 
-    getFingerprint: function(wid, bid, callback) {
+    getFingerprint: function (wid, bid, callback) {
 
       var fingerprint = chainInterface.getFingerprint(wid, bid, callback);
       return true;
@@ -39,8 +39,3 @@ module.exports = function() {
 
   return blockchain;
 }
-
-}
-
-return blockchain;
-};

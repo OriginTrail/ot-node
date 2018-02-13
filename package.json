@@ -1,0 +1,35 @@
+{
+  "name": "ot-node",
+  "version": "0.1.0",
+  "description": "OriginTrail node",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "aql": "0.0.3-alpha",
+    "arangojs": "^6.1.0",
+    "async": "^2.6.0",
+    "dotenv": "^5.0.0",
+    "ipaddr.js": "^1.6.0",
+    "kad": "^2.5.1",
+    "kad-quasar": "^2.1.0",
+    "leveldown": "^3.0.0",
+    "levelup": "^2.0.2",
+    "restify": "^6.3.4",
+    "socket.io": "^2.0.4",
+    "solidity-sha3": "^0.4.1",
+    "unirest": "^0.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OriginTrail/ot-yimishiji-pilot.git"
+  },
+  "author": "OriginTrail",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/OriginTrail/ot-yimishiji-pilot/issues"
+  },
+  "homepage": "https://github.com/OriginTrail/ot-yimishiji-pilot#readme"
+}
