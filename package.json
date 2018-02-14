@@ -18,7 +18,9 @@
     "solidity-sha3": "^0.4.1",
     "unirest": "^0.5.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^4.17.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -27,7 +29,7 @@
     "url": "git+https://github.com/OriginTrail/ot-yimishiji-pilot.git"
   },
   "author": "OriginTrail",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/OriginTrail/ot-yimishiji-pilot/issues"
   },
