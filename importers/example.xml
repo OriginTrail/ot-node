@@ -1,0 +1,284 @@
+<OriginTrailExport version="1.4">
+	<DataProvider> <!-- Unique ID for supply chain entity that provides the file -->
+		<ParticipantId>PROVIDER_ID</ParticipantId>
+	</DataProvider>
+	<MasterData>
+		<ParticipantsList>	<!-- Description of all entities (participants) in supply chain -->
+			<Participant>
+				<ParticipantIdentifiers> <!-- Mandatory -->
+					<ParticipantId>PROVIDER_ID</ParticipantId> <!-- Mandatory -->
+					<!-- <abc>Lorem Ipsum </abc> Optional descriptive data -->
+				</ParticipantIdentifiers>
+				<ParticipantData> <!--  -->
+					<Name> <!-- Mandatory -->
+						<EN>Provider</EN>
+					</Name>
+					<Location> <!-- Optional -->
+						<Address>Data Boulevard 01</Address>
+						<City>Traceshire</City>
+						<Country>Cryptonia</Country>
+						<Zip>001TRAC</Zip>
+						<GeoLocation>
+							<Latitude>00.0000</Latitude>
+							<Longitude>00.0000</Longitude>
+						</GeoLocation>
+					</Location>					
+					<!-- <AdditionalInformation> Lorem Ipsum </AdditionalInformation> Optional -->
+				</ParticipantData>
+			</Participant>
+			<Participant>
+				<ParticipantIdentifiers>
+					<ParticipantId>PARTNER_ID</ParticipantId>
+				</ParticipantIdentifiers>
+				<ParticipantData>
+					<Name>
+						<EN>Partner</EN>
+					</Name>
+					<Location>
+						<Address>Farmer's Street 01B</Address>
+						<City>Bytesfield</City>
+						<Country>Cryptonia</Country>
+						<Zip>002TRAC</Zip>
+						<GeoLocation>
+							<Latitude>00.0000</Latitude>
+							<Longitude>00.0000</Longitude>
+						</GeoLocation>
+					</Location>
+				</ParticipantData>
+			</Participant>
+		</ParticipantsList>
+		<BusinessLocationsList> <!-- Entity that describes all physical or system locations where business process is executed -->
+			<BusinessLocation>
+				<BusinessLocationOwnerId>PROVIDER_ID</BusinessLocationOwnerId> <!-- Mandatory -->
+				<BusinessLocationIdentifiers> <!-- Mandatory -->
+					<BusinessLocationId>WAREHOUSE_1</BusinessLocationId> <!-- Mandatory -->
+					<!-- <abc>Lorem Ipsum</abc> Optional-->
+				</BusinessLocationIdentifiers>
+				<BusinessLocationData> <!-- Mandatory -->
+					<Name> <!-- Mandatory -->
+						<EN>Provider's Warehouse</EN>
+					</Name>
+					<BusinessLocationType>Warehouse</BusinessLocationType> <!-- Mandatory -->
+					<Location> <!-- Optional -->
+						<Address>Data Boulevard 02</Address>
+						<City>Traceshire</City>
+						<Country>Cryptonia</Country>
+						<Zip>001TRAC</Zip>
+						<GeoLocation>
+							<Latitude>00.0000</Latitude>
+							<Longitude>00.0000</Longitude>
+						</GeoLocation>
+					</Location>
+					<!-- <AdditionalInformation>Lorem Ipsum </AdditionalInformation> Optional -->
+				</BusinessLocationData>
+			</BusinessLocation>
+			<BusinessLocation>
+				<BusinessLocationOwnerId>PARTNER_ID</BusinessLocationOwnerId>
+				<BusinessLocationIdentifiers>
+					<BusinessLocationId>FARM_1</BusinessLocationId>
+				</BusinessLocationIdentifiers>
+				<BusinessLocationData>
+					<BusinessLocationName>
+						<EN>Partner's Farm</EN>
+					</BusinessLocationName>
+					<BusinessLocationType>Farm</BusinessLocationType>
+					<Location>
+						<Address>Farmer's Street 01B</Address>
+						<City>Bytesfield</City>
+						<Country>Cryptonia</Country>
+						<Zip>002TRAC</Zip>
+						<GeoLocation>
+							<Latitude>00.0000</Latitude>
+							<Longitude>00.0000</Longitude>
+						</GeoLocation>
+					</Location>
+				</BusinessLocationData>
+			</BusinessLocation>
+		</BusinessLocationsList>
+		<ObjectsList> <!-- Object descriptions -->
+			<Object>
+				<ObjectIdentifiers> <!-- Mandatory -->
+					<ObjectId>OBJECT_1</ObjectId> <!-- Mandatory -->
+					<ean13>1234567890123</ean13> <!-- Optional -->
+					<!-- <abc>Lorem Ipsum</abc> Optional -->
+				</ObjectIdentifiers>
+				<ObjectData> <!-- Mandatory -->
+					<Name> <!-- Mandatory -->
+						<EN>Raw crypto Carrots 50 Kg</EN>
+					</Name>
+					<ObjectType>Vegetable</ObjectType> <!-- Mandatory -->
+					<ObjectCategory>Carrot</ObjectCategory> <!-- Mandatory -->
+					<ObjectDescription> <!-- Optional -->
+						The cryptiest carrots in the entire Cryptonia, packed in 50 Kg package.
+					</ObjectDescription>
+					<!-- <AdditionalInformation> Lorem Ipsum </AdditionalInformation> Optional -->
+				</ObjectData>
+			</Object>
+			<Object>
+				<ObjectIdentifiers>
+					<ObjectId>OBJECT_2</ObjectId>
+					<ean13>1234567890124</ean13>
+				</ObjectIdentifiers>
+				<ObjectData>
+					<Name>
+						<EN>Packed crypto Carrots 1 Kg</EN>
+					</Name>
+					<ObjectType>Vegetable</ObjectType>
+					<ObjectCategory>Carrot</ObjectCategory>
+					<ObjectDescription>
+						The cryptiest carrots in the entire Cryptonia, packed for retail in 1 Kg package.
+					</ObjectDescription>
+				</ObjectData>
+			</Object>
+		</ObjectsList>
+	</MasterData>
+	<TransactionData>
+		<InternalTransactionsList>
+			<InternalTransaction>
+				<InternalTransactionIdentifiers> <!-- Mandatory -->
+					<InternalTransactionId>TRANSACTION_1</InternalTransactionId> <!-- Mandatory -->
+					<InternalTransactionDocumentId>TRANSACTION_DOCUMENT_1</InternalTransactionDocumentId> <!-- Optional -->
+					<!-- <AdditionalInformation> Lorem Ipsum </AdditionalInformation> Optional -->
+				</InternalTransactionIdentifiers>
+				<BatchesInformation> <!-- Mandatory -->
+					<InputBatchesList> <!-- Optional -->
+						<Batch>
+							<BatchIdentifiers> <!-- Mandatory -->
+								<BatchId>INPUT_UNIT_1</BatchId> <!-- Mandatory -->
+								<ObjectId>OBJECT_1</ObjectId> <!-- Mandatory -->
+								<ExpirationDate>2020-01-01</ExpirationDate> <!-- Optional -->
+								<Lot>012</Lot> <!-- Optional -->
+								<!-- <abc>Lorem Ipsum</abc> Optional -->
+							</BatchIdentifiers>
+							<BatchData> <!-- Mandatory, 1:N is requirement -->
+								<QuantitiesDataList>
+									<QuantityData>
+										<Quantity>50.0</Quantity>
+										<Measure>Kg</Measure>
+									</QuantityData>
+									<QuantityData>
+										<Quantity>1</Quantity>
+										<Measure>Batch</Measure>
+									</QuantityData>
+								</QuantitiesDataList>
+							</BatchData>
+						</Batch>
+					</InputBatchesList>
+					<OutputBatchesList> <!-- Mandatory -->
+						<Batch>
+							<BatchIdentifiers>
+								<BatchId>OUTPUT_UNIT_1</BatchId>
+								<ObjectId>OBJECT_2</ObjectId>
+								<Lot>123L</Lot>
+								<ExpirationDate>2020-01-01</ExpirationDate>
+							</BatchIdentifiers>
+							<BatchData>
+								<QuantitiesDataList>
+									<QuantityData>
+										<Quantity>50.0</Quantity>
+										<Measure>Kg</Measure>
+									</QuantityData>
+									<QuantityData>
+										<Quantity>50</Quantity>
+										<Measure>Batch</Measure>
+									</QuantityData>
+								</QuantitiesDataList>
+							</BatchData>
+						</Batch>
+					</OutputBatchesList>
+				</BatchesInformation>				
+				<InternalTransactionData> <!-- Mandatory -->
+					<TransactionTime>21.01.2018T00:00:00</TransactionTime>
+					<BusinessProcess>Packaging</BusinessProcess>
+					<BusinessLocationId>WAREHOUSE_1</BusinessLocationId> <!-- Mandatory -->
+					<BusinessProcessDescription>Packaging carrots for retail</BusinessProcessDescription>
+					<AdditionalInformation> <!-- Optional -->
+						<Note>Machine 1 jammed for 5 minutes</Note>
+					</AdditionalInformation>
+				</InternalTransactionData>
+			</InternalTransaction>
+		</InternalTransactionsList>
+		<ExternalTransactionsList>
+			<ExternalTransaction>
+				<ExternalTransactionIdentifiers>
+					<ExternalTransactionId>TRANSACTION_2</ExternalTransactionId>
+					<ExternalTransactionDocumentId>TRANSACTION_DOCUMENT_2</ExternalTransactionDocumentId>
+				</ExternalTransactionIdentifiers>
+				<BatchesInformation>
+					<BatchesList>
+						<Batch>
+							<BatchIdentifiers>
+								<BatchId>INPUT_UNIT_1</BatchId>
+								<ObjectId>OBJECT_1</ObjectId>
+								<Lot>123</Lot>
+								<ExpirationDate>2020-01-01</ExpirationDate>
+							</BatchIdentifiers>
+							<BatchData>
+								<QuantitiesDataList>
+									<QuantityData>
+										<Quantity>50.0</Quantity>
+										<Measure>Kg</Measure>
+									</QuantityData>
+									<QuantityData>
+										<Quantity>1</Quantity>
+										<Measure>Batch</Measure>
+									</QuantityData>
+								</QuantitiesDataList>
+							</BatchData>
+						</Batch>
+					</BatchesList>
+				</BatchesInformation>
+				<ExternalTransactionData>
+					<TransactionTime>21.12.2012T00:00:00</TransactionTime>
+					<BusinessProcess>Purchase</BusinessProcess>
+					<BusinessLocationId>WAREHOUSE_1</BusinessLocationId>
+					<TransactionFlow>Input</TransactionFlow> <!-- Mandatory -->
+					<SourceBusinessLocationId>FARM_1</SourceBusinessLocationId>
+					<DestinationBusinessLocationId>WAREHOUSE_1</DestinationBusinessLocationId>				
+					<BusinessProcessDescription>Regular Purchase</BusinessProcessDescription>
+					<AdditionalInformation> <!-- Optional -->
+						<Price>
+							<Value>100</Value>
+							<VAT>1%</VAT>
+							<Total>101</Total>
+							<Currency>USD</Currency>
+							<Discount>0%</Discount>
+						</Price>
+						<PaymentType>Bill</PaymentType>					
+					</AdditionalInformation>
+				</ExternalTransactionData>
+			</ExternalTransaction>
+		</ExternalTransactionsList>		
+	</TransactionData>	
+
+	<VisibilityEventData>
+		<VisibilityEventsList>
+			<Event>
+				<EventIdentifiers>
+					<EventId>EVENT_1</EventId>
+					<BatchId>OUTPUT_UNIT_1</BatchId>
+					<ObjectId>OBJECT_2</ObjectId>
+				</EventIdentifiers>
+				<EventData>
+					<TemperatureData>
+						<MeasurementStartTimestamp>2018-01-01T00:00:00</MeasurementStartTimestamp>
+						<MeasurementEndTimestamp>2018-01-02T00:00:00</MeasurementEndTimestamp>
+						<AverageTemperature>27</AverageTemperature>
+						<MinimalTemperature>18</MinimalTemperature>
+						<MaximalTemperature>31</MaximalTemperature>
+						<Measure>C</Measure>
+					</TemperatureData>
+					<HumidityData>
+						<MeasurementStartTimestamp>2018-01-01T00:00:00</MeasurementStartTimestamp>
+						<MeasurementEndTimestamp>2018-01-02T00:00:00</MeasurementEndTimestamp>
+						<AverageHumidity>50</AverageHumidity>
+						<MinimalHumidity>35</MinimalHumidity>
+						<MaximalHumidity>75</MaximalHumidity>
+						<Measure>%</Measure>
+					</HumidityData>
+				<!-- <AdditionalData> ... </AdditionalInformation> -->
+				</EventData>
+			</Event>
+		</VisibilityEventsList>
+	</VisibilityEventData>
+</OriginTrailExport>
