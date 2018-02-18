@@ -1,6 +1,6 @@
 // External modules
 var fs = require('fs');
-var config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+var config = require('./config')
 var ipaddr = require('ipaddr.js');
 var sha3 = require('solidity-sha3').default;
 
