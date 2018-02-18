@@ -21,10 +21,11 @@ module.exports = function () {
 	var blockchain = {
 		addFingerprint: function (batch_uid, batch_uid_hash, trail_hash) {
 
+			console.log('Writing on blockchain...');
 			console.log(batch_uid);
 			console.log(batch_uid_hash);
 			console.log(trail_hash);
-
+			console.log();
 			// chainInterface.addFingerprint(batch_uid, batch_uid_hash, trail_hash);
 		},
 

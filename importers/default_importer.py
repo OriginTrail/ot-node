@@ -1,5 +1,5 @@
 import sys
-sys.path.append('./dependencies');
+sys.path.append('./dependencies')
 from xmljson import yahoo as parser
 from xml.etree.ElementTree import fromstring
 from xml.etree.ElementTree import ParseError
@@ -14,23 +14,25 @@ if len(sys.argv) != 2:
     sys.exit()
 
 # Entities
-PROVIDERS = {}
+PARTICIPANTS = {}
 LOCATIONS = {}
-PRODUCTS = {}
+OBJECTS = {}
 BATCHES = {}
+TRANSACTIONS = {}
 EVENTS = {}
 
 # Relations
 OWNED_BY = []
 AT = []
-SOURCE_BATCH = []
-RESULTED_BATCH = []
+INPUT_BATCH = []
+OUTPUT_BATCH = []
 INSTANCE_OF = [] 
 OF_BATCH = [] 
+TRACED_BY = [] 
 FROM = []
 TO = []
 
-# Database connection
+#Database connection
 
 config_file = open('config.json').read()
 config = loads(config_file)
@@ -71,21 +73,20 @@ if new_graph:
 
 def hashed(source_string):
    hash_method = hashlib.md5()
-   hash_method.update(source_string.encode('utf-8') )
+   hash_method.update(source_string.encode('utf-8'))
    return hash_method.hexdigest()
 
 # Error display function
 
 def error(error_message):
-    print("ERROR: " + error_message)
+    sys.stderr.write("ERROR: " + error_message)
     sys.exit()
-
-
 
 # Insert new node_value
 
-def insert_node(collection, node_value):
+def insert_node(collection, node_value, data_provider):
     node_value['vertex_type'] = collection
+    node_value['data_provider'] = data_provider
     nodesCollection = db.collection('ot_vertices')
 
     if nodesCollection.has(node_value['_key']):
@@ -95,9 +96,10 @@ def insert_node(collection, node_value):
 
 # Insert new edge
 
-def insert_edge(collection, edge_value):
+def insert_edge(collection, edge_value, data_provider):
     edge_value['_to'] = 'ot_vertices/' + edge_value['_to']
     edge_value['_from'] = 'ot_vertices/' + edge_value['_from']
+    edge_value['data_provider'] = data_provider
     edge_value['edge_type'] = collection
     edgesCollection = db.collection('ot_edges')
     
@@ -105,16 +107,40 @@ def insert_edge(collection, edge_value):
         return
     else:
         edgesCollection.insert(dumps(edge_value))
-            
+  
+def joinTransactions(transaction):
+    transaction_id = transaction['identifiers']['ExternalTransactionId']
+    key = transaction['_key']
+
+    if transaction['data']['TransactionFlow'] == 'Input':
+        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.data.TransactionFlow == 'Output' and e.id.transaction_id == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
+    
+        result = db.aql.execute(aql);
+    
+        for res_key in result:
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Output', '_from': key, '_to' : res_key})
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Input', '_from': res_key, '_to' : key})
+    else:    
+        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.data.TransactionFlow == 'Input' and e.id.transaction_id == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
+    
+        result = db.aql.execute(aql);
+    
+        for res_key in result:
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Input', '_from': key, '_to' : res_key})
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Output', '_from': res_key, '_to' : key})
 # Collaboration check
 
 def isCollaborationConfirmed(providerId, partnerId):
     return True
 
-TRANSFER_EVENTS = [];
+# Find vertex key by id and vertex type
+
+def hasVertex(vertex_key):
+    nodesCollection = db.collection('ot_vertices')
+    return nodesCollection.has(vertex_key);
 
 # Loading XML from input file supplied in command line argument
-xml_file_url = sys.argv[1];
+xml_file_url = sys.argv[1]
 xml_file = open(xml_file_url, "r") 
 xml_data = xml_file.read() 
 
@@ -124,554 +150,732 @@ try:
     import_data = parser.data(fromstring(xml_data))
 except ParseError:
     error('Invalid XML file')
-
-if 'OrigintrailExport' not in import_data:
-    error("Missing OrigintrailExport element!")
     
+if 'OriginTrailExport' not in import_data:
+    error("Missing OriginTrailExport element!")
 
-OrigintrailExport = import_data['OrigintrailExport']
 
-if 'creationTimestamp' not in OrigintrailExport:
-    error('Missing export creation timestamp!')
-  
+# Reading file header
+
+OriginTrailExport_element = import_data['OriginTrailExport']
+
+if 'version' not in OriginTrailExport_element:
+    error('Missing version number attribute for OriginTrailExport element!')
+
+export_version = OriginTrailExport_element['version']
+
+if 'DataProvider' not in OriginTrailExport_element:
+    error("Missing DataProvider element!")
     
-creationTimestamp = OrigintrailExport['creationTimestamp']
+DataProvider_element = OriginTrailExport_element['DataProvider']
 
-# Reading provider data
-if 'Provider' not in OrigintrailExport:
-    error("Missing provider info!")
+if isinstance(DataProvider_element, list):
+    error("Multiple DataProvider elements!")
     
-providerData = OrigintrailExport['Provider']
-
-if isinstance(providerData, list):
-    error("Multiple provider elements!")
-
-if 'uid' not in providerData:
-    error("Missing provider uid!")
-
-providerId = providerData['uid']
- 
-PROVIDERS[providerId] = {}
-
-if 'data' in providerData:
-    PROVIDERS[providerId]['data'] = providerData['data']
-
-PROVIDERS[providerId]['uid'] = providerId
-
-PROVIDERS[providerId]['_key'] = hashed('provider_' + providerId)
-PROVIDERS[providerId]['nodekey'] = hashed('provider_' + providerId)
-
-if 'MasterData' not in OrigintrailExport:
-    error('Missing Master Data!')
-
-
-MasterData = OrigintrailExport['MasterData']
-
-if 'EntitiesList' not in MasterData:
-    error('Missing EntitiesList in MasterData section!')
-
-EntitiesList = MasterData['EntitiesList']
-
-# Reading partners data
-
-if 'Partners' in EntitiesList:
+if 'ParticipantId' not in DataProvider_element:
+    error('Missing ParticipantId element for DataProvider!')
     
-    partnersData = EntitiesList['Partners']
-    
-    for key, partnerData in partnersData.items():
-        if key != 'Partner':
-            error('Invalid element ' + key + " provided in Partners section")
+data_provider_id = DataProvider_element['ParticipantId']
+
+
+# Reading Master Data
+
+if 'MasterData' in OriginTrailExport_element:
+   
+    MasterData_element = OriginTrailExport_element['MasterData']
+   
+   
+    # Reading Participants Data
+   
+    if 'ParticipantsList' in MasterData_element:
         
-        if not isinstance(partnerData, list):
-            tmp_partner = partnerData
-            partnerData = []
-            partnerData.append(tmp_partner)
+        ParticipantsList_element = MasterData_element['ParticipantsList']
         
+        if 'Participant' not in ParticipantsList_element:
+            error('Missing Participant element for ParticipantsList')
         
-        for partner in partnerData:
-            if 'uid' not in partner:
-                error('Missing partner uid!')
+        Participant_elements = ParticipantsList_element['Participant']
+        
+        if not isinstance(Participant_elements, list):
+            tmp_Participant_elements = Participant_elements
+            Participant_elements = []
+            Participant_elements.append(tmp_Participant_elements)
             
-            partnerIdValue = partner['uid']
+        for participant_element in Participant_elements:
             
-            if len(partnerIdValue) < 3 or partnerIdValue[0:3] != "ot:": # OriginTrail Data Creator Identificator
-                partnerIdValue = providerId + '_p_' + partnerIdValue
-        
-        
-            if not isCollaborationConfirmed(providerId, partnerIdValue):
-                error('Collaboration with partner ' + partnerIdValue + ' not confirmed!')
-              
-            
-            PROVIDERS[partnerIdValue] = {}
+            if 'ParticipantIdentifiers' not in participant_element:
+                error('Missing ParticipantIdentifiers element for Participant!')
+                
+            ParticipantIdentifiers_element = participant_element['ParticipantIdentifiers']
+                
+            if 'ParticipantId' not in ParticipantIdentifiers_element:
+                error('Missing ParticipantId for Participant!')
+                
+            participant_id = ParticipantIdentifiers_element['ParticipantId']
 
-            if 'data' in partner:
-                PROVIDERS[partnerIdValue]['data'] = partner['data']
-                    
-            PROVIDERS[partnerIdValue]['id'] = partner['uid']
-            PROVIDERS[partnerIdValue]['uid'] = partnerIdValue
-            PROVIDERS[partnerIdValue]['_key'] = hashed('provider_' + partnerIdValue)
-            PROVIDERS[partnerIdValue]['nodekey'] = hashed('provider_' + partnerIdValue)
+            participant_uid = 'ot:' + data_provider_id + ':otpartid:' + participant_id
             
-# Reading locations data
-
-if 'Locations' not in EntitiesList:
-    error('Missing locations data!')
+            if 'ParticipantData' not in participant_element:
+                error('Missing ParticipantData element for Participant!')
+            
+            ParticipantData_element = participant_element['ParticipantData']
+            
+            PARTICIPANTS[participant_id] = {}
+            PARTICIPANTS[participant_id]['identifiers'] = ParticipantIdentifiers_element
+            PARTICIPANTS[participant_id]['identifiers']['uid'] = participant_uid
+            PARTICIPANTS[participant_id]['data'] = ParticipantData_element
+            PARTICIPANTS[participant_id]['_key'] = hashed('participant_' + participant_uid)
+            PARTICIPANTS[participant_id]['vertex_key'] = hashed('participant_' + participant_uid)
 
     
-businessLocations = EntitiesList['Locations']
-
-for key, locationData in businessLocations.items():
-    
-    if key != 'BusinessLocation':
-        error('Invalid element ' + key + ' provided in Locations section!')
+    # Reading Business Locations Data
+   
+    if 'BusinessLocationsList' in MasterData_element:
         
-    
-    if not isinstance(locationData, list):
-        tmp_locationData = locationData
-        locationData = []
-        locationData.append(tmp_locationData)
+        BusinessLocationsList_element = MasterData_element['BusinessLocationsList']
         
-    for location in locationData:
-    
-        if 'uid' not in location:
-            error('Missing uid for Business Location!')
-
+        if 'BusinessLocation' not in BusinessLocationsList_element:
+            error('Missing BusinessLocation element for BusinessLocationsList!')
             
-        locationIdValue = location['uid']
+        BusinessLocation_elements = BusinessLocationsList_element['BusinessLocation']
+        
+        if not isinstance(BusinessLocation_elements, list):
+            tmp_BusinessLocation_elements = BusinessLocation_elements
+            BusinessLocation_elements = []
+            BusinessLocation_elements.append(tmp_BusinessLocation_elements)
+
+        for business_location_element in BusinessLocation_elements:
+            
+            if 'BusinessLocationOwnerId' not in business_location_element:
+                error('Missing BusinessLocationOwnerId for BusinessLocation!');
+            
+            business_location_owner_id = business_location_element['BusinessLocationOwnerId']
+            
+            if business_location_owner_id in PARTICIPANTS:
+                business_location_owner_key = PARTICIPANTS[business_location_owner_id]['_key']
+            else:
+                business_location_owner_key = hashed('participant_ot:' + data_provider_id + ':otpartid:' + business_location_owner_id)
+            
+                if not hasVertex(business_location_owner_key):
+                    error('Business location owner with id ' + business_location_owner_id + ' is not provided in export nor found in database!')
            
-        
-       
+            if not business_location_owner_key:
+                error('Business location owner with id ' + business_location_owner_id + ' not provided in export nor found in database')
             
+            if 'BusinessLocationIdentifiers' not in business_location_element:
+                error('Missing BusinessLocationIdentifiers element for BusinessLocation!')
                 
-        if 'ownerId' not in location:
-            error('Missing owner Id for business location ' + locationIdValue + '!')
-
+            BusinessLocationIdentifiers_element = business_location_element['BusinessLocationIdentifiers']
             
-        ownerIdValue = location['ownerId']
-        
-        if len(ownerIdValue) < 3 or ownerIdValue[0:3] != 'ot:':
-            ownerIdValue = providerId + '_p_' + ownerIdValue
-            
-        if ownerIdValue not in PROVIDERS:
-            error('Owner ' + ownerId['content'] + ' of Business Location ' + locationIdValue + ' not provided in Partners section!')
-    
+            if 'BusinessLocationId' not in BusinessLocationIdentifiers_element:
+                error('Missing BusinessLocationId for BusinessLocation')
                 
-        if len(locationIdValue) < 3 or locationIdValue[0:3] != 'ot:': # OriginTrail Business Location Identificator
-           locationIdValue = providerId + ':otblid:' + locationIdValue
+            business_location_id = BusinessLocationIdentifiers_element['BusinessLocationId']
+            
+            business_location_uid = 'ot:' + data_provider_id + ':otblid:' + business_location_id
         
-          
-        LOCATIONS[locationIdValue] = {}
-        
-        if 'data' in location:
-            LOCATIONS[locationIdValue]['data'] = location['data']
+            if 'BusinessLocationData' not in business_location_element:
+                error('Missing BusinessLocationData element for BusinessLocation!')
                 
-        LOCATIONS[locationIdValue]['id'] = location['uid']
-        LOCATIONS[locationIdValue]['owner'] = location['ownerId']
-        LOCATIONS[locationIdValue]['uid'] = locationIdValue
-        LOCATIONS[locationIdValue]['_key'] = hashed('business_location_' + locationIdValue)
-        LOCATIONS[locationIdValue]['nodekey'] = hashed('business_location_' + locationIdValue)
+            BusinessLocationData_element = business_location_element['BusinessLocationData']
+            
+            LOCATIONS[business_location_id] = {}
+            LOCATIONS[business_location_id]['identifiers'] = BusinessLocationIdentifiers_element
+            LOCATIONS[business_location_id]['identifiers']['uid'] = business_location_uid
+            LOCATIONS[business_location_id]['data'] = BusinessLocationData_element
+            LOCATIONS[business_location_id]['_key'] = hashed('business_location_' + business_location_uid)
+            LOCATIONS[business_location_id]['vertex_key'] = hashed('business_location_' + business_location_uid)
+            
+            OWNED_BY.append({
+                    '_from': LOCATIONS[business_location_id]['_key'],
+                    '_to': business_location_owner_key,
+                    '_key': hashed(business_location_owner_key + '_' + LOCATIONS[business_location_id]['_key'])
+                })
+            
+    # Reading Objects Data
+   
+    if 'ObjectsList' in MasterData_element:
         
-        OWNED_BY.append({'_to': PROVIDERS[ownerIdValue]['nodekey'], '_from': LOCATIONS[locationIdValue]['nodekey'], '_key': hashed('owns_' + PROVIDERS[ownerIdValue]['nodekey'] + LOCATIONS[locationIdValue]['nodekey'])})
-
-
-# Reading products data
-
-if 'Products' not in EntitiesList:
-    error('Missing products data!')
-
-    
-products = EntitiesList['Products']
-
-for key, productData in products.items():
-    
-    if key != 'Product':
-        error('Invalid element ' + key + ' provided in Products section!')
-     
-    
-    if not isinstance(productData, list):
-        tmp_productData = productData
-        productData = []
-        productData.append(tmp_productData)
+        ObjectsList_element = MasterData_element['ObjectsList']
         
-    for product in productData:
-    
-#        print productData
-    
-    
-        if 'uid' not in product:
-            error('Missing uid for Product!')
-     
+        if 'Object' not in ObjectsList_element:
+            error('Missing Object element for ObjectsList!')
+                
+        Object_elements = ObjectsList_element['Object']
+        
+        if not isinstance(Object_elements, list):
+            tmp_Object_elements = Object_elements
+            Object_elements = []
+            Object_elements.append(tmp_Object_elements)
+        
+        for object_element in Object_elements:
             
-        productIdValue  = product['uid']
+            if 'ObjectIdentifiers' not in object_element :
+                error('Missing ObjectIdentifiers element for Object!')
+                
+            ObjectIdentifiers_element = object_element['ObjectIdentifiers']
             
-        if len(productIdValue) < 3 or productIdValue[0:3] != 'ot:': # OriginTrail Product Identificator
-            productIdValue = providerId + ':otpid:' + productIdValue
+            if 'ObjectId' not in ObjectIdentifiers_element:
+                error('Missing ObjectId for Object')
+                
+            object_id = ObjectIdentifiers_element['ObjectId']
             
-        if 'allIdentifiers' not in product:
-            error('Missing allIdentifiers section for Product ' + product['uid'] + '!')
+            object_uid = 'ot:' + data_provider_id + ':otoid:' + object_id
+        
+            if 'ObjectData' not in object_element:
+                error('Missing ObjectData element for Object!')
+                
+            ObjectData_element = object_element['ObjectData']
+            
+            OBJECTS[object_id] = {}
+            OBJECTS[object_id]['identifiers'] = ObjectIdentifiers_element
+            OBJECTS[object_id]['identifiers']['uid'] = object_uid
+            OBJECTS[object_id]['data'] = ObjectData_element
+            OBJECTS[object_id]['_key'] = hashed('object_' + object_uid)
+            OBJECTS[object_id]['vertex_key'] = hashed('object_' + object_uid)
+            
+
+# Reading Transactions Data
+
+if 'TransactionData' in OriginTrailExport_element:
+    
+    TransactionsData_element = OriginTrailExport_element['TransactionData']
+    
+    # Reading internal transactions data
+
+    if 'InternalTransactionsList' in TransactionsData_element:
+        
+        InternalTransactionsList_element = TransactionsData_element['InternalTransactionsList']
+        
+        if 'InternalTransaction' not in InternalTransactionsList_element:
+            error('Missing InternalTransaction element for InternalTransactionsList!')
+                
+        InternalTransaction_elements = InternalTransactionsList_element['InternalTransaction']
+        
+        if not isinstance(InternalTransaction_elements, list):
+            tmp_InternalTransaction_elements = InternalTransaction_elements 
+            InternalTransaction_elements  = []
+            InternalTransaction_elements.append(tmp_InternalTransaction_elements)
+        
+        for internal_transaction_element in InternalTransaction_elements:
+            
+            if 'InternalTransactionIdentifiers' not in internal_transaction_element :
+                error('Missing InternalTransactionIdentifiers element for InternalTransaction!')
+                
+            InternalTransactionIdentifiers_element = internal_transaction_element['InternalTransactionIdentifiers']
+            
+            if 'InternalTransactionId' not in InternalTransactionIdentifiers_element:
+                error('Missing InternalTransactionId for InternalTransaction!')
+                
+            internal_transaction_id = InternalTransactionIdentifiers_element['InternalTransactionId']
+            
+            internal_transaction_uid = 'ot:' + data_provider_id + ':ottid:' + internal_transaction_id
+            
+            if 'BatchesInformation' not in internal_transaction_element:
+                error('Missing BatchesInformation element for InternalTransaction!')
+                
+            BatchesInformation_element = internal_transaction_element['BatchesInformation']
            
+           # Reading input batches for internal transaction
+           
+            if 'InputBatchesList' not in BatchesInformation_element:
+                error('Missing InputBatchesList for InternalTransaction!')
+
+            InputBatchesList_element = BatchesInformation_element['InputBatchesList']
         
-        allIdentifiers = product['allIdentifiers']
-        
-        for key, identifiers in allIdentifiers.items():
-            if not isinstance(identifiers, list):
-                tmp_identifiers = identifiers
-                identifiers = []
-                identifiers.append(tmp_identifiers)
+            if 'Batch' not in InputBatchesList_element:
+                error('Missing Batch element for InputBatchesList!')
+                    
+            Batch_elements = InputBatchesList_element['Batch']
             
-        PRODUCTS[productIdValue] = {}
-        
-        if 'data' in product:
-            PRODUCTS[productIdValue]['data'] = product['data']
+            if not isinstance(Batch_elements, list):
+                tmp_Batch_elements = Batch_elements
+                Batch_elements = []
+                Batch_elements.append(tmp_Batch_elements)
+            
+            INPUT_BATCHES = []
+            
+            for batch_element in Batch_elements:
                 
-        PRODUCTS[productIdValue]['id'] = product['allIdentifiers']
-        PRODUCTS[productIdValue]['uid'] = productIdValue
-        PRODUCTS[productIdValue]['_key'] =  hashed('product_' + productIdValue)
-        PRODUCTS[productIdValue]['nodekey'] = hashed('product_' + productIdValue)
-        
-        if 'ProductBatch' in product:
-            productBatch = product['ProductBatch']
-            
-            if 'uid' not in productBatch:
-                error('uid number not provided for Product Batch!')
-
+                if 'BatchIdentifiers' not in batch_element :
+                    error('Missing BatchIdentifiers element for Batch!')
+                    
+                BatchIdentifiers_element = batch_element['BatchIdentifiers']
                 
-            batchIdValue = productBatch['uid']
-            
-            batchIdValue = productIdValue + ":otbid:" + batchIdValue
-            
-            BATCHES[batchIdValue] = {}
-            BATCHES[batchIdValue]['id'] = batchIdValue
-            BATCHES[batchIdValue]['_key'] = hashed('product_batch_' + batchIdValue)
-            BATCHES[batchIdValue]['nodekey'] = hashed('product_batch_' + batchIdValue)
-            
-            if 'data' in productBatch:
-                BATCHES[batchIdValue]['data'] = productBatch['data']
-            
-            INSTANCE_OF.append({'_from': BATCHES[batchIdValue]['nodekey'], '_to': PRODUCTS[productIdValue]['nodekey'], '_key': hashed('instance_of_' + BATCHES[batchIdValue]['nodekey'] + PRODUCTS[productIdValue]['nodekey'])})
-
-
-if 'EventsData' not in OrigintrailExport:
-    error('Missing EventsData!')
-
-    
-EventsData = OrigintrailExport['EventsData']
-
-if 'EventsList' not in EventsData:
-    error('EventsList not provided id EventsData section!')
-
-    
-EventsList = EventsData['EventsList']
-
-for eventType, events in EventsList.items():
-    
-    if not isinstance(events, list):
-        tmp_events = events
-        events = []
-        events.append(tmp_events)
-        
-    for event in events:
-        
-        if 'eventId' not in event:
-            error('Missing event id!')
-
-            
-        eventId = event['eventId']
-        
-        if 'eventTime' not in event:
-            error('Missing event time for event ' + eventId + '!')
-
-            
-        if 'eventTimeZoneOffset' not in event:
-            error('Missing event time zone offset for event ' + eventId + '!')
-
-            
-        eventTimeZoneOffset = event['eventTimeZoneOffset']
-        
-        if 'businessLocationId' not in event:
-            error('Missing business location for event ' + eventId + '!')
-
-            
-        locationIdValue = event['businessLocationId']
-        
-        if len(locationIdValue) < 3 or locationIdValue[0:3] != 'ot:': # OriginTrail Business Location Identificator
-            locationIdValue = providerId + ':otblid:' + locationIdValue
-        
-        
-        eventLocation = locationIdValue
-        
-        if eventLocation not in LOCATIONS:
-            error('Business Location ' + eventLocation + ', ' + event['businessLocationId'] + ' for event ' + eventId + ' not provided in Locations section!')
-
-            
-        if 'businessProcess' not in event:
-            error('Missing business process for event ' + eventId + '!')
-
-            
-        inputProductProvided = False
-        
-        if eventType == 'TransformationEvent':
-        
-            if 'inputProduct' in event:
-                inputProductProvided = True
-            
-                inputProduct = event['inputProduct']
-            
-                if 'productId' not in inputProduct:
-                    error('Missing product identificator for input product for event ' + eventId)
-
+                if 'BatchId' not in BatchIdentifiers_element:
+                    error('Missing BatchId for Batch!')
                     
-                productIdValue = inputProduct['productId']
+                batch_id = BatchIdentifiers_element['BatchId']
                 
-                if len(productIdValue) < 3 or productIdValue[0:3] != 'ot:': # OriginTrail Product Identificator
-                    productIdValue = providerId + ':otpid:' + productIdValue
+                if 'ObjectId' not in BatchIdentifiers_element:
+                    error('Missing ObjectId for Batch!')
                     
-                if productIdValue not in PRODUCTS:
-                    error('Product ' + inputProduct['productId'] + ' not provided in Products section!')
-        
-                    
-                    
-                if 'productBatchId' in inputProduct:
-                    
-                    productBatchId = inputProduct['productBatchId']
-                    
-                    if len(productBatchIdValue) < 3 or productBatchIdValue[0:3] != 'ot:':
-                        productBatchIdValue = productIdValue + ':otbid:' + productBatchIdValue
-                        
-                    if productBatchIdValue not in BATCHES:
-                        error('Product batch ' + inputProduct['productBatchId'] + ' for product ' + inputProduct['productId'] + ' not provided in Products section!')
+                object_id = BatchIdentifiers_element['ObjectId']
                 
-                        
-                    inputBatchId = productBatchIdValue
+                if object_id in OBJECTS:
+                    object_key = OBJECTS[object_id]['_key']
                 else:
-                    inputBatchId = productIdValue + creationTimestamp + str(time.time())
-                    BATCHES[inputBatchId] = {}
-                    BATCHES[inputBatchId]['_key'] = hashed('product_batch_' + inputBatchId)
-                    BATCHES[inputBatchId]['id'] = inputBatchId
-                    BATCHES[inputBatchId]['nodekey'] = hashed('product_batch_' + inputBatchId)
-                    BATCHES[inputBatchId]['type'] = 'dummy_batch'
-
-                    INSTANCE_OF.append({'_from': BATCHES[inputBatchId]['nodekey'], '_to':PRODUCTS[productIdValue]['nodekey'], '_key': hashed('instance_of_' + BATCHES[inputBatchId]['nodekey'] + PRODUCTS[productIdValue]['nodekey'])})
-                    
-                inputProductId = productIdValue
+                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
                 
+                    if not hasVertex(object_key):
+                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
                 
-            if 'outputProduct' not in event:
-                error('Missing output product for event ' + eventId)
+                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
             
-                
-            outputProduct = event['outputProduct']
-        
-            if 'productId' not in outputProduct:
-                error('Missing product identificator for output product for event ' + eventId)
-        
-                
-            productIdValue = outputProduct['productId']
-                
-            if len(productIdValue) < 3 or productIdValue[0:3] != 'ot:': # OriginTrail Product Identificator
-                productIdValue = providerId + ':otpid:' + productIdValue
-                
-            if productIdValue not in PRODUCTS:
-                error('Product ' + outputProduct['productId'] + ' not provided in Products section!')
-
-                
-            if 'productBatchId' in outputProduct:
-                
-                productBatchIdValue = outputProduct['productBatchId']
-                
-                if len(productBatchIdValue) < 3 or productBatchIdValue[0:3] != 'ot:':
-                    productBatchIdValue = productIdValue + ':otbid:' + productBatchIdValue
+                if 'BatchData' not in batch_element:
+                    error('Missing BatchData element for Batch!')
                     
-                if productBatchIdValue not in BATCHES:
-                    error('Product batch ' + outputProduct['productBatchId'] + ' for product ' + outputProduct['productId'] + ' not provided in Products section!')
+                BatchData_element = batch_element['BatchData']
+                
+                BATCHES[batch_uid] = {}
+                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
+                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
+                BATCHES[batch_uid]['data'] = BatchData_element
+                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
+                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
+                
+                INPUT_BATCHES.append(hashed('batch_' + batch_uid));
+                
+                INSTANCE_OF.append({
+                        '_from': BATCHES[batch_uid]['vertex_key'],
+                        '_to': object_key,
+                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
+                    })
             
+            # Reading output units for internal transaction
+            
+            if 'OutputBatchesList' not in BatchesInformation_element:
+                    error('Missing OutputBatchesList for InternalTransaction!')
+
+            OutputBatchesList_element = BatchesInformation_element['OutputBatchesList']
+        
+            if 'Batch' not in OutputBatchesList_element:
+                error('Missing Batch element for OutputBatchesList!')
                     
-                outputBatchId = productBatchIdValue
+            Batch_elements = OutputBatchesList_element['Batch']
+            
+            if not isinstance(Batch_elements, list):
+                tmp_Batch_elements = Batch_elements
+                Batch_elements = []
+                Batch_elements.append(tmp_Batch_elements)
+            
+            OUTPUT_BATCHES = []
+            
+            for batch_element in Batch_elements:
+                
+                if 'BatchIdentifiers' not in batch_element :
+                    error('Missing BatchIdentifiers element for Batch!')
+                    
+                BatchIdentifiers_element = batch_element['BatchIdentifiers']
+                
+                if 'BatchId' not in BatchIdentifiers_element:
+                    error('Missing BatchId for Batch!')
+                    
+                batch_id = BatchIdentifiers_element['BatchId']
+                
+                if 'ObjectId' not in BatchIdentifiers_element:
+                    error('Missing ObjectId for Batch!')
+                    
+                object_id = BatchIdentifiers_element['ObjectId']
+                
+                if object_id in OBJECTS:
+                    object_key = OBJECTS[object_id]['_key']
+                else:
+                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                
+                    if not hasVertex(object_key):
+                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                
+                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
+            
+                if 'BatchData' not in batch_element:
+                    error('Missing BatchData element for Batch!')
+                    
+                BatchData_element = batch_element['BatchData']
+                
+                BATCHES[batch_uid] = {}
+                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
+                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
+                BATCHES[batch_uid]['data'] = BatchData_element
+                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
+                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
+                
+                OUTPUT_BATCHES.append(hashed('batch_' + batch_uid));
+                
+                INSTANCE_OF.append({
+                        '_from': BATCHES[batch_uid]['vertex_key'],
+                        '_to': object_key,
+                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
+                    })
+        
+            if 'InternalTransactionData' not in internal_transaction_element:
+                error('Missing InternalTransactionData element for InternalTransaction!')
+                
+            InternalTransactionData_element = internal_transaction_element['InternalTransactionData']
+            
+            if 'BusinessLocationId' not in InternalTransactionData_element:
+                error('Missing BusinessLocationId for Internal Transaction!')
+        
+            business_location_id = InternalTransactionData_element['BusinessLocationId']
+            
+            if business_location_id in LOCATIONS:
+                    business_location_key = LOCATIONS[business_location_id]['_key']
             else:
-                outputBatchId = productIdValue + ':otbid:' + creationTimestamp + str(time.time())
-                BATCHES[outputBatchId] = {}
-                BATCHES[outputBatchId]['_key'] = hashed('product_batch_' + outputBatchId)
-                BATCHES[outputBatchId]['id'] = outputBatchId
-                BATCHES[outputBatchId]['nodekey'] = hashed('product_batch_' + outputBatchId)
-                BATCHES[outputBatchId]['type'] = 'dummy_batch'
+                business_location_key = hashed('object_ot:' + data_provider_id + ':otoid:' + business_location_id)
+            
+                if not hasVertex(business_location_key):
+                    error('Business location with id ' + business_location_id + ' is not provided in export nor found in database!')
+                
+            
+            TRANSACTIONS[internal_transaction_id] = {}
+            TRANSACTIONS[internal_transaction_id]['identifiers'] = InternalTransactionIdentifiers_element
+            TRANSACTIONS[internal_transaction_id]['identifiers']['uid'] = internal_transaction_uid
+            TRANSACTIONS[internal_transaction_id]['identifiers']['TransactionId'] = internal_transaction_id
+            TRANSACTIONS[internal_transaction_id]['data'] = InternalTransactionData_element
+            TRANSACTIONS[internal_transaction_id]['TransactionType'] = 'InternalTransaction'
+            TRANSACTIONS[internal_transaction_id]['_key'] = hashed('transaction_' + internal_transaction_uid)
+            TRANSACTIONS[internal_transaction_id]['vertex_key'] = hashed('transaction_' + internal_transaction_uid)
 
-                INSTANCE_OF.append({'_from': BATCHES[outputBatchId]['nodekey'], '_to':PRODUCTS[productIdValue]['nodekey'], '_key': hashed('instance_of_' + BATCHES[outputBatchId]['nodekey'] + PRODUCTS[productIdValue]['nodekey'])})
+            AT.append({
+                    '_from': TRANSACTIONS[internal_transaction_id]['_key'],
+                    '_to': business_location_key,
+                    '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + business_location_key)
+                })
+
+            for input_batch in INPUT_BATCHES:
+                INPUT_BATCH.append({
+                        '_from': TRANSACTIONS[internal_transaction_id]['_key'],
+                        '_to': input_batch,
+                        '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + input_batch)
+                    })
+
+            for output_batch in OUTPUT_BATCHES:
+                OUTPUT_BATCH.append({
+                        '_from': output_batch,
+                        '_to': TRANSACTIONS[internal_transaction_id]['_key'],
+                        '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + output_batch)
+                    })
+
+    # Reading external transactions data
+
+    if 'ExternalTransactionsList' in TransactionsData_element:
+        
+        ExternalTransactionsList_element = TransactionsData_element['ExternalTransactionsList']
+        
+        if 'ExternalTransaction' not in ExternalTransactionsList_element:
+            error('Missing ExternalTransaction element for ExternalTransactionsList!')
+
+        ExternalTransaction_elements = ExternalTransactionsList_element['ExternalTransaction']
+        
+        if not isinstance(ExternalTransaction_elements, list):
+            tmp_ExternalTransaction_elements = ExternalTransaction_elements 
+            ExternalTransaction_elements  = []
+            ExternalTransaction_elements.append(tmp_ExternalTransaction_elements)
+        
+        for external_transaction_element in ExternalTransaction_elements:
+            
+            if 'ExternalTransactionIdentifiers' not in external_transaction_element :
+                error('Missing ExternalTransactionIdentifiers element for ExternalTransaction!')
                 
-            outputProductId = productIdValue
+            ExternalTransactionIdentifiers_element = external_transaction_element['ExternalTransactionIdentifiers']
+            
+            if 'ExternalTransactionId' not in ExternalTransactionIdentifiers_element:
+                error('Missing ExternalTransactionId for ExternalTransaction!')
+                
+            external_transaction_id = ExternalTransactionIdentifiers_element['ExternalTransactionId']
+            
+            external_transaction_uid = 'ot:' + data_provider_id + ':ottid:' + external_transaction_id
+            
+            if 'BatchesInformation' not in external_transaction_element:
+                error('Missing BatchesInformation element for ExternalTransaction!')
+                
+            BatchesInformation_element = external_transaction_element['BatchesInformation']
+           
+           # Reading batches for external transaction
+
+            if 'BatchesList' not in BatchesInformation_element:
+                    error('Missing BatchesList for ExternalTransaction!')
+
+            BatchesList_element = BatchesInformation_element['BatchesList']
         
-            eventIdValue = providerId + ':event:' + eventId
-        
-            EVENTS[eventId] = {}
-            EVENTS[eventId]['_key'] = hashed('event_' + eventIdValue)
-            EVENTS[eventId]['nodekey'] = hashed('event_' + eventIdValue)
-            EVENTS[eventId]['uid'] = eventIdValue
-            EVENTS[eventId]['id'] = eventId
-            EVENTS[eventId]['type'] = 'TransformationEvent'
+            if 'Batch' not in BatchesList_element:
+                error('Missing Batch element for BatchesList!')
+                    
+            Batch_elements = BatchesList_element['Batch']
             
-            if inputProductProvided:
-                EVENTS[eventId]['InputProduct'] = inputProductId
-                SOURCE_BATCH.append({'_from': EVENTS[eventId]['nodekey'], '_to':BATCHES[inputBatchId]['nodekey'], '_key':hashed('SOURCE_BATCH_' + EVENTS[eventId]['nodekey'] + BATCHES[inputBatchId]['nodekey'])})
+            if not isinstance(Batch_elements, list):
+                tmp_Batch_elements = Batch_elements
+                Batch_elements = []
+                Batch_elements.append(tmp_Batch_elements)
             
-            EVENTS[eventId]['OutputProduct'] = outputProductId
-            EVENTS[eventId]['BusinessLocation'] = event['businessLocationId']
-            EVENTS[eventId]['BusinessProcess'] = event['businessProcess']
-            EVENTS[eventId]['Provider'] = providerId
-            EVENTS[eventId]['EventType'] = 'Transformation'
+            TRANSFERED_BATCHES = []
             
-            if 'eventDocumentId' in event:
-                EVENTS[eventId]['eventDocumentId'] = event['eventDocumentId']
+            for batch_element in Batch_elements:
+                
+                if 'BatchIdentifiers' not in batch_element :
+                    error('Missing BatchIdentifiers element for Batch!')
+                    
+                BatchIdentifiers_element = batch_element['BatchIdentifiers']
+                
+                if 'BatchId' not in BatchIdentifiers_element:
+                    error('Missing BatchId for Batch!')
+                    
+                batch_id = BatchIdentifiers_element['BatchId']
+                
+                if 'ObjectId' not in BatchIdentifiers_element:
+                    error('Missing ObjectId for Batch!')
+                    
+                object_id = BatchIdentifiers_element['ObjectId']
+                
+                if object_id in OBJECTS:
+                    object_key = OBJECTS[object_id]['_key']
+                else:
+                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                
+                    if not hasVertex(object_key):
+                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                
+                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
             
-            RESULTED_BATCH.append({'_to': EVENTS[eventId]['nodekey'], '_from':BATCHES[outputBatchId]['nodekey'], '_key':hashed('resulted_' + EVENTS[eventId]['nodekey'] + BATCHES[outputBatchId]['nodekey'])})
-            AT.append({'_from': EVENTS[eventId]['nodekey'], '_to': LOCATIONS[eventLocation]['nodekey'], '_key':hashed('at_' + EVENTS[eventId]['nodekey'] + LOCATIONS[eventLocation]['nodekey'])})
-        
-        elif eventType == 'TransferEvent':
-            if 'Product' not in event:
-                error('Missing Product for TransferEvent ' + eventId + '!')
+                if 'BatchData' not in batch_element:
+                    error('Missing BatchData element for Batch!')
+                    
+                BatchData_element = batch_element['BatchData']
+                
+                BATCHES[batch_uid] = {}
+                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
+                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
+                BATCHES[batch_uid]['data'] = BatchData_element
+                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
+                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
+                
+                TRANSFERED_BATCHES.append(hashed('batch_' + batch_uid));
+                
+                INSTANCE_OF.append({
+                        '_from': BATCHES[batch_uid]['vertex_key'],
+                        '_to': object_key,
+                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
+                    })
+
+                if 'ExternalTransactionData' not in external_transaction_element:
+                    error('Missing ExternalTransactionData element for ExternalTransaction!')
+                
+                ExternalTransactionData_element = external_transaction_element['ExternalTransactionData']
+                
+                if 'BusinessLocationId' not in ExternalTransactionData_element:
+                    error('Missing BusinessLocationId for External Transaction!')
+            
+                business_location_id = ExternalTransactionData_element['BusinessLocationId']
+                
+                if business_location_id in LOCATIONS:
+                        business_location_key = LOCATIONS[business_location_id]['_key']
+                else:
+                    business_location_key = hashed('object_ot:' + data_provider_id + ':otoid:' + business_location_id)
+                
+                    if not hasVertex(business_location_key):
+                        error('Business location with id ' + business_location_id + ' is not provided in export nor found in database!')
+
+                if 'BusinessLocationId' not in ExternalTransactionData_element:
+                    error('Missing BusinessLocationId for External Transaction!')
+                
+                source_business_location_id = ExternalTransactionData_element['SourceBusinessLocationId']
+                
+                if source_business_location_id in LOCATIONS:
+                        source_business_location_key = LOCATIONS[source_business_location_id]['_key']
+                else:
+                    source_business_location_key = hashed('object_ot:' + data_provider_id + ':otoid:' + source_business_location_id)
+                
+                    if not hasVertex(source_business_location_key):
+                        error('Business location with id ' + source_business_location_id + ' is not provided in export nor found in database!')
+                
+                dest_business_location_id = ExternalTransactionData_element['DestinationBusinessLocationId']
+                
+                if dest_business_location_id in LOCATIONS:
+                        dest_business_location_key = LOCATIONS[dest_business_location_id]['_key']
+                else:
+                    dest_business_location_key = hashed('object_ot:' + data_provider_id + ':otoid:' + dest_business_location_id)
+                
+                    if not hasVertex(dest_business_location_key):
+                        error('Business location with id ' + dest_business_location_id + ' is not provided in export nor found in database!')    
+
+                if 'TransactionFlow' not in ExternalTransactionData_element:
+                    error('Missing TransactionFlow element for ExternalTransaction!')
+
+                transaction_flow = ExternalTransactionData_element['TransactionFlow']
+
+                if not (transaction_flow == 'Input' or transaction_flow == 'Output'):
+                    error('Invalid value for TransactionFlow element!')
+
+                TRANSACTIONS[external_transaction_id] = {}
+                TRANSACTIONS[external_transaction_id]['identifiers'] = ExternalTransactionIdentifiers_element
+                TRANSACTIONS[external_transaction_id]['identifiers']['uid'] = external_transaction_uid
+                TRANSACTIONS[external_transaction_id]['identifiers']['TransactionId'] = external_transaction_id
+                TRANSACTIONS[external_transaction_id]['transcation_flow'] = transaction_flow
+                TRANSACTIONS[external_transaction_id]['data'] = ExternalTransactionData_element
+                TRANSACTIONS[internal_transaction_id]['TransactionType'] = 'ExternalTransaction'
+                TRANSACTIONS[external_transaction_id]['_key'] = hashed('transaction_' + external_transaction_uid)
+                TRANSACTIONS[internal_transaction_id]['vertex_key'] = hashed('transaction_' + internal_transaction_uid)
 
                 
-            transferProduct = event['Product']
-            
-            if 'productId' not in transferProduct:
-                    error('Missing product identificator for input product for event ' + eventId)
-                    
-                    
-            productIdValue = transferProduct['productId']
-            
-            if len(productIdValue) < 3 or productIdValue[0:3] != 'ot:': # OriginTrail Product Identificator
-                productIdValue = providerId + ':otpid:' + productIdValue
-                
-            if productIdValue not in PRODUCTS:
-                error('Product ' + transferProduct['productId'] + ' not provided in Products section!')
+                AT.append({
+                    '_from': TRANSACTIONS[external_transaction_id]['_key'],
+                    '_to': business_location_key,
+                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + business_location_key)
+                })
+
+                FROM.append({
+                    '_from': TRANSACTIONS[external_transaction_id]['_key'],
+                    '_to': source_business_location_key,
+                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + source_business_location_key)
+                })
+
+                TO.append({
+                    '_from': TRANSACTIONS[external_transaction_id]['_key'],
+                    '_to': dest_business_location_key,
+                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + dest_business_location_key)
+                })
+
+            for transfered_batch in TRANSFERED_BATCHES:
+                OF_BATCH.append({
+                        '_from': transfered_batch,
+                        '_to': TRANSACTIONS[external_transaction_id]['_key'],
+                        '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + transfered_batch)
+                    })
+
+# Reading Visibility Events data Data
+
+if 'VisibilityEventData' in OriginTrailExport_element:
+   
+    VisibilityEventData_element = OriginTrailExport_element['VisibilityEventData']
+   
+   
+   
+    if 'VisibilityEventsList' in VisibilityEventData_element:
         
+        VisibilityEventsList_element = VisibilityEventData_element['VisibilityEventsList']
+        
+        if 'Event' not in VisibilityEventsList_element:
+            error('Missing Event element for VisibilityEventsList')
+        
+        Event_elements = VisibilityEventsList_element['Event']
+        
+        if not isinstance(Event_elements, list):
+            tmp_Event_elements = Event_elements
+            Event_elements = []
+            Event_elements.append(tmp_Event_elements)
+            
+        for event_element in Event_elements:
+            
+            if 'EventIdentifiers' not in event_element:
+                error('Missing EventIdentifiers element for Event!')
                 
+            EventIdentifiers_element = event_element['EventIdentifiers']
                 
-            if 'productBatchId' in transferProduct:
+            if 'EventId' not in EventIdentifiers_element:
+                error('Missing EventId for Event!')
                 
-                productBatchIdValue = transferProduct['productBatchId']
-                
-                if len(productBatchIdValue) < 3 or productBatchIdValue[0:3] != 'ot:':
-                    productBatchIdValue = productIdValue + ':otbid:' + productBatchIdValue
+            event_id = EventIdentifiers_element['EventId']
+
+            event_uid = 'ot:' + data_provider_id + ':oteid:' + event_id
+
+            if 'ObjectId' not in EventIdentifiers_element:
+                    error('Missing ObjectId for Event!')
                     
-                if productBatchIdValue not in BATCHES: 
-                    error('Product batch ' + transferProduct['productBatchId']+ ' for product ' + transferProduct['productId'] + ' not provided in Products section!')
-                    
-                    
-                transferBatchId = productBatchIdValue
+            object_id = EventIdentifiers_element['ObjectId']
+            
+            if object_id in OBJECTS:
+                object_key = OBJECTS[object_id]['_key']
             else:
-                transferBatchId = productIdValue + creationTimestamp + str(time.time())
-                BATCHES[transferBatchId] = {}
-                BATCHES[transferBatchId]['_key'] = hashed('product_batch_' + transferBatchId)
-                BATCHES[transferBatchId]['nodekey'] = hashed('product_batch_' + transferBatchId)
-                BATCHES[transferBatchId]['type'] = 'dummy_batch'
+                object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+            
+                if not hasVertex(object_key):
+                    error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+            
 
-                INSTANCE_OF.append({'_from':BATCHES[transferBatchId]['nodekey'], '_to':PRODUCTS[productIdValue]['nodekey'], '_key':hashed('instance_of_' + BATCHES[transferBatchId]['nodekey'] + PRODUCTS[productIdValue]['nodekey'])})
-                
-            transferProductId = productIdValue
-            
-            if 'sourceBusinessLocationId' not in event:
-                error('Missing Source Business Location for Transfer Event ' + eventId)
-        
-                
-            locationIdValue = event['sourceBusinessLocationId']
-    
-            
-            if len(location) < 3 or locationIdValue[0:3] != 'ot:': # OriginTrail Business Location Identificator
-                locationIdValue = providerId + ':otblid:' + locationIdValue
-            
-            sourceLocation = locationIdValue
-            
-            if sourceLocation not in LOCATIONS:
-                error('Source Business Location ' + event['sourceBusinessLocationId'] + ' for Transfer event ' + eventId + ' not provided in Locations section!')
-        
-            
-            if 'destBusinessLocationId' not in event:
-                error('Missing Destination Business Location for Transfer Event ' + eventId)
+            if 'BatchId' not in EventIdentifiers_element:
+                error('Missing BatchId for Event!')
 
-                
-            locationIdValue = event['destBusinessLocationId']
-            
-            
-            if len(location) < 3 or locationIdValue[0:3] != 'ot:': # OriginTrail Business Location Identificator
-                locationIdValue = providerId + ':otblid:' + locationIdValue
-            
-            destLocation = locationIdValue
-            
-            if destLocation not in LOCATIONS:
-                error('Destination Business Location ' + event['destBusinessLocationId']+ ' for Transfer event ' + eventId + ' not provided in Locations section!')
-            
-            eventIdValue = providerId + ':event:' + eventId
-            
-            EVENTS[eventId] = {}
-            EVENTS[eventId]['_key'] = hashed('event_' + eventIdValue)
-            EVENTS[eventId]['nodekey'] = hashed('event_' + eventIdValue)
-            EVENTS[eventId]['uid'] = eventIdValue
-            EVENTS[eventId]['id'] = eventId
-            EVENTS[eventId]['type'] = 'TransferEvent'
+            batch_id = EventIdentifiers_element['BatchId']
+            batch_uid = 'ot:' + data_provider_id + ':otoid:'+ object_id + ':otbid:' + batch_id
 
-            EVENTS[eventId]['SourceBusinessLocation'] = LOCATIONS[sourceLocation]['nodekey']
-            EVENTS[eventId]['DestinationBusinessLocation'] = LOCATIONS[destLocation]['nodekey']
-            
-            EVENTS[eventId]['TransferedProduct'] = transferProductId
-            EVENTS[eventId]['BusinessLocation'] = event['businessLocationId']
-            EVENTS[eventId]['BusinessProcess'] = event['businessProcess']
-            EVENTS[eventId]['Provider'] = providerId
-            EVENTS[eventId]['EventType'] = 'Transfer'
-            TRANSFER_EVENTS.append({'id': eventId, '_key': hashed('event_' + eventIdValue)})
-            
-            if 'eventDocumentId' in event:
-                EVENTS[eventId]['eventDocumentId'] = event['eventDocumentId']
+            if batch_uid in BATCHES:
+                    batch_key = BATCHES[batch_uid]['_key']
+            else:
 
+                batch_key = hashed('batch_' + batch_uid)
+
+                if not hasVertex(batch_key):
+                    error('Batch with id ' + batch_id + ' is not provided in export nor found in database!')
             
-            OF_BATCH.append({'_to': EVENTS[eventId]['nodekey'], '_from':BATCHES[transferBatchId]['nodekey'], '_key':hashed('of_batch_' + EVENTS[eventId]['nodekey'] + BATCHES[transferBatchId]['nodekey'])})
-            AT.append({'_from': EVENTS[eventId]['nodekey'], '_to': LOCATIONS[eventLocation]['nodekey'], '_key':hashed('at_' + EVENTS[eventId]['nodekey'] + LOCATIONS[eventLocation]['nodekey'])})
-            FROM.append({'_from': EVENTS[eventId]['nodekey'], '_to':LOCATIONS[sourceLocation]['nodekey'], '_key':hashed('sent_from_' + EVENTS[eventId]['nodekey'] + LOCATIONS[sourceLocation]['nodekey'])})
-            TO.append({'_from': EVENTS[eventId]['nodekey'], '_to':LOCATIONS[destLocation]['nodekey'], '_key':hashed('sent_to_' + EVENTS[eventId]['nodekey'] + LOCATIONS[destLocation]['nodekey'])})
+            if 'EventData' not in event_element:
+                error('Missing EventData element for Event!')
             
-        else:
-            error('Invalid event type ' + eventType +'!')
+            EventData_element = event_element['EventData']
+
+            EVENTS[event_id] = {}
+            EVENTS[event_id]['identifiers'] = EventIdentifiers_element
+            EVENTS[event_id]['identifiers']['uid'] = event_uid
+            EVENTS[event_id]['data'] = EventData_element
+            EVENTS[event_id]['_key'] = hashed('event_' + event_uid)
+            EVENTS[event_id]['vertex_key'] = hashed('event_' + event_uid)
+
+            TRACED_BY.append({
+                    '_from': batch_key,
+                    '_to': EVENTS[event_id]['vertex_key'],
+                    '_key': hashed(batch_key + '_' + EVENTS[event_id]['vertex_key'])
+                })
+
 
 # Importing parsed data into graph database
 
-for key, provider in PROVIDERS.items():
-    insert_node('PROVIDER', provider)
+for key, participant_vertex in PARTICIPANTS.items():
+    insert_node('PARTICIPANT', participant_vertex, data_provider_id)
     
-for key, location in LOCATIONS.items():
-    insert_node('BUSINESS_LOCATION', location)
+for key, location_vertex in LOCATIONS.items():
+    insert_node('BUSINESS_LOCATION', location_vertex, data_provider_id)
     
-for key, product in PRODUCTS.items():
-    insert_node('PRODUCT', product)
+for key, object_vertex in OBJECTS.items():
+    insert_node('OBJECT', object_vertex, data_provider_id)
     
-for key, batch in BATCHES.items():
-    insert_node('PRODUCT_BATCH', batch)
+for key, batch_vertex in BATCHES.items():
+    insert_node('BATCH', batch_vertex, data_provider_id)
     
-for key, event in EVENTS.items():
-    insert_node('EVENT', event)
+for key, transaction_vertex in TRANSACTIONS.items():
+    insert_node('TRANSACTION', transaction_vertex, data_provider_id)
 
+for key, event_vertex in EVENTS.items():
+    insert_node('VISIBILITY_EVENT', event_vertex, data_provider_id)
 
-
-for owns_relation in OWNED_BY:
-    insert_edge('OWNED_BY', owns_relation)
+for owned_by_relation in OWNED_BY:
+    insert_edge('OWNED_BY', owned_by_relation, data_provider_id)
     
 for at_relation in AT:
-    insert_edge('AT', at_relation)
+    insert_edge('AT', at_relation, data_provider_id)
     
-for SOURCE_BATCH_relation in SOURCE_BATCH:
-    insert_edge('SOURCE_BATCH', SOURCE_BATCH_relation)
+for input_batch_relation in INPUT_BATCH:
+    insert_edge('INPUT_BATCH', input_batch_relation, data_provider_id)
     
-for resulted_relation in RESULTED_BATCH:
-    insert_edge('RESULTED_BATCH', resulted_relation)
+for output_batch_relation in OUTPUT_BATCH:
+    insert_edge('OUTPUT_BATCH', output_batch_relation, data_provider_id)
 
 for instance_of_relation in INSTANCE_OF:
-    insert_edge('INSTANCE_OF', instance_of_relation)
+    insert_edge('INSTANCE_OF', instance_of_relation, data_provider_id)
 
 for of_batch_relation in OF_BATCH:
-    insert_edge('OF_BATCH', of_batch_relation )
+    insert_edge('OF_BATCH', of_batch_relation, data_provider_id)
     
 for sent_from_relation in FROM:
-    insert_edge('FROM', sent_from_relation)
+    insert_edge('FROM', sent_from_relation, data_provider_id)
     
 for sent_to_relation in TO:
-    insert_edge('TO', sent_to_relation)
-    
-print(dumps({"message": "Data import complete!", "batches": BATCHES, "transferEvents": TRANSFER_EVENTS}))
+    insert_edge('TO', sent_to_relation, data_provider_id)
+
+for traced_by_relation in TRACED_BY:
+    insert_edge('TRACED_BY', traced_by_relation, data_provider_id)
+
+print(dumps({"message": "Data import complete!", "batches": BATCHES}))
 sys.stdout.flush()
+
+for key, transaction in TRANSACTIONS.items():
+    if 'TransactionFlow' in transaction['data']:
+        joinTransactions(transaction)

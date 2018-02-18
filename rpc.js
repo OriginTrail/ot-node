@@ -59,19 +59,6 @@ server.use(
 server.get('/api/trail/batches', function (req, res) {
 	var queryObject = req.query;
 
-	// YIMISHIJI specific query rewrite
-	//= ================================
-	if (queryObject['internal_product_id'] != undefined) {
-		queryObject['id.yimi_erp'] = queryObject['internal_product_id'];
-		delete queryObject['internal_product_id'];
-	}
-
-	if (queryObject['expiration_date'] != undefined) {
-		queryObject['id.expirationDate'] = queryObject['expiration_date'];
-		delete queryObject['expiration_date'];
-	}
-	//= ================================
-
 	var reqNum = utilities.getRandomInt(10000000000);
 
 	while (socketRequests[reqNum] != undefined) {
@@ -87,35 +74,6 @@ server.get('/api/trail/batches', function (req, res) {
 });
 // ====================
 
-// Available expiration dates for product
-// ======================================
-server.get('/api/expiration_dates', function (req, res) {
-	var queryObject = req.query;
-
-	if (queryObject['internal_product_id'] != undefined) {
-		queryObject['id.yimi_erp'] = queryObject['internal_product_id'];
-		delete queryObject['internal_product_id'];
-	}
-
-	if (queryObject['expiration_date'] != undefined) {
-		queryObject['id.expirationDate'] = queryObject['expiration_date'];
-		delete queryObject['expiration_date'];
-	}
-
-	var reqNum = utilities.getRandomInt(10000000000);
-
-	while (socketRequests[reqNum] != undefined) {
-		utilities.getRandomInt(10000000000);
-	}
-
-	socketRequests[reqNum] = res;
-	socket.emit('event', {
-		request: 'expiration-request',
-		queryObject: queryObject,
-		clientRequest: reqNum
-	});
-});
-// ======================================
 
 // Blockchain fingerprint check
 // ============================
