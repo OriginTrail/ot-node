@@ -21,8 +21,15 @@ module.exports = function () {
 						continue;
 					}
 
+					if(key != 'vertex_type')
+					{
+						search_key = 'identifiers.' + key;
+					}
+					else
+						search_key = key;
+
 					const param = 'param' + i;
-					filters.push('v.' + key + ' == @param' + i);
+					filters.push('v.' + search_key + ' == @param' + i);
 					i++;
 
 					params[param] = queryObject[key];
@@ -113,13 +120,14 @@ module.exports = function () {
 		},
 
 		BFS: function (trail, start_vertex_uid, restricted = false) {
+
 			const visited = [];
 			const traversalArray = [];
 
 			let start_vertex = null;
 
 			for (let i in trail) {
-				if (trail[i].uid === start_vertex_uid) {
+				if (trail[i].identifiers.uid === start_vertex_uid) {
 					start_vertex = i;
 					break;
 				}
@@ -144,11 +152,11 @@ module.exports = function () {
 						const e = trail[curr].outbound[i];
 						const w = e.to;
 
-						if (e.edge_type !== 'EVENT_CONNECTION') {
+						if (restricted && e.edge_type != 'TRANSACTION_CONNECTION') {
 							traversalArray.push(e);
 						}
 
-						if (visited[w] === undefined && trail[w] !== undefined && (restricted === false || (restricted === true && trail[w].vertex_type !== 'PRODUCT_BATCH' && e.edge_type !== 'EVENT_CONNECTION'))) {
+						if (visited[w] === undefined && trail[w] !== undefined && !(e.edge_type == 'TRANSACTION_CONNECTION' && e.TransactionFlow == 'Output') && (restricted === false || (restricted === true && trail[w].vertex_type !== 'BATCH' && e.edge_type !== 'TRANSACTION_CONNECTION'))) {
 							visited[w] = true;
 							queue.push(w);
 						}
