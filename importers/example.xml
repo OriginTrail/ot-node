@@ -13,7 +13,7 @@
 		<ParticipantsList>	<!-- Description of all entities (participants) in supply chain -->
 			<Participant>
 				<ParticipantIdentifiers> <!-- Required -->
-					<ParticipantId>PROVIDER_ID</ParticipantId> <!-- Required -->
+					<ParticipantId>PROVIDER_ID</ParticipantId> <!-- Required - During the test phase, you can obtain your Unique ID here https://origintrail.io/node-registration -->
 					<AnotherIdentifier>SomeValue</AnotherIdentifier> <!-- Optional: you may define and add more identifiers if needed -->
 				</ParticipantIdentifiers>
 				<ParticipantData> 
