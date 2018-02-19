@@ -162,9 +162,10 @@ server.post('/import', function (req, res) {
 
 		var post_body = req.body;
 
+		/*
 		if (post_body.importer != undefined) {
 			selected_importer = post_body.importer;
-		}
+		}*/
 
 		var input_file = req.files.importfile.path;
 
