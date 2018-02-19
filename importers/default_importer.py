@@ -38,9 +38,6 @@ TO = []
 
 # Database connection
 
-config_file = open('config.json').read()
-config = loads(config_file)
-
 client = ArangoClient(protocol = 'http',
 host = os.environ.get("DB_HOST"),
 port = os.environ.get("DB_PORT"),
