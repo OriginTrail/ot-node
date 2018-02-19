@@ -25,7 +25,6 @@ module.exports = function() {
     addFingerprint: function(batch_id, batch_id_hash, graph_hash) {
 
         signing.signAndSend(batch_id, batch_id_hash, graph_hash)
-        // signing.signAndSend('x','y','z');
         return true;
       },
 

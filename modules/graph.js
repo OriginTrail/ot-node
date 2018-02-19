@@ -120,7 +120,7 @@ module.exports = function () {
 		},
 
 		BFS: function (trail, start_vertex_uid, restricted = false) {
-			
+
 			const visited = [];
 			const traversalArray = [];
 

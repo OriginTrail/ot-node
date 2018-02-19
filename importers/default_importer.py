@@ -6,6 +6,13 @@ from xml.etree.ElementTree import ParseError
 from json import dumps, loads
 import hashlib
 import time
+import os
+
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '..','.env')
+load_dotenv(dotenv_path)
 
 from arango import ArangoClient
 
@@ -34,18 +41,15 @@ TO = []
 
 #Database connection
 
-config_file = open('config.json').read()
-config = loads(config_file)
-
 client = ArangoClient(protocol = 'http',
-host = config['DB_HOST'],
-port = config['DB_PORT'],
-username = config['DB_USERNAME'],
-password = config['DB_PASSWORD'],
+host = os.environ.get("DB_HOST"),
+port = os.environ.get("DB_PORT"),
+username = os.environ.get("DB_USERNAME"),
+password = os.environ.get("DB_PASSWORD"),
 enable_logging = True)
 
 db = client.db('origintrail')
-client.grant_user_access('root', 'my_database')
+# client.grant_user_access(os.environ.get("DB_USERNAME"), os.environ.get("DB_DATABASE"))
 
 current_graphs = db.graphs()
 new_graph = True
@@ -378,69 +382,69 @@ if 'TransactionData' in OriginTrailExport_element:
            
            # Reading input batches for internal transaction
            
-            if 'InputBatchesList' not in BatchesInformation_element:
-                error('Missing InputBatchesList for InternalTransaction!')
+            if 'InputBatchesList' in BatchesInformation_element:
+                
 
-            InputBatchesList_element = BatchesInformation_element['InputBatchesList']
-        
-            if 'Batch' not in InputBatchesList_element:
-                error('Missing Batch element for InputBatchesList!')
-                    
-            Batch_elements = InputBatchesList_element['Batch']
+                InputBatchesList_element = BatchesInformation_element['InputBatchesList']
             
-            if not isinstance(Batch_elements, list):
-                tmp_Batch_elements = Batch_elements
-                Batch_elements = []
-                Batch_elements.append(tmp_Batch_elements)
-            
-            INPUT_BATCHES = []
-            
-            for batch_element in Batch_elements:
+                if 'Batch' not in InputBatchesList_element:
+                    error('Missing Batch element for InputBatchesList!')
+                        
+                Batch_elements = InputBatchesList_element['Batch']
                 
-                if 'BatchIdentifiers' not in batch_element :
-                    error('Missing BatchIdentifiers element for Batch!')
+                if not isinstance(Batch_elements, list):
+                    tmp_Batch_elements = Batch_elements
+                    Batch_elements = []
+                    Batch_elements.append(tmp_Batch_elements)
+                
+                INPUT_BATCHES = []
+                
+                for batch_element in Batch_elements:
                     
-                BatchIdentifiers_element = batch_element['BatchIdentifiers']
-                
-                if 'BatchId' not in BatchIdentifiers_element:
-                    error('Missing BatchId for Batch!')
+                    if 'BatchIdentifiers' not in batch_element :
+                        error('Missing BatchIdentifiers element for Batch!')
+                        
+                    BatchIdentifiers_element = batch_element['BatchIdentifiers']
                     
-                batch_id = BatchIdentifiers_element['BatchId']
-                
-                if 'ObjectId' not in BatchIdentifiers_element:
-                    error('Missing ObjectId for Batch!')
+                    if 'BatchId' not in BatchIdentifiers_element:
+                        error('Missing BatchId for Batch!')
+                        
+                    batch_id = BatchIdentifiers_element['BatchId']
                     
-                object_id = BatchIdentifiers_element['ObjectId']
-                
-                if object_id in OBJECTS:
-                    object_key = OBJECTS[object_id]['_key']
-                else:
-                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
-                
-                    if not hasVertex(object_key):
-                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
-                
-                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
-            
-                if 'BatchData' not in batch_element:
-                    error('Missing BatchData element for Batch!')
+                    if 'ObjectId' not in BatchIdentifiers_element:
+                        error('Missing ObjectId for Batch!')
+                        
+                    object_id = BatchIdentifiers_element['ObjectId']
                     
-                BatchData_element = batch_element['BatchData']
+                    if object_id in OBJECTS:
+                        object_key = OBJECTS[object_id]['_key']
+                    else:
+                        object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                    
+                        if not hasVertex(object_key):
+                            error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                    
+                    batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
                 
-                BATCHES[batch_uid] = {}
-                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
-                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
-                BATCHES[batch_uid]['data'] = BatchData_element
-                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
-                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
-                
-                INPUT_BATCHES.append(hashed('batch_' + batch_uid));
-                
-                INSTANCE_OF.append({
-                        '_from': BATCHES[batch_uid]['vertex_key'],
-                        '_to': object_key,
-                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
-                    })
+                    if 'BatchData' not in batch_element:
+                        error('Missing BatchData element for Batch!')
+                        
+                    BatchData_element = batch_element['BatchData']
+                    
+                    BATCHES[batch_uid] = {}
+                    BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
+                    BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
+                    BATCHES[batch_uid]['data'] = BatchData_element
+                    BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
+                    BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
+                    
+                    INPUT_BATCHES.append(hashed('batch_' + batch_uid));
+                    
+                    INSTANCE_OF.append({
+                            '_from': BATCHES[batch_uid]['vertex_key'],
+                            '_to': object_key,
+                            '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
+                        })
             
             # Reading output units for internal transaction
             

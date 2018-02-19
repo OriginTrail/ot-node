@@ -2,3 +2,5 @@ node_modules
 .DS_Store
 .idea
 config.json
+.env
+.nyc_output
