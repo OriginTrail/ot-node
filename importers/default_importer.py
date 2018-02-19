@@ -6,6 +6,7 @@ from xml.etree.ElementTree import ParseError
 from json import dumps, loads
 import hashlib
 import time
+import os
 
 from os.path import join, dirname
 from dotenv import load_dotenv
