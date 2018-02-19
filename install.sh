@@ -10,9 +10,9 @@ sudo apt-get install arangodb3
 
 sudo apt-get install -y python3-pip
 
-pip3 install python-arango
-pip3 install xmljson
-pip3 install python-dotenv
+sudo pip3 install python-arango
+sudo pip3 install xmljson
+sudo pip3 install python-dotenv
 
 sudo apt-get install git
 

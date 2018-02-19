@@ -21,7 +21,7 @@ var contract_abi_path = config.blockchain.settings.ethereum.contract_abi;
 var contract_abi_file = fs.readFileSync(contract_abi_path);
 var contract_abi = JSON.parse(contract_abi_file);
 
-var nonce = web3.toHex(web3.eth.getTransactionCount(wallet_address, 'pending'));
+var nonce = parseInt(web3.toHex(web3.eth.getTransactionCount(wallet_address, 'pending')));
 var nonce_increment = 0;
 
 module.exports = function() {
@@ -45,8 +45,8 @@ module.exports = function() {
 
 		signAndSend: function(batch_id, batch_id_hash, graph_hash) {
 
-			new_nonce = nonce + nonce_increment;
-			nonce_increment++;
+			var new_nonce = nonce + nonce_increment;
+			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
 			    nonce: new_nonce,
@@ -54,6 +54,8 @@ module.exports = function() {
 			    gasPrice: web3.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: contract_address
 			}
+
+			console.log(txOptions)
 
 			var rawTx = txutils.functionTx(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
 			sendRaw(rawTx);
