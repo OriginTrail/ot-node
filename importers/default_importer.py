@@ -7,6 +7,12 @@ from json import dumps, loads
 import hashlib
 import time
 
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
 from arango import ArangoClient
 
 if len(sys.argv) != 2:
@@ -36,10 +42,10 @@ config_file = open('config.json').read()
 config = loads(config_file)
 
 client = ArangoClient(protocol = 'http',
-host = config['DB_HOST'],
-port = config['DB_PORT'],
-username = config['DB_USERNAME'],
-password = config['DB_PASSWORD'],
+host = os.environ.get("DB_HOST"),
+port = os.environ.get("DB_PORT"),
+username = os.environ.get("DB_USERNAME"),
+password = os.environ.get("DB_PASSWORD"),
 enable_logging = True)
 
 db = client.db('origintrail')
