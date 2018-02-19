@@ -110,7 +110,7 @@
 		<ObjectsList> <!-- Object descriptions - i.e. product (object) master data, involved in the supply chain -->
 			<Object>
 				<ObjectIdentifiers> <!-- Required: these identifiers usually correspond to the codes available on the packaging of the object. All codes are supported -->
-					<ObjectId>1234567890123</ObjectId> <!-- Required: this should be the preferred product code in the supply chain. At least one code is required and this should be in ObjectId. Example here is ean13 -->
+					<ObjectId>OBJECT_1</ObjectId> <!-- Required: this should be the preferred product code in the supply chain. At least one code is required and this should be in ObjectId. Example here is ean13 -->
 					<ean13>1234567890123</ean13> <!-- Optional, but very useful: Repeat the above code also in it's human readable tag -->
 					<ean8>12345678</ean8> <!-- Optional: add more codes if useful -->
 					<qrCode>5u34bgouenf089dsavbna97ybf84rwens0vub9sudv</qrCode> <!-- Optional -->
