@@ -46,8 +46,8 @@ username = os.environ.get("DB_USERNAME"),
 password = os.environ.get("DB_PASSWORD"),
 enable_logging = True)
 
-db = client.db(os.environ.get("DB_DATABASE"))
-client.grant_user_access(os.environ.get("DB_USERNAME"), os.environ.get("DB_DATABASE"))
+db = client.db('origintrail')
+# client.grant_user_access(os.environ.get("DB_USERNAME"), os.environ.get("DB_DATABASE"))
 
 current_graphs = db.graphs()
 new_graph = True
