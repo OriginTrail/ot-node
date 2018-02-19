@@ -3,3 +3,4 @@ node_modules
 .idea
 config.json
 .env
+.nyc_output
