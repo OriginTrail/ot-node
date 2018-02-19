@@ -7,7 +7,7 @@ __OriginTrail is building first Purpose-built Protocol for Supply Chains Based o
  
 This repository contains a work-in-progress code for a network node. Please have in mind that code is still __in early alpha version__ developed mostly as a quick proof of concept and although main features will work, there are many limitations. 
 
-We expect __Test Network__ release to be available by the end of Q2 2018 as a beta o our protocol, while __Main Network__ is scheduled for Q3 2018. For further information about our roadmap please see our [website](https://origintrail.io/roadmap) and more detailed development roadmap on our [wiki](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Roadmap).    
+We expect __Test Network__ release to be available by the end of Q2 2018 as a beta o our protocol, while __Main Network__ is scheduled for Q3 2018. For further information about our roadmap please see our [website](https://origintrail.io/roadmap).   
 
 [Please see our main wiki page for more information](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/)
 
