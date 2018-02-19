@@ -12,7 +12,7 @@ sudo apt-get install -y python3-pip
 
 pip3 install python-arango
 pip3 install xmljson
-pip install python-dotenv
+pip3 install python-dotenv
 
 git clone https://github.com/OriginTrail/ot-node.git
 cd ot-node
