@@ -15,6 +15,7 @@ module.exports = {
         "WALLET_ID": process.env.WALLET_ID,
         "KADEMLIA_SEED_IP": process.env.KADEMLIA_SEED_IP,
         "KADEMLIA_SEED_PORT": process.env.KADEMLIA_SEED_PORT,
+        "IS_KADEMLIA_BEACON": process.env.IS_KADEMLIA_BEACON,
         "REQUEST_TIMEOUT": process.env.REQUEST_TIMEOUT,
         "REMOTE_ACCESS": [process.env.REMOTE_ACCESS],
         "blockchain":{

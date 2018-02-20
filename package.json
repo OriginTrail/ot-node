@@ -19,13 +19,20 @@
     "restify": "^6.3.4",
     "socket.io": "^2.0.4",
     "solidity-sha3": "^0.4.1",
-    "unirest": "^0.5.1"
+    "unirest": "^0.5.1",
+    "snyk": "^1.69.7"
   },
   "devDependencies": {
-    "eslint": "^4.17.0"
+    "eslint": "^4.17.0",
+    "mocha": "^5.0.1",
+    "nyc": "^11.4.1",
+    "should": "^13.2.1",
+    "supertest": "^3.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc mocha --recursive test",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -36,5 +43,6 @@
   "bugs": {
     "url": "https://github.com/OriginTrail/ot-yimishiji-pilot/issues"
   },
-  "homepage": "https://github.com/OriginTrail/ot-yimishiji-pilot#readme"
+  "homepage": "https://github.com/OriginTrail/ot-yimishiji-pilot#readme",
+  "snyk": true
 }

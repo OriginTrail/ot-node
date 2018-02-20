@@ -25,6 +25,9 @@ module.exports = function () {
 			console.log(batch_uid);
 			console.log(batch_uid_hash);
 			console.log(trail_hash);
+
+			console.log();
+
 			chainInterface.addFingerprint(batch_uid, batch_uid_hash, trail_hash);
 		},
 
