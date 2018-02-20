@@ -1,5 +1,5 @@
 // External modules
-var config = require('./config')
+var config = require('./config');
 var ipaddr = require('ipaddr.js');
 var sha3 = require('solidity-sha3').default;
 
