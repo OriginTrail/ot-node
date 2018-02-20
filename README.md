@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/OriginTrail/ot-node.svg?branch=master)](https://travis-ci.org/OriginTrail/ot-node)
+
 OriginTrail Node
 ================
 
