@@ -25,12 +25,11 @@ io.on('connection', function (socket) {
       })
     } else if (data.request == 'import-request') {
       var queryObject = data.queryObject
-      var selected_importer = queryObject.importer
       var clientRequest = data.clientRequest
 
       var input_file = queryObject.filepath
 
-      importer.importXML(input_file, selected_importer, function (data) {
+      importer.importXML(input_file, function (data) {
         socket.emit('event', {
           response: 'import-response',
           responseData: data,

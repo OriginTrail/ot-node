@@ -6,20 +6,6 @@ const quasar = require('kad-quasar')
 var utilities = require('./utilities')()
 var config = utilities.getConfig()
 
-const seed = ['0000000000000000000000000000000000000001', {
-  hostname: config.KADEMLIA_SEED_IP,
-  port: config.KADEMLIA_SEED_PORT
-}]
-
-const node = kad({
-  transport: new kad.HTTPTransport(),
-  storage: require('levelup')(leveldown('kad-storage')),
-  contact: {
-    hostname: config.NODE_IP,
-    port: config.KADEMLIA_PORT
-  }
-})
-
 // Response pool
 var ping_responses = []
 var waiting_for_responses = false
@@ -47,7 +33,21 @@ module.exports = function () {
       waiting_for_responses = false
     },
 
-    start: function () {
+    start: function (ip) {
+
+      const seed = ['0000000000000000000000000000000000000001', {
+        hostname: config.KADEMLIA_SEED_IP,
+        port: config.KADEMLIA_SEED_PORT
+      }]
+
+      const node = kad({
+        transport: new kad.HTTPTransport(),
+        storage: require('levelup')(leveldown('kad-storage')),
+        contact: {
+          hostname: ip,
+          port: config.KADEMLIA_PORT
+        }
+      })
       node.plugin(quasar)
 
       if (config.IS_KADEMLIA_BEACON == 'false') {

@@ -1,7 +1,10 @@
 // External modules
-var config = require('./config')
+var config = require('./config');
 var ipaddr = require('ipaddr.js');
 var sha3 = require('solidity-sha3').default;
+var net = require('net');
+var natpmp = require('nat-pmp');
+
 
 module.exports = function () {
 	var utilities = {
@@ -61,7 +64,7 @@ module.exports = function () {
 			}
 
 			return sortedObj;
-		}
+		},
 	};
 
 	return utilities;

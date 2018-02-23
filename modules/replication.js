@@ -7,7 +7,7 @@ var config = utilities.getConfig()
 module.exports = function () {
   var replication = {
 
-    replicate: function (input_file, importer) {
+    replicate: function (input_file) {
       kademlia.clearPingResponses()
       kademlia.waitForResponse()
 
@@ -29,7 +29,6 @@ module.exports = function () {
             .headers({
               'Content-Type': 'multipart/form-data'
             })
-            .field('importer', importer)
             .field('noreplicate', true)
             .attach('importfile', input_file)
             .end(function (response) {
