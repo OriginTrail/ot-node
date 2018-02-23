@@ -206,17 +206,21 @@ if(config.NODE_IP == '127.0.0.1')
 		}
 	});
 
+
+
 	client.externalIp(function(err, ip) {
+		config.NODE_IP = ip
 		console.log(ip)
-	  	kademlia.start(ip);
+	  	kademlia.start();
+
+	  	server.listen(parseInt(config.RPC_API_PORT), function () {
+			console.log('%s listening at %s', server.name, server.url);
+		});
 	});
-	server.listen(parseInt(config.RPC_API_PORT), function () {
-	console.log('%s listening at %s', server.name, server.url);
-});
 }
 else
 {
-	kademlia.start(config.NODE_IP)
+	kademlia.start()
 	server.listen(parseInt(config.RPC_API_PORT), function () {
 	console.log('%s listening at %s', server.name, server.url);
 });

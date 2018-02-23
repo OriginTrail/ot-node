@@ -9,6 +9,7 @@ var config = utilities.getConfig()
 // Response pool
 var ping_responses = []
 var waiting_for_responses = false
+var node = null
 
 module.exports = function () {
   var kademlia = {
@@ -33,18 +34,18 @@ module.exports = function () {
       waiting_for_responses = false
     },
 
-    start: function (ip) {
+    start: function () {
 
       const seed = ['0000000000000000000000000000000000000001', {
         hostname: config.KADEMLIA_SEED_IP,
         port: config.KADEMLIA_SEED_PORT
       }]
 
-      const node = kad({
+      node = kad({
         transport: new kad.HTTPTransport(),
         storage: require('levelup')(leveldown('kad-storage')),
         contact: {
-          hostname: ip,
+          hostname: config.NODE_IP,
           port: config.KADEMLIA_PORT
         }
       })

@@ -32,7 +32,7 @@ module.exports = function () {
             .field('noreplicate', true)
             .attach('importfile', input_file)
             .end(function (response) {
-              console.log(responses[i].sender_ip + ':' + responses[i].sender_port + ' : ' + JSON.stringify(response.body))
+              console.log('Replication response : ' + JSON.stringify(response.body))
             })
         }
       }, parseInt(config.REQUEST_TIMEOUT))
