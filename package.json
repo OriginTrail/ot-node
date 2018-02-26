@@ -2,7 +2,7 @@
   "name": "ot-node",
   "version": "0.1.0",
   "auto-updater":{
-    "repo":"/OriginTrail/ot-node",
+    "repo":"OriginTrail/ot-node",
     "branch":"master"
   },
   "description": "OriginTrail node",
