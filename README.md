@@ -18,7 +18,7 @@ Installation
 
 Detailed instructions for installation and configuration of OriginTrail Node are provided on our wiki.
 
- * [Installation Instructions](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Installation-Instructions)
+ * [Integration Instructions](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Integration-Instructions)
  * [Configuration](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Configuration)
  
 Contribution
