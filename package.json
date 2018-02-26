@@ -1,6 +1,10 @@
 {
   "name": "ot-node",
   "version": "0.1.0",
+  "auto-updater":{
+    "repo":"/OriginTrail/ot-node",
+    "branch":"master"
+  },
   "description": "OriginTrail node",
   "main": "gulpfile.js",
   "dependencies": {
@@ -8,6 +12,7 @@
     "aql": "0.0.3-alpha",
     "arangojs": "^6.1.0",
     "async": "^2.6.0",
+    "auto-updater": "^1.0.2",
     "dotenv": "^5.0.0",
     "eth-lightwallet": "^3.0.1",
     "ethereumjs-tx": "^1.3.3",
