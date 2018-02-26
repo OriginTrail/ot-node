@@ -4,3 +4,7 @@ node_modules
 config.json
 .env
 .nyc_output
+package-lock.json
+kad-storage/*
+!kad-storage/.gitkeep
+import-log.txt

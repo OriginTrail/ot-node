@@ -1,6 +1,8 @@
 OriginTrail Node
 ================
 
+[![Build Status](https://travis-ci.org/OriginTrail/ot-node.svg?branch=master)](https://travis-ci.org/OriginTrail/ot-node)
+
 Company Website: [origintrail.io](https://origintrail.io)
 
 __OriginTrail is building first Purpose-built Protocol for Supply Chains Based on Blockchain.__
@@ -16,7 +18,7 @@ Installation
 
 Detailed instructions for installation and configuration of OriginTrail Node are provided on our wiki.
 
- * [Installation Instructions](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Installation-Instructions)
+ * [Integration Instructions](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Integration-Instructions)
  * [Configuration](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Configuration)
  
 Contribution
