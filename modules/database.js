@@ -25,6 +25,7 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
+				console.log(err)
 			}
 		}
 	};

@@ -61,8 +61,6 @@ server.post('/import', function (req, res) {
 			message: 'Input file not provided!'
 		});
 	} else {
-		var selected_importer = 'default_importer';
-
 		var post_body = req.body;
 
 		if (post_body.importer != undefined) {
@@ -70,7 +68,7 @@ server.post('/import', function (req, res) {
 		}
 
 		var input_file = req.files.importfile.path;
-		importer.importXML(input_file, selected_importer, function (data) {
+		importer.importXML(input_file, function (data) {
 			res.send(data);
 		});
 	}
