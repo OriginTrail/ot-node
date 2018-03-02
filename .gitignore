@@ -8,3 +8,4 @@ package-lock.json
 kad-storage/*
 !kad-storage/.gitkeep
 import-log.txt
+OT-GIT-NODE-DEVELOP.zip
