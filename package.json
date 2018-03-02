@@ -1,13 +1,14 @@
 {
   "name": "ot-node",
   "version": "0.1.0",
-  "auto-updater":{
-    "repo":"OriginTrail/ot-node",
-    "branch":"master"
+  "auto-updater": {
+    "repo": "OriginTrail/ot-node",
+    "branch": "master"
   },
   "description": "OriginTrail node",
   "main": "gulpfile.js",
   "dependencies": {
+    "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^6.2.0",
     "aql": "0.0.3-alpha",
     "arangojs": "^6.1.0",
