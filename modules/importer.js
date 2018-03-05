@@ -37,7 +37,7 @@ module.exports = function () {
 							let bid_hash = utilities.sha3(bid);
 							let trail_hash = product.hashTrail(trail, bid);
 
-					//		blockchain.addFingerprint(bid, bid_hash, trail_hash);
+					//	blockchain.addFingerprint(bid, bid_hash, trail_hash);
 
 							next();
 						});

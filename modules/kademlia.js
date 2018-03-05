@@ -49,6 +49,7 @@ module.exports = function () {
           port: config.KADEMLIA_PORT
         }
       })
+
       node.plugin(quasar)
 
       if (config.IS_KADEMLIA_BEACON == 'false') {
