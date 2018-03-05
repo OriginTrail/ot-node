@@ -127,6 +127,9 @@ server.get('/api/blockchain/check', function (req, res) {
 // Remote data import route
 // ========================
 server.post('/import', function (req, res) {
+
+	console.log('Import request received')
+
 	var request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	var remote_access = utilities.getConfig().REMOTE_ACCESS;
 
