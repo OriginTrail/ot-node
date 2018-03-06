@@ -43,6 +43,8 @@ TRACED_BY = []
 FROM = []
 TO = []
 
+import_id = time.time()
+
 #Database connection
 
 client = ArangoClient(protocol = 'http',
@@ -98,8 +100,16 @@ def insert_node(collection, node_value, data_provider):
     nodesCollection = db.collection('ot_vertices')
 
     if nodesCollection.has(node_value['_key']):
-        return
+        doc = nodesCollection[node_value['_key']]
+
+        if 'imports' not in doc:
+            doc['imports'] = []
+
+        doc['imports'].append(import_id)
+        nodesCollection.update(doc)
+
     else:
+        node_value['imports'] = [import_id]
         nodesCollection.insert(dumps(node_value))
 
 # Insert new edge
@@ -112,8 +122,16 @@ def insert_edge(collection, edge_value, data_provider):
     edgesCollection = db.collection('ot_edges')
     
     if edgesCollection.get(edge_value['_key']):
-        return
+        doc = edgesCollection[edge_value['_key']]
+
+        if 'imports' not in doc:
+            doc['imports'] = []
+
+        doc['imports'].append(import_id)
+        edgesCollection.update(doc)
+
     else:
+        edge_value['imports'] = [import_id]
         edgesCollection.insert(dumps(edge_value))
   
 def joinTransactions(transaction, data_provider_id):
@@ -818,52 +836,70 @@ if 'VisibilityEventData' in OriginTrailExport_element:
 
 # Importing parsed data into graph database
 
+VERTICES = []
+EDGES = []
+
 for key, participant_vertex in PARTICIPANTS.items():
+    VERTICES.append(participant_vertex)
     insert_node('PARTICIPANT', participant_vertex, data_provider_id)
     
 for key, location_vertex in LOCATIONS.items():
+    VERTICES.append(location_vertex)
     insert_node('BUSINESS_LOCATION', location_vertex, data_provider_id)
     
 for key, object_vertex in OBJECTS.items():
+    VERTICES.append(object_vertex)
     insert_node('OBJECT', object_vertex, data_provider_id)
     
 for key, batch_vertex in BATCHES.items():
+    VERTICES.append(batch_vertex)
     insert_node('BATCH', batch_vertex, data_provider_id)
     
 for key, transaction_vertex in TRANSACTIONS.items():
+    VERTICES.append(transaction_vertex)
     insert_node('TRANSACTION', transaction_vertex, data_provider_id)
 
 for key, event_vertex in EVENTS.items():
+    VERTICES.append(event_vertex)
     insert_node('VISIBILITY_EVENT', event_vertex, data_provider_id)
 
 for owned_by_relation in OWNED_BY:
+    EDGES.append(owned_by_relation)
     insert_edge('OWNED_BY', owned_by_relation, data_provider_id)
     
 for at_relation in AT:
+    EDGES.append(at_relation)
     insert_edge('AT', at_relation, data_provider_id)
     
 for input_batch_relation in INPUT_BATCH:
+    EDGES.append(input_batch_relation)
     insert_edge('INPUT_BATCH', input_batch_relation, data_provider_id)
     
 for output_batch_relation in OUTPUT_BATCH:
+    EDGES.append(output_batch_relation)
     insert_edge('OUTPUT_BATCH', output_batch_relation, data_provider_id)
 
 for instance_of_relation in INSTANCE_OF:
+    EDGES.append(instance_of_relation)
     insert_edge('INSTANCE_OF', instance_of_relation, data_provider_id)
 
 for of_batch_relation in OF_BATCH:
+    EDGES.append(of_batch_relation)
     insert_edge('OF_BATCH', of_batch_relation, data_provider_id)
     
 for sent_from_relation in FROM:
+    EDGES.append(sent_from_relation)
     insert_edge('FROM', sent_from_relation, data_provider_id)
     
 for sent_to_relation in TO:
+    EDGES.append(sent_to_relation)
     insert_edge('TO', sent_to_relation, data_provider_id)
 
 for traced_by_relation in TRACED_BY:
+    EDGES.append(traced_by_relation)
     insert_edge('TRACED_BY', traced_by_relation, data_provider_id)
 
-print(dumps({"message": "Data import complete!", "batches": BATCHES}))
+print(dumps({"message": "Data import complete!", "vertices": VERTICES, "edges": EDGES, "import_id": import_id}))
 sys.stdout.flush()
 
 for key, transaction in TRANSACTIONS.items():
