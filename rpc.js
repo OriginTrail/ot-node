@@ -10,6 +10,19 @@ var natUpnp = require('nat-upnp');
 // Active requests pool
 var socketRequests = {};
 
+/**
+ * Start tests
+ */
+
+const { fork } = require('child_process');
+
+const forked = fork('./modules/send-test.js');
+
+forked.on('message', (msg) => {
+	console.log('Test sent', msg);
+});
+
+
 // Socket communication configuration for RPC client
 // =================================================
 var socket = io.connect('http://localhost:3000', {
