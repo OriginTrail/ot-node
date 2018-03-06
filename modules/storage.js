@@ -13,6 +13,7 @@ module.exports = function(){
 	  				utilities.executeCallback(callback, false);
 	  			}
 	  			else {
+	  				console.log('Stored key: ', key);
 		  			utilities.executeCallback(callback, true)
 	  			}
 	  		})
@@ -21,7 +22,7 @@ module.exports = function(){
 		getObject: function(key, callback) {
 			db.get(key, function (err, value) {
 			    if (err) {
-			    	// console.log('Storage: Key not found');
+			    	console.log('Storage: ' + err);
 			    	utilities.executeCallback(callback, []);	
 			    }
 			    else {
