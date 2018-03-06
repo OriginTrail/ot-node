@@ -1,6 +1,7 @@
 // External modules
 const utilities = require('./utilities')();
 const database = require('./database')();
+const encryption = require('./encryption')();
 
 const config = utilities.getConfig();
 const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
@@ -173,6 +174,26 @@ module.exports = function () {
 			} else {
 				return traversalArray;
 			}
+		},
+
+		encryptVertices: function(vertices) {
+
+			var keys = encryption.generateKeyPair();
+
+			for(i in vertices) {
+				vertices[i].data = encryption.encryptObject(vertices[i].data, keys.privateKey);
+			}
+
+			return {vertices: vertices, public_key: keys.publicKey};
+		},
+
+		decryptVertices: function(vertices, public_key) {
+
+			for(i in vertices) {
+				vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
+			}
+
+			return vertices;
 		}
 	};
 
