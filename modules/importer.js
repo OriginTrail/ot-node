@@ -4,9 +4,17 @@ const utilities = require('./utilities')();
 const blockchain = require('./blockchain')();
 const product = require('./product')();
 const async = require('async');
+const database = require('./database')()
 
 module.exports = function () {
 	let importer = {
+
+		importJSON: function (json_document, callback) {
+
+			graph = JSON.parse(json_document);
+			console.log(graph);
+
+		}
 
 		importXML: function (ot_xml_document, callback) {
 
