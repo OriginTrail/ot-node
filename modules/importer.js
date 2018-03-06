@@ -10,8 +10,8 @@ module.exports = function () {
 	let importer = {
 
 		importJSON: function (json_document, callback) {
-
-			graph = JSON.parse(json_document);
+			console.log(json_document.queryObject);
+			//graph = JSON.parse(json_document);
 			console.log(graph);
 
 		},

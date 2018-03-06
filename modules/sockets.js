@@ -70,12 +70,11 @@ io.on('connection', function (socket) {
 			importer.importJSON(queryObject, function (data) {
 				socket.emit('event', {
 					response: 'replication-response',
-					responseData: data,
+					responseData: data.request,
 					clientRequest: clientRequest
 				});
 			});
 		} else {
-			console.log(data);
 			socket.emit('event', {
 				response: 'Unsupported request'
 			});
