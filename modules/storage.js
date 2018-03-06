@@ -10,23 +10,30 @@ module.exports = function(){
 			db.put(key, JSON.stringify(obj), function (err) {
 	  			if(err) {
 	  				console.log('Storage error: ', err);		
-	  				utilities.execute_callback(callback, true);
+	  				utilities.executeCallback(callback, false);
+	  			}
+	  			else {
+	  				console.log('Stored key: ', key);
+		  			utilities.executeCallback(callback, true)
 	  			}
 	  		})
 		},
 
-		getObject: function(key) {
+		getObject: function(key, callback) {
 			db.get(key, function (err, value) {
 			    if (err) {
-			    	console.log('Storage: Key not found');
-			    	utilities.execute_callback(callback, true);	
+			    	console.log('Storage: ' + err);
+			    	utilities.executeCallback(callback, []);	
 			    }
+			    else {
+		  			utilities.executeCallback(callback, JSON.parse(value));
+	  			}
 
-			    utilities.execute_callback(callback, JSON.parse(value));
 			    
-			  })
+			    
 			})
 		}
+		
 	}
 
 	return storage;

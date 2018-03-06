@@ -134,10 +134,10 @@ server.get('/api/blockchain/check', function (req, res) {
 
 server.post('/api/replication', function (req, res) {
 
-	let queryObject = req.body.payload;
+	let queryObject = req.body;
 
 	var reqNum = utilities.getRandomInt(10000000000);
-
+	console.log(reqNum);
 	while (socketRequests[reqNum] != undefined) {
 		utilities.getRandomInt(10000000000);
 	}

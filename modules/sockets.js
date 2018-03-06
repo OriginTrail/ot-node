@@ -63,7 +63,7 @@ io.on('connection', function (socket) {
 				});
 			});
 		} else if (data.request == 'replication-request') {
-			let queryObject = data;
+			let queryObject = data.queryObject;
 			let clientRequest = data.clientRequest;
 
 

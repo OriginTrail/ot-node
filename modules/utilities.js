@@ -65,6 +65,10 @@ module.exports = function () {
 
 			return sortedObj;
 		},
+
+		getRandomIntRange: function (min, max) {
+			return min + Math.floor(Math.random() * Math.floor(max));
+		}
 	};
 
 	return utilities;
