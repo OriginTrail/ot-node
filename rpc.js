@@ -20,6 +20,7 @@ socket.on('connect', function () {
 });
 
 socket.on('event', function (data) {
+	console.log(data);
 	var reqNum = data.clientRequest;
 	socketRequests[reqNum].send(data.responseData);
 
@@ -122,13 +123,41 @@ server.get('/api/blockchain/check', function (req, res) {
 		clientRequest: reqNum
 	});
 });
+
+
+/*
+* Imports data for replication
+*
+* @param json payload
+* @return object status
+*/
+
+server.post('/api/replication', function (req, res) {
+
+	let queryObject = req.body.payload;
+
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'replication-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
 // ============================
 
 // Remote data import route
 // ========================
 server.post('/import', function (req, res) {
 
-	console.log('Import request received')
+	console.log('Import request received');
 
 	var request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	var remote_access = utilities.getConfig().REMOTE_ACCESS;
@@ -178,55 +207,52 @@ server.post('/import', function (req, res) {
 if(config.NODE_IP == '127.0.0.1')
 {
 	var client = natUpnp.createClient();
-
 	client.portMapping({
-  		public: config.RPC_API_PORT,
-  		private: config.RPC_API_PORT,
-  		ttl: 0,
+		public: config.RPC_API_PORT,
+		private: config.RPC_API_PORT,
+		ttl: 0,
 	}, function(err) {
 		if(err)
 		{
-	  		console.log(err)		
+			console.log(err);
 		}
 		else
 		{
-			console.log("uPnP port mapping enabled, port: " + config.RPC_API_PORT)
+			console.log('uPnP port mapping enabled, port: ' + config.RPC_API_PORT);
 		}
 	});
 
 	client.portMapping({
-  		public: config.KADEMLIA_PORT,
-  		private: config.KADEMLIA_PORT,
-  		ttl: 0,
+		public: config.KADEMLIA_PORT,
+		private: config.KADEMLIA_PORT,
+		ttl: 0,
 	}, function(err) {
 		if(err)
 		{
-	  		console.log(err)		
+			console.log(err);
 		}
 		else
 		{
-			console.log("uPnP port mapping enabled, port: " + config.KADEMLIA_PORT)
+			console.log('uPnP port mapping enabled, port: ' + config.KADEMLIA_PORT);
 		}
 	});
 
 
 
 	client.externalIp(function(err, ip) {
-		config.NODE_IP = ip
-		console.log(ip)
-	  	kademlia.start();
+		config.NODE_IP = ip;
+		console.log(ip);
+		kademlia.start();
 
-	  	server.listen(parseInt(config.RPC_API_PORT), function () {
+		server.listen(parseInt(config.RPC_API_PORT), function () {
 			console.log('%s listening at %s', server.name, server.url);
 		});
 	});
 }
 else
 {
-	kademlia.start()
+	kademlia.start();
 	server.listen(parseInt(config.RPC_API_PORT), function () {
-	console.log('%s listening at %s', server.name, server.url);
-});
+		console.log('%s listening at %s', server.name, server.url);
+	});
 }
-
-
