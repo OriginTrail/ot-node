@@ -75,10 +75,10 @@ io.on('connection', function (socket) {
 				});
 			});
 		} else {
-			console.log(data)
-			// socket.emit('event', {
-			// 	response: 'Unsupported request'
-			// });
+			console.log(data);
+			socket.emit('event', {
+				response: 'Unsupported request'
+			});
 		}
 	});
 });

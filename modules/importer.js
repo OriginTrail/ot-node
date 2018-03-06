@@ -14,7 +14,7 @@ module.exports = function () {
 			graph = JSON.parse(json_document);
 			console.log(graph);
 
-		}
+		},
 
 		importXML: function (ot_xml_document, callback) {
 
