@@ -1,20 +1,73 @@
 // External modules
 var PythonShell = require('python-shell');
 const utilities = require('./utilities')();
-const blockchain = require('./blockchain')();
+//const blockchain = require('./blockchain')();
 const product = require('./product')();
 const async = require('async');
-const database = require('./database')()
+const db = require('./database')();
 
 module.exports = function () {
 	let importer = {
 
-		importJSON: function (json_document, callback) {
+		importJSON: async function (json_document, import_id, callback) {
+			
+			var graph = JSON.parse(json_document);
+			
+			await db.createVertexCollection('ot_vertices', function(){});
+			await db.createEdgeCollection('ot_edges', function(){});
 
-			graph = JSON.parse(json_document);
-			console.log(graph);
+			vertices = graph.vertices;
+			edges = graph.edges;
 
-		}
+			async.each(vertices, function (vertex, next) {
+				db.addVertex('ot_vertices', vertex, function(import_status) {
+					if(import_status == false) {
+						db.updateDocumentImports('ot_vertices', vertex._key, import_id, function(update_status) {
+							if(update_status == false)
+							{
+								console.log('Import error!')
+								return;
+							}
+							else
+							{
+								next();
+							}
+						})
+					}
+					else {
+						next();
+					}
+				})
+			}, function(){
+				
+			});
+
+			async.each(edges, function (edge, next) {
+				db.addEdge('ot_edges', edge, function(import_status) {
+					if(import_status == false) {
+						db.updateDocumentImports('ot_edges', edge._key, import_id, function(update_status) {
+							if(update_status == false)
+							{
+								console.log('Import error!')
+								return;
+							}
+							else
+							{
+								next();
+							}
+						})
+					}
+					else {
+						next();
+					}
+				})
+			}, function(){
+				console.log('JSON import complete')
+			})
+
+			utilities.executeCallback(callback,true)
+
+		},
 
 		importXML: function (ot_xml_document, callback) {
 
