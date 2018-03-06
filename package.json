@@ -1,9 +1,9 @@
 {
   "name": "ot-node",
   "version": "0.1.0",
-  "auto-updater":{
-    "repo":"OriginTrail/ot-node",
-    "branch":"master"
+  "auto-updater": {
+    "repo": "OriginTrail/ot-node",
+    "branch": "master"
   },
   "description": "OriginTrail node",
   "main": "gulpfile.js",
@@ -24,6 +24,7 @@
     "levelup": "^2.0.2",
     "nat-pmp": "^1.0.0",
     "nat-upnp": "^1.1.1",
+    "node-rsa": "^0.4.2",
     "python-shell": "^0.5.0",
     "restify": "^6.3.4",
     "snyk": "^1.69.7",
