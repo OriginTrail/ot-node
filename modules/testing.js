@@ -46,11 +46,11 @@ module.exports = function () {
 
 			test_table.insertTests(tests, function(response) {
 				utilities.executeCallback(callback, response);
-			})
+			});
 			
 		}
 	};
 
 	return testing;
 
-}
+};

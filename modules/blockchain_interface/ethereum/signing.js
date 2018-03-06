@@ -10,7 +10,7 @@ var config = utilities.getConfig();
 var wallet_address = config.blockchain.settings.ethereum.wallet_address;
 var private_key = config.blockchain.settings.ethereum.private_key;
 
-var web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.settings.ethereum.rpc_node+":"+config.blockchain.settings.ethereum.node_port));
+var web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.settings.ethereum.rpc_node+':'+config.blockchain.settings.ethereum.node_port));
 
 // OT contract data
 var contract_address = config.blockchain.settings.ethereum.contract_address;
@@ -63,16 +63,16 @@ module.exports = function() {
 		            console.log('Transaction: ', result);
 		        }
 		    });
-		}      
+	}
 
 	var signing = {
 
 		signAndSend: async function(batch_id, batch_id_hash, graph_hash) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
-			console.log(nonce)
+			console.log(nonce);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -82,9 +82,9 @@ module.exports = function() {
 			    gasLimit: web3.util.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.util.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: contract_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
 			sendRaw(rawTx);
@@ -93,7 +93,7 @@ module.exports = function() {
 		signAndAllow: async function(amount, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -103,9 +103,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: token_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
 			sendRaw(rawTx, callback);
@@ -114,7 +114,7 @@ module.exports = function() {
 		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -124,9 +124,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: escrow_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
@@ -134,34 +134,34 @@ module.exports = function() {
 
 		signCheque: function(receiver_wallet, data_id)
 		{
-			message = wallet_address + '|' + receiver_wallet + '|' + data_id
-			signed = web3.eth.accounts.sign(message, private_key)
+			message = wallet_address + '|' + receiver_wallet + '|' + data_id;
+			signed = web3.eth.accounts.sign(message, private_key);
 
-			return signed
+			return signed;
 		},
 
 		verifyMessageSignature: function(message, signer_address)
 		{
 			var recovered_address = web3.eth.accounts.recover(message, message.v, message.r, message.s);
 
-			var message_data = message.message
-			var message_hash = message.messageHash
+			var message_data = message.message;
+			var message_hash = message.messageHash;
 
-			var hashed_message = utilities.sha3(`\x19Ethereum Signed Message:\n${message_data.length}${message_data.data}`)
+			var hashed_message = utilities.sha3(`\x19Ethereum Signed Message:\n${message_data.length}${message_data.data}`);
 
-			return recovered_address == signer_address && message_hash == hashed_message
+			return recovered_address == signer_address && message_hash == hashed_message;
 		},
 
 		parseMessage: function(message_data) {
-			var message_elements = message_data.split('|')
+			var message_elements = message_data.split('|');
 
 			var parsed_message = {
 				sender: message_elements[0],
 				receiver: message_elements[1],
 				amount: message_elements[2]
-			}
+			};
 
-			return parsed_message
+			return parsed_message;
 		},
 
 		isValidMessage: function(sender_wallet, receiver_wallet, message) {
@@ -173,7 +173,7 @@ module.exports = function() {
 				return false;
 			}
 
-			var parsed_message = parseMessage(message.message)
+			var parsed_message = parseMessage(message.message);
 
 			if(parsed_message.sender != sender_wallet || parsed_message.receiver != receiver_wallet)
 			{
@@ -184,8 +184,8 @@ module.exports = function() {
 		}
 
 
-	}
+	};
 
 	return signing;
-}
+};
 

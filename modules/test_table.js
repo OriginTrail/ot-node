@@ -21,14 +21,14 @@ module.exports = function () {
 				response.splice(i+1, 0, test);
 				//response.push(test);
 
-			//	console.log(response);
+				//	console.log(response);
 
 				storage.storeObject('Tests', response, function(status){
 					console.log(response);
 					utilities.executeCallback(callback, true);
-				})
+				});
 
-			})
+			});
 		},
 
 		insertTests: function(tests, callback)
@@ -46,60 +46,60 @@ module.exports = function () {
 				
 				storage.storeObject('Tests', response, function(status){
 					utilities.executeCallback(callback, true);
-				})
+				});
 
-			})
+			});
 		},
 
 		popNextTest: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, undefined)
+					utilities.executeCallback(callback, undefined);
 				} else {
 					let test = response.shift();
 
 					storage.storeObject('Tests', response, function(status) {
 						if(status == false) {
-							console.log('Storing tests failes!')
+							console.log('Storing tests failes!');
 							utilities.executeCallback(callback, {});							
 						} else {
 							utilities.executeCallback(callback, test);
 						}
-					}) 
+					});
 				}
-			})
+			});
 		},
 
 		nextTest: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, undefined)
+					utilities.executeCallback(callback, undefined);
 				} else {
 					let test = response[0];
 
 					storage.storeObject('Tests', response, function(status) {
 						if(status == false) {
-							console.log('Storing tests failes!')
+							console.log('Storing tests failes!');
 							utilities.executeCallback(callback, {});							
 						} else {
 							utilities.executeCallback(callback, test);
 						}
-					}) 
+					});
 				}
-			})
+			});
 		},
 
 		getTests: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, [])
+					utilities.executeCallback(callback, []);
 				} else {
 					utilities.executeCallback(callback, response);
 				}
 			});
 		}
-	}
+	};
 
 	return test_table;
 
-}
+};
