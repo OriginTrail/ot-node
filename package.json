@@ -43,7 +43,6 @@
   },
   "scripts": {
     "test": "nyc mocha --recursive test",
-    "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect"
   },
   "repository": {
