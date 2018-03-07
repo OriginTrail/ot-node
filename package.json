@@ -42,9 +42,7 @@
     "supertest": "^3.0.0"
   },
   "scripts": {
-    "test": "nyc mocha --recursive test",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "test": "nyc mocha --recursive test"
   },
   "repository": {
     "type": "git",
