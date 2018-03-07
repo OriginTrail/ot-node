@@ -39,7 +39,7 @@ module.exports = function() {
     createEscrow: function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
       signing.createEscrow(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback)
       return true;
-    }
+    },
 
     getFingerprintByBatchHash: function(address, batch_id_hash) {
         return contract_instance.getFingerprintByBatchHash(address, batch_id_hash, {

@@ -65,7 +65,8 @@ module.exports = function () {
 						} else {
 							utilities.executeCallback(callback, test);
 						}
-					});
+
+					}); 
 				}
 			});
 		},
@@ -84,7 +85,8 @@ module.exports = function () {
 						} else {
 							utilities.executeCallback(callback, test);
 						}
-					});
+            
+					}); 
 				}
 			});
 		},
