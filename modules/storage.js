@@ -1,6 +1,6 @@
-var levelup = require('levelup')
-var leveldown = require('leveldown')
-var db = levelup(leveldown('./system'))
+var levelup = require('levelup');
+var leveldown = require('leveldown');
+var db = levelup(leveldown('./system'));
 const utilities = require('./utilities')();
 
 module.exports = function(){
@@ -14,9 +14,9 @@ module.exports = function(){
 	  			}
 	  			else {
 	  				console.log('Stored key: ', key);
-		  			utilities.executeCallback(callback, true)
-	  			}
-	  		})
+					utilities.executeCallback(callback, true);
+				}
+			});
 		},
 
 		getObject: function(key, callback) {
@@ -31,10 +31,10 @@ module.exports = function(){
 
 			    
 			    
-			})
+			});
 		}
 		
-	}
+	};
 
 	return storage;
-}
+};
