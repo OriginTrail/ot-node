@@ -7,5 +7,7 @@ config.json
 package-lock.json
 kad-storage/*
 !kad-storage/.gitkeep
+system/*
+!system/.gitkeep
 import-log.txt
 OT-GIT-NODE-DEVELOP.zip

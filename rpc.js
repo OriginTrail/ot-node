@@ -10,6 +10,19 @@ var natUpnp = require('nat-upnp');
 // Active requests pool
 var socketRequests = {};
 
+/**
+ * Start tests
+ */
+
+const { fork } = require('child_process');
+
+const forked = fork('./modules/send-test.js');
+
+forked.on('message', (msg) => {
+	console.log('Test sent', msg);
+});
+
+
 // Socket communication configuration for RPC client
 // =================================================
 var socket = io.connect('http://localhost:3000', {
@@ -66,7 +79,6 @@ server.get('/api/trail/batches', function (req, res) {
 	while (socketRequests[reqNum] != undefined) {
 		utilities.getRandomInt(10000000000);
 	}
-
 	socketRequests[reqNum] = res;
 	socket.emit('event', {
 		request: 'trail-request',
@@ -127,17 +139,18 @@ server.get('/api/blockchain/check', function (req, res) {
 
 /*
 * Imports data for replication
+* Method: post
 *
 * @param json payload
-* @return object status
 */
 
 server.post('/api/replication', function (req, res) {
 
 	let queryObject = req.body;
 
+	//TODO: extract this as it repeats
 	var reqNum = utilities.getRandomInt(10000000000);
-	console.log(reqNum);
+
 	while (socketRequests[reqNum] != undefined) {
 		utilities.getRandomInt(10000000000);
 	}
@@ -146,6 +159,58 @@ server.post('/api/replication', function (req, res) {
 
 	socket.emit('event', {
 		request: 'replication-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
+/**
+ * Receive test request
+ * Method: post
+ *
+ * @param json test
+ */
+
+server.post('/api/testing', function (req, res) {
+
+	let queryObject = req.body;
+
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'testing-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
+/**
+ * Receive receipt
+ * Method: post
+ *
+ * @param json receipt
+ */
+
+server.post('/api/receipt', function (req, res) {
+
+	let queryObject = req.body;
+
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'receipt-request',
 		queryObject: queryObject,
 		clientRequest: reqNum
 	});
