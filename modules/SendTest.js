@@ -1,5 +1,5 @@
 const testTable = require('./test_table')();
-const https = require('https');
+const axios = require('axios');
 
 class SendTests {
 
@@ -13,17 +13,17 @@ class SendTests {
 		}, 1000);
 	}
 
-    /**
-     * End the test sequence
-     *
-     */
-	endTests(test) {
-	    clearInterval(test);
-    }
 	/**
- 	* Check if there is a new test to be sent
- 	*
- 	*/
+	 * End the test sequence
+	 *
+	 */
+	endTests(test) {
+		clearInterval(test);
+	}
+	/**
+	* Check if there is a new test to be sent
+	*
+	*/
 	checkTests() {
 		testTable.getTests((test) => {
 			if(test.length === 0) return;
@@ -57,32 +57,22 @@ class SendTests {
 
 
 		const options = {
-			hostname: ip,
-			port: port,
-			path: '/api/testing',
 			method: 'POST',
+			url: 'http://' + ip + ':' + port + '/api/testing',
 			headers: {
 				'Content-Type': 'application/json',
 				'Content-Length': question.length
-			}
+			},
+			data: question
 		};
 
-		https.post( options, (resp) => {
-			let data = '';
-
-			// A chunk of data has been recieved.
-			resp.on('data', (chunk) => {
-				data += chunk;
+		axios(options)
+			.then(res => {
+				console.log(res);
+			}).catch(error => {
+				// console.log('error');
+				console.log(error);
 			});
-
-			// The whole response has been received. Print out the result.
-			resp.on('end', () => {
-				return data;
-			});
-
-		}).on('error', (err) => {
-			console.log('Error: ' + err.message);
-		});
 
 	}
 

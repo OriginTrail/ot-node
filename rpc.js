@@ -16,7 +16,7 @@ var socketRequests = {};
 
 const { fork } = require('child_process');
 
-const forked = fork('./modules/send-test.js');
+const forked = fork('./modules/SendTest.js');
 
 forked.on('message', (msg) => {
 	console.log('Test sent', msg);
@@ -33,7 +33,6 @@ socket.on('connect', function () {
 });
 
 socket.on('event', function (data) {
-	console.log(data);
 	var reqNum = data.clientRequest;
 	socketRequests[reqNum].send(data.responseData);
 
@@ -145,7 +144,6 @@ server.get('/api/blockchain/check', function (req, res) {
 */
 
 server.post('/api/replication', function (req, res) {
-
 	let queryObject = req.body;
 
 	//TODO: extract this as it repeats

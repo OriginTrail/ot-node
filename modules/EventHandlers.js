@@ -10,7 +10,7 @@ class EventHandlers {
 		this.event = data.request.replace(/-([a-z])/g, function (g) { return g[1].toUpperCase(); });
 
 		//get the first part of some-response => some
-		this.eventPrefix = data.request.split(/_(.+)/)[0];
+		this.eventPrefix = data.request.split(/-(.+)/)[0];
 
 		this.queryObject = data.queryObject;
 		this.clientRequest = data.clientRequest;
@@ -59,8 +59,11 @@ class EventHandlers {
 	}
 
 	replicationRequest(socket) {
-		importer.importJSON(this.queryObject, function (response) {
-			this.emitResponse(socket, response);
+		importer.importJSON(this.queryObject,  (response) =>  {
+			this.emitResponse(socket, {
+				message: 'success',
+				data: []
+			});
 		});
 	}
 

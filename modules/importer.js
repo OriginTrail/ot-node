@@ -11,7 +11,6 @@ module.exports = function () {
 
 		importJSON: async function (json_document, callback) {
 			var graph = json_document;
-			
 			await db.createVertexCollection('ot_vertices', function(){});
 			await db.createEdgeCollection('ot_edges', function(){});
 

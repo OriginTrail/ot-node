@@ -25,25 +25,25 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err)
+				console.log(err);
 			}
 		},
 		createVertexCollection: async function(collection_name, callback) {
 			var collection = db.collection(collection_name);
 			collection.create().then(
 			  () => {
-			  		console.log('Collection created')
-			  		utilities.executeCallback(callback, true)
-					},
+			  		console.log('Collection created');
+			  		utilities.executeCallback(callback, true);
+				},
 			  err => {
 			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists')
-			  		utilities.executeCallback(callback, true)
+			  		console.log('collection already exists');
+			  		utilities.executeCallback(callback, true);
 			  	}
 			  	else
 			  		{
-			  		console.log(JSON.stringify(err))
-				  	utilities.executeCallback(callback, false)
+			  		console.log(err);
+				  	utilities.executeCallback(callback, false);
 				  	}
 			  	}
 			);	
@@ -52,18 +52,18 @@ module.exports = function () {
 			var collection = db.edgeCollection(collection_name);
 			collection.create().then(
 			  () => {
-			  		console.log('Collection created')
-			  		utilities.executeCallback(callback, true)
-					},
+			  		console.log('Collection created');
+			  		utilities.executeCallback(callback, true);
+				},
 			  err => {
 			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists')
-			  		utilities.executeCallback(callback, true)
+			  		console.log('collection already exists');
+			  		utilities.executeCallback(callback, true);
 			  	}
 			  	else
 			  		{
-			  		console.log(err)
-				  	utilities.executeCallback(callback, false)
+			  		console.log(err);
+				  	utilities.executeCallback(callback, false);
 				  	}
 			  	}
 			);
@@ -75,7 +75,7 @@ module.exports = function () {
 			  meta => utilities.executeCallback(callback, true),
 			  err => {
 			  	//console.error('Failed to save document:', err)
-			  	utilities.executeCallback(callback, false)
+			  	utilities.executeCallback(callback, false);
 			  }
 			);
 		},
@@ -86,37 +86,43 @@ module.exports = function () {
 			  meta => utilities.executeCallback(callback, true),
 			  err => {
 			  	//console.error('Failed to save document:', err)
-			  	utilities.executeCallback(callback, false)
+			  	utilities.executeCallback(callback, false);
 			  }
 			);
 		},
 
 		updateDocumentImports: function(collection_name, document_key, import_number, callback) {
-			var collection = db.collection(collection_name)
+			var collection = db.collection(collection_name);
 			collection.document(document_key).then(
 			  doc => {
 
-				var imports = doc.imports
+					var imports = doc.imports;
 			  	
-				if(imports == undefined)
-			  		imports = []
+					if(imports == undefined)
+			  		imports = [];
 
 			  	if(imports.indexOf(import_number) == -1)
 			  	{
-					imports.push(import_number);
-					collection.update(document_key, {imports: imports}).then(
+						imports.push(import_number);
+						collection.update(document_key, {imports: imports}).then(
 					  meta => utilities.executeCallback(callback, true),
-					  err => utilities.executeCallback(callback, false)
-					);  		
+					  err => {
+					  	console.log(err);
+					  	utilities.executeCallback(callback, false);
+							}
+						);  		
 			  	}
 			  },
-			  err => utilities.executeCallback(callback, false)
+			  err => {
+			  	console.log(err)
+			  	utilities.executeCallback(callback, false)
+              }
 			);			
 		},
 		
 		getVerticesByImportId: async function(import_id, callback){
 
-			queryString = `FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v`
+			queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
 			params = {importId: import_id};
 
 			try {
@@ -124,13 +130,13 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err)
+				console.log(err);
 			}
 		},
 
 		getEdgesByImportId: async function(import_id, callback){
 
-			queryString = `FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v`
+			queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
 			params = {importId: import_id};
 
 			try {
@@ -138,7 +144,7 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err)
+				console.log(err);
 			}
 		}
 	};
