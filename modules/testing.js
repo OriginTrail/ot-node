@@ -47,6 +47,10 @@ module.exports = function () {
 				utilities.executeCallback(callback, response);
 			});
 			
+		},
+
+		checkTest() {
+
 		}
 	};
 
