@@ -1,8 +1,10 @@
 const https = require('https');
+var graph = require('./modules/graph')();
 var utilities = require('./utilities')();
 var config = utilities.getConfig();
 
 class DataReplication {
+
 	/**
 	* Sends data to DH for replication
 	*
@@ -10,9 +12,12 @@ class DataReplication {
 	* @return object response
 	*/
 
-	sendPayload(payload) {
-		payload = JSON.stringify({
-			payload: payload
+	sendPayload(vertices) {
+		let encryptedVerticas = graph.encryptVertices(vertices);
+
+		const payload = JSON.stringify({
+			payload: encryptedVerticas.vertices,
+			publicKey: encryptedVerticas.public_key,
 		});
 
 		const options = {
@@ -36,7 +41,12 @@ class DataReplication {
 
 			// The whole response has been received. Print out the result.
 			resp.on('end', () => {
-				console.log(JSON.parse(data).explanation);
+				return {
+					status: 'OK',
+					code: 200,
+					messages: [],
+					result: JSON.parse(data)
+				};
 			});
 
 		}).on('error', (err) => {
@@ -45,4 +55,4 @@ class DataReplication {
 	}
 }
 
-module.exports = new DataReplication;
+module.exports = DataReplication;
