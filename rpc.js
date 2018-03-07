@@ -14,13 +14,13 @@ var socketRequests = {};
  * Start tests
  */
 
-const { fork } = require('child_process');
+// const { fork } = require('child_process');
+//
+// const forked = fork('./modules/SendTest.js');
 
-const forked = fork('./modules/SendTest.js');
-
-forked.on('message', (msg) => {
-	console.log('Test sent', msg);
-});
+// forked.on('message', (msg) => {
+// 	console.log('Test sent', msg);
+// });
 
 
 // Socket communication configuration for RPC client

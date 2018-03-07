@@ -12,7 +12,7 @@ class DataReplication {
 	* @return object response
 	*/
 
-	sendPayload(data) {
+	async sendPayload(data) {
 
 		let encryptedVertices = graph.encryptVertices(data.vertices);
 
@@ -31,14 +31,12 @@ class DataReplication {
 			},
 			data: payload
 		};
-
-		axios(options)
-			.then(res => {
-				console.log(res);
-			}).catch(error => {
-				// console.log('error');
-				console.log(error);
-			});
+		try {
+			let result = await axios(options);
+			return result.data;
+		} catch(e) {
+			console.log(e);
+		}
 
 	}
 

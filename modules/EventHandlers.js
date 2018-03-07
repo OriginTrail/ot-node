@@ -61,7 +61,8 @@ class EventHandlers {
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  (response) =>  {
 			this.emitResponse(socket, {
-				message: 'success',
+				status: 'success',
+				code: 200,
 				data: []
 			});
 		});
