@@ -31,7 +31,8 @@
     "socket.io": "^2.0.4",
     "solidity-sha3": "^0.4.1",
     "tcp-port-used": "^0.1.2",
-    "unirest": "^0.5.1"
+    "unirest": "^0.5.1",
+    "web3": "^1.0.0-beta.30"
   },
   "devDependencies": {
     "eslint": "^4.17.0",
