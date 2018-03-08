@@ -4,6 +4,10 @@ var fs = require('fs');
 var util = require('ethereumjs-util');
 var tx = require('ethereumjs-tx');
 var lightwallet = require('eth-lightwallet');
+var Account = require("eth-lib/lib/account");
+var Hash = require("eth-lib/lib/hash");
+var abi = require('ethereumjs-abi')
+
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
 
