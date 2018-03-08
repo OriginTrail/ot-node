@@ -43,7 +43,7 @@ TRACED_BY = []
 FROM = []
 TO = []
 
-import_id = time.time()
+import_id = int(time.time())
 
 #Database connection
 

@@ -67,7 +67,7 @@ module.exports = function () {
 		},
 
 		getRandomIntRange: function (min, max) {
-			return min + Math.floor(Math.random() * Math.floor(max));
+		  return min + Math.floor(Math.random() * Math.floor(max));
 		}
 	};
 
