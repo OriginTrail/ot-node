@@ -212,4 +212,4 @@
 		"stateMutability": "nonpayable",
 		"type": "constructor"
 	}
-]
+];

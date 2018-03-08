@@ -17,45 +17,45 @@ module.exports = function(){
 
 				storage.storeObject('Holding', response, function(status){
 					utilities.executeCallback(callback, true);
-				})
+				});
 
-			})
+			});
 		},
 
 		getHoldingData: function(dh_wallet, data_id, callback) {
 			storage.getObject('Holding', function(response) {
 
-					if(response.length == 0 || response[dh_wallet][data_id] == undefined) {
-						utilities.executeCallback(callback, {});
-						return;
-					}
-					else {
-						utilities.executeCallback(callback, response[dh_wallet][data_id]);
-					}
+				if(response.length == 0 || response[dh_wallet][data_id] == undefined) {
+					utilities.executeCallback(callback, {});
+					return;
+				}
+				else {
+					utilities.executeCallback(callback, response[dh_wallet][data_id]);
+				}
 
-			})
+			});
 		},	
 
 		increaseConfirmationVerificationNumber: function(dh_wallet, data_id, callback) {
 			storage.getObject('Holding', function(response) {
 
-					if(response.length == 0 || response[dh_wallet][data_id] == undefined)
-					{
-						utilities.executeCallback(callback, false);
-						return;
-					}
+				if(response.length == 0 || response[dh_wallet][data_id] == undefined)
+				{
+					utilities.executeCallback(callback, false);
+					return;
+				}
 					
-					console.log(response[dh_wallet][data_id]);
-					response[dh_wallet][data_id].confirmation_number += 1
+				console.log(response[dh_wallet][data_id]);
+				response[dh_wallet][data_id].confirmation_number += 1;
 
-					storage.storeObject('Holding', response, function(status){
-						utilities.executeCallback(callback, true);
-					})
+				storage.storeObject('Holding', response, function(status){
+					utilities.executeCallback(callback, true);
+				});
 
-				})
+			});
 		}
 	};
 
-	return holding
+	return holding;
 
-}
+};

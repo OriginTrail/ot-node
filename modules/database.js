@@ -114,9 +114,9 @@ module.exports = function () {
 			  	}
 			  },
 			  err => {
-			  	console.log(err)
-			  	utilities.executeCallback(callback, false)
-              }
+					console.log(err);
+					utilities.executeCallback(callback, false);
+				}
 			);			
 		},
 		
