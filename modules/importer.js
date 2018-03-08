@@ -39,7 +39,7 @@ module.exports = function () {
 					}
 				});
 			}, function(){
-				
+
 			});
 
 			async.each(edges, function (edge, next) {
@@ -108,36 +108,35 @@ module.exports = function () {
 					// 	});
 					// });
 
-					import_id = result.import_id;
+					let import_id = result.import_id;
 
 					var vertices = [{_key: '1', identifiers: {a:1}, data: [1,2,3,4,5]},{_key: '2', identifiers: {a:2}, data:{a:'a',b:'b',c:'c'}},{_key: '3', identifiers: {a:3}, data:{a:['a','abc','def']}}];
 
 					var edges = [{
-							"_key": "12",
-							"_from": "ot_vertices/1",
-							"_to": "ot_vertices/2",
-							"imports": []
-						}, {
-							"_key": "23",
-							"_from": "ot_vertices/2",
-							"_to": "ot_vertices/3",
-							"imports": []
-						}, {
-							"_key": "31",
-							"imports": [],
-							"_from": "ot_vertices/3",
-							"_to": "ot_vertices/1"
-						}];
+						'_key': '12',
+						'_from': 'ot_vertices/1',
+						'_to': 'ot_vertices/2',
+						'imports': []
+					}, {
+						'_key': '23',
+						'_from': 'ot_vertices/2',
+						'_to': 'ot_vertices/3',
+						'imports': []
+					}, {
+						'_key': '31',
+						'imports': [],
+						'_from': 'ot_vertices/3',
+						'_to': 'ot_vertices/1'
+					}];
 
-					let data;
+					const data = {};
 					data.vertices = vertices;
 					data.edges = edges;
 					data.import_id = import_id;
 
-					let response = await replication.sendPayload(data);
-
-					console.log(response);
-
+					replication.sendPayload(data).then(res => {
+						console.log(res);
+					});
 
 				}
 			});
