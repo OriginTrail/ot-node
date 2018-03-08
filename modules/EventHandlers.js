@@ -1,7 +1,9 @@
 const product = require('./product')();
 const importer = require('./importer')();
+const holding = require('./holding')();
 const blockchain = require('./blockchain')();
 const utilities = require('./utilities')();
+const config = utilities.getConfig();
 
 class EventHandlers {
 
@@ -59,13 +61,15 @@ class EventHandlers {
 	}
 
 	replicationRequest(socket) {
-		importer.importJSON(this.queryObject,  (response) =>  {
-			//store public key somewhere
-			this.emitResponse(socket, {
-				status: 'success',
-				code: 200,
-				data: []
+		importer.importJSON(this.queryObject,  () =>  {
+			holding.addHoldingData(config.WALLET_ID, this.queryObject.import_id, this.queryObject.public_key, () => {
+				this.emitResponse(socket, {
+					status: 'success',
+					code: 200,
+					data: []
+				});
 			});
+
 		});
 	}
 
