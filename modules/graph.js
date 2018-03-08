@@ -8,7 +8,7 @@ const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
 
 module.exports = function () {
 	let graph = {
-		getVertices: function (queryObject, callback) {
+		getVertices: function (queryObject, callback) { 
 			let queryString = 'FOR v IN ot_vertices ';
 			let params = {};
 			if (utilities.isEmptyObject(queryObject) === false) {

@@ -9,8 +9,6 @@ module.exports = function () {
 		{
 			storage.getObject('Tests', function(response) {
 
-				console.log('vucem ', response);
-
 				let n = response.length;
 				let i = n - 1;
 
@@ -19,9 +17,6 @@ module.exports = function () {
 				}
 
 				response.splice(i+1, 0, test);
-				//response.push(test);
-
-				//	console.log(response);
 
 				storage.storeObject('Tests', response, function(status){
 					console.log(response);
