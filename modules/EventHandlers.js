@@ -62,7 +62,7 @@ class EventHandlers {
 
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  () =>  {
-			holding.addHoldingData(config.WALLET_ID, this.queryObject.import_id, this.queryObject.public_key, () => {
+			holding.addHoldingData(config.blockchain.settings.ethereum.wallet_address, this.queryObject.import_id, this.queryObject.public_key, () => {
 				this.emitResponse(socket, {
 					status: 'success',
 					code: 200,
