@@ -1,5 +1,6 @@
 'use strict';
-import {describe, it} from 'mocha';
+const describe = require('mocha').describe;
+const it = require('mocha').it;
 // eslint-disable-next-line no-unused-vars
 const should = require('should');
 // eslint-disable-next-line no-unused-vars
