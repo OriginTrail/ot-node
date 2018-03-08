@@ -36,7 +36,7 @@ class SendTests {
 				this.verifyResult(test, result.answer);
 
 			} else {
-				console.log(test);
+				//console.log(test);
 			}
 
 		});
