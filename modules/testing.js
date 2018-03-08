@@ -14,16 +14,15 @@ module.exports = function () {
 
 				let new_test = {};
 
-				let j = utilities.getRandomInt(0,encrypted_vertices.length);
-
+				let j = utilities.getRandomIntRange(0,encrypted_vertices.length);
 				let test_vertex = encrypted_vertices[j];
 				let test_vertex_data = test_vertex.data;
 
 				let start_index = 0;
 				let end_index = 0;
 
-				start_index = utilities.getRandomInt(0,test_vertex_data.length);
-				end_index = utilities.getRandomInt(start_index, test_vertex_data.length);
+				start_index = utilities.getRandomIntRange(0,test_vertex_data.length);
+				end_index = utilities.getRandomIntRange(start_index, test_vertex_data.length);
 
 				let question = {vertex_key: test_vertex._key, start_index: start_index, end_index: end_index};
 				let answer = test_vertex_data.substring(start_index, end_index);
@@ -38,7 +37,7 @@ module.exports = function () {
 				{	
 					new_test.test_time = end_time;
 				} else {
-					new_test.test_time = utilities.getRandomInt(start_time, end_time - 1);
+					new_test.test_time = utilities.getRandomIntRange(start_time, end_time - 1);
 				}
 
 				tests.push(new_test);
@@ -46,8 +45,12 @@ module.exports = function () {
 
 			test_table.insertTests(tests, function(response) {
 				utilities.executeCallback(callback, response);
-			})
+			});
 			
+		},
+
+		checkTest() {
+
 		}
 	};
 

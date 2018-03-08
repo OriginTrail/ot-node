@@ -9,15 +9,15 @@ const db = require('./database')();
 module.exports = function () {
 	let importer = {
 
-		importJSON: async function (json_document, import_id, callback) {
-			
-			var graph = JSON.parse(json_document);
+		importJSON: async function (json_document, callback) {
+			var graph = json_document;
 			
 			await db.createVertexCollection('ot_vertices', function(){});
 			await db.createEdgeCollection('ot_edges', function(){});
 
-			vertices = graph.vertices;
-			edges = graph.edges;
+			let vertices = graph.vertices;
+			let edges = graph.edges;
+			let import_id = graph.import_id;
 
 			async.each(vertices, function (vertex, next) {
 				db.addVertex('ot_vertices', vertex, function(import_status) {
@@ -25,19 +25,19 @@ module.exports = function () {
 						db.updateDocumentImports('ot_vertices', vertex._key, import_id, function(update_status) {
 							if(update_status == false)
 							{
-								console.log('Import error!')
+								console.log('Import error!');
 								return;
 							}
 							else
 							{
 								next();
 							}
-						})
+						});
 					}
 					else {
 						next();
 					}
-				})
+				});
 			}, function(){
 				
 			});
@@ -48,34 +48,33 @@ module.exports = function () {
 						db.updateDocumentImports('ot_edges', edge._key, import_id, function(update_status) {
 							if(update_status == false)
 							{
-								console.log('Import error!')
+								console.log('Import error!');
 								return;
 							}
 							else
 							{
 								next();
 							}
-						})
+						});
 					}
 					else {
 						next();
 					}
-				})
+				});
 			}, function(){
-				console.log('JSON import complete')
-			})
+				console.log('JSON import complete');
+			});
 
-			utilities.executeCallback(callback,true)
-
+			utilities.executeCallback(callback,true);
 		},
 
 		importXML: function (ot_xml_document, callback) {
 
 			var options = {
-			  mode: 'text',
-			  pythonPath: 'python3',
-			  scriptPath: 'importers/',
-			  args: [ot_xml_document]
+				mode: 'text',
+				pythonPath: 'python3',
+				scriptPath: 'importers/',
+				args: [ot_xml_document]
 			};
 
 			PythonShell.run('default_importer.py', options, function(stderr, stdout){
@@ -86,7 +85,7 @@ module.exports = function () {
 						message: 'Import failure',
 						data: []
 					});
-				return;
+					return;
 				} else {
 					let result = JSON.parse(stdout);
 					let batch_uids_array = Object.keys(result.batches);
@@ -98,7 +97,7 @@ module.exports = function () {
 							let bid_hash = utilities.sha3(bid);
 							let trail_hash = product.hashTrail(trail, bid);
 
-					//	blockchain.addFingerprint(bid, bid_hash, trail_hash);
+							//	blockchain.addFingerprint(bid, bid_hash, trail_hash);
 
 							next();
 						});
