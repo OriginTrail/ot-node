@@ -88,46 +88,12 @@ module.exports = function () {
 					return;
 				} else {
 					let result = JSON.parse(stdout);
-					// let batch_uids_array = Object.keys(result.batches);
 
-					// async.each(batch_uids_array, function (batch_uid, next) {
-					// 	product.getTrailByUID(batch_uid, function (trailObject) {
-					// 		let trail = trailObject.graph;
-					// 		let bid = batch_uid;
-					// 		let bid_hash = utilities.sha3(bid);
-					// 		let trail_hash = product.hashTrail(trail, bid);
-
-					// 		//	blockchain.addFingerprint(bid, bid_hash, trail_hash);
-
-					// 		next();
-					// 	});
-					// }, function () {
-					// 	utilities.executeCallback(callback, {
-					// 		message: 'Import success',
-					// 		data: []
-					// 	});
-					// });
-
+					var vertices = result.vertices;
+					var edges = result.edges;
 					let import_id = result.import_id;
-
-					var vertices = [{_key: '1', identifiers: {a:1}, data: [1,2,3,4,5]},{_key: '2', identifiers: {a:2}, data:{a:'a',b:'b',c:'c'}},{_key: '3', identifiers: {a:3}, data:{a:['a','abc','def']}}];
-
-					var edges = [{
-						'_key': '12',
-						'_from': 'ot_vertices/1',
-						'_to': 'ot_vertices/2',
-						'imports': []
-					}, {
-						'_key': '23',
-						'_from': 'ot_vertices/2',
-						'_to': 'ot_vertices/3',
-						'imports': []
-					}, {
-						'_key': '31',
-						'imports': [],
-						'_from': 'ot_vertices/3',
-						'_to': 'ot_vertices/1'
-					}];
+					
+					console.log(result);
 
 					const data = {};
 					data.vertices = vertices;

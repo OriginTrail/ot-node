@@ -1,59 +1,16 @@
 [
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"name": "data_id",
-				"type": "uint256"
-			}
-		],
-		"name": "refund",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "DC_wallet",
-				"type": "address"
-			},
-			{
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"name": "data_id",
-				"type": "uint256"
-			},
-			{
-				"name": "token_amount",
-				"type": "uint256"
-			},
-			{
-				"name": "start_time",
-				"type": "uint256"
-			},
-			{
-				"name": "total_time",
-				"type": "uint256"
-			}
-		],
-		"name": "verify",
+		"constant": true,
+		"inputs": [],
+		"name": "token",
 		"outputs": [
 			{
-				"name": "isCorrect",
-				"type": "bool"
+				"name": "",
+				"type": "address"
 			}
 		],
 		"payable": false,
-		"stateMutability": "nonpayable",
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -111,6 +68,36 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"name": "data_id",
+				"type": "uint256"
+			},
+			{
+				"name": "token_amount",
+				"type": "uint256"
+			},
+			{
+				"name": "start_time",
+				"type": "uint256"
+			},
+			{
+				"name": "total_time",
+				"type": "uint256"
+			}
+		],
+		"name": "initiateEscrow",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"name": "DC_wallet",
 				"type": "address"
 			},
@@ -157,6 +144,24 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"name": "data_id",
+				"type": "uint256"
+			}
+		],
+		"name": "refund",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
 				"name": "DC_wallet",
 				"type": "address"
 			},
@@ -181,24 +186,15 @@
 				"type": "uint256"
 			}
 		],
-		"name": "initiateEscrow",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "token",
+		"name": "verify",
 		"outputs": [
 			{
-				"name": "",
-				"type": "address"
+				"name": "isCorrect",
+				"type": "bool"
 			}
 		],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
