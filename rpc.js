@@ -11,12 +11,11 @@ var natUpnp = require('nat-upnp');
 var socketRequests = {};
 
 /**
- * Start tests
+ * Start testing mechanism as a separate thread
  */
 
-// const { fork } = require('child_process');
-//
-// const forked = fork('./modules/SendTest.js');
+const { fork } = require('child_process');
+const forked = fork('./modules/SendTest.js');
 
 // forked.on('message', (msg) => {
 // 	console.log('Test sent', msg);
