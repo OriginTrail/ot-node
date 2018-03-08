@@ -2,6 +2,7 @@ const product = require('./product')();
 const importer = require('./importer')();
 const holding = require('./holding')();
 const blockchain = require('./blockchain')();
+const signing = require('./blockchain_interface/ethereum/signing')();
 const utilities = require('./utilities')();
 const config = utilities.getConfig();
 
@@ -78,6 +79,7 @@ class EventHandlers {
 	}
 
 	receiptRequest(socket) {
+		await signing.sendConfirmationfunction(confirmation, callback);
 		//this.emitResponse(socket, response);
 	}
 }
