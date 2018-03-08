@@ -1,4 +1,5 @@
 // External modules
+// eslint-disable-next-line no-unused-vars
 var leveldup = require('levelup');
 var leveldown = require('leveldown');
 var kad = require('kad');

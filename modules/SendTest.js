@@ -90,6 +90,7 @@ class SendTests {
 	}
 
 	createReceipt() {
+		// eslint-disable-next-line no-undef
 		return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
 	}
 

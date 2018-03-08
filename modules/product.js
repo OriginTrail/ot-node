@@ -1,7 +1,9 @@
 // External modules
 var utilities = require('./utilities')();
+// eslint-disable-next-line no-unused-vars
 var database = require('./database')();
 var graph = require('./graph')();
+// eslint-disable-next-line no-unused-vars
 var Database = require('arangojs').Database;
 
 var fs = require('fs');
@@ -12,6 +14,7 @@ module.exports = function () {
 		var journey = [];
 		var batches = [];
 		var usedBatchUIDs = [];
+		// eslint-disable-next-line no-unused-vars
 		var batchUIDs = [];
 		var transactions = [];
 		var usedTransactionIDs = [];
@@ -26,7 +29,7 @@ module.exports = function () {
 						point.product_info = virtual_graph_data[edges[j].to];
 					} else if (edges[j].edge_type == 'OUTPUT_BATCH' || edges[j].edge_type == 'OF_BATCH') {
 						var event = virtual_graph_data[edges[j].to];
-						event_edges = event.outbound;
+						var event_edges = event.outbound;
 
 						for (i in event_edges) {
 							if (event_edges[i].edge_type == 'AT') {
@@ -41,14 +44,14 @@ module.exports = function () {
 			}
 
 			if (point.vertex_type == 'TRANSACTION' && usedTransactionIDs[point.identifiers.TransactionId] != true) {
-				var edges = point.outbound;
+				edges = point.outbound;
 
 				usedTransactionIDs[point.identifiers.TransactionId] = true;
 				transactions.push(point);
 			}
 		}
 
-		var i = 1;
+		i = 1;
 		var j = 0;
 
 		if (batches.length > 0) {
@@ -101,11 +104,13 @@ module.exports = function () {
 					}
 
 					// Sorting keys in object for uniform response
-					for (var i in BFSt) {
+					for ( i in BFSt) {
 						BFSt[i] = utilities.sortObject(BFSt[i]);
 					}
 
 					var BFS = graph.BFS(utilities.copyObject(virtual_graph_data.data), start_vertex.identifiers.uid, restricted);
+
+					// eslint-disable-next-line no-unused-vars
 					var BFS_data = utilities.copyObject(graph.BFS(virtual_graph_data.data, start_vertex.identifiers.uid, restricted));
 
 					var fetchedJourney = getProductJourney(utilities.copyObject(virtual_graph_data.data), utilities.copyObject(BFS));
@@ -148,7 +153,7 @@ module.exports = function () {
 				}
 			}
 
-			for (var i in BFStraversal) {
+			for ( i in BFStraversal) {
 				BFStraversal[i] = utilities.sortObject(BFStraversal[i]);
 			}
 

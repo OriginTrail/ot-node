@@ -18,6 +18,7 @@ module.exports = function () {
 
 				response.splice(i+1, 0, test);
 
+				// eslint-disable-next-line no-unused-vars
 				storage.storeObject('Tests', response, function(status){
 					console.log(response);
 					utilities.executeCallback(callback, true);
@@ -39,6 +40,7 @@ module.exports = function () {
 					response.splice(i+1, 0, tests[j]);
 				}
 				
+				// eslint-disable-next-line no-unused-vars
 				storage.storeObject('Tests', response, function(status){
 					utilities.executeCallback(callback, true);
 				});

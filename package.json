@@ -48,7 +48,8 @@
   },
   "scripts": {
     "test": "nyc mocha --recursive test",
-    "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\""
+    "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
+    "lint": "eslint --fix ./"
   },
   "repository": {
     "type": "git",

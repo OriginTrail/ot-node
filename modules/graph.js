@@ -24,7 +24,7 @@ module.exports = function () {
 
 					if(key != 'vertex_type' && key != '_key')
 					{
-						search_key = 'identifiers.' + key;
+						var search_key = 'identifiers.' + key;
 					}
 					else
 						search_key = key;
@@ -180,7 +180,7 @@ module.exports = function () {
 
 			var keys = encryption.generateKeyPair();
 			console.log(vertices);
-			for(i in vertices) {
+			for(let i in vertices) {
 				vertices[i].data = encryption.encryptObject(vertices[i].data, keys.privateKey);
 			}
 
@@ -189,7 +189,7 @@ module.exports = function () {
 
 		decryptVertices: function(vertices, public_key) {
 
-			for(i in vertices) {
+			for(let i in vertices) {
 				vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
 			}
 

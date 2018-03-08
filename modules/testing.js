@@ -1,6 +1,8 @@
 var utilities = require('./utilities')();
 var test_table = require('./test_table')();
+// eslint-disable-next-line no-unused-vars
 var encryption = require('./encryption')();
+// eslint-disable-next-line no-unused-vars
 var async = require('async');
 
 module.exports = function () {

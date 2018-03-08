@@ -15,6 +15,7 @@ var socketRequests = {};
  */
 
 const { fork } = require('child_process');
+// eslint-disable-next-line no-unused-vars
 const forked = fork('./modules/SendTest.js');
 
 // forked.on('message', (msg) => {
@@ -240,8 +241,10 @@ server.post('/import', function (req, res) {
 			message: 'Input file not provided!'
 		});
 	} else {
+		// eslint-disable-next-line no-unused-vars
 		var selected_importer = 'default_importer';
 
+		// eslint-disable-next-line no-unused-vars
 		var post_body = req.body;
 
 		var input_file = req.files.importfile.path;

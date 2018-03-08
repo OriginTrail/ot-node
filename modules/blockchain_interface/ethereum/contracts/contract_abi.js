@@ -353,4 +353,4 @@
 		"name": "OwnershipTransferred",
 		"type": "event"
 	}
-]
+];

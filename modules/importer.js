@@ -1,7 +1,8 @@
 // External modules
 var PythonShell = require('python-shell');
 const utilities = require('./utilities')();
-//const blockchain = require('./blockchain')();
+// const blockchain = require('./blockchain')();
+// eslint-disable-next-line no-unused-vars
 const product = require('./product')();
 const async = require('async');
 const db = require('./database')();
