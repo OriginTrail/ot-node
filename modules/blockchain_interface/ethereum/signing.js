@@ -4,27 +4,18 @@ var fs = require('fs');
 var util = require('ethereumjs-util');
 var tx = require('ethereumjs-tx');
 var lightwallet = require('eth-lightwallet');
-<<<<<<< HEAD
-=======
 var Account = require("eth-lib/lib/account");
 var Hash = require("eth-lib/lib/hash");
 var abi = require('ethereumjs-abi')
-
->>>>>>> 2cd2bcd19e59a86d318705e606fc61a962d71744
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
 
 var wallet_address = config.blockchain.settings.ethereum.wallet_address;
 var private_key = config.blockchain.settings.ethereum.private_key;
-<<<<<<< HEAD
 
 var web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.settings.ethereum.rpc_node+":"+config.blockchain.settings.ethereum.node_port));
 
-=======
 
-var web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.settings.ethereum.rpc_node+':'+config.blockchain.settings.ethereum.node_port));
-
->>>>>>> 2cd2bcd19e59a86d318705e606fc61a962d71744
 // OT contract data
 var contract_address = config.blockchain.settings.ethereum.contract_address;
 var contract_abi_path = config.blockchain.settings.ethereum.contract_abi;
@@ -83,15 +74,7 @@ module.exports = function() {
 		signAndSend: async function(batch_id, batch_id_hash, graph_hash) {
 
 			if(nonce == -1)
-<<<<<<< HEAD
 				nonce = await web3.eth.getTransactionCount(wallet_address)
-
-			console.log(nonce)
-=======
-				nonce = await web3.eth.getTransactionCount(wallet_address);
-
-			console.log(nonce);
->>>>>>> 2cd2bcd19e59a86d318705e606fc61a962d71744
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -110,7 +93,7 @@ module.exports = function() {
 		},
 
 		signAndAllow: async function(amount, callback) {
-<<<<<<< HEAD
+
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address)
@@ -152,12 +135,10 @@ module.exports = function() {
 			sendRaw(rawTx, callback);
 		},
 
-		signCheque: function(receiver_wallet, data_id)
+		signCheque: async function(receiver_wallet, data_id)
 		{
 			message = wallet_address + '|' + receiver_wallet + '|' + data_id
 			signed = web3.eth.accounts.sign(message, private_key)
-=======
->>>>>>> 2cd2bcd19e59a86d318705e606fc61a962d71744
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
@@ -180,13 +161,7 @@ module.exports = function() {
 
 		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
-<<<<<<< HEAD
-			var parsed_message = {
-				sender: message_elements[0],
-				receiver: message_elements[1],
-				amount: message_elements[2]
-			}
-=======
+
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
 
@@ -201,7 +176,6 @@ module.exports = function() {
 			};
 
 			console.log(txOptions);
->>>>>>> 2cd2bcd19e59a86d318705e606fc61a962d71744
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
