@@ -2,8 +2,11 @@
 var config = require('./config');
 var ipaddr = require('ipaddr.js');
 var sha3 = require('solidity-sha3').default;
+// eslint-disable-next-line no-unused-vars
 var net = require('net');
+// eslint-disable-next-line no-unused-vars
 var natpmp = require('nat-pmp');
+var _ = require('lodash');
 
 
 module.exports = function () {
@@ -26,7 +29,7 @@ module.exports = function () {
 		},
 
 		getRandomInt: function (max) {
-			return Math.floor(Math.random() * Math.floor(max));
+			return _.random(0, max);
 		},
 
 		sha3: function (value) {
@@ -67,7 +70,7 @@ module.exports = function () {
 		},
 
 		getRandomIntRange: function (min, max) {
-		  return min + Math.floor(Math.random() * Math.floor(max));
+			return _.range(min,max);
 		}
 	};
 
