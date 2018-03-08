@@ -8,7 +8,7 @@ class DataReplication {
 	/**
 	* Sends data to DH for replication
 	*
-	* @param json payload This is the payload to be sent
+	* @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
 	* @return object response
 	*/
 
