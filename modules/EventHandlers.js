@@ -78,7 +78,7 @@ class EventHandlers {
 		//this.emitResponse(socket, response);
 	}
 
-	receiptRequest(socket) {
+	async receiptRequest(socket) {
 		await signing.sendConfirmationfunction(confirmation, callback);
 		//this.emitResponse(socket, response);
 	}

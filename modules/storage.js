@@ -13,7 +13,7 @@ module.exports = function(){
 					utilities.executeCallback(callback, false);
 				}
 				else {
-					console.log('Stored key: ', key);
+				//	console.log('Stored key: ', key);
 					utilities.executeCallback(callback, true);
 				}
 			});

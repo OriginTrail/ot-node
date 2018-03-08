@@ -76,15 +76,18 @@ module.exports = function() {
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
 
+
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
 			    nonce: new_nonce,
-			    gasLimit: web3.util.toHex(config.blockchain.settings.ethereum.gas_limit),
-			    gasPrice: web3.util.toHex(config.blockchain.settings.ethereum.gas_price),
+			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: contract_address
 			};
+
+
 
 			console.log(txOptions);
 
