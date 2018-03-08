@@ -60,6 +60,7 @@ class EventHandlers {
 
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  (response) =>  {
+			//store public key somewhere
 			this.emitResponse(socket, {
 				status: 'success',
 				code: 200,

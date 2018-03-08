@@ -32,8 +32,11 @@ class SendTests {
 
 
 			if (currentUnixTime > test.test_time) {
-				var result = this.sendTest(test.dh_ip, test.dh_port, test.question);
-				this.verifyResult(test, result.answer);
+				this.sendTest(test.dh_ip, test.dh_port, test.question).then( result => {
+					this.verifyResult(test, result.answer);
+				}).catch(e => {
+					console.log(e);
+				});
 
 			} else {
 				//console.log(test);
@@ -50,7 +53,7 @@ class SendTests {
 	 * @param question object
 	 * @returns {Promise.data} object data.answer
 	 */
-	sendTest(ip, port, question) {
+	async sendTest(ip, port, question) {
 		question = JSON.stringify({
 			question: question
 		});
@@ -66,14 +69,8 @@ class SendTests {
 			data: question
 		};
 
-		axios(options)
-			.then(res => {
-				console.log(res);
-			}).catch(error => {
-				// console.log('error');
-				console.log(error);
-			});
-
+		let response = await axios(options);
+		return response;
 	}
 
 	/**
@@ -84,15 +81,31 @@ class SendTests {
 	 */
 	verifyResult(test, answer) {
 		if(test.answer === answer) {
-			this.sendReceipt(); //TODO: Send receipt
+			this.sendReceipt();
 			testTable.popNextTest(() => {
 
 			});
 		}
 	}
 
-	sendReceipt() {
+	createReceipt() {
+		//aleks
+	}
 
+	async sendReceipt(ip, port) {
+		const receipt = this.createReceipt();
+		const options = {
+			method: 'POST',
+			url: 'http://' + ip + ':' + port + '/api/receipt',
+			headers: {
+				'Content-Type': 'application/json',
+				'Content-Length': receipt.length
+			},
+			data: receipt
+		};
+
+		let result = await axios(options);
+		return result;
 	}
 }
 

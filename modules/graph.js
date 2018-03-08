@@ -22,7 +22,7 @@ module.exports = function () {
 						continue;
 					}
 
-					if(key != 'vertex_type')
+					if(key != 'vertex_type' && key != '_key')
 					{
 						search_key = 'identifiers.' + key;
 					}
