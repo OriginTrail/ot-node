@@ -14,7 +14,7 @@ module.exports = function(){
 				}
 				else {
 					console.log('Stored key: ', key);
-					utilities.executeCallback(callback, true)
+					utilities.executeCallback(callback, true);
 				}
 			});
 		},

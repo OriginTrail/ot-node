@@ -6,7 +6,7 @@ var tx = require('ethereumjs-tx');
 var lightwallet = require('eth-lightwallet');
 var Account = require("eth-lib/lib/account");
 var Hash = require("eth-lib/lib/hash");
-var abi = require('ethereumjs-abi')
+var abi = require('ethereumjs-abi');
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
 
@@ -74,7 +74,7 @@ module.exports = function() {
 		signAndSend: async function(batch_id, batch_id_hash, graph_hash) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -96,7 +96,7 @@ module.exports = function() {
 
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -106,9 +106,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: token_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
 			sendRaw(rawTx, callback);
@@ -117,7 +117,7 @@ module.exports = function() {
 		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -127,9 +127,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: escrow_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
@@ -137,8 +137,8 @@ module.exports = function() {
 
 		signCheque: async function(receiver_wallet, data_id)
 		{
-			message = wallet_address + '|' + receiver_wallet + '|' + data_id
-			signed = web3.eth.accounts.sign(message, private_key)
+			message = wallet_address + '|' + receiver_wallet + '|' + data_id;
+			signed = web3.eth.accounts.sign(message, private_key);
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
@@ -189,8 +189,8 @@ module.exports = function() {
             bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
             */
 
-            // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
-            var raw_data = "0x" + abi.soliditySHA3(
+			// (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
+			var raw_data = "0x" + abi.soliditySHA3(
 			    ["address", "uint", "uint", "uint", "bool"],
 			    [new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid]
 			  ).toString('hex');
@@ -217,15 +217,15 @@ module.exports = function() {
 		    	r: s.r,
 		    	s: s.s,
 		    	confirmation_hash: s.message
-		    }
+		    };
 
-		    return confirmation 
+		    return confirmation;
 		},
 
 		sendConfirmation: async function(confirmation, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -235,9 +235,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: escrow_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet, 
 																  confirmation.data_id, 
