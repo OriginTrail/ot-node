@@ -79,6 +79,7 @@ class EventHandlers {
 
 	testingRequest(socket) {
 		log.info('[DH] Event emitted: Testing Request Response');
+		
 		this.emitResponse(socket, []);
 	}
 
