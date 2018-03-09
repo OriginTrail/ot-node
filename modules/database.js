@@ -21,12 +21,13 @@ module.exports = function () {
 		},
 
 		runQuery: async function (queryString, callback, params = {}) {
+			log.info(queryString);
 			try {
 				let cursor = await db.query(queryString, params);
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				log.info(err);
+				console.log(err);
 			}
 		},
 		createVertexCollection: async function(collection_name, callback) {
