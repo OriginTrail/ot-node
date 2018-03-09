@@ -126,18 +126,16 @@ module.exports = function () {
 						data.import_id = import_id;
 
 						replication.sendPayload(data).then(res => {
-							log.info(res);
+							log.info('[DC] Payload sent');
+							log.info('[DC] Generating tests for DH');
+							let currentUnixTime = Math.floor(new Date() / 1000);
+							let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
+							let encryptedVertices = graph.encryptVertices(vertices);
 
-							if(res.message == "success") {
-								log.info('[DC] Generating tests for DH');
-								let currentUnixTime = Math.floor(new Date() / 1000);
-								let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
-                              	let encryptedVertices = graph.encryptVertices(vertices);
+							testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
+								log.info('[DC] Tests generated');
+							});
 
-								testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
-									log.info('[DC] Tests generated');
-								});
-							}
 						});
 					});
 
