@@ -69,7 +69,12 @@ module.exports = function () {
 			let vertex_key = question.vertex_key;
 
 			graph.getVertices({_key: vertex_key}, function(response) {
+
+				console.log(response);
+
 				let vertex = response[0];
+
+				console.log(vertex);
 
 				if(vertex == undefined || vertex.data == undefined)
 				{
@@ -79,6 +84,8 @@ module.exports = function () {
 				{
 					let vertex_data = vertex.data;
 					let answer = vertex_data.substring(start_index, end_index);
+
+					console.log(answer);
 
 					utilities.executeCallback(callback, answer);
 				}
