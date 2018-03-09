@@ -57,20 +57,20 @@ module.exports = function(){
 		getObject: function(key, callback) {
 			db.connect(url, function(err, db) {
 			  dbo = db.db("origintrail");
-	 		dbo.collection("ot_system").findOne({key: key}, function(err, result) {
+		 		dbo.collection("ot_system").findOne({key: key}, function(err, result) {
 
-				if (err || result == null) {
-				//	log.info('Storage: ' + err);
-					utilities.executeCallback(callback, []);
-				}
-				else {
-					utilities.executeCallback(callback, result.data);
-				}
-
+					if (err || result == null) {
+					//	log.info('Storage: ' + err);
+						utilities.executeCallback(callback, []);
+					}
+					else {
+						utilities.executeCallback(callback, result.data);
+					}
+			
+				});
 			});
-		});
 
-		
+		}	
 	};
 
 	return storage;
