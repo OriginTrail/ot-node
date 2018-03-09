@@ -81,8 +81,12 @@ class EventHandlers {
 		log.info('[DH] Event emitted: Testing Request Response');
 		let ip = this.queryObject.dc_ip;
 		let port = this.queryObject.dc_port;
-		
-		this.emitResponse(socket, []);
+
+		// answerQuestion(..., function(answer) {
+		//	...
+			this.emitResponse(socket, []);
+		//})
+
 	}
 
 	async receiptRequest(socket) {
