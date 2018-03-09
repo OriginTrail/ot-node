@@ -69,20 +69,11 @@ module.exports = function () {
 		nextTest: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, response);
+					utilities.executeCallback(callback, {}});
 				} else {
 					let test = response[0];
 
-					storage.storeObject('Tests', response, function(status) {
-						if(status == false) {
-							log.error('Storing tests fails!');
-							utilities.executeCallback(callback, {});							
-						} else {
-                          	log.info('Storing tests!');
-                          	log.info(test);
-							utilities.executeCallback(callback, test);
-						}
-					}); 
+					utilities.executeCallback(callback, test);							
 				}
 			});
 		},
