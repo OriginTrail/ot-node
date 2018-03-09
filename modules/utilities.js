@@ -9,7 +9,7 @@ var natpmp = require('nat-pmp');
 var _ = require('lodash');
 const log = require('winston');
 
-log.add(log.transports.File, { filename: 'log.log' });
+log.add(log.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
 log.remove(log.transports.Console);
 log.add(log.transports.Console, {colorize: true});
 
