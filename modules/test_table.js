@@ -75,9 +75,11 @@ module.exports = function () {
 
 					storage.storeObject('Tests', response, function(status) {
 						if(status == false) {
-							log.info('Storing tests failes!');
+							log.error('Storing tests fails!');
 							utilities.executeCallback(callback, {});							
 						} else {
+                          	log.info('Storing tests!');
+                          	log.info(test);
 							utilities.executeCallback(callback, test);
 						}
 					}); 
