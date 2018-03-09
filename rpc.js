@@ -247,11 +247,11 @@ server.post('/import', function (req, res) {
 		var input_file = req.files.importfile.path;
 
 		var reqNum = utilities.getRandomInt(10000000000);
-
+/*
 		if (req.body.noreplicate == undefined) {
 			replication.replicate(input_file);
 		}
-
+*/
 		socketRequests[reqNum] = res;
 		var queryObject = {
 			filepath: input_file

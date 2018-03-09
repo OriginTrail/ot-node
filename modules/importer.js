@@ -113,8 +113,6 @@ module.exports = function () {
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
 						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()));
 
-						return;
-
 						const data = {};
 						data.vertices = vertices;
 						data.edges = edges;
