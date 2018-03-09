@@ -97,6 +97,7 @@ class SendTests {
 	verifyResult(test, answer) {
 		log.info('Entering verifyResult');
 		log.error(test.answer);
+		log.warn(answer);
 		if(test.answer === answer) {
 			log.info('Answer is good');
 			this.sendReceipt().then(result => {
