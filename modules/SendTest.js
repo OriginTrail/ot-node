@@ -1,4 +1,5 @@
 const testTable = require('./test_table')();
+const signing = require('./blockchain_interface/ethereum/signing.js')();
 const axios = require('axios');
 
 class SendTests {
@@ -89,7 +90,7 @@ class SendTests {
 	}
 
 	createReceipt() {
-		//aleks
+		return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
 	}
 
 	async sendReceipt(ip, port) {

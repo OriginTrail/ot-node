@@ -1,7 +1,9 @@
 // External modules
 var PythonShell = require('python-shell');
 const utilities = require('./utilities')();
-//const blockchain = require('./blockchain')();
+const Mtree = require('./mtree')();
+const storage = require('./storage')();
+const blockchain = require('./blockchain')();
 const product = require('./product')();
 const async = require('async');
 const db = require('./database')();
@@ -68,7 +70,7 @@ module.exports = function () {
 			utilities.executeCallback(callback,true);
 		},
 
-		importXML: function async (ot_xml_document, callback) {
+		importXML: async function async (ot_xml_document, callback) {
 
 			var options = {
 				mode: 'text',
@@ -88,55 +90,39 @@ module.exports = function () {
 					return;
 				} else {
 					let result = JSON.parse(stdout);
-					// let batch_uids_array = Object.keys(result.batches);
 
-					// async.each(batch_uids_array, function (batch_uid, next) {
-					// 	product.getTrailByUID(batch_uid, function (trailObject) {
-					// 		let trail = trailObject.graph;
-					// 		let bid = batch_uid;
-					// 		let bid_hash = utilities.sha3(bid);
-					// 		let trail_hash = product.hashTrail(trail, bid);
-
-					// 		//	blockchain.addFingerprint(bid, bid_hash, trail_hash);
-
-					// 		next();
-					// 	});
-					// }, function () {
-					// 	utilities.executeCallback(callback, {
-					// 		message: 'Import success',
-					// 		data: []
-					// 	});
-					// });
-
+					var vertices = result.vertices;
+					var edges = result.edges;
 					let import_id = result.import_id;
+					
 
-					var vertices = [{_key: '1', identifiers: {a:1}, data: [1,2,3,4,5]},{_key: '2', identifiers: {a:2}, data:{a:'a',b:'b',c:'c'}},{_key: '3', identifiers: {a:3}, data:{a:['a','abc','def']}}];
+					let leaves = [];
+					let hash_pairs = [];
 
-					var edges = [{
-						'_key': '12',
-						'_from': 'ot_vertices/1',
-						'_to': 'ot_vertices/2',
-						'imports': []
-					}, {
-						'_key': '23',
-						'_from': 'ot_vertices/2',
-						'_to': 'ot_vertices/3',
-						'imports': []
-					}, {
-						'_key': '31',
-						'imports': [],
-						'_from': 'ot_vertices/3',
-						'_to': 'ot_vertices/1'
-					}];
+					for(i in vertices) {
+						leaves.push(utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data}));
+						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
+					}
 
-					const data = {};
-					data.vertices = vertices;
-					data.edges = edges;
-					data.import_id = import_id;
+					let tree = new Mtree(hash_pairs);
+					let root_hash = tree.root();
 
-					replication.sendPayload(data).then(res => {
-						console.log(res);
-					});
+					console.log("Import id: " + import_id);
+					console.log("Import root hash: " + root_hash);
+					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
+						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()));
+
+						return;
+
+						const data = {};
+						data.vertices = vertices;
+						data.edges = edges;
+						data.import_id = import_id;
+
+						replication.sendPayload(data).then(res => {
+							console.log(res);
+						});
+					})
 
 				}
 			});

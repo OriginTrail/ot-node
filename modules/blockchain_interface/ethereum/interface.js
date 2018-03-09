@@ -42,20 +42,20 @@ module.exports = function() {
     },
 
 
-    getFingerprintByBatchHash: function(address, batch_id_hash) {
-        return contract_instance.getFingerprintByBatchHash(address, batch_id_hash, {
+    getFingerprintByBatchHash: function(address, data_id_hash) {
+        return contract_instance.getFingerprintByBatchHash(address, data_id_hash, {
           from: web3.eth.accounts[0]
         });
       },
-    addFingerprint: function(batch_id, batch_id_hash, graph_hash) {
 
-        signing.signAndSend(batch_id, batch_id_hash, graph_hash)
+    addFingerprint: function(data_id, data_id_hash, import_hash) {
+        signing.signAndSend(data_id, data_id_hash, import_hash)
         return true;
       },
 
-    getFingerprint: function(data_holder_address, batch_id_hash, callback) {
+    getFingerprint: function(data_holder_address, import_hash, callback) {
       var graph_hash = null;
-      graph_hash = contract_instance.getFingerprintByBatchHash(data_holder_address, batch_id_hash, {
+      graph_hash = contract_instance.getFingerprintByBatchHash(data_holder_address, data_id_hash, {
         from: web3.eth.accounts[0]
       });
 
