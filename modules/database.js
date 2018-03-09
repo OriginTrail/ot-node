@@ -26,7 +26,7 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				log.info(err);
+				console.log(err);
 			}
 		},
 		createVertexCollection: async function(collection_name, callback) {
