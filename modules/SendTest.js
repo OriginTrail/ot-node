@@ -104,7 +104,7 @@ class SendTests {
 				log.info("Test deleted from database");
 			});
 		} else {
-			log.warning('Answer not good');
+			log.warn('Answer not good');
 		}
 	}
 

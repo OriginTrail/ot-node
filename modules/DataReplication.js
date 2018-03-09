@@ -22,7 +22,7 @@ class DataReplication {
 		let currentUnixTime = Math.floor(new Date() / 1000);
 		let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
 
-		testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
+		testing.generateTests(config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
 			log.info('[DC] Tests generated');
 		});
 
