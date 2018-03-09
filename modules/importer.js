@@ -1,13 +1,15 @@
 // External modules
-var PythonShell = require('python-shell');
+const PythonShell = require('python-shell');
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
+const config = utilities.getConfig();
 const Mtree = require('./mtree')();
 const storage = require('./storage')();
 const blockchain = require('./blockchain')();
-const product = require('./product')();
+
 const async = require('async');
 const db = require('./database')();
+
 const replication = require('./DataReplication');
 
 module.exports = function () {
@@ -101,7 +103,7 @@ module.exports = function () {
 					let leaves = [];
 					let hash_pairs = [];
 
-					for(i in vertices) {
+					for(let i in vertices) {
 						leaves.push(utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data}));
 						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
 					}
@@ -112,20 +114,15 @@ module.exports = function () {
 					log.info("Import id: " + import_id);
 					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-/*						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
+	/*					blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
 							console.log(response);
 						});
-*/
-	
-	const graph = require('./graph')();
-	const testing = require('./testing')();
-	let encryptedVertices = graph.encryptVertices(vertices);
+	*/
+						const graph = require('./graph')();
+						const testing = require('./testing')();
+						let encryptedVertices = graph.encryptVertices(vertices);
 
-						testing.generateTests('127.0.0.1', 12345, '0x1234', encryptedVertices.vertices, 10, 1234564, 12345666, function(ispis) {
-							console.log(ispis);
-						})
-return;
-						log.info('Preparing to enter sendPayload');
+						log.info('[DC] Preparing to enter sendPayload');
 
 						const data = {};
 						data.vertices = vertices;
@@ -133,9 +130,11 @@ return;
 						data.import_id = import_id;
 
 						replication.sendPayload(data).then(res => {
-							log.info(res);
+							log.info('[DC] Payload sent');
+							log.info('[DC] Generating tests for DH');
+
 						});
-					})
+					});
 
 				}
 			});

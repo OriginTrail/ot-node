@@ -58,7 +58,7 @@ module.exports = function () {
 					if (node.router.size != 0) {
 						log.info('Kademlia connected to seed');
 					} else {
-						log.info('Kademlia connection to seed failed');
+						log.warn('Kademlia connection to seed failed');
 					}
 				});
 			}

@@ -69,18 +69,11 @@ module.exports = function () {
 		nextTest: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, undefined);
+					utilities.executeCallback(callback, {}});
 				} else {
 					let test = response[0];
 
-					storage.storeObject('Tests', response, function(status) {
-						if(status == false) {
-							log.info('Storing tests failes!');
-							utilities.executeCallback(callback, {});							
-						} else {
-							utilities.executeCallback(callback, test);
-						}
-					}); 
+					utilities.executeCallback(callback, response);							
 				}
 			});
 		},
@@ -88,6 +81,7 @@ module.exports = function () {
 		getTests: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
+					log.info('No tests it LevelDB');
 					utilities.executeCallback(callback, []);
 				} else {
 					utilities.executeCallback(callback, response);

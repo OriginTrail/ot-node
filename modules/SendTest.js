@@ -14,7 +14,7 @@ class SendTests {
 		log.info('Starting tests');
 		return setInterval(() => {
 			this.checkTests();
-		}, 5000);
+		}, 15000);
 	}
 
 	/**
@@ -29,22 +29,28 @@ class SendTests {
 	*
 	*/
 	checkTests() {
-		log.info('Checking tests');
-		testTable.getTests((test) => {
-			if(test.length === 0) return;
+		log.info('Checking if there are tests to send');
+		testTable.nextTest((test) => {
 
+			if(test.length === 0) return;
+			log.info('All tests:');
+			log.info(test);
 			let currentUnixTime = Math.floor(new Date() / 1000);
 
-
 			if (currentUnixTime > test.test_time) {
+
 				this.sendTest(test.dh_ip, test.dh_port, test.question).then( result => {
+					log.info('Test sent:');
+					log.info(test);
 					this.verifyResult(test, result.answer);
 				}).catch(e => {
-					log.info(e);
+					log.error('Error sending test');
+					log.error(e);
 				});
 
 			} else {
-				//log.info(test);
+				log.info('Test time: ' + test.time);
+				log.info('Current time: ' + currentUnixTime);
 			}
 
 		});
@@ -63,7 +69,8 @@ class SendTests {
 		question = JSON.stringify({
 			question: question
 		});
-
+		log.info('Question to send');
+		log.info(question);
 
 		const options = {
 			method: 'POST',
@@ -88,19 +95,28 @@ class SendTests {
 	verifyResult(test, answer) {
 		log.info('Entering verifyResult');
 		if(test.answer === answer) {
-			this.sendReceipt();
-			testTable.popNextTest(() => {
-
+			log.info('Answer is good');
+			this.sendReceipt().then(result => {
+				log.info('Receipt sent. Result:');
+				log.info(result);
 			});
+			testTable.popNextTest(() => {
+				log.info("Test deleted from database");
+			});
+		} else {
+			log.warning('Answer not good');
 		}
 	}
+
 
 	createReceipt() {
 		//return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
 	}
 
 	async sendReceipt(ip, port) {
+		log.info('Sending receipt...');
 		const receipt = this.createReceipt();
+		log.info(receipt);
 		const options = {
 			method: 'POST',
 			url: 'http://' + ip + ':' + port + '/api/receipt',
