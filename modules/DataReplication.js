@@ -15,6 +15,7 @@ class DataReplication {
 
 	async sendPayload(data) {
 
+		log.info('Entering sendPayload');
 		let encryptedVertices = graph.encryptVertices(data.vertices);
 
 		const payload = JSON.stringify({
