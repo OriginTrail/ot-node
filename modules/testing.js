@@ -67,6 +67,10 @@ module.exports = function () {
 			let end_index = question.end_index;
 			let vertex_key = question.vertex_key;
 
+			console.log(question);
+			console.log(vertex_ley);
+			console.log({_key: vertex_key});
+
 			graph.getVertices({_key: vertex_key}, function(response) {
 				let vertex = response[0];
 
