@@ -1,4 +1,5 @@
 var utilities = require('../../utilities')();
+const log = utilities.getLogger();
 var Web3 = require('web3');
 var fs = require('fs');
 var util = require('ethereumjs-util');
@@ -35,11 +36,11 @@ var escrow_abi_file = fs.readFileSync(escrow_abi_path);
 var escrow_abi = JSON.parse(escrow_abi_file);
 
 /*
-console.log('------------------------');
+log.info('------------------------');
 var nonce = 5;
 web3.eth.getTransactionCount("0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",web3.eth.defaultBlock,function(err, result) {
-}).then(function (nonce){console.log(nonce)})
-console.log('------------------------');*/
+}).then(function (nonce){log.info(nonce)})
+log.info('------------------------');*/
 
 
 var nonce = -1;
@@ -55,7 +56,7 @@ module.exports = function() {
 		    web3.eth.sendSignedTransaction(
 		    '0x' + serializedTx, function(err, result) {
 		        if(err) {
-		            console.log(err);
+		            log.info(err);
 
 		            if(callback) {
 		            	utilities.executeCallback(callback, false);
@@ -64,7 +65,7 @@ module.exports = function() {
 		        	if(callback) {
 		            	utilities.executeCallback(callback, result);
 		            }
-		            console.log('Transaction: ', result);
+		            log.info('Transaction: ', result);
 		        }
 		    });
 	}      
@@ -89,7 +90,7 @@ module.exports = function() {
 
 
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
 			sendRaw(rawTx);
@@ -111,7 +112,7 @@ module.exports = function() {
 			    to: token_address
 			};
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
 			sendRaw(rawTx, callback);
@@ -132,7 +133,7 @@ module.exports = function() {
 			    to: escrow_address
 			};
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
@@ -156,7 +157,7 @@ module.exports = function() {
 			    to: token_address
 			};
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
 			sendRaw(rawTx, callback);
@@ -178,7 +179,7 @@ module.exports = function() {
 			    to: escrow_address
 			};
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
@@ -240,7 +241,7 @@ module.exports = function() {
 			    to: escrow_address
 			};
 
-			console.log(txOptions);
+			log.info(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet, 
 																  confirmation.data_id, 

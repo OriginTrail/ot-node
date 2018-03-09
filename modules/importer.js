@@ -1,6 +1,7 @@
 // External modules
 var PythonShell = require('python-shell');
 const utilities = require('./utilities')();
+const log = utilities.getLogger();
 const Mtree = require('./mtree')();
 const storage = require('./storage')();
 const blockchain = require('./blockchain')();
@@ -27,7 +28,7 @@ module.exports = function () {
 						db.updateDocumentImports('ot_vertices', vertex._key, import_id, function(update_status) {
 							if(update_status == false)
 							{
-								console.log('Import error!');
+								log.info('Import error!');
 								return;
 							}
 							else
@@ -50,7 +51,7 @@ module.exports = function () {
 						db.updateDocumentImports('ot_edges', edge._key, import_id, function(update_status) {
 							if(update_status == false)
 							{
-								console.log('Import error!');
+								log.info('Import error!');
 								return;
 							}
 							else
@@ -64,7 +65,7 @@ module.exports = function () {
 					}
 				});
 			}, function(){
-				console.log('JSON import complete');
+				log.info('JSON import complete');
 			});
 
 			utilities.executeCallback(callback,true);
@@ -82,7 +83,7 @@ module.exports = function () {
 			PythonShell.run('v1.5.py', options, function(stderr, stdout){
 
 				if (stderr) {
-					console.log(stderr);
+					log.info(stderr);
 					utilities.executeCallback(callback, {
 						message: 'Import failure',
 						data: []
@@ -107,8 +108,8 @@ module.exports = function () {
 					let tree = new Mtree(hash_pairs);
 					let root_hash = tree.root();
 
-					console.log("Import id: " + import_id);
-					console.log("Import root hash: " + root_hash);
+					log.info("Import id: " + import_id);
+					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
 						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()));
 
@@ -120,7 +121,7 @@ module.exports = function () {
 						data.import_id = import_id;
 
 						replication.sendPayload(data).then(res => {
-							console.log(res);
+							log.info(res);
 						});
 					})
 

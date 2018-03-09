@@ -1,4 +1,5 @@
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var storage = require('./storage')();
 
 module.exports = function(){
@@ -22,7 +23,7 @@ module.exports = function(){
 				}
 
 				new_data = {dh_wallet: dh_wallet, data_id: data_id, public_key: public_key, confirmation_number: 0};
-				console.log(JSON.stringify(new_data))
+				log.info(JSON.stringify(new_data))
 				response.data.push(new_data);
 
 				storage.storeObject('Holding', response, function(status){

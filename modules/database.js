@@ -1,5 +1,6 @@
 // External modules
 const utilities = require('./utilities')();
+const log = utilities.getLogger();
 const Database = require('arangojs').Database;
 const config = utilities.getConfig();
 
@@ -25,24 +26,24 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err);
+				log.info(err);
 			}
 		},
 		createVertexCollection: async function(collection_name, callback) {
 			var collection = db.collection(collection_name);
 			collection.create().then(
 			  () => {
-			  		console.log('Collection created');
+			  		log.info('Collection created');
 			  		utilities.executeCallback(callback, true);
 				},
 			  err => {
 			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists');
+			  		log.info('collection already exists');
 			  		utilities.executeCallback(callback, true);
 			  	}
 			  	else
 			  		{
-			  		console.log(err);
+			  		log.info(err);
 				  	utilities.executeCallback(callback, false);
 				  	}
 			  	}
@@ -52,17 +53,17 @@ module.exports = function () {
 			var collection = db.edgeCollection(collection_name);
 			collection.create().then(
 			  () => {
-			  		console.log('Collection created');
+			  		log.info('Collection created');
 			  		utilities.executeCallback(callback, true);
 				},
 			  err => {
 			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists');
+			  		log.info('collection already exists');
 			  		utilities.executeCallback(callback, true);
 			  	}
 			  	else
 			  		{
-			  		console.log(err);
+			  		log.info(err);
 				  	utilities.executeCallback(callback, false);
 				  	}
 			  	}
@@ -107,14 +108,14 @@ module.exports = function () {
 						collection.update(document_key, {imports: imports}).then(
 					  meta => utilities.executeCallback(callback, true),
 					  err => {
-					  	console.log(err);
+					  	log.info(err);
 					  	utilities.executeCallback(callback, false);
 							}
 						);  		
 			  	}
 			  },
 			  err => {
-					console.log(err);
+					log.info(err);
 					utilities.executeCallback(callback, false);
 				}
 			);			
@@ -130,7 +131,7 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err);
+				log.info(err);
 			}
 		},
 
@@ -144,7 +145,7 @@ module.exports = function () {
 				utilities.executeCallback(callback, cursor._result);
 			} catch (err) {
 				utilities.executeCallback(callback, []);
-				console.log(err);
+				log.info(err);
 			}
 		}
 	};

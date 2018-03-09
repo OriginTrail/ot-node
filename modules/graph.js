@@ -1,5 +1,6 @@
 // External modules
 const utilities = require('./utilities')();
+const log = utilities.getLogger();
 const database = require('./database')();
 const encryption = require('./encryption')();
 
@@ -179,7 +180,7 @@ module.exports = function () {
 		encryptVertices: function(vertices) {
 
 			var keys = encryption.generateKeyPair();
-			console.log(vertices);
+			log.info(vertices);
 			for(i in vertices) {
 				vertices[i].data = encryption.encryptObject(vertices[i].data, keys.privateKey);
 			}

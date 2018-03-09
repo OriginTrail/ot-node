@@ -1,5 +1,6 @@
 // External modules
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var database = require('./database')();
 var graph = require('./graph')();
 var Database = require('arangojs').Database;

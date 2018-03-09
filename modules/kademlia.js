@@ -4,6 +4,7 @@ var leveldown = require('leveldown');
 var kad = require('kad');
 const quasar = require('kad-quasar');
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var config = utilities.getConfig();
 
 // Response pool
@@ -55,15 +56,15 @@ module.exports = function () {
 			if (config.IS_KADEMLIA_BEACON == 'false') {
 				node.join(seed, function () {
 					if (node.router.size != 0) {
-						console.log('Kademlia connected to seed');
+						log.info('Kademlia connected to seed');
 					} else {
-						console.log('Kademlia connection to seed failed');
+						log.info('Kademlia connection to seed failed');
 					}
 				});
 			}
 
 			node.listen(config.KADEMLIA_PORT, function () {
-				console.log('Kademlia service listening...');
+				log.info('Kademlia service listening...');
 			});
 
 			node.quasarSubscribe('ot-ping-request', (content) => {

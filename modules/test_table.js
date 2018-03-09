@@ -1,4 +1,5 @@
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var storage = require('./storage')();
 
 module.exports = function () {
@@ -19,7 +20,7 @@ module.exports = function () {
 				response.splice(i+1, 0, test);
 
 				storage.storeObject('Tests', response, function(status){
-					console.log(response);
+					log.info(response);
 					utilities.executeCallback(callback, true);
 				});
 
@@ -55,7 +56,7 @@ module.exports = function () {
 
 					storage.storeObject('Tests', response, function(status) {
 						if(status == false) {
-							console.log('Storing tests failes!');
+							log.info('Storing tests failes!');
 							utilities.executeCallback(callback, {});							
 						} else {
 							utilities.executeCallback(callback, test);
@@ -74,7 +75,7 @@ module.exports = function () {
 
 					storage.storeObject('Tests', response, function(status) {
 						if(status == false) {
-							console.log('Storing tests failes!');
+							log.info('Storing tests failes!');
 							utilities.executeCallback(callback, {});							
 						} else {
 							utilities.executeCallback(callback, test);

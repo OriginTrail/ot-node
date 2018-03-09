@@ -1,6 +1,7 @@
 var fs = require('fs');
 var Web3 = require('web3');
 var utilities = require('../../utilities')();
+const log = utilities.getLogger();
 var signing = require('./signing')();
 
 config = utilities.getConfig();

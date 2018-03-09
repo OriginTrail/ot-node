@@ -3,6 +3,7 @@ var unirest = require('unirest');
 var kademlia = require('./kademlia')();
 var utilities = require('./utilities')();
 var config = utilities.getConfig();
+const log = utilities.getLogger();
 
 module.exports = function () {
 	var replication = {
@@ -32,7 +33,7 @@ module.exports = function () {
 						.field('noreplicate', true)
 						.attach('importfile', input_file)
 						.end(function (response) {
-							console.log('Replication response : ' + JSON.stringify(response.body));
+							log.info('Replication response : ' + JSON.stringify(response.body));
 						});
 				}
 			}, parseInt(config.REQUEST_TIMEOUT));

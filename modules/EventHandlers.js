@@ -4,6 +4,7 @@ const holding = require('./holding')();
 const blockchain = require('./blockchain')();
 const signing = require('./blockchain_interface/ethereum/signing')();
 const utilities = require('./utilities')();
+const log = utilities.getLogger();
 const config = utilities.getConfig();
 
 class EventHandlers {

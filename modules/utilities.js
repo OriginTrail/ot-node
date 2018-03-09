@@ -7,16 +7,22 @@ var net = require('net');
 // eslint-disable-next-line no-unused-vars
 var natpmp = require('nat-pmp');
 var _ = require('lodash');
+const log = require('winston');
 
+log.add(log.transports.File, { filename: 'log.log' });
+log.remove(log.transports.Console);
+log.add(log.transports.Console, {colorize: true});
 
 module.exports = function () {
+
 	var utilities = {
+
 
 		executeCallback: function executeCallback (callback, callback_input) {
 			if (typeof callback === 'function') {
 				callback(callback_input);
 			} else {
-				console.log('Callback not defined!');
+				log.info('Callback not defined!');
 			}
 		},
 
@@ -71,6 +77,11 @@ module.exports = function () {
 
 		getRandomIntRange: function (min, max) {
 			return _.range(min,max);
+		},
+
+		getLogger() {
+
+			return log;
 		}
 	};
 

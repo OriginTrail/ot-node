@@ -1,4 +1,5 @@
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var test_table = require('./test_table')();
 var encryption = require('./encryption')();
 var async = require('async');

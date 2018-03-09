@@ -1,6 +1,8 @@
 const testTable = require('./test_table')();
 const signing = require('./blockchain_interface/ethereum/signing.js')();
 const axios = require('axios');
+const utilities = require('./utilities')();
+const log = utilities.getLogger();
 
 class SendTests {
 
@@ -11,7 +13,7 @@ class SendTests {
 	startTests() {
 		return setInterval(() => {
 			this.checkTests();
-		}, 1000);
+		}, 5000);
 	}
 
 	/**
@@ -36,11 +38,11 @@ class SendTests {
 				this.sendTest(test.dh_ip, test.dh_port, test.question).then( result => {
 					this.verifyResult(test, result.answer);
 				}).catch(e => {
-					console.log(e);
+					log.info(e);
 				});
 
 			} else {
-				//console.log(test);
+				//log.info(test);
 			}
 
 		});

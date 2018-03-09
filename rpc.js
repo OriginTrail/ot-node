@@ -6,7 +6,7 @@ var replication = require('./modules/replication')();
 var io = require('socket.io-client')('http://localhost:3000');
 var config = utilities.getConfig();
 var natUpnp = require('nat-upnp');
-
+const log = utilities.getLogger();
 // Active requests pool
 var socketRequests = {};
 
@@ -18,7 +18,7 @@ const { fork } = require('child_process');
 const forked = fork('./modules/SendTest.js');
 
 // forked.on('message', (msg) => {
-// 	console.log('Test sent', msg);
+// 	log.info('Test sent', msg);
 // });
 
 
@@ -28,7 +28,7 @@ var socket = io.connect('http://localhost:3000', {
 	reconnect: true
 });
 socket.on('connect', function () {
-	console.log('Socket connected to IPC-RPC Communication server on port ' + 3000);
+	log.info('Socket connected to IPC-RPC Communication server on port ' + 3000);
 });
 
 socket.on('event', function (data) {
@@ -40,7 +40,7 @@ socket.on('event', function (data) {
 });
 
 socket.on('disconnect', function () {
-	console.log('IPC-RPC Communication disconnected');
+	log.info('IPC-RPC Communication disconnected');
 });
 // =================================================
 
@@ -219,7 +219,7 @@ server.post('/api/receipt', function (req, res) {
 // ========================
 server.post('/import', function (req, res) {
 
-	console.log('Import request received');
+	log.info('Import request received');
 
 	var request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	var remote_access = utilities.getConfig().REMOTE_ACCESS;
@@ -276,11 +276,11 @@ if(config.NODE_IP == '127.0.0.1')
 	}, function(err) {
 		if(err)
 		{
-			console.log(err);
+			log.info(err);
 		}
 		else
 		{
-			console.log('uPnP port mapping enabled, port: ' + config.RPC_API_PORT);
+			log.info('uPnP port mapping enabled, port: ' + config.RPC_API_PORT);
 		}
 	});
 
@@ -291,11 +291,11 @@ if(config.NODE_IP == '127.0.0.1')
 	}, function(err) {
 		if(err)
 		{
-			console.log(err);
+			log.info(err);
 		}
 		else
 		{
-			console.log('uPnP port mapping enabled, port: ' + config.KADEMLIA_PORT);
+			log.info('uPnP port mapping enabled, port: ' + config.KADEMLIA_PORT);
 		}
 	});
 
@@ -303,11 +303,11 @@ if(config.NODE_IP == '127.0.0.1')
 
 	client.externalIp(function(err, ip) {
 		config.NODE_IP = ip;
-		console.log(ip);
+		log.info(ip);
 		kademlia.start();
 
 		server.listen(parseInt(config.RPC_API_PORT), function () {
-			console.log('%s listening at %s', server.name, server.url);
+			log.info('%s listening at %s', server.name, server.url);
 		});
 	});
 }
@@ -315,6 +315,6 @@ else
 {
 	kademlia.start();
 	server.listen(parseInt(config.RPC_API_PORT), function () {
-		console.log('%s listening at %s', server.name, server.url);
+		log.info('%s listening at %s', server.name, server.url);
 	});
 }

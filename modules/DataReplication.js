@@ -1,6 +1,7 @@
 const axios = require('axios');
 const graph = require('./graph')();
 const utilities = require('./utilities')();
+const log = utilities.getLogger();
 const config = utilities.getConfig();
 
 class DataReplication {
@@ -35,7 +36,7 @@ class DataReplication {
 			let result = await axios(options);
 			return result.data;
 		} catch(e) {
-			console.log(e);
+			log.info(e);
 		}
 
 	}
