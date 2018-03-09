@@ -1,8 +1,9 @@
 // External modules
 var PythonShell = require('python-shell');
 const utilities = require('./utilities')();
-// const blockchain = require('./blockchain')();
-// eslint-disable-next-line no-unused-vars
+const Mtree = require('./mtree')();
+const storage = require('./storage')();
+const blockchain = require('./blockchain')();
 const product = require('./product')();
 const async = require('async');
 const db = require('./database')();
@@ -69,7 +70,7 @@ module.exports = function () {
 			utilities.executeCallback(callback,true);
 		},
 
-		importXML: function async (ot_xml_document, callback) {
+		importXML: async function async (ot_xml_document, callback) {
 
 			var options = {
 				mode: 'text',
@@ -94,16 +95,34 @@ module.exports = function () {
 					var edges = result.edges;
 					let import_id = result.import_id;
 					
-					console.log(result);
 
-					const data = {};
-					data.vertices = vertices;
-					data.edges = edges;
-					data.import_id = import_id;
+					let leaves = [];
+					let hash_pairs = [];
 
-					replication.sendPayload(data).then(res => {
-						console.log(res);
-					});
+					for(i in vertices) {
+						leaves.push(utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data}));
+						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
+					}
+
+					let tree = new Mtree(hash_pairs);
+					let root_hash = tree.root();
+
+					console.log("Import id: " + import_id);
+					console.log("Import root hash: " + root_hash);
+					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
+						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()));
+
+						return;
+
+						const data = {};
+						data.vertices = vertices;
+						data.edges = edges;
+						data.import_id = import_id;
+
+						replication.sendPayload(data).then(res => {
+							console.log(res);
+						});
+					})
 
 				}
 			});

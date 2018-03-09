@@ -8,6 +8,7 @@
   "description": "OriginTrail node",
   "main": "gulpfile.js",
   "dependencies": {
+    "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^6.2.0",
     "aql": "0.0.3-alpha",
     "arangojs": "^6.1.0",
