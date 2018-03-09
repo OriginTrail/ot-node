@@ -65,26 +65,26 @@ class EventHandlers {
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  () =>  {
 			log.info('[DH] JSON imported');
-			// holding.addHoldingData(config.blockchain.settings.ethereum.wallet_address, this.queryObject.import_id, this.queryObject.public_key, () => {
-			// 	log.info('[DH] Holding data saved into database');
-			// 	this.emitResponse(socket, {
-			// 		status: 'success',
-			// 		code: 200,
-			// 		data: []
-			// 	});
-			// });
+			holding.addHoldingData(config.blockchain.settings.ethereum.wallet_address, this.queryObject.import_id, this.queryObject.public_key, () => {
+				log.info('[DH] Holding data saved into database');
+				this.emitResponse(socket, {
+					status: 'success',
+					code: 200,
+					data: []
+				});
+			});
 
 		});
 	}
 
 	testingRequest(socket) {
-		log.info('Event emitted: Testing Request Response');
+		log.info('[DH] Event emitted: Testing Request Response');
 		this.emitResponse(socket, []);
 	}
 
 	async receiptRequest(socket) {
-		await signing.sendConfirmationfunction(confirmation, callback);
-		log.info('Event emitted: Receipt Request Response');
+		await signing.sendConfirmation(confirmation, callback);
+		log.info('[DH] Event emitted: Receipt Request Response');
 		this.emitResponse(socket, []);
 	}
 }
