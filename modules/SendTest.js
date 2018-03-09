@@ -30,10 +30,11 @@ class SendTests {
 	*/
 	checkTests() {
 		log.info('Checking if there are tests to send');
-		testTable.nextTest((test) => {
+		testTable.getTests((test) => {
 
 			if(test.length === 0) return;
 			log.info('All tests:');
+			test = test[0];
 			log.info(test);
 			let currentUnixTime = Math.floor(new Date() / 1000);
 
