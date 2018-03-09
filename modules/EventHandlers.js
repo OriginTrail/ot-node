@@ -64,9 +64,9 @@ class EventHandlers {
 
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  () =>  {
-			log.info('JSON imported');
+			log.info('[DH] JSON imported');
 			holding.addHoldingData(config.blockchain.settings.ethereum.wallet_address, this.queryObject.import_id, this.queryObject.public_key, () => {
-				log.info('Holding data saved into database');
+				log.info('[DH] Holding data saved into database');
 				this.emitResponse(socket, {
 					status: 'success',
 					code: 200,

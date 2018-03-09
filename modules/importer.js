@@ -1,13 +1,15 @@
 // External modules
-var PythonShell = require('python-shell');
+const PythonShell = require('python-shell');
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
+const config = utilities.getConfig();
 const Mtree = require('./mtree')();
 const storage = require('./storage')();
 const blockchain = require('./blockchain')();
-const product = require('./product')();
+const testing = require('./testing')();
 const async = require('async');
 const db = require('./database')();
+const graph = require('./graph')();
 const replication = require('./DataReplication');
 
 module.exports = function () {
@@ -101,7 +103,7 @@ module.exports = function () {
 					let leaves = [];
 					let hash_pairs = [];
 
-					for(i in vertices) {
+					for(let i in vertices) {
 						leaves.push(utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data}));
 						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
 					}
@@ -116,7 +118,7 @@ module.exports = function () {
 							console.log(response);
 						});
 
-						log.info('Preparing to enter sendPayload');
+						log.info('[DC] Preparing to enter sendPayload');
 
 						const data = {};
 						data.vertices = vertices;
@@ -125,8 +127,19 @@ module.exports = function () {
 
 						replication.sendPayload(data).then(res => {
 							log.info(res);
+
+							if(res.message == "success") {
+								log.info('[DC] Generating tests for DH');
+								let currentUnixTime = Math.floor(new Date() / 1000);
+								let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
+                              	let encryptedVertices = graph.encryptVertices(vertices);
+
+								testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
+									log.info('[DC] Tests generated');
+								});
+							}
 						});
-					})
+					});
 
 				}
 			});

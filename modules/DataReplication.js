@@ -38,7 +38,7 @@ class DataReplication {
 			log.info('Payload sent');
 			return result.data;
 		} catch(e) {
-          	log.error('Payload not sent');
+			log.error('Payload not sent');
 			console.log(e);
 		}
 
