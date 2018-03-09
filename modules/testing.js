@@ -8,8 +8,8 @@ module.exports = function () {
 
 	var testing = {
 		generateTests: function(dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
-			log.info('[DH] Encrypted vertices:');
-			log.info(encrypted_vertices);
+			//log.info('[DH] Encrypted vertices:');
+			//log.info(encrypted_vertices);
 			var tests = [];
 
 			for(let i = 0; i < number_of_tests; i++) {
@@ -17,7 +17,7 @@ module.exports = function () {
 				let new_test = {};
 
 				let j = utilities.getRandomIntRange(0,encrypted_vertices.length - 1);
-				log.error('Random number: ' + j);
+				//log.error('Random number: ' + j);
 				let test_vertex = encrypted_vertices[j];
 				let test_vertex_data = test_vertex.data;
 
