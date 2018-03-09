@@ -83,6 +83,10 @@ module.exports = function () {
 				else
 				{
 					let vertex_data = vertex.data;
+
+					console.log(answer.data);
+
+					console.log(start_index, end_index);
 					let answer = vertex_data.substring(start_index, end_index);
 
 					console.log(answer);
