@@ -76,7 +76,7 @@ module.exports = function () {
 		},
 
 		getRandomIntRange: function (min, max) {
-			return _.range(min,max);
+			return _.random(min,max);
 		},
 
 		getLogger() {
