@@ -67,7 +67,7 @@ module.exports = function () {
 			let end_index = question.end_index;
 			let vertex_key = question.vertex_key;
 
-			graph.getVertices({_key: vertex_key}}, function(response) {
+			graph.getVertices({_key: vertex_key}, function(response) {
 				let vertex = response[0];
 
 				if(vertex == undefined || vertex.data == undefined)
