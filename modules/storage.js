@@ -27,7 +27,7 @@ module.exports = function(){
 		getObject: function(key, callback) {
 			db.get(key, function (err, value) {
 				if (err) {
-					//log.info('Storage: ' + err);
+					log.info('Storage: ' + err);
 					utilities.executeCallback(callback, []);
 				}
 				else {
