@@ -83,7 +83,6 @@ class EventHandlers {
 		log.info('[DH] Event emitted: Testing Request Response');
 		log.warn(this.queryObject);
 		testing.answerQuestion(this.queryObject, (answer) => {
-          	console.log(answer);
 			this.emitResponse(socket, answer);
 		});
 
