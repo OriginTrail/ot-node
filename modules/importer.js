@@ -112,10 +112,19 @@ module.exports = function () {
 					log.info("Import id: " + import_id);
 					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
+/*						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
 							console.log(response);
 						});
+*/
+	
+	const graph = require('./graph')();
+	const testing = require('./testing')();
+	let encryptedVertices = graph.encryptVertices(vertices);
 
+						testing.generateTests('127.0.0.1', 12345, '0x1234', encryptedVertices.vertices, 10, 1234564, 12345666, function(ispis) {
+							console.log(ispis);
+						})
+return;
 						log.info('Preparing to enter sendPayload');
 
 						const data = {};

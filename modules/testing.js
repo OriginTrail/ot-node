@@ -45,14 +45,17 @@ module.exports = function () {
 			}
 
 			test_table.insertTests(tests, function(response) {
+
 				utilities.executeCallback(callback, response);
+
+				test_table.getTests(function(response) {
+					console.log(response)
+
 			});
 			
+		})
 		},
 
-		checkTest() {
-
-		}
 	};
 
 	return testing;
