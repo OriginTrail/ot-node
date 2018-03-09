@@ -1,7 +1,11 @@
 var levelup = require('levelup');
 var leveldown = require('leveldown');
-var db = levelup(leveldown('./system'));
 const utilities = require('./utilities')();
+
+	var db = levelup(leveldown('./system'),function(err, response) {});
+
+
+
 
 module.exports = function(){
 	

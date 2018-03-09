@@ -184,6 +184,27 @@ module.exports = function() {
 			sendRaw(rawTx, callback);
 		},
 
+		confirmEscrow: async function(DC_wallet, data_id, callback)
+		{
+			if(nonce == -1)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
+
+			var new_nonce = nonce + nonce_increment;
+			nonce_increment = nonce_increment + 1;
+
+			var txOptions = {
+			    nonce: new_nonce,
+			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+			    to: escrow_address
+			};
+
+			console.log(txOptions);
+
+			var rawTx = txutils.functionTx(escrow_abi, 'verify', [DC_wallet, data_id], txOptions);
+			sendRaw(rawTx, callback);
+		},
+
 		createConfirmation: function(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid){
 
 			/*
