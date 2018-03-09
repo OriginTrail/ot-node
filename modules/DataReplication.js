@@ -37,7 +37,7 @@ class DataReplication {
 			let result = await axios(options);
 			return result.data;
 		} catch(e) {
-			log.info(e);
+			console.log(e);
 		}
 
 	}
