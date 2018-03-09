@@ -81,6 +81,12 @@ module.exports = function () {
 				{
 					let vertex_data = vertex.data;
 
+					console.log('-------')					
+					console.log(start_index, end_index);
+					console.log('-------')
+					console.log('VERTEX_DATA', vertex.data);
+					console.log('-------')
+
 					let answer = vertex_data.substring(start_index, end_index);
 
 					utilities.executeCallback(callback, answer);
