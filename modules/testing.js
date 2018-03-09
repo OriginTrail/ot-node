@@ -3,6 +3,7 @@ var config = utilities.getConfig();
 const log = utilities.getLogger();
 var test_table = require('./test_table')();
 var encryption = require('./encryption')();
+var graph = require('./graph')();
 var async = require('async');
 
 module.exports = function () {
@@ -60,6 +61,29 @@ module.exports = function () {
 			
 		})
 		},
+
+		answerQuestion: function(question, callback) {
+			let start_index = question.start_index;
+			let end_index = question.end_index;
+			let vertex_key = question.vertex_key;
+
+			graph.getVertices({_key: vertex_key}}, function(response) {
+				let vertex = response[0];
+
+				if(vertex == undefined || vertex.data == undefined)
+				{
+					utilities.executeCallback(callback, 'MISSING_DATA');
+				}
+				else
+				{
+					let vertex_data = vertex.data;
+					let answer = vertex_data.substring(start_index, end_index);
+
+					utilities.executeCallback(callback, answer);
+				}
+			})
+
+		}
 
 	};
 
