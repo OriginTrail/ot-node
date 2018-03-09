@@ -42,7 +42,7 @@ class SendTests {
 				this.sendTest(test.dh_ip, test.dh_port, test.question, answer => {
 					log.info('Test sent:');
 					log.info(test);
-					this.verifyResult(test, answer);
+					this.verifyResult(test, answer.data);
 				});
 
 			} else {
