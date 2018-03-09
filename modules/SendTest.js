@@ -81,8 +81,8 @@ class SendTests {
 			data: question
 		};
 
-		axios(options, (response ) => {
-			utilities.executeCallback(callback, response);
+		axios(options).then(result => {
+          utilities.executeCallback(callback, result);
 		});
 	}
 
