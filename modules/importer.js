@@ -14,6 +14,7 @@ module.exports = function () {
 	let importer = {
 
 		importJSON: async function (json_document, callback) {
+			log.info('Entering importJSON');
 			var graph = json_document;
 			await db.createVertexCollection('ot_vertices', function(){});
 			await db.createEdgeCollection('ot_edges', function(){});
@@ -111,9 +112,11 @@ module.exports = function () {
 					log.info("Import id: " + import_id);
 					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()));
+						blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
+							console.log(response);
+						});
 
-						return;
+						log.info('Preparing to enter sendPayload');
 
 						const data = {};
 						data.vertices = vertices;

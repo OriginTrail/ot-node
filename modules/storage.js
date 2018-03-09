@@ -3,7 +3,7 @@ var leveldown = require('leveldown');
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
 
-	var db = levelup(leveldown('./system'),function(err, response) {});
+var db = levelup(leveldown('./system'),function(err, response) {});
 
 
 

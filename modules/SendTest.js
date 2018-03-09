@@ -11,6 +11,7 @@ class SendTests {
 	 *
 	 */
 	startTests() {
+		log.info('Starting tests');
 		return setInterval(() => {
 			this.checkTests();
 		}, 5000);
@@ -28,6 +29,7 @@ class SendTests {
 	*
 	*/
 	checkTests() {
+		log.info('Checking tests');
 		testTable.getTests((test) => {
 			if(test.length === 0) return;
 
@@ -57,6 +59,7 @@ class SendTests {
 	 * @returns {Promise.data} object data.answer
 	 */
 	async sendTest(ip, port, question) {
+		log.info('Entering sendTest');
 		question = JSON.stringify({
 			question: question
 		});
@@ -83,6 +86,7 @@ class SendTests {
 	 * @param answer
 	 */
 	verifyResult(test, answer) {
+		log.info('Entering verifyResult');
 		if(test.answer === answer) {
 			this.sendReceipt();
 			testTable.popNextTest(() => {
@@ -92,7 +96,7 @@ class SendTests {
 	}
 
 	createReceipt() {
-		return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
+		//return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
 	}
 
 	async sendReceipt(ip, port) {

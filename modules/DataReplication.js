@@ -15,6 +15,7 @@ class DataReplication {
 
 	async sendPayload(data) {
 
+		log.info('Entering sendPayload');
 		let encryptedVertices = graph.encryptVertices(data.vertices);
 
 		const payload = JSON.stringify({
@@ -36,7 +37,7 @@ class DataReplication {
 			let result = await axios(options);
 			return result.data;
 		} catch(e) {
-			log.info(e);
+			console.log(e);
 		}
 
 	}

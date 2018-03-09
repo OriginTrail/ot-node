@@ -48,13 +48,13 @@ import_id = int(time.time())
 #Database connection
 
 client = ArangoClient(protocol = 'http',
-host = "localhost",
-port = "8529",
-username = "root",
-password = "root",
+host = os.environ.get("DB_HOST"),
+port = os.environ.get("DB_PORT"),
+username = os.environ.get("DB_USERNAME"),
+password = os.environ.get("DB_PASSWORD"),
 enable_logging = True)
 
-db = client.db('origintrail')
+db = client.db(os.environ.get("DB_DATABASE"))
 # client.grant_user_access(os.environ.get("DB_USERNAME"), os.environ.get("DB_DATABASE"))
 
 current_graphs = db.graphs()
