@@ -70,26 +70,27 @@ module.exports = function () {
 
 			graph.getVertices({_key: vertex_key}, function(response) {
 
-				console.log(response);
+				console.log('RESPONSE',response);
 
 				let vertex = response[0];
 
-				console.log(vertex);
+				console.log('VERTEX',vertex);
 
 				if(vertex == undefined || vertex.data == undefined)
 				{
 					utilities.executeCallback(callback, 'MISSING_DATA');
+					return;
 				}
 				else
 				{
 					let vertex_data = vertex.data;
 
-					console.log(answer.data);
+					console.log('VERTEX.DATA',vertex.data);
 
-					console.log(start_index, end_index);
+					console.log('INDEXES',start_index, end_index);
 					let answer = vertex_data.substring(start_index, end_index);
 
-					console.log(answer);
+					console.log('ANSWER',answer);
 
 					utilities.executeCallback(callback, answer);
 				}
