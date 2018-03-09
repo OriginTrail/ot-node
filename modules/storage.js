@@ -1,37 +1,69 @@
-var levelup = require('levelup');
-var leveldown = require('leveldown');
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
 
-var db = levelup(leveldown('./system'),function(err, response) {});
+var db = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017";
+
+var dbo = undefined;
 
 
 
 
 module.exports = function(){
-	
+
 	var storage = {
 		storeObject: function(key, obj, callback) {
-			db.put(key, JSON.stringify(obj), function (err) {
-				if(err) {
-					log.info('Storage error: ', err);
-					utilities.executeCallback(callback, false);
-				}
-				else {
-				//	log.info('Stored key: ', key);
-					utilities.executeCallback(callback, true);
-				}
-			});
+			db.connect(url, function(err, db) {
+			  dbo = db.db("origintrail");
+				dbo.createCollection("ot_system", function(err, res) {
+					dbo.collection("ot_system").findOne({key: key}, function(err, result) {
+
+		 			if (result == null) {
+
+						dbo.collection('ot_system').insertOne({key: key, data: obj}, function(err, res) {
+							if (err) throw err;
+							console.log("1 document inserted");
+							utilities.executeCallback(callback, true);
+							});
+						db.close();
+					}
+					else
+					{
+						var query = { key: key};
+	  					var newvalues = { $set: {key: key, data: obj } };
+	  					dbo.collection("ot_system").updateOne(query, newvalues, function(err, res) {
+						    if (result == null) {
+						    	utilities.executeCallback(callback, false);
+						    	db.close();
+						    }
+						  	else {
+							    console.log("1 document updated");
+							    utilities.executeCallback(callback, true);
+							    db.close();
+							  }
+						  });
+
+						}
+					})
+
+					  
+					  
+					});
+				});			  
+			  
+	 		
 		},
 
 		getObject: function(key, callback) {
-			db.get(key, function (err, value) {
-				if (err) {
-					log.info('Storage: ' + err);
+			
+	 		dbo.collection("ot_system").findOne({key: key}, function(err, result) {
+
+				if (err || result == null) {
+				//	log.info('Storage: ' + err);
 					utilities.executeCallback(callback, []);
 				}
 				else {
-					utilities.executeCallback(callback, JSON.parse(value));
+					utilities.executeCallback(callback, result.data);
 				}
 
 

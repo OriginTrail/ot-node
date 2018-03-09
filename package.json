@@ -28,6 +28,7 @@
     "leveldown": "^3.0.0",
     "levelup": "^2.0.2",
     "lodash": "^4.17.5",
+    "mongodb": "^3.0.4",
     "nat-pmp": "^1.0.0",
     "nat-upnp": "^1.1.1",
     "node-rsa": "^0.4.2",
