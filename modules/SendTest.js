@@ -14,7 +14,7 @@ class SendTests {
 		log.info('Starting tests');
 		return setInterval(() => {
 			this.checkTests();
-		}, 5000);
+		}, 15000);
 	}
 
 	/**
@@ -29,8 +29,10 @@ class SendTests {
 	*
 	*/
 	checkTests() {
-
+		log.info('Checking if there are tests to send');
 		testTable.getTests((test) => {
+			log.info('All tests:');
+			log.info(test);
 			if(test.length === 0) return;
 
 			let currentUnixTime = Math.floor(new Date() / 1000);
