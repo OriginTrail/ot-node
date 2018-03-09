@@ -73,7 +73,7 @@ module.exports = function () {
 				} else {
 					let test = response[0];
 
-					utilities.executeCallback(callback, response);							
+					utilities.executeCallback(callback, test);							
 				}
 			});
 		},
