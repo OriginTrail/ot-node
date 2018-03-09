@@ -69,7 +69,7 @@ module.exports = function () {
 		nextTest: function(callback) {
 			storage.getObject('Tests', function(response) {
 				if(response.length == 0) {
-					utilities.executeCallback(callback, undefined);
+					utilities.executeCallback(callback, response);
 				} else {
 					let test = response[0];
 
