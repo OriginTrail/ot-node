@@ -31,10 +31,10 @@ class SendTests {
 	checkTests() {
 		log.info('Checking if there are tests to send');
 		testTable.getTests((test) => {
+
+			if(test.length === 0) return;
 			log.info('All tests:');
 			log.info(test);
-			if(test.length === 0) return;
-
 			let currentUnixTime = Math.floor(new Date() / 1000);
 
 			if (currentUnixTime > test.test_time) {
@@ -106,7 +106,7 @@ class SendTests {
 		} else {
 			log.warning('Answer not good');
 		}
-    }
+	}
 
 
 	createReceipt() {
