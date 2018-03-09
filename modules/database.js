@@ -28,102 +28,104 @@ module.exports = function () {
 				console.log(err);
 			}
 		},
-		createVertexCollection: async function(collection_name, callback) {
+		createVertexCollection: async function (collection_name, callback) {
 			var collection = db.collection(collection_name);
 			collection.create().then(
-			  () => {
-			  		console.log('Collection created');
-			  		utilities.executeCallback(callback, true);
+				() => {
+					console.log('Collection created');
+					utilities.executeCallback(callback, true);
 				},
-			  err => {
-			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists');
-			  		utilities.executeCallback(callback, true);
-			  	}
-			  	else
-			  		{
-			  		console.log(err);
-				  	utilities.executeCallback(callback, false);
-				  	}
-			  	}
-			);	
+				err => {
+					if (err.response.body.code == 409) {
+						console.log('collection already exists');
+						utilities.executeCallback(callback, true);
+					}
+					else {
+						console.log(err);
+						utilities.executeCallback(callback, false);
+					}
+				}
+			);
 		},
-		createEdgeCollection: async function(collection_name, callback) {
+		createEdgeCollection: async function (collection_name, callback) {
 			var collection = db.edgeCollection(collection_name);
 			collection.create().then(
-			  () => {
-			  		console.log('Collection created');
-			  		utilities.executeCallback(callback, true);
+				() => {
+					console.log('Collection created');
+					utilities.executeCallback(callback, true);
 				},
-			  err => {
-			  	if(err.response.body.code == 409) {
-			  		console.log('collection already exists');
-			  		utilities.executeCallback(callback, true);
-			  	}
-			  	else
-			  		{
-			  		console.log(err);
-				  	utilities.executeCallback(callback, false);
-				  	}
-			  	}
+				err => {
+					if (err.response.body.code == 409) {
+						console.log('collection already exists');
+						utilities.executeCallback(callback, true);
+					}
+					else {
+						console.log(err);
+						utilities.executeCallback(callback, false);
+					}
+				}
 			);
 		},
 
-		addVertex: function(collection_name, vertex, callback) {
+		addVertex: function (collection_name, vertex, callback) {
 			var collection = db.collection(collection_name);
 			collection.save(vertex).then(
-			  meta => utilities.executeCallback(callback, true),
-			  err => {
-			  	//console.error('Failed to save document:', err)
-			  	utilities.executeCallback(callback, false);
-			  }
+				// eslint-disable-next-line no-unused-vars
+				meta => utilities.executeCallback(callback, true),
+				// eslint-disable-next-line no-unused-vars
+				err => {
+					//console.error('Failed to save document:', err)
+					utilities.executeCallback(callback, false);
+				}
 			);
 		},
 
-		addEdge: function(collection_name, edge, callback) {
+		addEdge: function (collection_name, edge, callback) {
 			var collection = db.collection(collection_name);
 			collection.save(edge).then(
-			  meta => utilities.executeCallback(callback, true),
-			  err => {
-			  	//console.error('Failed to save document:', err)
-			  	utilities.executeCallback(callback, false);
-			  }
+				// eslint-disable-next-line no-unused-vars
+				meta => utilities.executeCallback(callback, true),
+				// eslint-disable-next-line no-unused-vars
+				err => {
+					//console.error('Failed to save document:', err)
+					utilities.executeCallback(callback, false);
+				}
 			);
 		},
 
-		updateDocumentImports: function(collection_name, document_key, import_number, callback) {
+		updateDocumentImports: function (collection_name, document_key, import_number, callback) {
 			var collection = db.collection(collection_name);
 			collection.document(document_key).then(
-			  doc => {
+				doc => {
 
 					var imports = doc.imports;
-			  	
-					if(imports == undefined)
-			  		imports = [];
 
-			  	if(imports.indexOf(import_number) == -1)
-			  	{
+					if (imports == undefined)
+						imports = [];
+
+					if (imports.indexOf(import_number) == -1) {
 						imports.push(import_number);
-						collection.update(document_key, {imports: imports}).then(
-					  meta => utilities.executeCallback(callback, true),
-					  err => {
-					  	console.log(err);
-					  	utilities.executeCallback(callback, false);
+						collection.update(document_key, { imports: imports }).then(
+							// eslint-disable-next-line no-unused-vars
+							meta => utilities.executeCallback(callback, true),
+							err => {
+								console.log(err);
+								utilities.executeCallback(callback, false);
 							}
-						);  		
-			  	}
-			  },
-			  err => {
+						);
+					}
+				},
+				err => {
 					console.log(err);
 					utilities.executeCallback(callback, false);
 				}
-			);			
+			);
 		},
-		
-		getVerticesByImportId: async function(import_id, callback){
 
-			queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-			params = {importId: import_id};
+		getVerticesByImportId: async function (import_id, callback) {
+
+			let queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+			let params = { importId: import_id };
 
 			try {
 				let cursor = await db.query(queryString, params);
@@ -134,10 +136,10 @@ module.exports = function () {
 			}
 		},
 
-		getEdgesByImportId: async function(import_id, callback){
+		getEdgesByImportId: async function (import_id, callback) {
 
-			queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-			params = {importId: import_id};
+			let queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+			let params = { importId: import_id };
 
 			try {
 				let cursor = await db.query(queryString, params);

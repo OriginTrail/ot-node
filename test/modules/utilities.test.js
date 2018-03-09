@@ -1,7 +1,12 @@
 'use strict';
+const describe = require('mocha').describe;
+const it = require('mocha').it;
+// eslint-disable-next-line no-unused-vars
 const should = require('should');
-const reuest = require('supertest');
+// eslint-disable-next-line no-unused-vars
+const request = require('supertest');
 const utilities = require('../../modules/utilities')();
+// eslint-disable-next-line no-unused-vars
 const config = utilities.getConfig();
 
 

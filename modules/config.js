@@ -40,7 +40,7 @@ module.exports = {
 				'node_port': '80',
 				'gas_limit': process.env.GAS_LIMIT,
 				'gas_price': process.env.GAS_PRICE
-		  },
+			},
 			'iota': {
 				'i':'// TODO: setup testing Iota node'
 			},

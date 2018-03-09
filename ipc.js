@@ -64,7 +64,8 @@ server.post('/import', function (req, res) {
 		var post_body = req.body;
 
 		if (post_body.importer != undefined) {
-			selected_importer = post_body.importer;
+			// eslint-disable-next-line no-unused-vars
+			var selected_importer = post_body.importer;
 		}
 
 		var input_file = req.files.importfile.path;
