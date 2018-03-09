@@ -2,8 +2,10 @@ const product = require('./product')();
 const importer = require('./importer')();
 const holding = require('./holding')();
 const blockchain = require('./blockchain')();
+const testing = require('./testing')();
 const signing = require('./blockchain_interface/ethereum/signing')();
 const utilities = require('./utilities')();
+const axios = require('axios');
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
@@ -79,8 +81,11 @@ class EventHandlers {
 
 	testingRequest(socket) {
 		log.info('[DH] Event emitted: Testing Request Response');
-		
-		this.emitResponse(socket, []);
+
+		testing.answerQuestion(this.queryObject, (answer) => {
+			this.emitResponse(socket, answer);
+		});
+
 	}
 
 	async receiptRequest(socket) {

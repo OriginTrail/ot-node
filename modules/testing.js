@@ -1,4 +1,5 @@
 var utilities = require('./utilities')();
+var config = utilities.getConfig();
 const log = utilities.getLogger();
 var test_table = require('./test_table')();
 var encryption = require('./encryption')();
@@ -34,6 +35,8 @@ module.exports = function () {
 				new_test.answer = answer;
 				new_test.dh_ip = dh_ip;
 				new_test.dh_port = dh_port;
+				new_test.dc_ip = config.NODE_IP;
+				new_test.dc_port = config.NODE_PORT;
 				new_test.dh_wallet = dh_wallet;
 
 				if(i == number_of_tests - 1)

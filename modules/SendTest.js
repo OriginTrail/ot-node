@@ -39,10 +39,10 @@ class SendTests {
 
 			if (currentUnixTime > test.test_time) {
 
-				this.sendTest(test.dh_ip, test.dh_port, test.question).then( result => {
+				this.sendTest(test.dh_ip, test.dh_port, test.question).then( answer => {
 					log.info('Test sent:');
 					log.info(test);
-					this.verifyResult(test, result.answer);
+					this.verifyResult(test, answer);
 				}).catch(e => {
 					log.error('Error sending test');
 					log.error(e);
@@ -71,6 +71,8 @@ class SendTests {
 		});
 		log.info('Question to send');
 		log.info(question);
+		let testQuestion = utilities.copyObject(question);
+		delete testQuestion.answer;
 
 		const options = {
 			method: 'POST',
