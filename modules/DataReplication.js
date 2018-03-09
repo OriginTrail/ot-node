@@ -24,6 +24,13 @@ class DataReplication {
 
 		testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
 			log.info('[DC] Tests generated');
+
+			const test_table = require('./test_table')();
+			test_table.getTests((res) => {
+				log.info('tests');
+				log.info(res);
+
+			});
 		});
 
 		const payload = JSON.stringify({
