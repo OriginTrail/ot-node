@@ -39,13 +39,10 @@ class SendTests {
 
 			if (currentUnixTime > test.test_time) {
 
-				this.sendTest(test.dh_ip, test.dh_port, test.question).then( answer => {
+				this.sendTest(test.dh_ip, test.dh_port, test.question, answer => {
 					log.info('Test sent:');
 					log.info(test);
 					this.verifyResult(test, answer);
-				}).catch(e => {
-					log.error('Error sending test');
-					log.error(e);
 				});
 
 			} else {
@@ -64,7 +61,7 @@ class SendTests {
 	 * @param question object
 	 * @returns {Promise.data} object data.answer
 	 */
-	async sendTest(ip, port, question) {
+	sendTest(ip, port, question, callback) {
 		log.info('Entering sendTest');
 		question = JSON.stringify({
 			question: question
@@ -84,8 +81,9 @@ class SendTests {
 			data: question
 		};
 
-		let response = await axios(options);
-		return response;
+		axios(options).then(result => {
+          utilities.executeCallback(callback, result);
+		});
 	}
 
 	/**
@@ -96,6 +94,8 @@ class SendTests {
 	 */
 	verifyResult(test, answer) {
 		log.info('Entering verifyResult');
+		log.error(test.answer);
+		log.warn(answer);
 		if(test.answer === answer) {
 			log.info('Answer is good');
 			this.sendReceipt().then(result => {
