@@ -55,7 +55,8 @@ module.exports = function(){
 		},
 
 		getObject: function(key, callback) {
-			
+			db.connect(url, function(err, db) {
+			  dbo = db.db("origintrail");
 	 		dbo.collection("ot_system").findOne({key: key}, function(err, result) {
 
 				if (err || result == null) {
@@ -66,10 +67,9 @@ module.exports = function(){
 					utilities.executeCallback(callback, result.data);
 				}
 
-
-
 			});
-		}
+		});
+
 		
 	};
 
