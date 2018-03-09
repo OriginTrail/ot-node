@@ -21,7 +21,6 @@ module.exports = function () {
 		},
 
 		runQuery: async function (queryString, callback, params = {}) {
-			log.info(queryString);
 			try {
 				let cursor = await db.query(queryString, params);
 				utilities.executeCallback(callback, cursor._result);
