@@ -180,8 +180,8 @@ module.exports = function () {
 		encryptVertices: function(vertices) {
 
 			var keys = encryption.generateKeyPair();
-			log.info(vertices);
-			for(i in vertices) {
+			//log.info(vertices);
+			for(let i in vertices) {
 				vertices[i].data = encryption.encryptObject(vertices[i].data, keys.privateKey);
 			}
 

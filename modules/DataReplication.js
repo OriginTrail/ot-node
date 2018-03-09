@@ -1,5 +1,6 @@
 const axios = require('axios');
 const graph = require('./graph')();
+const testing = require('./testing')();
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
 const config = utilities.getConfig();
@@ -17,6 +18,13 @@ class DataReplication {
 
 		log.info('Entering sendPayload');
 		let encryptedVertices = graph.encryptVertices(data.vertices);
+
+		let currentUnixTime = Math.floor(new Date() / 1000);
+		let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
+
+		testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
+			log.info('[DC] Tests generated');
+		});
 
 		const payload = JSON.stringify({
 			vertices: encryptedVertices.vertices,

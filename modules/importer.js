@@ -6,10 +6,10 @@ const config = utilities.getConfig();
 const Mtree = require('./mtree')();
 const storage = require('./storage')();
 const blockchain = require('./blockchain')();
-const testing = require('./testing')();
+
 const async = require('async');
 const db = require('./database')();
-const graph = require('./graph')();
+
 const replication = require('./DataReplication');
 
 module.exports = function () {
@@ -128,13 +128,6 @@ module.exports = function () {
 						replication.sendPayload(data).then(res => {
 							log.info('[DC] Payload sent');
 							log.info('[DC] Generating tests for DH');
-							let currentUnixTime = Math.floor(new Date() / 1000);
-							let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
-							let encryptedVertices = graph.encryptVertices(vertices);
-
-							testing.generateTests(config.NODE_IP, config.RPC_API_PORT, config.blockchain.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
-								log.info('[DC] Tests generated');
-							});
 
 						});
 					});
