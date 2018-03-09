@@ -17,6 +17,7 @@ module.exports = function () {
 				let new_test = {};
 
 				let j = utilities.getRandomIntRange(0,encrypted_vertices.length);
+				log.error('Random number: ' + j);
 				let test_vertex = encrypted_vertices[j];
 				let test_vertex_data = test_vertex.data;
 
