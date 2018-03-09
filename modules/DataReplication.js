@@ -35,8 +35,10 @@ class DataReplication {
 		};
 		try {
 			let result = await axios(options);
+			log.info('Payload sent');
 			return result.data;
 		} catch(e) {
+          	log.error('Payload not sent');
 			console.log(e);
 		}
 
