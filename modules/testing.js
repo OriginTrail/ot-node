@@ -8,7 +8,8 @@ module.exports = function () {
 
 	var testing = {
 		generateTests: function(dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
-
+			log.info('[DH] Encrypted vertices:');
+			log.info(encrypted_vertices);
 			var tests = [];
 
 			for(let i = 0; i < number_of_tests; i++) {
