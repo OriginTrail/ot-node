@@ -34,19 +34,19 @@ class SendTests {
 			if(test.length === 0) return;
 			log.info('All tests:');
 			test = test[0];
-			log.info(test);
+			//log.info(test);
 			let currentUnixTime = Math.floor(new Date() / 1000);
 
 			if (currentUnixTime > test.test_time) {
 
 				this.sendTest(test.dh_ip, test.dh_port, test.question, answer => {
 					log.info('Test sent:');
-					log.info(test);
+					//log.info(test);
 					this.verifyResult(test, answer.data);
 				});
 
 			} else {
-				log.info('Test time: ' + test.time);
+				log.info('Test time: ' + test.test_time);
 				log.info('Current time: ' + currentUnixTime);
 			}
 
@@ -66,8 +66,8 @@ class SendTests {
 		question = JSON.stringify({
 			question: question
 		});
-		log.info('Question to send');
-		log.info(question);
+		// log.info('Question to send');
+		// log.info(question);
 		let testQuestion = utilities.copyObject(question);
 		delete testQuestion.answer;
 
@@ -94,13 +94,13 @@ class SendTests {
 	 */
 	verifyResult(test, answer) {
 		log.info('Entering verifyResult');
-		log.error(test.answer);
-		log.warn(answer);
+		// log.error(test.answer);
+		// log.warn(answer);
 		if(test.answer === answer) {
 			log.info('Answer is good');
 			this.sendReceipt().then(result => {
 				log.info('Receipt sent. Result:');
-				log.info(result);
+				//log.info(result);
 			});
 			testTable.popNextTest(() => {
 				log.info("Test deleted from database");
@@ -118,7 +118,7 @@ class SendTests {
 	async sendReceipt(ip, port) {
 		log.info('Sending receipt...');
 		const receipt = this.createReceipt();
-		log.info(receipt);
+	//	log.info(receipt);
 		const options = {
 			method: 'POST',
 			url: 'http://' + ip + ':' + port + '/api/receipt',
