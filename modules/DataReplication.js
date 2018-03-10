@@ -24,7 +24,7 @@ class DataReplication {
 				log.info('[DC] Tests generated');
 			});
           	const fs = require('fs');
-			fs.writeFileSync('stasesalje.txt', encryptedVertices.vertices);
+			fs.writeFileSync('stasesalje.txt', JSON.stringify(encryptedVertices.vertices));
 			const payload = JSON.stringify({
 				vertices: encryptedVertices.vertices,
 				public_key: encryptedVertices.public_key,
