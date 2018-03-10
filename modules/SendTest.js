@@ -3,6 +3,7 @@ const signing = require('./blockchain_interface/ethereum/signing.js')();
 const axios = require('axios');
 const holding = require('./holding')();
 const utilities = require('./utilities')();
+const config = utilities.getConfig();
 const log = utilities.getLogger();
 
 class SendTests {
@@ -100,8 +101,8 @@ class SendTests {
 		var receipt;
 		if(test.answer === answer.answer) {
 			log.info('Answer is good');
-			holding.getHoldingData(answer.wallet, test.data_id, (holdingData) => {
-				receipt = signing.createConfirmation(answer.wallet, test.data_id, holdingData.confirmation_number, test.test_time, true);
+			holding.getHoldingData(config.DH_WALLET, test.data_id, (holdingData) => {
+				receipt = signing.createConfirmation(config.DH_WALLET, test.data_id, holdingData.confirmation_number, test.test_time, true);
 				this.sendReceipt(answer.ip, answer.port, receipt).then(result => {
 					log.info('Receipt sent. Result:');
 					testTable.popNextTest(() => {
