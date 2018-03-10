@@ -65,7 +65,7 @@ class EventHandlers {
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  () =>  {
 			log.info('[DH] JSON imported');
-			signing.confirmEscrow(DC_wallet, data_id, (response) => {
+			signing.confirmEscrow(this.queryObject.dc_wallet, this.queryObject.data_id, (response) => {
 				this.emitResponse(socket, {
 					status: 'success',
 					code: 200,

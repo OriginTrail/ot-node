@@ -28,7 +28,8 @@ class DataReplication {
 				vertices: encryptedVertices.vertices,
 				public_key: encryptedVertices.public_key,
 				edges: data.edges,
-				data_id: data.data_id
+				data_id: data.data_id,
+				dc_wallet: config.blockchain.settings.ethereum.wallet_address
 			});
 			const options = {
 				method: 'POST',
