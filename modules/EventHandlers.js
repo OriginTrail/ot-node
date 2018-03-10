@@ -88,6 +88,7 @@ class EventHandlers {
 	}
 
 	receiptRequest(socket) {
+		log.info(this.queryObject);
 		signing.sendConfirmation(this.queryObject.data, (response) => {
 			log.info('[DH] Event emitted: Receipt Request Response');
 			this.emitResponse(socket, []);
