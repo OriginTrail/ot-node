@@ -130,7 +130,7 @@ module.exports = function () {
 							data.edges = edges;
 							data.import_id = import_id;
 
-							replication.sendPayload(data, (result) => {
+							replication.sendPayload(import_id, data, (result) => {
 								log.info('[DC] Payload sent');
 								log.info('[DC] Generating tests for DH');
 							});

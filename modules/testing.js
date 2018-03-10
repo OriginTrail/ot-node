@@ -9,7 +9,7 @@ var async = require('async');
 module.exports = function () {
 
 	var testing = {
-		generateTests: function(dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
+		generateTests: function(data_id, dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
 			//log.info('[DH] Encrypted vertices:');
 			//log.info(encrypted_vertices);
 			var tests = [];
@@ -39,6 +39,7 @@ module.exports = function () {
 				new_test.dc_ip = config.NODE_IP;
 				new_test.dc_port = config.NODE_PORT;
 				new_test.dh_wallet = dh_wallet;
+				new_test.data_id = data_id;
 
 				if(i == number_of_tests - 1)
 				{	
