@@ -55,11 +55,9 @@ module.exports = function () {
 				utilities.executeCallback(callback, response);
 
 				test_table.getTests(function(response) {
-					console.log(response)
-
+					console.log(response);
+				});
 			});
-			
-		})
 		},
 
 		answerQuestion: function(test, callback) {
@@ -93,7 +91,7 @@ module.exports = function () {
 
 					utilities.executeCallback(callback, answer);
 				}
-			})
+			});
 
 		}
 
