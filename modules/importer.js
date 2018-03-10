@@ -104,7 +104,7 @@ module.exports = function () {
 					let hash_pairs = [];
 
 					for(let i in vertices) {
-						leaves.push(utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data}));
+						leaves.push(utilities.sha3(utilities.sortObject({identifiers: utilities.vertices[i].identifiers, data: vertices[i].data})));
 						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
 					}
 
@@ -120,20 +120,23 @@ module.exports = function () {
 	*/
 						const graph = require('./graph')();
 						const testing = require('./testing')();
-						let encryptedVertices = graph.encryptVertices(vertices);
+						graph.encryptVertices(vertices, function(response) {
 
-						log.info('[DC] Preparing to enter sendPayload');
+							log.info('[DC] Preparing to enter sendPayload');
 
-						const data = {};
-						data.vertices = vertices;
-						data.edges = edges;
-						data.import_id = import_id;
+							const data = {};
+							data.vertices = vertices;
+							data.edges = edges;
+							data.import_id = import_id;
 
-						replication.sendPayload(data).then(res => {
-							log.info('[DC] Payload sent');
-							log.info('[DC] Generating tests for DH');
+							replication.sendPayload(data).then(res => {
+								log.info('[DC] Payload sent');
+								log.info('[DC] Generating tests for DH');
+
+							});
 
 						});
+
 					});
 
 				}

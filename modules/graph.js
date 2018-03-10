@@ -1,8 +1,9 @@
 // External modules
 const utilities = require('./utilities')();
-const log = utilities.getLogger();
+//const log = utilities.getLogger();
 const database = require('./database')();
 const encryption = require('./encryption')();
+const storage = require('./storage')();
 
 const config = utilities.getConfig();
 const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
@@ -177,15 +178,53 @@ module.exports = function () {
 			}
 		},
 
-		encryptVertices: function(vertices) {
+		encryptVertices: function(dh_ip, dh_port, vertices, callback) {
 
-			var keys = encryption.generateKeyPair();
-			//log.info(vertices);
-			for(let i in vertices) {
-				vertices[i].data = encryption.encryptObject(vertices[i].data, keys.privateKey);
-			}
+			storage.getObject('Keys', function(response) {
+				if(response.length == 0)
+				{
+					var keypair = encryption.generateKeyPair();
 
-			return {vertices: vertices, public_key: keys.publicKey};
+					storage.storeObject('Keys', [{dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey}], function(response) {
+			
+						for(let i in vertices) {
+							vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+						}
+
+						callback({vertices: vertices, public_key: keypair.publicKey});
+					})
+
+				}
+				else
+				{
+					for(let i in response) {
+						if(response[i].dh_ip == dh_ip && response[i].dh_port == dh_port) {
+							
+							for(let j in vertices) {
+								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
+							}
+
+							callback({vertices: vertices, public_key: response[i].publicKey});
+							return;
+						}
+					}
+
+					var keypair = encryption.generateKeyPair();
+
+					response.push({dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey});
+
+					storage.storeObject('Keys', response, function(response) {
+
+						for(let i in vertices) {
+								vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+							}
+
+							callback({vertices: vertices, public_key: keypair.publicKey});
+							return;
+					})
+
+				}
+			})
 		},
 
 		decryptVertices: function(vertices, public_key) {

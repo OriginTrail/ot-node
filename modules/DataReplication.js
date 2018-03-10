@@ -17,7 +17,7 @@ class DataReplication {
 	async sendPayload(data) {
 
 		log.info('Entering sendPayload');
-		let encryptedVertices = graph.encryptVertices(data.vertices);
+		let encryptedVertices = graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices);
 
 		let currentUnixTime = Math.floor(new Date() / 1000);
 		let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
@@ -32,6 +32,7 @@ class DataReplication {
 			edges: data.edges,
 			import_id: data.import_id
 		});
+
 		const options = {
 			method: 'POST',
 			url: 'http://' + config.DH_NODE_IP + ':' + config.DH_NODE_PORT + '/api/replication',
