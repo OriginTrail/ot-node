@@ -204,7 +204,7 @@ module.exports = function () {
 								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
 							}
 
-							callback({vertices: vertices, public_key: response[i].publicKey});
+							utilities.executeCallback(callback, {vertices: vertices, public_key: response[i].publicKey});
 							return;
 						}
 					}
