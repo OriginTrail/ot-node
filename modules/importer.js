@@ -114,26 +114,32 @@ module.exports = function () {
 					log.info("Import id: " + import_id);
 					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-	/*					blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
+						/*					blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
 							console.log(response);
 						});
 	*/
 						const graph = require('./graph')();
 						const testing = require('./testing')();
-						let encryptedVertices = graph.encryptVertices(vertices);
 
-						log.info('[DC] Preparing to enter sendPayload');
+						graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, result => {
+							const encryptedVertices = result;
+							log.info('[DC] Preparing to enter sendPayload');
 
-						const data = {};
-						data.vertices = vertices;
-						data.edges = edges;
-						data.import_id = import_id;
+							const data = {};
+							data.vertices = vertices;
+							data.edges = edges;
+							data.import_id = import_id;
 
-						replication.sendPayload(data).then(res => {
-							log.info('[DC] Payload sent');
-							log.info('[DC] Generating tests for DH');
+							replication.sendPayload(data, (result) => {
+								log.info('[DC] Payload sent');
+								log.info('[DC] Generating tests for DH');
+							});
+
+
 
 						});
+
+
 					});
 
 				}
