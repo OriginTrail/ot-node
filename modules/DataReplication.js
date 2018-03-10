@@ -14,7 +14,7 @@ class DataReplication {
 	* @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
 	* @return object response
 	*/
-	sendPayload(data_id, data, callback) {
+	sendPayload(data, callback) {
 		log.info('Entering sendPayload');
 		graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
 			let currentUnixTime = Math.floor(new Date() / 1000);
