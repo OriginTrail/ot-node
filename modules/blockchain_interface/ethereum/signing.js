@@ -8,6 +8,7 @@ var lightwallet = require('eth-lightwallet');
 var Account = require("eth-lib/lib/account");
 var Hash = require("eth-lib/lib/hash");
 var abi = require('ethereumjs-abi');
+var BN = require('bn.js');
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
 
