@@ -215,8 +215,6 @@ module.exports = function() {
             bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
             */
 
-            console.log(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
-
 			// (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
 			var raw_data = "0x" + abi.soliditySHA3(
 			    ["address", "uint", "uint", "uint", "bool"],
