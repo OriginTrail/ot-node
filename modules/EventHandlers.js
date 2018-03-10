@@ -1,11 +1,9 @@
 const product = require('./product')();
 const importer = require('./importer')();
-const holding = require('./holding')();
 const blockchain = require('./blockchain')();
 const testing = require('./testing')();
 const signing = require('./blockchain_interface/ethereum/signing')();
 const utilities = require('./utilities')();
-const axios = require('axios');
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
@@ -67,15 +65,11 @@ class EventHandlers {
 	replicationRequest(socket) {
 		importer.importJSON(this.queryObject,  () =>  {
 			log.info('[DH] JSON imported');
-			holding.addHoldingData(config.blockchain.settings.ethereum.wallet_address, this.queryObject.import_id, this.queryObject.public_key, () => {
-				log.info('[DH] Holding data saved into database');
-				this.emitResponse(socket, {
-					status: 'success',
-					code: 200,
-					data: []
-				});
+			this.emitResponse(socket, {
+				status: 'success',
+				code: 200,
+				data: []
 			});
-
 		});
 	}
 
@@ -83,15 +77,22 @@ class EventHandlers {
 		log.info('[DH] Event emitted: Testing Request Response');
 		//log.warn(this.queryObject);
 		testing.answerQuestion(this.queryObject, (answer) => {
-			this.emitResponse(socket, answer);
+			this.emitResponse(socket, {
+				answer: answer,
+				wallet: config.settings.ethereum.wallet_address,
+				ip: config.NODE_IP,
+				port: config.RPC_API_PORT
+			});
 		});
 
 	}
 
-	async receiptRequest(socket) {
-		await signing.sendConfirmation(confirmation, callback);
-		log.info('[DH] Event emitted: Receipt Request Response');
-		this.emitResponse(socket, []);
+	receiptRequest(socket) {
+		signing.sendConfirmation(this.queryObject.data, (response) => {
+			log.info('[DH] Event emitted: Receipt Request Response');
+			this.emitResponse(socket, []);
+		});
+
 	}
 }
 

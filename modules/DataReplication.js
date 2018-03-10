@@ -1,6 +1,7 @@
 const axios = require('axios');
 const graph = require('./graph')();
 const testing = require('./testing')();
+const holding = require('./holding')();
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
 const config = utilities.getConfig();
@@ -18,13 +19,11 @@ class DataReplication {
 		log.info('Entering sendPayload');
 		graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
 			let currentUnixTime = Math.floor(new Date() / 1000);
-			let min10 = currentUnixTime + (10 * 60); // for hum much time do we want testing
+			let min10 = currentUnixTime + (60); // for hum much time do we want testing
 
 			testing.generateTests(config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
 				log.info('[DC] Tests generated');
 			});
-          	const fs = require('fs');
-			fs.writeFileSync('stasesalje.txt', JSON.stringify(encryptedVertices.vertices));
 			const payload = JSON.stringify({
 				vertices: encryptedVertices.vertices,
 				public_key: encryptedVertices.public_key,
@@ -43,6 +42,9 @@ class DataReplication {
 			try {
 				axios(options).then(result => {
 					log.info('Payload sent');
+					holding.addHoldingData(config.DH_WALLET, data.import_id, payload.public_key, () => {
+						log.info('[DH] Holding data saved into database');
+					});
 					utilities.executeCallback(callback, result.data);
 				});
 

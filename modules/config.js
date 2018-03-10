@@ -4,6 +4,7 @@ module.exports = {
 	'NODE_IP': process.env.NODE_IP,
 	'DH_NODE_IP' : process.env.DH_NODE_IP,
 	'DH_NODE_PORT' : process.env.DH_NODE_PORT,
+  	'DH_WALLET': process.env.DH_WALLET,
 	'DB_TYPE': 'arango',
 	'DB_USERNAME': process.env.DB_USERNAME,
 	'DB_PASSWORD': process.env.DB_PASSWORD,

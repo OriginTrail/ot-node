@@ -1,6 +1,7 @@
 const testTable = require('./test_table')();
 const signing = require('./blockchain_interface/ethereum/signing.js')();
 const axios = require('axios');
+const holding = require('./holding')();
 const utilities = require('./utilities')();
 const log = utilities.getLogger();
 
@@ -82,7 +83,7 @@ class SendTests {
 		};
 
 		axios(options).then(result => {
-          utilities.executeCallback(callback, result);
+			utilities.executeCallback(callback, result);
 		});
 	}
 
@@ -96,29 +97,43 @@ class SendTests {
 		log.info('Entering verifyResult');
 		// log.error(test.answer);
 		// log.warn(answer);
-		if(test.answer === answer) {
+		var receipt;
+		if(test.answer === answer.answer) {
 			log.info('Answer is good');
-			this.sendReceipt().then(result => {
-				log.info('Receipt sent. Result:');
-				//log.info(result);
+			holding.getHoldingData(answer.wallet, test.data_id, (holdingData) => {
+				receipt = signing.createConfirmation(answer.wallet, test.data_id, holdingData.confirmation_number, test.test_time, true);
+				this.sendReceipt(answer.ip, answer.port, receipt).then(result => {
+					log.info('Receipt sent. Result:');
+					testTable.popNextTest(() => {
+						log.info("Test deleted from database");
+					});
+				});
+
 			});
-			testTable.popNextTest(() => {
-				log.info("Test deleted from database");
-			});
+
+
 		} else {
 			log.warn('Answer not good');
+
+			holding.getHoldingData(answer.wallet, test.data_id, (holdingData) => {
+				receipt = signing.createConfirmation(answer.wallet, test.data_id, holdingData.confirmation_number, test.test_time, false);
+				holding.increaseConfirmationVerificationNumber(answer.wallet, test.data_id, response => {
+					this.sendReceipt(answer.ip, answer.port, receipt).then(result => {
+						log.info('Receipt sent. Result:');
+						testTable.popNextTest(() => {
+							log.info("Test deleted from database");
+						});
+					});
+				});
+			});
 		}
 	}
 
 
-	createReceipt() {
-		//return signing.createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid);
-	}
-
-	async sendReceipt(ip, port) {
+	async sendReceipt(ip, port, receipt) {
 		log.info('Sending receipt...');
-		const receipt = this.createReceipt();
-	//	log.info(receipt);
+
+		//	log.info(receipt);
 		const options = {
 			method: 'POST',
 			url: 'http://' + ip + ':' + port + '/api/receipt',
