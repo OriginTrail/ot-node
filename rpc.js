@@ -35,8 +35,8 @@ socket.on('event', function (data) {
 	var reqNum = data.clientRequest;
 	socketRequests[reqNum].send(data.responseData);
 
-	console.log('data',data);
-	console.log('data.responseData',data.responseData);
+	//console.log('data',data);
+	//console.log('data.responseData',data.responseData);
 
 	// Free request slot
 	delete socketRequests[reqNum];
