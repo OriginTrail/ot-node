@@ -51,12 +51,7 @@ module.exports = function () {
 			}
 
 			test_table.insertTests(tests, function(response) {
-
 				utilities.executeCallback(callback, response);
-
-				test_table.getTests(function(response) {
-					console.log(response);
-				});
 			});
 		},
 
@@ -84,7 +79,7 @@ module.exports = function () {
 					console.log('-------')					
 					console.log(start_index, end_index);
 					console.log('-------')
-					console.log('VERTEX_DATA', vertex.data);
+					//console.log('VERTEX_DATA', vertex.data);
 					console.log('-------')
 
 					let answer = vertex_data.substring(start_index, end_index);
