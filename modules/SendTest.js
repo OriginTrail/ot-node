@@ -34,19 +34,19 @@ class SendTests {
 			if(test.length === 0) return;
 			log.info('All tests:');
 			test = test[0];
-			log.info(test);
+			//log.info(test);
 			let currentUnixTime = Math.floor(new Date() / 1000);
 
 			if (currentUnixTime > test.test_time) {
 
 				this.sendTest(test.dh_ip, test.dh_port, test.question, answer => {
 					log.info('Test sent:');
-					log.info(test);
+					//log.info(test);
 					this.verifyResult(test, answer.data);
 				});
 
 			} else {
-				log.info('Test time: ' + test.time);
+				log.info('Test time: ' + test.test_time);
 				log.info('Current time: ' + currentUnixTime);
 			}
 
