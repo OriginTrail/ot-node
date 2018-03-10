@@ -121,10 +121,10 @@ module.exports = function () {
 			);			
 		},
 		
-		getVerticesByImportId: async function(import_id, callback){
+		getVerticesByImportId: async function(data_id, callback){
 
 			queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-			params = {importId: import_id};
+			params = {importId: data_id};
 
 			try {
 				let cursor = await db.query(queryString, params);
@@ -135,10 +135,10 @@ module.exports = function () {
 			}
 		},
 
-		getEdgesByImportId: async function(import_id, callback){
+		getEdgesByImportId: async function(data_id, callback){
 
 			queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-			params = {importId: import_id};
+			params = {importId: data_id};
 
 			try {
 				let cursor = await db.query(queryString, params);

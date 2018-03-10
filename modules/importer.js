@@ -23,12 +23,12 @@ module.exports = function () {
 
 			let vertices = graph.vertices;
 			let edges = graph.edges;
-			let import_id = graph.import_id;
+			let data_id = graph.import_id;
 
 			async.each(vertices, function (vertex, next) {
 				db.addVertex('ot_vertices', vertex, function(import_status) {
 					if(import_status == false) {
-						db.updateDocumentImports('ot_vertices', vertex._key, import_id, function(update_status) {
+						db.updateDocumentImports('ot_vertices', vertex._key, data_id, function(update_status) {
 							if(update_status == false)
 							{
 								log.info('Import error!');
@@ -51,7 +51,7 @@ module.exports = function () {
 			async.each(edges, function (edge, next) {
 				db.addEdge('ot_edges', edge, function(import_status) {
 					if(import_status == false) {
-						db.updateDocumentImports('ot_edges', edge._key, import_id, function(update_status) {
+						db.updateDocumentImports('ot_edges', edge._key, data_id, function(update_status) {
 							if(update_status == false)
 							{
 								log.info('Import error!');
@@ -97,7 +97,7 @@ module.exports = function () {
 
 					var vertices = result.vertices;
 					var edges = result.edges;
-					let import_id = result.import_id;
+					let data_id = result.data_id;
 					
 
 					let leaves = [];
@@ -111,10 +111,10 @@ module.exports = function () {
 					let tree = new Mtree(hash_pairs);
 					let root_hash = tree.root();
 
-					log.info("Import id: " + import_id);
+					log.info("Import id: " + data_id);
 					log.info("Import root hash: " + root_hash);
-					storage.storeObject('Import_'+import_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-	/*					blockchain.addFingerprint(import_id, utilities.sha3(import_id), utilities.sha3(tree.root()), function(response) {
+					storage.storeObject('Import_'+data_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
+	/*					blockchain.addFingerprint(data_id, utilities.sha3(data_id), utilities.sha3(tree.root()), function(response) {
 							console.log(response);
 						});
 	*/
@@ -128,7 +128,7 @@ module.exports = function () {
 							const data = {};
 							data.vertices = vertices;
 							data.edges = edges;
-							data.import_id = import_id;
+							data.data_id = data_id;
 
 							replication.sendPayload(data, (result) => {
 								log.info('[DC] Payload sent');

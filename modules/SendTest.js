@@ -102,7 +102,7 @@ class SendTests {
 		if(test.answer === answer.answer) {
 			log.info('Answer is good');
 			holding.getHoldingData(config.DH_WALLET, test.data_id, (holdingData) => {
-				receipt = signing.createConfirmation(config.DH_WALLET, test.import_id, holdingData.confirmation_number, test.test_time, true);
+				receipt = signing.createConfirmation(config.DH_WALLET, test.data_id, holdingData.confirmation_number, test.test_time, true);
 				this.sendReceipt(answer.ip, answer.port, receipt).then(result => {
 					log.info('Receipt sent. Result:');
 					testTable.popNextTest(() => {
@@ -116,9 +116,9 @@ class SendTests {
 		} else {
 			log.warn('Answer not good');
 
-			holding.getHoldingData(answer.wallet, test.import_id, (holdingData) => {
-				receipt = signing.createConfirmation(answer.wallet, test.import_id, holdingData.confirmation_number, test.test_time, false);
-				holding.increaseConfirmationVerificationNumber(answer.wallet, test.import_id, response => {
+			holding.getHoldingData(answer.wallet, test.data_id, (holdingData) => {
+				receipt = signing.createConfirmation(answer.wallet, test.data_id, holdingData.confirmation_number, test.test_time, false);
+				holding.increaseConfirmationVerificationNumber(answer.wallet, test.data_id, response => {
 					this.sendReceipt(answer.ip, answer.port, receipt).then(result => {
 						log.info('Receipt sent. Result:');
 						testTable.popNextTest(() => {
