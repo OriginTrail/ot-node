@@ -66,8 +66,8 @@ class SendTests {
 		question = JSON.stringify({
 			question: question
 		});
-		log.info('Question to send');
-		log.info(question);
+		// log.info('Question to send');
+		// log.info(question);
 		let testQuestion = utilities.copyObject(question);
 		delete testQuestion.answer;
 
@@ -94,13 +94,13 @@ class SendTests {
 	 */
 	verifyResult(test, answer) {
 		log.info('Entering verifyResult');
-		log.error(test.answer);
-		log.warn(answer);
+		// log.error(test.answer);
+		// log.warn(answer);
 		if(test.answer === answer) {
 			log.info('Answer is good');
 			this.sendReceipt().then(result => {
 				log.info('Receipt sent. Result:');
-				log.info(result);
+				//log.info(result);
 			});
 			testTable.popNextTest(() => {
 				log.info("Test deleted from database");
@@ -118,7 +118,7 @@ class SendTests {
 	async sendReceipt(ip, port) {
 		log.info('Sending receipt...');
 		const receipt = this.createReceipt();
-		log.info(receipt);
+	//	log.info(receipt);
 		const options = {
 			method: 'POST',
 			url: 'http://' + ip + ':' + port + '/api/receipt',
