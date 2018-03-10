@@ -104,7 +104,7 @@ module.exports = function () {
 					let hash_pairs = [];
 
 					for(let i in vertices) {
-						leaves.push(utilities.sha3(utilities.sortObject({identifiers: utilities.vertices[i].identifiers, data: vertices[i].data})));
+						leaves.push(utilities.sha3(utilities.sortObject({identifiers: vertices[i].identifiers, data: vertices[i].data})));
 						hash_pairs.push({key: vertices[i]._key, hash: utilities.sha3({identifiers: vertices[i].identifiers, data: vertices[i].data})});
 					}
 
