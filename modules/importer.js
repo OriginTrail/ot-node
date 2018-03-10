@@ -22,6 +22,8 @@ module.exports = function () {
 			await db.createEdgeCollection('ot_edges', function(){});
 
 			let vertices = graph.vertices;
+			const fs = require('fs');
+			fs.writeFileSync('staupisujem.txt', vertices);
 			let edges = graph.edges;
 			let import_id = graph.import_id;
 

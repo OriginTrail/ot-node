@@ -5,6 +5,7 @@ const utilities = require('./utilities')();
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
+
 class DataReplication {
 
 	/**
@@ -22,7 +23,8 @@ class DataReplication {
 			testing.generateTests(config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
 				log.info('[DC] Tests generated');
 			});
-
+          	const fs = require('fs');
+			fs.writeFileSync('stasesalje.txt', encryptedVertices.vertices);
 			const payload = JSON.stringify({
 				vertices: encryptedVertices.vertices,
 				public_key: encryptedVertices.public_key,
