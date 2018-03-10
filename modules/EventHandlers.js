@@ -79,7 +79,7 @@ class EventHandlers {
 		testing.answerQuestion(this.queryObject, (answer) => {
 			this.emitResponse(socket, {
 				answer: answer,
-				wallet: config.settings.ethereum.wallet_address,
+				wallet: config.blockchain.settings.ethereum.wallet_address,
 				ip: config.NODE_IP,
 				port: config.RPC_API_PORT
 			});
