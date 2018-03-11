@@ -4,7 +4,7 @@ module.exports = {
 	'NODE_IP': process.env.NODE_IP,
 	'DH_NODE_IP' : process.env.DH_NODE_IP,
 	'DH_NODE_PORT' : process.env.DH_NODE_PORT,
-  	'DH_WALLET': process.env.DH_WALLET,
+	'DH_WALLET': process.env.DH_WALLET,
 	'DB_TYPE': 'arango',
 	'DB_USERNAME': process.env.DB_USERNAME,
 	'DB_PASSWORD': process.env.DB_PASSWORD,
@@ -41,7 +41,7 @@ module.exports = {
 				'node_port': '80',
 				'gas_limit': process.env.GAS_LIMIT,
 				'gas_price': process.env.GAS_PRICE
-		  },
+			},
 			'iota': {
 				'i':'// TODO: setup testing Iota node'
 			},

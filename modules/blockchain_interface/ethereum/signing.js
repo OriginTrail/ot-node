@@ -6,8 +6,8 @@ var tx = require('ethereumjs-tx');
 var lightwallet = require('eth-lightwallet');
 var Account = require("eth-lib/lib/account");
 var Hash = require("eth-lib/lib/hash");
-var BN = require('bn.js')
-var abi = require('ethereumjs-abi')
+var BN = require('bn.js');
+var abi = require('ethereumjs-abi');
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
 
@@ -15,6 +15,7 @@ var wallet_address = config.blockchain.settings.ethereum.wallet_address;
 var private_key = config.blockchain.settings.ethereum.private_key;
 
 var web3 = new Web3(new Web3.providers.HttpProvider(config.blockchain.settings.ethereum.rpc_node+":"+config.blockchain.settings.ethereum.node_port));
+
 
 // OT contract data
 var contract_address = config.blockchain.settings.ethereum.contract_address;
@@ -34,7 +35,6 @@ var escrow_abi_path = config.blockchain.settings.ethereum.escrow_abi;
 var escrow_abi_file = fs.readFileSync(escrow_abi_path);
 var escrow_abi = JSON.parse(escrow_abi_file);
 
-var token_contract = new web3.eth.Contract(token_abi, token_address);
 
 
 /*
@@ -51,47 +51,47 @@ var nonce_increment = 0;
 module.exports = function() {
 
 	function sendRaw(rawTx, callback) {
-		    var privateKey = new Buffer(private_key, 'hex');
-		    var transaction = new tx(rawTx);
-		    transaction.sign(privateKey);
-		    var serializedTx = transaction.serialize().toString('hex');
-		    web3.eth.sendSignedTransaction(
-		    '0x' + serializedTx, function(err, result) {
-		        if(err) {
-		            console.log(err);
+		var privateKey = new Buffer(private_key, 'hex');
+		var transaction = new tx(rawTx);
+		transaction.sign(privateKey);
+		var serializedTx = transaction.serialize().toString('hex');
+		web3.eth.sendSignedTransaction(
+			'0x' + serializedTx, function(err, result) {
+				if(err) {
+					console.log(err);
 
-		            if(callback) {
-		            	utilities.executeCallback(callback, false);
-		            }
-		        } else {
-		        	if(callback) {
-		            	utilities.executeCallback(callback, result);
-		            }
-		            console.log('Transaction: ', result);
-		        }
-		    });
-		}      
+					if(callback) {
+						utilities.executeCallback(callback, false);
+					}
+				} else {
+					if(callback) {
+						utilities.executeCallback(callback, result);
+					}
+					console.log('Transaction: ', result);
+				}
+			});
+	}      
 
 	var signing = {
 
 		signAndSend: async function(batch_id, batch_id_hash, graph_hash) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
-			console.log(nonce)
+			console.log(nonce);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
-			    nonce: new_nonce,
-			    gasLimit: web3.util.toHex(config.blockchain.settings.ethereum.gas_limit),
-			    gasPrice: web3.util.toHex(config.blockchain.settings.ethereum.gas_price),
-			    to: contract_address
-			}
+				nonce: new_nonce,
+				gasLimit: web3.util.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.util.toHex(config.blockchain.settings.ethereum.gas_price),
+				to: contract_address
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
 			sendRaw(rawTx);
@@ -100,39 +100,44 @@ module.exports = function() {
 		signAndAllow: async function(amount, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
-			    nonce: new_nonce,
-			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-			    to: token_address
-			}
+				nonce: new_nonce,
+				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+				to: token_address
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
 			sendRaw(rawTx, (response) => {
-				this.listenApproval(callback)
+				this.listenApproval(callback);
 			});
 		},
 
 		listenApproval: function(callback) {
-			var event = token_contract.Approval(wallet_address, escrow_address, 10);
 
-			event.watch(function(error, result) {
-				callback(result);
-			})
-
+			var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
+			var token = new web32.eth.Contract(token_abi, token_address);
+			token.once('Approval', [], (err, res) => {
+				console.log(err);
+				if(callback) {
+					utilities.executeCallback(callback, res);
+				} else {
+					console.log(err);
+				}
+			});
 		},
 
 		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -142,9 +147,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: escrow_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
@@ -158,8 +163,8 @@ module.exports = function() {
             bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
             */
 
-            // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
-            var raw_data = "0x" + abi.soliditySHA3(
+			// (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
+			var raw_data = "0x" + abi.soliditySHA3(
 			    ["address", "uint", "uint", "uint", "bool"],
 			    [new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid]
 			  ).toString('hex');
@@ -186,9 +191,9 @@ module.exports = function() {
 		    	r: s.r,
 		    	s: s.s,
 		    	confirmation_hash: s.message
-		    }
+		    };
 
-		    return confirmation
+		    return confirmation;
 
 
 		},
@@ -196,7 +201,7 @@ module.exports = function() {
 		sendConfirmation: async function(confirmation, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -206,9 +211,9 @@ module.exports = function() {
 			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 			    to: escrow_address
-			}
+			};
 
-			console.log(txOptions)
+			console.log(txOptions);
 
 			var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet, 
 																  confirmation.data_id, 
@@ -221,7 +226,7 @@ module.exports = function() {
 																  confirmation.s], txOptions);
 			sendRaw(rawTx, callback);
 		}
-/*
+		/*
 		verifyMessageSignature: function(message, signer_address)
 		{
 			var recovered_address = web3.eth.accounts.recover(message, message.v, message.r, message.s);
@@ -266,8 +271,8 @@ module.exports = function() {
 		}
 */
 
-	}
+	};
 
 	return signing;
-}
+};
 
