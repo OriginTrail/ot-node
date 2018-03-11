@@ -136,7 +136,7 @@ module.exports = function() {
 			});
 
 
-		},
+		}),
 
 		listenApproval: new Promise((resolve, reject) => {
 
