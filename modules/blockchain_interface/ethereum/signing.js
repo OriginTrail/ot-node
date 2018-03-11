@@ -102,7 +102,7 @@ module.exports = function() {
 
 			if(nonce == -1)
 				await web3.eth.getTransactionCount(wallet_address).then(nonce => {
-					log.error(nonce);
+
 					var new_nonce = nonce + nonce_increment;
 					nonce_increment = nonce_increment + 1;
 
@@ -119,22 +119,24 @@ module.exports = function() {
 					sendRaw(rawTx, (response) => {
 						log.info("Send raw response");
 						log.info(response);
-						/*
-					listenApproval.then((result) => {
-							log.warn('Waiting for approval');
-							this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
-								log.warn('Creating Escrow');
-							});
-						}).catch(e => {
-							log.error('Not Approved!');
-							console.log(e);
-						});
-					 */
+
 					});
-				});
+				}).then(result => {
+				   console.log('LISTEN APROVAL');
+                });
 
 
-
+            /*
+                                listenApproval.then((result) => {
+                                        log.warn('Waiting for approval');
+                                        this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+                                            log.warn('Creating Escrow');
+                                        });
+                                    }).catch(e => {
+                                        log.error('Not Approved!');
+                                        console.log(e);
+                                    });
+                                 */
 
 
 
