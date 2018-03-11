@@ -98,8 +98,10 @@ module.exports = function() {
 		},
 
 		signAndAllow: async function(options, callback) {
+		    log.info('Sign and Allow');
 
 			await web3.eth.getTransactionCount(wallet_address).then( nonce => {
+			    log.info('Nonce: ' + nonce);
 				var new_nonce = nonce + nonce_increment;
 				nonce_increment = nonce_increment + 1;
 
