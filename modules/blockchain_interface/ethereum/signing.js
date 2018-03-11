@@ -101,26 +101,26 @@ module.exports = function() {
 		signAndAllow: async function(options, callback) {
 			log.info('Sign and Allow');
 
-			await web3.eth.getTransactionCount(wallet_address).then( nonce => {
-				log.info('Nonce: ' + nonce);
-				var new_nonce = nonce + nonce_increment;
-				nonce_increment = nonce_increment + 1;
+			if(nonce == -1)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
+			log.info('Nonce: ' + nonce);
+			var new_nonce = nonce + nonce_increment;
+			nonce_increment = nonce_increment + 1;
 
-				var txOptions = {
-					nonce: new_nonce,
-					gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-					gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-					to: token_address
-				};
+			var txOptions = {
+				nonce: new_nonce,
+				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+				to: token_address
+			};
 
-				console.log(txOptions);
+			console.log(txOptions);
 
-				var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
-				sendRaw(rawTx, (response) => {
-					this.listenApproval(result => {
-						this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
-							console.log(result);
-						});
+			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
+			sendRaw(rawTx, (response) => {
+				this.listenApproval(result => {
+					this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+						console.log(result);
 					});
 				});
 			});
