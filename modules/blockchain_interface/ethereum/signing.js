@@ -104,11 +104,8 @@ module.exports = function() {
 				//if(nonce == -1)
 				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-					var new_nonce = nonce + nonce_increment;
-					nonce_increment = nonce_increment + 1;
-
 					var txOptions = {
-						nonce: new_nonce,
+						nonce: nonce + 1,
 						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 						to: token_address
