@@ -3,6 +3,7 @@ const graph = require('./graph')();
 const testing = require('./testing')();
 const holding = require('./holding')();
 const utilities = require('./utilities')();
+const signing = require('./signing')();
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
