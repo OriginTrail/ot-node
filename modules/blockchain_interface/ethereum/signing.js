@@ -99,11 +99,10 @@ module.exports = function() {
 		},
 
 		signAndAllow: async function(options, callback) {
-			log.info('Sign and Allow');
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
-			log.info('Nonce: ' + nonce);
+
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
 
@@ -119,7 +118,9 @@ module.exports = function() {
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
 			sendRaw(rawTx, (response) => {
 				this.listenApproval(result => {
+					log.warn('Approved! Creating escrow...');
 					this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+						log.warn('Creating Escrow');
 						console.log(result);
 					});
 				});
@@ -137,6 +138,7 @@ module.exports = function() {
 				if(callback) {
 					utilities.executeCallback(callback, res);
 				} else {
+					log.error('Not approved');
 					console.log(err);
 				}
 			});
