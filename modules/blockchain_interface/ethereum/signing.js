@@ -98,10 +98,10 @@ module.exports = function() {
 			sendRaw(rawTx);
 		},
 
-		signAndAllow: async function(options, callback) {
+		signAndAllow: new Promise((resolve, reject) => {
 
 			//if(nonce == -1)
-			await web3.eth.getTransactionCount(wallet_address).then(nonce => {
+			web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
 				var new_nonce = nonce + nonce_increment;
 				nonce_increment = nonce_increment + 1;
@@ -119,26 +119,21 @@ module.exports = function() {
 				sendRaw(rawTx, (response) => {
 					log.info("Send raw response");
 					log.info(response);
-                    console.log('LISTEN APROVAL');
+					console.log('LISTEN APROVAL');
+					this.listenApproval.then((result) => {
+						log.warn('Waiting for approval');
+						this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+							log.warn('Creating Escrow');
+							resolve(result);
+						});
+					}).catch(e => {
+						log.error('Not Approved!');
+						console.log(e);
+						reject(e);
+					});
 
 				});
 			});
-
-
-			/*
-                                listenApproval.then((result) => {
-                                        log.warn('Waiting for approval');
-                                        this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
-                                            log.warn('Creating Escrow');
-                                        });
-                                    }).catch(e => {
-                                        log.error('Not Approved!');
-                                        console.log(e);
-                                    });
-                                 */
-
-
-
 
 
 		},
