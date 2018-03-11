@@ -3,7 +3,7 @@ const graph = require('./graph')();
 const testing = require('./testing')();
 const holding = require('./holding')();
 const utilities = require('./utilities')();
-const signing = require('./signing')();
+const signing = require('./blockchain_interface/ethereum/signing')();
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
