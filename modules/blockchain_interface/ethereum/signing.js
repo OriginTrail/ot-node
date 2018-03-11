@@ -164,28 +164,6 @@ module.exports = function() {
 			sendRaw(rawTx, callback);
 		},
 
-		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
-
-
-			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address);
-
-			var new_nonce = nonce + nonce_increment;
-			nonce_increment = nonce_increment + 1;
-
-			var txOptions = {
-			    nonce: new_nonce,
-			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-			    to: escrow_address
-			};
-
-			log.info(txOptions);
-
-			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
-			sendRaw(rawTx, callback);
-		},
-
 		confirmEscrow: async function(DC_wallet, data_id, callback)
 		{
 			if(nonce == -1)

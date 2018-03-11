@@ -17,47 +17,52 @@ class DataReplication {
 	*/
 	sendPayload(data, callback) {
 		log.info('Entering sendPayload');
-		graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
-			let currentUnixTime = Math.floor(new Date() / 1000);
-			let min10 = currentUnixTime + (60); // for hum much time do we want testing
 
-			testing.generateTests(data.data_id, config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime, min10, (res, err) => {
-				log.info('[DC] Tests generated');
-			});
-			const payload = JSON.stringify({
-				vertices: encryptedVertices.vertices,
-				public_key: encryptedVertices.public_key,
-				edges: data.edges,
-				data_id: data.data_id,
-				dc_wallet: config.blockchain.settings.ethereum.wallet_address
-			});
-			const options = {
-				method: 'POST',
-				url: 'http://' + config.DH_NODE_IP + ':' + config.DH_NODE_PORT + '/api/replication',
-				headers: {
-					'Content-Type': 'application/json',
-					'Content-Length': payload.length
-				},
-				data: payload
-			};
-			try {
-				axios(options).then(result => {
-					log.info('Payload sent');
-					holding.addHoldingData(config.DH_WALLET, data.data_id, payload.public_key, () => {
-						log.info('[DH] Holding data saved into database');
-					});
-					utilities.executeCallback(callback, result.data);
+		var currentUnixTime = Math.floor(new Date() / 1000);
+		var min10 = currentUnixTime + 120 + 60; // for hum much time do we want testing
+
+		signing.createEscrow(config.blockchain.settings.ethereum.wallet_address, config.DH_WALLET, data.data_id, 10,currentUnixTime + 120 , 60, function(){
+
+			graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
+				
+
+				testing.generateTests(data.data_id, config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime + 120, min10, (res, err) => {
+					log.info('[DC] Tests generated');
 				});
+				const payload = JSON.stringify({
+					vertices: encryptedVertices.vertices,
+					public_key: encryptedVertices.public_key,
+					edges: data.edges,
+					data_id: data.data_id,
+					dc_wallet: config.blockchain.settings.ethereum.wallet_address
+				});
+				const options = {
+					method: 'POST',
+					url: 'http://' + config.DH_NODE_IP + ':' + config.DH_NODE_PORT + '/api/replication',
+					headers: {
+						'Content-Type': 'application/json',
+						'Content-Length': payload.length
+					},
+					data: payload
+				};
+				try {
+					axios(options).then(result => {
+						log.info('Payload sent');
+						holding.addHoldingData(config.DH_WALLET, data.data_id, payload.public_key, () => {
+							log.info('[DH] Holding data saved into database');
+						});
+						utilities.executeCallback(callback, result.data);
+					});
 
-			} catch(e) {
-				log.error('Payload not sent');
-				console.log(e);
-			}
+				} catch(e) {
+					log.error('Payload not sent');
+					console.log(e);
+				}
+			});
+
 		});
 
-
-
-	}
+	}	
 
 }
 
