@@ -98,7 +98,7 @@ module.exports = function() {
 			sendRaw(rawTx);
 		},
 
-		signAndAllow: function() {
+		signAndAllow: function(options) {
 			return new Promise((resolve, reject) => {
 
 				//if(nonce == -1)
@@ -116,13 +116,6 @@ module.exports = function() {
 
 					console.log(txOptions);
 
-					let options = {
-						dh_wallet: config.DH_WALLET,
-						import_id: 12345,
-						amount: 10,
-						start_time: 120,
-						total_time: 60
-					};
 
 					var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
 					sendRaw(rawTx, (response) => {
