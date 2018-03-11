@@ -101,7 +101,7 @@ module.exports = function() {
 		signAndAllow: async function(options, callback) {
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address);
+				nonce = web3.eth.getTransactionCount(wallet_address);
 
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
@@ -117,11 +117,12 @@ module.exports = function() {
 
 			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
 			sendRaw(rawTx, (response) => {
+			    log.info("Send raw response");
+			    log.info(response);
 				this.listenApproval(result => {
 					log.warn('Approved! Creating escrow...');
 					this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
 						log.warn('Creating Escrow');
-						utilities.executeCallback(callback, result);
 					});
 				});
 			});
@@ -133,14 +134,15 @@ module.exports = function() {
 
 			var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
 			var token = new web32.eth.Contract(token_abi, token_address);
-			token.once('Approval', [], (err, res) => {
-				if(callback) {
-					log.warn('Now Approved!');
-					utilities.executeCallback(callback, res);
-				} else {
-					log.error('Not approved');
-					console.log(err);
-				}
+			return token.once('Approval', [], (err, res) => {
+                return res;
+				// if(callback) {
+				// 	log.warn('Now Approved!');
+				// 	utilities.executeCallback(callback, res);
+				// } else {
+				// 	log.error('Not approved');
+				// 	console.log(err);
+				// }
 			});
 		},
 
