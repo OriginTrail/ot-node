@@ -54,10 +54,6 @@
 			{
 				"name": "total_time",
 				"type": "uint256"
-			},
-			{
-				"name": "verified",
-				"type": "bool"
 			}
 		],
 		"payable": false,
@@ -154,45 +150,6 @@
 		],
 		"name": "refund",
 		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "DC_wallet",
-				"type": "address"
-			},
-			{
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"name": "data_id",
-				"type": "uint256"
-			},
-			{
-				"name": "token_amount",
-				"type": "uint256"
-			},
-			{
-				"name": "start_time",
-				"type": "uint256"
-			},
-			{
-				"name": "total_time",
-				"type": "uint256"
-			}
-		],
-		"name": "verify",
-		"outputs": [
-			{
-				"name": "isCorrect",
-				"type": "bool"
-			}
-		],
 		"payable": false,
 		"stateMutability": "nonpayable",
 		"type": "function"
