@@ -121,7 +121,7 @@ module.exports = function() {
 					log.warn('Approved! Creating escrow...');
 					this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
 						log.warn('Creating Escrow');
-						console.log(result);
+						utilities.executeCallback(callback, result);
 					});
 				});
 			});
@@ -134,8 +134,8 @@ module.exports = function() {
 			var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
 			var token = new web32.eth.Contract(token_abi, token_address);
 			token.once('Approval', [], (err, res) => {
-				console.log(err);
 				if(callback) {
+					log.warn('Now Approved!');
 					utilities.executeCallback(callback, res);
 				} else {
 					log.error('Not approved');
