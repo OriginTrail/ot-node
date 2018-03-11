@@ -105,7 +105,7 @@ module.exports = function() {
 				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
 					var new_nonce = nonce + nonce_increment;
-					//nonce_increment = nonce_increment + 1;
+					nonce_increment = nonce_increment + 1;
 
 					var txOptions = {
 						nonce: new_nonce,
@@ -157,7 +157,7 @@ module.exports = function() {
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
 
-			var new_nonce = nonce + nonce_increment;
+			var new_nonce = nonce +  1;
 			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
