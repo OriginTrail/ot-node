@@ -98,55 +98,57 @@ module.exports = function() {
 			sendRaw(rawTx);
 		},
 
-		signAndAllow: new Promise((resolve, reject) => {
+		signAndAllow: function() {
+			return new Promise((resolve, reject) => {
 
-			//if(nonce == -1)
-			web3.eth.getTransactionCount(wallet_address).then(nonce => {
+				//if(nonce == -1)
+				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-				var new_nonce = nonce + nonce_increment;
-				nonce_increment = nonce_increment + 1;
+					var new_nonce = nonce + nonce_increment;
+					nonce_increment = nonce_increment + 1;
 
-				var txOptions = {
-					nonce: new_nonce,
-					gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-					gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-					to: token_address
-				};
+					var txOptions = {
+						nonce: new_nonce,
+						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+						to: token_address
+					};
 
-				console.log(txOptions);
+					console.log(txOptions);
 
-				let options = {
-					dh_wallet: config.DH_WALLET,
-					import_id: 12345,
-					amount: 10,
-					start_time: 120,
-					total_time: 60
-				};
+					let options = {
+						dh_wallet: config.DH_WALLET,
+						import_id: 12345,
+						amount: 10,
+						start_time: 120,
+						total_time: 60
+					};
 
-				var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
-				sendRaw(rawTx, (response) => {
-					log.info("Send raw response");
-					log.info(response);
-					console.log('LISTEN APROVAL');
-					this.listenApproval().then((result) => {
-						log.warn('Waiting for approval');
-						this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
-							log.warn('Creating Escrow');
-							resolve(result);
+					var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
+					sendRaw(rawTx, (response) => {
+						log.info("Send raw response");
+						log.info(response);
+						console.log('LISTEN APROVAL');
+						this.listenApproval().then((result) => {
+							log.warn('Waiting for approval');
+							this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+								log.warn('Creating Escrow');
+								resolve(result);
+							});
+						}).catch(e => {
+							log.error('Not Approved!');
+							console.log(e);
+							reject(e);
 						});
-					}).catch(e => {
-						log.error('Not Approved!');
-						console.log(e);
-						reject(e);
+
 					});
-
 				});
+
+
 			});
+		},
 
-
-		}),
-
-		listenApproval: new Promise((resolve, reject) => {
+		listenApproval: function() { return new Promise((resolve, reject) => {
 
 			var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
 			var token = new web32.eth.Contract(token_abi, token_address);
@@ -154,7 +156,8 @@ module.exports = function() {
 				if(err) reject(err);
 				resolve(res);
 			});
-		}),
+		});
+		},
 
 		createEscrow: async function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
