@@ -22,7 +22,7 @@ class DataReplication {
 		var currentUnixTime = Math.floor(new Date() / 1000);
 		var min10 = currentUnixTime + 120 + 60; // for hum much time do we want testing
 
-		signing.createEscrow(config.blockchain.settings.ethereum.wallet_address, config.DH_WALLET, data.data_id, 10,currentUnixTime + 120 , 60, function(){
+		signing.createEscrow(config.DH_WALLET, data.data_id, 10,currentUnixTime + 120 , 60, function(){
 
 			graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
 				

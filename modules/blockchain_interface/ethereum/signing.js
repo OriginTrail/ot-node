@@ -119,7 +119,7 @@ module.exports = function() {
 			sendRaw(rawTx, callback);
 		},
 
-		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
+		createEscrow: async function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
@@ -136,7 +136,7 @@ module.exports = function() {
 
 			log.info(txOptions);
 
-			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
+			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
 		},
 
