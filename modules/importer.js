@@ -97,7 +97,7 @@ module.exports = function () {
 
 					var vertices = result.vertices;
 					var edges = result.edges;
-					let data_id = result.data_id;
+					let data_id = result.import_id;
 					
 
 					let leaves = [];
