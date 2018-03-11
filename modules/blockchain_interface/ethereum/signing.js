@@ -100,33 +100,32 @@ module.exports = function() {
 
 		signAndAllow: async function(options, callback) {
 
-			if(nonce == -1)
-				await web3.eth.getTransactionCount(wallet_address).then(nonce => {
+			//if(nonce == -1)
+			await web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-					var new_nonce = nonce + nonce_increment;
-					nonce_increment = nonce_increment + 1;
+				var new_nonce = nonce + nonce_increment;
+				nonce_increment = nonce_increment + 1;
 
-					var txOptions = {
-						nonce: new_nonce,
-						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-						to: token_address
-					};
+				var txOptions = {
+					nonce: new_nonce,
+					gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+					gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+					to: token_address
+				};
 
-					console.log(txOptions);
+				console.log(txOptions);
 
-					var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
-					sendRaw(rawTx, (response) => {
-						log.info("Send raw response");
-						log.info(response);
+				var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
+				sendRaw(rawTx, (response) => {
+					log.info("Send raw response");
+					log.info(response);
+                    console.log('LISTEN APROVAL');
 
-					});
-				}).then(result => {
-				   console.log('LISTEN APROVAL');
-                });
+				});
+			});
 
 
-            /*
+			/*
                                 listenApproval.then((result) => {
                                         log.warn('Waiting for approval');
                                         this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
