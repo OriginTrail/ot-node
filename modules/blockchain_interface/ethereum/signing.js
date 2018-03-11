@@ -97,7 +97,7 @@ module.exports = function() {
 			sendRaw(rawTx);
 		},
 
-		signAndAllow: async function(amount, callback) {
+		signAndAllow: async function(options, callback) {
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
@@ -114,9 +114,13 @@ module.exports = function() {
 
 			console.log(txOptions);
 
-			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, amount], txOptions);
+			var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
 			sendRaw(rawTx, (response) => {
-				this.listenApproval(callback);
+				this.listenApproval(result => {
+					this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+						console.log(result);
+					});
+				});
 			});
 		},
 
@@ -134,7 +138,7 @@ module.exports = function() {
 			});
 		},
 
-		createEscrow: async function(DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time, callback) {
+		createEscrow: async function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
 
 			if(nonce == -1)
 				nonce = await web3.eth.getTransactionCount(wallet_address);
@@ -143,15 +147,15 @@ module.exports = function() {
 			nonce_increment = nonce_increment + 1;
 
 			var txOptions = {
-			    nonce: new_nonce,
-			    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-			    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-			    to: escrow_address
+				nonce: new_nonce,
+				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+				to: escrow_address
 			};
 
 			console.log(txOptions);
 
-			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DC_wallet, DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
+			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 			sendRaw(rawTx, callback);
 		},
 
