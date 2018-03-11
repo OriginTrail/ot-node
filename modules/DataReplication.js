@@ -28,8 +28,7 @@ class DataReplication {
 			start_time: currentUnixTime + 120,
 			total_time: 60
 		};
-		signing.signAndAllow(options_signing, function(){
-
+		signing.signAndAllow(options_signing).then(response => {
 			graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
 				
 
@@ -66,7 +65,6 @@ class DataReplication {
 					console.log(e);
 				}
 			});
-
 		});
 
 	}	
