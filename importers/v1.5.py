@@ -167,7 +167,7 @@ def hasVertex(vertex_key):
 
 # Loading XML from input file supplied in command line argument
 xml_file_url = sys.argv[1]
-xml_file = open(xml_file_url, "r") 
+xml_file = open(xml_file_url, "r", encoding="utf-8") 
 xml_data = xml_file.read() 
 
 # Data from import file loaded as dictionary
