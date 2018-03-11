@@ -102,7 +102,9 @@ module.exports = function() {
 			log.info('Sign and Allow');
 
 			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address).then(console.log);
+				nonce = await web3.eth.getTransactionCount(wallet_address).then(console.log).catch(e => {
+				    console.log(e)
+                })
 			log.info('Nonce: ' + nonce);
 			var new_nonce = nonce + nonce_increment;
 			nonce_increment = nonce_increment + 1;
