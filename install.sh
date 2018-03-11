@@ -15,6 +15,8 @@ sudo apt-get install -y mongodb-org
 sudo systemctl start mongod
 sudo systemctl enable mongod
 
+export LC_ALL=C
+
 sudo apt-get install -y python3-pip
 
 sudo pip3 install python-arango
