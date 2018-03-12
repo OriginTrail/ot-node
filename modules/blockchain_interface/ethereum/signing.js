@@ -36,8 +36,6 @@ var escrow_abi_path = config.blockchain.settings.ethereum.escrow_abi;
 var escrow_abi_file = fs.readFileSync(escrow_abi_path);
 var escrow_abi = JSON.parse(escrow_abi_file);
 
-
-
 /*
 console.log('------------------------');
 var nonce = 5;
@@ -46,8 +44,6 @@ web3.eth.getTransactionCount("0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",web3.e
 console.log('------------------------');*/
 
 
-var nonce = -1;
-var nonce_increment = 0;
 
 module.exports = function() {
 
@@ -56,121 +52,87 @@ module.exports = function() {
 		var transaction = new tx(rawTx);
 		transaction.sign(privateKey);
 		var serializedTx = transaction.serialize().toString('hex');
-		web3.eth.sendSignedTransaction(
-			'0x' + serializedTx, function(err, result) {
-				if(err) {
-					console.log(err);
+		return web3.eth.sendSignedTransaction('0x' + serializedTx);
+	};
 
-					if(callback) {
-						utilities.executeCallback(callback, false);
-					}
-				} else {
-					if(callback) {
-						utilities.executeCallback(callback, result);
-					}
-					console.log('Transaction: ', result);
-				}
-			});
-	}      
+	function sendTransaction(abi, method, args, txOptions) {
+			return new Promise((resolve, reject) => {
+				web3.eth.getTransactionCount(wallet_address).then(nonce => {
+
+					txOptions.nonce = nonce;
+
+					log.info(method)
+					log.info(txOptions);
+
+					var rawTx = txutils.functionTx(abi, method, args, txOptions);
+					sendRaw(rawTx).on('error', err => {
+						reject(err);
+					}).then(response => {
+						resolve(response);
+					});			
+
+				})
+			})
+		}
 
 	var signing = {
 
-		signAndSend: async function(batch_id, batch_id_hash, graph_hash) {
-
-			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address);
-
-			console.log(nonce);
-
-			var new_nonce = nonce + nonce_increment;
-			nonce_increment = nonce_increment + 1;
+		signAndSend: function(batch_id, batch_id_hash, graph_hash) {
 
 			var txOptions = {
-				nonce: new_nonce,
-				gasLimit: web3.util.toHex(config.blockchain.settings.ethereum.gas_limit),
-				gasPrice: web3.util.toHex(config.blockchain.settings.ethereum.gas_price),
+				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 				to: contract_address
 			};
 
-			console.log(txOptions);
-
-			var rawTx = txutils.functionTx(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
-			sendRaw(rawTx);
+			return sendTransaction(contract_abi, 'addFingerPrint', [batch_id,batch_id_hash, graph_hash], txOptions);
 		},
 
 		signAndAllow: function(options) {
+
+			var approvalFunction = this.listenApproval
+			var createEscrowFunction = this.createEscrow
+
 			return new Promise((resolve, reject) => {
 
-				//if(nonce == -1)
-				web3.eth.getTransactionCount(wallet_address).then(nonce => {
+				var txOptions = {
+					gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+					gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+					to: token_address
+				};
 
-					var txOptions = {
-						nonce: nonce,
-						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-						to: token_address
-					};
-
-					console.log(txOptions);
-
-
-					var rawTx = txutils.functionTx(token_abi, 'approve', [escrow_address, options.amount], txOptions);
-					sendRaw(rawTx, (response) => {
-						log.info("Send raw response");
-						log.info(response);
-						console.log('LISTEN APROVAL');
-						this.listenApproval().then((result) => {
-							log.warn('Waiting for approval');
-							this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then( result => {
-								log.warn('Creating Escrow');
-								resolve(result);
-							});
-						}).catch(e => {
-							log.error('Not Approved!');
-							console.log(e);
-							reject(e);
-						});
-
-					});
-				});
+				log.info("Send raw response");
+				sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then(function(response) {
+					//log.info(response);
+					console.log('LISTEN APROVAL');
+					
+					log.info('Creating Escrow');
+					createEscrowFunction(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then( result => {
+						log.info('Escrow created');
+						resolve(result);
+					}).catch(e => {
+						log.error('Escrow creation failed')
+						reject(e);
+					})
 
 
-			});
-		},
-
-		listenApproval: function() {
-			return new Promise((resolve, reject) => {
-
-				var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
-				var token = new web32.eth.Contract(token_abi, token_address);
-				token.once('Approval', [], (err, res) => {
-					if(err) reject(err);
-					resolve(res);
+				}).catch(e => {
+					log.error('Not Approved!');
+					console.log(e);
+					reject(e);
 				});
 			});
 		},
 
 		createEscrow: function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
-			return new Promise((resolve, reject) => {
-				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-					var txOptions = {
-						nonce: nonce,
-						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-						to: escrow_address
-					};
+			var txOptions = {
+				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+				to: escrow_address
+			};
 
-					console.log(txOptions);
-
-					var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
-					sendRaw(rawTx, (err, res) => {
-						resolve(res);
-					});
-				});
-
-
-			});
+			return sendTransaction(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 		},
 
 		createConfirmation: function(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid){
@@ -185,7 +147,7 @@ module.exports = function() {
 			var raw_data = "0x" + abi.soliditySHA3(
 				["address", "uint", "uint", "uint", "bool"],
 				[new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid]
-			  ).toString('hex');
+				).toString('hex');
 
 			var hash = utilities.sha3(raw_data);
 			var signature = Account.sign(hash, '0x' + private_key);
@@ -212,38 +174,31 @@ module.exports = function() {
 			};
 
 			return confirmation;
-
-
 		},
 
 		sendConfirmation: async function(confirmation, callback) {
 
-			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address);
-
-			var new_nonce = nonce + nonce_increment;
-			nonce_increment = nonce_increment + 1;
-
 			var txOptions = {
-				nonce: new_nonce,
 				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 				to: escrow_address
 			};
 
-			console.log(txOptions);
 
-			var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet, 
-																  confirmation.data_id, 
-																  confirmation.confirmation_verification_number, 
-																  confirmation.confirmation_time, 
-																  confirmation.confirmation_valid, 
-																  confirmation.confirmation_hash, 
-																  confirmation.v, 
-																  confirmation.r, 
-																  confirmation.s], txOptions);
-			sendRaw(rawTx, callback);
-		}
+			this.sendTransaction(escrow_abi, 'payOut', [confirmation.DC_wallet, 
+				confirmation.data_id, 
+				confirmation.confirmation_verification_number, 
+				confirmation.confirmation_time, 
+				confirmation.confirmation_valid, 
+				confirmation.confirmation_hash, 
+				confirmation.v, 
+				confirmation.r, 
+				confirmation.s], txOptions).then(response => {
+					log.info('Confirmation complete')
+				}).catch(err => {
+					log.warn('Confirmation failed')
+				})
+			}
 		/*
 		verifyMessageSignature: function(message, signer_address)
 		{
@@ -287,7 +242,7 @@ module.exports = function() {
 
 			return true;
 		}
-*/
+		*/
 
 	};
 

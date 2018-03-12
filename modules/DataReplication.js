@@ -20,11 +20,11 @@ class DataReplication {
 		log.info('Entering sendPayload');
 
 		var currentUnixTime = Math.floor(new Date() / 1000);
-		var min10 = currentUnixTime + 120 + 60; // for hum much time do we want testing
+		var min10 = currentUnixTime + 120 + 60; // End of testing period
 		let options_signing = {
 			dh_wallet: config.DH_WALLET,
 			import_id: data.data_id,
-			amount: 10,
+			amount: data.vertices.length + data.edges.length,
 			start_time: currentUnixTime + 120,
 			total_time: 60
 		};

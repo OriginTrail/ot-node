@@ -6,7 +6,7 @@ const config = utilities.getConfig();
 const Mtree = require('./mtree')();
 const storage = require('./storage')();
 const blockchain = require('./blockchain')();
-
+const signing = require('./blockchain_interface/ethereum/signing')();
 const async = require('async');
 const db = require('./database')();
 
@@ -114,33 +114,30 @@ module.exports = function () {
 					log.info("Import id: " + data_id);
 					log.info("Import root hash: " + root_hash);
 					storage.storeObject('Import_'+data_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
-	/*					blockchain.addFingerprint(data_id, utilities.sha3(data_id), utilities.sha3(tree.root()), function(response) {
-							console.log(response);
-						});
-	*/
-						const graph = require('./graph')();
-						const testing = require('./testing')();
+						signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then(response => {
 
-						graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, result => {
-							const encryptedVertices = result;
-							log.info('[DC] Preparing to enter sendPayload');
+							const graph = require('./graph')();
+							const testing = require('./testing')();
 
-							const data = {};
-							data.vertices = vertices;
-							data.edges = edges;
-							data.data_id = data_id;
+							graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, result => {
+								const encryptedVertices = result;
+								log.info('[DC] Preparing to enter sendPayload');
 
-							replication.sendPayload(data, (result) => {
-								log.info('[DC] Payload sent');
-								log.info('[DC] Generating tests for DH');
+								const data = {};
+								data.vertices = vertices;
+								data.edges = edges;
+								data.data_id = data_id;
+
+								replication.sendPayload(data, (result) => {
+									log.info('[DC] Payload sent');
+									log.info('[DC] Generating tests for DH');
+								});
 							});
 
-
-
-						});
-
-
-					});
+						}).catch(err => {
+							log.warn('Failed to write data fingerprint on blockchain!');
+						})
+					})
 
 				}
 			});

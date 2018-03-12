@@ -1,6 +1,6 @@
 {
   "name": "ot-node",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "auto-updater": {
     "repo": "OriginTrail/ot-node",
     "branch": "master"
@@ -51,7 +51,7 @@
   },
   "scripts": {
     "test": "nyc mocha --recursive test",
-    "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\""
+    "start": "sudo systemctl start mongod && concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\""
   },
   "repository": {
     "type": "git",

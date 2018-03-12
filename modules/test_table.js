@@ -82,7 +82,7 @@ module.exports = function () {
 			storage.getObject('Tests', function(response) {
 			//	log.info(response);
 				if(response.length == 0) {
-					log.info('No tests it LevelDB');
+					log.info('There are no planed tests');
 					utilities.executeCallback(callback, []);
 				} else {
 					utilities.executeCallback(callback, response);

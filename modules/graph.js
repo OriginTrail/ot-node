@@ -203,7 +203,7 @@ module.exports = function () {
 							
 							for(let j in vertices) {
 								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
-								vertices[j].decryption_key = keypair.publicKey;
+								vertices[j].decryption_key = response[i].publicKey;
 							}
 
 							utilities.executeCallback(callback, {vertices: vertices, public_key: response[i].publicKey});
