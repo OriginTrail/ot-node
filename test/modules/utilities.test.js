@@ -1,7 +1,11 @@
 'use strict';
+const {describe, it} = require('mocha');
+// eslint-disable-next-line no-unused-vars
 const should = require('should');
-const reuest = require('supertest');
+// eslint-disable-next-line no-unused-vars
+const request = require('supertest');
 const utilities = require('../../modules/utilities')();
+// eslint-disable-next-line no-unused-vars
 const config = utilities.getConfig();
 
 
@@ -37,12 +41,19 @@ describe('The Utilities', () => {
 		number.should.be.belowOrEqual(10);
 	});
 
+	it('should return random number in range min - max', () => {
+		let number = utilities.getRandomIntRange(8,17);
+		number.should.be.aboveOrEqual(8, "Number should be >= then min");
+		number.should.be.belowOrEqual(17, "Number should be <= then max");
+	});
+
 	it('should return true if two IP addresses are the same', () => {
 		let ip1 = '127.0.0.1';
 		let ip2 = '127.0.0.1';
 		let result = utilities.isIpEqual(ip1, ip2);
 		result.should.be.true;
 	});
+
 	it('should return false if two IP addresses are not the same', () => {
 		let ip1 = '127.0.0.1';
 		let ip2 = '192.168.0.0';
@@ -50,5 +61,8 @@ describe('The Utilities', () => {
 		result.should.be.false;
 	});
 
-
+	it('should return copied object', ()=> {
+		let obj1 = { "name":"Mike", "age":30, "city":"New York"};
+		obj1.should.be.deepEqual(utilities.copyObject(obj1));
+	});
 });
