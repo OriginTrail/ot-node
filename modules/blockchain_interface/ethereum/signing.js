@@ -65,7 +65,7 @@ module.exports = function() {
 				//log.info(txOptions);
 
 				var rawTx = txutils.functionTx(abi, method, args, txOptions);
-				sendRaw(rawTx).on('error', err => {
+				return sendRaw(rawTx).on('error', err => {
 					return reject(err);
 				}).then(response => {
 					return resolve(response);
