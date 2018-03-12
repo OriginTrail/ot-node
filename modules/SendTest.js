@@ -16,7 +16,7 @@ class SendTests {
 		log.info('Starting tests');
 		return setInterval(() => {
 			this.checkTests();
-		}, 15000);
+		}, 45000);
 	}
 
 	/**
