@@ -104,11 +104,8 @@ module.exports = function() {
 				//if(nonce == -1)
 				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-					var new_nonce = nonce + nonce_increment;
-					nonce_increment = nonce_increment + 1;
-
 					var txOptions = {
-						nonce: new_nonce,
+						nonce: nonce,
 						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 						to: token_address
@@ -153,25 +150,30 @@ module.exports = function() {
 			});
 		},
 
-		createEscrow: async function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
+		createEscrow: function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
+			return new Promise((resolve, reject) => {
+				web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-			if(nonce == -1)
-				nonce = await web3.eth.getTransactionCount(wallet_address);
+					var txOptions = {
+						nonce: nonce,
+						gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+						gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+						to: escrow_address
+					};
 
-			var new_nonce = nonce;
-			nonce_increment = nonce_increment;
+					console.log(txOptions);
 
-			var txOptions = {
-				nonce: new_nonce,
-				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-				to: escrow_address
-			};
+					var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
+					sendRaw(rawTx, (response, err) => {
+						if (err) {
+							reject(err);
+						}
+						resolve(response);
+					});
+				});
 
-			console.log(txOptions);
 
-			var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
-			sendRaw(rawTx, callback);
+			});
 		},
 
 		createConfirmation: function(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid){
