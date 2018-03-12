@@ -121,7 +121,7 @@ module.exports = function() {
 						console.log('LISTEN APROVAL');
 						this.listenApproval().then((result) => {
 							log.warn('Waiting for approval');
-							this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time, result => {
+							this.createEscrow(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then( result => {
 								log.warn('Creating Escrow');
 								resolve(result);
 							});
