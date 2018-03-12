@@ -1,94 +1,96 @@
 // External modules
-var leveldup = require('levelup')
-var leveldown = require('leveldown')
-var kad = require('kad')
-const quasar = require('kad-quasar')
-var utilities = require('./utilities')()
-var config = utilities.getConfig()
+var leveldup = require('levelup');
+var leveldown = require('leveldown');
+var kad = require('kad');
+const quasar = require('kad-quasar');
+var utilities = require('./utilities')();
+const log = utilities.getLogger();
+var config = utilities.getConfig();
 
 // Response pool
-var ping_responses = []
-var waiting_for_responses = false
-var node = null
+var ping_responses = [];
+var waiting_for_responses = false;
+var node = null;
 
 module.exports = function () {
-  var kademlia = {
+	var kademlia = {
 
-    sendRequest: function (requestType, requestObject) {
-      node.quasarPublish(requestType, requestObject)
-    },
+		sendRequest: function (requestType, requestObject) {
+			node.quasarPublish(requestType, requestObject);
+		},
 
-    getPingResponses: function () {
-      return ping_responses
-    },
+		getPingResponses: function () {
+			return ping_responses;
+		},
 
-    clearPingResponses: function () {
-      ping_responses = []
-    },
+		clearPingResponses: function () {
+			ping_responses = [];
+		},
 
-    waitForResponse: function () {
-      waiting_for_responses = true
-    },
+		waitForResponse: function () {
+			waiting_for_responses = true;
+		},
 
-    stopWaitingForResponse: function () {
-      waiting_for_responses = false
-    },
+		stopWaitingForResponse: function () {
+			waiting_for_responses = false;
+		},
 
-    start: function () {
+		start: function () {
 
-      const seed = ['0000000000000000000000000000000000000001', {
-        hostname: config.KADEMLIA_SEED_IP,
-        port: config.KADEMLIA_SEED_PORT
-      }]
+			const seed = ['0000000000000000000000000000000000000001', {
+				hostname: config.KADEMLIA_SEED_IP,
+				port: config.KADEMLIA_SEED_PORT
+			}];
 
-      node = kad({
-        transport: new kad.HTTPTransport(),
-        storage: require('levelup')(leveldown('kad-storage')),
-        contact: {
-          hostname: config.NODE_IP,
-          port: config.KADEMLIA_PORT
-        }
-      })
-      node.plugin(quasar)
+			node = kad({
+				transport: new kad.HTTPTransport(),
+				storage: require('levelup')(leveldown('kad-storage')),
+				contact: {
+					hostname: config.NODE_IP,
+					port: config.KADEMLIA_PORT
+				}
+			});
 
-      if (config.IS_KADEMLIA_BEACON == 'false') {
-        node.join(seed, function () {
-          if (node.router.size != 0) {
-            console.log('Kademlia connected to seed')
-          } else {
-            console.log('Kademlia connection to seed failed')
-          }
-        })
-      }
+			node.plugin(quasar);
 
-      node.listen(config.KADEMLIA_PORT, function () {
-        console.log('Kademlia service listening...')
-      })
+			if (config.IS_KADEMLIA_BEACON == 'false') {
+				node.join(seed, function () {
+					if (node.router.size != 0) {
+						log.info('Kademlia connected to seed');
+					} else {
+						log.warn('Kademlia connection to seed failed');
+					}
+				});
+			}
 
-      node.quasarSubscribe('ot-ping-request', (content) => {
-        if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
-          return
-        }
+			node.listen(config.KADEMLIA_PORT, function () {
+				log.info('Kademlia service listening...');
+			});
 
-        node.quasarPublish('ot-ping-response', {
-          request_id: content.request_id,
-          sender_ip: config.NODE_IP,
-          sender_port: config.RPC_API_PORT,
-          message: 'ALOHA'
-        })
-      })
+			node.quasarSubscribe('ot-ping-request', (content) => {
+				if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
+					return;
+				}
 
-      node.quasarSubscribe('ot-ping-response', (content) => {
-        if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
-          return
-        }
+				node.quasarPublish('ot-ping-response', {
+					request_id: content.request_id,
+					sender_ip: config.NODE_IP,
+					sender_port: config.RPC_API_PORT,
+					message: 'ALOHA'
+				});
+			});
 
-        if (waiting_for_responses == true) {
-          ping_responses.push(content)
-        }
-      })
-    }
-  }
+			node.quasarSubscribe('ot-ping-response', (content) => {
+				if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
+					return;
+				}
 
-  return kademlia
-}
+				if (waiting_for_responses == true) {
+					ping_responses.push(content);
+				}
+			});
+		}
+	};
+
+	return kademlia;
+};

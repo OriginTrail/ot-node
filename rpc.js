@@ -6,9 +6,21 @@ var replication = require('./modules/replication')();
 var io = require('socket.io-client')('http://localhost:3000');
 var config = utilities.getConfig();
 var natUpnp = require('nat-upnp');
-
+const log = utilities.getLogger();
 // Active requests pool
 var socketRequests = {};
+
+/**
+ * Start testing mechanism as a separate thread
+ */
+
+const { fork } = require('child_process');
+const forked = fork('./modules/SendTest.js');
+
+// forked.on('message', (msg) => {
+// 	log.info('Test sent', msg);
+// });
+
 
 // Socket communication configuration for RPC client
 // =================================================
@@ -16,19 +28,22 @@ var socket = io.connect('http://localhost:3000', {
 	reconnect: true
 });
 socket.on('connect', function () {
-	console.log('Socket connected to IPC-RPC Communication server on port ' + 3000);
+	log.info('Socket connected to IPC-RPC Communication server on port ' + 3000);
 });
 
 socket.on('event', function (data) {
 	var reqNum = data.clientRequest;
 	socketRequests[reqNum].send(data.responseData);
 
+	//console.log('data',data);
+	//console.log('data.responseData',data.responseData);
+
 	// Free request slot
 	delete socketRequests[reqNum];
 });
 
 socket.on('disconnect', function () {
-	console.log('IPC-RPC Communication disconnected');
+	log.info('IPC-RPC Communication disconnected');
 });
 // =================================================
 
@@ -65,7 +80,6 @@ server.get('/api/trail/batches', function (req, res) {
 	while (socketRequests[reqNum] != undefined) {
 		utilities.getRandomInt(10000000000);
 	}
-
 	socketRequests[reqNum] = res;
 	socket.emit('event', {
 		request: 'trail-request',
@@ -122,11 +136,94 @@ server.get('/api/blockchain/check', function (req, res) {
 		clientRequest: reqNum
 	});
 });
+
+
+/*
+* Imports data for replication
+* Method: post
+*
+* @param json payload
+*/
+
+server.post('/api/replication', function (req, res) {
+	let queryObject = req.body;
+
+	//TODO: extract this as it repeats
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'replication-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
+/**
+ * Receive test request
+ * Method: post
+ *
+ * @param json test
+ */
+
+server.post('/api/testing', function (req, res) {
+
+	let queryObject = req.body;
+
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'testing-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
+/**
+ * Receive receipt
+ * Method: post
+ *
+ * @param json receipt
+ */
+
+server.post('/api/receipt', function (req, res) {
+
+	let queryObject = req.body;
+
+	var reqNum = utilities.getRandomInt(10000000000);
+
+	while (socketRequests[reqNum] != undefined) {
+		utilities.getRandomInt(10000000000);
+	}
+
+	socketRequests[reqNum] = res;
+
+	socket.emit('event', {
+		request: 'receipt-request',
+		queryObject: queryObject,
+		clientRequest: reqNum
+	});
+});
+
 // ============================
 
 // Remote data import route
 // ========================
 server.post('/import', function (req, res) {
+
+	log.info('[DC] Import request received!');
+
 	var request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	var remote_access = utilities.getConfig().REMOTE_ACCESS;
 
@@ -153,11 +250,11 @@ server.post('/import', function (req, res) {
 		var input_file = req.files.importfile.path;
 
 		var reqNum = utilities.getRandomInt(10000000000);
-
+/*
 		if (req.body.noreplicate == undefined) {
 			replication.replicate(input_file);
 		}
-
+*/
 		socketRequests[reqNum] = res;
 		var queryObject = {
 			filepath: input_file
@@ -175,55 +272,52 @@ server.post('/import', function (req, res) {
 if(config.NODE_IP == '127.0.0.1')
 {
 	var client = natUpnp.createClient();
-
 	client.portMapping({
-  		public: config.RPC_API_PORT,
-  		private: config.RPC_API_PORT,
-  		ttl: 0,
+		public: config.RPC_API_PORT,
+		private: config.RPC_API_PORT,
+		ttl: 0,
 	}, function(err) {
 		if(err)
 		{
-	  		console.log(err)		
+			log.info(err);
 		}
 		else
 		{
-			console.log("uPnP port mapping enabled, port: " + config.RPC_API_PORT)
+			log.info('uPnP port mapping enabled, port: ' + config.RPC_API_PORT);
 		}
 	});
 
 	client.portMapping({
-  		public: config.KADEMLIA_PORT,
-  		private: config.KADEMLIA_PORT,
-  		ttl: 0,
+		public: config.KADEMLIA_PORT,
+		private: config.KADEMLIA_PORT,
+		ttl: 0,
 	}, function(err) {
 		if(err)
 		{
-	  		console.log(err)		
+			log.info(err);
 		}
 		else
 		{
-			console.log("uPnP port mapping enabled, port: " + config.KADEMLIA_PORT)
+			log.info('uPnP port mapping enabled, port: ' + config.KADEMLIA_PORT);
 		}
 	});
 
 
 
 	client.externalIp(function(err, ip) {
-		config.NODE_IP = ip
-		console.log(ip)
-	  	kademlia.start();
+		config.NODE_IP = ip;
+		log.info(ip);
+		kademlia.start();
 
-	  	server.listen(parseInt(config.RPC_API_PORT), function () {
-			console.log('%s listening at %s', server.name, server.url);
+		server.listen(parseInt(config.RPC_API_PORT), function () {
+			log.info('%s listening at %s', server.name, server.url);
 		});
 	});
 }
 else
 {
-	kademlia.start()
+	kademlia.start();
 	server.listen(parseInt(config.RPC_API_PORT), function () {
-	console.log('%s listening at %s', server.name, server.url);
-});
+		log.info('%s listening at %s', server.name, server.url);
+	});
 }
-
-

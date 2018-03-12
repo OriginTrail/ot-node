@@ -1,9 +1,10 @@
 // External modules
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var config = utilities.getConfig();
 var chain = config.blockchain.preferred_chain;
 var chainInterface = null;
-//console.log(chain);
+//log.info(chain);
 
 switch (chain) {
 case 'ethereum':
@@ -13,7 +14,7 @@ case 'neo':
 	break;
 default:
 	chainInterface = null;
-	console.log('ERROR: Couldn\'t load blockchain interaface, please check your config file.');
+	log.info('ERROR: Couldn\'t load blockchain interaface, please check your config file.');
 }
 
 module.exports = function () {
@@ -21,12 +22,12 @@ module.exports = function () {
 	var blockchain = {
 		addFingerprint: function (batch_uid, batch_uid_hash, trail_hash) {
 
-			console.log('Writing on blockchain...');
-			console.log(batch_uid);
-			console.log(batch_uid_hash);
-			console.log(trail_hash);
+			log.info('Writing on blockchain...');
+			log.info(batch_uid);
+			log.info(batch_uid_hash);
+			log.info(trail_hash);
 
-			console.log();
+			log.info();
 
 			chainInterface.addFingerprint(batch_uid, batch_uid_hash, trail_hash);
 		},

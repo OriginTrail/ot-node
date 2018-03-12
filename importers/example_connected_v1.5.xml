@@ -1,0 +1,200 @@
+<OriginTrailExport version="1.5">
+  <DataProvider> <!-- Unique ID for supply chain entity that provides the file -->
+    <ParticipantId>WALLET_2_ID</ParticipantId>
+  </DataProvider>
+  <MasterData>
+    <!-- 
+    Master data is the core data that is essential to operations in a specific business or business unit. It represents the business objects which are agreed on and shared across the enterprise. It can cover relatively static reference data, unstructured, analytical, hierarchical and metadata. In our current XML structure, the Master Data entities are:
+
+      - ParticipantsList and Participant – Description of all entities (participants) in the supply chain
+      - BusinessLocationsList and BusinessLocation - describe all physical or system locations where business processes are executed
+      - ObjectsList and Object – entities that are subjects of business processes (items or goods being described) 
+    -->
+    <ParticipantsList>  <!-- Description of all entities (participants) in supply chain -->
+      <Participant>
+        <ParticipantIdentifiers>
+          <ParticipantId>RETAILER_ID</ParticipantId>
+        </ParticipantIdentifiers>
+        <ParticipantData>
+          <Name>
+            <EN>Retailer</EN>
+          </Name>
+          <Location>
+            <Address>Retailer's Street 01C</Address>
+            <City>Bytesfield</City>
+            <Country>Cryptonia</Country>
+            <Zip>20001</Zip>
+            <GeoLocation>
+              <Latitude>00.0000</Latitude>
+              <Longitude>00.0000</Longitude>
+            </GeoLocation>
+          </Location>
+        </ParticipantData>
+      </Participant>
+      <Participant>
+        <ParticipantIdentifiers> <!-- Required -->
+          <ParticipantId>PROVIDER_ID</ParticipantId> <!-- Required -->
+          <AnotherIdentifier>SomeValue</AnotherIdentifier> <!-- Optional: you may define and add more identifiers if needed -->
+        </ParticipantIdentifiers>
+        <ParticipantData> 
+          <!--  ParticipantData tag is required, but all the contents inside are optional -->
+          <Name> <!-- Required -->
+            <en>Green Warehouse Ltd</en>
+            <de>Gruene Warehouse Ltd</de>
+            <!-- languages are defined by ISO 639-1 (https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)-->
+          </Name>
+          <Location> <!-- Optional -->
+            <Address>Data Boulevard 01</Address>
+            <City>Traceshire</City>
+            <Country>Cryptonia</Country>
+            <Zip>10000</Zip>
+            <GeoLocation>
+              <Latitude>00.0000</Latitude>
+              <Longitude>00.0000</Longitude>
+            </GeoLocation>
+          </Location>         
+          <AdditionalInformation> Lorem Ipsum </AdditionalInformation> <!-- Optional: you may add additional tags if needed -->
+        </ParticipantData>
+      </Participant>
+    </ParticipantsList>
+    <BusinessLocationsList> <!-- This tag describes all physical locations where business processes are executed -->
+      <BusinessLocation>
+        <BusinessLocationOwnerId>RETAILER_ID</BusinessLocationOwnerId>
+        <BusinessLocationIdentifiers>
+          <BusinessLocationId>STORE_1</BusinessLocationId>
+        </BusinessLocationIdentifiers>
+        <BusinessLocationData>
+          <BusinessLocationName>
+            <EN>Retailer's Store</EN>
+          </BusinessLocationName>
+          <BusinessLocationType>Store</BusinessLocationType>
+          <Location>
+            <Address>Retailer's Street 01C</Address>
+            <City>Bytesfield</City>
+            <Country>Cryptonia</Country>
+            <Zip>20001</Zip>
+            <GeoLocation>
+              <Latitude>00.0000</Latitude>
+              <Longitude>00.0000</Longitude>
+            </GeoLocation>
+          </Location>
+        </BusinessLocationData>
+      </BusinessLocation>
+      <BusinessLocation>
+        <BusinessLocationOwnerId>PROVIDER_ID</BusinessLocationOwnerId> <!-- Required. Corresponds to ParticipantId in ParticipantsList above -->
+        <BusinessLocationIdentifiers> <!-- Required -->
+          <BusinessLocationId>WAREHOUSE_1</BusinessLocationId> <!-- Required -->
+          <AnotherIdentifier>SomeValue</AnotherIdentifier> <!-- Optional: you may define and add more identifiers if needed -->
+        </BusinessLocationIdentifiers>
+        <BusinessLocationData> <!-- Required -->
+          <Name> <!-- Required -->
+            <en>Provider's Warehouse</en>
+            <de>Das Warehouse des Anbieters</de>
+            <!-- languages are defined by ISO 639-1 (https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes)-->
+          </Name>
+          <BusinessLocationType>Warehouse</BusinessLocationType> <!-- Required -->
+          <Location> <!-- Optional -->
+            <Address>Data Boulevard 02</Address>
+            <City>Traceshire</City>
+            <Country>Cryptonia</Country>
+            <Zip>10000</Zip>
+            <GeoLocation>
+              <Latitude>00.0000</Latitude>
+              <Longitude>00.0000</Longitude>
+            </GeoLocation>
+          </Location>
+          <AdditionalInformation> Lorem Ipsum </AdditionalInformation> <!-- Optional: you may add additional tags if needed -->
+        </BusinessLocationData>
+      </BusinessLocation>
+      
+    </BusinessLocationsList>
+    <ObjectsList> <!-- Object descriptions - i.e. product (object) master data, involved in the supply chain -->
+      <Object>
+        <ObjectIdentifiers>
+          <ObjectId>OBJECT_2</ObjectId>
+          <ean13>1234567890124</ean13>
+        </ObjectIdentifiers>
+        <ObjectData>
+          <Name>
+            <EN>Packed crypto Carrots 1 Kg</EN>
+          </Name>
+          <ObjectType>Vegetable</ObjectType>
+          <ObjectCategory>Carrot</ObjectCategory>
+          <ObjectDescription>
+            <en>The cryptiest carrots in the entire Cryptonia, packed for retail in 1 Kg package.</en>
+          </ObjectDescription>
+        </ObjectData>
+      </Object>
+    </ObjectsList>
+    <BatchesList>
+      <Batch>
+        <BatchIdentifiers>
+          <BatchId>OUTPUT_BATCH_ID</BatchId> <!-- Required -->
+          <ObjectId>OBJECT_2</ObjectId> <!-- Required -->
+          <SomeOtherCode>SomeValue</SomeOtherCode>  <!-- Optional -->
+        </BatchIdentifiers>
+        <BatchData>
+          <QuantitiesDataList> <!-- Optional -->
+            <QuantityData>
+              <Quantity>1</Quantity>
+              <Measure>Unit</Measure>
+            </QuantityData>
+            <QuantityData>
+              <Quantity>10</Quantity>
+              <Measure>Kg</Measure>
+            </QuantityData>
+          </QuantitiesDataList>
+          <Note>Purchased on time</Note> <!-- Optional -->
+          <AdditionalInformation>Lorem ipsum</AdditionalInformation> <!--Required -->
+        </BatchData>
+      </Batch>
+    </BatchesList>
+  </MasterData>
+  <TransactionData>
+    <ExternalTransactionsList>
+      <ExternalTransaction>
+        <ExternalTransactionIdentifiers>
+          <ExternalTransactionId>TRANSACTION_3</ExternalTransactionId>
+          <ExternalTransactionDocumentId>TRANSACTION_DOCUMENT_3</ExternalTransactionDocumentId>
+        </ExternalTransactionIdentifiers>
+        <TransactionBatchesInformation>
+          <TransactionBatchesList> <!-- Required -->
+            <TransactionBatch>
+              <TransactionBatchId>OUTPUT_BATCH_ID</TransactionBatchId>
+              <TransactionBatchData>
+                <QuantitiesDataList>
+                  <QuantityData>
+                    <Quantity>1</Quantity>
+                    <Measure>Unit</Measure>
+                  </QuantityData>
+                  <QuantityData>
+                    <Quantity>10</Quantity>
+                    <Measure>Kg</Measure>
+                  </QuantityData>
+                </QuantitiesDataList>
+              </TransactionBatchData>
+            </TransactionBatch>
+          </TransactionBatchesList>
+        </TransactionBatchesInformation>
+        <ExternalTransactionData>
+          <TransactionTime>21.12.2012T00:00:00</TransactionTime>
+          <BusinessProcess>Purchase</BusinessProcess>
+          <BusinessLocationId>STORE_1</BusinessLocationId>
+          <TransactionFlow>Input</TransactionFlow> <!-- Required -->
+          <SourceBusinessLocationId>WAREHOUSE_1</SourceBusinessLocationId>
+          <DestinationBusinessLocationId>STORE_1</DestinationBusinessLocationId>        
+          <BusinessProcessDescription>Regular Purchase</BusinessProcessDescription>
+          <AdditionalInformation> <!-- Optional -->
+            <Price>
+              <Value>10</Value>
+              <VAT>1%</VAT>
+              <Total>11</Total>
+              <Currency>USD</Currency>
+              <Discount>0%</Discount>
+            </Price>
+          </AdditionalInformation>
+        </ExternalTransactionData>
+      </ExternalTransaction>
+    </ExternalTransactionsList>
+  </TransactionData>
+</OriginTrailExport>

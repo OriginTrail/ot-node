@@ -28,6 +28,10 @@ BATCHES = {}
 TRANSACTIONS = {}
 EVENTS = {}
 
+INPUT_BATCHES = []
+OUTPUT_BATCHES = []
+TRANSFERED_BATCHES = []
+
 # Relations
 OWNED_BY = []
 AT = []
@@ -38,6 +42,8 @@ OF_BATCH = []
 TRACED_BY = [] 
 FROM = []
 TO = []
+
+import_id = int(time.time())
 
 #Database connection
 
@@ -94,8 +100,16 @@ def insert_node(collection, node_value, data_provider):
     nodesCollection = db.collection('ot_vertices')
 
     if nodesCollection.has(node_value['_key']):
-        return
+        doc = nodesCollection[node_value['_key']]
+
+        if 'imports' not in doc:
+            doc['imports'] = []
+
+        doc['imports'].append(import_id)
+        nodesCollection.update(doc)
+
     else:
+        node_value['imports'] = [import_id]
         nodesCollection.insert(dumps(node_value))
 
 # Insert new edge
@@ -108,30 +122,38 @@ def insert_edge(collection, edge_value, data_provider):
     edgesCollection = db.collection('ot_edges')
     
     if edgesCollection.get(edge_value['_key']):
-        return
+        doc = edgesCollection[edge_value['_key']]
+
+        if 'imports' not in doc:
+            doc['imports'] = []
+
+        doc['imports'].append(import_id)
+        edgesCollection.update(doc)
+
     else:
+        edge_value['imports'] = [import_id]
         edgesCollection.insert(dumps(edge_value))
   
-def joinTransactions(transaction):
+def joinTransactions(transaction, data_provider_id):
     transaction_id = transaction['identifiers']['ExternalTransactionId']
     key = transaction['_key']
 
     if transaction['data']['TransactionFlow'] == 'Input':
-        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.data.TransactionFlow == 'Output' and e.id.transaction_id == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
+        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.transaction_flow == 'Output' and e.identifiers.TransactionId == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
     
         result = db.aql.execute(aql);
     
         for res_key in result:
-            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Output', '_from': key, '_to' : res_key})
-            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Input', '_from': res_key, '_to' : key})
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Output', '_from': key, '_to' : res_key}, data_provider_id)
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Input', '_from': res_key, '_to' : key}, data_provider_id)
     else:    
-        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.data.TransactionFlow == 'Input' and e.id.transaction_id == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
+        aql = "FOR e IN ot_vertices FILTER e.vertex_type == 'TRANSACTION' and e.transaction_flow == 'Input' and e.identifiers.TransactionId == '" + transaction_id + "' and e._key != '"+ key +"' RETURN e._key"
     
         result = db.aql.execute(aql);
     
         for res_key in result:
-            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Input', '_from': key, '_to' : res_key})
-            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Output', '_from': res_key, '_to' : key})
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(key + "-" + res_key), 'TransactionFlow': 'Input', '_from': key, '_to' : res_key}, data_provider_id)
+            insert_edge('TRANSACTION_CONNECTION', {'_key':hashed(res_key + "-" + key), 'TransactionFlow': 'Output', '_from': res_key, '_to' : key}, data_provider_id)
 # Collaboration check
 
 def isCollaborationConfirmed(providerId, partnerId):
@@ -145,7 +167,7 @@ def hasVertex(vertex_key):
 
 # Loading XML from input file supplied in command line argument
 xml_file_url = sys.argv[1]
-xml_file = open(xml_file_url, "r") 
+xml_file = open(xml_file_url, "r", encoding="utf-8") 
 xml_data = xml_file.read() 
 
 # Data from import file loaded as dictionary
@@ -293,7 +315,7 @@ if 'MasterData' in OriginTrailExport_element:
             OWNED_BY.append({
                     '_from': LOCATIONS[business_location_id]['_key'],
                     '_to': business_location_owner_key,
-                    '_key': hashed(business_location_owner_key + '_' + LOCATIONS[business_location_id]['_key'])
+                    '_key': hashed('owned_by_' + business_location_owner_key + '_' + LOCATIONS[business_location_id]['_key'])
                 })
             
     # Reading Objects Data
@@ -337,6 +359,68 @@ if 'MasterData' in OriginTrailExport_element:
             OBJECTS[object_id]['data'] = ObjectData_element
             OBJECTS[object_id]['_key'] = hashed('object_' + object_uid)
             OBJECTS[object_id]['vertex_key'] = hashed('object_' + object_uid)
+
+             # Reading Objects Data
+   
+    if 'BatchesList' in MasterData_element:
+        
+        BatchesList_element = MasterData_element['BatchesList']
+        
+        if 'Batch' not in BatchesList_element:
+            error('Missing Batch element for BatchesList!')
+                
+        Batch_elements = BatchesList_element['Batch']
+        
+        if not isinstance(Batch_elements, list):
+            tmp_Batch_elements = Batch_elements
+            Batch_elements = []
+            Batch_elements.append(tmp_Batch_elements)
+        
+        for batch_element in Batch_elements:
+            
+            if 'BatchIdentifiers' not in batch_element:
+                error('Missing BatchIdentifiers element for Batch!')
+                
+            BatchIdentifiers_element = batch_element['BatchIdentifiers']
+            
+            if 'BatchId' not in BatchIdentifiers_element:
+                error('Missing BatchId for Batch')
+
+            batch_id = BatchIdentifiers_element['BatchId']
+
+            if 'ObjectId' not in ObjectIdentifiers_element:
+                error('Missing ObjectId for Batch')
+            
+            object_id = BatchIdentifiers_element['ObjectId']
+
+            if object_id in OBJECTS:
+                object_key = OBJECTS[object_id]['_key']
+            else:
+                object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+            
+                if not hasVertex(object_key):
+                    error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+            
+            batch_uid = 'ot:' + data_provider_id + ':otbid:' + batch_id
+        
+            if 'BatchData' not in batch_element:
+                error('Missing BatchData element for Object!')
+                
+            BatchData_element = batch_element['BatchData']
+            
+            BATCHES[batch_uid] = {}
+            BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
+            BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
+            BATCHES[batch_uid]['data'] = BatchData_element
+            BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
+            BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
+            
+            INSTANCE_OF.append({
+                    '_from': BATCHES[batch_uid]['vertex_key'],
+                    '_to': object_key,
+                    '_key': hashed('instance_of_' + BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
+                })
+    
             
 
 # Reading Transactions Data
@@ -375,22 +459,21 @@ if 'TransactionData' in OriginTrailExport_element:
             
             internal_transaction_uid = 'ot:' + data_provider_id + ':ottid:' + internal_transaction_id
             
-            if 'BatchesInformation' not in internal_transaction_element:
-                error('Missing BatchesInformation element for InternalTransaction!')
+            if 'TransactionBatchesInformation' not in internal_transaction_element:
+                error('Missing TransactionBatchesInformation element for InternalTransaction!')
                 
-            BatchesInformation_element = internal_transaction_element['BatchesInformation']
+            BatchesInformation_element = internal_transaction_element['TransactionBatchesInformation']
            
            # Reading input batches for internal transaction
            
             if 'InputBatchesList' in BatchesInformation_element:
-                
 
                 InputBatchesList_element = BatchesInformation_element['InputBatchesList']
             
-                if 'Batch' not in InputBatchesList_element:
-                    error('Missing Batch element for InputBatchesList!')
+                if 'TransactionBatch' not in InputBatchesList_element:
+                    error('Missing TransactionBatch element for InputBatchesList!')
                         
-                Batch_elements = InputBatchesList_element['Batch']
+                Batch_elements = InputBatchesList_element['TransactionBatch']
                 
                 if not isinstance(Batch_elements, list):
                     tmp_Batch_elements = Batch_elements
@@ -398,65 +481,40 @@ if 'TransactionData' in OriginTrailExport_element:
                     Batch_elements.append(tmp_Batch_elements)
                 
                 INPUT_BATCHES = []
-                
+
                 for batch_element in Batch_elements:
-                    
-                    if 'BatchIdentifiers' not in batch_element :
-                        error('Missing BatchIdentifiers element for Batch!')
+
+                    if 'TransactionBatchId' not in batch_element:
+                        error('Missing TransactionBatchId for Batch!')
                         
-                    BatchIdentifiers_element = batch_element['BatchIdentifiers']
+                    batch_id = batch_element['TransactionBatchId']
                     
-                    if 'BatchId' not in BatchIdentifiers_element:
-                        error('Missing BatchId for Batch!')
-                        
-                    batch_id = BatchIdentifiers_element['BatchId']
-                    
-                    if 'ObjectId' not in BatchIdentifiers_element:
-                        error('Missing ObjectId for Batch!')
-                        
-                    object_id = BatchIdentifiers_element['ObjectId']
-                    
-                    if object_id in OBJECTS:
-                        object_key = OBJECTS[object_id]['_key']
+                    batch_uid = 'ot:' + data_provider_id + ':otbid:' + batch_id
+
+                    if batch_uid in BATCHES:
+                        batch_key = BATCHES[batch_uid]['_key']
                     else:
-                        object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                        batch_key = hashed('batch_' + batch_uid)
                     
                         if not hasVertex(object_key):
-                            error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                            error('Batch with id ' + batch_id + ' is not provided in export nor found in database!')
                     
-                    batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
-                
-                    if 'BatchData' not in batch_element:
-                        error('Missing BatchData element for Batch!')
+                    if 'TransactionBatchData' not in batch_element:
+                        error('Missing TransactionBatchData element for Batch!')
                         
-                    BatchData_element = batch_element['BatchData']
-                    
-                    BATCHES[batch_uid] = {}
-                    BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
-                    BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
-                    BATCHES[batch_uid]['data'] = BatchData_element
-                    BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
-                    BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
-                    
-                    INPUT_BATCHES.append(hashed('batch_' + batch_uid));
-                    
-                    INSTANCE_OF.append({
-                            '_from': BATCHES[batch_uid]['vertex_key'],
-                            '_to': object_key,
-                            '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
-                        })
+                    INPUT_BATCHES.append(batch_key);
             
             # Reading output units for internal transaction
             
             if 'OutputBatchesList' not in BatchesInformation_element:
-                    error('Missing OutputBatchesList for InternalTransaction!')
+                error('Missing OutputBatchesList for TransactionBatchesInformation')
 
             OutputBatchesList_element = BatchesInformation_element['OutputBatchesList']
         
-            if 'Batch' not in OutputBatchesList_element:
-                error('Missing Batch element for OutputBatchesList!')
+            if 'TransactionBatch' not in OutputBatchesList_element:
+                error('Missing TransactionBatch element for OutputBatchesList!')
                     
-            Batch_elements = OutputBatchesList_element['Batch']
+            Batch_elements = OutputBatchesList_element['TransactionBatch']
             
             if not isinstance(Batch_elements, list):
                 tmp_Batch_elements = Batch_elements
@@ -467,50 +525,27 @@ if 'TransactionData' in OriginTrailExport_element:
             
             for batch_element in Batch_elements:
                 
-                if 'BatchIdentifiers' not in batch_element :
-                    error('Missing BatchIdentifiers element for Batch!')
-                    
-                BatchIdentifiers_element = batch_element['BatchIdentifiers']
-                
-                if 'BatchId' not in BatchIdentifiers_element:
+                if 'TransactionBatchId' not in batch_element:
                     error('Missing BatchId for Batch!')
                     
-                batch_id = BatchIdentifiers_element['BatchId']
+                batch_id = batch_element['TransactionBatchId']
                 
-                if 'ObjectId' not in BatchIdentifiers_element:
-                    error('Missing ObjectId for Batch!')
-                    
-                object_id = BatchIdentifiers_element['ObjectId']
-                
-                if object_id in OBJECTS:
-                    object_key = OBJECTS[object_id]['_key']
+                batch_uid = 'ot:' + data_provider_id + ':otbid:' + batch_id
+
+                if batch_uid in BATCHES:
+                    batch_key = BATCHES[batch_uid]['_key']
                 else:
-                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                    batch_key = hashed('batch_' + batch_uid)
                 
                     if not hasVertex(object_key):
-                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                        error('Batch with id ' + batch_id + ' is not provided in export nor found in database!')
                 
-                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
-            
-                if 'BatchData' not in batch_element:
-                    error('Missing BatchData element for Batch!')
+                if 'TransactionBatchData' not in batch_element:
+                    error('Missing TransactionBatchData element for Batch!')
                     
-                BatchData_element = batch_element['BatchData']
+                BatchData_element = batch_element['TransactionBatchData']
                 
-                BATCHES[batch_uid] = {}
-                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
-                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
-                BATCHES[batch_uid]['data'] = BatchData_element
-                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
-                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
-                
-                OUTPUT_BATCHES.append(hashed('batch_' + batch_uid));
-                
-                INSTANCE_OF.append({
-                        '_from': BATCHES[batch_uid]['vertex_key'],
-                        '_to': object_key,
-                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
-                    })
+                OUTPUT_BATCHES.append(batch_key);
         
             if 'InternalTransactionData' not in internal_transaction_element:
                 error('Missing InternalTransactionData element for InternalTransaction!')
@@ -525,7 +560,7 @@ if 'TransactionData' in OriginTrailExport_element:
             if business_location_id in LOCATIONS:
                     business_location_key = LOCATIONS[business_location_id]['_key']
             else:
-                business_location_key = hashed('object_ot:' + data_provider_id + ':otoid:' + business_location_id)
+                business_location_key = hashed('business_location_ot:' + data_provider_id + ':otblid:' + business_location_id)
             
                 if not hasVertex(business_location_key):
                     error('Business location with id ' + business_location_id + ' is not provided in export nor found in database!')
@@ -536,6 +571,7 @@ if 'TransactionData' in OriginTrailExport_element:
             TRANSACTIONS[internal_transaction_id]['identifiers']['uid'] = internal_transaction_uid
             TRANSACTIONS[internal_transaction_id]['identifiers']['TransactionId'] = internal_transaction_id
             TRANSACTIONS[internal_transaction_id]['data'] = InternalTransactionData_element
+            TRANSACTIONS[internal_transaction_id]['data']['BatchesInformation'] = BatchesInformation_element
             TRANSACTIONS[internal_transaction_id]['TransactionType'] = 'InternalTransaction'
             TRANSACTIONS[internal_transaction_id]['_key'] = hashed('transaction_' + internal_transaction_uid)
             TRANSACTIONS[internal_transaction_id]['vertex_key'] = hashed('transaction_' + internal_transaction_uid)
@@ -543,21 +579,21 @@ if 'TransactionData' in OriginTrailExport_element:
             AT.append({
                     '_from': TRANSACTIONS[internal_transaction_id]['_key'],
                     '_to': business_location_key,
-                    '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + business_location_key)
+                    '_key': hashed('at_' + TRANSACTIONS[internal_transaction_id]['_key'] + '_' + business_location_key)
                 })
 
             for input_batch in INPUT_BATCHES:
                 INPUT_BATCH.append({
                         '_from': TRANSACTIONS[internal_transaction_id]['_key'],
                         '_to': input_batch,
-                        '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + input_batch)
+                        '_key': hashed('input_batch_' + TRANSACTIONS[internal_transaction_id]['_key'] + '_' + input_batch)
                     })
 
             for output_batch in OUTPUT_BATCHES:
                 OUTPUT_BATCH.append({
                         '_from': output_batch,
                         '_to': TRANSACTIONS[internal_transaction_id]['_key'],
-                        '_key': hashed(TRANSACTIONS[internal_transaction_id]['_key'] + '_' + output_batch)
+                        '_key': hashed('output_batch_' + TRANSACTIONS[internal_transaction_id]['_key'] + '_' + output_batch)
                     })
 
     # Reading external transactions data
@@ -590,22 +626,22 @@ if 'TransactionData' in OriginTrailExport_element:
             
             external_transaction_uid = 'ot:' + data_provider_id + ':ottid:' + external_transaction_id
             
-            if 'BatchesInformation' not in external_transaction_element:
-                error('Missing BatchesInformation element for ExternalTransaction!')
+            if 'TransactionBatchesInformation' not in external_transaction_element:
+                error('Missing TransactionBatchesInformation element for ExternalTransaction!')
                 
-            BatchesInformation_element = external_transaction_element['BatchesInformation']
+            BatchesInformation_element = external_transaction_element['TransactionBatchesInformation']
            
            # Reading batches for external transaction
 
-            if 'BatchesList' not in BatchesInformation_element:
-                    error('Missing BatchesList for ExternalTransaction!')
+            if 'TransactionBatchesList' not in BatchesInformation_element:
+                    error('Missing TransactionBatchesList for ExternalTransaction!')
 
-            BatchesList_element = BatchesInformation_element['BatchesList']
+            BatchesList_element = BatchesInformation_element['TransactionBatchesList']
         
-            if 'Batch' not in BatchesList_element:
-                error('Missing Batch element for BatchesList!')
+            if 'TransactionBatch' not in BatchesList_element:
+                error('Missing TransactionBatch element for TransactionBatchesList!')
                     
-            Batch_elements = BatchesList_element['Batch']
+            Batch_elements = BatchesList_element['TransactionBatch']
             
             if not isinstance(Batch_elements, list):
                 tmp_Batch_elements = Batch_elements
@@ -615,51 +651,26 @@ if 'TransactionData' in OriginTrailExport_element:
             TRANSFERED_BATCHES = []
             
             for batch_element in Batch_elements:
-                
-                if 'BatchIdentifiers' not in batch_element :
-                    error('Missing BatchIdentifiers element for Batch!')
                     
-                BatchIdentifiers_element = batch_element['BatchIdentifiers']
-                
-                if 'BatchId' not in BatchIdentifiers_element:
+                if 'TransactionBatchId' not in batch_element:
                     error('Missing BatchId for Batch!')
                     
-                batch_id = BatchIdentifiers_element['BatchId']
+                batch_id = batch_element['TransactionBatchId']
                 
-                if 'ObjectId' not in BatchIdentifiers_element:
-                    error('Missing ObjectId for Batch!')
-                    
-                object_id = BatchIdentifiers_element['ObjectId']
-                
-                if object_id in OBJECTS:
-                    object_key = OBJECTS[object_id]['_key']
+                batch_uid = 'ot:' + data_provider_id + ':otbid:' + batch_id
+
+                if batch_uid in BATCHES:
+                    batch_key = BATCHES[batch_uid]['_key']
                 else:
-                    object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
+                    batch_key = hashed('batch_' + batch_uid)
                 
                     if not hasVertex(object_key):
-                        error('Object with id ' + object_id + ' is not provided in export nor found in database!')
+                        error('Batch with id ' + batch_id + ' is not provided in export nor found in database!')
                 
-                batch_uid = 'ot:' + data_provider_id + ':otoid:' + object_id + ':otbid:' + batch_id
+                if 'TransactionBatchData' not in batch_element:
+                    error('Missing TransactionBatchData element for Batch!')
             
-                if 'BatchData' not in batch_element:
-                    error('Missing BatchData element for Batch!')
-                    
-                BatchData_element = batch_element['BatchData']
-                
-                BATCHES[batch_uid] = {}
-                BATCHES[batch_uid]['identifiers'] = BatchIdentifiers_element
-                BATCHES[batch_uid]['identifiers']['uid'] = batch_uid
-                BATCHES[batch_uid]['data'] = BatchData_element
-                BATCHES[batch_uid]['_key'] = hashed('batch_' + batch_uid)
-                BATCHES[batch_uid]['vertex_key'] = hashed('batch_' + batch_uid)
-                
-                TRANSFERED_BATCHES.append(hashed('batch_' + batch_uid));
-                
-                INSTANCE_OF.append({
-                        '_from': BATCHES[batch_uid]['vertex_key'],
-                        '_to': object_key,
-                        '_key': hashed(BATCHES[batch_uid]['vertex_key'] + '_' + object_key)
-                    })
+                TRANSFERED_BATCHES.append(batch_key);
 
                 if 'ExternalTransactionData' not in external_transaction_element:
                     error('Missing ExternalTransactionData element for ExternalTransaction!')
@@ -714,36 +725,43 @@ if 'TransactionData' in OriginTrailExport_element:
                 TRANSACTIONS[external_transaction_id]['identifiers'] = ExternalTransactionIdentifiers_element
                 TRANSACTIONS[external_transaction_id]['identifiers']['uid'] = external_transaction_uid
                 TRANSACTIONS[external_transaction_id]['identifiers']['TransactionId'] = external_transaction_id
-                TRANSACTIONS[external_transaction_id]['transcation_flow'] = transaction_flow
+                TRANSACTIONS[external_transaction_id]['transaction_flow'] = transaction_flow
                 TRANSACTIONS[external_transaction_id]['data'] = ExternalTransactionData_element
-                TRANSACTIONS[internal_transaction_id]['TransactionType'] = 'ExternalTransaction'
+                TRANSACTIONS[external_transaction_id]['data']['BatchesInformation'] = BatchesInformation_element
+                TRANSACTIONS[external_transaction_id]['TransactionType'] = 'ExternalTransaction'
                 TRANSACTIONS[external_transaction_id]['_key'] = hashed('transaction_' + external_transaction_uid)
-                TRANSACTIONS[internal_transaction_id]['vertex_key'] = hashed('transaction_' + internal_transaction_uid)
+                TRANSACTIONS[external_transaction_id]['vertex_key'] = hashed('transaction_' + external_transaction_uid)
 
                 
                 AT.append({
                     '_from': TRANSACTIONS[external_transaction_id]['_key'],
                     '_to': business_location_key,
-                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + business_location_key)
+                    '_key': hashed('at_' + TRANSACTIONS[external_transaction_id]['_key'] + '_' + business_location_key)
                 })
 
                 FROM.append({
                     '_from': TRANSACTIONS[external_transaction_id]['_key'],
                     '_to': source_business_location_key,
-                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + source_business_location_key)
+                    '_key': hashed('from_' + TRANSACTIONS[external_transaction_id]['_key'] + '_' + source_business_location_key)
                 })
 
                 TO.append({
                     '_from': TRANSACTIONS[external_transaction_id]['_key'],
                     '_to': dest_business_location_key,
-                    '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + dest_business_location_key)
+                    '_key': hashed('to_' + TRANSACTIONS[external_transaction_id]['_key'] + '_' + dest_business_location_key)
                 })
 
             for transfered_batch in TRANSFERED_BATCHES:
                 OF_BATCH.append({
                         '_from': transfered_batch,
                         '_to': TRANSACTIONS[external_transaction_id]['_key'],
-                        '_key': hashed(TRANSACTIONS[external_transaction_id]['_key'] + '_' + transfered_batch)
+                        '_key': hashed('of_batch_' + TRANSACTIONS[external_transaction_id]['_key'] + '_' + transfered_batch)
+                    })
+
+                OF_BATCH.append({
+                        '_from': TRANSACTIONS[external_transaction_id]['_key'],
+                        '_to': transfered_batch,
+                        '_key': hashed('of_batch_' + transfered_batch + '_' + TRANSACTIONS[external_transaction_id]['_key'])
                     })
 
 # Reading Visibility Events data Data
@@ -782,28 +800,14 @@ if 'VisibilityEventData' in OriginTrailExport_element:
 
             event_uid = 'ot:' + data_provider_id + ':oteid:' + event_id
 
-            if 'ObjectId' not in EventIdentifiers_element:
-                    error('Missing ObjectId for Event!')
-                    
-            object_id = EventIdentifiers_element['ObjectId']
-            
-            if object_id in OBJECTS:
-                object_key = OBJECTS[object_id]['_key']
-            else:
-                object_key = hashed('object_ot:' + data_provider_id + ':otoid:' + object_id)
-            
-                if not hasVertex(object_key):
-                    error('Object with id ' + object_id + ' is not provided in export nor found in database!')
-            
-
             if 'BatchId' not in EventIdentifiers_element:
                 error('Missing BatchId for Event!')
 
             batch_id = EventIdentifiers_element['BatchId']
-            batch_uid = 'ot:' + data_provider_id + ':otoid:'+ object_id + ':otbid:' + batch_id
+            batch_uid = 'ot:' + data_provider_id + ':otbid:' + batch_id
 
             if batch_uid in BATCHES:
-                    batch_key = BATCHES[batch_uid]['_key']
+                batch_key = BATCHES[batch_uid]['_key']
             else:
 
                 batch_key = hashed('batch_' + batch_uid)
@@ -826,60 +830,78 @@ if 'VisibilityEventData' in OriginTrailExport_element:
             TRACED_BY.append({
                     '_from': batch_key,
                     '_to': EVENTS[event_id]['vertex_key'],
-                    '_key': hashed(batch_key + '_' + EVENTS[event_id]['vertex_key'])
+                    '_key': hashed('traced_by_' + batch_key + '_' + EVENTS[event_id]['vertex_key'])
                 })
 
 
 # Importing parsed data into graph database
 
+VERTICES = []
+EDGES = []
+
 for key, participant_vertex in PARTICIPANTS.items():
+    VERTICES.append(participant_vertex)
     insert_node('PARTICIPANT', participant_vertex, data_provider_id)
     
 for key, location_vertex in LOCATIONS.items():
+    VERTICES.append(location_vertex)
     insert_node('BUSINESS_LOCATION', location_vertex, data_provider_id)
     
 for key, object_vertex in OBJECTS.items():
+    VERTICES.append(object_vertex)
     insert_node('OBJECT', object_vertex, data_provider_id)
     
 for key, batch_vertex in BATCHES.items():
+    VERTICES.append(batch_vertex)
     insert_node('BATCH', batch_vertex, data_provider_id)
     
 for key, transaction_vertex in TRANSACTIONS.items():
+    VERTICES.append(transaction_vertex)
     insert_node('TRANSACTION', transaction_vertex, data_provider_id)
 
 for key, event_vertex in EVENTS.items():
+    VERTICES.append(event_vertex)
     insert_node('VISIBILITY_EVENT', event_vertex, data_provider_id)
 
 for owned_by_relation in OWNED_BY:
+    EDGES.append(owned_by_relation)
     insert_edge('OWNED_BY', owned_by_relation, data_provider_id)
     
 for at_relation in AT:
+    EDGES.append(at_relation)
     insert_edge('AT', at_relation, data_provider_id)
     
 for input_batch_relation in INPUT_BATCH:
+    EDGES.append(input_batch_relation)
     insert_edge('INPUT_BATCH', input_batch_relation, data_provider_id)
     
 for output_batch_relation in OUTPUT_BATCH:
+    EDGES.append(output_batch_relation)
     insert_edge('OUTPUT_BATCH', output_batch_relation, data_provider_id)
 
 for instance_of_relation in INSTANCE_OF:
+    EDGES.append(instance_of_relation)
     insert_edge('INSTANCE_OF', instance_of_relation, data_provider_id)
 
 for of_batch_relation in OF_BATCH:
+    EDGES.append(of_batch_relation)
     insert_edge('OF_BATCH', of_batch_relation, data_provider_id)
     
 for sent_from_relation in FROM:
+    EDGES.append(sent_from_relation)
     insert_edge('FROM', sent_from_relation, data_provider_id)
     
 for sent_to_relation in TO:
+    EDGES.append(sent_to_relation)
     insert_edge('TO', sent_to_relation, data_provider_id)
 
 for traced_by_relation in TRACED_BY:
+    EDGES.append(traced_by_relation)
     insert_edge('TRACED_BY', traced_by_relation, data_provider_id)
 
-print(dumps({"message": "Data import complete!", "batches": BATCHES}))
+print(dumps({"message": "Data import complete!", "vertices": VERTICES, "edges": EDGES, "import_id": import_id}))
 sys.stdout.flush()
 
 for key, transaction in TRANSACTIONS.items():
     if 'TransactionFlow' in transaction['data']:
-        joinTransactions(transaction)
+        joinTransactions(transaction, data_provider_id)
