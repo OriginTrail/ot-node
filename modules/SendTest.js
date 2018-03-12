@@ -46,7 +46,7 @@ class SendTests {
 				});
 
 			} else {
-				log.info('Test time: ' + test.test_time);
+				log.info('Next test time: ' + test.test_time);
 				log.info('Current time: ' + currentUnixTime);
 			}
 

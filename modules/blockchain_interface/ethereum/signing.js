@@ -68,7 +68,7 @@ module.exports = function() {
 				return sendRaw(rawTx).on('error', err => {
 					return reject(err);
 				}).then(response => {
-					if(response.error == 0) {
+					if(response.error == '0x0') {
 						reject(response);
 					}  else {
 						return resolve(response);
@@ -107,11 +107,10 @@ module.exports = function() {
 					to: token_address
 				};
 
-				log.info("Send raw response");
 				sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then(function(response) {
 					//log.info(response);
 					
-					log.info('Creating Escrow');
+					log.info('Creating Escrow...');
 					createEscrowFunction(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then( result => {
 						log.info('Escrow created');
 						resolve(result);
