@@ -143,7 +143,7 @@ module.exports = function() {
 
 				var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
 				var token = new web32.eth.Contract(token_abi, token_address);
-				token.once('Approval', [], (res, err) => {
+				token.once('Approval', [], (err, res) => {
 					if(err) reject(err);
 					resolve(res);
 				});
@@ -164,11 +164,9 @@ module.exports = function() {
 					console.log(txOptions);
 
 					var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
-					sendRaw(rawTx, (response, err) => {
-						if (err) {
-							reject(err);
-						}
-						resolve(response);
+					sendRaw(rawTx, (err, res) => {
+						if(err) reject(err);
+						resolve(res);
 					});
 				});
 
