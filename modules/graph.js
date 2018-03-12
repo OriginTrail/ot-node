@@ -189,6 +189,7 @@ module.exports = function () {
 			
 						for(let i in vertices) {
 							vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+							vertices[i].decryption_key = keypair.publicKey;
 						}
 
 						utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
@@ -202,6 +203,7 @@ module.exports = function () {
 							
 							for(let j in vertices) {
 								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
+								vertices[j].decryption_key = keypair.publicKey;
 							}
 
 							utilities.executeCallback(callback, {vertices: vertices, public_key: response[i].publicKey});
@@ -217,6 +219,7 @@ module.exports = function () {
 
 						for(let i in vertices) {
 								vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+								vertices[i].decryption_key = keypair.publicKey;
 							}
 
 							utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
