@@ -186,7 +186,15 @@ module.exports = function() {
 				to: escrow_address
 			};
 
-
+			console.log([confirmation.DC_wallet,
+              confirmation.data_id,
+              confirmation.confirmation_verification_number,
+              confirmation.confirmation_time,
+              confirmation.confirmation_valid,
+              confirmation.confirmation_hash,
+              confirmation.v,
+              confirmation.r,
+              confirmation.s]);
 			sendTransaction(escrow_abi, 'payOut', [confirmation.DC_wallet,
 				confirmation.data_id,
 				confirmation.confirmation_verification_number,
