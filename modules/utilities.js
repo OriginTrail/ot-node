@@ -80,7 +80,6 @@ module.exports = function () {
 		},
 
 		getLogger() {
-
 			return log;
 		}
 	};
