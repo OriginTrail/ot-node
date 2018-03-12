@@ -69,10 +69,14 @@ module.exports = function() {
 						reject(err);
 					}).then(response => {
 						resolve(response);
-					});			
+					}).catch(err => {
+						reject(err);
+					})
 
 				})
-			})
+			}).catch(err => {
+						reject(err);
+					})
 		}
 
 	var signing = {
@@ -104,7 +108,6 @@ module.exports = function() {
 				log.info("Send raw response");
 				sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then(function(response) {
 					//log.info(response);
-					console.log('LISTEN APROVAL');
 					
 					log.info('Creating Escrow');
 					createEscrowFunction(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then( result => {
@@ -199,50 +202,6 @@ module.exports = function() {
 					log.warn('Confirmation failed')
 				})
 			}
-		/*
-		verifyMessageSignature: function(message, signer_address)
-		{
-			var recovered_address = web3.eth.accounts.recover(message, message.v, message.r, message.s);
-
-			var message_data = message.message
-			var message_hash = message.messageHash
-
-			var hashed_message = utilities.sha3(`\x19Ethereum Signed Message:\n${message_data.length}${message_data.data}`)
-
-			return recovered_address == signer_address && message_hash == hashed_message
-		},
-
-		parseMessage: function(message_data) {
-			var message_elements = message_data.split('|')
-
-			var parsed_message = {
-				sender: message_elements[0],
-				receiver: message_elements[1],
-				amount: message_elements[2]
-			}
-
-			return parsed_message
-		},
-
-		isValidMessage: function(sender_wallet, receiver_wallet, message) {
-			
-			var is_message_signed = verifyMessageSignature(message, sender_wallet);
-
-			if(is_message_signed == false)
-			{
-				return false;
-			}
-
-			var parsed_message = parseMessage(message.message)
-
-			if(parsed_message.sender != sender_wallet || parsed_message.receiver != receiver_wallet)
-			{
-				return false;
-			}
-
-			return true;
-		}
-		*/
 
 	};
 

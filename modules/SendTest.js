@@ -85,6 +85,8 @@ class SendTests {
 
 		axios(options).then(result => {
 			utilities.executeCallback(callback, result);
+		}).catch(err => {
+			console.error(err);
 		});
 	}
 
@@ -108,7 +110,9 @@ class SendTests {
 					testTable.popNextTest(() => {
 						log.info("Test deleted from database");
 					});
-				});
+				}).catch(err => {
+						console.error('DH connection failed');
+					})
 
 			});
 
@@ -124,7 +128,9 @@ class SendTests {
 						testTable.popNextTest(() => {
 							log.info("Test deleted from database");
 						});
-					});
+					}).catch(err => {
+						console.error(err);
+					})
 				});
 			});
 		}

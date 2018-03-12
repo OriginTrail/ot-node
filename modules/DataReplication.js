@@ -60,11 +60,13 @@ class DataReplication {
 							log.info('[DH] Holding data saved into database');
 						});
 						utilities.executeCallback(callback, result.data);
-					});
+					}).catch(err => {
+						console.error(err);
+					})
 
 				} catch(e) {
 					log.error('Payload not sent');
-					console.log(e);
+					console.error('DH connection failed');
 				}
 			});
 		});
