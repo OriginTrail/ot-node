@@ -196,8 +196,10 @@ module.exports = function() {
 				confirmation.r, 
 				confirmation.s], txOptions).then(response => {
 				log.info('Confirmation complete');
+				console.log(response);
 			}).catch(err => {
 				log.warn('Confirmation failed');
+				console.log("ERROR: " + err);
 			});
 		}
 
