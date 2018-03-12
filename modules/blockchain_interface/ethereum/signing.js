@@ -68,7 +68,11 @@ module.exports = function() {
 				return sendRaw(rawTx).on('error', err => {
 					return reject(err);
 				}).then(response => {
-					return resolve(response);
+					if(response.error == 0) {
+						reject(response);
+					}  else {
+						return resolve(response);
+					}
 				}).catch(err => {
 					reject(err);
 				});
