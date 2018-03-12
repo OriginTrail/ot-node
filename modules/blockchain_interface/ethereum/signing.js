@@ -143,7 +143,7 @@ module.exports = function() {
 
 				var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
 				var token = new web32.eth.Contract(token_abi, token_address);
-				token.once('Approval', [], (err, res) => {
+				token.once('Approval', [], (res, err) => {
 					if(err) reject(err);
 					resolve(res);
 				});
