@@ -1,57 +1,67 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.10.1
+version: v1.10.2
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
   'npm:hoek:20180212':
     - unirest > request > hawk > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - unirest > request > hawk > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - unirest > request > hawk > sntp > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - unirest > request > hawk > cryptiles > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > hawk > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.785Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > request > hawk > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > request > hawk > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > request > hawk > sntp > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
+        expires: '2018-03-28T17:01:29.940Z'
     - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > request > hawk > cryptiles > boom > hoek:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
+        expires: '2018-03-28T17:01:29.940Z'
   'npm:mime:20170907':
     - unirest > mime:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
+        expires: '2018-03-28T17:01:29.940Z'
   'npm:tunnel-agent:20170305':
     - unirest > request > tunnel-agent:
         reason: None given
-        expires: '2018-03-21T09:26:34.786Z'
-# patches apply the minimum changes required to fix a vulnerability
-patch:
+        expires: '2018-03-28T17:01:29.940Z'
+  'npm:braces:20180219':
+    - solidity-sha3 > babel-cli > chokidar > anymatch > micromatch > braces:
+        reason: None given
+        expires: '2018-03-28T17:01:29.940Z'
   'npm:debug:20170905':
-    - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > tar-pack > debug:
-        patched: '2018-02-19T09:25:12.181Z'
-  'npm:tough-cookie:20170905':
-    - solidity-sha3 > babel-cli > chokidar > fsevents > node-pre-gyp > request > tough-cookie:
-        patched: '2018-02-19T09:25:12.181Z'
+    - nat-pmp > debug:
+        reason: None given
+        expires: '2018-03-28T17:01:29.940Z'
+    - tcp-port-used > debug:
+        reason: None given
+        expires: '2018-03-28T17:01:29.940Z'
+  'npm:lodash:20180130':
+    - eth-lightwallet > bitcore-lib > lodash:
+        reason: None given
+        expires: '2018-03-28T17:01:29.940Z'
+    - eth-lightwallet > bitcore-mnemonic > bitcore-lib > lodash:
+        reason: None given
+        expires: '2018-03-28T17:01:29.940Z'

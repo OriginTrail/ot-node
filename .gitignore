@@ -4,3 +4,13 @@ node_modules
 config.json
 .env
 .nyc_output
+package-lock.json
+kad-storage/*
+!kad-storage/.gitkeep
+system/*
+!system/.gitkeep
+import-log.txt
+OT-GIT-NODE-DEVELOP.zip
+manual-testing-scripts
+log.log
+

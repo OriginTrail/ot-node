@@ -1,13 +1,16 @@
 // External modules
 const utilities = require('./utilities')();
+//const log = utilities.getLogger();
 const database = require('./database')();
+const encryption = require('./encryption')();
+const storage = require('./storage')();
 
 const config = utilities.getConfig();
 const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
 
 module.exports = function () {
 	let graph = {
-		getVertices: function (queryObject, callback) {
+		getVertices: function (queryObject, callback) { 
 			let queryString = 'FOR v IN ot_vertices ';
 			let params = {};
 			if (utilities.isEmptyObject(queryObject) === false) {
@@ -21,7 +24,7 @@ module.exports = function () {
 						continue;
 					}
 
-					if(key != 'vertex_type')
+					if(key != 'vertex_type' && key != '_key')
 					{
 						search_key = 'identifiers.' + key;
 					}
@@ -173,6 +176,67 @@ module.exports = function () {
 			} else {
 				return traversalArray;
 			}
+		},
+
+		encryptVertices: function(dh_ip, dh_port, vertices, callback) {
+
+			storage.getObject('Keys', function(response) {
+				if(response.length == 0)
+				{
+					var keypair = encryption.generateKeyPair();
+
+					storage.storeObject('Keys', [{dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey}], function(response) {
+			
+						for(let i in vertices) {
+							vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+							vertices[i].decryption_key = keypair.publicKey;
+						}
+
+						utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
+					})
+
+				}
+				else
+				{
+					for(let i in response) {
+						if(response[i].dh_ip == dh_ip && response[i].dh_port == dh_port) {
+							
+							for(let j in vertices) {
+								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
+								vertices[j].decryption_key = response[i].publicKey;
+							}
+
+							utilities.executeCallback(callback, {vertices: vertices, public_key: response[i].publicKey});
+							return;
+						}
+					}
+
+					var keypair = encryption.generateKeyPair();
+
+					response.push({dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey});
+
+					storage.storeObject('Keys', response, function(response) {
+
+						for(let i in vertices) {
+								vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
+								vertices[i].decryption_key = keypair.publicKey;
+							}
+
+							utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
+							return;
+					})
+
+				}
+			})
+		},
+
+		decryptVertices: function(vertices, public_key) {
+
+			for(i in vertices) {
+				vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
+			}
+
+			return vertices;
 		}
 	};
 

@@ -5,7 +5,7 @@ const socket_com = require('./modules/sockets')();
 const importer = require('./modules/importer')();
 const utilities = require('./modules/utilities')();
 const config = utilities.getConfig();
-
+const log = utilities.getLogger();
 // Node server configuration
 // =========================
 const server = restify.createServer({
@@ -61,8 +61,6 @@ server.post('/import', function (req, res) {
 			message: 'Input file not provided!'
 		});
 	} else {
-		var selected_importer = 'default_importer';
-
 		var post_body = req.body;
 
 		if (post_body.importer != undefined) {
@@ -70,7 +68,7 @@ server.post('/import', function (req, res) {
 		}
 
 		var input_file = req.files.importfile.path;
-		importer.importXML(input_file, selected_importer, function (data) {
+		importer.importXML(input_file, function (data) {
 			res.send(data);
 		});
 	}
@@ -81,5 +79,5 @@ server.post('/import', function (req, res) {
 socket_com.start();
 
 server.listen(parseInt(config.IPC_API_PORT), 'localhost', function () {
-	console.log('%s listening at %s', server.name, server.url);
+	log.info('%s listening at %s', server.name, server.url);
 });

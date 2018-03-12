@@ -4,25 +4,13 @@ var leveldown = require('leveldown');
 var kad = require('kad');
 const quasar = require('kad-quasar');
 var utilities = require('./utilities')();
+const log = utilities.getLogger();
 var config = utilities.getConfig();
-
-const seed = ['0000000000000000000000000000000000000001', {
-	hostname: config.KADEMLIA_SEED_IP,
-	port: config.KADEMLIA_SEED_PORT
-}];
-
-const node = kad({
-	transport: new kad.HTTPTransport(),
-	storage: require('levelup')(leveldown('kad-storage')),
-	contact: {
-		hostname: config.NODE_IP,
-		port: config.KADEMLIA_PORT
-	}
-});
 
 // Response pool
 var ping_responses = [];
 var waiting_for_responses = false;
+var node = null;
 
 module.exports = function () {
 	var kademlia = {
@@ -48,20 +36,35 @@ module.exports = function () {
 		},
 
 		start: function () {
+
+			const seed = ['0000000000000000000000000000000000000001', {
+				hostname: config.KADEMLIA_SEED_IP,
+				port: config.KADEMLIA_SEED_PORT
+			}];
+
+			node = kad({
+				transport: new kad.HTTPTransport(),
+				storage: require('levelup')(leveldown('kad-storage')),
+				contact: {
+					hostname: config.NODE_IP,
+					port: config.KADEMLIA_PORT
+				}
+			});
+
 			node.plugin(quasar);
 
 			if (config.IS_KADEMLIA_BEACON == 'false') {
 				node.join(seed, function () {
 					if (node.router.size != 0) {
-						console.log('Kademlia connected to seed');
+						log.info('Kademlia connected to seed');
 					} else {
-						console.log('Kademlia connection to seed failed');
+						log.warn('Kademlia connection to seed failed');
 					}
 				});
 			}
 
 			node.listen(config.KADEMLIA_PORT, function () {
-				console.log('Kademlia service listening...');
+				log.info('Kademlia service listening...');
 			});
 
 			node.quasarSubscribe('ot-ping-request', (content) => {

@@ -3,11 +3,12 @@ var unirest = require('unirest');
 var kademlia = require('./kademlia')();
 var utilities = require('./utilities')();
 var config = utilities.getConfig();
+const log = utilities.getLogger();
 
 module.exports = function () {
 	var replication = {
 
-		replicate: function (input_file, importer) {
+		replicate: function (input_file) {
 			kademlia.clearPingResponses();
 			kademlia.waitForResponse();
 
@@ -29,11 +30,10 @@ module.exports = function () {
 						.headers({
 							'Content-Type': 'multipart/form-data'
 						})
-						.field('importer', importer)
 						.field('noreplicate', true)
 						.attach('importfile', input_file)
 						.end(function (response) {
-							console.log(responses[i].sender_ip + ':' + responses[i].sender_port + ' : ' + JSON.stringify(response.body));
+							log.info('Replication response : ' + JSON.stringify(response.body));
 						});
 				}
 			}, parseInt(config.REQUEST_TIMEOUT));
