@@ -222,7 +222,7 @@ server.post('/api/receipt', function (req, res) {
 // ========================
 server.post('/import', function (req, res) {
 
-	log.info('Import request received');
+	log.info('[DC] Import request received!');
 
 	var request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 	var remote_access = utilities.getConfig().REMOTE_ACCESS;

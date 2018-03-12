@@ -29,8 +29,8 @@ class DataReplication {
 			total_time: 60
 		};
 		signing.signAndAllow(options_signing).then(response => {
-            log.warn('Sign and Allow Response:');
-            log.warn(response);
+			log.warn('Sign and Allow Response:');
+			log.warn(response);
 			graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, encryptedVertices => {
 				
 
@@ -62,7 +62,7 @@ class DataReplication {
 						utilities.executeCallback(callback, result.data);
 					}).catch(err => {
 						console.error(err);
-					})
+					});
 
 				} catch(e) {
 					log.error('Payload not sent');

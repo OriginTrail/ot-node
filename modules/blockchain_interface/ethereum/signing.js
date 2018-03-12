@@ -53,31 +53,29 @@ module.exports = function() {
 		transaction.sign(privateKey);
 		var serializedTx = transaction.serialize().toString('hex');
 		return web3.eth.sendSignedTransaction('0x' + serializedTx);
-	};
+	}
 
 	function sendTransaction(abi, method, args, txOptions) {
-			return new Promise((resolve, reject) => {
-				web3.eth.getTransactionCount(wallet_address).then(nonce => {
+		return new Promise((resolve, reject) => {
+			web3.eth.getTransactionCount(wallet_address).then(nonce => {
 
-					txOptions.nonce = nonce;
+				txOptions.nonce = nonce;
 
-					log.info(method)
-					log.info(txOptions);
+				//log.info(method);
+				//log.info(txOptions);
 
-					var rawTx = txutils.functionTx(abi, method, args, txOptions);
-					sendRaw(rawTx).on('error', err => {
-						reject(err);
-					}).then(response => {
-						resolve(response);
-					}).catch(err => {
-						reject(err);
-					})
+				var rawTx = txutils.functionTx(abi, method, args, txOptions);
+				sendRaw(rawTx).on('error', err => {
+					return reject(err);
+				}).then(response => {
+					resolve(response);
+				}).catch(err => {
+					reject(err);
+				});
 
-				})
-			}).catch(err => {
-						reject(err);
-					})
-		}
+			});
+		});
+	}
 
 	var signing = {
 
@@ -94,8 +92,8 @@ module.exports = function() {
 
 		signAndAllow: function(options) {
 
-			var approvalFunction = this.listenApproval
-			var createEscrowFunction = this.createEscrow
+			var approvalFunction = this.listenApproval;
+			var createEscrowFunction = this.createEscrow;
 
 			return new Promise((resolve, reject) => {
 
@@ -114,9 +112,9 @@ module.exports = function() {
 						log.info('Escrow created');
 						resolve(result);
 					}).catch(e => {
-						log.error('Escrow creation failed')
+						log.error('Escrow creation failed');
 						reject(e);
-					})
+					});
 
 
 				}).catch(e => {
@@ -150,7 +148,7 @@ module.exports = function() {
 			var raw_data = "0x" + abi.soliditySHA3(
 				["address", "uint", "uint", "uint", "bool"],
 				[new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid]
-				).toString('hex');
+			).toString('hex');
 
 			var hash = utilities.sha3(raw_data);
 			var signature = Account.sign(hash, '0x' + private_key);
@@ -188,7 +186,7 @@ module.exports = function() {
 			};
 
 
-			this.sendTransaction(escrow_abi, 'payOut', [confirmation.DC_wallet, 
+			sendTransaction(escrow_abi, 'payOut', [confirmation.DC_wallet,
 				confirmation.data_id, 
 				confirmation.confirmation_verification_number, 
 				confirmation.confirmation_time, 
@@ -197,11 +195,11 @@ module.exports = function() {
 				confirmation.v, 
 				confirmation.r, 
 				confirmation.s], txOptions).then(response => {
-					log.info('Confirmation complete')
-				}).catch(err => {
-					log.warn('Confirmation failed')
-				})
-			}
+				log.info('Confirmation complete');
+			}).catch(err => {
+				log.warn('Confirmation failed');
+			});
+		}
 
 	};
 

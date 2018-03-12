@@ -93,6 +93,7 @@ module.exports = function () {
 					});
 					return;
 				} else {
+					log.info('[DC] Import complete');
 					let result = JSON.parse(stdout);
 
 					var vertices = result.vertices;
@@ -112,7 +113,7 @@ module.exports = function () {
 					let root_hash = tree.root();
 
 					log.info("Import id: " + data_id);
-					log.info("Import root hash: " + root_hash);
+					log.info("Import hash: " + root_hash);
 					storage.storeObject('Import_'+data_id, {vertices: hash_pairs, root_hash: root_hash}, function(response) {
 						signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then(response => {
 
@@ -136,8 +137,8 @@ module.exports = function () {
 
 						}).catch(err => {
 							log.warn('Failed to write data fingerprint on blockchain!');
-						})
-					})
+						});
+					});
 
 				}
 			});

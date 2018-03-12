@@ -111,8 +111,8 @@ class SendTests {
 						log.info("Test deleted from database");
 					});
 				}).catch(err => {
-						console.error('DH connection failed');
-					})
+					console.error('DH connection failed');
+				});
 
 			});
 
@@ -130,7 +130,7 @@ class SendTests {
 						});
 					}).catch(err => {
 						console.error(err);
-					})
+					});
 				});
 			});
 		}

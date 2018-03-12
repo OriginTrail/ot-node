@@ -14,50 +14,48 @@ module.exports = function(){
 	var storage = {
 		storeObject: function(key, obj, callback) {
 			db.connect(url, function(err, db) {
-			  dbo = db.db("origintrail");
+				dbo = db.db("origintrail");
 				dbo.createCollection("ot_system", function(err, res) {
 					dbo.collection("ot_system").findOne({key: key}, function(err, result) {
 
-		 			if (result == null) {
+						if (result == null) {
 
-						dbo.collection('ot_system').insertOne({key: key, data: obj}, function(err, res) {
-							if (err) throw err;
-							console.log("1 document inserted");
-							utilities.executeCallback(callback, true);
+							dbo.collection('ot_system').insertOne({key: key, data: obj}, function(err, res) {
+								if (err) throw err;
+								utilities.executeCallback(callback, true);
 							});
-						db.close();
-					}
-					else
-					{
-						var query = { key: key};
-	  					var newvalues = { $set: {key: key, data: obj } };
-	  					dbo.collection("ot_system").updateOne(query, newvalues, function(err, res) {
-						    if (result == null) {
-						    	utilities.executeCallback(callback, false);
-						    	db.close();
-						    }
-						  	else {
-							    console.log("1 document updated");
-							    utilities.executeCallback(callback, true);
-							    db.close();
-							  }
-						  });
+							db.close();
+						}
+						else
+						{
+							var query = { key: key};
+							var newvalues = { $set: {key: key, data: obj } };
+							dbo.collection("ot_system").updateOne(query, newvalues, function(err, res) {
+								if (result == null) {
+									utilities.executeCallback(callback, false);
+									db.close();
+								}
+								else {
+									utilities.executeCallback(callback, true);
+									db.close();
+								}
+							});
 
 						}
-					})
-
-					  
-					  
 					});
-				});			  
-			  
-	 		
+
+
+
+				});
+			});
+
+
 		},
 
 		getObject: function(key, callback) {
 			db.connect(url, function(err, db) {
-			  dbo = db.db("origintrail");
-		 		dbo.collection("ot_system").findOne({key: key}, function(err, result) {
+				dbo = db.db("origintrail");
+				dbo.collection("ot_system").findOne({key: key}, function(err, result) {
 
 					if (err || result == null) {
 					//	log.info('Storage: ' + err);
