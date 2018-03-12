@@ -62,7 +62,7 @@ module.exports = function() {
 				txOptions.nonce = nonce;
 
 				//log.info(method);
-				//log.info(txOptions);
+				log.warn(txOptions);
 
 				var rawTx = txutils.functionTx(abi, method, args, txOptions);
 				return sendRaw(rawTx).on('error', err => {
