@@ -165,7 +165,6 @@ module.exports = function() {
 
 					var rawTx = txutils.functionTx(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
 					sendRaw(rawTx, (err, res) => {
-						if(err) reject(err);
 						resolve(res);
 					});
 				});
