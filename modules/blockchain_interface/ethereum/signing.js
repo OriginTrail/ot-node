@@ -141,15 +141,16 @@ module.exports = function() {
 			});
 		},
 
-		listenApproval: function() { return new Promise((resolve, reject) => {
+		listenApproval: function() {
+			return new Promise((resolve, reject) => {
 
-			var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
-			var token = new web32.eth.Contract(token_abi, token_address);
-			token.once('Approval', [], (err, res) => {
-				if(err) reject(err);
-				resolve(res);
+				var web32 = new Web3(new Web3.providers.WebsocketProvider("wss://rinkeby.infura.io/_ws"));
+				var token = new web32.eth.Contract(token_abi, token_address);
+				token.once('Approval', [], (err, res) => {
+					if(err) reject(err);
+					resolve(res);
+				});
 			});
-		});
 		},
 
 		createEscrow: async function(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
