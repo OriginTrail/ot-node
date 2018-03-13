@@ -34,15 +34,26 @@ socket.on('connect', () => {
     log.info(`Socket connected to IPC-RPC Communication server on port ${3000}`);
 });
 
-socket.on('event', (data) => {
-    const reqNum = data.clientRequest;
-    socketRequests[reqNum].send(data.responseData);
+
+socket.on('event', function (data) {
+	const reqNum = data.clientRequest;
+
+	if (!socketRequests[reqNum]) {
+		return;
+	}
+
+	socketRequests[reqNum].send(data.responseData);
+
 
     // console.log('data',data);
     // console.log('data.responseData',data.responseData);
 
-    // Free request slot
-    delete socketRequests[reqNum];
+
+	// Free request slot
+	delete socketRequests[reqNum];
+
+	return;
+
 });
 
 socket.on('disconnect', () => {
