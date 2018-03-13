@@ -44,6 +44,10 @@
   },
   "devDependencies": {
     "eslint": "^4.17.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.7.0",
     "mocha": "^5.0.1",
     "nyc": "^11.4.1",
     "should": "^13.2.1",
@@ -51,6 +55,7 @@
   },
   "scripts": {
     "test": "nyc mocha --recursive test",
+    "precommit": "node_modules/.bin/eslint ./",
     "start": "sudo systemctl start mongod && concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\""
   },
   "repository": {

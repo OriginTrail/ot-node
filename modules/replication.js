@@ -1,45 +1,46 @@
 // External modules
-var unirest = require('unirest');
-var kademlia = require('./kademlia')();
-var utilities = require('./utilities')();
-var config = utilities.getConfig();
+const unirest = require('unirest');
+const kademlia = require('./kademlia')();
+const utilities = require('./utilities')();
+
+const config = utilities.getConfig();
 const log = utilities.getLogger();
 
 module.exports = function () {
-	var replication = {
+    const replication = {
 
-		replicate: function (input_file) {
-			kademlia.clearPingResponses();
-			kademlia.waitForResponse();
+        replicate(input_file) {
+            kademlia.clearPingResponses();
+            kademlia.waitForResponse();
 
-			var reqNum = utilities.getRandomInt(10000000000);
+            const reqNum = utilities.getRandomInt(10000000000);
 
-			kademlia.sendRequest('ot-ping-request', {
-				request_id: reqNum,
-				sender_ip: config.NODE_IP,
-				sender_port: config.RPC_API_PORT
-			});
+            kademlia.sendRequest('ot-ping-request', {
+                request_id: reqNum,
+                sender_ip: config.NODE_IP,
+                sender_port: config.RPC_API_PORT,
+            });
 
-			setTimeout(function () {
-				kademlia.stopWaitingForResponse();
+            setTimeout(() => {
+                kademlia.stopWaitingForResponse();
 
-				var responses = kademlia.getPingResponses();
+                const responses = kademlia.getPingResponses();
 
-				for (var i in responses) {
-					unirest.post('http://' + responses[i].sender_ip + ':' + responses[i].sender_port + '/import')
-						.headers({
-							'Content-Type': 'multipart/form-data'
-						})
-						.field('noreplicate', true)
-						.attach('importfile', input_file)
-						.end(function (response) {
-							log.info('Replication response : ' + JSON.stringify(response.body));
-						});
-				}
-			}, parseInt(config.REQUEST_TIMEOUT));
-		}
+                for (const i in responses) {
+                    unirest.post(`http://${responses[i].sender_ip}:${responses[i].sender_port}/import`)
+                        .headers({
+                            'Content-Type': 'multipart/form-data',
+                        })
+                        .field('noreplicate', true)
+                        .attach('importfile', input_file)
+                        .end((response) => {
+                            log.info(`Replication response : ${JSON.stringify(response.body)}`);
+                        });
+                }
+            }, parseInt(config.REQUEST_TIMEOUT));
+        },
 
-	};
+    };
 
-	return replication;
+    return replication;
 };
