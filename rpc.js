@@ -32,7 +32,12 @@ socket.on('connect', function () {
 });
 
 socket.on('event', function (data) {
-	var reqNum = data.clientRequest;
+	const reqNum = data.clientRequest;
+
+	if (!socketRequests[reqNum]) {
+		return;
+	}
+
 	socketRequests[reqNum].send(data.responseData);
 
 	//console.log('data',data);
@@ -40,6 +45,8 @@ socket.on('event', function (data) {
 
 	// Free request slot
 	delete socketRequests[reqNum];
+
+	return;
 });
 
 socket.on('disconnect', function () {
