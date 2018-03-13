@@ -6,7 +6,6 @@
     "branch": "master"
   },
   "description": "OriginTrail node",
-  "main": "gulpfile.js",
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "ajv": "^6.2.0",
@@ -51,17 +50,18 @@
   },
   "scripts": {
     "test": "nyc mocha --recursive test",
-    "start": "sudo systemctl start mongod && concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\""
+    "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
+    "lint": "./node_modules/.bin/eslint **/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OriginTrail/ot-yimishiji-pilot.git"
+    "url": "git+https://github.com/OriginTrail/ot-node.git"
   },
   "author": "OriginTrail",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/OriginTrail/ot-yimishiji-pilot/issues"
+    "url": "https://github.com/OriginTrail/ot-node/issues"
   },
-  "homepage": "https://github.com/OriginTrail/ot-yimishiji-pilot#readme",
+  "homepage": "https://origintrail.io",
   "snyk": true
 }
