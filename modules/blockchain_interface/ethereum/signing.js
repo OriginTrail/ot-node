@@ -158,7 +158,7 @@ module.exports = function () {
             const hash = utilities.sha3(raw_data);
             const signature = Account.sign(hash, `0x${private_key}`);
             const vrs = Account.decodeSignature(signature);
-            s = {
+            const s = {
                 message: raw_data,
                 messageHash: hash,
                 v: vrs[0],
