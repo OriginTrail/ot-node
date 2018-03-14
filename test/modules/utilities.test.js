@@ -40,7 +40,6 @@ describe('Utilitity method', () => {
         assert.exists(config.blockchain);
         assert.equal(config.blockchain.preferred_chain, 'ethereum');
         assert.exists(config.blockchain.settings);
-        console.log(config.blockchain.settings.ethereum.token_contract);
         assert.isTrue(web3.utils.isAddress(config.blockchain.settings.ethereum.token_contract));
         assert.isTrue(web3.utils.isAddress(config.blockchain.settings.ethereum.escrow_contract));
     });
