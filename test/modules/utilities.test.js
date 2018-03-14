@@ -9,6 +9,8 @@ let config;
 
 before('Get an instance of config', () => {
     config = utilities.getConfig();
+    console.log(config);
+    console.log("____");
 });
 
 
