@@ -37,6 +37,7 @@ module.exports = function () {
                             log.info(`Replication response : ${JSON.stringify(response.body)}`);
                         });
                 }
+                // eslint-disable-next-line radix
             }, parseInt(config.REQUEST_TIMEOUT));
         },
 

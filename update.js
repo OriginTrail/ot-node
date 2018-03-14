@@ -38,7 +38,7 @@ autoupdater.on('download.start', function(name) {
     log.info("Starting downloading: " + name);
 });
 autoupdater.on('download.progress', function(name, perc) {
-    process.stdout.write("Downloading " + perc + "% \033[0G");
+    process.stdout.write("Downloading " + perc + "% \033[0G"); // eslint-disable-line
 });
 autoupdater.on('download.end', function(name) {
     log.info("Downloaded " + name);

@@ -11,6 +11,7 @@ switch (chain) {
 case 'ethereum':
 case 'iota':
 case 'neo':
+    // eslint-disable-next-line global-require,import/no-dynamic-require
     chainInterface = require(`./blockchain_interface/${chain}/interface.js`)(config);
     break;
 default:

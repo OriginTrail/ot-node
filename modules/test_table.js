@@ -12,6 +12,7 @@ module.exports = function () {
                 let i = n - 1;
 
                 while (i >= 0 && response[i].test_time > test.test_time) {
+                    // eslint-disable-next-line no-plusplus
                     i--;
                 }
 
@@ -26,10 +27,12 @@ module.exports = function () {
 
         insertTests(tests, callback) {
             storage.getObject('Tests', (response) => {
+                // eslint-disable-next-line no-plusplus
                 for (let j = 0; j < tests.length; j++) {
                     const n = response.length;
                     let i = n - 1;
                     while (i >= 0 && response[i].test_time > tests[j].test_time) {
+                        // eslint-disable-next-line no-plusplus
                         i--;
                     }
                     response.splice(i + 1, 0, tests[j]);
@@ -43,13 +46,13 @@ module.exports = function () {
 
         popNextTest(callback) {
             storage.getObject('Tests', (response) => {
-                if (response.length == 0) {
+                if (response.length === 0) {
                     utilities.executeCallback(callback, undefined);
                 } else {
                     const test = response.shift();
 
                     storage.storeObject('Tests', response, (status) => {
-                        if (status == false) {
+                        if (status === false) {
                             log.info('Storing tests failes!');
                             utilities.executeCallback(callback, {});
                         } else {
@@ -62,7 +65,7 @@ module.exports = function () {
 
         nextTest(callback) {
             storage.getObject('Tests', (response) => {
-                if (response.length == 0) {
+                if (response.length === 0) {
                     utilities.executeCallback(callback, {});
                 } else {
                     const test = response[0];
@@ -74,8 +77,8 @@ module.exports = function () {
 
         getTests(callback) {
             storage.getObject('Tests', (response) => {
-                //	log.info(response);
-                if (response.length == 0) {
+                // log.info(response);
+                if (response.length === 0) {
                     log.info('There are no planed tests');
                     utilities.executeCallback(callback, []);
                 } else {

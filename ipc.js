@@ -56,7 +56,7 @@ server.get('/api/expiration_dates', (req, res) => {
 // Import xml file in database
 // ===========================
 server.post('/import', (req, res) => {
-    if (req.files == undefined || req.files.importfile == undefined) {
+    if (req.files === undefined || req.files.importfile === undefined) {
         res.send({
             status: 400,
             message: 'Input file not provided!',
@@ -64,7 +64,8 @@ server.post('/import', (req, res) => {
     } else {
         const post_body = req.body;
 
-        if (post_body.importer != undefined) {
+        if (post_body.importer !== undefined) {
+            // eslint-disable-next-line no-undef
             selected_importer = post_body.importer;
         }
 
@@ -78,7 +79,7 @@ server.post('/import', (req, res) => {
 // ==========
 
 socket_com.start();
-
+// eslint-disable-next-line radix
 server.listen(parseInt(config.IPC_API_PORT), 'localhost', () => {
     log.info('%s listening at %s', server.name, server.url);
 });

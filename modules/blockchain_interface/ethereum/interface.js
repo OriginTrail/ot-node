@@ -30,7 +30,7 @@ module.exports = function() {
   var token_contract = new web3.eth.Contract(token_abi, token_address);
   var escrow_contract = new web3.eth.Contract(escrow_abi, escrow_address);
 
-  var interface = {
+  var interface = { // eslint-disable-line
 
     giveAllowance: function(ammount, callback) {
       signing.signAndAllow(ammount, callback)

@@ -14,6 +14,7 @@ class EventHandlers {
         this.event = data.request.replace(/-([a-z])/g, g => g[1].toUpperCase());
 
         // get the first part of some-response => some
+        // eslint-disable-next-line  prefer-destructuring
         this.eventPrefix = data.request.split(/-(.+)/)[0];
 
         this.queryObject = data.queryObject;

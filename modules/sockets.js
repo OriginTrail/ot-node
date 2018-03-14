@@ -12,6 +12,7 @@ io.on('connection', (socket) => {
     log.info('RPC Server connected');
 
     socket.on('event', (data) => {
+        // eslint-disable-next-line no-new
         new EventHandlers(data, socket);
     });
 });

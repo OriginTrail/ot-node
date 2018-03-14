@@ -11,14 +11,14 @@ const config = utilities.getConfig();
 
 describe('The Utilities', () => {
     // it('config should exist', () => {
-    // 	let config = utilities.getConfig();
-    // 	should.exist(config);
-    // 	config.should.be.an.Object;
-    // 	(function () {
-    // 		JSON.stringify(config);
-    // 	}).should.not.throw();
-    // 	should.exist(config.NODE_IP);
-    // 	config.NODE_IP.should.not.be.empty();
+    //     let config = utilities.getConfig();
+    //     should.exist(config);
+    //     config.should.be.an.Object;
+    //     (function () {
+    //         JSON.stringify(config);
+    //     }).should.not.throw();
+    //     should.exist(config.NODE_IP);
+    //     config.NODE_IP.should.not.be.empty();
     // });
 
     it('should return true if it is an empty object', () => {

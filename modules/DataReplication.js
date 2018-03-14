@@ -11,12 +11,12 @@ const config = utilities.getConfig();
 
 class DataReplication {
     /**
-	* Sends data to DH for replication
-	*
-	* @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-	* @return object response
-	*/
-    sendPayload(data, callback) {
+    * Sends data to DH for replication
+    *
+    * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+    * @return object response
+    */
+    sendPayload(data, callback) { // eslint-disable-line class-methods-use-this
         log.info('Entering sendPayload');
 
         const currentUnixTime = Math.floor(new Date() / 1000);
@@ -29,7 +29,9 @@ class DataReplication {
             total_time: 60,
         };
         signing.signAndAllow(options_signing).then((response) => {
+            // eslint-disable-next-line max-len
             graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, data.vertices, (encryptedVertices) => {
+                // eslint-disable-next-line max-len
                 testing.generateTests(data.data_id, config.DH_NODE_IP, config.DH_NODE_PORT, config.blockchain.settings.ethereum.wallet_address, encryptedVertices.vertices, 10, currentUnixTime + 120, min10, (res, err) => {
                     log.info('[DC] Tests generated');
                 });
@@ -52,6 +54,7 @@ class DataReplication {
                 try {
                     axios(options).then((result) => {
                         log.info('Payload sent');
+                        // eslint-disable-next-line max-len
                         holding.addHoldingData(config.DH_WALLET, data.data_id, payload.public_key, () => {
                             log.info('[DH] Holding data saved into database');
                         });

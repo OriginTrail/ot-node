@@ -12,8 +12,9 @@ module.exports = function () {
             return this.tree.root;
         }
 
-
+        // eslint-disable-next-line class-methods-use-this
         digestFn(hashType, data) {
+            // eslint-disable-next-line no-param-reassign
             if (typeof data !== 'string') data = JSON.stringify(data);
             const hash = crypto.createHash(hashType);
             hash.update(data);
@@ -24,7 +25,7 @@ module.exports = function () {
             if (leaf_index >= this.tree.leaves.length || leaf_index < 0) { return false; }
 
             const proof = this.tree.proof(leaf_index);
-            return proof[0].indexOf(this.tree.leaves[leaf_index]) != -1;
+            return proof[0].indexOf(this.tree.leaves[leaf_index]) !== -1;
         }
 
         verifyLeaves(test_leaves) {

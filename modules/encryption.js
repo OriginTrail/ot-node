@@ -5,8 +5,7 @@ module.exports = function () {
 	let encryption = {
 		generateKeyPair: function() {
 			var key = new RSA({b: 512});
-
-			var private = key.exportKey('pkcs8-private');
+			var private = key.exportKey('pkcs8-private'); // eslint-disable-line
 			var public = key.exportKey('pkcs8-public');
 
 			return {

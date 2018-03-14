@@ -9,11 +9,13 @@ const async = require('async');
 
 module.exports = function () {
     const testing = {
+        // eslint-disable-next-line max-len
         generateTests(data_id, dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
             // log.info('[DH] Encrypted vertices:');
             // log.info(encrypted_vertices);
             const tests = [];
 
+            // eslint-disable-next-line no-plusplus
             for (let i = 0; i < number_of_tests; i++) {
                 const new_test = {};
 
@@ -28,6 +30,7 @@ module.exports = function () {
                 start_index = utilities.getRandomIntRange(0, test_vertex_data.length - 1);
                 end_index = utilities.getRandomIntRange(start_index, test_vertex_data.length - 1);
 
+                // eslint-disable-next-line no-underscore-dangle
                 const question = { vertex_key: test_vertex._key, start_index, end_index };
                 const answer = test_vertex_data.substring(start_index, end_index);
 
@@ -40,7 +43,7 @@ module.exports = function () {
                 new_test.dh_wallet = dh_wallet;
                 new_test.data_id = data_id;
 
-                if (i == number_of_tests - 1) {
+                if (i === number_of_tests - 1) {
                     new_test.test_time = end_time;
                 } else {
                     new_test.test_time = utilities.getRandomIntRange(start_time, end_time - 1);
@@ -55,9 +58,13 @@ module.exports = function () {
         },
 
         answerQuestion(test, callback) {
+            // eslint-disable-next-line  prefer-destructuring
             const question = test.question;
+            // eslint-disable-next-line  prefer-destructuring
             const start_index = question.start_index;
+            // eslint-disable-next-line  prefer-destructuring
             const end_index = question.end_index;
+            // eslint-disable-next-line  prefer-destructuring
             const vertex_key = question.vertex_key;
 
             // console.log('VERTEX_KEY',vertex_key);
@@ -65,7 +72,7 @@ module.exports = function () {
             graph.getVertices({ _key: vertex_key }, (response) => {
                 const vertex = response[0];
 
-                if (vertex == undefined || vertex.data == undefined) {
+                if (vertex === undefined || vertex.data === undefined) {
                     utilities.executeCallback(callback, 'MISSING_DATA');
                     return;
                 }

@@ -44,7 +44,7 @@ module.exports = function () {
         isIpEqual(ip1, ip2) {
             const ip1v4 = ipaddr.process(ip1).octets.join('.');
             const ip2v4 = ipaddr.process(ip2).octets.join('.');
-            return ip1v4 == ip2v4;
+            return ip1v4 === ip2v4;
         },
 
         copyObject(Obj) {
@@ -52,11 +52,14 @@ module.exports = function () {
         },
 
         sortObject(object) {
-            let sortedObj = {},
-                keys = Object.keys(object);
+            const sortedObj = {};
+            const keys = Object.keys(object);
 
             keys.sort((key1, key2) => {
-                key1 = key1.toLowerCase(), key2 = key2.toLowerCase();
+                // eslint-disable-next-line no-param-reassign
+                key1 = key1.toLowerCase();
+                // eslint-disable-next-line no-param-reassign
+                key2 = key2.toLowerCase();
                 if (key1 < key2) return -1;
                 if (key1 > key2) return 1;
                 return 0;

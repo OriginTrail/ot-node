@@ -1,6 +1,6 @@
 module.exports = function() {
   // TODO: IOTA interface
-  interface = {
+  interface = { // eslint-disable-line
 
   };
 
