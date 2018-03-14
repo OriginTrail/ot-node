@@ -11,7 +11,7 @@ const log = utilities.getLogger();
 // =========================
 const server = restify.createServer({
     name: 'OriginTrail IPC server',
-    version: '0.1.1',
+    version: '0.3alpha',
 });
 
 server.use(restify.plugins.acceptParser(server.acceptable));

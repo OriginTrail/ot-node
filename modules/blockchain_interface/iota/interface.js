@@ -1,8 +1,7 @@
-module.exports = function() {
-  // TODO: IOTA interface
-  interface = { // eslint-disable-line
+module.exports = function () {
+    // TODO: IOTA interface
+    const theInterface = {
 
-  };
-
-  return interface;
-}
+    };
+    return theInterface;
+};
