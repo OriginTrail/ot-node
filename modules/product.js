@@ -25,12 +25,12 @@ module.exports = function () {
             if (point.vertex_type === 'BATCH' && usedBatchUIDs[point.identifiers.uid] !== true) {
                 var edges = point.outbound;
 
-                for (j in edges) {
+                for (const j in edges) {
                     if (edges[j].edge_type === 'INSTANCE_OF') {
                         point.product_info = virtual_graph_data[edges[j].to];
                     } else if (edges[j].edge_type === 'OUTPUT_BATCH' || edges[j].edge_type === 'OF_BATCH') {
                         const event = virtual_graph_data[edges[j].to];
-                        event_edges = event.outbound;
+                        var event_edges = event.outbound;
 
                         for (i in event_edges) {
                             if (event_edges[i].edge_type === 'AT') {

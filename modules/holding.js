@@ -20,7 +20,7 @@ module.exports = function () {
                     }
                 }
 
-                new_data = {
+                const new_data = {
                     dh_wallet, data_id, public_key, confirmation_number: 0,
                 };
                 log.info(JSON.stringify(new_data));

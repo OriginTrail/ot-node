@@ -25,7 +25,7 @@ module.exports = function () {
                         // eslint-disable-next-line no-continue
                         continue;
                     }
-
+                    let search_key;
                     if (key !== 'vertex_type' && key !== '_key') {
                         search_key = `identifiers.${key}`;
                     } else { search_key = key; }
@@ -250,7 +250,7 @@ module.exports = function () {
         },
 
         decryptVertices(vertices, public_key) {
-            for (i in vertices) {
+            for (const i in vertices) {
                 vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
             }
 
