@@ -9,9 +9,9 @@ const log = utilities.getLogger();
 
 class SendTests {
     /**
-	 * Start the test sequence
-	 *
-	 */
+    * Start the test sequence
+    *
+    */
     startTests() {
         log.info('Starting tests');
         return setInterval(() => {
@@ -20,21 +20,23 @@ class SendTests {
     }
 
     /**
-	 * End the test sequence
-	 *
-	 */
+    * End the test sequence
+    *
+    */
+    // eslint-disable-next-line class-methods-use-this
     endTests(test) {
         clearInterval(test);
     }
     /**
-	* Check if there is a new test to be sent
-	*
-	*/
+    * Check if there is a new test to be sent
+    *
+    */
     checkTests() {
         log.info('Checking if there are tests to send');
         testTable.getTests((test) => {
             if (test.length === 0) return;
-            test = test[0];
+            // eslint-disable-next-line prefer-destructuring
+            test = test[0]; // eslint-disable-line no-param-reassign
             const currentUnixTime = Math.floor(new Date() / 1000);
 
             if (currentUnixTime > test.test_time) {
@@ -51,15 +53,17 @@ class SendTests {
     }
 
     /**
-	 * Sends test to Data Holder
-	 *
-	 * @param ip string DH IP address
-	 * @param port string DH port
-	 * @param question object
-	 * @returns {Promise.data} object data.answer
-	 */
+    * Sends test to Data Holder
+    *
+    * @param ip string DH IP address
+    * @param port string DH port
+    * @param question object
+    * @returns {Promise.data} object data.answer
+    */
+    // eslint-disable-next-line class-methods-use-this
     sendTest(ip, port, question, callback) {
         log.info('Entering sendTest');
+        // eslint-disable-next-line no-param-reassign
         question = JSON.stringify({
             question,
         });
@@ -86,11 +90,11 @@ class SendTests {
     }
 
     /**
-	 * Verify if the test result is correct and sends the receipt
-	 *
-	 * @param test
-	 * @param answer
-	 */
+    * Verify if the test result is correct and sends the receipt
+    *
+    * @param test
+    * @param answer
+    */
     verifyResult(test, answer) {
         log.info('Entering verifyResult');
         // log.error(test.answer);
@@ -99,6 +103,7 @@ class SendTests {
         if (test.answer === answer.answer) {
             log.info('Answer is good');
             holding.getHoldingData(config.DH_WALLET, test.data_id, (holdingData) => {
+                // eslint-disable-next-line max-len
                 receipt = signing.createConfirmation(config.DH_WALLET, test.data_id, holdingData.confirmation_number, test.test_time, true);
                 this.sendReceipt(answer.ip, answer.port, receipt).then((result) => {
                     log.info('Receipt sent. Result:');
@@ -113,7 +118,9 @@ class SendTests {
             log.warn('Answer not good');
 
             holding.getHoldingData(answer.wallet, test.data_id, (holdingData) => {
+                // eslint-disable-next-line max-len
                 receipt = signing.createConfirmation(answer.wallet, test.data_id, holdingData.confirmation_number, test.test_time, false);
+                // eslint-disable-next-line max-len
                 holding.increaseConfirmationVerificationNumber(answer.wallet, test.data_id, (response) => {
                     this.sendReceipt(answer.ip, answer.port, receipt).then((result) => {
                         log.info('Receipt sent. Result:');
@@ -128,11 +135,11 @@ class SendTests {
         }
     }
 
-
+    // eslint-disable-next-line class-methods-use-this
     async sendReceipt(ip, port, receipt) {
         log.info('Sending receipt...');
 
-        //	log.info(receipt);
+        // log.info(receipt);
         const options = {
             method: 'POST',
             url: `http://${ip}:${port}/api/receipt`,

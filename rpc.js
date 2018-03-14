@@ -21,7 +21,7 @@ const { fork } = require('child_process');
 const forked = fork('./modules/SendTest.js');
 
 // forked.on('message', (msg) => {
-// 	log.info('Test sent', msg);
+// log.info('Test sent', msg);
 // });
 
 
@@ -35,25 +35,22 @@ socket.on('connect', () => {
 });
 
 
-socket.on('event', function (data) {
-	const reqNum = data.clientRequest;
+socket.on('event', (data) => {
+    const reqNum = data.clientRequest;
 
-	if (!socketRequests[reqNum]) {
-		return;
-	}
+    if (!socketRequests[reqNum]) {
+        return;
+    }
 
-	socketRequests[reqNum].send(data.responseData);
+    socketRequests[reqNum].send(data.responseData);
 
 
     // console.log('data',data);
     // console.log('data.responseData',data.responseData);
 
 
-	// Free request slot
-	delete socketRequests[reqNum];
-
-	return;
-
+    // Free request slot
+    delete socketRequests[reqNum];
 });
 
 socket.on('disconnect', () => {
@@ -89,7 +86,7 @@ server.get('/api/trail/batches', (req, res) => {
 
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
     socketRequests[reqNum] = res;
@@ -106,19 +103,19 @@ server.get('/api/trail/batches', (req, res) => {
 server.get('/api/expiration_dates', (req, res) => {
     const queryObject = req.query;
 
-    if (queryObject.internal_product_id != undefined) {
+    if (queryObject.internal_product_id !== undefined) {
         queryObject['id.yimi_erp'] = queryObject.internal_product_id;
         delete queryObject.internal_product_id;
     }
 
-    if (queryObject.expiration_date != undefined) {
+    if (queryObject.expiration_date !== undefined) {
         queryObject['id.expirationDate'] = queryObject.expiration_date;
         delete queryObject.expiration_date;
     }
 
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
 
@@ -137,7 +134,7 @@ server.get('/api/blockchain/check', (req, res) => {
     const queryObject = req.query;
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
 
@@ -163,7 +160,7 @@ server.post('/api/replication', (req, res) => {
     // TODO: extract this as it repeats
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
 
@@ -188,7 +185,7 @@ server.post('/api/testing', (req, res) => {
 
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
 
@@ -213,7 +210,7 @@ server.post('/api/receipt', (req, res) => {
 
     const reqNum = utilities.getRandomInt(10000000000);
 
-    while (socketRequests[reqNum] != undefined) {
+    while (socketRequests[reqNum] !== undefined) {
         utilities.getRandomInt(10000000000);
     }
 
@@ -236,7 +233,7 @@ server.post('/import', (req, res) => {
     const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const remote_access = utilities.getConfig().REMOTE_ACCESS;
 
-    if (remote_access.find(ip => utilities.isIpEqual(ip, request_ip)) == undefined) {
+    if (remote_access.find(ip => utilities.isIpEqual(ip, request_ip)) === undefined) {
         res.send({
             message: 'Unauthorized request',
             data: [],
@@ -244,7 +241,7 @@ server.post('/import', (req, res) => {
         return;
     }
 
-    if (req.files == undefined || req.files.importfile == undefined) {
+    if (req.files === undefined || req.files.importfile === undefined) {
         res.send({
             status: 400,
             message: 'Input file not provided!',
@@ -257,11 +254,11 @@ server.post('/import', (req, res) => {
         const input_file = req.files.importfile.path;
 
         const reqNum = utilities.getRandomInt(10000000000);
-        /*
-		if (req.body.noreplicate == undefined) {
-			replication.replicate(input_file);
-		}
-*/
+
+        // if (req.body.noreplicate ===undefined) {
+        //     replication.replicate(input_file);
+        // }
+
         socketRequests[reqNum] = res;
         const queryObject = {
             filepath: input_file,
@@ -276,7 +273,7 @@ server.post('/import', (req, res) => {
 // ========================
 // ==========
 
-if (config.NODE_IP == '127.0.0.1') {
+if (config.NODE_IP === '127.0.0.1') {
     const client = natUpnp.createClient();
     client.portMapping({
         public: config.RPC_API_PORT,
@@ -308,12 +305,14 @@ if (config.NODE_IP == '127.0.0.1') {
         log.info(ip);
         kademlia.start();
 
+        // eslint-disable-next-line radix
         server.listen(parseInt(config.RPC_API_PORT), () => {
             log.info('%s listening at %s', server.name, server.url);
         });
     });
 } else {
     kademlia.start();
+    // eslint-disable-next-line radix
     server.listen(parseInt(config.RPC_API_PORT), () => {
         log.info('%s listening at %s', server.name, server.url);
     });

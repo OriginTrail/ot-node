@@ -44,6 +44,7 @@ module.exports = function () {
 
             node = kad({
                 transport: new kad.HTTPTransport(),
+                // eslint-disable-next-line global-require
                 storage: require('levelup')(leveldown('kad-storage')),
                 contact: {
                     hostname: config.NODE_IP,
@@ -53,9 +54,9 @@ module.exports = function () {
 
             node.plugin(quasar);
 
-            if (config.IS_KADEMLIA_BEACON == 'false') {
+            if (config.IS_KADEMLIA_BEACON === 'false') {
                 node.join(seed, () => {
-                    if (node.router.size != 0) {
+                    if (node.router.size !== 0) {
                         log.info('Kademlia connected to seed');
                     } else {
                         log.warn('Kademlia connection to seed failed');
@@ -68,7 +69,8 @@ module.exports = function () {
             });
 
             node.quasarSubscribe('ot-ping-request', (content) => {
-                if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
+                // eslint-disable-next-line max-len
+                if (content.sender_ip === config.NODE_IP && content.sender_port === config.RPC_API_PORT) {
                     return;
                 }
 
@@ -81,11 +83,12 @@ module.exports = function () {
             });
 
             node.quasarSubscribe('ot-ping-response', (content) => {
-                if (content.sender_ip == config.NODE_IP && content.sender_port == config.RPC_API_PORT) {
+                // eslint-disable-next-line max-len
+                if (content.sender_ip === config.NODE_IP && content.sender_port === config.RPC_API_PORT) {
                     return;
                 }
 
-                if (waiting_for_responses == true) {
+                if (waiting_for_responses === true) {
                     ping_responses.push(content);
                 }
             });

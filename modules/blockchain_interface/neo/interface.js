@@ -1,6 +1,6 @@
 module.exports = function() {
   // TODO: NEO interface
-  interface = {
+  interface = { // eslint-disable-line
 
   };
   return interface;

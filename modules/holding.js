@@ -7,12 +7,14 @@ module.exports = function () {
     const holding = {
         addHoldingData(dh_wallet, data_id, public_key, callback) {
             storage.getObject('Holding', (response) => {
-                if (response.length == 0) {
+                if (response.length === 0) {
+                    // eslint-disable-next-line no-param-reassign
                     response = { data: [] };
                 }
 
                 for (const i in response.data) {
-                    if (response.data[i].dh_wallet == dh_wallet && response.data[i].data_id == data_id) {
+                    // eslint-disable-next-line max-len
+                    if (response.data[i].dh_wallet === dh_wallet && response.data[i].data_id === data_id) {
                         utilities.executeCallback(callback, true);
                         return;
                     }
@@ -32,13 +34,14 @@ module.exports = function () {
 
         getHoldingData(dh_wallet, data_id, callback) {
             storage.getObject('Holding', (response) => {
-                if (response.length == 0 || response.data.length == 0) {
+                if (response.length === 0 || response.data.length === 0) {
                     utilities.executeCallback(callback, {});
                     return;
                 }
 
                 for (const i in response.data) {
-                    if (response.data[i].dh_wallet == dh_wallet && response.data[i].data_id == data_id) {
+                    // eslint-disable-next-line max-len
+                    if (response.data[i].dh_wallet === dh_wallet && response.data[i].data_id === data_id) {
                         utilities.executeCallback(callback, response.data[i]);
                         return;
                     }
@@ -50,13 +53,14 @@ module.exports = function () {
 
         increaseConfirmationVerificationNumber(dh_wallet, data_id, callback) {
             storage.getObject('Holding', (response) => {
-                if (response.length == 0) {
+                if (response.length === 0) {
                     utilities.executeCallback(callback, false);
                     return;
                 }
 
                 for (const i in response.data) {
-                    if (response.data[i].dh_wallet == dh_wallet && response.data[i].data_id == data_id) {
+                    // eslint-disable-next-line max-len
+                    if (response.data[i].dh_wallet === dh_wallet && response.data[i].data_id === data_id) {
                         response.data[i].confirmation_number += 1;
                     }
                 }
