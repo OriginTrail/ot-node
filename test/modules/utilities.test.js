@@ -1,6 +1,6 @@
 
 const { describe, before, it } = require('mocha');
-const { assert } = require('chai');
+const { assert, expect } = require('chai');
 const should = require('should');
 const web3 = require('web3');
 const utilities = require('../../modules/utilities')();
@@ -9,39 +9,33 @@ let config;
 
 before('Get an instance of config', () => {
     config = utilities.getConfig();
-    console.log(config);
-    console.log("____");
 });
 
 
 describe('Utilitity method', () => {
     it('getConfig should exist with approriate key/values', () => {
-        assert.exists(config);
-        assert.exists(config.NODE_IP);
-        assert.isNotEmpty(config.NODE_IP);
-        assert.exists(config.DH_NODE_IP);
-        assert.exists(config.DH_NODE_PORT);
-        assert.exists(config.DH_WALLET);
-        assert.exists(config.DB_TYPE);
+        expect(config).to.have.property('NODE_IP');
+        expect(config).to.have.property('DH_NODE_IP');
+        expect(config).to.have.property('DH_NODE_PORT');
+        expect(config).to.have.property('DH_WALLET');
+        expect(config).to.have.property('DB_TYPE');
+        expect(config).to.have.property('DB_USERNAME');
+        expect(config).to.have.property('DB_PASSWORD');
+        expect(config).to.have.property('DB_HOST');
+        expect(config).to.have.property('DB_PORT');
+        expect(config).to.have.property('DB_DATABASE');
+        expect(config).to.have.property('MAX_PATH_LENGTH');
+        expect(config).to.have.property('RPC_API_PORT');
+        expect(config).to.have.property('IPC_API_PORT');
+        expect(config).to.have.property('KADEMLIA_PORT');
+        expect(config).to.have.property('WALLET_ID');
+        expect(config).to.have.property('KADEMLIA_SEED_IP');
+        expect(config).to.have.property('IS_KADEMLIA_BEACON');
+        expect(config).to.have.property('REQUEST_TIMEOUT');
+        expect(config).to.have.property('REMOTE_ACCESS');
+        expect(config).to.have.property('blockchain');
         assert.equal(config.DB_TYPE, 'arango');
-        assert.exists(config.DB_USERNAME);
-        assert.exists(config.DB_PASSWORD);
-        assert.exists(config.DB_HOST);
-        assert.exists(config.DB_PORT);
-        assert.exists(config.DB_DATABASE);
-        assert.exists(config.MAX_PATH_LENGTH);
-        assert.exists(config.RPC_API_PORT);
-        assert.exists(config.IPC_API_PORT);
-        assert.exists(config.KADEMLIA_PORT);
-        assert.exists(config.WALLET_ID);
-        assert.exists(config.KADEMLIA_SEED_IP);
-        assert.exists(config.KADEMLIA_SEED_PORT);
-        assert.exists(config.IS_KADEMLIA_BEACON);
-        assert.exists(config.REQUEST_TIMEOUT);
-        assert.exists(config.REMOTE_ACCESS);
-        assert.exists(config.blockchain);
         assert.equal(config.blockchain.preferred_chain, 'ethereum');
-        assert.exists(config.blockchain.settings);
         assert.isTrue(web3.utils.isAddress(config.blockchain.settings.ethereum.token_contract));
         assert.isTrue(web3.utils.isAddress(config.blockchain.settings.ethereum.escrow_contract));
     });
