@@ -118,6 +118,6 @@ describe('Utilitity method', () => {
             p: '12345',
         };
 
-        assert.deepEqual(objA, sortedObjA, 'given and sorted object should be identical');
+        assert.deepEqual(utilities.sortObject(objA), sortedObjA, 'given and sorted object should be identical');
     });
 });
