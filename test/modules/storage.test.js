@@ -3,15 +3,18 @@ const { assert, expect } = require('chai');
 const storage = require('../../modules/storage')();
 const utilities = require('../../modules/utilities')();
 
-describe('Storage tests', () => {
-    it('check that user can retrieve stored data from local mongodb', () => {
-        const keyToStore = 'capitalOfGermany';
-        const valueToStore = 'Berlin';
+const keyToStore = utilities.getRandomString(utilities.getRandomInt(10));
+const valueToStore = utilities.getRandomString(utilities.getRandomInt(10));
 
-        storage.storeObject(keyToStore, valueToStore, (response) => {
+describe('Storage tests', () => {
+    before('store data', async () => {
+        await storage.storeObject(keyToStore, valueToStore, (response) => {
             expect(response).to.be.true;
         });
-        storage.getObject(keyToStore, (responseData) => {
+    });
+
+    it('check that user can retrieve stored data from local mongodb', async () => {
+        await storage.getObject(keyToStore, (responseData) => {
             expect(responseData).to.be.equal(valueToStore);
         });
     });
