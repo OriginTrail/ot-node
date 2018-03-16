@@ -7,7 +7,6 @@ describe('Storage tests', () => {
     it('check that user can retrieve stored data from local mongodb', () => {
         const keyToStore = 'capitalOfGermany';
         const valueToStore = 'Berlin';
-        let isValueStored;
 
         storage.storeObject(keyToStore, valueToStore, (response) => {
             expect(response).to.be.true;

@@ -1,6 +1,8 @@
 language: node_js
 node_js:
   - "9"
+services:
+  - mongodb
 script:
   - npm run lint
   - npm run initmongod
