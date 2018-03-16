@@ -44,7 +44,7 @@
     "solidity-sha3": "^0.4.1",
     "tcp-port-used": "^0.1.2",
     "unirest": "^0.5.1",
-    "web3": "1.0.0-beta.26",
+    "web3": "1.0.0-beta.30",
     "winston": "^2.4.0"
   },
   "devDependencies": {
