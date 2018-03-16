@@ -121,8 +121,8 @@ module.exports = function () {
         },
 
         async getVerticesByImportId(data_id, callback) {
-            queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-            params = { importId: data_id };
+            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+            const params = { importId: data_id };
 
             try {
                 const cursor = await db.query(queryString, params);
@@ -135,8 +135,8 @@ module.exports = function () {
         },
 
         async getEdgesByImportId(data_id, callback) {
-            queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
-            params = { importId: data_id };
+            const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+            const params = { importId: data_id };
 
             try {
                 const cursor = await db.query(queryString, params);

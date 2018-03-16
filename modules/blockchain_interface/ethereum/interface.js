@@ -4,11 +4,11 @@ var utilities = require('../../utilities')();
 var signing = require('./signing')();
 
 const log = utilities.getLogger();
-config = utilities.getConfig();
+const config = utilities.getConfig();
 
 
 module.exports = function () {
-    web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
+    var web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
     var { contract_address, token_address } = config.blockchain.settings.ethereum;
     var escrow_address = config.blockchain.settings.ethereum.escrow_contract;
 
@@ -48,6 +48,7 @@ module.exports = function () {
 
 
         getFingerprintByBatchHash(address, data_id_hash) {
+            // eslint-disable-next-line no-undef
             return contract_instance.getFingerprintByBatchHash(address, data_id_hash, {
                 from: web3.eth.accounts[0],
             });
@@ -60,7 +61,9 @@ module.exports = function () {
 
         getFingerprint(data_holder_address, import_hash, callback) {
             var graph_hash = null;
+            // eslint-disable-next-line no-undef
             graph_hash = contract_instance.getFingerprintByBatchHash(
+                // eslint-disable-next-line no-undef
                 data_holder_address, data_id_hash,
                 {
                     from: web3.eth.accounts[0],

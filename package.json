@@ -44,11 +44,12 @@
     "solidity-sha3": "^0.4.1",
     "tcp-port-used": "^0.1.2",
     "unirest": "^0.5.1",
-    "web3": "^1.0.0-beta.30",
+    "web3": "1.0.0-beta.30",
     "winston": "^2.4.0"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.2",
+    "chai": "^4.1.2",
     "eslint": "^4.18.2",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.9.0",
