@@ -61,7 +61,7 @@
     "supertest": "^3.0.0"
   },
   "scripts": {
-    "initmongod": "mongod --fork --logpath ./mongod.log",
+    "initmongod": "mongod --fork --logpath /var/log/mongodb.log",
     "test": "nyc mocha --recursive test",
     "shutdownmongod": "mongo admin --eval \"db.shutdownServer()\"",
     "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
