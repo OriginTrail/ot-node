@@ -8,7 +8,7 @@ const net = require('net');
 const natpmp = require('nat-pmp');
 const _ = require('lodash');
 const log = require('winston');
-const randomString = require("randomstring");
+const randomString = require('randomstring');
 
 log.add(log.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
 log.remove(log.transports.Console);
@@ -86,12 +86,12 @@ module.exports = function () {
             return log;
         },
 
-        getRandomString(howLong){
+        getRandomString(howLong) {
             return randomString.generate({
                 length: howLong,
-                charset: 'alphabetic'
-              });
-        }
+                charset: 'alphabetic',
+            });
+        },
     };
 
     return utilities;
