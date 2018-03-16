@@ -1,4 +1,4 @@
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();

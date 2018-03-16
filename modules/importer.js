@@ -1,6 +1,6 @@
 // External modules
 const PythonShell = require('python-shell');
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();

@@ -1,6 +1,6 @@
 // External modules
 const io = require('socket.io')();
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const EventHandlers = require('./EventHandlers');

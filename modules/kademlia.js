@@ -3,7 +3,7 @@ const leveldup = require('levelup');
 const leveldown = require('leveldown');
 const kad = require('kad');
 const quasar = require('kad-quasar');
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();

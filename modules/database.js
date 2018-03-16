@@ -1,5 +1,5 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 // eslint-disable-next-line  prefer-destructuring

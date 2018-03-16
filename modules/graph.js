@@ -1,13 +1,13 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 // const log = utilities.getLogger();
 const database = require('./database')();
 const encryption = require('./encryption')();
 const storage = require('./storage')();
 
 const config = utilities.getConfig();
-// eslint-disable-next-line radix
-const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
+
+const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH, 10);
 
 module.exports = function () {
     let graph = {
@@ -21,21 +21,18 @@ module.exports = function () {
 
                 let i = 1;
                 for (const key in queryObject) {
-                    if (key.match(/^[\w\d]+$/g) === null) {
-                        // eslint-disable-next-line no-continue
-                        continue;
+                    if (key.match(/^[\w\d]+$/g) !== null) {
+                        if (key !== 'vertex_type' && key !== '_key') {
+                            search_key = `identifiers.${key}`;
+                        } else { search_key = key; }
+
+                        const param = `param${i}`;
+                        filters.push(`v.${search_key} === @param${i}`);
+                        // eslint-disable-next-line no-plusplus
+                        i++;
+
+                        params[param] = queryObject[key];
                     }
-
-                    if (key !== 'vertex_type' && key !== '_key') {
-                        search_key = `identifiers.${key}`;
-                    } else { search_key = key; }
-
-                    const param = `param${i}`;
-                    filters.push(`v.${search_key} === @param${i}`);
-                    // eslint-disable-next-line no-plusplus
-                    i++;
-
-                    params[param] = queryObject[key];
                 }
 
                 queryString += filters.join(' AND ');
@@ -196,22 +193,23 @@ module.exports = function () {
         },
 
         encryptVertices(dh_ip, dh_port, vertices, callback) {
+            var keyPair;
             storage.getObject('Keys', (response) => {
                 if (response.length === 0) {
-                    var keypair = encryption.generateKeyPair();
+                    keyPair = encryption.generateKeyPair();
 
                     storage.storeObject('Keys', [{
                         // eslint-disable-next-line max-len
-                        dh_ip, dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey,
-                    // eslint-disable-next-line no-shadow
-                    }], (response) => {
+                        dh_ip, dh_port, privateKey: keyPair.privateKey, publicKey: keyPair.publicKey,
+
+                    }], () => {
                         for (const i in vertices) {
                             // eslint-disable-next-line max-len
-                            vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-                            vertices[i].decryption_key = keypair.publicKey;
+                            vertices[i].data = encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
                         }
                         // eslint-disable-next-line max-len
-                        utilities.executeCallback(callback, { vertices, public_key: keypair.publicKey });
+                        utilities.executeCallback(callback, { vertices, public_key: keyPair.publicKey });
                     });
                 } else {
                     for (const i in response) {
@@ -227,23 +225,25 @@ module.exports = function () {
                         }
                     }
 
-                    // eslint-disable-next-line no-redeclare
-                    var keypair = encryption.generateKeyPair();
+
+                    keyPair = encryption.generateKeyPair();
 
                     response.push({
-                        // eslint-disable-next-line max-len
-                        dh_ip, dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey,
+                        dh_ip,
+                        dh_port,
+                        privateKey: keyPair.privateKey,
+                        publicKey: keyPair.publicKey,
                     });
 
                     // eslint-disable-next-line no-shadow
                     storage.storeObject('Keys', response, (response) => {
                         for (const i in vertices) {
                             // eslint-disable-next-line max-len
-                            vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-                            vertices[i].decryption_key = keypair.publicKey;
+                            vertices[i].data = encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
                         }
                         // eslint-disable-next-line max-len
-                        utilities.executeCallback(callback, { vertices, public_key: keypair.publicKey });
+                        utilities.executeCallback(callback, { vertices, public_key: keyPair.publicKey });
                     });
                 }
             });

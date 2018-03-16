@@ -1,5 +1,5 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const database = require('./database')();

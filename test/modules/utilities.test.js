@@ -4,7 +4,7 @@ const { describe, it } = require('mocha');
 const should = require('should');
 // eslint-disable-next-line no-unused-vars
 const request = require('supertest');
-const utilities = require('../../modules/utilities')();
+const utilities = require('../../modules/utilities');
 // eslint-disable-next-line no-unused-vars
 const config = utilities.getConfig();
 

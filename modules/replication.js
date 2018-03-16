@@ -1,7 +1,7 @@
 // External modules
 const unirest = require('unirest');
 const kademlia = require('./kademlia')();
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();
