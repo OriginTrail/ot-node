@@ -57,6 +57,7 @@ module.exports = function () {
                     } else {
                         utilities.executeCallback(callback, result.data);
                     }
+                    db.close();
                 });
             });
         },
