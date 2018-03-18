@@ -45,12 +45,12 @@ module.exports = function () {
             });
         },
 
-        getObject(keyToFind, callback) {
+        getObject(key, callback) {
             // eslint-disable-next-line no-shadow
             db.connect(url, (err, db) => {
                 dbo = db.db('origintrail');
                 // eslint-disable-next-line no-shadow
-                dbo.collection('ot_system').findOne({ key: keyToFind }, (err, result) => {
+                dbo.collection('ot_system').findOne({ key }, (err, result) => {
                     if (err || result == null) {
                         // log.info('Storage: ' + err);
                         utilities.executeCallback(callback, []);
