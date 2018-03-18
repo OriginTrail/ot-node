@@ -16,7 +16,7 @@ describe('Storage tests', () => {
 
     it('check that user can retrieve stored data from local mongodb', (done) => {
         storage.getObject(keyToStore, (responseData) => {
-            console.log("expecting " + responseData + "to be equal to " + valueToStore);
+            console.log(`expecting ${responseData}to be equal to ${valueToStore}`);
             expect(responseData).to.be.equal(valueToStore);
             done();
         });
