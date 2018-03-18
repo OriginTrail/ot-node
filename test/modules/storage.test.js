@@ -1,4 +1,4 @@
-const { describe, it } = require('mocha');
+const { describe, it, after } = require('mocha');
 const { assert, expect } = require('chai');
 const storage = require('../../modules/storage')();
 const utilities = require('../../modules/utilities')();
@@ -6,6 +6,13 @@ const utilities = require('../../modules/utilities')();
 const keyToStore = utilities.getRandomString(utilities.getRandomInt(10));
 const valueToStore = utilities.getRandomString(utilities.getRandomInt(10));
 const valueToStore2 = utilities.getRandomString(utilities.getRandomInt(10));
+
+after('Cleanup created key/value entries from local db', (done) => {
+    storage.deleteObject(keyToStore, (responseData) => {
+        expect(responseData).to.be.true;
+        done();
+    });
+});
 
 describe('Storage tests', () => {
     it('store new data under random key with random value', (done) => {
@@ -17,7 +24,7 @@ describe('Storage tests', () => {
 
     it('check that user can retrieve stored data from local mongodb', (done) => {
         storage.getObject(keyToStore, (responseData) => {
-            console.log(`expecting ${responseData} to be equal to ${valueToStore}`);
+            // console.log(`expecting ${responseData} to be equal to ${valueToStore}`);
             expect(responseData).to.be.equal(valueToStore);
             done();
         });
@@ -30,9 +37,9 @@ describe('Storage tests', () => {
         });
     });
 
-    it('check that user can retrieve stored data from local mongodb', (done) => {
+    it('check that user can retrieve overwritten data under same key', (done) => {
         storage.getObject(keyToStore, (responseData) => {
-            console.log(`expecting ${responseData} to be equal to ${valueToStore2}`);
+            // console.log(`expecting ${responseData} to be equal to ${valueToStore2}`);
             expect(responseData).to.be.equal(valueToStore2);
             done();
         });
