@@ -49,7 +49,6 @@ describe('Encryption modules ', () => {
     });
 
     it('check that decrypting encrypted data gives back original data', () => {
-
         const testData = { ObjectType: 'Vegetable', ObjectCategory: 'Carrot', ObjectDescription: 'The cryptiest carrots in the entire Cryptonia, packed for retail in 1 Kg package.' };
         const encryptedObject = encryption.encryptObject(testData, myPrivateKey);
         const decryptedObject = encryption.decryptObject(encryptedObject, myPublicKey);
