@@ -7,14 +7,14 @@ const keyToStore = utilities.getRandomString(utilities.getRandomInt(10));
 const valueToStore = utilities.getRandomString(utilities.getRandomInt(10));
 const valueToStore2 = utilities.getRandomString(utilities.getRandomInt(10));
 
-after('Cleanup created key/value entries from local db', (done) => {
-    storage.deleteObject(keyToStore, (responseData) => {
-        expect(responseData).to.be.true;
-        done();
-    });
-});
-
 describe('Storage tests', () => {
+    after('Cleanup created key/value entries from local db', (done) => {
+        storage.deleteObject(keyToStore, (responseData) => {
+            expect(responseData).to.be.true;
+            done();
+        });
+    });
+
     it('store new data under random key with random value', (done) => {
         storage.storeObject(keyToStore, valueToStore, (response) => {
             expect(response).to.be.true;
