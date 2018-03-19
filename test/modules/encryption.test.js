@@ -12,27 +12,15 @@ let myPublicKey;
 let myObj;
 
 describe('Encryption modules ', () => {
-    function isMyPrivateKeyEmpty(keyData) {
+    function isMyKeyEmpty(keyData, format) {
         const key = new NodeRSA();
-        key.importKey(keyData, privateFormatId);
+        key.importKey(keyData, format);
         return key.isEmpty();
     }
 
-    function isMyPublicKeyEmpty(keyData) {
+    function getMyKeySize(keyData, format) {
         const key = new NodeRSA();
-        key.importKey(keyData, publicFormatId);
-        return key.isEmpty();
-    }
-
-    function getMyPrivateKeySize(keyData) {
-        const key = new NodeRSA();
-        key.importKey(keyData, privateFormatId);
-        return key.getKeySize();
-    }
-
-    function getMyPublicKeySize(keyData) {
-        const key = new NodeRSA();
-        key.importKey(keyData, publicFormatId);
+        key.importKey(keyData, format);
         return key.getKeySize();
     }
 
@@ -42,10 +30,10 @@ describe('Encryption modules ', () => {
         myPrivateKey = myObj.privateKey;
         myPublicKey = myObj.publicKey;
 
-        assert.isFalse(isMyPrivateKeyEmpty(myPrivateKey), 'Key should not be empty');
-        assert.isFalse(isMyPublicKeyEmpty(myPublicKey), 'Key should not be empty');
-        assert.equal(getMyPrivateKeySize(myPrivateKey), keySize, 'Key size should be 512');
-        assert.equal(getMyPublicKeySize(myPublicKey), keySize, 'Key size should be 512');
+        assert.isFalse(isMyKeyEmpty(myPrivateKey, privateFormatId), 'Key should not be empty');
+        assert.isFalse(isMyKeyEmpty(myPublicKey, publicFormatId), 'Key should not be empty');
+        assert.equal(getMyKeySize(myPrivateKey, privateFormatId), keySize, 'Key size should be 512');
+        assert.equal(getMyKeySize(myPublicKey, publicFormatId), keySize, 'Key size should be 512');
     });
 
     it('check that decrypting encrypted data gives back original data', () => {
