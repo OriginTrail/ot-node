@@ -9,7 +9,8 @@ before_install:
 - chmod +x setup_arangodb.sh
 - ./setup_arangodb.sh
 - rm -rf ArangoDB-3.2.2.tar.gz
-- cd ArangoDB-3.2.2 && touch .eslintignore && echo ArangoDB-3.2.2 >> .eslintignore && cd ..
+- cd ArangoDB-3.2.2 && touch .eslintignore && echo ArangoDB-3.2.2/** >> .eslintignore && cd ..
+- more ArangoDB-3.2.2/.eslintignore
 script:
   - npm run lint
   - npm test
