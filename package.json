@@ -64,7 +64,7 @@
   "scripts": {
     "test": "nyc mocha --recursive test",
     "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
-    "lint": "./node_modules/.bin/eslint --ignore-path ./ArangoDB-3.2.2/**/*.js --quiet ."
+    "lint": "./node_modules/.bin/eslint --ignore-path ArangoDB-3.2.2/**/*.js --quiet ."
   },
   "repository": {
     "type": "git",
