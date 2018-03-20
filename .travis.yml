@@ -10,6 +10,7 @@ before_install:
 - ./setup_arangodb.sh
 - pwd
 - ls -al
+- rm -rf ArangoDB-3.2.2.tar.gz
 script:
   - npm run lint
   - npm test
