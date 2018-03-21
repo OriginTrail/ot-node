@@ -9,7 +9,7 @@ const url = 'mongodb://localhost:27017';
 let dbo;
 
 
-module.exports = function () {
+module.exports = () => {
     const storage = {
         storeObject(key, obj, callback) {
             // eslint-disable-next-line no-shadow

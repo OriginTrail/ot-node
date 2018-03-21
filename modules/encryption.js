@@ -1,11 +1,11 @@
 // External modules
 var RSA = require('node-rsa');
 
-module.exports = function () {
+module.exports = () => {
     const encryption = {
         generateKeyPair() {
             var key = new RSA({ b: 512 });
-			var privateKey = key.exportKey('pkcs8-private'); // eslint-disable-line
+            var privateKey = key.exportKey('pkcs8-private');
             var publicKey = key.exportKey('pkcs8-public');
 
             return {

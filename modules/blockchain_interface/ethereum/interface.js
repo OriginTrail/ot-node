@@ -1,13 +1,15 @@
 var fs = require('fs');
 var Web3 = require('web3');
 var utilities = require('../../utilities')();
-var signing = require('./signing')();
+var signing =
+    require('./signing')();
 
+let contractInstance;
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
 
-module.exports = function () {
+module.exports = () => {
     var web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
     var { contract_address, token_address } = config.blockchain.settings.ethereum;
     var escrow_address = config.blockchain.settings.ethereum.escrow_contract;
@@ -28,7 +30,7 @@ module.exports = function () {
     var token_contract = new web3.eth.Contract(token_abi, token_address);
     var escrow_contract = new web3.eth.Contract(escrow_abi, escrow_address);
 
-  var theInterface = { // eslint-disable-line
+    var theInterface = {
 
         giveAllowance(ammount, callback) {
             signing.signAndAllow(ammount, callback);
@@ -47,24 +49,23 @@ module.exports = function () {
         },
 
 
-        getFingerprintByBatchHash(address, data_id_hash) {
-            // eslint-disable-next-line no-undef
-            return contract_instance.getFingerprintByBatchHash(address, data_id_hash, {
+        getFingerprintByBatchHash(address, dataIdHash) {
+            return contractInstance.getFingerprintByBatchHash(address, dataIdHash, {
                 from: web3.eth.accounts[0],
             });
         },
 
-        addFingerprint(data_id, data_id_hash, import_hash) {
-            signing.signAndSend(data_id, data_id_hash, import_hash);
+        addFingerprint(data_id, dataIdHash, import_hash) {
+            signing.signAndSend(data_id, dataIdHash, import_hash);
             return true;
         },
 
         getFingerprint(data_holder_address, import_hash, callback) {
             var graph_hash = null;
-            // eslint-disable-next-line no-undef
-            graph_hash = contract_instance.getFingerprintByBatchHash(
-                // eslint-disable-next-line no-undef
-                data_holder_address, data_id_hash,
+            let dataIdHash;
+            graph_hash = contractInstance.getFingerprintByBatchHash(
+
+                data_holder_address, dataIdHash,
                 {
                     from: web3.eth.accounts[0],
                 },

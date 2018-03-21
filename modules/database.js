@@ -2,24 +2,23 @@
 const utilities = require('./utilities');
 
 const log = utilities.getLogger();
-// eslint-disable-next-line  prefer-destructuring
-const Database = require('arangojs').Database;
+
+const { Database } = require('arangojs').Database;
 
 const config = utilities.getConfig();
 
 const username = config.DB_USERNAME;
 const password = config.DB_PASSWORD;
 // const host = config.DB_HOST;
-// const port = config.DB_PORT;
-const database = config.DB_DATABASE;
+let database = config.DB_DATABASE;
 
 const db = new Database();
 db.useDatabase(database);
 db.useBasicAuth(username, password);
 
-module.exports = function () {
-    // eslint-disable-next-line no-shadow
-    const database = {
+
+module.exports = () => {
+    database = {
         getConnection() {
             return db;
         },
@@ -27,7 +26,7 @@ module.exports = function () {
         async runQuery(queryString, callback, params = {}) {
             try {
                 const cursor = await db.query(queryString, params);
-                // eslint-disable-next-line no-underscore-dangle
+
                 utilities.executeCallback(callback, cursor._result);
             } catch (err) {
                 utilities.executeCallback(callback, []);
@@ -97,8 +96,7 @@ module.exports = function () {
             const collection = db.collection(collection_name);
             collection.document(document_key).then(
                 (doc) => {
-                    // eslint-disable-next-line prefer-destructuring
-                    let imports = doc.imports;
+                    let { imports } = doc.imports;
 
                     if (imports === undefined) { imports = []; }
 
@@ -126,7 +124,7 @@ module.exports = function () {
 
             try {
                 const cursor = await db.query(queryString, params);
-                // eslint-disable-next-line no-underscore-dangle
+
                 utilities.executeCallback(callback, cursor._result);
             } catch (err) {
                 utilities.executeCallback(callback, []);
@@ -140,7 +138,7 @@ module.exports = function () {
 
             try {
                 const cursor = await db.query(queryString, params);
-                // eslint-disable-next-line no-underscore-dangle
+
                 utilities.executeCallback(callback, cursor._result);
             } catch (err) {
                 utilities.executeCallback(callback, []);

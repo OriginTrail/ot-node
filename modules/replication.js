@@ -6,7 +6,7 @@ const utilities = require('./utilities');
 const config = utilities.getConfig();
 const log = utilities.getLogger();
 
-module.exports = function () {
+module.exports = () => {
     const replication = {
 
         replicate(input_file) {

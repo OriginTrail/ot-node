@@ -17,7 +17,7 @@ io.on('connection', (socket) => {
     });
 });
 
-module.exports = function () {
+module.exports = () => {
     const sockets = {
 
         start() {

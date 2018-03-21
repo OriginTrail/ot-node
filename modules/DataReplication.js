@@ -16,7 +16,7 @@ class DataReplication {
     * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
     * @return object response
     */
-    sendPayload(data, callback) { // eslint-disable-line class-methods-use-this
+    static sendPayload(data, callback) {
         log.info('Entering sendPayload');
 
         const currentUnixTime = Math.floor(new Date() / 1000);
@@ -82,4 +82,4 @@ class DataReplication {
     }
 }
 
-module.exports = new DataReplication();
+module.exports = DataReplication();

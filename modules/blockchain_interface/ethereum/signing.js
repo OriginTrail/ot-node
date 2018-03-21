@@ -2,22 +2,21 @@ const utilities = require('../../utilities')();
 const Web3 = require('web3');
 const fs = require('fs');
 const util = require('ethereumjs-util');
-const tx = require('ethereumjs-tx');
+const Tx = require('ethereumjs-tx');
 const lightwallet = require('eth-lightwallet');
 const Account = require('eth-lib/lib/account');
 const Hash = require('eth-lib/lib/hash');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
 
-// eslint-disable-next-line  prefer-destructuring
-const txutils = lightwallet.txutils;
+const { txutils } = lightwallet.txutils;
 const config = utilities.getConfig();
 const log = utilities.getLogger();
 
-// eslint-disable-next-line  prefer-destructuring
-const wallet_address = config.blockchain.settings.ethereum.wallet_address;
-// eslint-disable-next-line  prefer-destructuring
-const private_key = config.blockchain.settings.ethereum.private_key;
+
+const { wallet_address } = config.blockchain.settings.ethereum.wallet_address;
+
+const { private_key } = config.blockchain.settings.ethereum.private_key;
 
 const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
 
@@ -52,22 +51,19 @@ console.log('------------------------'); */
 let nonce = -1;
 let nonce_increment = 0;
 
-module.exports = function () {
+module.exports = () => {
     function sendRaw(rawTx, callback) {
         // eslint-disable-next-line no-buffer-constructor
         const privateKey = new Buffer(private_key, 'hex');
         // eslint-disable-next-line new-cap
-        const transaction = new tx(rawTx);
+        const transaction = new Tx(rawTx);
         transaction.sign(privateKey);
         const serializedTx = transaction.serialize().toString('hex');
         return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 
-    // eslint-disable-next-line no-shadow
     function sendTransaction(abi, method, args, txOptions) {
-        // eslint-disable-next-line no-shadow
         return new Promise((resolve, reject) => {
-            // eslint-disable-next-line no-shadow
             web3.eth.getTransactionCount(wallet_address).then((nonce) => {
                 txOptions.nonce = nonce;
 
@@ -110,7 +106,7 @@ module.exports = function () {
                     to: token_address,
                 };
 
-                sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then((response) => {
+                sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then(() => {
                     // log.info(response);
 
                     log.info('Creating Escrow...');
@@ -140,19 +136,33 @@ module.exports = function () {
             return sendTransaction(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
         },
 
-        // eslint-disable-next-line max-len
-        createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) {
+
+        createConfirmation(
+            DH_wallet,
+            data_id,
+            confirmation_verification_number,
+            confirmation_time,
+            confirmation_valid,
+        ) {
             /*
       address DC_wallet, uint data_id,
       uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
       bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
       */
-            // eslint-disable-next-line max-len
-            // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) === confirmation_hash
+
+            // (msg.sender,
+            // data_id, confirmation_
+            // verification_number,
+            // confirmation_time,
+            // confirmation_valid) === confirmation_hash
             const raw_data = `0x${abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint', 'bool'],
-                // eslint-disable-next-line max-len
-                [new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid],
+
+                [new BN(DH_wallet, 16),
+                    data_id,
+                    confirmation_verification_number,
+                    confirmation_time,
+                    confirmation_valid],
             ).toString('hex')}`;
 
             const hash = utilities.sha3(raw_data);
@@ -182,10 +192,9 @@ module.exports = function () {
             return confirmation;
         },
         sendRawX(rawTx, callback) {
-            // eslint-disable-next-line no-buffer-constructor
-            const privateKey = new Buffer(private_key, 'hex');
-            // eslint-disable-next-line new-cap
-            const transaction = new tx(rawTx);
+            const privateKey = Buffer.from(private_key, 'hex');
+
+            const transaction = new Tx(rawTx);
             transaction.sign(privateKey);
             const serializedTx = transaction.serialize().toString('hex');
             web3.eth.sendSignedTransaction(`0x${serializedTx}`, (err, result) => {

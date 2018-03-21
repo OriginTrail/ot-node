@@ -3,7 +3,7 @@ const utilities = require('./utilities');
 const log = utilities.getLogger();
 const storage = require('./storage')();
 
-module.exports = function () {
+module.exports = () => {
     const test_table = {
 
         insertTest(test, callback) {
@@ -12,8 +12,7 @@ module.exports = function () {
                 let i = n - 1;
 
                 while (i >= 0 && response[i].test_time > test.test_time) {
-                    // eslint-disable-next-line no-plusplus
-                    i--;
+                    i -= 1;
                 }
 
                 response.splice(i + 1, 0, test);
@@ -27,13 +26,12 @@ module.exports = function () {
 
         insertTests(tests, callback) {
             storage.getObject('Tests', (response) => {
-                // eslint-disable-next-line no-plusplus
-                for (let j = 0; j < tests.length; j++) {
-                    const n = response.length;
-                    let i = n - 1;
+                for (let j = 0; j < tests.length; j += 1) {
+                    let n = response.length;
+                    n -= 1;
+                    let i = n;
                     while (i >= 0 && response[i].test_time > tests[j].test_time) {
-                        // eslint-disable-next-line no-plusplus
-                        i--;
+                        i -= 1;
                     }
                     response.splice(i + 1, 0, tests[j]);
                 }
