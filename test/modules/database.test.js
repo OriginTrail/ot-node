@@ -18,7 +18,7 @@ let systemDb;
 let otnode;
 let db;
 
-describe.only('Database module ', async () => {
+describe('Database module ', async () => {
     before('create and use otnode db', async () => {
         systemDb = new Database();
         otnode = await systemDb.createDatabase(
