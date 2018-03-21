@@ -21,6 +21,7 @@ module.exports = function () {
     // eslint-disable-next-line no-shadow
     const database = {
         getConnection() {
+            console.log(db.name);
             return db;
         },
 

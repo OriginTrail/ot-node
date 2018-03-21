@@ -10,7 +10,7 @@ const DB_DATABASE = 'otnode';
 
 let myDb;
 
-describe.only('Database module ', async () => {
+describe('Database module ', async () => {
     it('getConnection method should return a db back', async () => {
         myDb = database.getConnection();
         expect(myDb.name).to.be.equal(DB_DATABASE);

@@ -4,6 +4,7 @@ node_js:
 services:
   - mongodb
 before_install:
+-  - cp .env.example .env
 - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
 - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
 - chmod +x setup_arangodb.sh
@@ -12,7 +13,6 @@ before_install:
 - touch .eslintignore && cd ArangoDB-3.2.2 && find . -name '*.js' >> ../.eslintignore && cd ..
 script:
   - npm run lint
-  - cp .env.example .env
   - npm test
 after_script:
 - kill -9 $(pgrep arangod)

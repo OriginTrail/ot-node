@@ -24,6 +24,7 @@ describe('Utilitity method', () => {
         expect(config).to.have.property('DB_HOST');
         expect(config).to.have.property('DB_PORT');
         expect(config).to.have.property('DB_DATABASE');
+        assert.equal(config.DB_DATABASE, 'otnode');
         expect(config).to.have.property('MAX_PATH_LENGTH');
         expect(config).to.have.property('RPC_API_PORT');
         expect(config).to.have.property('IPC_API_PORT');
