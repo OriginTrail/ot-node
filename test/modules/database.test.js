@@ -13,31 +13,36 @@ const DB_HOST = 'localhost';
 const DB_PORT = 8529;
 const DB_DATABASE = 'otnode';
 
-let db;
+let systemDb;
 let otnode;
+let db;
 
-describe('Database module ', async () => {
-    before('create otnode db', async () => {
-        db = new Database();
-        otnode = await db.createDatabase(DB_DATABASE, [{username: DB_USERNAME, password: DB_PASSWORD}]);
-        await db.useDatabase(DB_DATABASE);
+describe.only('Database module ', async () => {
+    before('create and use otnode db', async () => {
+        systemDb = new Database();
+        otnode = await systemDb.createDatabase(
+            DB_DATABASE,
+            [{ username: DB_USERNAME, passwd: DB_PASSWORD, active: true }],
+        );
+        // this should start using otnode
+        db = database.getConnection();
     });
 
     after('drop otnode db', async () => {
-        db = new Database();
-        await db.dropDatabase(DB_DATABASE);
+        systemDb = new Database();
+        await systemDb.dropDatabase(DB_DATABASE);
     });
 
     it('some basics', async () => {
-        expect(db.name).to.be.equal(DB_DATABASE);
-        const listOfDatabases = await db.listDatabases();
+        expect(systemDb.name).to.be.equal('_system');
+        const listOfDatabases = await systemDb.listDatabases();
         assert.equal(listOfDatabases[0], '_system');
         assert.equal(listOfDatabases[1], 'otnode');
     });
 
-    it.skip('run a simple query', async () => {
+    it('run a simple query', async () => {
         const now = Date.now();
-        await database.runQuery("RETURN @value", (result) => {
+        await database.runQuery('RETURN @value', (result) => {
             console.log(result);
         }, { value: now });
     });
