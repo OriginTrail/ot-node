@@ -12,6 +12,7 @@ before_install:
 - touch .eslintignore && cd ArangoDB-3.2.2 && find . -name '*.js' >> ../.eslintignore && cd ..
 script:
   - npm run lint
+  - cp .env.example .env
   - npm test
 after_script:
 - kill -9 $(pgrep arangod)
