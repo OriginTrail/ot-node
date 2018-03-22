@@ -64,7 +64,7 @@
   "scripts": {
     "test": "nyc mocha --recursive test",
     "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
-    "lint": "./node_modules/.bin/eslint --quiet modules test ipc.js rpc.js update.js gulpfile.js"
+    "lint": "./node_modules/.bin/eslint --quiet ."
   },
   "repository": {
     "type": "git",
