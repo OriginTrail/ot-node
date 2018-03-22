@@ -38,12 +38,12 @@ module.exports = function () {
             const collection = db.collection(collection_name);
             collection.create().then(
                 () => {
-                    log.info('Collection created');
+                    log.info('Document collection created');
                     utilities.executeCallback(callback, true);
                 },
                 (err) => {
                     if (err.response.body.code === 409) {
-                        log.info('collection already exists');
+                        log.info('Document collection already exists');
                         utilities.executeCallback(callback, true);
                     } else {
                         log.info(err);
@@ -56,12 +56,12 @@ module.exports = function () {
             const collection = db.edgeCollection(collection_name);
             collection.create().then(
                 () => {
-                    log.info('Collection created');
+                    log.info('Edge collection created');
                     utilities.executeCallback(callback, true);
                 },
                 (err) => {
                     if (err.response.body.code === 409) {
-                        log.info('collection already exists');
+                        log.info('Edge collection already exists');
                         utilities.executeCallback(callback, true);
                     } else {
                         log.info(err);
