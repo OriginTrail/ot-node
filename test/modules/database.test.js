@@ -6,6 +6,7 @@ const utilities = require('../../modules/utilities')();
 
 const config = utilities.getConfig();
 const database = require('../../modules/database')();
+const databaseData = require('./test_data/database-data.js');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
 
@@ -14,12 +15,14 @@ const myPassword = config.DB_PASSWORD;
 const myDatabase = config.DB_DATABASE;
 const documentCollectionName = 'ot_vertices';
 const edgeCollectionName = 'ot_edges';
+const vertexOne = databaseData.vertices[0];
+// console.log(vertexOne);
 
 let systemDb;
 let otnode;
 let db;
 
-describe('Database module ', async () => {
+describe.only('Database module ', async () => {
     before('create and use otnode db', async () => {
         systemDb = new Database();
         otnode = await systemDb.createDatabase(
@@ -95,11 +98,25 @@ describe('Database module ', async () => {
         assert.equal(info.length, 2);
     });
 
-    it.skip('.addVertex() should save item in doc collection', async () => {
-
+    it('.addVertex() should save item in Document Collection', (done) => {
+        database.addVertex(documentCollectionName, vertexOne, (response) => {
+            assert.isTrue(response, 'We should be able to save vertex in document collection');
+            done();
+        });
     });
 
-    it.skip('.addEdge() should save item in edge collection', async () => {
-
+    it('now lets check that we saved vertex correctly', async () => {
+        const myCollection = db.collection(documentCollectionName);
+        // eslint-disable-next-line no-underscore-dangle
+        const retrievedVertex = await myCollection.document(vertexOne._key);
+        assert.deepEqual(retrievedVertex.data, vertexOne.data);
+        assert.deepEqual(retrievedVertex.vertex_type, vertexOne.vertex_type);
+        assert.deepEqual(retrievedVertex.identifiers, vertexOne.identifiers);
+        assert.deepEqual(retrievedVertex.data_provider, vertexOne.data_provider);
+        assert.deepEqual(retrievedVertex.imports, vertexOne.imports);
+        // eslint-disable-next-line no-underscore-dangle
+        assert.equal(retrievedVertex.vertex_key, vertexOne.vertex_key);
+        // eslint-disable-next-line no-underscore-dangle
+        assert.equal(retrievedVertex._key, vertexOne._key);
     });
 });
