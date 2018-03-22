@@ -13,6 +13,7 @@ const myUserName = config.DB_USERNAME;
 const myPassword = config.DB_PASSWORD;
 const myDatabase = config.DB_DATABASE;
 const documentCollectionName = 'ot_vertices';
+const edgeCollectionName = 'ot_edges';
 
 let systemDb;
 let otnode;
@@ -27,6 +28,7 @@ describe('Database module ', async () => {
         );
         // this should start using otnode
         db = database.getConnection();
+        assert(db.name, myDatabase);
     });
 
     after('drop otnode db', async () => {
@@ -34,7 +36,7 @@ describe('Database module ', async () => {
         await systemDb.dropDatabase(myDatabase);
     });
 
-    it('some basics', async () => {
+    it('check some basics', async () => {
         expect(systemDb.name).to.be.equal('_system');
         const listOfDatabases = await systemDb.listDatabases();
         assert.equal(listOfDatabases[0], '_system');
@@ -52,12 +54,12 @@ describe('Database module ', async () => {
     it('.createVertexCollection() should create Document Collection', async () => {
         // first time creating Document Collection
         await database.createVertexCollection(documentCollectionName, (response) => {
-            assert.equal(response, true, 'collection should be created');
+            assert.equal(response, true, 'doc collection should be created');
         });
 
         // this will cover 409 path
         await database.createVertexCollection(documentCollectionName, (response) => {
-            assert.equal(response, true, 'collection has already been created');
+            assert.equal(response, true, 'doc collection has already been created');
         });
 
         const myCollection = db.collection(documentCollectionName);
@@ -66,5 +68,38 @@ describe('Database module ', async () => {
         assert.equal(data.code, 200);
         assert.isFalse(data.isSystem);
         assert.equal(data.name, documentCollectionName);
+
+        const info = await db.listCollections();
+        assert.equal(info.length, 1);
+    });
+
+    it('.createEdgeCollection() should create Edge Collection', async () => {
+        // first time creating Edge Collection
+        await database.createEdgeCollection(edgeCollectionName, (response) => {
+            assert.equal(response, true, 'edge collection has already been created');
+        });
+
+        // this will cover 409 path
+        await database.createEdgeCollection(edgeCollectionName, (response) => {
+            assert.equal(response, true, 'edge collection has already been created');
+        });
+
+        const myCollection = db.collection(edgeCollectionName);
+        const data = await myCollection.get();
+
+        assert.equal(data.code, 200);
+        assert.isFalse(data.isSystem);
+        assert.equal(data.name, edgeCollectionName);
+
+        const info = await db.listCollections();
+        assert.equal(info.length, 2);
+    });
+
+    it.skip('.addVertex() should save item in doc collection', async () => {
+
+    });
+
+    it.skip('.addEdge() should save item in edge collection', async () => {
+
     });
 });
