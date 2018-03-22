@@ -3,12 +3,12 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const utilities = require('../../modules/utilities')();
-
-const config = utilities.getConfig();
 const database = require('../../modules/database')();
 const databaseData = require('./test_data/database-data.js');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
+
+const config = utilities.getConfig();
 
 const myUserName = config.DB_USERNAME;
 const myPassword = config.DB_PASSWORD;
@@ -16,7 +16,8 @@ const myDatabase = config.DB_DATABASE;
 const documentCollectionName = 'ot_vertices';
 const edgeCollectionName = 'ot_edges';
 const vertexOne = databaseData.vertices[0];
-// console.log(vertexOne);
+const vertexTwo = databaseData.vertices[1];
+const edgeOne = databaseData.edges[0];
 
 let systemDb;
 let otnode;
@@ -39,7 +40,7 @@ describe.only('Database module ', async () => {
         await systemDb.dropDatabase(myDatabase);
     });
 
-    it('check some basics', async () => {
+    it('should see one system and one custom database', async () => {
         expect(systemDb.name).to.be.equal('_system');
         const listOfDatabases = await systemDb.listDatabases();
         assert.equal(listOfDatabases[0], '_system');
@@ -67,11 +68,9 @@ describe.only('Database module ', async () => {
 
         const myCollection = db.collection(documentCollectionName);
         const data = await myCollection.get();
-
         assert.equal(data.code, 200);
         assert.isFalse(data.isSystem);
         assert.equal(data.name, documentCollectionName);
-
         const info = await db.listCollections();
         assert.equal(info.length, 1);
     });
@@ -89,11 +88,9 @@ describe.only('Database module ', async () => {
 
         const myCollection = db.collection(edgeCollectionName);
         const data = await myCollection.get();
-
         assert.equal(data.code, 200);
         assert.isFalse(data.isSystem);
         assert.equal(data.name, edgeCollectionName);
-
         const info = await db.listCollections();
         assert.equal(info.length, 2);
     });
@@ -105,7 +102,7 @@ describe.only('Database module ', async () => {
         });
     });
 
-    it('now lets check that we saved vertex correctly', async () => {
+    it('now lets check that we\'ve saved vertex correctly', async () => {
         const myCollection = db.collection(documentCollectionName);
         // eslint-disable-next-line no-underscore-dangle
         const retrievedVertex = await myCollection.document(vertexOne._key);
@@ -118,5 +115,27 @@ describe.only('Database module ', async () => {
         assert.equal(retrievedVertex.vertex_key, vertexOne.vertex_key);
         // eslint-disable-next-line no-underscore-dangle
         assert.equal(retrievedVertex._key, vertexOne._key);
+    });
+
+    it('.addEdge() should save item in Edge Document Collection', (done) => {
+        database.addEdge(edgeCollectionName, edgeOne, (response) => {
+            assert.isTrue(response, 'We should be able to save edge in edge document collection');
+            done();
+        });
+    });
+
+    it('now lets check that we\'ve saved edge correctly', async () => {
+        const myCollection = db.edgeCollection(edgeCollectionName);
+        // eslint-disable-next-line no-underscore-dangle
+        const retrievedEdge = await myCollection.edge(edgeOne._key);
+        // eslint-disable-next-line no-underscore-dangle
+        assert.deepEqual(retrievedEdge._key, edgeOne._key);
+        assert.deepEqual(retrievedEdge.edge_type, edgeOne.edge_type);
+        assert.deepEqual(retrievedEdge.data_provider, edgeOne.data_provider);
+        assert.deepEqual(retrievedEdge.imports, edgeOne.imports);
+        // eslint-disable-next-line no-underscore-dangle
+        assert.deepEqual(retrievedEdge._to, edgeOne._to);
+        // eslint-disable-next-line no-underscore-dangle
+        assert.deepEqual(retrievedEdge._from, edgeOne._from);
     });
 });
