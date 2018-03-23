@@ -34,7 +34,7 @@ module.exports = function() {
 
 	const tx_queue = {
 
-		sendTransaction(rawTx, callback){
+		queueTransaction(rawTx, callback){
 			return new Promise(
 				async function(resolve, reject){
 					queue.push(rawTx);

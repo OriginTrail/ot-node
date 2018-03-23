@@ -80,7 +80,7 @@ module.exports = function () {
                 //     reject(err);
                 // });
 
-                transacting.sendTransaction(rawTx, (response, err) => {
+                transacting.queueTransaction(rawTx, (response, err) => {
                     if(err) {
                         reject(err)
                     } else {
@@ -243,7 +243,7 @@ module.exports = function () {
                 confirmation.v,
                 confirmation.r,
                 confirmation.s], txOptions);
-            transacting.sendTransaction(rawTx,callback);
+            transacting.queueTransaction(rawTx,callback);
            // this.sendRawX(rawTx, callback);
         },
 
