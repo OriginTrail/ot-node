@@ -157,8 +157,7 @@ describe('Database module ', async () => {
         // "ot_edges" seems hardcoded in method impl.
 
         await database.getEdgesByImportId(1520345631, (response) => {
-            // TODO investigate why we get single result, if both imports are identical
-            // this I would expect that we get back two results in this test
+            // here we should have just single result
             assert.equal(response.length, 1);
             // eslint-disable-next-line no-underscore-dangle
             assert.equal(response[0]._from, edgeOne._from);
