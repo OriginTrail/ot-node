@@ -1,6 +1,7 @@
 node_modules
 .DS_Store
 .idea
+.vscode/*
 config.json
 .env
 .nyc_output
@@ -13,4 +14,3 @@ import-log.txt
 OT-GIT-NODE-DEVELOP.zip
 manual-testing-scripts
 log.log
-
