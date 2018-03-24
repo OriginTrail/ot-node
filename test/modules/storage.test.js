@@ -1,7 +1,7 @@
 const { describe, it, after } = require('mocha');
 const { assert, expect } = require('chai');
 const storage = require('../../modules/storage')();
-const utilities = require('../../modules/utilities')();
+const utilities = require('../../modules/utilities');
 
 const keyToStore = utilities.getRandomString(utilities.getRandomInt(10));
 const valueToStore = utilities.getRandomString(utilities.getRandomInt(10));
