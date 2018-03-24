@@ -14,7 +14,7 @@ const log = utilities.getLogger();
 const transaction_queue = [];
 let transaction_pending = false;
 
-module.exports = function () {
+module.exports = () => {
     function signalNextInQueue() {
         transaction_queue.shift();
         transaction_pending = false;

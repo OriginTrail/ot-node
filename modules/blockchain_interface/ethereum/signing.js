@@ -47,7 +47,7 @@ let nonce = -1;
 let nonce_increment = 0;
 
 
-module.exports = function () {
+module.exports = () => {
     // eslint-disable-next-line no-shadow
     function sendTransaction(abi, method, args, txOptions) {
         return new Promise((resolve, reject) => {
@@ -72,17 +72,6 @@ module.exports = function () {
     }
 
     const signing = {
-
-
-        sendRaw(rawTx) {
-        // eslint-disable-next-line no-buffer-constructor
-            const privateKey = new Buffer(private_key, 'hex');
-            // eslint-disable-next-line new-cap
-            const transaction = new tx(rawTx);
-            transaction.sign(privateKey);
-            const serializedTx = transaction.serialize().toString('hex');
-            return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
-        },
 
         signAndSend(batch_id, batch_id_hash, graph_hash) {
             const txOptions = {
@@ -136,14 +125,18 @@ module.exports = function () {
         },
 
 
-
-        // eslint-disable-next-line max-len
-        createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) {
+        createConfirmation(
+            DH_wallet,
+            data_id,
+            confirmation_verification_number,
+            confirmation_time,
+            confirmation_valid,
+        ) {
             /*
-      address DC_wallet, uint data_id,
-      uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
-      bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
-      */
+          address DC_wallet, uint data_id,
+          uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
+          bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
+          */
 
             // (msg.sender,
             // data_id, confirmation_
