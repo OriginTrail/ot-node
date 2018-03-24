@@ -1,15 +1,15 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 // const log = utilities.getLogger();
 const database = require('./database')();
 const encryption = require('./encryption')();
 const storage = require('./storage')();
 
 const config = utilities.getConfig();
-// eslint-disable-next-line radix
-const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
 
-module.exports = function () {
+const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH, 10);
+
+module.exports = () => {
     let graph = {
         getVertices(queryObject, callback) {
             let queryString = 'FOR v IN ot_vertices ';
@@ -21,21 +21,19 @@ module.exports = function () {
 
                 let i = 1;
                 for (const key in queryObject) {
-                    if (key.match(/^[\w\d]+$/g) === null) {
-                        // eslint-disable-next-line no-continue
-                        continue;
+                    if (key.match(/^[\w\d]+$/g) !== null) {
+                        let searchKey;
+                        if (key !== 'vertex_type' && key !== '_key') {
+                            searchKey = `identifiers.${key}`;
+                        } else { searchKey = key; }
+
+                        const param = `param${i}`;
+                        filters.push(`v.${searchKey} === @param${i}`);
+
+                        i += 1;
+
+                        params[param] = queryObject[key];
                     }
-                    let search_key;
-                    if (key !== 'vertex_type' && key !== '_key') {
-                        search_key = `identifiers.${key}`;
-                    } else { search_key = key; }
-
-                    const param = `param${i}`;
-                    filters.push(`v.${search_key} === @param${i}`);
-                    // eslint-disable-next-line no-plusplus
-                    i++;
-
-                    params[param] = queryObject[key];
                 }
 
                 queryString += filters.join(' AND ');
@@ -49,7 +47,6 @@ module.exports = function () {
         },
 
         getTraversal(start_vertex, callback) {
-            // eslint-disable-next-line no-underscore-dangle
             if (start_vertex === undefined || start_vertex._id === undefined) {
                 utilities.executeCallback(callback, []);
                 return;
@@ -80,15 +77,15 @@ module.exports = function () {
                             raw_graph_data[i].edges[j].from = raw_graph_data[i].edges[j]._from.split('/')[1];
                             // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
                             raw_graph_data[i].edges[j].to = raw_graph_data[i].edges[j]._to.split('/')[1];
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].edges[j]._key;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].edges[j]._id;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].edges[j]._rev;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].edges[j]._to;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].edges[j]._from;
                             // eslint-disable-next-line  prefer-destructuring
                             const key = raw_graph_data[i].edges[j].key;
@@ -103,14 +100,13 @@ module.exports = function () {
                 if (raw_graph_data[i].vertices !== undefined) {
                     for (const j in raw_graph_data[i].vertices) {
                         if (raw_graph_data[i].vertices[j] !== null) {
-                            // eslint-disable-next-line no-underscore-dangle
                             raw_graph_data[i].vertices[j].key = raw_graph_data[i].vertices[j]._key;
                             raw_graph_data[i].vertices[j].outbound = [];
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].vertices[j]._key;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].vertices[j]._id;
-                            // eslint-disable-next-line no-underscore-dangle
+
                             delete raw_graph_data[i].vertices[j]._rev;
 
                             // eslint-disable-next-line  prefer-destructuring
@@ -196,22 +192,29 @@ module.exports = function () {
         },
 
         encryptVertices(dh_ip, dh_port, vertices, callback) {
+            var keyPair;
             storage.getObject('Keys', (response) => {
                 if (response.length === 0) {
-                    var keypair = encryption.generateKeyPair();
+                    keyPair = encryption.generateKeyPair();
 
                     storage.storeObject('Keys', [{
-                        // eslint-disable-next-line max-len
-                        dh_ip, dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey,
-                    // eslint-disable-next-line no-shadow
-                    }], (response) => {
+
+                        dh_ip,
+                        dh_port,
+                        privateKey:
+                        keyPair.privateKey,
+                        publicKey: keyPair.publicKey,
+
+                    }], () => {
                         for (const i in vertices) {
                             // eslint-disable-next-line max-len
-                            vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-                            vertices[i].decryption_key = keypair.publicKey;
+                            vertices[i].data = encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
                         }
                         // eslint-disable-next-line max-len
-                        utilities.executeCallback(callback, { vertices, public_key: keypair.publicKey });
+                        utilities.executeCallback(callback, {
+                            vertices, public_key: keyPair.publicKey,
+                        });
                     });
                 } else {
                     for (const i in response) {
@@ -227,23 +230,27 @@ module.exports = function () {
                         }
                     }
 
-                    // eslint-disable-next-line no-redeclare
-                    var keypair = encryption.generateKeyPair();
+
+                    keyPair = encryption.generateKeyPair();
 
                     response.push({
-                        // eslint-disable-next-line max-len
-                        dh_ip, dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey,
+                        dh_ip,
+                        dh_port,
+                        privateKey: keyPair.privateKey,
+                        publicKey: keyPair.publicKey,
                     });
 
-                    // eslint-disable-next-line no-shadow
-                    storage.storeObject('Keys', response, (response) => {
+
+                    storage.storeObject('Keys', response, () => {
                         for (const i in vertices) {
-                            // eslint-disable-next-line max-len
-                            vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-                            vertices[i].decryption_key = keypair.publicKey;
+                            vertices[i].data =
+                                encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
                         }
-                        // eslint-disable-next-line max-len
-                        utilities.executeCallback(callback, { vertices, public_key: keypair.publicKey });
+
+                        utilities.executeCallback(callback, {
+                            vertices, public_key: keyPair.publicKey,
+                        });
                     });
                 }
             });

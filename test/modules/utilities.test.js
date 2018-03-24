@@ -3,7 +3,7 @@ const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const should = require('should');
 const web3 = require('web3');
-const utilities = require('../../modules/utilities')();
+const utilities = require('../../modules/utilities');
 
 let config;
 

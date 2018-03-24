@@ -1,4 +1,4 @@
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();
@@ -7,7 +7,7 @@ const encryption = require('./encryption')();
 const graph = require('./graph')();
 const async = require('async');
 
-module.exports = function () {
+module.exports = () => {
     const testing = {
         // eslint-disable-next-line max-len
         generateTests(data_id, dh_ip, dh_port, dh_wallet, encrypted_vertices, number_of_tests, start_time, end_time, callback) {
@@ -15,8 +15,8 @@ module.exports = function () {
             // log.info(encrypted_vertices);
             const tests = [];
 
-            // eslint-disable-next-line no-plusplus
-            for (let i = 0; i < number_of_tests; i++) {
+
+            for (let i = 0; i < number_of_tests; i += 1) {
                 const new_test = {};
 
                 const j = utilities.getRandomIntRange(0, encrypted_vertices.length - 1);
@@ -30,7 +30,7 @@ module.exports = function () {
                 start_index = utilities.getRandomIntRange(0, test_vertex_data.length - 1);
                 end_index = utilities.getRandomIntRange(start_index, test_vertex_data.length - 1);
 
-                // eslint-disable-next-line no-underscore-dangle
+
                 const question = { vertex_key: test_vertex._key, start_index, end_index };
                 const answer = test_vertex_data.substring(start_index, end_index);
 

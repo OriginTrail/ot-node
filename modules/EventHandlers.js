@@ -3,19 +3,17 @@ const importer = require('./importer')();
 const blockchain = require('./blockchain')();
 const testing = require('./testing')();
 const signing = require('./blockchain_interface/ethereum/signing')();
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();
 
 class EventHandlers {
     constructor(data, socket) {
-        // kebab-case to snakeCase
-        this.event = data.request.replace(/-([a-z])/g, g => g[1].toUpperCase());
+        this.event = utilities.toSnakeCase(data.request);
 
         // get the first part of some-response => some
-        // eslint-disable-next-line  prefer-destructuring
-        this.eventPrefix = data.request.split(/-(.+)/)[0];
+        [this.eventPrefix] = data.request.split(/-(.+)/);
 
         this.queryObject = data.queryObject;
         this.clientRequest = data.clientRequest;

@@ -2,7 +2,7 @@ const testTable = require('./test_table')();
 const signing = require('./blockchain_interface/ethereum/signing.js')();
 const axios = require('axios');
 const holding = require('./holding')();
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();

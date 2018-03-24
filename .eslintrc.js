@@ -27,6 +27,8 @@ module.exports = {
         "no-restricted-syntax": 0,
         "guard-for-in": 0,
         "no-param-reassign": 0,
+        "no-underscore-dangle": 0,
+        "no-shadow": 0,
         "semi": [
             "error",
             "always"

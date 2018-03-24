@@ -1,9 +1,9 @@
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const storage = require('./storage')();
 
-module.exports = function () {
+module.exports = () => {
     const holding = {
         addHoldingData(dh_wallet, data_id, public_key, callback) {
             storage.getObject('Holding', (response) => {

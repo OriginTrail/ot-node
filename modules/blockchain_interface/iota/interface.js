@@ -1,4 +1,4 @@
-module.exports = function () {
+module.exports = () => {
     // TODO: IOTA interface
     const theInterface = {
 

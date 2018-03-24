@@ -1,5 +1,5 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();
@@ -19,7 +19,7 @@ default:
     log.info('ERROR: Couldn\'t load blockchain interaface, please check your config file.');
 }
 
-module.exports = function () {
+module.exports = () => {
     const blockchain = {
         addFingerprint(batch_uid, batch_uid_hash, trail_hash) {
             log.info('Writing on blockchain...');
