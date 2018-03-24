@@ -1,7 +1,5 @@
 const utilities = require('./utilities');
 
-const log = utilities.getLogger();
-
 const db = require('mongodb').MongoClient;
 
 const url = 'mongodb://localhost:27017';
