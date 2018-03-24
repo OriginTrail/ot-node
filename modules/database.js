@@ -3,7 +3,7 @@ const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 
-const { Database } = require('arangojs').Database;
+const { Database } = require('arangojs');
 
 const config = utilities.getConfig();
 
