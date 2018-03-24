@@ -8,7 +8,6 @@ const Account = require('eth-lib/lib/account');
 const Hash = require('eth-lib/lib/hash');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
-
 const transacting = require('./transacting');
 
 
@@ -45,12 +44,10 @@ const escrow_abi_file = fs.readFileSync(escrow_abi_path);
 const escrow_abi = JSON.parse(escrow_abi_file);
 
 
-
 let nonce = -1;
 let nonce_increment = 0;
 
 module.exports = function () {
-
     // eslint-disable-next-line no-shadow
     function sendTransaction(abi, method, args, txOptions) {
         // eslint-disable-next-line no-shadow
@@ -66,14 +63,12 @@ module.exports = function () {
 
 
                 transacting.queueTransaction(rawTx, (response, err) => {
-                    if(err) {
-                        reject(err)
+                    if (err) {
+                        reject(err);
                     } else {
-                        resolve(response)
+                        resolve(response);
                     }
-                })
-
-
+                });
             });
         });
     }
@@ -81,39 +76,38 @@ module.exports = function () {
     const signing = {
 
 
-    sendRaw(rawTx) {
+        sendRaw(rawTx) {
         // eslint-disable-next-line no-buffer-constructor
-        const privateKey = new Buffer(private_key, 'hex');
-        // eslint-disable-next-line new-cap
-        const transaction = new tx(rawTx);
-        transaction.sign(privateKey);
-        const serializedTx = transaction.serialize().toString('hex');
-        return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
-    },
+            const privateKey = new Buffer(private_key, 'hex');
+            // eslint-disable-next-line new-cap
+            const transaction = new tx(rawTx);
+            transaction.sign(privateKey);
+            const serializedTx = transaction.serialize().toString('hex');
+            return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
+        },
 
-    signAndSend(batch_id, batch_id_hash, graph_hash) {
-        const txOptions = {
-            gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-            gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-            to: contract_address,
-        };
-
-        return sendTransaction(contract_abi, 'addFingerPrint', [batch_id, batch_id_hash, graph_hash], txOptions);
-    },
-
-    signAndAllow(options) {
-        const approvalFunction = this.listenApproval;
-        const createEscrowFunction = this.createEscrow;
-
-        return new Promise((resolve, reject) => {
+        signAndSend(batch_id, batch_id_hash, graph_hash) {
             const txOptions = {
                 gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                 gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-                to: token_address,
+                to: contract_address,
             };
 
-            sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then((response) => {
+            return sendTransaction(contract_abi, 'addFingerPrint', [batch_id, batch_id_hash, graph_hash], txOptions);
+        },
 
+        signAndAllow(options) {
+            const approvalFunction = this.listenApproval;
+            const createEscrowFunction = this.createEscrow;
+
+            return new Promise((resolve, reject) => {
+                const txOptions = {
+                    gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+                    gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+                    to: token_address,
+                };
+
+                sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then((response) => {
                     // log.info(response);
 
                     log.info('Creating Escrow...');
@@ -131,7 +125,6 @@ module.exports = function () {
                     reject(e);
                 });
             });
-
         },
 
         createEscrow(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
@@ -214,8 +207,7 @@ module.exports = function () {
                 confirmation.r,
                 confirmation.s], txOptions);
 
-            transacting.queueTransaction(rawTx,callback);
-
+            transacting.queueTransaction(rawTx, callback);
         },
 
     };
