@@ -18,6 +18,7 @@ const edgeCollectionName = 'ot_edges';
 const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
 const edgeOne = databaseData.edges[0];
+const newImportValue = 2520345631;
 
 let systemDb;
 let otnode;
@@ -137,5 +138,44 @@ describe('Database module ', async () => {
         assert.deepEqual(retrievedEdge._to, edgeOne._to);
         // eslint-disable-next-line no-underscore-dangle
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
+    });
+
+    it('getVerticesByImportId() should give back vertexes', async () => {
+        // "ot_vertices" seems hardcoded in method impl.
+
+        await database.getVerticesByImportId(1520345631, (response) => {
+            // TODO investigate why we get single result, if both imports are identical,
+            // thus I would expect that we get back two results in this test setup
+            assert.equal(response.length, 1);
+            assert.deepEqual(response[0].data, vertexOne.data);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.deepEqual(response[0]._key, vertexOne._key);
+        });
+    });
+
+    it('getEdgesByImportId() should give back edge', async () => {
+        // "ot_edges" seems hardcoded in method impl.
+
+        await database.getEdgesByImportId(1520345631, (response) => {
+            // here we should have just single result
+            assert.equal(response.length, 1);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response[0]._from, edgeOne._from);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response[0]._to, edgeOne._to);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response[0]._key, edgeOne._key);
+        });
+    });
+
+    it.skip('updateDocumentImports() should add/append imports data', (done) => {
+        database.updateDocumentImports(
+            documentCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            vertexTwo._key, newImportValue, (response) => {
+            // TODO properly handle promise and make asserts
+                done();
+            },
+        );
     });
 });
