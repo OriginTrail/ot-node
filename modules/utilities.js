@@ -137,6 +137,13 @@ class Utilities {
 
         return log;
     }
+
+    static getRandomString(howLong) {
+        return randomString.generate({
+            length: howLong,
+            charset: 'alphabetic',
+        });
+    }
 }
 
 module.exports = Utilities;
