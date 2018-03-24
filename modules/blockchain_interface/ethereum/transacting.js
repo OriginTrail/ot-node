@@ -37,8 +37,8 @@ module.exports = function() {
 		queueTransaction(rawTx, callback){
 			return new Promise(
 				async function(resolve, reject){
-					queue.push(rawTx);
-					if(transaction_pending)	await readyFor(tx);
+					transaction_queue.push(rawTx);
+					if(transaction_pending)	await readyFor(rawTx);
 					transaction_pending = true;
 					signing.sendRaw(tx)
 					.then(function(response){
@@ -55,8 +55,8 @@ module.exports = function() {
 						})
 					.catch(function(err){
 						log.warn(err);
-						if (callback) utilities.executeCallback(callback, false);
 						signalNextInQueue();
+						if (callback) utilities.executeCallback(callback, false);
 						reject(err);
 						});
 					});
