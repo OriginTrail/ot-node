@@ -8,6 +8,8 @@ const Account = require('eth-lib/lib/account');
 const Hash = require('eth-lib/lib/hash');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
+const transacting = require('./transacting');
+
 
 const { txutils } = lightwallet.txutils;
 const config = utilities.getConfig();
@@ -40,28 +42,13 @@ const escrow_abi_path = config.blockchain.settings.ethereum.escrow_abi;
 const escrow_abi_file = fs.readFileSync(escrow_abi_path);
 const escrow_abi = JSON.parse(escrow_abi_file);
 
-/*
-console.log('------------------------');
-var nonce = 5;
-web3.eth.getTransactionCount("0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",
-    web3.eth.defaultBlock,function(err, result) {
-}).then(function (nonce){console.log(nonce)})
-console.log('------------------------'); */
 
 let nonce = -1;
 let nonce_increment = 0;
 
-module.exports = () => {
-    function sendRaw(rawTx, callback) {
-        // eslint-disable-next-line no-buffer-constructor
-        const privateKey = new Buffer(private_key, 'hex');
-        // eslint-disable-next-line new-cap
-        const transaction = new Tx(rawTx);
-        transaction.sign(privateKey);
-        const serializedTx = transaction.serialize().toString('hex');
-        return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
-    }
 
+module.exports = function () {
+    // eslint-disable-next-line no-shadow
     function sendTransaction(abi, method, args, txOptions) {
         return new Promise((resolve, reject) => {
             web3.eth.getTransactionCount(wallet_address).then((nonce) => {
@@ -71,19 +58,31 @@ module.exports = () => {
                 log.warn(txOptions);
 
                 const rawTx = txutils.functionTx(abi, method, args, txOptions);
-                return sendRaw(rawTx).then((response) => {
-                    if (response.error === '0x0') {
-                        return reject(response);
+
+
+                transacting.queueTransaction(rawTx, (response, err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(response);
                     }
-                    return resolve(response);
-                }).catch((err) => {
-                    reject(err);
                 });
             });
         });
     }
 
     const signing = {
+
+
+        sendRaw(rawTx) {
+        // eslint-disable-next-line no-buffer-constructor
+            const privateKey = new Buffer(private_key, 'hex');
+            // eslint-disable-next-line new-cap
+            const transaction = new tx(rawTx);
+            transaction.sign(privateKey);
+            const serializedTx = transaction.serialize().toString('hex');
+            return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
+        },
 
         signAndSend(batch_id, batch_id_hash, graph_hash) {
             const txOptions = {
@@ -137,13 +136,9 @@ module.exports = () => {
         },
 
 
-        createConfirmation(
-            DH_wallet,
-            data_id,
-            confirmation_verification_number,
-            confirmation_time,
-            confirmation_valid,
-        ) {
+
+        // eslint-disable-next-line max-len
+        createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) {
             /*
       address DC_wallet, uint data_id,
       uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
@@ -157,6 +152,7 @@ module.exports = () => {
             // confirmation_valid) === confirmation_hash
             const raw_data = `0x${abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint', 'bool'],
+
 
                 [new BN(DH_wallet, 16),
                     data_id,
@@ -191,27 +187,7 @@ module.exports = () => {
 
             return confirmation;
         },
-        sendRawX(rawTx, callback) {
-            const privateKey = Buffer.from(private_key, 'hex');
 
-            const transaction = new Tx(rawTx);
-            transaction.sign(privateKey);
-            const serializedTx = transaction.serialize().toString('hex');
-            web3.eth.sendSignedTransaction(`0x${serializedTx}`, (err, result) => {
-                if (err) {
-                    console.log(err);
-
-                    if (callback) {
-                        utilities.executeCallback(callback, false);
-                    }
-                } else {
-                    if (callback) {
-                        utilities.executeCallback(callback, result);
-                    }
-                    console.log('Transaction: ', result);
-                }
-            });
-        },
 
         async sendConfirmation(confirmation, callback) {
             if (nonce === -1) { nonce = await web3.eth.getTransactionCount(wallet_address); }
@@ -237,7 +213,8 @@ module.exports = () => {
                 confirmation.v,
                 confirmation.r,
                 confirmation.s], txOptions);
-            this.sendRawX(rawTx, callback);
+
+            transacting.queueTransaction(rawTx, callback);
         },
 
     };
