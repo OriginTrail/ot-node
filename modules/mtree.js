@@ -1,7 +1,7 @@
 const MerkleTree = require('@garbados/merkle-tree');
 const crypto = require('crypto');
 
-module.exports = function () {
+module.exports = () => {
     class MTree {
         constructor(dataArray) {
             this.dataArray = dataArray;

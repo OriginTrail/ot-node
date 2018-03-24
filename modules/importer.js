@@ -1,6 +1,6 @@
 // External modules
 const PythonShell = require('python-shell');
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();
@@ -13,7 +13,7 @@ const db = require('./database')();
 
 const replication = require('./DataReplication');
 
-module.exports = function () {
+module.exports = () => {
     const importer = {
 
         async importJSON(json_document, callback) {
@@ -31,7 +31,6 @@ module.exports = function () {
             async.each(vertices, (vertex, next) => {
                 db.addVertex('ot_vertices', vertex, (import_status) => {
                     if (import_status === false) {
-                        // eslint-disable-next-line no-underscore-dangle
                         db.updateDocumentImports('ot_vertices', vertex._key, data_id, (update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
@@ -51,7 +50,6 @@ module.exports = function () {
             async.each(edges, (edge, next) => {
                 db.addEdge('ot_edges', edge, (import_status) => {
                     if (import_status === false) {
-                        // eslint-disable-next-line no-underscore-dangle
                         db.updateDocumentImports('ot_edges', edge._key, data_id, (update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
@@ -96,7 +94,6 @@ module.exports = function () {
                 // eslint-disable-next-line  prefer-destructuring
                 const edges = result.edges;
                 const data_id = result.import_id;
-
 
                 const leaves = [];
                 const hash_pairs = [];

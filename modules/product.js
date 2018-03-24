@@ -1,5 +1,5 @@
 // External modules
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const database = require('./database')();
@@ -9,7 +9,7 @@ const Database = require('arangojs').Database;
 
 const fs = require('fs');
 
-module.exports = function () {
+module.exports = () => {
     // Private function
     function getProductJourney(virtual_graph_data, traversal) {
         const journey = [];
@@ -19,8 +19,7 @@ module.exports = function () {
         const transactions = [];
         const usedTransactionIDs = [];
 
-        // eslint-disable-next-line no-plusplus
-        for (var i = 0; i < traversal.length; i++) {
+        for (var i = 0; i < traversal.length; i += 1) {
             const point = traversal[i];
             if (point.vertex_type === 'BATCH' && usedBatchUIDs[point.identifiers.uid] !== true) {
                 var edges = point.outbound;
@@ -61,10 +60,9 @@ module.exports = function () {
         }
 
         while (i < batches.length && j < transactions.length) {
-            // eslint-disable-next-line no-plusplus
-            journey.push(transactions[j++]);
-            // eslint-disable-next-line no-plusplus
-            journey.push(batches[i++]);
+            journey.push(transactions[j += 1]);
+
+            journey.push(batches[i += 1]);
         }
 
         if (i < batches.length) {
@@ -98,13 +96,18 @@ module.exports = function () {
                 const start_vertex = vertices[0];
 
                 graph.getTraversal(start_vertex, (raw_graph_data) => {
-                    // eslint-disable-next-line max-len
-                    const virtual_graph_data = graph.convertToVirtualGraph(utilities.copyObject(raw_graph_data));
+                    const virtual_graph_data = graph
+                        .convertToVirtualGraph(utilities.copyObject(raw_graph_data));
 
-                    // eslint-disable-next-line max-len
+
                     const returnBFS = utilities.copyObject(virtual_graph_data);
-                    // eslint-disable-next-line max-len
-                    const BFSt = graph.BFS(utilities.copyObject(returnBFS.data), start_vertex.identifiers.uid, true);
+
+                    const BFSt = graph.BFS(
+                        utilities.copyObject(returnBFS.data),
+                        start_vertex.identifiers.uid,
+                        true,
+                    );
+
 
                     for (var i in BFSt) {
                         if (BFSt[i].outbound !== undefined) {
@@ -118,12 +121,22 @@ module.exports = function () {
                         BFSt[i] = utilities.sortObject(BFSt[i]);
                     }
 
-                    // eslint-disable-next-line max-len
-                    const BFS = graph.BFS(utilities.copyObject(virtual_graph_data.data), start_vertex.identifiers.uid, restricted);
-                    // eslint-disable-next-line max-len
-                    const BFS_data = utilities.copyObject(graph.BFS(virtual_graph_data.data, start_vertex.identifiers.uid, restricted));
-                    // eslint-disable-next-line max-len
-                    const fetchedJourney = getProductJourney(utilities.copyObject(virtual_graph_data.data), utilities.copyObject(BFS));
+
+                    const BFS = graph.BFS(
+                        utilities.copyObject(virtual_graph_data.data),
+                        start_vertex.identifiers.uid,
+                        restricted,
+                    );
+
+                    const BFS_data = utilities.copyObject(graph.BFS(
+                        virtual_graph_data.data,
+                        start_vertex.identifiers.uid, restricted,
+                    ));
+
+                    const fetchedJourney = getProductJourney(
+                        utilities.copyObject(virtual_graph_data.data),
+                        utilities.copyObject(BFS),
+                    );
 
 
                     const responseObject = {

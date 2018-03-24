@@ -3,7 +3,7 @@ const leveldup = require('levelup');
 const leveldown = require('leveldown');
 const kad = require('kad');
 const quasar = require('kad-quasar');
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();
@@ -13,7 +13,7 @@ let ping_responses = [];
 let waiting_for_responses = false;
 let node = null;
 
-module.exports = function () {
+module.exports = () => {
     const kademlia = {
 
         sendRequest(requestType, requestObject) {
@@ -69,8 +69,8 @@ module.exports = function () {
             });
 
             node.quasarSubscribe('ot-ping-request', (content) => {
-                // eslint-disable-next-line max-len
-                if (content.sender_ip === config.NODE_IP && content.sender_port === config.RPC_API_PORT) {
+                if (content.sender_ip === config.NODE_IP &&
+                    content.sender_port === config.RPC_API_PORT) {
                     return;
                 }
 
@@ -83,8 +83,8 @@ module.exports = function () {
             });
 
             node.quasarSubscribe('ot-ping-response', (content) => {
-                // eslint-disable-next-line max-len
-                if (content.sender_ip === config.NODE_IP && content.sender_port === config.RPC_API_PORT) {
+                if (content.sender_ip === config.NODE_IP &&
+                    content.sender_port === config.RPC_API_PORT) {
                     return;
                 }
 

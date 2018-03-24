@@ -1,12 +1,12 @@
 // External modules
 const unirest = require('unirest');
 const kademlia = require('./kademlia')();
-const utilities = require('./utilities')();
+const utilities = require('./utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();
 
-module.exports = function () {
+module.exports = () => {
     const replication = {
 
         replicate(input_file) {
