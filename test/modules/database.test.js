@@ -3,7 +3,7 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const utilities = require('../../modules/utilities');
-const database = require('../../modules/database');
+const database = require('../../modules/database')();
 const databaseData = require('./test_data/database-data.js');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
