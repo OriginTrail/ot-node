@@ -37,6 +37,7 @@
     "nat-upnp": "^1.1.1",
     "node-rsa": "^0.4.2",
     "python-shell": "^0.5.0",
+    "randomstring": "^1.1.5",
     "restify": "^6.3.4",
     "snyk": "^1.69.7",
     "socket.io": "^2.0.4",
@@ -64,14 +65,14 @@
   "scripts": {
     "test": "nyc mocha --recursive test",
     "start": "concurrently -n IPC,RPC -c magenta,yellow \"node ipc\" \"node rpc\" --kill-others --prefix \"{name}\"",
-    "lint": "./node_modules/.bin/eslint --quiet ."
+    "lint": "./node_modules/.bin/eslint --quiet modules test ipc.js rpc.js update.js gulpfile.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OriginTrail/ot-node.git"
   },
   "author": "OriginTrail",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/OriginTrail/ot-node/issues"
   },

@@ -4,6 +4,7 @@ const ipaddr = require('ipaddr.js');
 const sha3 = require('solidity-sha3').default;
 const _ = require('lodash');
 const log = require('winston');
+const randomString = require('randomstring');
 
 class Utilities {
     static executeCallback(callback, callback_input) {
@@ -139,3 +140,4 @@ class Utilities {
 }
 
 module.exports = Utilities;
+

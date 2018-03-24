@@ -57,6 +57,24 @@ module.exports = () => {
                     } else {
                         utilities.executeCallback(callback, result.data);
                     }
+                    db.close();
+                });
+            });
+        },
+
+        deleteObject(key, callback) {
+            // eslint-disable-next-line no-shadow
+            db.connect(url, (err, db) => {
+                dbo = db.db('origintrail');
+                // eslint-disable-next-line no-shadow
+                dbo.collection('ot_system').deleteOne({ key }, (err, result) => {
+                    if (err || result == null) {
+                        // log.info('Storage: ' + err);
+                        utilities.executeCallback(callback, false);
+                    } else {
+                        utilities.executeCallback(callback, true);
+                    }
+                    db.close();
                 });
             });
         },
