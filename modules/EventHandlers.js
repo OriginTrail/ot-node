@@ -47,6 +47,12 @@ class EventHandlers {
         });
     }
 
+    gs1importRequest(socket) {
+        importer.importXMLgs1(this.queryObject.filepath, (response) => {
+            this.emitResponse(socket, response);
+        });
+    }
+
     blockchainRequest(socket) {
         const batch_uid_hash = utilities.sha3(this.queryObject.batch_uid);
         blockchain.getFingerprint(this.queryObject.owner, batch_uid_hash, (response) => {

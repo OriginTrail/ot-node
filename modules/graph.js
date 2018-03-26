@@ -28,7 +28,7 @@ module.exports = () => {
                         } else { searchKey = key; }
 
                         const param = `param${i}`;
-                        filters.push(`v.${searchKey} === @param${i}`);
+                        filters.push(`v.${searchKey} == @param${i}`);
 
                         i += 1;
 
@@ -40,6 +40,7 @@ module.exports = () => {
             }
 
             queryString += ' RETURN v';
+
 
             database.runQuery(queryString, (result) => {
                 utilities.executeCallback(callback, result);
@@ -54,7 +55,7 @@ module.exports = () => {
             /*eslint-disable */
             const queryString = `FOR v, e, p IN 1 .. ${MAX_PATH_LENGTH}
             OUTBOUND '${start_vertex._id}'
-            RAPH 'origintrail_graph'
+            GRAPH 'origintrail_graph'
             RETURN p`;
             /* eslint-enable */
 
