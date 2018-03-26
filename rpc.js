@@ -62,7 +62,7 @@ socket.on('disconnect', () => {
 // =========================
 const server = restify.createServer({
     name: 'OriginTrail RPC server',
-    version: '0.1.1',
+    version: '0.4.0',
 });
 
 server.use(restify.plugins.acceptParser(server.acceptable));

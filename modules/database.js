@@ -96,7 +96,7 @@ module.exports = () => {
             const collection = db.collection(collection_name);
             collection.document(document_key).then(
                 (doc) => {
-                    let imports = doc.imports;
+                    let { imports } = doc;
 
                     if (imports === undefined) { imports = []; }
 
@@ -105,17 +105,14 @@ module.exports = () => {
                         collection.update(document_key, { imports }).then(
                             meta => utilities.executeCallback(callback, true),
                             (err) => {
-                                //console.log(err);
+                                // console.log(err);
                                 utilities.executeCallback(callback, false);
-                                return;
                             },
                         );
                     }
                 },
                 (err) => {
-                    //console.log(err);
                     utilities.executeCallback(callback, false);
-                    return;
                 },
             );
         },

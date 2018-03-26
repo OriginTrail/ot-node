@@ -113,9 +113,9 @@ module.exports = () => {
                 log.info(`Import hash: ${root_hash}`);
 
                 utilities.executeCallback(callback, {
-                        message: 'Import success',
-                        data: [],
-                    });
+                    message: 'Import success',
+                    data: [],
+                });
 
                 storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
@@ -153,10 +153,10 @@ module.exports = () => {
                 log.info('[DC] Import complete');
 
                 utilities.executeCallback(callback, {
-                        message: 'Import success',
-                        data: [],
-                    });
-                
+                    message: 'Import success',
+                    data: [],
+                });
+
                 const result = response;
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = result.vertices;

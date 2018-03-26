@@ -9,12 +9,18 @@ const graph = require('./graph')();
 
 // Update import data
 
+
 function updateImportNumber(collection, vertex_key, import_id, callback) {
     db.updateDocumentImports(collection, vertex_key, import_id, callback);
 }
 
-// find function
-
+/**
+ * Find values helper
+ * @param obj
+ * @param key
+ * @param list
+ * @return {*}
+ */
 function findValuesHelper(obj, key, list) {
     if (!obj) return list;
     if (obj instanceof Array) {
@@ -419,7 +425,7 @@ module.exports = () => ({
 
 
                                                     attribute_id = attribute_id.replace('urn:ot:location:', '');
-                                                    
+
 
                                                     if (attribute_id === 'participantId') {
                                                         owned_by_edges.push({
@@ -781,7 +787,6 @@ module.exports = () => ({
                                     read_point = read_point_element.id;
                                 }
 
-                                
 
                                 // bizLocation
                                 let biz_location;
@@ -891,7 +896,7 @@ module.exports = () => ({
                                 }
 
                                 const { epc } = epcList;
-                                
+
                                 if (typeof epc === 'string') {
                                     child_epcs = [epc];
                                 } else {
@@ -932,7 +937,7 @@ module.exports = () => ({
                                     _key: md5(`event_${sender_id}_${event_id}`),
                                 };
 
-                                
+
                                 aggregation_events[event_id] =
                                         utilities.copyObject(aggregation_event);
 
@@ -1077,7 +1082,7 @@ module.exports = () => ({
                                                 biz_location = biz_location_element.id;
                                             }
 
-                                            
+
                                             for (const bi in input_epcs) {
                                                 input_batches_edges.push({
                                                     _key: md5(`child_batch_${sender_id}_${ext_event_id}_${input_epcs[bi]}`),
@@ -1127,7 +1132,7 @@ module.exports = () => ({
 
                     var vertices = [];
                     var edges = [];
-                    var import_id = Date.now()
+                    var import_id = Date.now();
 
                     var temp_participants = [];
                     for (const i in participants) {
@@ -1139,7 +1144,7 @@ module.exports = () => ({
                             vertices.push(participant);
                             updateImportNumber('ot_vertices', participant._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting participants complete');
@@ -1155,8 +1160,7 @@ module.exports = () => ({
                             vertices.push(object);
                             updateImportNumber('ot_vertices', object._key, import_id, () => {
                                 next();
-                            })
-
+                            });
                         });
                     }, () => {
                         console.log('Writting objects complete');
@@ -1172,7 +1176,7 @@ module.exports = () => ({
                             vertices.push(location);
                             updateImportNumber('ot_vertices', location._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting business locations complete');
@@ -1188,7 +1192,7 @@ module.exports = () => ({
                             vertices.push(batch);
                             updateImportNumber('ot_vertices', batch._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting batches complete');
@@ -1205,7 +1209,7 @@ module.exports = () => ({
                             vertices.push(event);
                             updateImportNumber('ot_vertices', event._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting object events complete');
@@ -1221,7 +1225,7 @@ module.exports = () => ({
                             vertices.push(event);
                             updateImportNumber('ot_vertices', event._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting aggregation events complete');
@@ -1237,7 +1241,7 @@ module.exports = () => ({
                             vertices.push(event);
                             updateImportNumber('ot_vertices', event._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting transformation events complete');
@@ -1249,7 +1253,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_vertices', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting instance_of edges complete');
@@ -1260,7 +1264,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting owned_by edges complete');
@@ -1271,7 +1275,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting at_edges complete');
@@ -1283,7 +1287,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting read_point edges  complete');
@@ -1294,7 +1298,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting event_batch edges  complete');
@@ -1305,7 +1309,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting parent_batches edges  complete');
@@ -1316,7 +1320,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting child_batches edges  complete');
@@ -1327,7 +1331,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting input_batches edges  complete');
@@ -1338,7 +1342,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting output_batches edges  complete');
@@ -1349,7 +1353,7 @@ module.exports = () => ({
                             edges.push(input);
                             updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
-                            })
+                            });
                         });
                     }, () => {
                         console.log('Writting business_location edges  complete');
