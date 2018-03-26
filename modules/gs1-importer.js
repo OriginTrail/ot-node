@@ -1389,6 +1389,12 @@ module.exports = () => ({
                         console.log('Writting business_location edges  complete');
                     });
 
+                    console.log(JSON.stringify({
+                        vertices: vertices_list,
+                        edges: edges_list,
+                        import_id,
+                    }));
+
                     utilities.executeCallback(
                         callback,
                         { vertices: vertices_list, edges: edges_list, import_id },
