@@ -138,10 +138,18 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
 */
 
             // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
+          console.log(
+              DH_wallet,
+              data_id,
+              confirmation_verification_number,
+              confirmation_time,
+              confirmation_valid);
             var raw_data = `0x${abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint', 'bool'],
                 [new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid],
             ).toString('hex')}`;
+
+
 
             var hash = utilities.sha3(raw_data);
             var signature = Account.sign(hash, `0x${private_key}`);
