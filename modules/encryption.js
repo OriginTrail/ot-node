@@ -1,36 +1,35 @@
 // External modules
 var RSA = require('node-rsa');
 
-module.exports = function () {
-	let encryption = {
-		generateKeyPair: function() {
-			var key = new RSA({b: 512});
+module.exports = () => {
+    const encryption = {
+        generateKeyPair() {
+            var key = new RSA({ b: 512 });
+            var privateKey = key.exportKey('pkcs8-private');
+            var publicKey = key.exportKey('pkcs8-public');
 
-			var private = key.exportKey('pkcs8-private');
-			var public = key.exportKey('pkcs8-public');
+            return {
+                privateKey,
+                publicKey,
+            };
+        },
 
-			return {
-				privateKey: private,
-				publicKey: public
-			}
-		},
+        encryptObject(data, private_key) {
+            var key = new RSA();
+            key.importKey(private_key, 'pkcs8-private');
+            var encrypted = key.encryptPrivate(data, 'base64');
 
-		encryptObject: function(data, private_key) {
-			var key = new RSA();
-			key.importKey(private_key, 'pkcs8-private');
-			var encrypted = key.encryptPrivate(data, 'base64');
+            return encrypted;
+        },
 
-			return encrypted
-		},
+        decryptObject(data, public_key) {
+            var key = new RSA();
+            key.importKey(public_key, 'pkcs8-public');
+            var decrypted = key.decryptPublic(data, 'utf8');
 
-		decryptObject: function(data, public_key) {
-			var key = new RSA();
-			key.importKey(public_key, 'pkcs8-public');
-			var decrypted = key.decryptPublic(data, 'utf8');
+            return JSON.parse(decrypted);
+        },
+    };
 
-			return JSON.parse(decrypted)
-		}
-	};
-
-	return encryption;
+    return encryption;
 };
