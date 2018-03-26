@@ -92,6 +92,7 @@ module.exports = () => {
                 const result = JSON.parse(stdout);
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = result.vertices;
+                console.log(result);
                 // eslint-disable-next-line  prefer-destructuring
                 const edges = result.edges;
                 const data_id = result.import_id;
