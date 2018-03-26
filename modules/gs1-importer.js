@@ -7,7 +7,13 @@ const utilities = require('./utilities');
 const async = require('async');
 
 
-// //find function
+/**
+ * Find values helper
+ * @param obj
+ * @param key
+ * @param list
+ * @return {*}
+ */
 
 function findValuesHelper(obj, key, list) {
     if (!obj) return list;
