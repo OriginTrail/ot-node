@@ -14,6 +14,6 @@ before_install:
 script:
   - npm run lint
   - npm test
-  - timeout -s SIGKILL 20 npm start
+  - timeout -s 0 20 npm start
 after_script:
 - kill -9 $(pgrep arangod)
