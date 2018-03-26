@@ -209,7 +209,11 @@ module.exports = () => {
                     }], () => {
                         for (const i in vertices) {
                             // eslint-disable-next-line max-len
-                            vertices[i].data = encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            if (vertices[i].data === undefined) {
+                                console.log(vertices[i]);
+                            }
+                            vertices[i].data =
+                                encryption.encryptObject(vertices[i].data, keyPair.privateKey);
                             vertices[i].decryption_key = keyPair.publicKey;
                         }
                         // eslint-disable-next-line max-len
