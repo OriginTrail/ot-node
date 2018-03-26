@@ -391,6 +391,7 @@ module.exports = () => ({
                                                 });
 
                                                 locations[child_location_id] = {};
+                                                locations[child_location_id].data = { type: 'child_location' };
                                                 locations[child_location_id].identifiers = {};
                                                 locations[child_location_id]
                                                     .identifiers
@@ -1389,11 +1390,6 @@ module.exports = () => ({
                         console.log('Writting business_location edges  complete');
                     });
 
-                    console.log(JSON.stringify({
-                        vertices: vertices_list,
-                        edges: edges_list,
-                        import_id,
-                    }));
 
                     utilities.executeCallback(
                         callback,
