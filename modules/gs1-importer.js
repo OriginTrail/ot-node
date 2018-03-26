@@ -1251,7 +1251,7 @@ module.exports = () => ({
                     async.each(instance_of_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            updateImportNumber('ot_vertices', input._key, import_id, () => {
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
                                 next();
                             });
                         });

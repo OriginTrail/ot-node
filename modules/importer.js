@@ -92,7 +92,7 @@ module.exports = () => {
                 const result = JSON.parse(stdout);
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = result.vertices;
-                console.log(result);
+
                 // eslint-disable-next-line  prefer-destructuring
                 const edges = result.edges;
                 const data_id = result.import_id;
@@ -173,6 +173,7 @@ module.exports = () => {
                     leaves.push(utilities.sha3(utilities.sortObject({ identifiers: vertices[i].identifiers, data: vertices[i].data })));
                     // eslint-disable-next-line no-underscore-dangle
                     hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
+                    console.log(hash_pairs);
                 }
 
                 const tree = new Mtree(hash_pairs);
