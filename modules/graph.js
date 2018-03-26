@@ -1,244 +1,269 @@
 // External modules
-const utilities = require('./utilities')();
-//const log = utilities.getLogger();
+const utilities = require('./utilities');
+// const log = utilities.getLogger();
 const database = require('./database')();
 const encryption = require('./encryption')();
 const storage = require('./storage')();
 
 const config = utilities.getConfig();
-const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH);
 
-module.exports = function () {
-	let graph = {
-		getVertices: function (queryObject, callback) { 
-			let queryString = 'FOR v IN ot_vertices ';
-			let params = {};
-			if (utilities.isEmptyObject(queryObject) === false) {
-				queryString += 'FILTER ';
+const MAX_PATH_LENGTH = parseInt(config.MAX_PATH_LENGTH, 10);
 
-				let filters = [];
+module.exports = () => {
+    let graph = {
+        getVertices(queryObject, callback) {
+            let queryString = 'FOR v IN ot_vertices ';
+            const params = {};
+            if (utilities.isEmptyObject(queryObject) === false) {
+                queryString += 'FILTER ';
 
-				let i = 1;
-				for (let key in queryObject) {
-					if (key.match(/^[\w\d]+$/g) === null) {
-						continue;
-					}
+                const filters = [];
 
-					if(key != 'vertex_type' && key != '_key')
-					{
-						search_key = 'identifiers.' + key;
-					}
-					else
-						search_key = key;
+                let i = 1;
+                for (const key in queryObject) {
+                    if (key.match(/^[\w\d]+$/g) !== null) {
+                        let searchKey;
+                        if (key !== 'vertex_type' && key !== '_key') {
+                            searchKey = `identifiers.${key}`;
+                        } else { searchKey = key; }
 
-					const param = 'param' + i;
-					filters.push('v.' + search_key + ' == @param' + i);
-					i++;
+                        const param = `param${i}`;
+                        filters.push(`v.${searchKey} === @param${i}`);
 
-					params[param] = queryObject[key];
-				}
+                        i += 1;
 
-				queryString += filters.join(' AND ');
-			}
+                        params[param] = queryObject[key];
+                    }
+                }
 
-			queryString += ' RETURN v';
+                queryString += filters.join(' AND ');
+            }
 
-			database.runQuery(queryString, function (result) {
-				utilities.executeCallback(callback, result);
-			}, params);
-		},
+            queryString += ' RETURN v';
 
-		getTraversal: function (start_vertex, callback) {
-			if (start_vertex === undefined || start_vertex._id === undefined) {
-				utilities.executeCallback(callback, []);
-				return;
-			}
+            database.runQuery(queryString, (result) => {
+                utilities.executeCallback(callback, result);
+            }, params);
+        },
 
-			let queryString = `FOR v, e, p IN 1 .. ${MAX_PATH_LENGTH}
-					       OUTBOUND '${start_vertex._id}'
-					       GRAPH 'origintrail_graph'
-					       RETURN p`;
+        getTraversal(start_vertex, callback) {
+            if (start_vertex === undefined || start_vertex._id === undefined) {
+                utilities.executeCallback(callback, []);
+                return;
+            }
+            /*eslint-disable */
+            const queryString = `FOR v, e, p IN 1 .. ${MAX_PATH_LENGTH}
+            OUTBOUND '${start_vertex._id}'
+            RAPH 'origintrail_graph'
+            RETURN p`;
+            /* eslint-enable */
 
-			database.runQuery(queryString, callback);
-		},
+            database.runQuery(queryString, callback);
+        },
 
-		convertToVirtualGraph: function (raw_graph_data) {
-			const vertices = {};
-			const edges = {};
-			const list = {};
+        convertToVirtualGraph(raw_graph_data) {
+            const vertices = {};
+            const edges = {};
+            const list = {};
 
-			for (let i in raw_graph_data) {
-				if (raw_graph_data[i].edges !== undefined) {
-					for (let j in raw_graph_data[i].edges) {
-						if (raw_graph_data[i].edges[j] != null) {
-							raw_graph_data[i].edges[j].key = raw_graph_data[i].edges[j]._key;
-							raw_graph_data[i].edges[j].from = raw_graph_data[i].edges[j]._from.split('/')[1];
-							raw_graph_data[i].edges[j].to = raw_graph_data[i].edges[j]._to.split('/')[1];
-							delete raw_graph_data[i].edges[j]._key;
-							delete raw_graph_data[i].edges[j]._id;
-							delete raw_graph_data[i].edges[j]._rev;
-							delete raw_graph_data[i].edges[j]._to;
-							delete raw_graph_data[i].edges[j]._from;
+            for (const i in raw_graph_data) {
+                if (raw_graph_data[i].edges !== undefined) {
+                    for (const j in raw_graph_data[i].edges) {
+                        if (raw_graph_data[i].edges[j] !== null) {
+                            // eslint-disable-next-line no-underscore-dangle,no-param-reassign
+                            raw_graph_data[i].edges[j].key = raw_graph_data[i].edges[j]._key;
+                            // eslint-disable-next-line max-len
+                            // eslint-disable-next-line no-underscore-dangle,no-param-reassign,prefer-destructuring
+                            raw_graph_data[i].edges[j].from = raw_graph_data[i].edges[j]._from.split('/')[1];
+                            // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
+                            raw_graph_data[i].edges[j].to = raw_graph_data[i].edges[j]._to.split('/')[1];
 
-							let key = raw_graph_data[i].edges[j].key;
+                            delete raw_graph_data[i].edges[j]._key;
 
-							if (edges[key] === undefined) {
-								edges[key] = raw_graph_data[i].edges[j];
-							}
-						}
-					}
-				}
+                            delete raw_graph_data[i].edges[j]._id;
 
-				if (raw_graph_data[i].vertices !== undefined) {
-					for (let j in raw_graph_data[i].vertices) {
-						if (raw_graph_data[i].vertices[j] != null) {
-							raw_graph_data[i].vertices[j].key = raw_graph_data[i].vertices[j]._key;
-							raw_graph_data[i].vertices[j].outbound = [];
-							delete raw_graph_data[i].vertices[j]._key;
-							delete raw_graph_data[i].vertices[j]._id;
-							delete raw_graph_data[i].vertices[j]._rev;
+                            delete raw_graph_data[i].edges[j]._rev;
 
-							let key = raw_graph_data[i].vertices[j].key;
+                            delete raw_graph_data[i].edges[j]._to;
 
-							if (vertices[key] === undefined) {
-								vertices[key] = raw_graph_data[i].vertices[j];
-							}
-						}
-					}
-				}
-			}
+                            delete raw_graph_data[i].edges[j]._from;
+                            // eslint-disable-next-line  prefer-destructuring
+                            const key = raw_graph_data[i].edges[j].key;
 
-			for (let i in vertices) {
-				list[vertices[i].key] = vertices[i];
-			}
+                            if (edges[key] === undefined) {
+                                edges[key] = raw_graph_data[i].edges[j];
+                            }
+                        }
+                    }
+                }
 
-			for (let i in edges) {
-				list[edges[i].from].outbound.push(edges[i]);
-			}
+                if (raw_graph_data[i].vertices !== undefined) {
+                    for (const j in raw_graph_data[i].vertices) {
+                        if (raw_graph_data[i].vertices[j] !== null) {
+                            raw_graph_data[i].vertices[j].key = raw_graph_data[i].vertices[j]._key;
+                            raw_graph_data[i].vertices[j].outbound = [];
 
-			graph = {};
-			graph['data'] = list;
+                            delete raw_graph_data[i].vertices[j]._key;
 
-			return graph;
-		},
+                            delete raw_graph_data[i].vertices[j]._id;
 
-		BFS: function (trail, start_vertex_uid, restricted = false) {
+                            delete raw_graph_data[i].vertices[j]._rev;
 
-			const visited = [];
-			const traversalArray = [];
+                            // eslint-disable-next-line  prefer-destructuring
+                            const key = raw_graph_data[i].vertices[j].key;
 
-			let start_vertex = null;
+                            if (vertices[key] === undefined) {
+                                vertices[key] = raw_graph_data[i].vertices[j];
+                            }
+                        }
+                    }
+                }
+            }
 
-			for (let i in trail) {
-				if (trail[i].identifiers.uid === start_vertex_uid) {
-					start_vertex = i;
-					break;
-				}
-			}
+            for (const i in vertices) {
+                list[vertices[i].key] = vertices[i];
+            }
 
-			if (start_vertex != null) {
-				const queue = [];
-				queue.push(start_vertex);
+            for (const i in edges) {
+                list[edges[i].from].outbound.push(edges[i]);
+            }
 
-				visited[start_vertex] = true;
+            graph = {};
+            graph.data = list;
 
-				while (queue.length > 0) {
-					const curr = queue.shift();
+            return graph;
+        },
 
-					if (trail[curr] === undefined) {
-						continue;
-					}
+        BFS(trail, start_vertex_uid, restricted = false) {
+            const visited = [];
+            const traversalArray = [];
 
-					traversalArray.push(trail[curr]);
+            let start_vertex = null;
 
-					for (let i in trail[curr].outbound) {
-						const e = trail[curr].outbound[i];
-						const w = e.to;
+            for (const i in trail) {
+                if (trail[i].identifiers.uid === start_vertex_uid) {
+                    start_vertex = i;
+                    break;
+                }
+            }
 
-						if (restricted && e.edge_type != 'TRANSACTION_CONNECTION') {
-							traversalArray.push(e);
-						}
+            if (start_vertex !== null) {
+                const queue = [];
+                queue.push(start_vertex);
 
-						if (visited[w] === undefined && trail[w] !== undefined && !(e.edge_type == 'TRANSACTION_CONNECTION' && e.TransactionFlow == 'Output') && (restricted === false || (restricted === true && trail[w].vertex_type !== 'BATCH' && e.edge_type !== 'TRANSACTION_CONNECTION'))) {
-							visited[w] = true;
-							queue.push(w);
-						}
-					}
-				}
+                visited[start_vertex] = true;
 
-				for (let i in traversalArray) {
-					if (traversalArray[i]._checked !== undefined) {
-						delete traversalArray[i]._checked;
-					}
-				}
+                while (queue.length > 0) {
+                    const curr = queue.shift();
 
-				return traversalArray;
-			} else {
-				return traversalArray;
-			}
-		},
+                    if (trail[curr] === undefined) {
+                        // eslint-disable-next-line no-continue
+                        continue;
+                    }
 
-		encryptVertices: function(dh_ip, dh_port, vertices, callback) {
+                    traversalArray.push(trail[curr]);
 
-			storage.getObject('Keys', function(response) {
-				if(response.length == 0)
-				{
-					var keypair = encryption.generateKeyPair();
+                    for (const i in trail[curr].outbound) {
+                        const e = trail[curr].outbound[i];
+                        const w = e.to;
 
-					storage.storeObject('Keys', [{dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey}], function(response) {
-			
-						for(let i in vertices) {
-							vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-							vertices[i].decryption_key = keypair.publicKey;
-						}
+                        if (restricted && e.edge_type !== 'TRANSACTION_CONNECTION') {
+                            traversalArray.push(e);
+                        }
 
-						utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
-					})
+                        if (visited[w] === undefined && trail[w] !== undefined && !(e.edge_type === 'TRANSACTION_CONNECTION' && e.TransactionFlow === 'Output') && (restricted === false || (restricted === true && trail[w].vertex_type !== 'BATCH' && e.edge_type !== 'TRANSACTION_CONNECTION'))) {
+                            visited[w] = true;
+                            queue.push(w);
+                        }
+                    }
+                }
 
-				}
-				else
-				{
-					for(let i in response) {
-						if(response[i].dh_ip == dh_ip && response[i].dh_port == dh_port) {
-							
-							for(let j in vertices) {
-								vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
-								vertices[j].decryption_key = response[i].publicKey;
-							}
+                for (const i in traversalArray) {
+                    // eslint-disable-next-line no-underscore-dangle
+                    if (traversalArray[i]._checked !== undefined) {
+                        // eslint-disable-next-line no-underscore-dangle
+                        delete traversalArray[i]._checked;
+                    }
+                }
 
-							utilities.executeCallback(callback, {vertices: vertices, public_key: response[i].publicKey});
-							return;
-						}
-					}
+                return traversalArray;
+            }
+            return traversalArray;
+        },
 
-					var keypair = encryption.generateKeyPair();
+        encryptVertices(dh_ip, dh_port, vertices, callback) {
+            var keyPair;
+            storage.getObject('Keys', (response) => {
+                if (response.length === 0) {
+                    keyPair = encryption.generateKeyPair();
 
-					response.push({dh_ip: dh_ip, dh_port: dh_port, privateKey: keypair.privateKey, publicKey: keypair.publicKey});
+                    storage.storeObject('Keys', [{
 
-					storage.storeObject('Keys', response, function(response) {
+                        dh_ip,
+                        dh_port,
+                        privateKey:
+                        keyPair.privateKey,
+                        publicKey: keyPair.publicKey,
 
-						for(let i in vertices) {
-								vertices[i].data = encryption.encryptObject(vertices[i].data, keypair.privateKey);
-								vertices[i].decryption_key = keypair.publicKey;
-							}
+                    }], () => {
+                        for (const i in vertices) {
+                            // eslint-disable-next-line max-len
+                            vertices[i].data = encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
+                        }
+                        // eslint-disable-next-line max-len
+                        utilities.executeCallback(callback, {
+                            vertices, public_key: keyPair.publicKey,
+                        });
+                    });
+                } else {
+                    for (const i in response) {
+                        if (response[i].dh_ip === dh_ip && response[i].dh_port === dh_port) {
+                            for (const j in vertices) {
+                                // eslint-disable-next-line max-len
+                                vertices[j].data = encryption.encryptObject(vertices[j].data, response[i].privateKey);
+                                vertices[j].decryption_key = response[i].publicKey;
+                            }
+                            // eslint-disable-next-line max-len
+                            utilities.executeCallback(callback, { vertices, public_key: response[i].publicKey });
+                            return;
+                        }
+                    }
 
-							utilities.executeCallback(callback, {vertices: vertices, public_key: keypair.publicKey});
-							return;
-					})
 
-				}
-			})
-		},
+                    keyPair = encryption.generateKeyPair();
 
-		decryptVertices: function(vertices, public_key) {
+                    response.push({
+                        dh_ip,
+                        dh_port,
+                        privateKey: keyPair.privateKey,
+                        publicKey: keyPair.publicKey,
+                    });
 
-			for(i in vertices) {
-				vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
-			}
 
-			return vertices;
-		}
-	};
+                    storage.storeObject('Keys', response, () => {
+                        for (const i in vertices) {
+                            vertices[i].data =
+                                encryption.encryptObject(vertices[i].data, keyPair.privateKey);
+                            vertices[i].decryption_key = keyPair.publicKey;
+                        }
 
-	return graph;
+                        utilities.executeCallback(callback, {
+                            vertices, public_key: keyPair.publicKey,
+                        });
+                    });
+                }
+            });
+        },
+
+        decryptVertices(vertices, public_key) {
+            for (const i in vertices) {
+                vertices[i].data = encryption.decryptObject(vertices[i].data, public_key);
+            }
+
+            return vertices;
+        },
+    };
+
+    return graph;
 };

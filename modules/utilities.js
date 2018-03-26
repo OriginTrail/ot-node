@@ -1,88 +1,154 @@
 // External modules
-var config = require('./config');
-var ipaddr = require('ipaddr.js');
-var sha3 = require('solidity-sha3').default;
-// eslint-disable-next-line no-unused-vars
-var net = require('net');
-// eslint-disable-next-line no-unused-vars
-var natpmp = require('nat-pmp');
-var _ = require('lodash');
-const log = require('winston');
+const config = require('./config');
+const ipaddr = require('ipaddr.js');
+const sha3 = require('solidity-sha3').default;
+const _ = require('lodash');
+const logger = require('winston');
+const randomString = require('randomstring');
 
-log.add(log.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
-log.remove(log.transports.Console);
-log.add(log.transports.Console, {colorize: true});
+class Utilities {
+    static executeCallback(callback, callback_input) {
+        if (typeof callback === 'function') {
+            callback(callback_input);
+        } else {
+            const log = this.getLogger();
+            log.info('Callback not defined!');
+        }
+    }
 
-module.exports = function () {
+    static getConfig() {
+        return config;
+    }
 
-	var utilities = {
+    /**
+    * Checks if an object is empty
+    *
+    * @param test_object
+    * @return {boolean}
+    */
+    static isEmptyObject(test_object) {
+        return Object.keys(test_object).length === 0 && test_object.constructor === Object;
+    }
 
+    /**
+    * Gets a random integer
+    *
+    * @param max
+    * @return {number}
+    */
+    static getRandomInt(max) {
+        return _.random(0, max);
+    }
 
-		executeCallback: function executeCallback (callback, callback_input) {
-			if (typeof callback === 'function') {
-				callback(callback_input);
-			} else {
-				log.info('Callback not defined!');
-			}
-		},
+    /**
+    * Gets a random integer in some specific range
+    *
+    * @param min
+    * @param max
+    * @return {number}
+    */
+    static getRandomIntRange(min, max) {
+        return _.random(min, max);
+    }
 
-		getConfig: function () {
-			return config;
-		},
+    /**
+    * Makes a SHA3 encryption of value
+    *
+    * @param value
+    * @return {*}
+    */
+    static sha3(value) {
+        return sha3(value);
+    }
 
-		isEmptyObject: function (test_object) {
-			return Object.keys(test_object).length === 0 && test_object.constructor === Object;
-		},
+    /**
+    * Checks if two IPs are equal
+    *
+    * @param ip1
+    * @param ip2
+    * @return {boolean}
+    */
+    static isIpEqual(ip1, ip2) {
+        const ip1v4 = ipaddr.process(ip1).octets.join('.');
+        const ip2v4 = ipaddr.process(ip2).octets.join('.');
+        return ip1v4 === ip2v4;
+    }
 
-		getRandomInt: function (max) {
-			return _.random(0, max);
-		},
+    /**
+    * Makes a copy of object
+    *
+    * @param object Obj
+    * @return object
+    */
+    static copyObject(Obj) {
+        return JSON.parse(JSON.stringify(Obj));
+    }
 
-		sha3: function (value) {
-			return sha3(value);
-		},
+    /**
+    * Sorts an object
+    *
+    * @param object
+    * @return object
+    */
+    static sortObject(object) {
+        const sortedObj = {};
+        const keys = Object.keys(object);
 
-		isIpEqual: function (ip1, ip2) {
-			var ip1v4 = ipaddr.process(ip1).octets.join('.');
-			var ip2v4 = ipaddr.process(ip2).octets.join('.');
-			return ip1v4 == ip2v4;
-		},
+        keys.sort((key1, key2) => {
+            // eslint-disable-next-line no-param-reassign
+            key1 = key1.toLowerCase();
+            // eslint-disable-next-line no-param-reassign
+            key2 = key2.toLowerCase();
+            if (key1 < key2) return -1;
+            if (key1 > key2) return 1;
+            return 0;
+        });
 
-		copyObject: function (Obj) {
-			return JSON.parse(JSON.stringify(Obj));
-		},
+        for (const index in keys) {
+            const key = keys[index];
+            if (typeof object[key] === 'object' && !(object[key] instanceof Array)) {
+                sortedObj[key] = this.sortObject(object[key]);
+            } else {
+                sortedObj[key] = object[key];
+            }
+        }
 
-		sortObject: function (object) {
-			var sortedObj = {},
-				keys = Object.keys(object);
+        return sortedObj;
+    }
 
-			keys.sort(function (key1, key2) {
-				key1 = key1.toLowerCase(), key2 = key2.toLowerCase();
-				if (key1 < key2) return -1;
-				if (key1 > key2) return 1;
-				return 0;
-			});
+    /**
+    * Converts kebab-case to snakeCase
+    *
+    * @param text
+    * @return string text
+    */
+    static toSnakeCase(text) {
+        return text.replace(/-([a-z])/g, g => g[1].toUpperCase());
+    }
 
-			for (var index in keys) {
-				var key = keys[index];
-				if (typeof object[key] === 'object' && !(object[key] instanceof Array)) {
-					sortedObj[key] = this.sortObject(object[key]);
-				} else {
-					sortedObj[key] = object[key];
-				}
-			}
+    /**
+    * Returns an instance of winston logger
+    *
+    * @return object log
+    */
+    static getLogger() {
+        try {
+            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
+            logger.remove(logger.transports.Console);
+            logger.add(logger.transports.Console, { colorize: true });
+        } catch (e) {
+            //
+        }
+        return logger;
+    }
 
-			return sortedObj;
-		},
+    static getRandomString(howLong) {
+        return randomString.generate({
+            length: howLong,
+            charset: 'alphabetic',
+        });
+    }
+}
 
-		getRandomIntRange: function (min, max) {
-			return _.random(min,max);
-		},
+module.exports = Utilities;
 
-		getLogger() {
-			return log;
-		}
-	};
-
-	return utilities;
-};

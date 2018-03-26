@@ -1,96 +1,90 @@
-var utilities = require('./utilities')();
+const utilities = require('./utilities');
+
 const log = utilities.getLogger();
-var storage = require('./storage')();
+const storage = require('./storage')();
 
-module.exports = function () {
+module.exports = () => {
+    const test_table = {
 
-	var test_table = {
+        insertTest(test, callback) {
+            storage.getObject('Tests', (response) => {
+                const n = response.length;
+                let i = n - 1;
 
-		insertTest: function(test, callback)
-		{
-			storage.getObject('Tests', function(response) {
+                while (i >= 0 && response[i].test_time > test.test_time) {
+                    i -= 1;
+                }
 
-				let n = response.length;
-				let i = n - 1;
+                response.splice(i + 1, 0, test);
 
-				while(i >= 0 && response[i].test_time > test.test_time) {
-					i--;
-				}
+                storage.storeObject('Tests', response, (status) => {
+                    log.info(response);
+                    utilities.executeCallback(callback, true);
+                });
+            });
+        },
 
-				response.splice(i+1, 0, test);
+        insertTests(tests, callback) {
+            storage.getObject('Tests', (response) => {
+                for (let j = 0; j < tests.length; j += 1) {
+                    let n = response.length;
+                    n -= 1;
+                    let i = n;
+                    while (i >= 0 && response[i].test_time > tests[j].test_time) {
+                        i -= 1;
+                    }
+                    response.splice(i + 1, 0, tests[j]);
+                }
 
-				storage.storeObject('Tests', response, function(status){
-					log.info(response);
-					utilities.executeCallback(callback, true);
-				});
+                storage.storeObject('Tests', response, (status) => {
+                    utilities.executeCallback(callback, true);
+                });
+            });
+        },
 
-			});
-		},
+        popNextTest(callback) {
+            storage.getObject('Tests', (response) => {
+                if (response.length === 0) {
+                    utilities.executeCallback(callback, undefined);
+                } else {
+                    const test = response.shift();
 
-		insertTests: function(tests, callback)
-		{
-			storage.getObject('Tests', function(response) {
+                    storage.storeObject('Tests', response, (status) => {
+                        if (status === false) {
+                            log.info('Storing tests failes!');
+                            utilities.executeCallback(callback, {});
+                        } else {
+                            utilities.executeCallback(callback, test);
+                        }
+                    });
+                }
+            });
+        },
 
-				for(let j = 0; j < tests.length; j++) {
-					let n = response.length;
-					let i = n - 1;
-					while(i >= 0 && response[i].test_time > tests[j].test_time) {
-						i--;
-					}
-					response.splice(i+1, 0, tests[j]);
-				}
-				
-				storage.storeObject('Tests', response, function(status){
-					utilities.executeCallback(callback, true);
-				});
+        nextTest(callback) {
+            storage.getObject('Tests', (response) => {
+                if (response.length === 0) {
+                    utilities.executeCallback(callback, {});
+                } else {
+                    const test = response[0];
 
-			});
-		},
+                    utilities.executeCallback(callback, test);
+                }
+            });
+        },
 
-		popNextTest: function(callback) {
-			storage.getObject('Tests', function(response) {
-				if(response.length == 0) {
-					utilities.executeCallback(callback, undefined);
-				} else {
-					let test = response.shift();
+        getTests(callback) {
+            storage.getObject('Tests', (response) => {
+                // log.info(response);
+                if (response.length === 0) {
+                    log.info('There are no planed tests');
+                    utilities.executeCallback(callback, []);
+                } else {
+                    utilities.executeCallback(callback, response);
+                }
+            });
+        },
+    };
 
-					storage.storeObject('Tests', response, function(status) {
-						if(status == false) {
-							log.info('Storing tests failes!');
-							utilities.executeCallback(callback, {});							
-						} else {
-							utilities.executeCallback(callback, test);
-						}
-					}); 
-				}
-			});
-		},
-
-		nextTest: function(callback) {
-			storage.getObject('Tests', function(response) {
-				if(response.length == 0) {
-					utilities.executeCallback(callback, {});
-				} else {
-					let test = response[0];
-
-					utilities.executeCallback(callback, test);							
-				}
-			});
-		},
-
-		getTests: function(callback) {
-			storage.getObject('Tests', function(response) {
-			//	log.info(response);
-				if(response.length == 0) {
-					log.info('There are no planed tests');
-					utilities.executeCallback(callback, []);
-				} else {
-					utilities.executeCallback(callback, response);
-				}
-			});
-		}
-	};
-
-	return test_table;
-
+    return test_table;
 };
