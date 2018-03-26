@@ -32,6 +32,7 @@
     "leveldown": "^3.0.0",
     "levelup": "^2.0.2",
     "lodash": "^4.17.5",
+    "md5": "^2.2.1",
     "mongodb": "^3.0.4",
     "nat-pmp": "^1.0.0",
     "nat-upnp": "^1.1.1",
@@ -47,7 +48,8 @@
     "underscore": "^1.8.3",
     "unirest": "^0.5.1",
     "web3": "1.0.0-beta.30",
-    "winston": "^2.4.0"
+    "winston": "^2.4.0",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.2",

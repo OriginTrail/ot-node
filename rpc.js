@@ -291,7 +291,6 @@ server.post('/import_gs1', (req, res) => {
             message: 'Input file not provided!',
         });
     } else {
-
         const post_body = req.body;
 
         const input_file = req.files.importfile.path;
