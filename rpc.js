@@ -270,6 +270,45 @@ server.post('/import', (req, res) => {
         });
     }
 });
+
+server.post('/import_gs1', (req, res) => {
+    log.info('[DC] Import request received!');
+
+    const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const remote_access = utilities.getConfig().REMOTE_ACCESS;
+
+    if (remote_access.find(ip => utilities.isIpEqual(ip, request_ip)) === undefined) {
+        res.send({
+            message: 'Unauthorized request',
+            data: [],
+        });
+        return;
+    }
+
+    if (req.files === undefined || req.files.importfile === undefined) {
+        res.send({
+            status: 400,
+            message: 'Input file not provided!',
+        });
+    } else {
+
+        const post_body = req.body;
+
+        const input_file = req.files.importfile.path;
+
+        const reqNum = utilities.getRandomInt(10000000000);
+
+        socketRequests[reqNum] = res;
+        const queryObject = {
+            filepath: input_file,
+        };
+        socket.emit('event', {
+            request: 'gs1import-request',
+            queryObject,
+            clientRequest: reqNum,
+        });
+    }
+});
 // ========================
 // ==========
 
