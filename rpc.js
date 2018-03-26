@@ -2,7 +2,6 @@
 var restify = require('restify');
 var utilities = require('./modules/utilities')();
 var kademlia = require('./modules/kademlia')();
-var replication = require('./modules/replication')();
 var io = require('socket.io-client')('http://localhost:3000');
 var config = utilities.getConfig();
 var natUpnp = require('nat-upnp');
@@ -250,11 +249,7 @@ server.post('/import', function (req, res) {
 		var input_file = req.files.importfile.path;
 
 		var reqNum = utilities.getRandomInt(10000000000);
-/*
-		if (req.body.noreplicate == undefined) {
-			replication.replicate(input_file);
-		}
-*/
+
 		socketRequests[reqNum] = res;
 		var queryObject = {
 			filepath: input_file
@@ -268,7 +263,7 @@ server.post('/import', function (req, res) {
 });
 // ========================
 // ==========
-
+/*
 if(config.NODE_IP == '127.0.0.1')
 {
 	var client = natUpnp.createClient();
@@ -315,9 +310,9 @@ if(config.NODE_IP == '127.0.0.1')
 	});
 }
 else
-{
-	kademlia.start();
-	server.listen(parseInt(config.RPC_API_PORT), function () {
-		log.info('%s listening at %s', server.name, server.url);
-	});
-}
+{*/
+kademlia.start();
+server.listen(parseInt(config.RPC_API_PORT), function () {
+	log.info('%s listening at %s', server.name, server.url);
+});
+//}

@@ -1,11 +1,9 @@
 var utilities = require('../../utilities')();
 var Web3 = require('web3');
 var fs = require('fs');
-var util = require('ethereumjs-util');
 var tx = require('ethereumjs-tx');
 var lightwallet = require('eth-lightwallet');
 var Account = require("eth-lib/lib/account");
-var Hash = require("eth-lib/lib/hash");
 var BN = require('bn.js');
 var abi = require('ethereumjs-abi');
 var txutils = lightwallet.txutils;
@@ -43,7 +41,8 @@ web3.eth.getTransactionCount("0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",web3.e
 }).then(function (nonce){console.log(nonce)})
 console.log('------------------------');*/
 
-
+var nonce = -1;
+var nonce_increment = 0;
 
 module.exports = function() {
 
@@ -177,25 +176,46 @@ module.exports = function() {
 
 			return confirmation;
 		},
+		sendRawX: function (rawTx, callback) {
+			var privateKey = new Buffer(private_key, 'hex');
+			var transaction = new tx(rawTx);
+			transaction.sign(privateKey);
+			var serializedTx = transaction.serialize().toString('hex');
+			web3.eth.sendSignedTransaction(
+				'0x' + serializedTx, function(err, result) {
+					if(err) {
+						console.log(err);
+
+						if(callback) {
+							utilities.executeCallback(callback, false);
+						}
+					} else {
+						if(callback) {
+							utilities.executeCallback(callback, result);
+						}
+						console.log('Transaction: ', result);
+					}
+				});
+		},
 
 		sendConfirmation: async function(confirmation, callback) {
 
+			if(nonce == -1)
+				nonce = await web3.eth.getTransactionCount(wallet_address);
+
+			var new_nonce = nonce + nonce_increment;
+			nonce_increment = nonce_increment + 1;
+
 			var txOptions = {
+				nonce: new_nonce,
 				gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
 				gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
 				to: escrow_address
 			};
 
-			console.log([confirmation.DC_wallet,
-              confirmation.data_id,
-              confirmation.confirmation_verification_number,
-              confirmation.confirmation_time,
-              confirmation.confirmation_valid,
-              confirmation.confirmation_hash,
-              confirmation.v,
-              confirmation.r,
-              confirmation.s]);
-			sendTransaction(escrow_abi, 'payOut', [confirmation.DC_wallet,
+			console.log(txOptions);
+
+			var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet,
 				confirmation.data_id,
 				confirmation.confirmation_verification_number,
 				confirmation.confirmation_time,
@@ -203,13 +223,8 @@ module.exports = function() {
 				confirmation.confirmation_hash,
 				confirmation.v,
 				confirmation.r,
-				confirmation.s], txOptions).then(response => {
-				log.info('Confirmation complete');
-				console.log(response);
-			}).catch(err => {
-				log.warn('Confirmation failed');
-				console.log("ERROR: " + err);
-			});
+				confirmation.s], txOptions);
+			this.sendRawX(rawTx, callback);
 		}
 
 	};

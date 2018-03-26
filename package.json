@@ -25,6 +25,7 @@
     "ipaddr.js": "^1.6.0",
     "kad": "^2.5.1",
     "kad-quasar": "^2.1.0",
+    "kad-traverse": "^1.1.1",
     "leveldown": "^3.0.0",
     "levelup": "^2.0.2",
     "lodash": "^4.17.5",

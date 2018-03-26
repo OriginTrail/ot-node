@@ -3,6 +3,7 @@ var leveldup = require('levelup');
 var leveldown = require('leveldown');
 var kad = require('kad');
 const quasar = require('kad-quasar');
+const traverse = require('kad-traverse');
 var utilities = require('./utilities')();
 const log = utilities.getLogger();
 var config = utilities.getConfig();
@@ -52,6 +53,13 @@ module.exports = function () {
 			});
 
 			node.plugin(quasar);
+
+			node.plugin(traverse([
+				new traverse.UPNPStrategy(/* options */),
+				new traverse.NATPMPStrategy(/* options */),
+				new traverse.ReverseTunnelStrategy(/* options */)
+			]));
+
 
 			if (config.IS_KADEMLIA_BEACON == 'false') {
 				node.join(seed, function () {
