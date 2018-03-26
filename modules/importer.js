@@ -161,7 +161,6 @@ module.exports = () => {
                 const result = response;
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = result.vertices;
-                console.log(vertices);
                 // eslint-disable-next-line  prefer-destructuring
                 const edges = result.edges;
                 const data_id = result.import_id;
