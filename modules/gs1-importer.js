@@ -1248,8 +1248,8 @@ module.exports = () => ({
                     });
 
 
-                    for(const i in instance_of_edges) {
-                        edges_list.push(instance_of_edges[i])
+                    for (const i in instance_of_edges) {
+                        edges_list.push(instance_of_edges[i]);
                     }
 
                     async.each(instance_of_edges, (input, next) => {
@@ -1262,8 +1262,8 @@ module.exports = () => ({
                         console.log('Writting instance_of edges complete');
                     });
 
-                    for(const i in owned_by_edges) {
-                        edges_list.push(owned_by_edges[i])
+                    for (const i in owned_by_edges) {
+                        edges_list.push(owned_by_edges[i]);
                     }
 
                     async.each(owned_by_edges, (input, next) => {
@@ -1276,8 +1276,8 @@ module.exports = () => ({
                         console.log('Writting owned_by edges complete');
                     });
 
-                    for(const i in at_edges) {
-                        edges_list.push(at_edges[i])
+                    for (const i in at_edges) {
+                        edges_list.push(at_edges[i]);
                     }
 
                     async.each(at_edges, (input, next) => {
@@ -1291,8 +1291,8 @@ module.exports = () => ({
                     });
 
 
-                    for(const i in read_point_edges) {
-                        edges_list.push(read_point_edges[i])
+                    for (const i in read_point_edges) {
+                        edges_list.push(read_point_edges[i]);
                     }
 
                     async.each(read_point_edges, (input, next) => {
@@ -1305,8 +1305,8 @@ module.exports = () => ({
                         console.log('Writting read_point edges  complete');
                     });
 
-                    for(const i in event_batch_edges) {
-                        edges_list.push(event_batch_edges[i])
+                    for (const i in event_batch_edges) {
+                        edges_list.push(event_batch_edges[i]);
                     }
 
                     async.each(event_batch_edges, (input, next) => {
@@ -1319,8 +1319,8 @@ module.exports = () => ({
                         console.log('Writting event_batch edges  complete');
                     });
 
-                    for(const i in parent_batches_edges) {
-                        edges_list.push(parent_batches_edges[i])
+                    for (const i in parent_batches_edges) {
+                        edges_list.push(parent_batches_edges[i]);
                     }
 
                     async.each(parent_batches_edges, (input, next) => {
@@ -1333,8 +1333,8 @@ module.exports = () => ({
                         console.log('Writting parent_batches edges  complete');
                     });
 
-                    for(const i in child_batches_edges) {
-                        edges_list.push(child_batches_edges[i])
+                    for (const i in child_batches_edges) {
+                        edges_list.push(child_batches_edges[i]);
                     }
 
                     async.each(child_batches_edges, (input, next) => {
@@ -1347,8 +1347,8 @@ module.exports = () => ({
                         console.log('Writting child_batches edges  complete');
                     });
 
-                    for(const i in input_batches_edges) {
-                        edges_list.push(input_batches_edges[i])
+                    for (const i in input_batches_edges) {
+                        edges_list.push(input_batches_edges[i]);
                     }
 
                     async.each(input_batches_edges, (input, next) => {
@@ -1361,8 +1361,8 @@ module.exports = () => ({
                         console.log('Writting input_batches edges  complete');
                     });
 
-                    for(const i in output_batches_edges) {
-                        edges_list.push(output_batches_edges[i])
+                    for (const i in output_batches_edges) {
+                        edges_list.push(output_batches_edges[i]);
                     }
 
                     async.each(output_batches_edges, (input, next) => {
@@ -1375,8 +1375,8 @@ module.exports = () => ({
                         console.log('Writting output_batches edges  complete');
                     });
 
-                    for(const i in business_location_edges) {
-                        edges_list.push(business_location_edges[i])
+                    for (const i in business_location_edges) {
+                        edges_list.push(business_location_edges[i]);
                     }
 
                     async.each(business_location_edges, (input, next) => {
