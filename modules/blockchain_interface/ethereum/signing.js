@@ -1,54 +1,62 @@
-const utilities = require('../../utilities');
-const Web3 = require('web3');
-const fs = require('fs');
-const util = require('ethereumjs-util');
-const Tx = require('ethereumjs-tx');
-const lightwallet = require('eth-lightwallet');
-const Account = require('eth-lib/lib/account');
-const Hash = require('eth-lib/lib/hash');
-const BN = require('bn.js');
-const abi = require('ethereumjs-abi');
-const transacting = require('./transacting');
+/* eslint-disable */
+var utilities = require('../../utilities');
+var Web3 = require('web3');
+var fs = require('fs');
+var util = require('ethereumjs-util');
+var tx = require('ethereumjs-tx');
+var lightwallet = require('eth-lightwallet');
+var Account = require('eth-lib/lib/account');
+var Hash = require('eth-lib/lib/hash');
+var BN = require('bn.js');
+var abi = require('ethereumjs-abi');
 
-
-const { txutils } = lightwallet.txutils;
-const config = utilities.getConfig();
+var txutils = lightwallet.txutils;
+var config = utilities.getConfig();
 const log = utilities.getLogger();
 
+var wallet_address = config.blockchain.settings.ethereum.wallet_address;
+var private_key = config.blockchain.settings.ethereum.private_key;
 
-const { wallet_address } = config.blockchain.settings.ethereum.wallet_address;
-
-const { private_key } = config.blockchain.settings.ethereum.private_key;
-
-const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
+var web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
 
 
 // OT contract data
-// eslint-disable-next-line  prefer-destructuring
-const contract_address = config.blockchain.settings.ethereum.contract_address;
-const contract_abi_path = config.blockchain.settings.ethereum.contract_abi;
-const contract_abi_file = fs.readFileSync(contract_abi_path);
-const contract_abi = JSON.parse(contract_abi_file);
+var contract_address = config.blockchain.settings.ethereum.contract_address;
+var contract_abi_path = config.blockchain.settings.ethereum.contract_abi;
+var contract_abi_file = fs.readFileSync(contract_abi_path);
+var contract_abi = JSON.parse(contract_abi_file);
 
 // Token contract data
-const token_address = config.blockchain.settings.ethereum.token_contract;
-const token_abi_path = config.blockchain.settings.ethereum.token_abi;
-const token_abi_file = fs.readFileSync(token_abi_path);
-const token_abi = JSON.parse(token_abi_file);
+var token_address = config.blockchain.settings.ethereum.token_contract;
+var token_abi_path = config.blockchain.settings.ethereum.token_abi;
+var token_abi_file = fs.readFileSync(token_abi_path);
+var token_abi = JSON.parse(token_abi_file);
 
 // Escrow contract data
-const escrow_address = config.blockchain.settings.ethereum.escrow_contract;
-const escrow_abi_path = config.blockchain.settings.ethereum.escrow_abi;
-const escrow_abi_file = fs.readFileSync(escrow_abi_path);
-const escrow_abi = JSON.parse(escrow_abi_file);
+var escrow_address = config.blockchain.settings.ethereum.escrow_contract;
+var escrow_abi_path = config.blockchain.settings.ethereum.escrow_abi;
+var escrow_abi_file = fs.readFileSync(escrow_abi_path);
+var escrow_abi = JSON.parse(escrow_abi_file);
 
+/*
+console.log('------------------------');
+var nonce = 5;
+web3.eth.getTransactionCount("0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe",web3.eth.defaultBlock,function(err, result) {
+}).then(function (nonce){console.log(nonce)})
+console.log('------------------------'); */
 
-let nonce = -1;
-let nonce_increment = 0;
+var nonce = -1;
+var nonce_increment = 0;
 
+module.exports = function () {
+    function sendRaw(rawTx, callback) {
+        var privateKey = new Buffer(private_key, 'hex');
+        var transaction = new tx(rawTx);
+        transaction.sign(privateKey);
+        var serializedTx = transaction.serialize().toString('hex');
+        return web3.eth.sendSignedTransaction(`0x${serializedTx}`);
+    }
 
-module.exports = () => {
-    // eslint-disable-next-line no-shadow
     function sendTransaction(abi, method, args, txOptions) {
         return new Promise((resolve, reject) => {
             web3.eth.getTransactionCount(wallet_address).then((nonce) => {
@@ -57,24 +65,23 @@ module.exports = () => {
                 // log.info(method);
                 log.warn(txOptions);
 
-                const rawTx = txutils.functionTx(abi, method, args, txOptions);
-
-
-                transacting.queueTransaction(rawTx, (response, err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(response);
+                var rawTx = txutils.functionTx(abi, method, args, txOptions);
+                return sendRaw(rawTx).then((response) => {
+                    if (response.error == '0x0') {
+                        return reject(response);
                     }
+                    return resolve(response);
+                }).catch((err) => {
+                    reject(err);
                 });
             });
         });
     }
 
-    const signing = {
+    var signing = {
 
         signAndSend(batch_id, batch_id_hash, graph_hash) {
-            const txOptions = {
+            var txOptions = {
                 gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                 gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
                 to: contract_address,
@@ -84,21 +91,20 @@ module.exports = () => {
         },
 
         signAndAllow(options) {
-            const approvalFunction = this.listenApproval;
-            const createEscrowFunction = this.createEscrow;
+            var approvalFunction = this.listenApproval;
+            var createEscrowFunction = this.createEscrow;
 
             return new Promise((resolve, reject) => {
-                const txOptions = {
+                var txOptions = {
                     gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                     gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
                     to: token_address,
                 };
 
-                sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then(() => {
+                sendTransaction(token_abi, 'increaseApproval', [escrow_address, options.amount], txOptions).then((response) => {
                     // log.info(response);
 
                     log.info('Creating Escrow...');
-                    // eslint-disable-next-line max-len
                     createEscrowFunction(options.dh_wallet, options.import_id, options.amount, options.start_time, options.total_time).then((result) => {
                         log.info('Escrow created');
                         resolve(result);
@@ -115,7 +121,7 @@ module.exports = () => {
         },
 
         createEscrow(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
-            const txOptions = {
+            var txOptions = {
                 gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                 gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
                 to: escrow_address,
@@ -124,40 +130,23 @@ module.exports = () => {
             return sendTransaction(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
         },
 
-
-        createConfirmation(
-            DH_wallet,
-            data_id,
-            confirmation_verification_number,
-            confirmation_time,
-            confirmation_valid,
-        ) {
+        createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) {
             /*
-          address DC_wallet, uint data_id,
-          uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
-          bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
-          */
+address DC_wallet, uint data_id,
+uint confirmation_verification_number, uint confirmation_time, bool confirmation_valid,
+bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
+*/
 
-            // (msg.sender,
-            // data_id, confirmation_
-            // verification_number,
-            // confirmation_time,
-            // confirmation_valid) === confirmation_hash
-            const raw_data = `0x${abi.soliditySHA3(
+            // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
+            var raw_data = `0x${abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint', 'bool'],
-
-
-                [new BN(DH_wallet, 16),
-                    data_id,
-                    confirmation_verification_number,
-                    confirmation_time,
-                    confirmation_valid],
+                [new BN(DH_wallet, 16), data_id, confirmation_verification_number, confirmation_time, confirmation_valid],
             ).toString('hex')}`;
 
-            const hash = utilities.sha3(raw_data);
-            const signature = Account.sign(hash, `0x${private_key}`);
-            const vrs = Account.decodeSignature(signature);
-            const s = {
+            var hash = utilities.sha3(raw_data);
+            var signature = Account.sign(hash, `0x${private_key}`);
+            var vrs = Account.decodeSignature(signature);
+            s = {
                 message: raw_data,
                 messageHash: hash,
                 v: vrs[0],
@@ -166,7 +155,7 @@ module.exports = () => {
                 signature,
             };
 
-            const confirmation = {
+            var confirmation = {
                 DC_wallet: wallet_address,
                 data_id,
                 confirmation_verification_number,
@@ -180,15 +169,34 @@ module.exports = () => {
 
             return confirmation;
         },
+        sendRawX(rawTx, callback) {
+            var privateKey = new Buffer(private_key, 'hex');
+            var transaction = new tx(rawTx);
+            transaction.sign(privateKey);
+            var serializedTx = transaction.serialize().toString('hex');
+            web3.eth.sendSignedTransaction(`0x${serializedTx}`, (err, result) => {
+                if (err) {
+                    console.log(err);
 
+                    if (callback) {
+                        utilities.executeCallback(callback, false);
+                    }
+                } else {
+                    if (callback) {
+                        utilities.executeCallback(callback, result);
+                    }
+                    console.log('Transaction: ', result);
+                }
+            });
+        },
 
         async sendConfirmation(confirmation, callback) {
-            if (nonce === -1) { nonce = await web3.eth.getTransactionCount(wallet_address); }
+            if (nonce == -1) { nonce = await web3.eth.getTransactionCount(wallet_address); }
 
-            const new_nonce = nonce + nonce_increment;
+            var new_nonce = nonce + nonce_increment;
             nonce_increment += 1;
 
-            const txOptions = {
+            var txOptions = {
                 nonce: new_nonce,
                 gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                 gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
@@ -197,7 +205,7 @@ module.exports = () => {
 
             console.log(txOptions);
 
-            const rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet,
+            var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet,
                 confirmation.data_id,
                 confirmation.confirmation_verification_number,
                 confirmation.confirmation_time,
@@ -206,8 +214,7 @@ module.exports = () => {
                 confirmation.v,
                 confirmation.r,
                 confirmation.s], txOptions);
-
-            transacting.queueTransaction(rawTx, callback);
+            this.sendRawX(rawTx, callback);
         },
 
     };
