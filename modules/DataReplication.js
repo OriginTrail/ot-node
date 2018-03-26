@@ -82,4 +82,4 @@ class DataReplication {
     }
 }
 
-module.exports = DataReplication();
+module.exports = DataReplication;

@@ -3,7 +3,7 @@ const config = require('./config');
 const ipaddr = require('ipaddr.js');
 const sha3 = require('solidity-sha3').default;
 const _ = require('lodash');
-const log = require('winston');
+const logger = require('winston');
 const randomString = require('randomstring');
 
 class Utilities {
@@ -131,11 +131,14 @@ class Utilities {
     * @return object log
     */
     static getLogger() {
-        log.add(log.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
-        log.remove(log.transports.Console);
-        log.add(log.transports.Console, { colorize: true });
+        try {
+            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
+            logger.remove(logger.transports.Console);
+            logger.add(logger.transports.Console, { colorize: true });
+        } catch (e) {
 
-        return log;
+        }
+        return logger;
     }
 
     static getRandomString(howLong) {

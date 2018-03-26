@@ -1,4 +1,4 @@
-const utilities = require('../../utilities')();
+const utilities = require('../../utilities');
 const Web3 = require('web3');
 const fs = require('fs');
 const util = require('ethereumjs-util');

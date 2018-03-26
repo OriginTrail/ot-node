@@ -1,5 +1,5 @@
 var AutoUpdater = require('auto-updater');
-const utilities = require('./modules/utilities')();
+const utilities = require('./modules/utilities');
 
 const log = utilities.getLogger();
 var autoupdater = new AutoUpdater({

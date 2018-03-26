@@ -1,6 +1,6 @@
 var fs = require('fs');
 var Web3 = require('web3');
-var utilities = require('../../utilities')();
+var utilities = require('../../utilities');
 var signing =
     require('./signing')();
 

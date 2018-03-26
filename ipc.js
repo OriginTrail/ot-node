@@ -3,7 +3,7 @@ const restify = require('restify');
 const product = require('./modules/product')();
 const socket_com = require('./modules/sockets')();
 const importer = require('./modules/importer')();
-const utilities = require('./modules/utilities')();
+const utilities = require('./modules/utilities');
 
 const config = utilities.getConfig();
 const log = utilities.getLogger();

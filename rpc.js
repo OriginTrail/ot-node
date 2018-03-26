@@ -1,6 +1,6 @@
 // External modules and dependencies
 const restify = require('restify');
-const utilities = require('./modules/utilities')();
+const utilities = require('./modules/utilities');
 const kademlia = require('./modules/kademlia')();
 const replication = require('./modules/replication')();
 const io = require('socket.io-client')('http://localhost:3000');
