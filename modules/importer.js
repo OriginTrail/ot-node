@@ -145,7 +145,7 @@ module.exports = () => {
         importXMLgs1: async function async(ot_xml_document, callback) {
             gs1.parseGS1(ot_xml_document, (response) => {
                 log.info('[DC] Import complete');
-                const result = JSON.parse(response);
+                const result = response;
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = result.vertices;
                 // eslint-disable-next-line  prefer-destructuring

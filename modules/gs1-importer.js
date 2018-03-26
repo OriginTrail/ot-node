@@ -5,9 +5,15 @@ const md5 = require('md5');
 const db = require('./database')();
 const utilities = require('./utilities');
 const async = require('async');
+const graph = require('./graph')();
 
+// Update import data
 
-// //find function
+function updateImportNumber(collection, vertex_key, import_id, callback) {
+    db.updateDocumentImports(collection, vertex_key, import_id, callback);
+}
+
+// find function
 
 function findValuesHelper(obj, key, list) {
     if (!obj) return list;
@@ -413,7 +419,7 @@ module.exports = () => ({
 
 
                                                     attribute_id = attribute_id.replace('urn:ot:location:', '');
-                                                    console.log(kk._);
+                                                    
 
                                                     if (attribute_id === 'participantId') {
                                                         owned_by_edges.push({
@@ -775,7 +781,7 @@ module.exports = () => ({
                                     read_point = read_point_element.id;
                                 }
 
-                                console.log(read_point);
+                                
 
                                 // bizLocation
                                 let biz_location;
@@ -885,7 +891,7 @@ module.exports = () => ({
                                 }
 
                                 const { epc } = epcList;
-                                // console.log(epc);
+                                
                                 if (typeof epc === 'string') {
                                     child_epcs = [epc];
                                 } else {
@@ -926,7 +932,7 @@ module.exports = () => ({
                                     _key: md5(`event_${sender_id}_${event_id}`),
                                 };
 
-                                console.log(child_epcs);
+                                
                                 aggregation_events[event_id] =
                                         utilities.copyObject(aggregation_event);
 
@@ -1071,7 +1077,7 @@ module.exports = () => ({
                                                 biz_location = biz_location_element.id;
                                             }
 
-                                            console.log(input_epcs);
+                                            
                                             for (const bi in input_epcs) {
                                                 input_batches_edges.push({
                                                     _key: md5(`child_batch_${sender_id}_${ext_event_id}_${input_epcs[bi]}`),
@@ -1121,6 +1127,7 @@ module.exports = () => ({
 
                     var vertices = [];
                     var edges = [];
+                    var import_id = Date.now()
 
                     var temp_participants = [];
                     for (const i in participants) {
@@ -1130,7 +1137,9 @@ module.exports = () => ({
                     async.each(temp_participants, (participant, next) => {
                         db.addVertex('ot_vertices', participant, () => {
                             vertices.push(participant);
-                            next();
+                            updateImportNumber('ot_vertices', participant._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting participants complete');
@@ -1144,7 +1153,10 @@ module.exports = () => ({
                     async.each(temp_objects, (object, next) => {
                         db.addVertex('ot_vertices', object, () => {
                             vertices.push(object);
-                            next();
+                            updateImportNumber('ot_vertices', object._key, import_id, () => {
+                                next();
+                            })
+
                         });
                     }, () => {
                         console.log('Writting objects complete');
@@ -1158,7 +1170,9 @@ module.exports = () => ({
                     async.each(temp_locations, (location, next) => {
                         db.addVertex('ot_vertices', location, () => {
                             vertices.push(location);
-                            next();
+                            updateImportNumber('ot_vertices', location._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting business locations complete');
@@ -1172,7 +1186,9 @@ module.exports = () => ({
                     async.each(temp_batches, (batch, next) => {
                         db.addVertex('ot_vertices', batch, () => {
                             vertices.push(batch);
-                            next();
+                            updateImportNumber('ot_vertices', batch._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting batches complete');
@@ -1187,13 +1203,13 @@ module.exports = () => ({
                     async.each(temp_object_events, (event, next) => {
                         db.addVertex('ot_vertices', event, () => {
                             vertices.push(event);
-                            next();
+                            updateImportNumber('ot_vertices', event._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting object events complete');
                     });
-
-                    console.log(object_events);
 
                     var temp_aggregation_events = [];
                     for (const i in aggregation_events) {
@@ -1203,7 +1219,9 @@ module.exports = () => ({
                     async.each(temp_aggregation_events, (event, next) => {
                         db.addVertex('ot_vertices', event, () => {
                             vertices.push(event);
-                            next();
+                            updateImportNumber('ot_vertices', event._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting aggregation events complete');
@@ -1217,7 +1235,9 @@ module.exports = () => ({
                     async.each(temp_transformation_events, (event, next) => {
                         db.addVertex('ot_vertices', event, () => {
                             vertices.push(event);
-                            next();
+                            updateImportNumber('ot_vertices', event._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting transformation events complete');
@@ -1227,7 +1247,9 @@ module.exports = () => ({
                     async.each(instance_of_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_vertices', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting instance_of edges complete');
@@ -1236,7 +1258,9 @@ module.exports = () => ({
                     async.each(owned_by_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting owned_by edges complete');
@@ -1245,7 +1269,9 @@ module.exports = () => ({
                     async.each(at_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting at_edges complete');
@@ -1255,7 +1281,9 @@ module.exports = () => ({
                     async.each(read_point_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting read_point edges  complete');
@@ -1264,7 +1292,9 @@ module.exports = () => ({
                     async.each(event_batch_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting event_batch edges  complete');
@@ -1273,7 +1303,9 @@ module.exports = () => ({
                     async.each(parent_batches_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting parent_batches edges  complete');
@@ -1282,7 +1314,9 @@ module.exports = () => ({
                     async.each(child_batches_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting child_batches edges  complete');
@@ -1291,7 +1325,9 @@ module.exports = () => ({
                     async.each(input_batches_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting input_batches edges  complete');
@@ -1300,7 +1336,9 @@ module.exports = () => ({
                     async.each(output_batches_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting output_batches edges  complete');
@@ -1309,7 +1347,9 @@ module.exports = () => ({
                     async.each(business_location_edges, (input, next) => {
                         db.addEdge('ot_edges', input, () => {
                             edges.push(input);
-                            next();
+                            updateImportNumber('ot_edges', input._key, import_id, () => {
+                                next();
+                            })
                         });
                     }, () => {
                         console.log('Writting business_location edges  complete');
@@ -1317,7 +1357,7 @@ module.exports = () => ({
 
                     utilities.executeCallback(
                         callback,
-                        { vertices, edges, import_id: Date.now() },
+                        { vertices, edges, import_id },
                     );
                 }
             },
