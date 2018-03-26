@@ -11,6 +11,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
+            const log = this.getLogger();
             log.info('Callback not defined!');
         }
     }
@@ -136,7 +137,7 @@ class Utilities {
             logger.remove(logger.transports.Console);
             logger.add(logger.transports.Console, { colorize: true });
         } catch (e) {
-
+            //
         }
         return logger;
     }
