@@ -21,3 +21,4 @@ script:
   - node isStartHealthy.js
 after_script:
 - kill -9 $(pgrep arangod)
+- rm -f start.log
