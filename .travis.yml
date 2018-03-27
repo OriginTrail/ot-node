@@ -18,5 +18,6 @@ script:
   - sleep 20
   - jobs
   - kill %1
+  - node isStartHealthy.js
 after_script:
 - kill -9 $(pgrep arangod)
