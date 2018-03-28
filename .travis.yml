@@ -14,5 +14,11 @@ before_install:
 script:
   - npm run lint
   - npm test
+  - npm start &>start.log &
+  - sleep 20
+  - jobs
+  - kill %1
+  - node isStartHealthy.js
 after_script:
 - kill -9 $(pgrep arangod)
+- rm -f start.log
