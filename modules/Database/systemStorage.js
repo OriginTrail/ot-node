@@ -21,8 +21,8 @@ class SystemStorage {
 
     /**
      * Runs query on SQLite ot_system database
-     * @param query - SQLite database query
-     * @param params - Query parameters
+     * @param {string} query - SQLite database query
+     * @param {object} params - Query parameters
      * @returns {Promise<any>}
      */
     runSystemQuery(query, params) {

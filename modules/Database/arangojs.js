@@ -6,11 +6,11 @@ class ArangoJS {
      * Creates new object connected with ArangoDB database,
      * with connection data found in system database
      * @constructor
-     * @param username
-     * @param password
-     * @param database
-     * @param host
-     * @param port
+     * @param {string} - username
+     * @param {string} - password
+     * @param {string} - database
+     * @param {string} - host
+     * @param {number} - port
      */
     constructor(username, password, database, host, port) {
         this.db = new Database(`http://${host}:${port}`);
@@ -20,8 +20,8 @@ class ArangoJS {
 
     /**
      * Run query on ArangoDB graph database
-     * @param {string} -queryString
-     * @param {object} -params
+     * @param {string} - queryString
+     * @param {object} - params
      * @returns {Promise<any>}
      */
     runQuery(queryString, params) {

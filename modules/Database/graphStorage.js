@@ -31,8 +31,8 @@ class GraphStorage {
 
     /**
      * Runs query on selected database
-     * @param queryString - Query string
-     * @param params - Query parameters
+     * @param {string} - queryString - Query string
+     * @param {object} - params - Query parameters
      * @returns {Promise<any>}
      */
     runQuery(queryString, params) {
@@ -51,8 +51,8 @@ class GraphStorage {
 
     /**
      * Add new document into given collection on selected database
-     * @param collectionName
-     * @param document
+     * @param {string} - collectionName
+     * @param {object} - document
      * @returns {Promise<any>}
      */
     addDocument(collectionName, document) {
