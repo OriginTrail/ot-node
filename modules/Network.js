@@ -7,7 +7,7 @@
 // onBroadcastMessage(...)
 
 const crypto = require('crypto');
-const bunyan = require('bunyan');
+const log = require('./utilities').getLogger();
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const leveldown = require('leveldown');
@@ -15,7 +15,6 @@ const kadence = require('@kadenceproject/kadence');
 
 // TODO: change it for sqlite
 const storage = levelup(encoding(leveldown('kad-storage/storage.db')));
-const logger = bunyan.createLogger({ name: 'OriginTrail node' });
 const transport = new kadence.HTTPTransport();
 const identity = kadence.utils.getRandomKeyBuffer();
 const contact = { hostname: 'localhost', port: 1337 };
@@ -28,12 +27,14 @@ class Network {
     /**
      * Setup options and construct a node
      */
-    constructor() {
+    constructor(config) {
+        this.config = config;
+
         // Construct a kademlia node interface; the returned `Node` object exposes:
         this.node = new kadence.KademliaNode({
             transport,
             storage,
-            logger,
+            log,
             identity,
             contact,
         });
@@ -42,15 +43,17 @@ class Network {
     }
 
     start() {
-        this.node.listen(1337);
+        this.node.listen(this.config.node_rpc_port);
+        log.info(`Listening on port ${this.config.node_rpc_port}`);
+
 
         this.node.join(['ea48d3f07a5241291ed0b4cab6483fa8b8fcc123', {
             hostname: 'localhost',
-            port: 8080,
+            port: this.config.node_rpc_port,
         }], () => {
             // Add 'join' callback which indicates peers were discovered and
             // our node is now connected to the overlay network
-            logger.info(`Connected to ${this.node.router.length} peers!`);
+            log.info(`Connected to ${this.node.router.length} peers!`);
 
             // Base protocol exposes:
             // * node.iterativeFindNode(key, callback)
