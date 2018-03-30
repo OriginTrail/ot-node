@@ -75,6 +75,45 @@ class GraphStorage {
     }
 
     /**
+     * Update document in selected graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    updateDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.updateDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Get document from selected graph database
+     * @param collectionName
+     * @param document
+     */
+    getDocument(collectionName, documentKey) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getDocument(collectionName, documentKey).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      * Identify selected graph database
      * @returns {string}
      */

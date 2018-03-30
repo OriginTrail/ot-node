@@ -42,7 +42,7 @@ class ArangoJS {
     }
 
     /**
-     * Inserts document into ArangoDB graph Database for given collectio name
+     * Inserts document into ArangoDB graph database for given collection name
      * @param {string} - collectionName
      * @param {object} - document
      * @returns {Promise<any>}
@@ -67,8 +67,53 @@ class ArangoJS {
     }
 
     /**
+     * Update document in ArangoDB graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    updateDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collectionName);
+            collection.update(document._key, document).then(
+                (meta) => {
+                    resolve(meta);
+                },
+                (err) => {
+                    reject(err);
+                },
+            ).catch((err) => {
+                console.log(err);
+            });
+        });
+    }
+
+    /**
+     * Get document from ArangoDB graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    getDocument(collectionName, documentKey) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collectionName);
+            collection.document(documentKey).then(
+                (res) => {
+                    resolve(res);
+                },
+                (err) => {
+                    reject(err);
+                },
+            ).catch((err) => {
+                console.log(err);
+            });
+        });
+    }
+
+
+    /**
      * Identify selected database as ArangoJS
-     * @returns {string}
+     * @returns {string} - Graph database identifier string
      */
     identify() {
         return 'ArangoJS';
