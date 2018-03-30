@@ -36,6 +36,7 @@
   "dependencies": {
     "arangojs": "^5.8.0",
     "deasync-promise": "^1.0.1",
+    "node-rsa": "^0.4.2",
     "sqlite3": "^4.0.0",
     "winston": "^2.4.1"
   }

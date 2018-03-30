@@ -5,6 +5,9 @@ const deasync = require('deasync-promise');
 const log = Utilities.getLogger();
 
 class OTNode {
+    /**
+     * OriginTrail node system bootstrap function
+     */
     bootstrap() {
         const loadConfig = Utilities.loadConfig();
         const loadSelectedDatabase = Utilities.loadSelectedDatabaseInfo();
@@ -34,9 +37,3 @@ class OTNode {
 
 const otNode = new OTNode();
 otNode.bootstrap();
-
-otNode.graphDB.getDocument('ot_vertices', '123').then((response) => {
-    console.log(response);
-}).catch((err) => {
-    console.log(err);
-})
