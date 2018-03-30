@@ -1,4 +1,5 @@
 const { Database } = require('arangojs');
+
 const IGNORE_DOUBLE_INSERT = true;
 
 class ArangoJS {
@@ -63,6 +64,14 @@ class ArangoJS {
                 reject(err);
             });
         });
+    }
+
+    /**
+     * Identify selected database as ArangoJS
+     * @returns {string}
+     */
+    identify() {
+        return 'ArangoJS';
     }
 }
 

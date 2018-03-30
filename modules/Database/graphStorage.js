@@ -73,6 +73,14 @@ class GraphStorage {
             }
         });
     }
+
+    /**
+     * Identify selected graph database
+     * @returns {string}
+     */
+    identify() {
+        return this.db.identify();
+    }
 }
 
 module.exports = GraphStorage;

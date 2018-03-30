@@ -13,7 +13,9 @@ class OTNode {
         // Loading config data and selected graph database data
         try {
             this.config = deasync(loadConfig);
+            log.info('Loaded system config');
             selectedDatabase = deasync(loadSelectedDatabase);
+            log.info('Loaded selected database data');
         } catch (err) {
             console.log(err);
         }
@@ -23,6 +25,7 @@ class OTNode {
         // Connecting to graph database
         try {
             deasync(this.graphDB.connect());
+            log.info(`Connected to graph database: ${this.graphDB.identify()}`);
         } catch (err) {
             console.log(err);
         }
@@ -31,30 +34,3 @@ class OTNode {
 
 const otNode = new OTNode();
 otNode.bootstrap();
-
-log.info(otNode.config);
-
-otNode.graphDB.runQuery('FOR v IN ot_vertices RETURN v._key').then((result) => {
-    console.log(result);
-}).catch((err) => {
-    console.log(err);
-});
-
-
-/*
-const graphDB = new GraphStorage();
-graphDB.connect().then((response) => {
-    //  console.log(response);
-    graphDB.addDocument('ot_vertices', { _key: '123' }).then(() => {
-        graphDB.runQuery('FOR v IN ot_vertices RETURN v._key').then((result) => {
-            console.log(result);
-        }).catch((err) => {
-            console.log(err);
-        });
-    }).catch((err) => {
-        console.log(err);
-    });
-}).catch((err) => {
-    console.log(err);
-});
-*/
