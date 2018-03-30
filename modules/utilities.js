@@ -72,7 +72,7 @@ class Utilities {
     * @return {Promise<any>}
     * @private
     */
-    static _generateSelfSignedCertificate() {
+    static generateSelfSignedCertificate(config) {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
                 days: 365,
@@ -81,12 +81,25 @@ class Utilities {
                 if (err) {
                     return reject(err);
                 }
-
-                fs.writeFileSync(config.SSLKeyPath, keys.serviceKey);
-                fs.writeFileSync(config.SSLCertificatePath, keys.certificate);
-                resolve();
+                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_key_path}`, keys.serviceKey);
+                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`, keys.certificate);
+                return resolve();
             });
         });
+    }
+
+    /**
+    * Generates private extended key for identity
+    * @param config
+    * @param kadence
+    */
+    static createPrivateExtendedKey(config, kadence) {
+        if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
+            fs.writeFileSync(
+                `${__dirname}/../keys/${config.private_extended_key_path}`,
+                kadence.utils.toHDKeyFromSeed().privateExtendedKey,
+            );
+        }
     }
 }
 
