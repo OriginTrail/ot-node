@@ -35,6 +35,7 @@
   "snyk": true,
   "dependencies": {
     "arangojs": "^6.2.2",
-    "sqlite3": "^4.0.0"
+    "sqlite3": "^4.0.0",
+    "winston": "^2.4.1"
   }
 }
