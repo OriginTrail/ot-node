@@ -32,5 +32,14 @@
     "url": "https://github.com/OriginTrail/ot-node/issues"
   },
   "homepage": "https://origintrail.io",
-  "snyk": true
+  "snyk": true,
+  "dependencies": {
+    "@kadenceproject/kadence": "^3.2.2",
+    "bunyan": "^1.8.12",
+    "crypto": "^1.0.1",
+    "encoding-down": "^4.0.0",
+    "leveldown": "^3.0.0",
+    "levelup": "^2.0.2",
+    "socks": "^2.1.6"
+  }
 }
