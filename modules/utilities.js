@@ -56,22 +56,6 @@ class Utilities {
             });
         });
     }
-
-    static getConfig() {
-        if (!this.config) {
-            throw Error('Configuration not loaded from system database');
-        } else {
-            return this.config;
-        }
-    }
-
-    static getSelectedDatabaseInfo() {
-        if (!this.config) {
-            throw Error('Configuration not loaded from system database');
-        } else {
-            return this.config;
-        }
-    }
 }
 
 module.exports = Utilities;

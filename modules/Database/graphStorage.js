@@ -2,30 +2,35 @@ const Utilities = require('../utilities');
 const ArangoJS = require('./arangojs.js');
 
 class GraphStorage {
+    constructor(selectedDatabase) {
+        this.selectedDatabase = selectedDatabase;
+    }
+
     /**
      * Connecting to graph database system selected in system database
      * @returns {Promise<any>}
      */
     connect() {
         return new Promise((resolve, reject) => {
-            Utilities.getSelectedDatabaseInfo().then((database) => {
-                switch (database.database_system) {
+            if (!this.selectedDatabase) {
+                reject(Error('Unable to connect ot graph database'));
+            } else {
+                switch (this.selectedDatabase.database_system) {
                 case 'arango_db':
                     this.db = new ArangoJS(
-                        database.username,
-                        database.password,
-                        database.database,
-                        database.host,
-                        database.port,
+                        this.selectedDatabase.username,
+                        this.selectedDatabase.password,
+                        this.selectedDatabase.database,
+                        this.selectedDatabase.host,
+                        this.selectedDatabase.port,
                     );
                     resolve(this.db);
                     break;
-                default: reject(Error('Unsupported graph database system'));
+                default:
+                    console.log(this.selectedDatabase);
+                    reject(Error('Unsupported graph database system'));
                 }
-            }).catch((err) => {
-                console.log(err);
-                reject(err);
-            });
+            }
         });
     }
 

@@ -1,43 +1,45 @@
 const Utilities = require('./modules/utilities');
 const GraphStorage = require('./modules/Database/graphStorage');
+const deasync = require('deasync-promise');
 
 const log = Utilities.getLogger();
 
-var config;
-var graphDB;
-
-
 class OTNode {
-
     bootstrap() {
-        return new Promise((resolve, reject) => {
-            Utilities.loadConfig().then((response) => {
-                config = Utilities.getConfig();
-                graphDB = new GraphStorage();
+        const loadConfig = Utilities.loadConfig();
+        const loadSelectedDatabase = Utilities.loadSelectedDatabaseInfo();
+        var selectedDatabase;
 
-                graphDB.connect().then((response) => {
-                    resolve('OK');
+        // Loading config data and selected graph database data
+        try {
+            this.config = deasync(loadConfig);
+            selectedDatabase = deasync(loadSelectedDatabase);
+        } catch (err) {
+            console.log(err);
+        }
 
-                }).catch((err) => {
-                    console.log(err);
-                    reject(err);
-                });
-            }).catch((err) => {
-                console.log(err);
-                reject(err);
-            });
-        });
+        this.graphDB = new GraphStorage(selectedDatabase);
+
+        // Connecting to graph database
+        try {
+            deasync(this.graphDB.connect());
+        } catch (err) {
+            console.log(err);
+        }
     }
 }
 
 const otNode = new OTNode();
-otNode.bootstrap().then((response) => {
-    console.log(response);
-    console.log(config);
-    console.log(graphDB);
+otNode.bootstrap();
+
+log.info(otNode.config);
+
+otNode.graphDB.runQuery('FOR v IN ot_vertices RETURN v._key').then((result) => {
+    console.log(result);
 }).catch((err) => {
     console.log(err);
-})
+});
+
 
 /*
 const graphDB = new GraphStorage();

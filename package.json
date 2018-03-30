@@ -35,6 +35,7 @@
   "snyk": true,
   "dependencies": {
     "arangojs": "^6.2.2",
+    "deasync-promise": "^1.0.1",
     "sqlite3": "^4.0.0",
     "winston": "^2.4.1"
   }
