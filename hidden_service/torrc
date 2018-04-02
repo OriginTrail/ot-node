@@ -1,0 +1,14 @@
+AvoidDiskWrites 1
+SocksPort auto IPv6Traffic PreferIPv6 KeepAliveIsolateSOCKSAuth
+ControlPort auto
+CookieAuthentication 1
+HiddenServiceDir /Users/vladimirlelicanin/Sites/vagrant/ot-node/hidden_service/hidden_service
+HiddenServiceVersion 3
+HiddenServicePort 443 127.0.0.1:8888
+CircuitBuildTimeout 10
+KeepalivePeriod 60
+NewCircuitPeriod 60
+NumEntryGuards 8
+Log notice stdout
+DataDirectory /Users/vladimirlelicanin/Sites/vagrant/ot-node/modules/../hidden_service
+ControlPortWriteToFile /Users/vladimirlelicanin/Sites/vagrant/ot-node/hidden_service/control-port

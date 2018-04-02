@@ -37,7 +37,11 @@ class OTNode {
 
         // Starting the kademlia
         const network = new Network(this.config);
-        network.start();
+        network.start().then(res => {
+            // console.log(res);
+        }).catch(e => {
+            // console.log(e)
+        });
     }
 }
 
