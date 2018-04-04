@@ -3,6 +3,16 @@ const soliditySha3 = require('solidity-sha3').default;
 var logger = require('winston');
 
 class Utilities {
+    constructor() {
+        try {
+            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
+            logger.remove(logger.transports.Console);
+            logger.add(logger.transports.Console, { colorize: true });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     /**
      * Get configuration parameters from SystemStorage database, table node_config
      * @returns {Promise<void>}
@@ -28,13 +38,6 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        try {
-            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
-            logger.remove(logger.transports.Console);
-            logger.add(logger.transports.Console, { colorize: true });
-        } catch (e) {
-            console.log(e);
-        }
         return logger;
     }
 

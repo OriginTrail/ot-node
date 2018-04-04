@@ -1,7 +1,9 @@
 const Utilities = require('./modules/utilities');
 const GraphStorage = require('./modules/Database/graphStorage');
+const Blockchain = require('./modules/blockchain');
 const deasync = require('deasync-promise');
 const MerkleTree = require('./modules/merkle');
+const restify = require('restify');
 
 const log = Utilities.getLogger();
 
@@ -12,7 +14,9 @@ class OTNode {
     bootstrap() {
         const loadConfig = Utilities.loadConfig();
         const loadSelectedDatabase = Utilities.loadSelectedDatabaseInfo();
+        const loadSelectedBlockchain = Utilities.loadSelectedBlockchainInfo();
         var selectedDatabase;
+        var selectedBlockchain;
 
         // Loading config data and selected graph database data
         try {
@@ -24,7 +28,16 @@ class OTNode {
             console.log(err);
         }
 
+        // Loading config data and selected graph database data
+        try {
+            selectedBlockchain = deasync(loadSelectedBlockchain);
+            log.info('Loaded selected blockchain data');
+        } catch (err) {
+            console.log(err);
+        }
+
         this.graphDB = new GraphStorage(selectedDatabase);
+        this.blockchain = new Blockchain(selectedBlockchain);
 
         // Connecting to graph database
         try {
@@ -36,15 +49,35 @@ class OTNode {
     }
 }
 
+console.log('===========================================');
+console.log('            OriginTrail Node               ');
+console.log('===========================================');
+
 const otNode = new OTNode();
 otNode.bootstrap();
 
+otNode.blockchain.increaseApproval(5).then((response) => {
+    log.info(response);
+}).catch((err) => {
+    console.log(err);
+});
+
+
+const server = restify.createServer({
+    name: 'OriginTrail RPC server',
+    version: '0.5.0',
+});
+
+server.listen(otNode.config.node_rpc_port, () => {
+    log.info('%s listening at %s', server.name, server.url);
+});
+
+/*
 const leaves = ['A', 'B', 'C', 'D', 'E'];
 
 const tree = new MerkleTree(leaves);
 
 console.log(tree.levels);
-/*
 // console.log(tree.levels);
 // console.log();
 const h1 = Utilities.sha3(1);
@@ -61,9 +94,9 @@ const h1234 = Utilities.sha3(h12, h34);
 const h5555 = Utilities.sha3(h55, h55);
 
 console.log(tree.verifyProof(proof, 2, 1));
-*/
 
 const proof = tree.createProof(1);
 console.log(proof);
 console.log(tree.verifyProof(proof, 'B', 1));
 console.log(tree.getRoot().toString('hex'));
+*/
