@@ -1,4 +1,3 @@
-const Utilities = require('../utilities');
 const ArangoJS = require('./arangojs.js');
 
 class GraphStorage {
@@ -119,6 +118,14 @@ class GraphStorage {
      */
     identify() {
         return this.db.identify();
+    }
+
+    /**
+     * Gets underlying database information
+     * @returns database info
+     */
+    getDatabaseInfo() {
+        return this.selectedDatabase;
     }
 }
 

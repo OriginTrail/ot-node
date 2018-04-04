@@ -1,7 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 
 class SystemStorage {
-
     /**
      * Creates connection with SQLite system database located in ./system.db file
      * @returns {Promise<any>}
@@ -35,6 +34,28 @@ class SystemStorage {
                         reject(err);
                     } else {
                         resolve(rows);
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Runs update query on SQLite ot_system database
+     * @param {string} update - SQLite database query
+     * @param {object} params - Query parameters
+     * @returns {Promise<any>}
+     */
+    runSystemUpdate(update, params) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to database'));
+            } else {
+                this.db.run(update, params, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
                     }
                 });
             }

@@ -2,6 +2,7 @@ const Utilities = require('./modules/utilities');
 const GraphStorage = require('./modules/Database/graphStorage');
 const deasync = require('deasync-promise');
 const MerkleTree = require('./modules/merkle');
+const Graph = require('./modules/graph');
 
 const log = Utilities.getLogger();
 
@@ -30,6 +31,7 @@ class OTNode {
         try {
             deasync(this.graphDB.connect());
             log.info(`Connected to graph database: ${this.graphDB.identify()}`);
+            this.graph = new Graph(this.graphDB);
         } catch (err) {
             console.log(err);
         }
