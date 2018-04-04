@@ -1,4 +1,5 @@
 const SystemStorage = require('./Database/systemStorage');
+const soliditySha3 = require('solidity-sha3').default;
 var logger = require('winston');
 
 class Utilities {
@@ -55,6 +56,35 @@ class Utilities {
                 reject(err);
             });
         });
+    }
+
+    /**
+     * Get information of selected graph storage database
+     * @returns {Promise<any>}
+     */
+    static loadSelectedBlockchainInfo() {
+        return new Promise((resolve, reject) => {
+            const db = new SystemStorage();
+            db.connect().then(() => {
+                db.runSystemQuery('SELECT bd.* FROM node_config AS nc JOIN blockchain_data bd ON nc.selected_blockchain = bd.id', []).then((rows) => {
+                    [this.selectedDatabase] = rows;
+                    resolve(rows[0]);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
+     * Returns solidity keccak256 hash of given data
+     * @param data
+     * @returns {string}
+     */
+    static sha3(data) {
+        return soliditySha3(data);
     }
 }
 

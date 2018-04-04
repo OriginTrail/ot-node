@@ -35,8 +35,11 @@
   "snyk": true,
   "dependencies": {
     "arangojs": "^5.8.0",
+    "bn.js": "^4.11.8",
     "deasync-promise": "^1.0.1",
+    "ethereumjs-abi": "^0.6.5",
     "node-rsa": "^0.4.2",
+    "solidity-sha3": "^0.4.1",
     "sqlite3": "^4.0.0",
     "winston": "^2.4.1"
   }
