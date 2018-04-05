@@ -71,7 +71,7 @@ class Network {
         this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
             .toString('hex');
 
-
+        log.info(`My identity: ${identity}`)
         log.info('Initializing network');
 
         // Initialize public contact data
