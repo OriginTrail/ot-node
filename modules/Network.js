@@ -78,7 +78,7 @@ class Network {
         const contact = this.setContact(config, parentkey);
 
         const transport = this._HTTPSTransport(config);
-
+        // const transport = new kadence.HTTPTransport();
         // Initialize protocol implementation
         node = new kadence.KademliaNode({
             log,
@@ -93,7 +93,7 @@ class Network {
         // DoS and spam attacks cost prohibitive
         node.hashcash = node.plugin(kadence.hashcash({
             methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 8,
+            difficulty: 2,
         }));
 
         log.info('Hashcach initialised');
@@ -111,19 +111,19 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        node.eclipse = node.plugin(kadence.eclipse());
+        // node.eclipse = node.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
-        node.permission = node.plugin(kadence.permission({
-            privateKey: node.spartacus.privateKey,
-            walletPath: `${__dirname}/../data/wallet.dat`,
-        }));
+        // node.permission = node.plugin(kadence.permission({
+        //     privateKey: node.spartacus.privateKey,
+        //     walletPath: `${__dirname}/../data/wallet.dat`,
+        // }));
 
         // Store peers in cache
         node.rolodex = node.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
-        log.info('Validating solutions in wallet, this can take some time');
-        await node.wallet.validate();
+        // log.info('Validating solutions in wallet, this can take some time');
+        // await node.wallet.validate();
 
         // Hibernate when bandwidth thresholds are reached
         // node.hibernate = node.plugin(kadence.hibernate({
@@ -133,22 +133,22 @@ class Network {
         // }));
 
         // Use Tor for an anonymous overlay
-        if (parseInt(config.onion_enabled, 10)) {
-            kadence.constants.T_RESPONSETIMEOUT = 20000;
-            node.onion = node.plugin(kadence.onion({
-                dataDirectory: `${__dirname}/../hidden_service`,
-                virtualPort: config.onion_virtual_port,
-                localMapping: `127.0.0.1:${config.node_rpc_port}`,
-                torrcEntries: {
-                    CircuitBuildTimeout: 10,
-                    KeepalivePeriod: 60,
-                    NewCircuitPeriod: 60,
-                    NumEntryGuards: 8,
-                    Log: 'notice stdout',
-                },
-                passthroughLoggingEnabled: 1,
-            }));
-        }
+        // if (parseInt(config.onion_enabled, 10)) {
+        //     kadence.constants.T_RESPONSETIMEOUT = 20000;
+        //     node.onion = node.plugin(kadence.onion({
+        //         dataDirectory: `${__dirname}/../hidden_service`,
+        //         virtualPort: config.onion_virtual_port,
+        //         localMapping: `127.0.0.1:${config.node_kademlia_port}`,
+        //         torrcEntries: {
+        //             CircuitBuildTimeout: 10,
+        //             KeepalivePeriod: 60,
+        //             NewCircuitPeriod: 60,
+        //             NumEntryGuards: 8,
+        //             Log: 'notice stdout',
+        //         },
+        //         passthroughLoggingEnabled: 1,
+        //     }));
+        // }
 
         if (parseInt(config.traverse_nat_enabled, 10)) {
             log.info('Trying NAT traversal');
@@ -176,59 +176,69 @@ class Network {
         }
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
-
             // https://127.0.0.1:8000/#ajsdlkasjdklasjkldjklasj
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
         // Use "global" rules for preprocessing *all* incoming messages
         // This is useful for things like blacklisting certain nodes
+        // node.use((request, response, next) => {
+        //     console.log('stiglo nesto');
+        //     console.log(JSON.stringify(request));
+        //     const [identityString] = request.contact;
+        //     console.log(response);
+        //
+        //     if ([/* identity blacklist */].includes(identityString)) {
+        //         return next(new Error('You have been blacklisted'));
+        //     }
+        //
+        //     next();
+        // });
+
         node.use((request, response, next) => {
-            console.log('stiglo nesto');
-            console.log(request);
-            const [identityString] = request.contact;
-            console.log(response);
-
-            if ([/* identity blacklist */].includes(identityString)) {
-                return next(new Error('You have been blacklisted'));
+            if (request.method == 'ECHO') {
+                console.log(JSON.stringify(request));
+                response.send( request.params);
             }
-
             next();
+        });
+        node.use('ECHO', (err, request, response, next) => {
+            console.log(request.params.message);
         });
 
 
-        node.listen(parseInt(config.node_rpc_port, 10), () => {
-            log.info(`Node listening on local port ${config.node_rpc_port} ` +
+        node.listen(parseInt(config.node_kademlia_port, 10), () => {
+            log.info(`Node listening on local port ${config.node_kademlia_port} ` +
                 `and exposed at https://${node.contact.hostname}:${node.contact.port}`);
-            ns.registerControlInterface(config, node);
-            if (config.solve_hashes) {
-                ns.spawnHashSolverProcesses();
-            }
-            async.retry({
-                times: Infinity,
-                interval: 1000,
-            }, done => this.joinNetwork(done), (err, entry) => {
-                if (err) {
-                    log.error(err.message);
-                    process.exit(1);
-                }
-
-                log.info(`Connected to network via ${entry[0]} ` +
-                    `(http://${entry[1].hostname}:${entry[1].port})`);
-                log.info(`Discovered ${node.router.size} peers from seed`);
-            });
+            // ns.registerControlInterface(config, node);
+            // if (config.solve_hashes) {
+            //     ns.spawnHashSolverProcesses();
+            // }
+            // async.retry({
+            //     times: Infinity,
+            //     interval: 1000,
+            // }, done => this.joinNetwork(done), (err, entry) => {
+            //     if (err) {
+            //         log.error(err.message);
+            //         process.exit(1);
+            //     }
+            //
+            //     log.info(`Connected to network via ${entry[0]} ` +
+            //         `(http://${entry[1].hostname}:${entry[1].port})`);
+            //     log.info(`Discovered ${node.router.size} peers from seed`);
+            // });
         });
 
         // this.node.plugin(kadence.quasar());
         //
         //
-        // node.listen(this.config.node_rpc_port);
-        // log.info(`Listening on port ${this.config.node_rpc_port}`);
+        // node.listen(this.config.node_kademlia_port);
+        // log.info(`Listening on port ${this.config.node_kademlia_port}`);
 
 
         // node.join(['ea48d3f07a5241291ed0b4cab6483fa8b8fcc123', {
         //     hostname: 'localhost',
-        //     port: this.config.node_rpc_port,
+        //     port: this.config.node_kademlia_port,
         // }], () => {
         // Add 'join' callback which indicates peers were discovered and
         // our node is now connected to the overlay network
@@ -250,8 +260,7 @@ class Network {
     }
 
 
-
-  /**
+    /**
    * Set contact data
     * @param config
     * @param parentkey
@@ -260,8 +269,8 @@ class Network {
     setContact(config, parentkey) {
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
-            port: parseInt(config.node_rpc_port, 10),
+            protocol: 'https:',
+            port: parseInt(config.node_kademlia_port, 10),
             xpub: parentkey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,

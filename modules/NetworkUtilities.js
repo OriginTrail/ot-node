@@ -234,7 +234,7 @@ class NetworkUtilities {
         // Start initializing identity keys
         const parentkey = hdkey.fromExtendedKey(xprivkey)
             .derive(kadence.constants.HD_KEY_DERIVATION_PATH);
-        const childkey = parentkey.deriveChild(parseInt(39, 10));
+        const childkey = parentkey.deriveChild(parseInt(this.config.child_derivation_index, 10));
         return {
             childkey,
             parentkey,

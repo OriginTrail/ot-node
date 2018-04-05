@@ -2,8 +2,8 @@ const kadence = require('@kadenceproject/kadence');
 const readLine = require('readline');
 
 if (parseInt(process.env.kadence_TestNetworkEnabled, 10)) {
-    kadence.constants.SOLUTION_DIFFICULTY = 10;
-    kadence.constants.IDENTITY_DIFFICULTY = 10;
+    kadence.constants.SOLUTION_DIFFICULTY = 2;
+    kadence.constants.IDENTITY_DIFFICULTY = 2;
 }
 
 process.once('message', ({ privateKey }) => {
