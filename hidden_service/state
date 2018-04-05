@@ -1,44 +1,47 @@
-# Tor state file last generated on 2018-04-02 01:23:24 local time
+# Tor state file last generated on 2018-04-04 14:01:21 local time
 # Other times below are in UTC
 # You *do not* need to edit this file.
 
-HidServRevCounter Q0TBUi8NppH6lAIU47/TwIHKHI0x1SClUGlD3tdRE2A 7
-HidServRevCounter K7gcu37v5swWbCZXLvpBh/JBgTbLtug+xM8jvDt0LHQ 8
-Guard in=default rsa_id=2F9AFDE43DC8E3F05803304C01BD3DBF329169AC nickname=dutreuil sampled_on=2018-03-25T14:48:33 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-24T20:12:03 confirmed_idx=7 pb_use_attempts=16.000000 pb_use_successes=16.000000 pb_circ_attempts=35.000000 pb_circ_successes=30.000000 pb_successful_circuits_closed=30.000000
-Guard in=default rsa_id=3711E80B5B04494C971FB0459D4209AB7F2EA799 nickname=0x3d002 sampled_on=2018-03-22T04:23:35 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=C6B3546CC6BCCB649FEC82D348D464554BC6323D nickname=radia4 sampled_on=2018-03-24T21:42:55 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-01T03:44:46 confirmed_idx=9 pb_use_attempts=2.000000 pb_use_successes=2.000000 pb_circ_attempts=3.000000 pb_circ_successes=2.000000 pb_successful_circuits_closed=2.000000
-Guard in=default rsa_id=9EB3FD84065E5622A57EFEF14E41A01B5B99A022 nickname=MCL3 sampled_on=2018-03-21T06:22:18 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=3BD3DD829C41A40122E72D78E26146A080F36DB0 nickname=jolly sampled_on=2018-03-27T15:10:08 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=564B8B9BA80DB1BB138C463F2220052D0BC2E1AF nickname=FollowYourHeart28 sampled_on=2018-03-24T11:48:34 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=7791CA6B67303ACE46C2B6F5211206B765948147 nickname=v01d sampled_on=2018-03-27T22:01:15 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-23T09:10:47 confirmed_idx=1 pb_use_attempts=22.000000 pb_use_successes=22.000000 pb_circ_attempts=32.000000 pb_circ_successes=28.000000 pb_successful_circuits_closed=28.000000
-Guard in=default rsa_id=EA270DF8A2448F11C8742DA177A66A965AD54FE0 nickname=Unnamed sampled_on=2018-03-30T16:39:08 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-28T13:10:07 confirmed_idx=6 pb_use_attempts=14.000000 pb_use_successes=14.000000 pb_circ_attempts=28.000000 pb_circ_successes=25.000000 pb_successful_circuits_closed=25.000000
-Guard in=default rsa_id=D592ED721BD7CCC70B2299FC09D4DF93AA573632 nickname=wilfong sampled_on=2018-03-25T18:53:29 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=94C0F99BA44AA4A6767C71333B8A66DBD1BC08C7 nickname=llama sampled_on=2018-03-25T23:47:49 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-31T20:52:47 confirmed_idx=5 pb_use_attempts=18.000000 pb_use_successes=18.000000 pb_circ_attempts=42.000000 pb_circ_successes=38.000000 pb_successful_circuits_closed=38.000000 pb_timeouts=1.000000
-Guard in=default rsa_id=5416F3E8F80101A133B1970495B04FDBD1C7446B nickname=Unnamed sampled_on=2018-03-28T23:28:53 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=365F393040AA2979DC01D102F5052CAD048F42F7 nickname=server001 sampled_on=2018-03-26T17:02:50 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=87170E0A9DA0209A4EB653F4E6CA1D64FBA88F23 nickname=asshai sampled_on=2018-03-27T13:35:25 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-22T17:15:08 confirmed_idx=3 pb_use_attempts=18.000000 pb_use_successes=18.000000 pb_circ_attempts=31.000000 pb_circ_successes=29.000000 pb_successful_circuits_closed=29.000000
-Guard in=default rsa_id=8A68053EDFD2FD32DA6B4C351E23CF00AEFFBE98 nickname=fable sampled_on=2018-03-21T21:06:25 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-22T06:24:57 confirmed_idx=0 pb_use_attempts=22.000000 pb_use_successes=22.000000 pb_circ_attempts=36.000000 pb_circ_successes=32.000000 pb_successful_circuits_closed=32.000000 pb_timeouts=1.000000
-Guard in=default rsa_id=6287129CB9EC475E816A0D283FE4E45D632A4A4B nickname=zwewwlUA1 sampled_on=2018-03-29T03:17:39 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-31T07:17:36 confirmed_idx=2 pb_use_attempts=16.000000 pb_use_successes=16.000000 pb_circ_attempts=32.000000 pb_circ_successes=28.000000 pb_successful_circuits_closed=28.000000 pb_timeouts=1.000000
-Guard in=default rsa_id=00658F71EC89799AA49779EEE9236F4F21F1FE7D nickname=kelly sampled_on=2018-03-26T03:17:26 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-27T18:04:06 confirmed_idx=4 pb_use_attempts=20.000000 pb_use_successes=20.000000 pb_circ_attempts=31.000000 pb_circ_successes=29.000000 pb_successful_circuits_closed=29.000000
-Guard in=default rsa_id=C2B45199FC6F98E21BFAFE0833348F288FA337E3 nickname=t4cc0reTor2 sampled_on=2018-03-27T21:31:18 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=8E0D012AEE55959BE10376D7B6FAD80362B42E44 nickname=RelayDune sampled_on=2018-03-26T17:32:52 sampled_by=0.3.2.10 listed=1
-Guard in=default rsa_id=1287B55F13537CEC7BAAFCAC0BB23371DA7B7DD1 nickname=rogemedic sampled_on=2018-03-28T18:30:57 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-21T16:56:21 confirmed_idx=8 pb_use_attempts=2.000000 pb_use_successes=2.000000 pb_circ_attempts=3.000000 pb_circ_successes=3.000000 pb_successful_circuits_closed=3.000000
-Guard in=default rsa_id=FDFC74DA23AE53E5C18E08092E6AFADC1042E2A4 nickname=hacktheplanet sampled_on=2018-03-25T05:53:53 sampled_by=0.3.2.10 listed=1
+HidServRevCounter xRxqj1msr1Vj3DxB7A1+crIiE3KjymdHMSPgXO9KY2w 2
+HidServRevCounter 0p5GyLZp8xWvtIJ4AGNRHeA0YjSEmY0Kc0BsHDx1dd4 2
+Guard in=default rsa_id=3F31B48C39945C18FA31B7E3796DDCCF33660C9C nickname=ValleTor2 sampled_on=2018-03-23T21:43:02 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=953DB709F2A2DECC8D7560661F934E64411444F7 nickname=chopin sampled_on=2018-03-27T02:44:38 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=929BF37C657D4F69C76324E5FEA760A62483813B nickname=Ichotolot65 sampled_on=2018-03-30T01:07:28 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=125B0656C14B2AC4DAE7A61018E6B0EC8AA8F275 nickname=walor2 sampled_on=2018-03-24T06:28:19 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-30T17:50:39 confirmed_idx=4 pb_use_attempts=8.000000 pb_use_successes=8.000000 pb_circ_attempts=12.000000 pb_circ_successes=12.000000 pb_successful_circuits_closed=12.000000 pb_timeouts=1.000000
+Guard in=default rsa_id=A9F5135AE18C7E25C7C79117CD8C7619BFEB85ED nickname=herlitzka sampled_on=2018-04-01T12:51:03 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=BD39703C64FFEC01F1D7CAB9C086689303E7EA1A nickname=Thrall sampled_on=2018-04-01T02:50:03 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=3711E80B5B04494C971FB0459D4209AB7F2EA799 nickname=0x3d002 sampled_on=2018-03-25T08:25:36 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-01T06:50:14 confirmed_idx=1 pb_use_attempts=5.000000 pb_use_successes=5.000000 pb_circ_attempts=9.000000 pb_circ_successes=8.000000 pb_successful_circuits_closed=8.000000 pb_timeouts=1.000000
+Guard in=default rsa_id=94C0F99BA44AA4A6767C71333B8A66DBD1BC08C7 nickname=llama sampled_on=2018-03-28T21:36:00 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-30T10:18:30 confirmed_idx=0 pb_use_attempts=5.000000 pb_use_successes=5.000000 pb_circ_attempts=7.000000 pb_circ_successes=7.000000 pb_successful_circuits_closed=7.000000
+Guard in=default rsa_id=38DE4DC38FDDBE2D25F4007A99866C204A91D4D6 nickname=Fission7 sampled_on=2018-03-30T02:59:45 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-04T11:32:50 confirmed_idx=7 pb_use_attempts=1.000000 pb_use_successes=1.000000 pb_circ_attempts=4.000000 pb_circ_successes=4.000000 pb_successful_circuits_closed=4.000000
+Guard in=default rsa_id=0D3EBA17E1C78F1E9900BABDB23861D46FCAF163 nickname=HY100 sampled_on=2018-03-27T21:24:58 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-03-23T13:36:51 confirmed_idx=5 pb_use_attempts=5.000000 pb_use_successes=5.000000 pb_circ_attempts=8.000000 pb_circ_successes=7.000000 pb_successful_circuits_closed=7.000000
+Guard in=default rsa_id=32828476F4F84E15C42B4C360A5CD8DE4C3C2BE7 nickname=Rhea sampled_on=2018-03-30T07:03:09 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=5C92A6C18FB5EAC9ECF940373957A24FDC3FC7A0 nickname=Prifysgol sampled_on=2018-03-23T23:31:34 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=0964EEEF3AEF8442F510F8A61370657BC6E0E098 nickname=RecycledElectrons sampled_on=2018-03-26T19:35:24 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=A4C98CEA3F34E05299417E9F885A642C88EF6029 nickname=jaures2 sampled_on=2018-03-26T02:22:57 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-02T12:30:59 confirmed_idx=6 pb_use_attempts=10.000000 pb_use_successes=10.000000 pb_circ_attempts=13.000000 pb_circ_successes=13.000000 pb_successful_circuits_closed=13.000000
+Guard in=default rsa_id=272FBB7CCB67D8FC122BE21973A277DB4D2E8CE6 nickname=midnight sampled_on=2018-03-26T21:25:10 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=744B753C7F5E0C6BDD240EE5D879A36C650D2B00 nickname=bgsv2 sampled_on=2018-03-27T08:18:07 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=3E53D3979DB07EFD736661C934A1DED14127B684 nickname=Unnamed sampled_on=2018-03-28T16:15:36 sampled_by=0.3.2.10 listed=1
+Guard in=default rsa_id=2BA2C8E96B2590E1072AECE2BDB5C48921BF8510 nickname=storm sampled_on=2018-03-25T00:31:39 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-04T10:23:21 confirmed_idx=3 pb_use_attempts=4.000000 pb_use_successes=4.000000 pb_circ_attempts=10.000000 pb_circ_successes=9.000000 pb_successful_circuits_closed=9.000000
+Guard in=default rsa_id=F3DFB3D2F6E21CB5BF1CC73AA67D111BD86893BC nickname=totem sampled_on=2018-03-31T04:08:14 sampled_by=0.3.2.10 listed=1 confirmed_on=2018-04-02T11:19:50 confirmed_idx=2 pb_use_attempts=6.000000 pb_use_successes=6.000000 pb_circ_attempts=13.000000 pb_circ_successes=13.000000 pb_successful_circuits_closed=13.000000
+Guard in=default rsa_id=1F9544C0A80F1C5D8A5117FBFFB50694469CC7F4 nickname=as44194l10501 sampled_on=2018-03-29T17:28:48 sampled_by=0.3.2.10 listed=1
 TorVersion Tor 0.3.2.10
-LastWritten 2018-04-01 23:23:24
-TotalBuildTimes 154
-CircuitBuildTimeBin 175 1
-CircuitBuildTimeBin 225 9
-CircuitBuildTimeBin 275 34
-CircuitBuildTimeBin 325 29
-CircuitBuildTimeBin 375 16
-CircuitBuildTimeBin 425 14
-CircuitBuildTimeBin 475 18
-CircuitBuildTimeBin 525 10
-CircuitBuildTimeBin 575 7
-CircuitBuildTimeBin 625 4
+LastWritten 2018-04-04 12:01:21
+TotalBuildTimes 43
+CircuitBuildAbandonedCount 1
+CircuitBuildTimeBin 225 5
+CircuitBuildTimeBin 275 4
+CircuitBuildTimeBin 325 6
+CircuitBuildTimeBin 375 4
+CircuitBuildTimeBin 425 3
+CircuitBuildTimeBin 475 1
+CircuitBuildTimeBin 525 2
+CircuitBuildTimeBin 575 3
+CircuitBuildTimeBin 625 1
 CircuitBuildTimeBin 675 2
-CircuitBuildTimeBin 725 3
-CircuitBuildTimeBin 775 3
-CircuitBuildTimeBin 825 3
-CircuitBuildTimeBin 1025 1
+CircuitBuildTimeBin 775 2
+CircuitBuildTimeBin 825 1
+CircuitBuildTimeBin 875 2
+CircuitBuildTimeBin 925 1
+CircuitBuildTimeBin 975 3
+CircuitBuildTimeBin 1125 1
+CircuitBuildTimeBin 1725 1

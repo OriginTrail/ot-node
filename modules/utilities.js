@@ -14,7 +14,24 @@ class Utilities {
             db.connect().then(() => {
                 db.runSystemQuery('SELECT * FROM node_config', []).then((rows) => {
                     [this.config] = rows;
+                    rows[0].ssl_authority_paths = JSON.parse(rows[0].ssl_authority_paths);
+                    rows[0].network_bootstrap_nodes = JSON.parse(rows[0].network_bootstrap_nodes);
                     resolve(rows[0]);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    static saveToConfig(property, value) {
+        return new Promise((resolve, reject) => {
+            const db = new SystemStorage();
+            db.connect().then(() => {
+                db.runSystemQuery(`UPDATE node_config SET ${property}='${value}' WHERE ID = 1`, []).then((rows) => {
+                    resolve(rows);
                 }).catch((err) => {
                     reject(err);
                 });

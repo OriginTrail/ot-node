@@ -4,8 +4,8 @@ const { EventEmitter } = require('events');
 
 
 if (parseInt(process.env.kadence_TestNetworkEnabled, 10)) {
-    kadence.constants.SOLUTION_DIFFICULTY = 7;
-    kadence.constants.IDENTITY_DIFFICULTY = 7;
+    kadence.constants.SOLUTION_DIFFICULTY = 10;
+    kadence.constants.IDENTITY_DIFFICULTY = 10;
 }
 
 process.once('message', ([xprv, index]) => {

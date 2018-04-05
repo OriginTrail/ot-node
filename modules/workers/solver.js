@@ -2,8 +2,8 @@ const kadence = require('@kadenceproject/kadence');
 const readLine = require('readline');
 
 if (parseInt(process.env.kadence_TestNetworkEnabled, 10)) {
-    kadence.constants.SOLUTION_DIFFICULTY = 7;
-    kadence.constants.IDENTITY_DIFFICULTY = 7;
+    kadence.constants.SOLUTION_DIFFICULTY = 10;
+    kadence.constants.IDENTITY_DIFFICULTY = 10;
 }
 
 process.once('message', ({ privateKey }) => {
@@ -12,7 +12,7 @@ process.once('message', ({ privateKey }) => {
     solver.on('data', (data) => {
         data.solution = data.solution.toBuffer().toString('hex');
         process.send({ result: data });
-        process.exit(0);
+        // process.exit(0);
     });
 
     solver.on('error', (err) => {
