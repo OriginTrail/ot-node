@@ -1,5 +1,7 @@
 const ArangoJS = require('./arangojs.js');
 
+const log = Utilities.getLogger();
+
 class GraphStorage {
     constructor(selectedDatabase) {
         this.selectedDatabase = selectedDatabase;
@@ -26,7 +28,7 @@ class GraphStorage {
                     resolve(this.db);
                     break;
                 default:
-                    console.log(this.selectedDatabase);
+                    log.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
             }

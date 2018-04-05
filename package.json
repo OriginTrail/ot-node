@@ -38,10 +38,14 @@
     "arangojs": "^5.8.0",
     "bn.js": "^4.11.8",
     "deasync-promise": "^1.0.1",
+    "eth-lightwallet": "^3.0.1",
     "ethereumjs-abi": "^0.6.5",
+    "ethereumjs-tx": "^1.3.4",
     "node-rsa": "^0.4.2",
+    "restify": "^7.1.0",
     "solidity-sha3": "^0.4.1",
     "sqlite3": "^4.0.0",
+    "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1"
   }
 }
