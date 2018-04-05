@@ -1,6 +1,5 @@
 const Utilities = require('./utilities');
 const Encryption = require('./encryption');
-const SystemStorage = require('./Database/systemStorage');
 
 /**
  * Private utility method used for encrypting a set of vertices
@@ -24,9 +23,11 @@ class Graph {
     /**
      * Creates Graph abstraction
      * @constructor
+     * @param sysdb        System DB
      * @param graphStorage Graph storage
      */
-    constructor(graphStorage) {
+    constructor(graphStorage, sysdb) {
+        this.sysdb = sysdb;
         this.graphStorage = graphStorage;
     }
 
@@ -75,7 +76,7 @@ class Graph {
 
     /**
      * Runs traversal starting from particular vertex
-     * @param startVertex      Starting vertex
+     * @param startVertex       Starting vertex
      * @returns {Promise<any>}
      */
     runTraversal(startVertex) {
@@ -84,13 +85,11 @@ class Graph {
                 resolve([]);
                 return;
             }
-            /*eslint-disable */
             const maxPathLength = this.graphStorage.getDatabaseInfo().max_path_length;
             const queryString = `FOR v, e, p IN 1 .. ${maxPathLength}
             OUTBOUND '${startVertex._id}'
             GRAPH 'origintrail_graph'
             RETURN p`;
-            /* eslint-enable */
 
             this.graphStorage.runQuery(queryString).then((result) => {
                 resolve(result);
@@ -102,74 +101,72 @@ class Graph {
 
     /**
      * Transforms raw graph data to virtual one (without
-     * @param rawGraph
+     * @param rawGraph  Raw graph structure
      * @returns {{}}
      */
     static convertToVirtualGraph(rawGraph) {
-        const vertices = {};
-        const edges = {};
-        const list = {};
+        const resultList = {};
+        const resultEdges = {};
+        const resultVertices = {};
 
-        for (const vertexId in rawGraph) {
-            const vertex = rawGraph[vertexId];
-            if (vertex.edges === undefined) {
+        for (const id in rawGraph) {
+            const graph = rawGraph[id];
+            if (graph.edges == null) {
                 // eslint-disable-next-line no-continue
                 continue;
             }
 
-            for (const edgeId in rawGraph[vertexId].edges) {
-                if (vertex.edges[edgeId] !== null) {
-                    // eslint-disable-next-line no-underscore-dangle,no-param-reassign
-                    vertex.edges[edgeId].key = vertex.edges[edgeId]._key;
-                    // eslint-disable-next-line max-len
-                    // eslint-disable-next-line no-underscore-dangle,no-param-reassign,prefer-destructuring
-                    vertex.edges[edgeId].from = vertex.edges[edgeId]._from.split('/')[1];
+            for (const edgeId in graph.edges) {
+                const edge = graph.edges[edgeId];
+                if (edge !== null) {
+                    edge.key = edge._key;
                     // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    vertex.edges[edgeId].to = vertex.edges[edgeId]._to.split('/')[1];
+                    edge.from = edge._from.split('/')[1];
+                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
+                    edge.to = edge._to.split('/')[1];
 
-                    delete vertex.edges[edgeId]._key;
-                    delete vertex.edges[edgeId]._id;
-                    delete vertex.edges[edgeId]._rev;
-                    delete vertex.edges[edgeId]._to;
-                    delete vertex.edges[edgeId]._from;
+                    delete edge._key;
+                    delete edge._id;
+                    delete edge._rev;
+                    delete edge._to;
+                    delete edge._from;
 
-                    // eslint-disable-next-line  prefer-destructuring
-                    const key = vertex.edges[edgeId].key;
-                    if (edges[key] === undefined) {
-                        edges[key] = vertex.edges[edgeId];
+                    const { key } = edge.key;
+                    if (resultEdges[key] === undefined) {
+                        resultEdges[key] = graph.edges[edgeId];
                     }
                 }
             }
 
-            if (vertex.vertices !== undefined) {
-                for (const j in rawGraph[vertexId].vertices) {
-                    if (vertex.vertices[j] !== null) {
-                        vertex.vertices[j].key = vertex.vertices[j]._key;
-                        vertex.vertices[j].outbound = [];
+            if (graph.vertices !== undefined) {
+                for (const j in rawGraph[id].vertices) {
+                    if (graph.vertices[j] !== null) {
+                        graph.vertices[j].key = graph.vertices[j]._key;
+                        graph.vertices[j].outbound = [];
 
-                        delete vertex.vertices[j]._key;
-                        delete vertex.vertices[j]._id;
-                        delete vertex.vertices[j]._rev;
+                        delete graph.vertices[j]._key;
+                        delete graph.vertices[j]._id;
+                        delete graph.vertices[j]._rev;
 
                         // eslint-disable-next-line  prefer-destructuring
-                        const key = vertex.vertices[j].key;
+                        const key = graph.vertices[j].key;
 
-                        if (vertices[key] === undefined) {
-                            vertices[key] = vertex.vertices[j];
+                        if (resultVertices[key] === undefined) {
+                            resultVertices[key] = graph.vertices[j];
                         }
                     }
                 }
             }
         }
 
-        for (const vertexId in vertices) {
-            list[vertices[vertexId].key] = vertices[vertexId];
+        for (const vertexId in resultVertices) {
+            resultList[resultVertices[vertexId].key] = resultVertices[vertexId];
         }
-        for (const edgeId in edges) {
-            list[edges[edgeId].from].outbound.push(edges[edgeId]);
+        for (const edgeId in resultEdges) {
+            resultList[resultEdges[edgeId].from].outbound.push(resultEdges[edgeId]);
         }
         return {
-            data: list,
+            data: resultList,
         };
     }
 
@@ -251,28 +248,28 @@ class Graph {
      * @param dhKademilaId  DH node Kademlia ID
      * @param vertices      Vertices to be encrypted
      */
-    static encryptVertices(dhWallet, dhKademilaId, vertices) {
+    encryptVertices(dhWallet, dhKademilaId, vertices) {
         return new Promise((resolve, reject) => {
-            const sysdb = new SystemStorage();
-
-            sysdb.connect().then(() => {
+            this.sysdb.connect().then(() => {
                 const selectQuerySQL = 'SELECT dh.data_private_key, dh.data_public_key from data_holders as dh where dh.dh_wallet=? and dh.dh_kademlia_id=?';
 
-                sysdb.runSystemQuery(selectQuerySQL, [dhWallet, dhKademilaId]).then((rows) => {
+                this.sysdb.runSystemQuery(selectQuerySQL, [dhWallet, dhKademilaId]).then((rows) => {
                     if (rows.length > 0) {
-                        // keys found
                         const privateKey = rows[0].data_private_key;
                         const publicKey = rows[0].data_public_key;
 
                         encryptVertices(vertices, privateKey, publicKey);
                         resolve({ vertices, public_key: publicKey });
                     } else {
-                        // there are no keys
                         const keyPair = Encryption.generateKeyPair();
                         const updateKeysSQL = 'UPDATE data_holders SET data_private_key=? and data_public_key=? where dh_wallet=? and dh_kademlia_id=?';
+                        const updateQueryParams = [
+                            keyPair.privateKey,
+                            keyPair.publicKey,
+                            dhWallet,
+                            dhKademilaId];
 
-                        /* eslint-disable max-len */
-                        sysdb.runSystemUpdate(updateKeysSQL, [keyPair.privateKey, keyPair.publicKey, dhWallet, dhKademilaId]).then(() => {
+                        this.sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
                             encryptVertices(vertices, keyPair.privateKey, keyPair.publicKey);
                             resolve({ vertices, public_key: keyPair.publicKey });
                         }).catch((err) => {
