@@ -15,3 +15,4 @@ OT-GIT-NODE-DEVELOP.zip
 manual-testing-scripts
 log.log
 start.log
+modules/blockchain_interface/ethereum/build/*
