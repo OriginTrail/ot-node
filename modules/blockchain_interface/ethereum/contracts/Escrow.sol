@@ -85,7 +85,7 @@ contract EscrowHolder {
 
 		escrow[msg.sender][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, 0, 0, total_time, EscrowStatus.initiated);
 
-		emit EscrowInitated(msg.sender, DH_wallet, data_id);
+		 EscrowInitated(msg.sender, DH_wallet, data_id);
 	}
 
 	function verifyEscrow(address DC_wallet, uint data_id, uint token_amount, uint total_time)
@@ -103,7 +103,7 @@ contract EscrowHolder {
 
 		escrow_def.escrow_status = EscrowStatus.active;
 		isVerified = true;
-		emit EscrowVerified(DC_wallet, msg.sender, data_id);
+		 EscrowVerified(DC_wallet, msg.sender, data_id);
 	}
 
 	function payOut(address DC_wallet, uint data_id)
@@ -119,7 +119,7 @@ contract EscrowHolder {
 			if(end_time > this_escrow.end_time){
 				amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 				this_escrow.escrow_status = EscrowStatus.completed;
-				emit EscrowCompleted(DC_wallet, msg.sender, data_id);
+				 EscrowCompleted(DC_wallet, msg.sender, data_id);
 			} 
 			else{
 				amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time;
@@ -129,7 +129,7 @@ contract EscrowHolder {
 		else {
 			amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 			this_escrow.escrow_status = EscrowStatus.completed;
-			emit EscrowCompleted(DC_wallet, msg.sender, data_id);
+			 EscrowCompleted(DC_wallet, msg.sender, data_id);
 		}
 
 		if(amount_to_send > 0) {
@@ -168,7 +168,7 @@ contract EscrowHolder {
 		}
 		
 		if(amount_to_send > 0) token.transfer(msg.sender, amount_to_send);
-		emit EscrowCanceled(msg.sender, DH_wallet, data_id);
+		 EscrowCanceled(msg.sender, DH_wallet, data_id);
 	}
 
 
