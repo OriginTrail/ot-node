@@ -133,26 +133,27 @@ class Graph {
 
                     const { key } = edge.key;
                     if (resultEdges[key] === undefined) {
-                        resultEdges[key] = graph.edges[edgeId];
+                        resultEdges[key] = edge;
                     }
                 }
             }
 
             if (graph.vertices !== undefined) {
-                for (const j in rawGraph[id].vertices) {
-                    if (graph.vertices[j] !== null) {
-                        graph.vertices[j].key = graph.vertices[j]._key;
-                        graph.vertices[j].outbound = [];
+                for (const vertexId in graph.vertices) {
+                    const vertex = graph.vertices[vertexId];
+                    if (vertex !== null) {
+                        vertex.key = vertex._key;
+                        vertex.outbound = [];
 
-                        delete graph.vertices[j]._key;
-                        delete graph.vertices[j]._id;
-                        delete graph.vertices[j]._rev;
+                        delete vertex._key;
+                        delete vertex._id;
+                        delete vertex._rev;
 
                         // eslint-disable-next-line  prefer-destructuring
-                        const key = graph.vertices[j].key;
+                        const key = vertex.key;
 
                         if (resultVertices[key] === undefined) {
-                            resultVertices[key] = graph.vertices[j];
+                            resultVertices[key] = vertex;
                         }
                     }
                 }
