@@ -16,19 +16,19 @@ contract('Escrow testing', async (accounts) =>{
 
   it("Should get TracToken contract", async () => {
     await TracToken.deployed();
-    });
+  });
   it("Should get Escrow contract", async () => {
     await EscrowHolder.deployed();
-    });
+  });
 
   it("Should wait for the escrow to be deployed", async() => {
     await new Promise((resolve) => setTimeout(resolve,1000));
-    });
+  });
 
   it("Should get the escrow_address", async () => {
     await EscrowHolder.deployed().then( res => {
       escrow_address = res.address;
-      }).catch(err => console.log(err));
+    }).catch(err => console.log(err));
     console.log("\t Escrow address: " + escrow_address);
   });
   
@@ -52,7 +52,7 @@ contract('Escrow testing', async (accounts) =>{
 
     assert.equal(balance_DC, 1000000000, "DC balance not 1 billion");
     assert.equal(balance_DH, 1000000000, "DH balance not 1 billion");
-    });
+  });
 
 
 
@@ -72,7 +72,7 @@ contract('Escrow testing', async (accounts) =>{
     console.log("\t allowance_DC: " + allowance_DC);
 
     assert.equal(allowance_DC, 100000000, "The proper amount was not allowed");
-    });
+  });
 
   it("Should create an Escrow, lasting 20 blocks, valued 100000000 trace", async () => {
     let instance = await EscrowHolder.deployed();
@@ -82,7 +82,7 @@ contract('Escrow testing', async (accounts) =>{
 
     await instance.initiateEscrow(DH_wallet, data_id, 100000000, escrowDuration, {from: DC_wallet}).then(function(result) {
       console.log("\t Initiate escrow - Gas used : " + result.receipt.gasUsed);
-      });
+    });
 
     response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
 
@@ -138,7 +138,7 @@ contract('Escrow testing', async (accounts) =>{
     assert.equal(0, endTime, "End time not equal zero!");
     assert.equal(escrowDuration, total_time, "Escrow duration does not match!");
     assert.equal(status, 'initated', "Escrow status not initated properly!");
-    });
+  });
 
   it("Should break - DH verifies escrow with wrong token amount", async () => {
     let instance = await EscrowHolder.deployed();
@@ -146,7 +146,7 @@ contract('Escrow testing', async (accounts) =>{
     let error;
     try{
       await instance.verify(DC_wallet, data_id, 3 * 100000000, escrowDuration, {from: DH_wallet}).then(function(result) {
-      console.log("\t Verify escrow - Gas used : " + result.receipt.gasUsed);
+        console.log("\t Verify escrow - Gas used : " + result.receipt.gasUsed);
       });
     }
     catch(e){
@@ -156,7 +156,7 @@ contract('Escrow testing', async (accounts) =>{
     assert.notEqual(error, undefined, 'Error must be thrown');
     assert.isAbove(error.message.search('invalid opcode'), -1, 'invalid opcode error must be returned');
 
-    });
+  });
 
 
 
@@ -165,7 +165,7 @@ contract('Escrow testing', async (accounts) =>{
 
     await instance.verify(DC_wallet, data_id, 100000000, escrowDuration, {from: DH_wallet}).then(function(result) {
       console.log("\t Verify escrow - Gas used : " + result.receipt.gasUsed);
-      });
+    });
 
     response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
     let status = response[5];
@@ -191,6 +191,6 @@ contract('Escrow testing', async (accounts) =>{
     console.log('\t Status: ' + status);
     assert.equal(status, 'verified',"Escrow wasn't verified");
 
-    });
-
   });
+
+});
