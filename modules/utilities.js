@@ -98,20 +98,6 @@ class Utilities {
     static isEmptyObject(obj) {
         return Object.keys(obj).length === 0 && obj.constructor === Object;
     }
-
-    /**
-     * Tries to execute callback if there is one
-     * @param callback        Callback to be executed
-     * @param callback_input  Callback inputs
-     */
-    static executeCallback(callback, callback_input) {
-        if (typeof callback === 'function') {
-            callback(callback_input);
-        } else {
-            const log = this.getLogger();
-            log.info('Callback not defined!');
-        }
-    }
 }
 
 module.exports = Utilities;

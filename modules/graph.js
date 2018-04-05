@@ -43,9 +43,8 @@ class Graph {
             if (Utilities.isEmptyObject(queryObject) === false) {
                 queryString += 'FILTER ';
 
-                const filters = [];
-
                 let count = 1;
+                const filters = [];
                 for (const key in queryObject) {
                     if (key.match(/^[\w\d]+$/g) !== null) {
                         let searchKey;
@@ -54,7 +53,6 @@ class Graph {
                         } else {
                             searchKey = key;
                         }
-
                         const param = `param${count}`;
                         filters.push(`v.${searchKey} == @param${count}`);
 
@@ -151,7 +149,6 @@ class Graph {
 
                         // eslint-disable-next-line  prefer-destructuring
                         const key = vertex.key;
-
                         if (resultVertices[key] === undefined) {
                             resultVertices[key] = vertex;
                         }
@@ -196,7 +193,6 @@ class Graph {
 
         const visitedIds = [];
         const traversalPath = [];
-
         const queueToExplore = [];
         queueToExplore.push(startVertexId);
         visitedIds[startVertexId] = true;

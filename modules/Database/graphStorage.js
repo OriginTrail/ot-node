@@ -1,4 +1,5 @@
 const ArangoJS = require('./arangojs.js');
+const Utilities = require('../utilities');
 
 const log = Utilities.getLogger();
 
