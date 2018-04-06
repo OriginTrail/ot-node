@@ -26,7 +26,7 @@ class Challenge {
         console.log(`Block size: ${blockSizeBytes}`);
         console.log(`Vertex data: ${vertexData}`);
 
-        if (numberOfTests < 0) { throw new Error('Number of tests cannot be nonpositive'); }
+        if (numberOfTests <= 0) { throw new Error('Number of tests cannot be nonpositive'); }
 
         if (startTime >= endTime) { throw new Error('Start time must be before end time'); }
 
@@ -35,7 +35,8 @@ class Challenge {
         const randomIntervals = [];
         let randomSum = 0;
 
-        for (let i = 0; i < numberOfTests; i += 1) {
+        // Create one more to avoid the last test's time to collide with end time.
+        for (let i = 0; i <= numberOfTests; i += 1) {
             randomIntervals.push(Math.floor(Math.random() * (endTime - startTime)));
             randomSum += randomIntervals[i];
         }
