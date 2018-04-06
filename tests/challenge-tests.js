@@ -59,7 +59,7 @@ function checkForTests(
         assert.deepEqual(test.dhId, expectedDhId);
         assert.deepEqual(test.importId, expectedImportId);
         assert(test.time > startTime, `Test time: ${new Date(test.time)}, start time: ${new Date(startTime)}`);
-        assert(test.time <= endTime, `Test time: ${new Date(test.time)}, end time: ${new Date(endTime)} (${test.time} < ${endTime})`);
+        assert(test.time <= endTime, `Test time: ${new Date(test.time)}, end time: ${new Date(endTime)}`);
         assert(test.time > previousTestTime);
         assert.deepEqual(test.answer, blocks[test.block]);
 
@@ -97,27 +97,27 @@ function testGenerateTests() {
     }
 
     // Start time after end time.
-    let testFunc = function () {
+    let testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 10, endTime, startTime, 32, vertexData);
     };
     assert.throws(testFunc, 'Start time after end time. Should crash!');
 
     // Nonpositive number of tests.
-    testFunc = function () {
+    testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 0, startTime, endTime, 32, vertexData);
     };
     assert.throws(testFunc, 'Zero tests asked. Should crash!');
-    testFunc = function () {
+    testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, -1, startTime, endTime, 32, vertexData);
     };
     assert.throws(testFunc, 'Negative tests asked. Should crash!');
 
     // Nonpositive block size.
-    testFunc = function () {
+    testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 10, startTime, endTime, 0, vertexData);
     };
     assert.throws(testFunc, 'Zero block size asked. Should crash!');
-    testFunc = function () {
+    testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 10, startTime, endTime, -1, vertexData);
     };
     assert.throws(testFunc, 'Negatice block size asked. Should crash!');
