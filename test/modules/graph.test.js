@@ -1,4 +1,6 @@
-const { describe, it } = require('mocha');
+const {
+    describe, it, afterEach, beforeEach,
+} = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
 
@@ -9,6 +11,12 @@ const SystemStorage = require('../../modules/Database/systemStorage');
 const deasync = require('deasync-promise');
 
 describe('graph module ', () => {
+    beforeEach('restore stubs', async () => {
+        this.encrytionMock = sinon.sandbox.mock(Encryption);
+    });
+    afterEach('restore stubs', async () => {
+        this.encrytionMock.restore();
+    });
     it('BFS empty graph', () => {
         const test_raw_graph = {};
         const traversal = Graph.bfs(test_raw_graph, 1111, false);
@@ -287,7 +295,7 @@ describe('graph module ', () => {
             },
         });
     });
-    it('Encrypt vertices test', () => {
+    it('Encrypt vertices, key not found test', () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
         const sysdb = new SystemStorageStub();
         sysdb.connect.returns(Promise.resolve());
@@ -297,13 +305,41 @@ describe('graph module ', () => {
         const graph = new Graph(null, sysdb);
 
         const keyPair = Encryption.generateKeyPair();
-        sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
+        this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
 
         const vertexData = 1;
         const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.calledOnce(sysdb.runSystemUpdate);
+
+        const encryptedVertex = encryptedVertices.vertices[0];
+        assert.isNotNull(encryptedVertex);
+
+        const encryptedData = Encryption.encryptRawData(vertexData, keyPair.privateKey);
+        assert.isNotNull(encryptedData);
+        assert.equal(encryptedData, encryptedVertex.data);
+    });
+    it('Encrypt vertices, key found test', () => {
+        const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
+        const sysdb = new SystemStorageStub();
+        sysdb.connect.returns(Promise.resolve());
+
+        const keyPair = Encryption.generateKeyPair();
+        sysdb.runSystemQuery.returns(Promise.resolve([{
+            data_private_key: keyPair.privateKey,
+            data_public_key: keyPair.publicKey,
+        }]));
+        sysdb.runSystemUpdate.returns(Promise.resolve());
+
+        const graph = new Graph(null, sysdb);
+        this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
+
+        const vertexData = 1;
+        const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
+        assert.isNotNull(encryptedVertices);
+
+        sinon.assert.notCalled(sysdb.runSystemUpdate);
 
         const encryptedVertex = encryptedVertices.vertices[0];
         assert.isNotNull(encryptedVertex);

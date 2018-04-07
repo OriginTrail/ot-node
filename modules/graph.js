@@ -7,7 +7,7 @@ const Encryption = require('./encryption');
  * @param privateKey  Private key used for encryption
  * @param publicKey   Public key used for decryption
  */
-function encryptVertices(vertices, privateKey, publicKey) {
+function _encryptVertices(vertices, privateKey, publicKey) {
     for (const id in vertices) {
         const vertex = vertices[id];
         vertex.data = Encryption.encryptObject(vertex.data, privateKey);
@@ -129,7 +129,8 @@ class Graph {
                     delete edge._to;
                     delete edge._from;
 
-                    const { key } = edge.key;
+                    // eslint-disable-next-line  prefer-destructuring
+                    const key = edge.key;
                     if (resultEdges[key] === undefined) {
                         resultEdges[key] = edge;
                     }
@@ -255,7 +256,7 @@ class Graph {
                         const privateKey = rows[0].data_private_key;
                         const publicKey = rows[0].data_public_key;
 
-                        encryptVertices(vertices, privateKey, publicKey);
+                        _encryptVertices(vertices, privateKey, publicKey);
                         resolve({ vertices, public_key: publicKey });
                     } else {
                         const keyPair = Encryption.generateKeyPair();
@@ -267,7 +268,7 @@ class Graph {
                             dhKademilaId];
 
                         this.sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
-                            encryptVertices(vertices, keyPair.privateKey, keyPair.publicKey);
+                            _encryptVertices(vertices, keyPair.privateKey, keyPair.publicKey);
                             resolve({ vertices, public_key: keyPair.publicKey });
                         }).catch((err) => {
                             reject(err);
