@@ -49,8 +49,6 @@ class SystemStorage {
                 });
         });
     }
-
-
 }
 
 module.exports = SystemStorage;
