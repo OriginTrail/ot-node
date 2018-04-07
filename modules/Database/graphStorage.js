@@ -1,5 +1,5 @@
-const Utilities = require('../utilities');
 const ArangoJS = require('./arangojs.js');
+const Utilities = require('../utilities');
 
 const log = Utilities.getLogger();
 
@@ -121,6 +121,14 @@ class GraphStorage {
      */
     identify() {
         return this.db.identify();
+    }
+
+    /**
+     * Gets underlying database information
+     * @returns database info
+     */
+    getDatabaseInfo() {
+        return this.selectedDatabase;
     }
 }
 

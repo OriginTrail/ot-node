@@ -89,6 +89,15 @@ class Utilities {
     static sha3(data) {
         return soliditySha3(data);
     }
+
+    /**
+     * Checks if an object is empty
+     * @param obj        Object to be checked
+     * @return {boolean} Is empty or not
+     */
+    static isEmptyObject(obj) {
+        return Object.keys(obj).length === 0 && obj.constructor === Object;
+    }
 }
 
 module.exports = Utilities;

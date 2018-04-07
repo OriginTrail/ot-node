@@ -3,6 +3,8 @@ const GraphStorage = require('./modules/Database/graphStorage');
 const Blockchain = require('./modules/blockchain');
 const deasync = require('deasync-promise');
 const MerkleTree = require('./modules/merkle');
+const Graph = require('./modules/graph');
+const SystemStorage = require('./modules/Database/systemStorage');
 const restify = require('restify');
 
 const log = Utilities.getLogger();
@@ -43,6 +45,7 @@ class OTNode {
         try {
             deasync(this.graphDB.connect());
             log.info(`Connected to graph database: ${this.graphDB.identify()}`);
+            this.graph = new Graph(this.graphDB, new SystemStorage());
         } catch (err) {
             console.log(err);
         }

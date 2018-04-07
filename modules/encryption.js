@@ -25,7 +25,7 @@ class Encryption {
      */
     static encryptObject(obj, privateKey) {
         const data = JSON.stringify(obj);
-        return this.encryptRawTada(data, privateKey);
+        return this.encryptRawData(data, privateKey);
     }
 
     /**
