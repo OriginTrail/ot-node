@@ -1,13 +1,4 @@
-// start(...)
-// connectToSeed(...)
-// sendBroadcast(...)
-// sendDirectMessage(...)
-// onDirectMessage(...)
-// broadcastMessage(...)
-// onBroadcastMessage(...)
-
-
-const log = require('./utilities').getLogger();
+const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const leveldown = require('leveldown');
@@ -23,7 +14,7 @@ const NetworkUtilities = require('./NetworkUtilities');
 
 var ns = {};
 
-const utilities = require('./utilities');
+const utilities = require('./Utilities');
 
 // TODO: change it for sqlite
 const storage = levelup(encoding(leveldown('kad-storage/storage.db')));

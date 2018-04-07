@@ -1,28 +1,53 @@
-const SystemStorage = require('./Database/systemStorage');
+const SystemStorage = require('./Database/SystemStorage');
+const soliditySha3 = require('solidity-sha3').default;
+const Sequelize = require('sequelize');
 const pem = require('pem');
 const fs = require('fs');
 var logger = require('winston');
 
 class Utilities {
+    constructor() {
+        try {
+            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
+            logger.remove(logger.transports.Console);
+            logger.add(logger.transports.Console, { colorize: true });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+
     /**
      * Get configuration parameters from SystemStorage database, table node_config
      * @returns {Promise<void>}
      */
     static loadConfig() {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery('SELECT * FROM node_config', []).then((rows) => {
-                    [this.config] = rows;
-                    rows[0].ssl_authority_paths = JSON.parse(rows[0].ssl_authority_paths);
-                    rows[0].network_bootstrap_nodes = JSON.parse(rows[0].network_bootstrap_nodes);
-                    resolve(rows[0]);
-                }).catch((err) => {
-                    reject(err);
+            new SystemStorage().connect().then(db => {
+
+                const Config = db.define('node_config', {
+                    node_wallet: {
+                        type: Sequelize.STRING,
+                    },
+                }, {
+                    tableName: 'node_config',
                 });
-            }).catch((err) => {
-                reject(err);
+                Config.findOne().then(config => {
+                    console.log(config);
+                });
             });
+
+            // db.connect().then(() => {
+            //     db.runSystemQuery('SELECT * FROM node_config', []).then((rows) => {
+            //         [this.config] = rows;
+            //         rows[0].ssl_authority_paths = JSON.parse(rows[0].ssl_authority_paths);
+            //         rows[0].network_bootstrap_nodes = JSON.parse(rows[0].network_bootstrap_nodes);
+            //         resolve(rows[0]);
+            //     }).catch((err) => {
+            //         reject(err);
+            //     });
+            // }).catch((err) => {
+            //     reject(err);
+            // });
         });
     }
 
@@ -76,6 +101,26 @@ class Utilities {
         });
     }
 
+    /**
+     * Get information of selected graph storage database
+     * @returns {Promise<any>}
+     */
+    static loadSelectedBlockchainInfo() {
+        return new Promise((resolve, reject) => {
+            const db = new SystemStorage();
+            db.connect().then(() => {
+                db.runSystemQuery('SELECT bd.* FROM node_config AS nc JOIN blockchain_data bd ON nc.selected_blockchain = bd.id', []).then((rows) => {
+                    [this.selectedDatabase] = rows;
+                    resolve(rows[0]);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
     static getSelectedDatabaseInfo() {
         if (!this.config) {
             throw Error('Configuration not loaded from system database');
@@ -118,7 +163,15 @@ class Utilities {
             );
         }
     }
+
+    /**
+     * Returns solidity keccak256 hash of given data
+     * @param data
+     * @returns {string}
+     */
+    static sha3(data) {
+        return soliditySha3(data);
+    }
 }
 
 module.exports = Utilities;
-

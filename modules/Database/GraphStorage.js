@@ -1,5 +1,7 @@
-const Utilities = require('../utilities');
-const ArangoJS = require('./arangojs.js');
+const Utilities = require('../Utilities');
+const ArangoJS = require('./Arangojs');
+
+const log = Utilities.getLogger();
 
 class GraphStorage {
     constructor(selectedDatabase) {
@@ -27,7 +29,7 @@ class GraphStorage {
                     resolve(this.db);
                     break;
                 default:
-                    console.log(this.selectedDatabase);
+                    log.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
             }
@@ -66,6 +68,45 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.addDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Update document in selected graph database
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    updateDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.updateDocument(collectionName, document).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Get document from selected graph database
+     * @param collectionName
+     * @param document
+     */
+    getDocument(collectionName, documentKey) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getDocument(collectionName, documentKey).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

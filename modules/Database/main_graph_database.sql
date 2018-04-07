@@ -1,0 +1,1 @@
+INSERT INTO graph_database (id, database_system, username, password, host, port, max_path_length, database) VALUES (1, 'arango_db', 'root', 'root', 'localhost', 8529, 1000, 'origintrail');
