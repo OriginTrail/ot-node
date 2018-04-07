@@ -23,3 +23,5 @@ data
 !data/.gitkeep
 start.log
 modules/blockchain_interface/ethereum/build/*
+hidden_service
+
