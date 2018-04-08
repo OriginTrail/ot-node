@@ -11,7 +11,7 @@ const signing = require('./blockchain_interface/ethereum/signing')();
 const async = require('async');
 const db = require('./database')();
 
-const replication = require('./DataReplication');
+const replication = require('./Challenge');
 const gs1 = require('./gs1-importer')();
 
 module.exports = () => {

@@ -1,5 +1,5 @@
 const globalEvents = require('./GlobalEvents');
-const importer = require('./importer')();
+//const importer = require('./importer')();
 const MessageHandler = require('./MessageHandler');
 
 const { globalEmitter } = globalEvents;
