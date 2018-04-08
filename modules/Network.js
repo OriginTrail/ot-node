@@ -169,18 +169,18 @@ class Network {
 
         // Use "global" rules for preprocessing *all* incoming messages
         // This is useful for things like blacklisting certain nodes
-        // node.ot.use((request, response, next) => {
-        //     console.log('stiglo nesto');
-        //     console.log(JSON.stringify(request));
-        //     const [identityString] = request.contact;
-        //     console.log(response);
-        //
-        //     if ([/* identity blacklist */].includes(identityString)) {
-        //         return next(new Error('You have been blacklisted'));
-        //     }
-        //
-        //     next();
-        // });
+        node.ot.use((request, response, next) => {
+            console.log('stiglo nesto');
+            console.log(JSON.stringify(request));
+            const [identityString] = request.contact;
+            console.log(response);
+
+            if ([/* identity blacklist */].includes(identityString)) {
+                return next(new Error('You have been blacklisted'));
+            }
+
+            next();
+        });
 
         // node.ot.use((request, response, next) => {
         //     if (request.method === 'ECHO') {
