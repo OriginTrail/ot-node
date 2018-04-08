@@ -97,7 +97,7 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
@@ -169,18 +169,18 @@ class Network {
 
         // Use "global" rules for preprocessing *all* incoming messages
         // This is useful for things like blacklisting certain nodes
-        node.ot.use((request, response, next) => {
-            console.log('stiglo nesto');
-            console.log(JSON.stringify(request));
-            const [identityString] = request.contact;
-            console.log(response);
-
-            if ([/* identity blacklist */].includes(identityString)) {
-                return next(new Error('You have been blacklisted'));
-            }
-
-            next();
-        });
+        // node.ot.use((request, response, next) => {
+        //     console.log('stiglo nesto');
+        //     console.log(JSON.stringify(request));
+        //     const [identityString] = request.contact;
+        //     console.log(response);
+        //
+        //     if ([/* identity blacklist */].includes(identityString)) {
+        //         return next(new Error('You have been blacklisted'));
+        //     }
+        //
+        //     next();
+        // });
 
         // node.ot.use((request, response, next) => {
         //     if (request.method === 'ECHO') {
@@ -193,6 +193,7 @@ class Network {
         //     console.log(request.params.message);
         // });
 
+        
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
             log.notify('OT Node listening ' +
