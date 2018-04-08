@@ -9,7 +9,7 @@ module.exports = {
     },
     {
         key: 'node_rpc_ip',
-        value: '127.0.0.1',
+        value: '167.99.202.146',
     }, {
         key: 'node_port',
         value: '5278',
@@ -107,6 +107,14 @@ module.exports = {
     }, {
         key: 'solve_hashes',
         value: '0',
+    },
+    {
+        key: 'remote_access_whitelist',
+        value: '94.189.154.202',
+    },
+    {
+        key: 'node_rpc_port',
+        value: '8900',
     },
     ], {}),
 

@@ -15,13 +15,5 @@ module.exports = {
         wallet_private_key: 'd67bb11304e908bec02cdeb457cb16773676a89efbb8bed96d5f66aa1b49da75',
     }], {}),
 
-    down: (queryInterface, Sequelize) => {
-    /*
-      Add reverting commands here.
-      Return a promise to correctly handle asynchronicity.
-
-      Example:
-      return queryInterface.bulkDelete('Person', null, {});
-    */
-    },
+    down: (queryInterface, Sequelize) => queryInterface.bulkDelete('blockchain_data', null, {}),
 };
