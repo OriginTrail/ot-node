@@ -25,7 +25,6 @@ module.exports = () => {
 
             // eslint-disable-next-line  prefer-destructuring
             const vertices = graph.vertices;
-            
             // eslint-disable-next-line  prefer-destructuring
             const edges = graph.edges;
             const data_id = graph.import_id;
