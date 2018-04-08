@@ -76,7 +76,7 @@ class Utilities {
             info: 'white',
             warn: 'yellow',
             crit: 'magenta',
-            fatal: 'red',
+            error: 'red',
         };
 
 
@@ -85,7 +85,7 @@ class Utilities {
                 colors: customColors,
                 level: logLevel,
                 levels: {
-                    fatal: 0,
+                    error: 0,
                     crit: 1,
                     warn: 2,
                     info: 3,
