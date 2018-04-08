@@ -94,7 +94,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'test_network',
-        value: '1',
+        value: '0',
     }, {
         key: 'ssl_authority_paths',
         value: '[]',
@@ -103,7 +103,7 @@ module.exports = {
         value: '[]',
     }, {
         key: 'is_bootstrap_node',
-        value: '1',
+        value: '0',
     }, {
         key: 'solve_hashes',
         value: '0',
