@@ -325,6 +325,7 @@ class Network {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
             } else {
+                log.info('Joined');
                 /* eslint-disable-next-line no-undef */
                 callback(null, entry);
             }
