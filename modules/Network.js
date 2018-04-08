@@ -266,6 +266,7 @@ class Network {
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
         };
+        console.log(contact);
         return contact;
     }
 
@@ -292,9 +293,12 @@ class Network {
     * @return {Promise<void>}
     */
     async joinNetwork(callback) {
-        const peers
-            = config
-                .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        // const peers
+        //     = config
+        //         .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+
+        const peers = [ '44cd40efdb5481ad27ed80ece9121c02fce3bc9f',
+            { protocol: 'https:', hostname: '167.99.202.146', port: '5278', xpub:  } ];
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
