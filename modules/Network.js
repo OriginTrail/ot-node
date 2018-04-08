@@ -304,13 +304,13 @@ class Network {
 
             return node.ot.router.events.once('add', (identity) => {
                 // console.log('identity');
-                console.log(identity);
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
                         node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
+                console.log(config.network_bootstrap_nodes);
                 this.joinNetwork(callback);
             });
         }
@@ -318,7 +318,6 @@ class Network {
         log.info(`Joining network from ${peers.length} seeds`);
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
-            console.log(contact);
             node.ot.join(contact, (err) => {
                 done(null, (!err) && node.ot.router.size > 1);
             });
