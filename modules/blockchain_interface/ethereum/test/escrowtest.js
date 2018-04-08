@@ -168,7 +168,8 @@ contract('Escrow testing', async (accounts) => {
         }
 
         assert.notEqual(error, undefined, 'Error must be thrown');
-        // assert.isAbove(error.message.search('invalid opcode'), -1, 'invalid opcode error must be returned');
+        // assert.isAbove(error.message.search('invalid opcode'), -1,
+        // 'invalid opcode error must be returned');
         assert.equal(error.message, REVERT_MSG);
     });
 
