@@ -203,21 +203,21 @@ class Network {
                 ns.spawnHashSolverProcesses();
             }
             // if bootstrap node, don't join just wait and listen in seed mode
-            // if (!parseInt(config.is_bootstrap_node, 10)) {
-            async.retry({
-                times: Infinity,
-                interval: 1000,
-            }, done => this.joinNetwork(done), (err, entry) => {
-                if (err) {
-                    log.error(err.message);
-                    process.exit(1);
-                }
+            if (!parseInt(config.is_bootstrap_node, 10)) {
+                async.retry({
+                    times: Infinity,
+                    interval: 1000,
+                }, done => this.joinNetwork(done), (err, entry) => {
+                    if (err) {
+                        log.error(err.message);
+                        process.exit(1);
+                    }
 
-                log.info(`Connected to network via ${entry[0]} ` +
+                    log.info(`Connected to network via ${entry[0]} ` +
                         `(http://${entry[1].hostname}:${entry[1].port})`);
-                log.info(`Discovered ${node.ot.router.size} peers from seed`);
-            });
-            // }
+                    log.info(`Discovered ${node.ot.router.size} peers from seed`);
+                });
+            }
         });
 
         // this.node.plugin(kadence.quasar());
