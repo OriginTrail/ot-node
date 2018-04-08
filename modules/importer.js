@@ -1,12 +1,12 @@
 // External modules
 const PythonShell = require('python-shell');
-const utilities = require('./utilities');
+const utilities = require('./Utilities');
 
 const log = utilities.getLogger();
 const config = utilities.getConfig();
-const Mtree = require('./mtree')();
-const storage = require('./storage')();
-const blockchain = require('./blockchain')();
+const Mtree = require('./Merkle')();
+const storage = require('./Storage')();
+const blockchain = require('./Blockchain')();
 const signing = require('./blockchain_interface/ethereum/signing')();
 const async = require('async');
 const db = require('./database')();
