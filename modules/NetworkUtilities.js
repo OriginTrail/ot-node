@@ -48,7 +48,7 @@ class NetworkUtilities {
             log.info('Still solving identity, ' +
           `currently ${attempts} of ${kadence.constants.MAX_NODE_INDEX} ` +
           `possible indices tested in the last ${ms(Date.now() - start)}`);
-        }, 1000);
+        }, 60000);
 
         log.info(`Solving identity derivation index with ${config.cpus} ` +
         'solver processes, this can take a while...');

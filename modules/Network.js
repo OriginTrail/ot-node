@@ -319,6 +319,7 @@ class Network {
                 done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
+            console.log(err);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));

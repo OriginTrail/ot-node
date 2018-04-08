@@ -94,7 +94,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'test_network',
-        value: '0',
+        value: '1',
     }, {
         key: 'ssl_authority_paths',
         value: '[]',
