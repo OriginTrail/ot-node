@@ -92,6 +92,8 @@ class Network {
             parseInt(config.child_derivation_index, 10),
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
+        console.log(this.xprivkey, parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH);
 
         log.info('Spartacus initialised');
 
