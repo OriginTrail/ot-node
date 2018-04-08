@@ -9,7 +9,7 @@ module.exports = {
     },
     {
         key: 'node_rpc_ip',
-        value: '192.168.100.144',
+        value: '127.0.0.1',
     }, {
         key: 'node_port',
         value: '5278',

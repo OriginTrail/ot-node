@@ -16,12 +16,8 @@ manual-testing-scripts
 log.log
 start.log
 keys
-!keys/.gitkeep
-wallet.dat
-!wallet.dat/.gitkeep
 data
-!data/.gitkeep
-start.log
 modules/blockchain_interface/ethereum/build/*
 hidden_service
+!*/.gitkeep
 

@@ -9,6 +9,7 @@ const deasync = require('deasync-promise');
 const utilities = require('./Utilities');
 const log = require('./Utilities').getLogger();
 const config = require('./Config');
+const node = require('./Node');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
@@ -161,7 +162,7 @@ class NetworkUtilities {
             'ControlSock and ControlPort cannot both be enabled',
         );
 
-        const controller = new boscar.Server(new kadence.Control(node));
+        const controller = new boscar.Server(new kadence.Control(node.ot));
 
         if (parseInt(config.control_port_enabled, 10)) {
             log.info(`Binding controller to port ${config.control_port}`);
@@ -214,15 +215,15 @@ class NetworkUtilities {
           `in ${msg.result.attempts} attempts (${ms(msg.result.time)})`);
 
             const solution = new kadence.permission.PermissionSolution(Buffer.from(msg.result.solution, 'hex'));
-            this.node.wallet.put(solution);
+            node.ot.wallet.put(solution);
         });
 
         solver.on('error', (err) => {
             log.error(`solver ${c} error, ${err.message}`);
         });
-        const node = require('./Node');
-        console.log(node);
-        solver.send({ privateKey: node.spartacus.privateKey.toString('hex') });
+
+
+        solver.send({ privateKey: node.ot.spartacus.privateKey.toString('hex') });
         this.solvers.push(solver);
     }
 

@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
 const encoding = require('encoding-down');
@@ -7,6 +9,7 @@ const config = require('./Config');
 const async = require('async');
 const fs = require('fs');
 var node = require('./Node');
+var code = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 
@@ -63,7 +66,7 @@ class Network {
         // const transport = new kadence.HTTPTransport();
 
         // Initialize protocol implementation
-        node = new kadence.KademliaNode({
+        node.ot = new kadence.KademliaNode({
             log,
             transport,
             contact,
@@ -74,17 +77,17 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        node.hashcash = node.plugin(kadence.hashcash({
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
             methods: ['PUBLISH', 'SUBSCRIBE'],
             difficulty: 2,
         }));
 
         log.info('Hashcach initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
-        node.quasar = node.plugin(kadence.quasar());
+        node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Spartacus attacks - Sybil
-        node.spartacus = node.plugin(kadence.spartacus(
+        node.ot.spartacus = node.ot.plugin(kadence.spartacus(
             this.xprivkey,
             parseInt(config.child_derivation_index, 10),
             kadence.constants.HD_KEY_DERIVATION_PATH,
@@ -94,22 +97,22 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        node.eclipse = node.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
-        // node.permission = node.plugin(kadence.permission({
-        //     privateKey: node.spartacus.privateKey,
-        //     walletPath: `${__dirname}/../data/wallet.dat`,
-        // }));
+        node.ot.permission = node.ot.plugin(kadence.permission({
+            privateKey: node.ot.spartacus.privateKey,
+            walletPath: `${__dirname}/../data/wallet.dat`,
+        }));
 
         // Store peers in cache
-        node.rolodex = node.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
-        // log.info('Validating solutions in wallet, this can take some time');
-        // await node.wallet.validate();
+        log.info('Validating solutions in wallet, this can take some time');
+        await node.ot.wallet.validate();
 
         // Hibernate when bandwidth thresholds are reached
-        // node.hibernate = node.plugin(kadence.hibernate({
+        // node.ot.hibernate = node.ot.plugin(kadence.hibernate({
         //     limit: config.BandwidthAccountingMax,
         //     interval: config.BandwidthAccountingReset,
         //     reject: ['FIND_VALUE', 'STORE'],
@@ -118,8 +121,8 @@ class Network {
         // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
             kadence.constants.T_RESPONSETIMEOUT = 20000;
-            node.onion = node.plugin(kadence.onion({
-                dataDirectory: `${__dirname}/../hidden_service`,
+            node.ot.onion = node.plugin(kadence.onion({
+                dataDirectory: `${__dirname}/../data/hidden_service`,
                 virtualPort: config.onion_virtual_port,
                 localMapping: `127.0.0.1:${config.node_port}`,
                 torrcEntries: {
@@ -135,27 +138,27 @@ class Network {
 
         if (parseInt(config.traverse_nat_enabled, 10)) {
             log.info('Trying NAT traversal');
-            node.traverse = node.plugin(kadence.traverse([
+            node.ot.traverse = node.ot.plugin(kadence.traverse([
                 new kadence.traverse.UPNPStrategy({
                     mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                    publicPort: parseInt(node.contact.port, 10),
+                    publicPort: parseInt(node.ot.contact.port, 10),
                 }),
                 new kadence.traverse.NATPMPStrategy({
                     mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                    publicPort: parseInt(node.contact.port, 10),
+                    publicPort: parseInt(node.ot.contact.port, 10),
                 }),
             ]));
         }
 
         // Handle any fatal errors
-        node.on('error', (err) => {
+        node.ot.on('error', (err) => {
             log.error(err.message.toLowerCase());
         });
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
-            node.rpc.deserializer.append(new kadence.logger.IncomingMessage(log));
-            node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(log));
+            node.ot.rpc.deserializer.append(new kadence.logger.IncomingMessage(log));
+            node.ot.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(log));
         }
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
@@ -165,7 +168,7 @@ class Network {
 
         // Use "global" rules for preprocessing *all* incoming messages
         // This is useful for things like blacklisting certain nodes
-        // node.use((request, response, next) => {
+        // node.ot.use((request, response, next) => {
         //     console.log('stiglo nesto');
         //     console.log(JSON.stringify(request));
         //     const [identityString] = request.contact;
@@ -178,41 +181,42 @@ class Network {
         //     next();
         // });
 
-        // node.use((request, response, next) => {
+        // node.ot.use((request, response, next) => {
         //     if (request.method === 'ECHO') {
         //         console.log(JSON.stringify(request));
         //         response.send(request.params);
         //     }
         //     next();
         // });
-        // node.use('ECHO', (err, request, response, next) => {
+        // node.ot.use('ECHO', (err, request, response, next) => {
         //     console.log(request.params.message);
         // });
 
 
-        node.listen(parseInt(config.node_port, 10), () => {
+        node.ot.listen(parseInt(config.node_port, 10), () => {
             log.info(`Node listening on local port ${config.node_port} ` +
-                `and exposed at https://${node.contact.hostname}:${node.contact.port}`);
+                `and exposed at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
             ns.registerControlInterface(config, node);
-            if (config.solve_hashes) {
+
+            if (parseInt(config.solve_hashes, 10)) {
                 ns.spawnHashSolverProcesses();
             }
             // if bootstrap node, don't join just wait and listen in seed mode
-            if (config.is_bootstrap_node) {
-                async.retry({
-                    times: Infinity,
-                    interval: 1000,
-                }, done => this.joinNetwork(done), (err, entry) => {
-                    if (err) {
-                        log.error(err.message);
-                        process.exit(1);
-                    }
+            // if (!parseInt(config.is_bootstrap_node, 10)) {
+            async.retry({
+                times: Infinity,
+                interval: 1000,
+            }, done => this.joinNetwork(done), (err, entry) => {
+                if (err) {
+                    log.error(err.message);
+                    process.exit(1);
+                }
 
-                    log.info(`Connected to network via ${entry[0]} ` +
+                log.info(`Connected to network via ${entry[0]} ` +
                         `(http://${entry[1].hostname}:${entry[1].port})`);
-                    log.info(`Discovered ${node.router.size} peers from seed`);
-                });
-            }
+                log.info(`Discovered ${node.ot.router.size} peers from seed`);
+            });
+            // }
         });
 
         // this.node.plugin(kadence.quasar());
@@ -273,8 +277,7 @@ class Network {
     _HTTPSTransport() {
         const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
         const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        // const ca = config.ssl_authority_paths.map(fs.readFileSync);
-        const ca = [];
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
 
         // Initialize transport adapter
         const transport = new kadence.HTTPSTransport({ key, cert, ca });
@@ -290,19 +293,19 @@ class Network {
     async joinNetwork(callback) {
         const peers
             = config
-                .network_bootstrap_nodes.concat(await node.rolodex.getBootstrapCandidates());
-
+                .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        console.log(peers);
         if (peers.length === 0) {
             log.info('No bootstrap seeds provided and no known profiles');
             log.info('Running in seed mode (waiting for connections)');
 
-            return node.router.events.once('add', (identity) => {
+            return node.ot.router.events.once('add', (identity) => {
                 console.log('identity');
                 console.log(identity);
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
-                        node.router.getContactByNodeId(identity),
+                        node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
                 this.joinNetwork(callback);
@@ -312,8 +315,8 @@ class Network {
         log.info(`Joining network from ${peers.length} seeds`);
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
-            node.join(contact, (err) => {
-                done(null, (!err) && node.router.size > 1);
+            node.ot.join(contact, (err) => {
+                done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
             if (!result) {

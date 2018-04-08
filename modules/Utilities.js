@@ -28,11 +28,23 @@ class Utilities {
                 attributes: ['key', 'value'],
             }).then((cnfs) => {
                 cnfs.forEach((cnf) => {
-                    config[cnf.get({
+                    const prop = cnf.get({
                         plain: true,
-                    }).key] = cnf.get({
-                        plain: true,
-                    }).value;
+                    }).key;
+                    if (prop === 'network_bootstrap_nodes' || prop === 'ssl_authority_paths') {
+                        config[cnf.get({
+                            plain: true,
+                        }).key] = JSON.parse(cnf.get({
+                            plain: true,
+                        }).value);
+                    } else {
+                        config[cnf.get({
+                            plain: true,
+                        }).key] = cnf.get({
+                            plain: true,
+                        }).value;
+                    }
+
                 });
                 resolve(config);
             });
