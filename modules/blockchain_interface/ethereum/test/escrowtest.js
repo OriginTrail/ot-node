@@ -7,6 +7,7 @@ var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-li
 var Web3 = require('web3');
 
 // Constant values
+const REVERT_MSG = 'VM Exception while processing transaction: revert';
 const escrowDuration = 20;
 const one_ether = '1000000000000000000';
 var DC_wallet;
@@ -144,8 +145,6 @@ contract('Escrow testing', async (accounts) => {
 
         assert.equal(token_amount, 100000000, 'Amount of tokens does not match!');
         assert.equal(tokens_sent, 0, 'Sent tokens not equal zero!');
-        // eslint-disable-next-line no-undef
-        assert.equal(stake, 100000000, 'Stake amount does not match!');
         assert.equal(0, actual_startTime, 'Start time not equal zero!');
         assert.equal(0, endTime, 'End time not equal zero!');
         assert.equal(escrowDuration, total_time, 'Escrow duration does not match!');
@@ -158,7 +157,7 @@ contract('Escrow testing', async (accounts) => {
 
         let error;
         try {
-            await instance.verify(
+            await instance.verifyEscrow(
                 DC_wallet, data_id, 3 * 100000000, escrowDuration,
                 { from: DH_wallet },
             ).then((result) => {
@@ -169,14 +168,15 @@ contract('Escrow testing', async (accounts) => {
         }
 
         assert.notEqual(error, undefined, 'Error must be thrown');
-        assert.isAbove(error.message.search('invalid opcode'), -1, 'invalid opcode error must be returned');
+        // assert.isAbove(error.message.search('invalid opcode'), -1, 'invalid opcode error must be returned');
+        assert.equal(error.message, REVERT_MSG);
     });
 
     // eslint-disable-next-line no-undef
     it('Should verify an existing escrow', async () => {
         const instance = await EscrowHolder.deployed();
 
-        await instance.verify(
+        await instance.verifyEscrow(
             DC_wallet, data_id, 100000000, escrowDuration,
             { from: DH_wallet },
         ).then((result) => {
