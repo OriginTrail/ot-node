@@ -97,7 +97,7 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         // log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
