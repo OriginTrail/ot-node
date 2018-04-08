@@ -1,9 +1,11 @@
-const SystemStorage = require('./Database/SystemStorage');
 const soliditySha3 = require('solidity-sha3').default;
-const Sequelize = require('sequelize');
 const pem = require('pem');
 const fs = require('fs');
 var logger = require('winston');
+const deasync = require('deasync-promise');
+const Storage = require('./Storage');
+const config = require('./Config');
+
 
 class Utilities {
     constructor() {
@@ -22,46 +24,32 @@ class Utilities {
      */
     static loadConfig() {
         return new Promise((resolve, reject) => {
-            new SystemStorage().connect().then(db => {
-
-                const Config = db.define('node_config', {
-                    node_wallet: {
-                        type: Sequelize.STRING,
-                    },
-                }, {
-                    tableName: 'node_config',
+            Storage.models.node_config.findAll({
+                attributes: ['key', 'value'],
+            }).then((cnfs) => {
+                cnfs.forEach((cnf) => {
+                    config[cnf.get({
+                        plain: true,
+                    }).key] = cnf.get({
+                        plain: true,
+                    }).value;
                 });
-                Config.findOne().then(config => {
-                    console.log(config);
-                });
+                resolve(config);
             });
-
-            // db.connect().then(() => {
-            //     db.runSystemQuery('SELECT * FROM node_config', []).then((rows) => {
-            //         [this.config] = rows;
-            //         rows[0].ssl_authority_paths = JSON.parse(rows[0].ssl_authority_paths);
-            //         rows[0].network_bootstrap_nodes = JSON.parse(rows[0].network_bootstrap_nodes);
-            //         resolve(rows[0]);
-            //     }).catch((err) => {
-            //         reject(err);
-            //     });
-            // }).catch((err) => {
-            //     reject(err);
-            // });
         });
     }
 
-    static saveToConfig(property, value) {
+    static saveToConfig(property, val) {
+        console.log(property, val);
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery(`UPDATE node_config SET ${property}='${value}' WHERE ID = 1`, []).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
+            Storage.models.node_config.find({
+                where: { key: property },
+            }).then((row) => {
+                row.value = val;
+                row.save().then(() => {
+                    deasync(Utilities.loadConfig());
+                    resolve(row);
                 });
-            }).catch((err) => {
-                reject(err);
             });
         });
     }
@@ -87,16 +75,15 @@ class Utilities {
      */
     static loadSelectedDatabaseInfo() {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery('SELECT gd.* FROM node_config AS nc JOIN graph_database gd ON nc.selected_graph_database = gd.id', []).then((rows) => {
-                    [this.selectedDatabase] = rows;
-                    resolve(rows[0]);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
+            Storage.models.node_config.findOne({
+                attributes: ['key', 'value'],
+                where: { key: 'selected_graph_database' },
+            }).then((id) => {
+                const gDBid = id.get({ plain: true });
+                Storage.models.graph_database.findById(gDBid.value)
+                    .then((gdb) => {
+                        resolve(gdb.get({ plain: true }));
+                    });
             });
         });
     }
@@ -107,26 +94,17 @@ class Utilities {
      */
     static loadSelectedBlockchainInfo() {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery('SELECT bd.* FROM node_config AS nc JOIN blockchain_data bd ON nc.selected_blockchain = bd.id', []).then((rows) => {
-                    [this.selectedDatabase] = rows;
-                    resolve(rows[0]);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
+            Storage.models.node_config.findOne({
+                attributes: ['key', 'value'],
+                where: { key: 'selected_blockchain' },
+            }).then((id) => {
+                const BCid = id.get({ plain: true });
+                Storage.models.blockchain_data.findById(BCid.value)
+                    .then((bc) => {
+                        resolve(bc.get({ plain: true }));
+                    });
             });
         });
-    }
-
-    static getSelectedDatabaseInfo() {
-        if (!this.config) {
-            throw Error('Configuration not loaded from system database');
-        } else {
-            return this.config;
-        }
     }
 
     /**
@@ -134,7 +112,7 @@ class Utilities {
     * @return {Promise<any>}
     * @private
     */
-    static generateSelfSignedCertificate(config) {
+    static generateSelfSignedCertificate() {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
                 days: 365,
@@ -143,7 +121,7 @@ class Utilities {
                 if (err) {
                     return reject(err);
                 }
-                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_key_path}`, keys.serviceKey);
+                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_keypath}`, keys.serviceKey);
                 fs.writeFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`, keys.certificate);
                 return resolve();
             });
@@ -152,10 +130,9 @@ class Utilities {
 
     /**
     * Generates private extended key for identity
-    * @param config
     * @param kadence
     */
-    static createPrivateExtendedKey(config, kadence) {
+    static createPrivateExtendedKey(kadence) {
         if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
             fs.writeFileSync(
                 `${__dirname}/../keys/${config.private_extended_key_path}`,

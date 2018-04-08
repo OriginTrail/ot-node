@@ -15,7 +15,7 @@ class GraphStorage {
     connect() {
         return new Promise((resolve, reject) => {
             if (!this.selectedDatabase) {
-                reject(Error('Unable to connect ot graph database'));
+                reject(Error('Unable to connect to graph database'));
             } else {
                 switch (this.selectedDatabase.database_system) {
                 case 'arango_db':

@@ -3,21 +3,15 @@ const levelup = require('levelup');
 const encoding = require('encoding-down');
 const leveldown = require('leveldown');
 const kadence = require('@kadenceproject/kadence');
-
+const config = require('./Config');
 const async = require('async');
-var { node } = require('./Node');
-
 const fs = require('fs');
-
-
+var node = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
+const utilities = require('./Utilities');
 
 var ns = {};
 
-const utilities = require('./Utilities');
-
-// TODO: change it for sqlite
-const storage = levelup(encoding(leveldown('kad-storage/storage.db')));
 
 /**
  * DHT module (Kademlia)
@@ -27,13 +21,12 @@ class Network {
     /**
    * Setup options and construct a node
    */
-    constructor(config) {
-        this.config = config;
-        ns = new NetworkUtilities(config);
+    constructor() {
+        ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
         // Initialize private extended key
-        utilities.createPrivateExtendedKey(config, kadence);
+        utilities.createPrivateExtendedKey(kadence);
     }
 
     /**
@@ -41,8 +34,6 @@ class Network {
     * @return {Promise<void>}
     */
     async start() {
-        const { config } = this;
-
         // Check config
         ns.verifyConfiguration(config);
 
@@ -50,7 +41,7 @@ class Network {
         ns.setSelfSignedCertificate(config);
 
         log.info('Getting the identity');
-        this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${this.config.private_extended_key_path}`).toString();
+        this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
         this.identity = new kadence.eclipse.EclipseIdentity(this.xprivkey, this.index);
 
 
@@ -68,8 +59,9 @@ class Network {
         // Initialize public contact data
         const contact = this.setContact(config, parentkey);
 
-        const transport = this._HTTPSTransport(config);
+        const transport = this._HTTPSTransport();
         // const transport = new kadence.HTTPTransport();
+
         // Initialize protocol implementation
         node = new kadence.KademliaNode({
             log,
@@ -102,7 +94,7 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        // node.eclipse = node.plugin(kadence.eclipse());
+        node.eclipse = node.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         // node.permission = node.plugin(kadence.permission({
@@ -124,22 +116,22 @@ class Network {
         // }));
 
         // Use Tor for an anonymous overlay
-        // if (parseInt(config.onion_enabled, 10)) {
-        //     kadence.constants.T_RESPONSETIMEOUT = 20000;
-        //     node.onion = node.plugin(kadence.onion({
-        //         dataDirectory: `${__dirname}/../hidden_service`,
-        //         virtualPort: config.onion_virtual_port,
-        //         localMapping: `127.0.0.1:${config.node_kademlia_port}`,
-        //         torrcEntries: {
-        //             CircuitBuildTimeout: 10,
-        //             KeepalivePeriod: 60,
-        //             NewCircuitPeriod: 60,
-        //             NumEntryGuards: 8,
-        //             Log: 'notice stdout',
-        //         },
-        //         passthroughLoggingEnabled: 1,
-        //     }));
-        // }
+        if (parseInt(config.onion_enabled, 10)) {
+            kadence.constants.T_RESPONSETIMEOUT = 20000;
+            node.onion = node.plugin(kadence.onion({
+                dataDirectory: `${__dirname}/../hidden_service`,
+                virtualPort: config.onion_virtual_port,
+                localMapping: `127.0.0.1:${config.node_port}`,
+                torrcEntries: {
+                    CircuitBuildTimeout: 10,
+                    KeepalivePeriod: 60,
+                    NewCircuitPeriod: 60,
+                    NumEntryGuards: 8,
+                    Log: 'notice stdout',
+                },
+                passthroughLoggingEnabled: 1,
+            }));
+        }
 
         if (parseInt(config.traverse_nat_enabled, 10)) {
             log.info('Trying NAT traversal');
@@ -167,7 +159,7 @@ class Network {
         }
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
-            // https://127.0.0.1:8000/#ajsdlkasjdklasjkldjklasj
+            // https://127.0.0.1:8000/#ea48d3f07a5241291ed0b4cab6483fa8b8fcc123
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
@@ -186,50 +178,53 @@ class Network {
         //     next();
         // });
 
-        node.use((request, response, next) => {
-            if (request.method == 'ECHO') {
-                console.log(JSON.stringify(request));
-                response.send( request.params);
-            }
-            next();
-        });
-        node.use('ECHO', (err, request, response, next) => {
-            console.log(request.params.message);
-        });
+        // node.use((request, response, next) => {
+        //     if (request.method === 'ECHO') {
+        //         console.log(JSON.stringify(request));
+        //         response.send(request.params);
+        //     }
+        //     next();
+        // });
+        // node.use('ECHO', (err, request, response, next) => {
+        //     console.log(request.params.message);
+        // });
 
 
-        node.listen(parseInt(config.node_kademlia_port, 10), () => {
-            log.info(`Node listening on local port ${config.node_kademlia_port} ` +
+        node.listen(parseInt(config.node_port, 10), () => {
+            log.info(`Node listening on local port ${config.node_port} ` +
                 `and exposed at https://${node.contact.hostname}:${node.contact.port}`);
-            // ns.registerControlInterface(config, node);
-            // if (config.solve_hashes) {
-            //     ns.spawnHashSolverProcesses();
-            // }
-            // async.retry({
-            //     times: Infinity,
-            //     interval: 1000,
-            // }, done => this.joinNetwork(done), (err, entry) => {
-            //     if (err) {
-            //         log.error(err.message);
-            //         process.exit(1);
-            //     }
-            //
-            //     log.info(`Connected to network via ${entry[0]} ` +
-            //         `(http://${entry[1].hostname}:${entry[1].port})`);
-            //     log.info(`Discovered ${node.router.size} peers from seed`);
-            // });
+            ns.registerControlInterface(config, node);
+            if (config.solve_hashes) {
+                ns.spawnHashSolverProcesses();
+            }
+            // if bootstrap node, don't join just wait and listen in seed mode
+            if (config.is_bootstrap_node) {
+                async.retry({
+                    times: Infinity,
+                    interval: 1000,
+                }, done => this.joinNetwork(done), (err, entry) => {
+                    if (err) {
+                        log.error(err.message);
+                        process.exit(1);
+                    }
+
+                    log.info(`Connected to network via ${entry[0]} ` +
+                        `(http://${entry[1].hostname}:${entry[1].port})`);
+                    log.info(`Discovered ${node.router.size} peers from seed`);
+                });
+            }
         });
 
         // this.node.plugin(kadence.quasar());
         //
         //
-        // node.listen(this.config.node_kademlia_port);
-        // log.info(`Listening on port ${this.config.node_kademlia_port}`);
+        // node.listen(config.node_port);
+        // log.info(`Listening on port ${config.node_port}`);
 
 
         // node.join(['ea48d3f07a5241291ed0b4cab6483fa8b8fcc123', {
         //     hostname: 'localhost',
-        //     port: this.config.node_kademlia_port,
+        //     port: config.node_port,
         // }], () => {
         // Add 'join' callback which indicates peers were discovered and
         // our node is now connected to the overlay network
@@ -252,7 +247,7 @@ class Network {
 
 
     /**
-   * Set contact data
+    * Set contact data
     * @param config
     * @param parentkey
     * @return {{hostname: *, protocol: string, port: number, xpub: *, index: number, agent: string}}
@@ -261,7 +256,7 @@ class Network {
         const contact = {
             hostname: config.node_rpc_ip,
             protocol: 'https:',
-            port: parseInt(config.node_kademlia_port, 10),
+            port: parseInt(config.node_port, 10),
             xpub: parentkey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
@@ -275,14 +270,15 @@ class Network {
     * @return {HTTPSTransport}
     * @private
     */
-    _HTTPSTransport(config) {
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_key_path}`);
+    _HTTPSTransport() {
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
         const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
-
+        // const ca = config.ssl_authority_paths.map(fs.readFileSync);
+        const ca = [];
 
         // Initialize transport adapter
         const transport = new kadence.HTTPSTransport({ key, cert, ca });
+
         return transport;
     }
 
@@ -292,10 +288,9 @@ class Network {
     * @return {Promise<void>}
     */
     async joinNetwork(callback) {
-        var { config } = this;
-
         const peers
-            = this.config.network_bootstrap_nodes.concat(await node.rolodex.getBootstrapCandidates());
+            = config
+                .network_bootstrap_nodes.concat(await node.rolodex.getBootstrapCandidates());
 
         if (peers.length === 0) {
             log.info('No bootstrap seeds provided and no known profiles');
@@ -304,7 +299,7 @@ class Network {
             return node.router.events.once('add', (identity) => {
                 console.log('identity');
                 console.log(identity);
-                this.config.network_bootstrap_nodes = [
+                config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
                         node.router.getContactByNodeId(identity),

@@ -1,4 +1,4 @@
-const { Database } = require('./Arangojs');
+const { Database } = require('arangojs');
 
 const IGNORE_DOUBLE_INSERT = true;
 

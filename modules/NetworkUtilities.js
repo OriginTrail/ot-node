@@ -8,13 +8,13 @@ const hdkey = require('hdkey');
 const deasync = require('deasync-promise');
 const utilities = require('./Utilities');
 const log = require('./Utilities').getLogger();
+const config = require('./Config');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
 
 class NetworkUtilities {
-    constructor(config) {
-        this.config = config;
+    constructor() {
         this.solvers = [];
     }
 
@@ -23,8 +23,8 @@ class NetworkUtilities {
     * @return {Promise<boolean>}
     */
     async setSelfSignedCertificate() {
-        if (!fs.existsSync(`../keys/${this.config.ssl_key_path}`)) {
-            const result = await utilities.generateSelfSignedCertificate(this.config);
+        if (!fs.existsSync(`../keys/${config.ssl_key_path}`)) {
+            const result = await utilities.generateSelfSignedCertificate(config);
             if (result) {
                 log.info('SSL generated');
                 return true;
@@ -49,7 +49,7 @@ class NetworkUtilities {
           `possible indices tested in the last ${ms(Date.now() - start)}`);
         }, 1000);
 
-        log.info(`Solving identity derivation index with ${this.config.cpus} ` +
+        log.info(`Solving identity derivation index with ${config.cpus} ` +
         'solver processes, this can take a while...');
 
         events.on('attempt', () => attempts += 1);
@@ -59,7 +59,7 @@ class NetworkUtilities {
             time = Date.now() - start;
         } catch (err) {
             log.error(err.message.toLowerCase());
-            log.info(`Delete/move ${this.config.private_extended_key_path} and restart`);
+            log.info(`Delete/move ${config.private_extended_key_path} and restart`);
             process.exit(1);
         }
 
@@ -68,7 +68,7 @@ class NetworkUtilities {
 
         log.info(`Solved identity derivation index ${this.index} in ${ms(time)}`);
         utilities.saveToConfig('child_derivation_index', this.index);
-        this.config.child_derivation_index = this.index;
+        config.child_derivation_index = this.index;
     }
 
     /**
@@ -79,7 +79,7 @@ class NetworkUtilities {
     */
     async spawnIdentityDerivationProcesses(xprivkey, events) {
         // How many process can we run
-        const cpus = parseInt(this.config.cpus, 10);
+        const cpus = parseInt(config.cpus, 10);
 
         if (cpus === 0) {
             return log.info('There are no derivation processes running');
@@ -178,7 +178,7 @@ class NetworkUtilities {
     * Spawn solvers for hashes
     */
     spawnHashSolverProcesses() {
-        const cpus = parseInt(this.config.cpus, 10);
+        const cpus = parseInt(config.cpus, 10);
 
         if (cpus === 0) {
             return log.info('There are no solver processes running');
@@ -194,9 +194,9 @@ class NetworkUtilities {
     }
 
     /**
-   * Create child processes for hash solvers
-   * @param c
-   */
+    * Create child processes for hash solvers
+    * @param c
+    */
     forkHashSolver(c) {
         log.info(`Forking solver process ${c}`);
 
@@ -214,14 +214,15 @@ class NetworkUtilities {
           `in ${msg.result.attempts} attempts (${ms(msg.result.time)})`);
 
             const solution = new kadence.permission.PermissionSolution(Buffer.from(msg.result.solution, 'hex'));
-            // this.node.wallet.put(solution);
+            this.node.wallet.put(solution);
         });
 
         solver.on('error', (err) => {
             log.error(`solver ${c} error, ${err.message}`);
         });
-
-        solver.send({ privateKey: this.node.spartacus.privateKey.toString('hex') });
+        const node = require('./Node');
+        console.log(node);
+        solver.send({ privateKey: node.spartacus.privateKey.toString('hex') });
         this.solvers.push(solver);
     }
 
@@ -234,7 +235,7 @@ class NetworkUtilities {
         // Start initializing identity keys
         const parentkey = hdkey.fromExtendedKey(xprivkey)
             .derive(kadence.constants.HD_KEY_DERIVATION_PATH);
-        const childkey = parentkey.deriveChild(parseInt(this.config.child_derivation_index, 10));
+        const childkey = parentkey.deriveChild(parseInt(config.child_derivation_index, 10));
         return {
             childkey,
             parentkey,

@@ -8,6 +8,8 @@ const deasync = require('deasync-promise');
 const MerkleTree = require('./modules/Merkle');
 const restify = require('restify');
 var models = require('./models');
+const Storage = require('./modules/Storage');
+const config = require('./modules/Config');
 
 const log = Utilities.getLogger();
 
@@ -21,28 +23,31 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
-        models.sequelize.sync();
-        return;
-        const loadConfig = Utilities.loadConfig();
-        const loadSelectedDatabase = Utilities.loadSelectedDatabaseInfo();
-        const loadSelectedBlockchain = Utilities.loadSelectedBlockchainInfo();
-        var selectedDatabase;
-        var selectedBlockchain;
+        // sync models
+        Storage.models = deasync(models.sequelize.sync()).models;
 
-        // Loading config data and selected graph database data
+        // Loading config data
         try {
-            this.config = deasync(loadConfig);
+            deasync(Utilities.loadConfig());
             log.info('Loaded system config');
-            selectedDatabase = deasync(loadSelectedDatabase);
+        } catch (err) {
+            console.log(err);
+        }
+
+        let selectedDatabase;
+        // Loading selected graph database data
+        try {
+            selectedDatabase = deasync(Utilities.loadSelectedDatabaseInfo());
             log.info('Loaded selected database data');
         } catch (err) {
             console.log(err);
         }
 
-        // Loading config data and selected graph database data
+        let selectedBlockchain;
+        // Loading selected graph database data
         try {
-            selectedBlockchain = deasync(loadSelectedBlockchain);
-            log.info('Loaded selected blockchain data');
+            selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
+            log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
         } catch (err) {
             console.log(err);
         }
@@ -54,13 +59,14 @@ class OTNode {
         try {
             deasync(this.graphDB.connect());
             log.info(`Connected to graph database: ${this.graphDB.identify()}`);
+            // TODO: System storage fix
             this.graph = new Graph(this.graphDB, new SystemStorage());
         } catch (err) {
             console.log(err);
         }
 
         // Starting the kademlia
-        const network = new Network(this.config);
+        const network = new Network();
         network.start().then((res) => {
             // console.log(res);
         }).catch((e) => {

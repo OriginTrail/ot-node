@@ -171,8 +171,5 @@ contract EscrowHolder {
 		EscrowCanceled(msg.sender, DH_wallet, data_id);
 	}
 
-
-
-
 }
 

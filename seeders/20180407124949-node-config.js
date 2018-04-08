@@ -27,11 +27,11 @@ module.exports = {
     },
     {
         key: 'selected_graph_database',
-        value: '',
+        value: '1',
     },
     {
         key: 'selected_blockchain',
-        value: '',
+        value: '1',
     },
     {
         key: 'request_timeout',
@@ -101,6 +101,12 @@ module.exports = {
     }, {
         key: 'network_bootstrap_nodes',
         value: '[]',
+    }, {
+        key: 'is_bootstrap_node',
+        value: '1',
+    }, {
+        key: 'solve_hashes',
+        value: '0',
     },
     ], {}),
 

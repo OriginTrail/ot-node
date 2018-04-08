@@ -1,6 +1,6 @@
 let instance = null;
 
-class Node {
+class Storage {
     constructor() {
         if (!instance) {
             instance = this;
@@ -9,4 +9,4 @@ class Node {
     }
 }
 
-module.exports = new Node();
+module.exports = new Storage();
