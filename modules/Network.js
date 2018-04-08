@@ -98,7 +98,7 @@ class Network {
 
         // Mitigate Eclipse attacks
         node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        // log.info('Eclipse protection initialised');
+        log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
             privateKey: node.ot.spartacus.privateKey,
@@ -315,6 +315,7 @@ class Network {
         log.info(`Joining network from ${peers.length} seeds`);
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
+            console.log(contact);
             node.ot.join(contact, (err) => {
                 done(null, (!err) && node.ot.router.size > 1);
             });
