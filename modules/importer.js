@@ -66,7 +66,6 @@ module.exports = () => {
             }, () => {
                 log.info('JSON import complete');
             });
-
             utilities.executeCallback(callback, true);
         },
 
