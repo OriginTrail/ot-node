@@ -56,7 +56,7 @@ class Network {
         this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
             .toString('hex');
 
-        log.info(`My identity: ${this.identity}`);
+        log.notify(`My identity: ${this.identity}`);
         log.info('Initializing network');
 
         // Initialize public contact data
@@ -120,6 +120,7 @@ class Network {
 
         // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
+            // noinspection JSAnnotator
             kadence.constants.T_RESPONSETIMEOUT = 20000;
             node.ot.onion = node.plugin(kadence.onion({
                 dataDirectory: `${__dirname}/../data/hidden_service`,
@@ -194,8 +195,8 @@ class Network {
 
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
-            log.info(`Node listening on local port ${config.node_port} ` +
-                `and exposed at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
+            log.notify('OT Node listening ' +
+                `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
             ns.registerControlInterface(config, node);
 
             if (parseInt(config.solve_hashes, 10)) {
@@ -294,14 +295,13 @@ class Network {
         const peers
             = config
                 .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
-        console.log(peers);
         if (peers.length === 0) {
-            log.info('No bootstrap seeds provided and no known profiles');
-            log.info('Running in seed mode (waiting for connections)');
+            log.warn('No bootstrap seeds provided and no known profiles');
+            log.trace('Running in seed mode (waiting for connections)');
 
             return node.ot.router.events.once('add', (identity) => {
-                console.log('identity');
-                console.log(identity);
+                // console.log('identity');
+                // console.log(identity);
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
@@ -323,6 +323,7 @@ class Network {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
             } else {
+                /* eslint-disable-next-line no-undef */
                 callback(null, entry);
             }
         });

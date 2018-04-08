@@ -1,21 +1,18 @@
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
-var logger = require('winston');
+const ipaddr = require('ipaddr.js');
+var winston = require('winston');
 const deasync = require('deasync-promise');
 const Storage = require('./Storage');
 const config = require('./Config');
+const _ = require('lodash');
+const randomString = require('randomstring');
 
 
 class Utilities {
     constructor() {
-        try {
-            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
-            logger.remove(logger.transports.Console);
-            logger.add(logger.transports.Console, { colorize: true });
-        } catch (e) {
-            console.log(e);
-        }
+        this.getLogger();
     }
 
     /**
@@ -44,7 +41,6 @@ class Utilities {
                             plain: true,
                         }).value;
                     }
-
                 });
                 resolve(config);
             });
@@ -71,14 +67,59 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
+        var logLevel = 'trace';
+
+        var customColors = {
+            trace: 'grey',
+            notify: 'green',
+            debug: 'blue',
+            info: 'white',
+            warn: 'yellow',
+            crit: 'magenta',
+            fatal: 'red',
+        };
+
+
         try {
-            logger.add(logger.transports.File, { filename: 'log.log', colorize: true, prettyPrint: true });
-            logger.remove(logger.transports.Console);
-            logger.add(logger.transports.Console, { colorize: true });
+            var logger = new (winston.Logger)({
+                colors: customColors,
+                level: logLevel,
+                levels: {
+                    fatal: 0,
+                    crit: 1,
+                    warn: 2,
+                    info: 3,
+                    debug: 4,
+                    notify: 5,
+                    trace: 6,
+                },
+                transports: [
+                    new (winston.transports.Console)({
+                        colorize: 'all',
+                        timestamp: false,
+                    }),
+                    new (winston.transports.File)({ filename: 'node.log' }),
+                ],
+            });
+            winston.addColors(customColors);
+
+            // Extend logger object to properly log 'Error' types
+            var origLog = logger.log;
+
+            logger.log = function (level, msg) {
+                if (msg instanceof Error) {
+                    var args = Array.prototype.slice.call(arguments);
+                    args[1] = msg.stack;
+                    origLog.apply(logger, args);
+                } else {
+                    origLog.apply(logger, arguments);
+                }
+            };
+            return logger;
         } catch (e) {
             // console.log(e);
         }
-        return logger;
+
     }
 
     /**
@@ -169,6 +210,52 @@ class Utilities {
      */
     static isEmptyObject(obj) {
         return Object.keys(obj).length === 0 && obj.constructor === Object;
+    }
+
+    /**
+     * Checks if two IPs are equal
+     *
+     * @param ip1
+     * @param ip2
+     * @return {boolean}
+     */
+    static isIpEqual(ip1, ip2) {
+        const ip1v4 = ipaddr.process(ip1).octets.join('.');
+        const ip2v4 = ipaddr.process(ip2).octets.join('.');
+        return ip1v4 === ip2v4;
+    }
+
+    /**
+     * Gets a random integer
+     *
+     * @param max
+     * @return {number}
+     */
+    static getRandomInt(max) {
+        return _.random(0, max);
+    }
+
+    /**
+     * Gets a random integer in some specific range
+     *
+     * @param min
+     * @param max
+     * @return {number}
+     */
+    static getRandomIntRange(min, max) {
+        return _.random(min, max);
+    }
+
+    /**
+     * Get random string
+     * @param howLong
+     * @returns {void|*}
+     */
+    static getRandomString(howLong) {
+        return randomString.generate({
+            length: howLong,
+            charset: 'alphabetic',
+        });
     }
 }
 
