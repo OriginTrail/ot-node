@@ -92,15 +92,13 @@ class Network {
             parseInt(config.child_derivation_index, 10),
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
-        console.log(this.xprivkey, parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH);
 
         log.info('Spartacus initialised');
 
 
         // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        log.info('Eclipse protection initialised');
+        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        // log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
             privateKey: node.ot.spartacus.privateKey,
