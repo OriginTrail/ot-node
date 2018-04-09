@@ -98,9 +98,9 @@ class OTNode {
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
 
-        // server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
-        //     log.notify('%s exposed at %s', server.name, server.url);
-        // });
+        server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
+            log.notify('%s exposed at %s', server.name, server.url);
+        });
 
         this.exposeAPIRoutes(server);
     }
