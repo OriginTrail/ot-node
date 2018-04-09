@@ -196,18 +196,13 @@ class Network {
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
                     MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                        console.log(payload.identity, this.identity);
+                        // don't send replication request to yourself
                         if (payload.identity !== this.identity) {
                             log.important('New replication request received');
                             globalEmitter.emit('replication-request', payload);
                         }
                     }).catch((e) => {
                         console.log(e);
-                    });
-
-                    MessageHandler.sendBroadcast('replication-request', {
-                        identity: this.identity,
-                        data: 'ads',
                     });
                 });
             }
