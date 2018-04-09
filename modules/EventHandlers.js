@@ -5,6 +5,7 @@ const Storage = require('./Database/SystemStorage');
 const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
 const replication = require('./DataReplication');
+const deasync = require('deasync-promise');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -24,6 +25,7 @@ globalEmitter.on('gs1-import-request', (data) => {
             edges,
         } = response;
 
+        deasync(Storage.connect());
         Storage.runSystemQuery("INSERT INTO data_info SET data_id='?', root_hash='?', import_timestamp=Date('now'), total_documents='?'", [data_id, root_hash, total_documents])
             .then((data_info) => {
                 console.log(data_info);

@@ -5,7 +5,7 @@ class SystemStorage {
      * Creates connection with SQLite system database located in ./system.db file
      * @returns {Promise<any>}
      */
-    connect() {
+    static connect() {
         return new Promise((resolve, reject) => {
             var db_connection = new sqlite3.Database('./modules/Database/system.db', (err) => {
                 if (err) {
