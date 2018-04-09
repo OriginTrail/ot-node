@@ -54,16 +54,17 @@ class Network {
 
         log.info('Checking the identity');
         // Check if identity is valid ?
-        ns.checkIdentity(this.identity, this.xprivkey);
+        ns.checkIdentity(this.identity, this.xprivkey).then(() => {
+            const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
 
-        const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
 
+            this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
+                .toString('hex');
 
-        this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
-            .toString('hex');
+            log.notify(`My identity: ${this.identity}`);
+            config.identity = this.identity;
+        });
 
-        log.notify(`My identity: ${this.identity}`);
-        config.identity = this.identity;
 
         log.info('Initializing network');
 
