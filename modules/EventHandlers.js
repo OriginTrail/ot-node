@@ -25,12 +25,12 @@ globalEmitter.on('gs1-import-request', (data) => {
         } = response;
 
         console.log(Storage.models);
-        Storage.models.data_info.findOrCreate({
+        Storage.models.data_info.bulkCreate([{
             data_id,
             root_hash,
             import_timestamp: new Date(),
             total_documents,
-        }).then((data_info) => {
+        }]).then((data_info) => {
             console.log(data_info);
             Blockchain.bc.writeRootHash(data_id, root_hash);
             Graph.encryptVertices(
