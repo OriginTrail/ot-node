@@ -4,7 +4,7 @@ const utilities = require('./Utilities');
 
 const log = utilities.getLogger();
 const config = require('./Config');
-const Mtree = require('./Merkle');
+const Mtree = require('./mtree');
 const storage = require('./Storage');
 const async = require('async');
 const db = require('./Database/Arangojs');
