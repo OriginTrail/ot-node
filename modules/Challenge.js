@@ -105,7 +105,7 @@ class Challenge {
      */
     static addTests(tests) {
         return new Promise((resolve, reject) => {
-            const db = new ();
+            const db = new SystemStorage();
             db.connect().then(() => {
                 // Delete any old tests
                 deasync(db.runSystemQuery(
