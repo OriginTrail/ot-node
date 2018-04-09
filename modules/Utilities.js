@@ -28,6 +28,9 @@ class Utilities {
                     const prop = cnf.get({
                         plain: true,
                     }).key;
+                    console.log(const prop = cnf.get({
+                        plain: true,
+                    }).value);
                     if (prop === 'network_bootstrap_nodes' || prop === 'ssl_authority_paths' || prop === 'remote_access_whitelist') {
                         config[cnf.get({
                             plain: true,
