@@ -321,14 +321,15 @@ class Network {
             });
         }, (err, result) => {
             console.log(result);
-            console.log(contact);
+            console.log(url);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
             } else {
-                log.info('Joined');
+                log.crit('Joined the network');
                 /* eslint-disable-next-line no-undef */
-                callback(null, result);
+                const contact = kadence.utils.parseContactURL(result);
+                callback(null, contact);
             }
         });
     }
