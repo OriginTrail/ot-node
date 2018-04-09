@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 
 class SystemStorage {
     /**
-     * Creates connection with SQLite system database located in ./system.db file
+     * Creates connection with SQLiteSystemStorage system database located in ./system.db file
      * @returns {Promise<any>}
      */
     static connect() {
