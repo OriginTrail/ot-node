@@ -195,6 +195,7 @@ class Network {
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
                     MessageHandler.onBroadcastMessage('PORUKA').then((res) => {
+                        console.log('result');
                         console.log(res);
                     }).catch((e) => {
                         console.log(e);
