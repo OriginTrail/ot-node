@@ -10,15 +10,9 @@ class MessageHandler {
     }
 
     onBroadcastMessage(channel) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             node.ot.quasarSubscribe(channel, (message, error) => {
-                console.log("Error: " + error);
-                console.log("channel: " + channel);
-                console.log("message: " + message);
-                if (error) {
-                    reject(error);
-                }
-                resolve({ channel, message });
+                resolve( message );
             });
         });
     }
