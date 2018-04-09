@@ -100,11 +100,11 @@ class Network {
         log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
-        // node.ot.spartacus = node.ot.plugin(kadence.spartacus(
-        //     this.xprivkey,
-        //     parseInt(config.child_derivation_index, 10),
-        //     kadence.constants.HD_KEY_DERIVATION_PATH,
-        // ));
+        node.ot.spartacus = node.ot.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
 
         log.info('Spartacus initialised');
 
@@ -198,31 +198,31 @@ class Network {
                         `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                    // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                    //     // don't send replication request to yourself
-                    //     if (payload.identity !== this.identity) {
-                    //         log.important(`New replication request received from ${payload.identity}`);
-                    //         globalEmitter.emit('replication-request', payload);
-                    //     }
-                    // }).catch((e) => {
-                    //     console.log(e);
-                    // });
-                    //
-                    // MessageHandler.onDirectMessage('payload-request')
-                    //     .then((payload) => {
-                    //         globalEmitter.emit('payload-request', payload);
-                    //     })
-                    //     .catch((e) => {
-                    //         console.log(e);
-                    //     });
-                    //
-                    // MessageHandler.onDirectMessage('replication-finished')
-                    //     .then((status) => {
-                    //         globalEmitter.emit('replication-finished', status);
-                    //     })
-                    //     .catch((e) => {
-                    //         console.log(e);
-                    //     });
+                    MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
+                        // don't send replication request to yourself
+                        if (payload.identity !== this.identity) {
+                            log.important(`New replication request received from ${payload.identity}`);
+                            globalEmitter.emit('replication-request', payload);
+                        }
+                    }).catch((e) => {
+                        console.log(e);
+                    });
+
+                    MessageHandler.onDirectMessage('payload-request')
+                        .then((payload) => {
+                            globalEmitter.emit('payload-request', payload);
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
+
+                    MessageHandler.onDirectMessage('replication-finished')
+                        .then((status) => {
+                            globalEmitter.emit('replication-finished', status);
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
 
                     // setTimeout(() => {
                     //     MessageHandler.sendBroadcast('replication-request', {
