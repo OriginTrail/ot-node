@@ -2,11 +2,11 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
 
-const Database = require('./Database/Arangojs');
+const Database = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
 
-const db = new Database();
+const { db } = new Database();
 
 // Update import data
 
