@@ -100,10 +100,10 @@ class Network {
         // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         // log.info('Eclipse protection initialised');
 
-        node.ot.permission = node.ot.plugin(kadence.permission({
-            privateKey: node.ot.spartacus.privateKey,
-            walletPath: `${__dirname}/../data/wallet.dat`,
-        }));
+        // node.ot.permission = node.ot.plugin(kadence.permission({
+        //     privateKey: node.ot.spartacus.privateKey,
+        //     walletPath: `${__dirname}/../data/wallet.dat`,
+        // }));
 
         // Store peers in cache
         node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
