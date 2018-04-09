@@ -48,7 +48,6 @@ class Utilities {
     }
 
     static saveToConfig(property, val) {
-        console.log(property, val);
         return new Promise((resolve, reject) => {
             Storage.models.node_config.find({
                 where: { key: property },
