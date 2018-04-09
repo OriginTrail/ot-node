@@ -5,7 +5,7 @@ class MessageHandler {
 
     }
 
-    static sendBroadcast(channel, message) {
+    sendBroadcast(channel, message) {
         node.ot.quasarPublish(channel, message);
     }
 
