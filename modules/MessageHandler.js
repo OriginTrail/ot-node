@@ -52,4 +52,4 @@ class MessageHandler {
     }
 }
 
-module.exports = MessageHandler();
+module.exports = new MessageHandler();
