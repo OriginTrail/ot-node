@@ -7,10 +7,10 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        dc_wallet: {
+        dh_wallet: {
             type: Sequelize.STRING,
         },
-        dc_kademlia_id: {
+        dh_kademlia_id: {
             type: Sequelize.STRING,
         },
         data_public_key: {
