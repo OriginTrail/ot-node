@@ -5,7 +5,7 @@ const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
 var Web3 = require('web3');
 
-var web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
+var web3 = new Web3(new Web3.providers.HttpProvider(`${config.node_rpc_ip}:${config.node_port}`));
 
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
