@@ -76,7 +76,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'verbose_logging',
-        value: '1',
+        value: '0',
     }, {
         key: 'control_port_enabled',
         value: '0',
@@ -103,7 +103,7 @@ module.exports = {
         value: '[]',
     }, {
         key: 'is_bootstrap_node',
-        value: '0',
+        value: '1',
     }, {
         key: 'solve_hashes',
         value: '0',
