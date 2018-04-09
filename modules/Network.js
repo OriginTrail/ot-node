@@ -204,6 +204,11 @@ class Network {
                     }).catch((e) => {
                         console.log(e);
                     });
+
+                    MessageHandler.sendBroadcast('replication-request', {
+                        identity: this.identity,
+                        data: 'ads',
+                    });
                 });
             }
         });
