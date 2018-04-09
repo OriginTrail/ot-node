@@ -11,7 +11,7 @@ class MessageHandler {
 
     onBroadcastMessage(channel) {
         return new Promise((resolve, reject) => {
-            node.quasarSubscribe(channel, (message, error) => {
+            node.ot.quasarSubscribe(channel, (message, error) => {
                 if (error) {
                     reject(error);
                 }
@@ -22,7 +22,7 @@ class MessageHandler {
 
     sendDirectMessage(contact, channel, msg) {
         return new Promise((resolve, reject) => {
-            node.send(channel, {
+            node.ot.send(channel, {
                 message: msg,
             }, contact, (err, response) => {
                 if (err) {
@@ -37,7 +37,7 @@ class MessageHandler {
 
     onDirectMessage(channel) {
         return new Promise((resolve, reject) => {
-            node.use((request, response, next) => {
+            node.ot.use((request, response, next) => {
                 if (request.method === channel) {
                     console.log(JSON.stringify(request));
                     // response.send(request.params);
