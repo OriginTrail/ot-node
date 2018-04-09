@@ -1,6 +1,7 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
+const deasync = require('deasync-promise');
 
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
@@ -1141,6 +1142,8 @@ module.exports = () => ({
                         temp_participants.push(participants[i]);
                         vertices_list.push(participants[i]);
                     }
+                    deasync(db.createCollection('ot_vertices'));
+                    deasync(db.createCollection('ot_edges'));
 
                     async.each(temp_participants, (participant, next) => {
                         db.addVertex('ot_vertices', participant, () => {
