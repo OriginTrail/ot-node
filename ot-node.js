@@ -44,6 +44,7 @@ class OTNode {
         try {
             selectedDatabase = deasync(Utilities.loadSelectedDatabaseInfo());
             log.info('Loaded selected database data');
+            config.database = selectedDatabase;
         } catch (err) {
             console.log(err);
         }
@@ -54,7 +55,6 @@ class OTNode {
             selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
             config.blockchain = selectedBlockchain;
-            console.log(config);
         } catch (err) {
             console.log(err);
         }

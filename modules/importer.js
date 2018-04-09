@@ -1,8 +1,7 @@
 // External modules
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
-
-const log = utilities.getLogger();
+const fs = require('fs');
 const config = require('./Config');
 const Mtree = require('./mtree')();
 const Storage = require('./Storage');
@@ -11,6 +10,9 @@ const db = require('./Database/Arangojs');
 const replication = require('./Challenge');
 const Transactions = require('./Blockchain/Ethereum/Transactions');
 const gs1 = require('./gs1-importer')();
+var Web3 = require('web3');
+
+const log = utilities.getLogger();
 
 module.exports = () => {
     const importer = {
@@ -114,7 +116,7 @@ module.exports = () => {
                     data: [],
                 });
 
-                storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
+                /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
                     signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
                         // eslint-disable-next-line global-require
@@ -141,7 +143,7 @@ module.exports = () => {
                     }).catch((err) => {
                         log.warn('Failed to write data fingerprint on blockchain!');
                     });
-                });
+                }); */
             });
         },
 
@@ -177,26 +179,26 @@ module.exports = () => {
                 log.info(`Import id: ${data_id}`);
                 log.info(`Import hash: ${root_hash}`);
 
-                const transactions = new Transactions();
+
                 Storage.models.data_info.create({
                     data_id,
                     root_hash,
                     import_timestamp: new Date(),
                     total_documents: hash_pairs.length,
                 }).then((data_info) => {
+                    const web3 = new Web3(new Web3.providers.HttpProvider(`${config.node_rpc_ip}:${config.node_rpc_port}`));
                     var txOptions = {
-                        gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
-                        gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
-                        to: contract_address,
+                        gasLimit: web3.utils.toHex(config.blockchain.gas_limit),
+                        gasPrice: web3.utils.toHex(config.blockchain.gas_price),
+                        to: config.blockchain.ot_contract_address,
                     };
 
-
-                    transactions.queueTransaction(fs.readFileSync(`${__dirname}/Blockchain/ot-contract/abi.json`), 'addFingerPrint', [batch_id, batch_id_hash, graph_hash], txOptions);
-                    process.kill(0);
+                    const transactions = new Transactions(web3);
+                    transactions.queueTransaction(fs.readFileSync(`${__dirname}/Blockchain/ot-contract/abi.json`), 'addFingerPrint', [data_id, utilities.sha3(data_id), utilities.sha3(root_hash)], txOptions);
                 });
 
 
-                /*storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
+                /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
                     signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
                         // eslint-disable-next-line global-require
@@ -223,7 +225,7 @@ module.exports = () => {
                     }).catch((err) => {
                         log.warn('Failed to write data fingerprint on blockchain!');
                     });
-                });*/
+                }); */
             });
         },
 
