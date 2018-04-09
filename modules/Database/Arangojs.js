@@ -219,6 +219,31 @@ class ArangoJS {
     identify() {
         return 'ArangoJS';
     }
+
+    /**
+     * Create document collection, if collection does not exist
+     * @param collectionName
+     */
+    createCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collectionName);
+        collection.create().then(
+            () => {
+            resolve('Collection created');
+    },
+        (err) => {
+            const errorCode = err.response.body.code;
+            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                resolve('Double insert');
+            } else {
+                reject(err);
+            }
+        },
+    ).catch((err) => {
+            console.log(err);
+    });
+    });
+    }
 }
 
 module.exports = ArangoJS;
