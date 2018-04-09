@@ -42,10 +42,10 @@ class DataReplication {
                 console.log(e);
             }
 
-            // const tests = Challenge.generateTests(
-            //     config.identity, options.import_id, 10,
-            //     options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
-            // );
+                // const tests = Challenge.generateTests(
+                //     config.identity, options.import_id, 10,
+                //     options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
+                // );
             const payload = JSON.stringify({
                 vertices: data.encryptedVertices.vertices,
                 public_key: data.encryptedVertices.public_key,

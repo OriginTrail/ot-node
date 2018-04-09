@@ -11,7 +11,6 @@ class Ethereum {
      * @param {object} - blockchainConfig
      */
     constructor(blockchainConfig) {
-        console.log(blockchainConfig);
         // Loading Web3
         this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
         this.transactions = new Transactions(
@@ -101,7 +100,11 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
+
+        console.log(options);
+        console.log(this.escrowContractAbi);
         console.log([dhWallet, dataId, tokenAmount, totalTime]);
+
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, totalTime], options);
     }
