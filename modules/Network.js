@@ -221,7 +221,6 @@ class Network {
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
         };
-        console.log(contact);
         return contact;
     }
 
