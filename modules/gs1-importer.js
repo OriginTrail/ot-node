@@ -2,11 +2,10 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
 
-const Database = require('./GraphStorageInstance');
+const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
 
-const GSInstance = Database();
 const { db } = GSInstance;
 
 // Update import data
