@@ -142,6 +142,24 @@ class GraphStorage {
     updateDocumentImports(collection_name, document_key, import_number, callback) {
         this.db.updateDocumentImports(collection_name, document_key, import_number, callback);
     }
+
+    /**
+     * Create document collection, if collection does not exist
+     * @param collectionName
+     */
+    createCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.createCollection(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
 }
 
 module.exports = GraphStorage;
