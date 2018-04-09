@@ -22,6 +22,7 @@ cd /home/ot/ot-node
 node_modules/.bin/sequelize db:migrate
 node_modules/.bin/sequelize db:seed:all
 rm -f data/peercache
+rm -rf kad-storage/*
 # rm -rf keys/*
 @endtask
 
