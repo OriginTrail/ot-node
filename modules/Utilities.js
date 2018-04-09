@@ -218,8 +218,6 @@ class Utilities {
      * @return {boolean}
      */
     static isIpEqual(ip1, ip2) {
-        console.log(ip1);
-        console.log(ip2);
         const ip1v4 = ipaddr.process(ip1).octets.join('.');
         const ip2v4 = ipaddr.process(ip2).octets.join('.');
         return ip1v4 === ip2v4;

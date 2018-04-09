@@ -5,8 +5,7 @@ const MessageHandler = require('./MessageHandler');
 const { globalEmitter } = globalEvents;
 
 globalEmitter.on('import-request', (data) => {
-    console.log(data);
-    importer.importXML(data.queryObject.filepath, (response) => {
+    importer.importXML(data.filepath, (response) => {
         // emit response
     });
 });
