@@ -75,7 +75,7 @@ class Utilities {
             debug: 'blue',
             info: 'white',
             warn: 'yellow',
-            crit: 'magenta',
+            important: 'magenta',
             error: 'red',
         };
 
@@ -86,7 +86,7 @@ class Utilities {
                 level: logLevel,
                 levels: {
                     error: 0,
-                    crit: 1,
+                    important: 1,
                     warn: 2,
                     info: 3,
                     debug: 4,

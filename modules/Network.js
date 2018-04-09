@@ -216,6 +216,9 @@ class Network {
                     log.info(`Connected to network via ${entry[0]} ` +
                         `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
+
+                    const MessageHandler = require('./MessageHandler');
+                    MessageHandler.sendBroadcast('PORUKA', 'SVIMA');
                 });
             }
         });
@@ -320,12 +323,11 @@ class Network {
                 done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
-            console.log(result);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
             } else {
-                log.crit('Joined the network');
+                log.important('Joined the network');
                 /* eslint-disable-next-line no-undef */
                 const contact = kadence.utils.parseContactURL(result);
                 callback(null, contact);
