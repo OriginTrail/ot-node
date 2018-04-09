@@ -10,6 +10,7 @@ const async = require('async');
 
 
 function updateImportNumber(collection, vertex_key, import_id, callback) {
+    const { db } = GSInstance;
     db.updateDocumentImports(collection, vertex_key, import_id, callback);
 }
 
