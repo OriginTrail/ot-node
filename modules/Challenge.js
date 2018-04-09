@@ -1,6 +1,8 @@
 const SystemStorage = require('./Database/SystemStorage');
 const deasync = require('deasync-promise');
 
+const log = require('./Utilities').getLogger();
+
 class Challenge {
     /**
      * Generate test challenges for Data Holder
