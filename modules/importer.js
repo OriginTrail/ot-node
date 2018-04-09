@@ -6,13 +6,14 @@ const config = require('./Config');
 const Mtree = require('./mtree')();
 const Storage = require('./Storage');
 const async = require('async');
-const db = require('./Database/Arangojs');
+const GSdb = require('./GraphStorageInstance');
 const replication = require('./Challenge');
 const Transactions = require('./Blockchain/Ethereum/Transactions');
 const gs1 = require('./gs1-importer')();
 var Web3 = require('web3');
 
 const log = utilities.getLogger();
+const { db } = GSdb;
 
 module.exports = () => {
     const importer = {

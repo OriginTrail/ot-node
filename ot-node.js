@@ -12,6 +12,7 @@ var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
 const BCInstance = require('./modules/BlockChainInstance');
+const GSInstance = require('./modules/GraphStorageInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -60,7 +61,8 @@ class OTNode {
             console.log(err);
         }
 
-        this.graphDB = new GraphStorage(selectedDatabase);
+        GSInstance.db = new GraphStorage(selectedDatabase);
+        this.graphDB = GSInstance;
         BCInstance.bc = new Blockchain(selectedBlockchain);
 
         // Connecting to graph database
