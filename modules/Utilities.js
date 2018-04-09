@@ -279,6 +279,38 @@ class Utilities {
             log.info('Callback not defined!');
         }
     }
+
+    /**
+     * Sorts an object
+     *
+     * @param object
+     * @return object
+     */
+    static sortObject(object) {
+        const sortedObj = {};
+        const keys = Object.keys(object);
+
+        keys.sort((key1, key2) => {
+            // eslint-disable-next-line no-param-reassign
+            key1 = key1.toLowerCase();
+            // eslint-disable-next-line no-param-reassign
+            key2 = key2.toLowerCase();
+            if (key1 < key2) return -1;
+            if (key1 > key2) return 1;
+            return 0;
+        });
+
+        for (const index in keys) {
+            const key = keys[index];
+            if (typeof object[key] === 'object' && !(object[key] instanceof Array)) {
+                sortedObj[key] = this.sortObject(object[key]);
+            } else {
+                sortedObj[key] = object[key];
+            }
+        }
+
+        return sortedObj;
+    }
 }
 
 module.exports = Utilities;
