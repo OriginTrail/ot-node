@@ -13,6 +13,8 @@ var code = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 
+const MessageHandler = require('./MessageHandler');
+
 var ns = {};
 
 
@@ -217,7 +219,7 @@ class Network {
                         `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                    const MessageHandler = require('./MessageHandler');
+
                     MessageHandler.sendBroadcast('PORUKA', 'SVIMA');
                 });
             }
