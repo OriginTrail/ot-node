@@ -10,8 +10,6 @@ const async = require('async');
 const db = require('./Database/Arangojs');
 const replication = require('./Challenge');
 const Transactions = require('./Blockchain/Ethereum/Transactions');
-
-const transactions = new Transactions();
 const gs1 = require('./gs1-importer')();
 
 module.exports = () => {
@@ -179,7 +177,7 @@ module.exports = () => {
                 log.info(`Import id: ${data_id}`);
                 log.info(`Import hash: ${root_hash}`);
 
-
+                const transactions = new Transactions();
                 Storage.models.data_info.create({
                     data_id,
                     root_hash,
