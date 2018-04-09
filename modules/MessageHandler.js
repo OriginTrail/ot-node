@@ -12,7 +12,7 @@ class MessageHandler {
     onBroadcastMessage(channel) {
         return new Promise((resolve) => {
             node.ot.quasarSubscribe(channel, (message, error) => {
-                resolve( message );
+                resolve(message);
             });
         });
     }

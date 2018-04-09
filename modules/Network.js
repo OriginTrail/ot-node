@@ -12,9 +12,10 @@ var node = require('./Node');
 var code = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
-
 const MessageHandler = require('./MessageHandler');
+const globalEvents = require('./GlobalEvents');
 
+const { globalEmitter } = globalEvents;
 var ns = {};
 
 
@@ -194,14 +195,19 @@ class Network {
                         `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                    MessageHandler.onBroadcastMessage('PORUKA').then((res) => {
-                        console.log('result');
-                        console.log(res);
+                    MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
+                        if (payload.identity !== this.identity) {
+                            log.important('New replication request received');
+                            globalEmitter.emit('replication-request', payload);
+                        }
                     }).catch((e) => {
-                        console.log('error');
                         console.log(e);
                     });
-                    MessageHandler.sendBroadcast('PORUKA', 'SVIMA');
+
+                    MessageHandler.sendBroadcast('replication-request', {
+                        identity: this.identity,
+                        data: 'ads',
+                    });
                 });
             }
         });

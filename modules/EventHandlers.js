@@ -14,3 +14,9 @@ globalEmitter.on('gs1-import-request', (data) => {
     //     // emit response
     // });
 });
+
+globalEmitter.on('replicaiton-request', (data) => {
+    // importer.importXMLgs1(data.queryObject.filepath, (response) => {
+    //     // emit response
+    // });
+});
