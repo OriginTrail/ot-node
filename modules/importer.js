@@ -10,7 +10,7 @@ const async = require('async');
 const db = require('./Database/Arangojs');
 
 const replication = require('./Challenge');
-//const gs1 = require('./gs1-importer')();
+const gs1 = require('./gs1-importer')();
 
 module.exports = () => {
     const importer = {
