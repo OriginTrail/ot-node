@@ -265,12 +265,12 @@ class NetworkUtilities {
    * @param identity
    * @param xprivkeyd
    */
-    async checkIdentity(identity, xprivkey) {
+    checkIdentity(identity, xprivkey) {
         this.xprivkey = xprivkey;
         this.identity = identity;
         if (!identity.validate(this.xprivkey, this.index)) {
             log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${this.index} is invalid`);
-            await this.solveIdentity();
+            deasync(this.solveIdentity());
         }
     }
 }
