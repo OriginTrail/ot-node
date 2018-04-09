@@ -185,8 +185,9 @@ module.exports = () => {
                     total_documents: hash_pairs.length,
                 }).then((data_info) => {
                     console.log(data_info);
+                    process.kill(0);
                 });
-                process.kill(0);
+
 
                 storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
