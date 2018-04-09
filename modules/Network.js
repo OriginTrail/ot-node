@@ -196,6 +196,7 @@ class Network {
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
                     MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
+                        console.log(payload);
                         if (payload.identity !== this.identity) {
                             log.important('New replication request received');
                             globalEmitter.emit('replication-request', payload);
