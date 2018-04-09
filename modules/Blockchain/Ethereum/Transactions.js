@@ -5,8 +5,6 @@ const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
 var Web3 = require('web3');
 
-var web3 = new Web3(new Web3.providers.HttpProvider(`${config.node_rpc_ip}:${config.node_port}`));
-
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
 
@@ -16,7 +14,7 @@ class Transactions {
      * @param web3
      */
     constructor() {
-        this.web3 = web3;
+        this.web3 = new Web3(new Web3.providers.HttpProvider(`${config.node_rpc_ip}:${config.node_rpc_port}`));
         this.transactionQueue = [];
         this.transactionPending = false;
         this.transactionEventEmmiter = new EventEmitter();
