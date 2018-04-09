@@ -169,31 +169,10 @@ class Network {
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
-        // Use "global" rules for preprocessing *all* incoming messages
-        // This is useful for things like blacklisting certain nodes
-        // node.ot.use((request, response, next) => {
-        //     console.log('stiglo nesto');
-        //     console.log(JSON.stringify(request));
-        //     const [identityString] = request.contact;
-        //     console.log(response);
-        //
-        //     if ([/* identity blacklist */].includes(identityString)) {
-        //         return next(new Error('You have been blacklisted'));
-        //     }
-        //
-        //     next();
-        // });
-
-        // node.ot.use((request, response, next) => {
-        //     if (request.method === 'ECHO') {
-        //         console.log(JSON.stringify(request));
-        //         response.send(request.params);
-        //     }
-        //     next();
-        // });
-        // node.ot.use('ECHO', (err, request, response, next) => {
-        //     console.log(request.params.message);
-        // });
+        node.ot.use((request, response, next) => {
+            console.log(request);
+            next();
+        });
 
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
@@ -228,35 +207,6 @@ class Network {
                 });
             }
         });
-
-        // this.node.plugin(kadence.quasar());
-        //
-        //
-        // node.listen(config.node_port);
-        // log.info(`Listening on port ${config.node_port}`);
-
-
-        // node.join(['ea48d3f07a5241291ed0b4cab6483fa8b8fcc123', {
-        //     hostname: 'localhost',
-        //     port: config.node_port,
-        // }], () => {
-        // Add 'join' callback which indicates peers were discovered and
-        // our node is now connected to the overlay network
-        //     log.info(`Connected to ${node.router.length} peers!`);
-
-        // Base protocol exposes:
-        // * node.iterativeFindNode(key, callback)
-        // * node.iterativeFindValue(key, callback)
-        // * node.iterativeStore(key, value, callback)
-        //
-        // Quasar plugin exposes:
-        // * node.quasarPublish(topic, content)
-        // * node.quasarSubscribe(topic, handler)
-        // * node.quasarUpdate(callback)
-        //
-        // Example plugin exposes:
-        // * node.sendNeighborEcho(text, callback)
-        // });
     }
 
 
