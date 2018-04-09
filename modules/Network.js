@@ -198,7 +198,7 @@ class Network {
                     MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
                         // don't send replication request to yourself
                         if (payload.identity !== this.identity) {
-                            log.important('New replication request received');
+                            log.important(`New replication request received from${payload.identity}`);
                             globalEmitter.emit('replication-request', payload);
                         }
                     }).catch((e) => {
