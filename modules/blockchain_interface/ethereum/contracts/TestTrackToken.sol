@@ -254,7 +254,7 @@ pragma solidity ^0.4.18;
   }
 }
 
- contract TracToken is MintableToken {
+ contract TestTracToken is MintableToken {
 
   string public constant name = 'Test Trace Token';
   string public constant symbol = 'TTRAC';
@@ -282,7 +282,7 @@ pragma solidity ^0.4.18;
   uint256 public TOTAL_NUM_TOKENS = 5e26;
 
 
-  function TracToken(address _wallet,address _teamAndFoundersWallet,address _advisorsAndPreICO) public {
+  function TestTracToken(address _wallet,address _teamAndFoundersWallet,address _advisorsAndPreICO) public {
     require(_wallet!=0x0);
     require(_teamAndFoundersWallet!=0x0);
     require(_advisorsAndPreICO!=0x0);
