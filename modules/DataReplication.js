@@ -5,6 +5,7 @@ const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
 const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
+const deasync = require('deasync-promise');
 
 const log = require('./Utilities').getLogger();
 
@@ -29,13 +30,13 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-            Blockchain.bc.increaseApproval(options.amount);
-            Blockchain.bc.initiateEscrow(
+            deasync(Blockchain.bc.increaseApproval(options.amount));
+            deasync(Blockchain.bc.initiateEscrow(
                 options.dh_wallet,
                 options.import_id,
                 options.amount,
                 options.total_time,
-            );
+            ));
 
             const tests = Challenge.generateTests(
                 config.identity, options.import_id, 10,
