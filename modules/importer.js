@@ -4,14 +4,13 @@ const utilities = require('./Utilities');
 
 const log = utilities.getLogger();
 const config = require('./Config');
-const Mtree = require('./Merkle')();
-const storage = require('./Storage')();
-const signing = require('./Blockchain/Ethereum/signing')();
+const Mtree = require('./Merkle');
+const storage = require('./Storage');
 const async = require('async');
-const db = require('./Database/Arangojs')();
+const db = require('./Database/Arangojs');
 
 const replication = require('./Challenge');
-const gs1 = require('./gs1-importer')();
+//const gs1 = require('./gs1-importer')();
 
 module.exports = () => {
     const importer = {
