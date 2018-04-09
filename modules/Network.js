@@ -97,7 +97,7 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
@@ -193,7 +193,6 @@ class Network {
         //     console.log(request.params.message);
         // });
 
-        
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
             log.notify('OT Node listening ' +
@@ -307,8 +306,8 @@ class Network {
                 // console.log('identity');
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
-                        identity,
-                        node.ot.router.getContactByNodeId(identity),
+                        this.identity,
+                        node.ot.router.getContactByNodeId(this.identity),
                     ]),
                 ];
                 console.log(config.network_bootstrap_nodes);
