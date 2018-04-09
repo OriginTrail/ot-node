@@ -1,15 +1,6 @@
-// const sqlite3 = require('sqlite3').verbose();
-const Sequelize = require('sequelize');
-
-let instance = null;
+const sqlite3 = require('sqlite3').verbose();
 
 class SystemStorage {
-    constructor() {
-        if (!instance) {
-            instance = this;
-        }
-        return instance;
-    }
 
     /**
      * Creates connection with SQLite system database located in ./system.db file
@@ -17,37 +8,37 @@ class SystemStorage {
      */
     connect() {
         return new Promise((resolve, reject) => {
-            const sequelize = new Sequelize({
-                host: 'localhost',
-                dialect: 'sqlite',
-                operatorsAliases: false,
-                logging: false,
+            var db_connection = new sqlite3.Database('./modules/Database/system.db', (err) => {
+                if (err) {
+                    reject(err.message);
+                } else {
+                    this.db = db_connection;
+        resolve(db_connection);
+    }
+    });
+    });
+    }
 
-                define: {
-                    timestamps: false, // true by default
-                },
-
-                pool: {
-                    max: 5,
-                    min: 0,
-                    acquire: 30000,
-                    idle: 10000,
-                },
-
-                // SQLite only
-                storage: './modules/Database/system.db',
-            });
-            sequelize
-                .authenticate()
-                .then(() => {
-                    console.log('Connection has been established successfully.');
-                    resolve(sequelize);
-                })
-                .catch((err) => {
-                    console.error('Unable to connect to the database:', err);
+    /**
+     * Runs query on SQLite ot_system database
+     * @param {string} query - SQLite database query
+     * @param {object} params - Query parameters
+     * @returns {Promise<any>}
+     */
+    runSystemQuery(query, params) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+            reject(Error('Not connected to database'));
+        } else {
+            this.db.all(query, params, (err, rows) => {
+                if (err) {
                     reject(err);
-                });
+                } else {
+                    resolve(rows);
+        }
         });
+        }
+    });
     }
 }
 
