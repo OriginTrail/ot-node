@@ -222,7 +222,6 @@ class NetworkUtilities {
             log.error(`solver ${c} error, ${err.message}`);
         });
 
-
         solver.send({ privateKey: node.ot.spartacus.privateKey.toString('hex') });
         this.solvers.push(solver);
     }

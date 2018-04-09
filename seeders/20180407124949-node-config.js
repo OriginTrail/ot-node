@@ -106,7 +106,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'solve_hashes',
-        value: '0',
+        value: '1',
     },
     {
         key: 'remote_access_whitelist',
