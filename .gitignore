@@ -17,7 +17,7 @@ data
 modules/blockchain_interface/ethereum/build/*
 hidden_service
 !*.gitkeep
-#Envoy.blade.php
+Envoy.blade.php
 !/keys/.gitkeep
 !/data/.gitkeep
 !/data/wallet.dat/.invalid/.gitkeep

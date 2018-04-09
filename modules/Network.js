@@ -85,10 +85,10 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 2,
-        // }));
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE'],
+            difficulty: 2,
+        }));
 
         log.info('Hashcach initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
@@ -222,13 +222,6 @@ class Network {
                         .catch((e) => {
                             console.log(e);
                         });
-
-                    // setTimeout(() => {
-                    //     MessageHandler.sendBroadcast('replication-request', {
-                    //         identity: this.identity,
-                    //         data: 'ads',
-                    //     });
-                    // }, 5000);
                 });
             }
         });

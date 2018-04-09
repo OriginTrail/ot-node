@@ -116,35 +116,6 @@ module.exports = () => {
                     message: 'Import success',
                     data: [],
                 });
-
-                /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
-                    // eslint-disable-next-line max-len
-                    signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
-                        // eslint-disable-next-line global-require
-                        const graph = require('./graph')();
-                        // eslint-disable-next-line global-require
-                        const testing = require('./testing')();
-
-                        // eslint-disable-next-line max-len
-                        graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, (result) => { // eslint-disable-line no-shadow
-                            const encryptedVertices = result;
-                            log.info('[DC] Preparing to enter sendPayload');
-
-                            const data = {};
-                            data.vertices = vertices;
-                            data.edges = edges;
-                            data.data_id = data_id;
-
-                            // eslint-disable-next-line no-shadow
-                            replication.sendPayload(data, (result) => {
-                                log.info('[DC] Payload sent');
-                                log.info('[DC] Generating tests for DH');
-                            });
-                        });
-                    }).catch((err) => {
-                        log.warn('Failed to write data fingerprint on blockchain!');
-                    });
-                }); */
             });
         },
 
@@ -192,36 +163,6 @@ module.exports = () => {
                         vertices,
                         edges,
                     });
-
-
-                    /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
-                  // eslint-disable-next-line max-len
-                  signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
-                      // eslint-disable-next-line global-require
-                      const graph = require('./graph')();
-                      // eslint-disable-next-line global-require
-                      const testing = require('./testing')();
-
-                      // eslint-disable-next-line max-len
-                      graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, (result) => { // eslint-disable-line no-shadow
-                          const encryptedVertices = result;
-                          log.info('[DC] Preparing to enter sendPayload');
-
-                          const data = {};
-                          data.vertices = vertices;
-                          data.edges = edges;
-                          data.data_id = data_id;
-
-                          // eslint-disable-next-line no-shadow
-                          replication.sendPayload(data, (result) => {
-                              log.info('[DC] Payload sent');
-                              log.info('[DC] Generating tests for DH');
-                          });
-                      });
-                  }).catch((err) => {
-                      log.warn('Failed to write data fingerprint on blockchain!');
-                  });
-              }); */
                 });
             });
         },
