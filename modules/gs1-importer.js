@@ -6,8 +6,6 @@ const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
 
-const { db } = GSInstance;
-
 // Update import data
 
 
@@ -70,6 +68,7 @@ function Error(message) {
 
 module.exports = () => ({
     parseGS1(gs1_xml_file, callback) {
+        const { db } = GSInstance;
         var gs1_xml = fs.readFileSync(gs1_xml_file);
         parseString(
             gs1_xml,
