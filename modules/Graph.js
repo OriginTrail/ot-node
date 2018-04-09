@@ -246,12 +246,12 @@ class Graph {
      * @param dhKademilaId  DH node Kademlia ID
      * @param vertices      Vertices to be encrypted
      */
-    encryptVertices(dhWallet, dhKademilaId, vertices) {
+    static encryptVertices(dhWallet, dhKademliaId, vertices) {
         return new Promise((resolve, reject) => {
             this.sysdb.connect().then(() => {
                 const selectQuerySQL = 'SELECT dh.data_private_key, dh.data_public_key from data_holders as dh where dh.dh_wallet=? and dh.dh_kademlia_id=?';
 
-                this.sysdb.runSystemQuery(selectQuerySQL, [dhWallet, dhKademilaId]).then((rows) => {
+                this.sysdb.runSystemQuery(selectQuerySQL, [dhWallet, dhKademliaId]).then((rows) => {
                     if (rows.length > 0) {
                         const privateKey = rows[0].data_private_key;
                         const publicKey = rows[0].data_public_key;
@@ -265,7 +265,7 @@ class Graph {
                             keyPair.privateKey,
                             keyPair.publicKey,
                             dhWallet,
-                            dhKademilaId];
+                            dhKademliaId];
 
                         this.sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
                             _encryptVertices(vertices, keyPair.privateKey, keyPair.publicKey);

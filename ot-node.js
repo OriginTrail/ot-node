@@ -11,6 +11,7 @@ const restify = require('restify');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+const BCInstance = require('./modules/BlockChainInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -60,7 +61,7 @@ class OTNode {
         }
 
         this.graphDB = new GraphStorage(selectedDatabase);
-        this.blockchain = new Blockchain(selectedBlockchain);
+        BCInstance.bc = new Blockchain(selectedBlockchain);
 
         // Connecting to graph database
         try {
