@@ -98,10 +98,11 @@ class ArangoJS {
         const collection = this.db.collection(collection_name);
         collection.document(document_key).then(
             (doc) => {
-                let { imports } = doc.imports;
-
-                if (imports === undefined) { imports = []; }
-
+                var imports = [];
+                if (doc !== undefined && doc.imports !== undefined) {
+                    /* eslint-disable-next-line prefer-destructuring */
+                    imports = doc.imports;
+                }
                 if (imports.indexOf(import_number) === -1) {
                     imports.push(import_number);
                     collection.update(document_key, { imports }).then(
