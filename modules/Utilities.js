@@ -152,7 +152,6 @@ class Utilities {
                 const BCid = id.get({ plain: true });
                 Storage.models.blockchain_data.findById(BCid.value)
                     .then((bc) => {
-                        config.blockchain = bc.get({ plain: true });
                         resolve(bc.get({ plain: true }));
                     });
             });
