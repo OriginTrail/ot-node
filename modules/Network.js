@@ -92,15 +92,15 @@ class Network {
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
-        node.ot.spartacus = node.ot.plugin(kadence.spartacus(
-            this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        ));
+        // node.ot.spartacus = node.ot.plugin(kadence.spartacus(
+        //     this.xprivkey,
+        //     parseInt(config.child_derivation_index, 10),
+        //     kadence.constants.HD_KEY_DERIVATION_PATH,
+        // ));
 
         log.info('Spartacus initialised');
 
