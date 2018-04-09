@@ -3,13 +3,12 @@ const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 
 const log = utilities.getLogger();
-const config = utilities.getConfig();
+const config = require('./Config');
 const Mtree = require('./Merkle')();
 const storage = require('./Storage')();
-const blockchain = require('./Blockchain')();
-const signing = require('./blockchain_interface/ethereum/signing')();
+const signing = require('./Blockchain/Ethereum/signing')();
 const async = require('async');
-const db = require('./database')();
+const db = require('./Database/Arangojs')();
 
 const replication = require('./Challenge');
 const gs1 = require('./gs1-importer')();
@@ -30,9 +29,9 @@ module.exports = () => {
             const data_id = graph.import_id;
 
             async.each(vertices, (vertex, next) => {
-                db.addVertex('ot_vertices', vertex, (import_status) => {
+                db.addVertex('ot_vertices', vertex).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_vertices', vertex._key, data_id, (update_status) => {
+                        db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -49,9 +48,9 @@ module.exports = () => {
             });
 
             async.each(edges, (edge, next) => {
-                db.addEdge('ot_edges', edge, (import_status) => {
+                db.addEdge('ot_edges', edge).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_edges', edge._key, data_id, (update_status) => {
+                        db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -66,7 +65,6 @@ module.exports = () => {
             }, () => {
                 log.info('JSON import complete');
             });
-            utilities.executeCallback(callback, true);
         },
 
         // eslint-disable-next-line no-shadow

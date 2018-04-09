@@ -1,5 +1,6 @@
 const { Database } = require('arangojs');
 
+const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
 
 class ArangoJS {
@@ -17,6 +18,123 @@ class ArangoJS {
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
+    }
+
+    /**
+     * Creates vertex collection
+     * @param collection_name
+     * @returns {Promise<any>}
+     */
+    async createVertexCollection(collection_name) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collection_name);
+            collection.create().then(
+                () => {
+                    log.info('Document collection created');
+                    resolve(true);
+                },
+                (err) => {
+                    if (err.response.body.code === 409) {
+                        log.info('Document collection already exists');
+                    } else {
+                        log.info(err);
+                    }
+                    reject(err);
+                },
+            );
+        });
+    }
+
+    /**
+     * Creates edge collection
+     * @param collection_name
+     * @returns {Promise<any>}
+     */
+    async createEdgeCollection(collection_name) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.edgeCollection(collection_name);
+            collection.create().then(
+                () => {
+                    log.info('Edge collection created');
+                    resolve(true);
+                },
+                (err) => {
+                    if (err.response.body.code === 409) {
+                        log.info('Edge collection already exists');
+                    } else {
+                        log.info(err);
+                    }
+                    reject(err);
+                },
+            );
+        });
+    }
+
+    /**
+     * Add vertex
+     * @param collection_name
+     * @param vertex
+     * @returns {Promise<any>}
+     */
+    addVertex(collection_name, vertex) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collection_name);
+            collection.save(vertex).then(
+                meta => resolve(true),
+                (err) => {
+                    // console.error('Failed to save document:', err)
+                    reject(err);
+                },
+            );
+        });
+    }
+
+    /**
+     * Add Edge
+     * @param collection_name
+     * @param edge
+     * @returns {Promise<any>}
+     */
+    addEdge(collection_name, edge) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collection_name);
+            collection.save(edge).then(
+                meta => resolve(true),
+                (err) => {
+                    // console.error('Failed to save document:', err)
+                    reject(err);
+                },
+            );
+        });
+    }
+
+    updateDocumentImports(collection_name, document_key, import_number) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collection_name);
+            collection.document(document_key).then(
+                (doc) => {
+                    let { imports } = doc;
+
+                    if (imports === undefined) {
+                        imports = [];
+                    }
+
+                    if (imports.indexOf(import_number) === -1) {
+                        imports.push(import_number);
+                        collection.update(document_key, { imports }).then(
+                            meta => resolve(true),
+                            (err) => {
+                                // console.log(err);
+                                reject(err);
+                            },
+                        );
+                    }
+                },
+                (err) => {
+                    reject(err);
+                },
+            );
+        });
     }
 
     /**
