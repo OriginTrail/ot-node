@@ -171,12 +171,6 @@ class Network {
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
-        node.ot.use((request, response, next) => {
-            console.log(request);
-            next();
-        });
-
-
         node.ot.listen(parseInt(config.node_port, 10), () => {
             log.notify('OT Node listening ' +
                 `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
