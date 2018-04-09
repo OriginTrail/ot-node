@@ -8,7 +8,7 @@ module.exports = {
         gas_price: '5000000000',
         ot_contract_address: '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d',
         token_contract_address: '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882',
-        escrow_contract_address: '0x7cb42d3c63043fb9a6218c3663d5214ec5bcfd5a',
+        escrow_contract_address: '0xa6563b91684a63dff511e8d5b06189e2b9ef291d',
         rpc_node_host: 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt',
         rpc_node_port: '80',
         wallet_address: '0xE1E9c5379C5df627a8De3a951fA493028394A050',
