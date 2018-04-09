@@ -77,10 +77,10 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 2,
-        }));
+        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE'],
+        //     difficulty: 2,
+        // }));
 
         log.info('Hashcach initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
@@ -106,10 +106,10 @@ class Network {
         // }));
 
         // Store peers in cache
-        node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        // node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         log.info('Validating solutions in wallet, this can take some time');
-        await node.ot.wallet.validate();
+        // await node.ot.wallet.validate();
 
         // Hibernate when bandwidth thresholds are reached
         // node.ot.hibernate = node.ot.plugin(kadence.hibernate({
