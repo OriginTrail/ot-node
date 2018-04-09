@@ -62,8 +62,8 @@ class Network {
         // Initialize public contact data
         const contact = this.setContact(config, parentkey);
 
-        const transport = this._HTTPSTransport();
-        // const transport = new kadence.HTTPTransport();
+        // const transport = this._HTTPSTransport();
+        const transport = new kadence.HTTPTransport();
 
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
