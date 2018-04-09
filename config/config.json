@@ -5,7 +5,7 @@
     "dialect": "sqlite",
     "storage": "./modules/Database/system.db",
     "migrationStorageTableName": "sequelize_meta",
-    "logging": false,
+    "logging": true,
     "operatorsAliases": false,
     "define": {
       "underscored": true,
