@@ -205,10 +205,12 @@ class Network {
                         console.log(e);
                     });
 
-                    MessageHandler.sendBroadcast('replication-request', {
-                        identity: this.identity,
-                        data: 'ads',
-                    });
+                    setTimeout(() => {
+                        MessageHandler.sendBroadcast('replication-request', {
+                            identity: this.identity,
+                            data: 'ads',
+                        });
+                    }, 5000);
                 });
             }
         });
