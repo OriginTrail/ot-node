@@ -62,7 +62,7 @@ class OTNode {
         }
 
         GSInstance.db = new GraphStorage(selectedDatabase);
-        this.graphDB = GSInstance;
+        this.graphDB = GSInstance.db;
         BCInstance.bc = new Blockchain(selectedBlockchain);
 
         // Connecting to graph database
