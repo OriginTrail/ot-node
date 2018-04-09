@@ -71,71 +71,53 @@ class ArangoJS {
         });
     }
 
-    /**
-     * Add vertex
-     * @param collection_name
-     * @param vertex
-     * @returns {Promise<any>}
-     */
-    addVertex(collection_name, vertex) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collection_name);
-            collection.save(vertex).then(
-                meta => resolve(true),
-                (err) => {
-                    // console.error('Failed to save document:', err)
-                    reject(err);
-                },
-            );
-        });
+
+    addVertex(collection_name, vertex, callback) {
+        const collection = this.db.collection(collection_name);
+        collection.save(vertex).then(
+            meta => Utilities.executeCallback(callback, true),
+            (err) => {
+                // console.error('Failed to save document:', err)
+                Utilities.executeCallback(callback, false);
+            },
+        );
     }
 
-    /**
-     * Add Edge
-     * @param collection_name
-     * @param edge
-     * @returns {Promise<any>}
-     */
-    addEdge(collection_name, edge) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collection_name);
-            collection.save(edge).then(
-                meta => resolve(true),
-                (err) => {
-                    // console.error('Failed to save document:', err)
-                    reject(err);
-                },
-            );
-        });
+    addEdge(collection_name, edge, callback) {
+        const collection = this.db.collection(collection_name);
+        collection.save(edge).then(
+            meta => Utilities.executeCallback(callback, true),
+            (err) => {
+                // console.error('Failed to save document:', err)
+                Utilities.executeCallback(callback, false);
+            },
+        );
     }
 
-    updateDocumentImports(collection_name, document_key, import_number) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collection_name);
-            collection.document(document_key).then(
-                (doc) => {
-                    let { imports } = doc;
+    updateDocumentImports(collection_name, document_key, import_number, callback) {
+        const collection = this.db.collection(collection_name);
+        collection.document(document_key).then(
+            (doc) => {
+                let { imports } = doc.imports;
 
-                    if (imports === undefined) {
-                        imports = [];
-                    }
+                if (imports === undefined) { imports = []; }
 
-                    if (imports.indexOf(import_number) === -1) {
-                        imports.push(import_number);
-                        collection.update(document_key, { imports }).then(
-                            meta => resolve(true),
-                            (err) => {
-                                // console.log(err);
-                                reject(err);
-                            },
-                        );
-                    }
-                },
-                (err) => {
-                    reject(err);
-                },
-            );
-        });
+                if (imports.indexOf(import_number) === -1) {
+                    imports.push(import_number);
+                    collection.update(document_key, { imports }).then(
+                        meta => Utilities.executeCallback(callback, true),
+                        (err) => {
+                            log.info(err);
+                            Utilities.executeCallback(callback, false);
+                        },
+                    );
+                }
+            },
+            (err) => {
+                log.info(err);
+                Utilities.executeCallback(callback, false);
+            },
+        );
     }
 
     /**

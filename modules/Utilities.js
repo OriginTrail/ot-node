@@ -265,6 +265,20 @@ class Utilities {
     static copyObject(Obj) {
         return JSON.parse(JSON.stringify(Obj));
     }
+
+    /**
+     * Execute callback
+     * @param callback
+     * @param callback_input
+     */
+    static executeCallback(callback, callback_input) {
+        if (typeof callback === 'function') {
+            callback(callback_input);
+        } else {
+            const log = this.getLogger();
+            log.info('Callback not defined!');
+        }
+    }
 }
 
 module.exports = Utilities;
