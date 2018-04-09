@@ -130,6 +130,18 @@ class GraphStorage {
     getDatabaseInfo() {
         return this.selectedDatabase;
     }
+
+    addEdge(collection_name, edge, callback) {
+        this.db.addDocument(collection_name, edge, callback);
+    }
+
+    addVertex(collection_name, vertex, callback) {
+        this.db.addVertex(collection_name, vertex, callback);
+    }
+
+    updateDocumentImports(collection_name, document_key, import_number, callback) {
+        this.db.updateDocumentImports(collection_name, document_key, import_number, callback);
+    }
 }
 
 module.exports = GraphStorage;
