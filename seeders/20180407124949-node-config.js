@@ -110,7 +110,7 @@ module.exports = {
     },
     {
         key: 'remote_access_whitelist',
-        value: '94.189.154.202',
+        value: '[]',
     },
     {
         key: 'node_rpc_port',
