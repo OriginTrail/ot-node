@@ -219,7 +219,11 @@ class Network {
                         `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-
+                    MessageHandler.onBroadcastMessage('PORUKA').then((res) => {
+                        console.log(res);
+                    }).catch((e) => {
+                        console.log(e);
+                    });
                     MessageHandler.sendBroadcast('PORUKA', 'SVIMA');
                 });
             }
