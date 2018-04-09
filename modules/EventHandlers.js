@@ -28,7 +28,7 @@ globalEmitter.on('gs1-import-request', (data) => {
         Storage.models.data_info.create({
             data_id,
             root_hash,
-            import_timestamp: new Date(),
+            // import_timestamp: new Date(),
             total_documents,
         }).then((data_info) => {
             console.log(data_info);
