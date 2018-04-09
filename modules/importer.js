@@ -1,18 +1,19 @@
 // External modules
 const PythonShell = require('python-shell');
-const utilities = require('./utilities');
+const utilities = require('./Utilities');
+const fs = require('fs');
+const config = require('./Config');
+const Mtree = require('./mtree')();
+const Storage = require('./Storage');
+const async = require('async');
+const GSdb = require('./GraphStorageInstance');
+const replication = require('./Challenge');
+const Transactions = require('./Blockchain/Ethereum/Transactions');
+const gs1 = require('./gs1-importer')();
+var Web3 = require('web3');
 
 const log = utilities.getLogger();
-const config = utilities.getConfig();
-const Mtree = require('./mtree')();
-const storage = require('./storage')();
-const blockchain = require('./blockchain')();
-const signing = require('./blockchain_interface/ethereum/signing')();
-const async = require('async');
-const db = require('./database')();
-
-const replication = require('./DataReplication');
-const gs1 = require('./gs1-importer')();
+const { db } = GSdb;
 
 module.exports = () => {
     const importer = {
@@ -30,9 +31,9 @@ module.exports = () => {
             const data_id = graph.import_id;
 
             async.each(vertices, (vertex, next) => {
-                db.addVertex('ot_vertices', vertex, (import_status) => {
+                db.addVertex('ot_vertices', vertex).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_vertices', vertex._key, data_id, (update_status) => {
+                        db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -49,9 +50,9 @@ module.exports = () => {
             });
 
             async.each(edges, (edge, next) => {
-                db.addEdge('ot_edges', edge, (import_status) => {
+                db.addEdge('ot_edges', edge).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_edges', edge._key, data_id, (update_status) => {
+                        db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -66,8 +67,6 @@ module.exports = () => {
             }, () => {
                 log.info('JSON import complete');
             });
-
-            utilities.executeCallback(callback, true);
         },
 
         // eslint-disable-next-line no-shadow
@@ -118,7 +117,7 @@ module.exports = () => {
                     data: [],
                 });
 
-                storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
+                /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
                     signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
                         // eslint-disable-next-line global-require
@@ -145,68 +144,84 @@ module.exports = () => {
                     }).catch((err) => {
                         log.warn('Failed to write data fingerprint on blockchain!');
                     });
-                });
+                }); */
             });
         },
 
-        importXMLgs1: async function async(ot_xml_document, callback) {
-            gs1.parseGS1(ot_xml_document, (response) => {
-                log.info('[DC] Import complete');
+        importXMLgs1(ot_xml_document) {
+            return new Promise((resolve, reject) => {
+                gs1.parseGS1(ot_xml_document, (response) => {
+                    log.info('[DC] Import complete');
 
-                utilities.executeCallback(callback, {
-                    message: 'Import success',
-                    data: [],
-                });
 
-                const result = response;
-                // eslint-disable-next-line  prefer-destructuring
-                const vertices = result.vertices;
-                // eslint-disable-next-line  prefer-destructuring
-                const edges = result.edges;
-                const data_id = result.import_id;
+                    const result = response;
+                    // eslint-disable-next-line  prefer-destructuring
+                    const vertices = result.vertices;
+                    // eslint-disable-next-line  prefer-destructuring
+                    const edges = result.edges;
+                    const data_id = result.import_id;
 
-                const leaves = [];
-                const hash_pairs = [];
+                    const leaves = [];
+                    const hash_pairs = [];
 
-                for (const i in vertices) {
-                    // eslint-disable-next-line max-len
-                    leaves.push(utilities.sha3(utilities.sortObject({ identifiers: vertices[i].identifiers, data: vertices[i].data })));
-                    // eslint-disable-next-line no-underscore-dangle
-                    hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
-                }
-
-                const tree = new Mtree(hash_pairs);
-                const root_hash = tree.root();
-
-                log.info(`Import id: ${data_id}`);
-                log.info(`Import hash: ${root_hash}`);
-                storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
-                    // eslint-disable-next-line max-len
-                    signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
-                        // eslint-disable-next-line global-require
-                        const graph = require('./graph')();
-                        // eslint-disable-next-line global-require
-                        const testing = require('./testing')();
-
+                    for (const i in vertices) {
                         // eslint-disable-next-line max-len
-                        graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, (result) => { // eslint-disable-line no-shadow
-                            const encryptedVertices = result;
-                            log.info('[DC] Preparing to enter sendPayload');
+                        leaves.push(utilities.sha3(utilities.sortObject({
+                            identifiers: vertices[i].identifiers,
+                            data: vertices[i].data,
+                        })));
+                        // eslint-disable-next-line no-underscore-dangle
+                        hash_pairs.push({
+                            key: vertices[i]._key,
+                            hash: utilities.sha3({
+                                identifiers: vertices[i].identifiers,
+                                data: vertices[i].data,
+                            }),
+                        }); // eslint-disable-line max-len
+                    }
 
-                            const data = {};
-                            data.vertices = vertices;
-                            data.edges = edges;
-                            data.data_id = data_id;
+                    const tree = new Mtree(hash_pairs);
+                    const root_hash = tree.root();
 
-                            // eslint-disable-next-line no-shadow
-                            replication.sendPayload(data, (result) => {
-                                log.info('[DC] Payload sent');
-                                log.info('[DC] Generating tests for DH');
-                            });
-                        });
-                    }).catch((err) => {
-                        log.warn('Failed to write data fingerprint on blockchain!');
+                    log.info(`Import id: ${data_id}`);
+                    log.info(`Import hash: ${root_hash}`);
+                    resolve({
+                        data_id,
+                        root_hash,
+                        total_documents: hash_pairs.length,
+                        vertices,
+                        edges,
                     });
+
+
+                    /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
+                  // eslint-disable-next-line max-len
+                  signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
+                      // eslint-disable-next-line global-require
+                      const graph = require('./graph')();
+                      // eslint-disable-next-line global-require
+                      const testing = require('./testing')();
+
+                      // eslint-disable-next-line max-len
+                      graph.encryptVertices(config.DH_NODE_IP, config.DH_NODE_PORT, vertices, (result) => { // eslint-disable-line no-shadow
+                          const encryptedVertices = result;
+                          log.info('[DC] Preparing to enter sendPayload');
+
+                          const data = {};
+                          data.vertices = vertices;
+                          data.edges = edges;
+                          data.data_id = data_id;
+
+                          // eslint-disable-next-line no-shadow
+                          replication.sendPayload(data, (result) => {
+                              log.info('[DC] Payload sent');
+                              log.info('[DC] Generating tests for DH');
+                          });
+                      });
+                  }).catch((err) => {
+                      log.warn('Failed to write data fingerprint on blockchain!');
+                  });
+              }); */
                 });
             });
         },
@@ -215,4 +230,3 @@ module.exports = () => {
 
     return importer;
 };
-

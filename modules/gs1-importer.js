@@ -1,16 +1,17 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
+const deasync = require('deasync-promise');
 
-const db = require('./database')();
-const utilities = require('./utilities');
+const GSInstance = require('./GraphStorageInstance');
+const utilities = require('./Utilities');
 const async = require('async');
-const graph = require('./graph')();
 
 // Update import data
 
 
 function updateImportNumber(collection, vertex_key, import_id, callback) {
+    const { db } = GSInstance;
     db.updateDocumentImports(collection, vertex_key, import_id, callback);
 }
 
@@ -69,6 +70,7 @@ function Error(message) {
 
 module.exports = () => ({
     parseGS1(gs1_xml_file, callback) {
+        const { db } = GSInstance;
         var gs1_xml = fs.readFileSync(gs1_xml_file);
         parseString(
             gs1_xml,
@@ -145,10 +147,10 @@ module.exports = () => ({
                     return Error('Missing StandardBusinessDocumentHeader element for EPCISHeader element!');
                 }
                 const StandardBusinessDocumentHeader_element =
-                        EPCISHeader_element.StandardBusinessDocumentHeader;
+                    EPCISHeader_element.StandardBusinessDocumentHeader;
 
 
-                    // //SENDER
+                // //SENDER
                 const send = findValuesHelper(StandardBusinessDocumentHeader_element, 'Sender', []);
                 if (send.length <= 0) {
                     return Error('Missing Sender element for StandardBusinessDocumentHeader element!');
@@ -211,7 +213,7 @@ module.exports = () => ({
                     return Error('Missing DocumentIdentification element for StandardBusinessDocumentHeader element!');
                 }
                 const DocumentIdentification_element =
-                        StandardBusinessDocumentHeader_element.DocumentIdentification;
+                    StandardBusinessDocumentHeader_element.DocumentIdentification;
 
 
                 const bus_scope = findValuesHelper(StandardBusinessDocumentHeader_element, 'BusinessScope', []);
@@ -219,7 +221,7 @@ module.exports = () => ({
                     return Error('Missing BusinessScope element for StandardBusinessDocumentHeader element!');
                 }
                 const BusinessScope_element =
-                        StandardBusinessDocumentHeader_element.BusinessScope;
+                    StandardBusinessDocumentHeader_element.BusinessScope;
 
 
                 sender.sender_id = {};
@@ -313,15 +315,15 @@ module.exports = () => ({
                                     return Error('Missing VocabularyElementList element for element!');
                                 }
                                 VocabularyElementList_element =
-                                        Bussines_location_elements.VocabularyElementList;
+                                    Bussines_location_elements.VocabularyElementList;
 
 
                                 for (const k in VocabularyElementList_element) {
                                     data_object = {};
 
                                     const VocabularyElement_element =
-                                            VocabularyElementList_element[k];
-                                        // console.log(VocabularyElement_element)
+                                        VocabularyElementList_element[k];
+                                    // console.log(VocabularyElement_element)
 
                                     for (const x in VocabularyElement_element) {
                                         const v = VocabularyElement_element[x];
@@ -940,7 +942,7 @@ module.exports = () => ({
 
 
                                 aggregation_events[event_id] =
-                                        utilities.copyObject(aggregation_event);
+                                    utilities.copyObject(aggregation_event);
 
                                 for (const bi in child_epcs) {
                                     child_batches_edges.push({
@@ -1064,7 +1066,7 @@ module.exports = () => ({
                                             };
 
                                             transformation_events[ext_event_id] =
-                                                    utilities.copyObject(transformation_event);
+                                                utilities.copyObject(transformation_event);
 
                                             // bizLocation
                                             let biz_location;
@@ -1074,7 +1076,7 @@ module.exports = () => ({
                                                 [],
                                             ).length !== 0) {
                                                 const biz_location_element =
-                                                        ext_event.bizLocation;
+                                                    ext_event.bizLocation;
 
                                                 if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
                                                     return Error('Missing id for bizLocation!');
@@ -1140,6 +1142,8 @@ module.exports = () => ({
                         temp_participants.push(participants[i]);
                         vertices_list.push(participants[i]);
                     }
+                    deasync(db.createCollection('ot_vertices'));
+                    deasync(db.createCollection('ot_edges'));
 
                     async.each(temp_participants, (participant, next) => {
                         db.addVertex('ot_vertices', participant, () => {
@@ -1148,7 +1152,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting participants complete');
+                        console.log('Writing participants complete');
                     });
 
                     var temp_objects = [];
@@ -1164,7 +1168,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting objects complete');
+                        console.log('Writing objects complete');
                     });
 
                     var temp_locations = [];
@@ -1180,7 +1184,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting business locations complete');
+                        console.log('Writing business locations complete');
                     });
 
                     var temp_batches = [];
@@ -1196,7 +1200,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting batches complete');
+                        console.log('Writing batches complete');
                     });
 
 
@@ -1213,7 +1217,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting object events complete');
+                        console.log('Writing object events complete');
                     });
 
                     var temp_aggregation_events = [];
@@ -1229,7 +1233,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting aggregation events complete');
+                        console.log('Writing aggregation events complete');
                     });
 
                     var temp_transformation_events = [];
@@ -1245,7 +1249,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting transformation events complete');
+                        console.log('Writing transformation events complete');
                     });
 
 
@@ -1260,7 +1264,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting instance_of edges complete');
+                        console.log('Writing instance_of edges complete');
                     });
 
                     for (const i in owned_by_edges) {
@@ -1274,7 +1278,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting owned_by edges complete');
+                        console.log('Writing owned_by edges complete');
                     });
 
                     for (const i in at_edges) {
@@ -1288,7 +1292,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting at_edges complete');
+                        console.log('Writing at_edges complete');
                     });
 
 
@@ -1303,7 +1307,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting read_point edges  complete');
+                        console.log('Writing read_point edges  complete');
                     });
 
                     for (const i in event_batch_edges) {
@@ -1317,7 +1321,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting event_batch edges  complete');
+                        console.log('Writing event_batch edges  complete');
                     });
 
                     for (const i in parent_batches_edges) {
@@ -1331,7 +1335,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting parent_batches edges  complete');
+                        console.log('Writing parent_batches edges  complete');
                     });
 
                     for (const i in child_batches_edges) {
@@ -1345,7 +1349,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting child_batches edges  complete');
+                        console.log('Writing child_batches edges  complete');
                     });
 
                     for (const i in input_batches_edges) {
@@ -1359,7 +1363,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting input_batches edges  complete');
+                        console.log('Writing input_batches edges  complete');
                     });
 
                     for (const i in output_batches_edges) {
@@ -1373,7 +1377,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting output_batches edges  complete');
+                        console.log('Writing output_batches edges  complete');
                     });
 
                     for (const i in business_location_edges) {
@@ -1387,7 +1391,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting business_location edges  complete');
+                        console.log('Writing business_location edges  complete');
                     });
 
 

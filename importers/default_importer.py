@@ -41,14 +41,21 @@ TO = []
 
 #Database connection
 
-client = ArangoClient(protocol = 'http',
-host = os.environ.get("DB_HOST"),
-port = os.environ.get("DB_PORT"),
-username = os.environ.get("DB_USERNAME"),
-password = os.environ.get("DB_PASSWORD"),
-enable_logging = True)
+#client = ArangoClient(protocol = 'http',
+#host = os.environ.get("DB_HOST"),
+#port = os.environ.get("DB_PORT"),
+#username = os.environ.get("DB_USERNAME"),
+#password = os.environ.get("DB_PASSWORD"),
+#enable_logging = True)
 
-db = client.db(os.environ.get("DB_DATABASE"))
+client = ArangoClient(protocol = 'http',
+host = "127.0.0.1",
+port = "8529",
+username = "root",
+password = "root",
+enable_logging = True)
+#db = client.db(os.environ.get("DB_DATABASE"))
+db = client.db("origintrail")
 # client.grant_user_access(os.environ.get("DB_USERNAME"), os.environ.get("DB_DATABASE"))
 
 current_graphs = db.graphs()
