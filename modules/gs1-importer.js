@@ -6,7 +6,7 @@ const Database = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
 
-const GSInstance = new Database();
+const GSInstance = Database();
 const { db } = GSInstance;
 
 // Update import data
