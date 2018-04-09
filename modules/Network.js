@@ -80,7 +80,6 @@ class Network {
             contact,
             storage: levelup(encoding(leveldown(`${__dirname}/../kad-storage/kadence.dht`))),
         });
-        console.log(node.ot);
 
         log.info('Starting OT Node...');
 
