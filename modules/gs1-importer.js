@@ -1152,7 +1152,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting participants complete');
+                        console.log('Writing participants complete');
                     });
 
                     var temp_objects = [];
@@ -1168,7 +1168,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting objects complete');
+                        console.log('Writing objects complete');
                     });
 
                     var temp_locations = [];
@@ -1184,7 +1184,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting business locations complete');
+                        console.log('Writing business locations complete');
                     });
 
                     var temp_batches = [];
@@ -1200,7 +1200,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting batches complete');
+                        console.log('Writing batches complete');
                     });
 
 
@@ -1217,7 +1217,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting object events complete');
+                        console.log('Writing object events complete');
                     });
 
                     var temp_aggregation_events = [];
@@ -1233,7 +1233,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting aggregation events complete');
+                        console.log('Writing aggregation events complete');
                     });
 
                     var temp_transformation_events = [];
@@ -1249,7 +1249,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting transformation events complete');
+                        console.log('Writing transformation events complete');
                     });
 
 
@@ -1264,7 +1264,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting instance_of edges complete');
+                        console.log('Writing instance_of edges complete');
                     });
 
                     for (const i in owned_by_edges) {
@@ -1278,7 +1278,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting owned_by edges complete');
+                        console.log('Writing owned_by edges complete');
                     });
 
                     for (const i in at_edges) {
@@ -1292,7 +1292,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting at_edges complete');
+                        console.log('Writing at_edges complete');
                     });
 
 
@@ -1307,7 +1307,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting read_point edges  complete');
+                        console.log('Writing read_point edges  complete');
                     });
 
                     for (const i in event_batch_edges) {
@@ -1321,7 +1321,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting event_batch edges  complete');
+                        console.log('Writing event_batch edges  complete');
                     });
 
                     for (const i in parent_batches_edges) {
@@ -1335,7 +1335,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting parent_batches edges  complete');
+                        console.log('Writing parent_batches edges  complete');
                     });
 
                     for (const i in child_batches_edges) {
@@ -1349,7 +1349,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting child_batches edges  complete');
+                        console.log('Writing child_batches edges  complete');
                     });
 
                     for (const i in input_batches_edges) {
@@ -1363,7 +1363,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting input_batches edges  complete');
+                        console.log('Writing input_batches edges  complete');
                     });
 
                     for (const i in output_batches_edges) {
@@ -1377,7 +1377,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting output_batches edges  complete');
+                        console.log('Writing output_batches edges  complete');
                     });
 
                     for (const i in business_location_edges) {
@@ -1391,7 +1391,7 @@ module.exports = () => ({
                             });
                         });
                     }, () => {
-                        console.log('Writting business_location edges  complete');
+                        console.log('Writing business_location edges  complete');
                     });
 
 

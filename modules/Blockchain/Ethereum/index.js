@@ -101,7 +101,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
-
+        console.log([dhWallet, dataId, tokenAmount, totalTime]);
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, totalTime], options);
     }
