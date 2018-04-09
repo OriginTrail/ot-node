@@ -321,7 +321,6 @@ class Network {
             });
         }, (err, result) => {
             console.log(result);
-            console.log(url);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
