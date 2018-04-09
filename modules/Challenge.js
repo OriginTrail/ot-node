@@ -17,14 +17,14 @@ class Challenge {
         dataCreator, importId, numberOfTests,
         startTime, endTime, blockSizeBytes, vertexData,
     ) {
-        console.log('generateTests:');
-        console.log(`Data creator: ${dataCreator}`);
-        console.log(`Import ID: ${importId}`);
-        console.log(`Number of tests: ${numberOfTests}`);
-        console.log(`Start time: ${new Date(startTime).toString()}`);
-        console.log(`End time: ${new Date(endTime).toString()}`);
-        console.log(`Block size: ${blockSizeBytes}`);
-        console.log(`Vertex data: ${vertexData}`);
+        log.info('generateTests');
+        // console.log(`Data creator: ${dataCreator}`);
+        // console.log(`Import ID: ${importId}`);
+        // console.log(`Number of tests: ${numberOfTests}`);
+        // console.log(`Start time: ${new Date(startTime).toString()}`);
+        // console.log(`End time: ${new Date(endTime).toString()}`);
+        // console.log(`Block size: ${blockSizeBytes}`);
+        // console.log(`Vertex data: ${vertexData}`);
 
         if (numberOfTests <= 0) { throw new Error('Number of tests cannot be nonpositive'); }
 
@@ -46,14 +46,14 @@ class Challenge {
             randomIntervals[i] = previousInterval +
                 Math.round((randomIntervals[i] * (endTime - startTime)) / randomSum);
             previousInterval = randomIntervals[i];
-            console.log(new Date(randomIntervals[i]).toString());
+            // console.log(new Date(randomIntervals[i]).toString());
         }
 
         const blocks = this.__getBlocks__(vertexData, blockSizeBytes);
 
-        for (let i = 0; i < blocks.length; i += 1) {
-            console.log(`Block ${i}, size ${blocks[i].length} ${blocks[i]}`);
-        }
+        // for (let i = 0; i < blocks.length; i += 1) {
+        //     console.log(`Block ${i}, size ${blocks[i].length} ${blocks[i]}`);
+        // }
 
         const tests = [];
         let testBlockId = 0;
