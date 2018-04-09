@@ -270,7 +270,7 @@ class NetworkUtilities {
         this.identity = identity;
         if (!identity.validate(this.xprivkey, this.index)) {
             log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${this.index} is invalid`);
-            deasync(this.solveIdentity());
+            this.solveIdentity();
         }
     }
 }
