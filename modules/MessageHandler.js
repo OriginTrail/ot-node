@@ -1,12 +1,12 @@
-var { node } = require('./Node');
+var node = require('./Node');
 
 class MessageHandler {
     connectToSeed(seed) {
 
     }
 
-    sendBroadcast(channel, message) {
-        node.quasarPublish(channel, message);
+    static sendBroadcast(channel, message) {
+        node.ot.quasarPublish(channel, message);
     }
 
     onBroadcastMessage(channel) {
@@ -52,4 +52,4 @@ class MessageHandler {
     }
 }
 
-module.exports = new MessageHandler();
+module.exports = MessageHandler();
