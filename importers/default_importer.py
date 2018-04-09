@@ -49,7 +49,7 @@ TO = []
 #enable_logging = True)
 
 client = ArangoClient(protocol = 'http',
-host = "localhost",
+host = "127.0.0.1",
 port = "8529",
 username = "root",
 password = "root",
