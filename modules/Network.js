@@ -63,6 +63,8 @@ class Network {
             .toString('hex');
 
         log.notify(`My identity: ${this.identity}`);
+        config.identity = this.identity;
+
         log.info('Initializing network');
 
         // Initialize public contact data
@@ -205,12 +207,28 @@ class Network {
                         console.log(e);
                     });
 
-                    setTimeout(() => {
-                        MessageHandler.sendBroadcast('replication-request', {
-                            identity: this.identity,
-                            data: 'ads',
+                    MessageHandler.onDirectMessage('payload-request')
+                        .then((payload) => {
+                            globalEmitter.emit('payload-request', payload);
+                        })
+                        .catch((e) => {
+                            console.log(e);
                         });
-                    }, 5000);
+
+                    MessageHandler.onDirectMessage('replication-finished')
+                        .then((status) => {
+                            globalEmitter.emit('replication-finished', status);
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
+
+                    // setTimeout(() => {
+                    //     MessageHandler.sendBroadcast('replication-request', {
+                    //         identity: this.identity,
+                    //         data: 'ads',
+                    //     });
+                    // }, 5000);
                 });
             }
         });

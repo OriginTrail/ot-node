@@ -184,7 +184,13 @@ module.exports = () => {
 
                     log.info(`Import id: ${data_id}`);
                     log.info(`Import hash: ${root_hash}`);
-                    resolve({ data_id, root_hash, total_documents: hash_pairs.length, vertices });
+                    resolve({
+                        data_id,
+                        root_hash,
+                        total_documents: hash_pairs.length,
+                        vertices,
+                        edges,
+                    });
 
 
                     /* storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
