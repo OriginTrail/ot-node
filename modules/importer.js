@@ -8,8 +8,10 @@ const Mtree = require('./mtree')();
 const Storage = require('./Storage');
 const async = require('async');
 const db = require('./Database/Arangojs');
-
 const replication = require('./Challenge');
+const Transactions = require('./Blockchain/Ethereum/Transactions');
+
+const transactions = new Transactions();
 const gs1 = require('./gs1-importer')();
 
 module.exports = () => {
@@ -184,7 +186,14 @@ module.exports = () => {
                     import_timestamp: new Date(),
                     total_documents: hash_pairs.length,
                 }).then((data_info) => {
-                    console.log(data_info);
+                    var txOptions = {
+                        gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
+                        gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
+                        to: contract_address,
+                    };
+
+
+                    transactions.queueTransaction(fs.readFileSync(`${__dirname}/Blockchain/ot-contract/abi.json`), 'addFingerPrint', [batch_id, batch_id_hash, graph_hash], txOptions);
                     process.kill(0);
                 });
 

@@ -1,7 +1,11 @@
 const Tx = require('ethereumjs-tx');
 const EventEmitter = require('events');
 const Utilities = require('../../Utilities');
+const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
+var Web3 = require('web3');
+
+var web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.settings.ethereum.rpc_node}:${config.blockchain.settings.ethereum.node_port}`));
 
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
@@ -11,13 +15,13 @@ class Transactions {
      * Initialize Transaction object
      * @param web3
      */
-    constructor(web3, privateKey, walletAddress) {
+    constructor() {
         this.web3 = web3;
         this.transactionQueue = [];
         this.transactionPending = false;
         this.transactionEventEmmiter = new EventEmitter();
-        this.privateKey = Buffer.from(privateKey, 'hex');
-        this.walletAddress = walletAddress;
+        this.privateKey = Buffer.from(config.node_private_key, 'hex');
+        this.walletAddress = config.node_wallet;
     }
     /**
      * Send transaction to Ethereum blockchain

@@ -53,6 +53,7 @@ class OTNode {
         try {
             selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
+            console.log(config);
         } catch (err) {
             console.log(err);
         }
