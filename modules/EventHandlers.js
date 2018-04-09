@@ -24,6 +24,7 @@ globalEmitter.on('gs1-import-request', (data) => {
             edges,
         } = response;
 
+        console.log(Storage.models);
         Storage.models.data_info.create({
             data_id,
             root_hash,
