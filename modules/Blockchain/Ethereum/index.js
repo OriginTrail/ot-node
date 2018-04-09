@@ -82,8 +82,6 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        console.log(options);
-        console.log([this.escrowContractAddress, tokenAmountIncrease]);
         log.warn('Increasing approval');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
     }

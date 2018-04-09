@@ -89,7 +89,7 @@ class Transactions {
             this.transactionPending = true;
             this.sendTransaction(newTransaction)
                 .then((response) => {
-                    log.info('Transaction: ', response);
+                    // log.info('Transaction: ', response);
                     this.signalNextInQueue();
                     if (response.status === '0x0') {
                         reject(response);
@@ -98,7 +98,7 @@ class Transactions {
                     }
                 })
                 .catch((err) => {
-                    log.warn(err);
+                    // log.warn(err);
                     this.signalNextInQueue();
                     reject(err);
                 });

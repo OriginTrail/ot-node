@@ -31,12 +31,16 @@ class DataReplication {
                 total_time: 10 * 60,
             };
             deasync(Blockchain.bc.increaseApproval(options.amount));
-            deasync(Blockchain.bc.initiateEscrow(
-                options.dh_wallet,
-                options.import_id,
-                options.amount,
-                options.total_time,
-            ));
+            try {
+                deasync(Blockchain.bc.initiateEscrow(
+                    options.dh_wallet,
+                    options.import_id,
+                    options.amount,
+                    options.total_time,
+                ));
+            } catch (e) {
+                console.log(e);
+            }
 
             const tests = Challenge.generateTests(
                 config.identity, options.import_id, 10,
