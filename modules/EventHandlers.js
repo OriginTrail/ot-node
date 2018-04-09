@@ -16,7 +16,6 @@ globalEmitter.on('import-request', (data) => {
 });
 globalEmitter.on('gs1-import-request', (data) => {
     importer.importXMLgs1(data.filepath).then((response) => {
-        console.log(response);
         const {
             data_id,
             root_hash,
@@ -31,6 +30,7 @@ globalEmitter.on('gs1-import-request', (data) => {
             import_timestamp: new Date(),
             total_documents,
         }).then((data_info) => {
+            console.log(data_info);
             Blockchain.bc.writeRootHash(data_id, root_hash);
             Graph.encryptVertices(
                 '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
@@ -46,6 +46,8 @@ globalEmitter.on('gs1-import-request', (data) => {
                 replication.sendPayload(data).then(() => {
                     log.info('[DC] Payload sent');
                 });
+            }).catch((e) => {
+                console.log(e);
             });
         });
     }).catch((e) => {
