@@ -101,10 +101,6 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        console.log(options);
-        console.log(this.escrowContractAbi);
-        console.log([dhWallet, dataId, tokenAmount, totalTime]);
-
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, totalTime], options);
     }

@@ -42,10 +42,10 @@ class DataReplication {
                 console.log(e);
             }
 
-                // const tests = Challenge.generateTests(
-                //     config.identity, options.import_id, 10,
-                //     options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
-                // );
+            const tests = Challenge.generateTests(
+                config.identity, options.import_id, 10,
+                options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
+            );
             const payload = JSON.stringify({
                 vertices: data.encryptedVertices.vertices,
                 public_key: data.encryptedVertices.public_key,
@@ -55,17 +55,17 @@ class DataReplication {
             });
 
             // send payload to DH
-            MessageHandler.sendDirectMessage(config.identity, 'payload-request', payload)
-                .then(() => {
-                    // save holding data config.DH_WALLET, data.data_id, payload.public_key
-                    Storage.models.holding_data.create({
-                        dc_id: config.identity,
-                        data_id: options.data_id,
-                        start_time: options.start_time,
-                        end_time: options.start_time + 120,
-                        total_token: options.amount,
-                    });
-                });
+            // MessageHandler.sendDirectMessage(config.identity, 'payload-request', payload)
+            //     .then(() => {
+            //         // save holding data config.DH_WALLET, data.data_id, payload.public_key
+            //         Storage.models.holding_data.create({
+            //             dc_id: config.identity,
+            //             data_id: options.data_id,
+            //             start_time: options.start_time,
+            //             end_time: options.start_time + 120,
+            //             total_token: options.amount,
+            //         });
+            //     });
         });
     }
 }
