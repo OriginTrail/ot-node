@@ -11,6 +11,7 @@ class Ethereum {
      * @param {object} - blockchainConfig
      */
     constructor(blockchainConfig) {
+        console.log(blockchainConfig);
         // Loading Web3
         this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
         this.transactions = new Transactions(
