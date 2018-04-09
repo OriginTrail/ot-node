@@ -97,18 +97,18 @@ class Network {
         log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
-        node.ot.spartacus = node.ot.plugin(kadence.spartacus(
-            this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        ));
+        // node.ot.spartacus = node.ot.plugin(kadence.spartacus(
+        //     this.xprivkey,
+        //     parseInt(config.child_derivation_index, 10),
+        //     kadence.constants.HD_KEY_DERIVATION_PATH,
+        // ));
 
         log.info('Spartacus initialised');
 
-        node.ot.permission = node.ot.plugin(kadence.permission({
-            privateKey: node.ot.spartacus.privateKey,
-            walletPath: `${__dirname}/../data/wallet.dat`,
-        }));
+        // node.ot.permission = node.ot.plugin(kadence.permission({
+        //     privateKey: node.ot.spartacus.privateKey,
+        //     walletPath: `${__dirname}/../data/wallet.dat`,
+        // }));
 
         // Store peers in cache
         node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
