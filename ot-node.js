@@ -150,7 +150,7 @@ class OTNode {
             log.info('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            const remote_access = Utilities.remote_access_whitelist;
+            const remote_access = config.remote_access_whitelist;
 
             if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
                 res.send({
@@ -176,7 +176,7 @@ class OTNode {
                     filepath: input_file,
                 };
 
-                globalEmitter.emit('import-request', queryObject);
+                globalEmitter.emit('gs1-import-request', queryObject);
             }
         });
     }

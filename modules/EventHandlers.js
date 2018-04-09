@@ -10,9 +10,9 @@ globalEmitter.on('import-request', (data) => {
     });
 });
 globalEmitter.on('gs1-import-request', (data) => {
-    // importer.importXMLgs1(data.queryObject.filepath, (response) => {
-    //     // emit response
-    // });
+    importer.importXMLgs1(data.filepath, (response) => {
+        // emit response
+    });
 });
 
 globalEmitter.on('replicaiton-request', (data) => {
