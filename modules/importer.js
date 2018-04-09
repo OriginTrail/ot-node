@@ -113,8 +113,6 @@ module.exports = () => {
                     message: 'Import success',
                     data: [],
                 });
-                console.log(hash_pairs);
-                process.kill(0);
 
                 storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
@@ -178,6 +176,11 @@ module.exports = () => {
 
                 log.info(`Import id: ${data_id}`);
                 log.info(`Import hash: ${root_hash}`);
+
+                console.log(hash_pairs);
+                process.kill(0);
+
+                
                 storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
                     signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
