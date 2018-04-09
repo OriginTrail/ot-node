@@ -97,8 +97,8 @@ class Network {
 
 
         // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        log.info('Eclipse protection initialised');
+        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        // log.info('Eclipse protection initialised');
 
         node.ot.permission = node.ot.plugin(kadence.permission({
             privateKey: node.ot.spartacus.privateKey,
@@ -303,14 +303,12 @@ class Network {
             log.trace('Running in seed mode (waiting for connections)');
 
             return node.ot.router.events.once('add', (identity) => {
-                // console.log('identity');
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
                         node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
-                console.log(config.network_bootstrap_nodes);
                 this.joinNetwork(callback);
             });
         }
