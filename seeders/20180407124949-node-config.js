@@ -76,7 +76,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'verbose_logging',
-        value: '1',
+        value: '0',
     }, {
         key: 'control_port_enabled',
         value: '0',
