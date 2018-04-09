@@ -56,7 +56,7 @@ class Network {
         ns.checkIdentity(this.identity, this.xprivkey);
 
         const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
-        console.log(kadence.utils.satisfiesDifficulty(kadence.utils.scrypt(childkey.publicKey), constants.IDENTITY_DIFFICULTY));
+        // console.log(kadence.utils.satisfiesDifficulty(kadence.utils.scrypt(childkey.publicKey), constants.IDENTITY_DIFFICULTY));
 
         this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
             .toString('hex');
