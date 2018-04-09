@@ -30,8 +30,8 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-            deasync(Blockchain.bc.increaseApproval(options.amount));
             try {
+                deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
                     options.dh_wallet,
                     options.import_id,
