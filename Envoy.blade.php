@@ -28,7 +28,7 @@ rm -rf kad-storage/*
 
 @task('dc-db', ['on' => 'dc'])
 sqlite3 /home/ot/ot-node/modules/Database/system.db 'UPDATE node_config SET value="167.99.202.146" WHERE key="node_rpc_ip"'
-sqlite3 /home/ot/ot-node/modules/Database/system.db "UPDATE node_config SET value='[\"94.189.154.202\"]'
+sqlite3 /home/ot/ot-node/modules/Database/system.db "UPDATE node_config SET value='[\"94.189.153.23\"]'
 WHERE key='remote_access_whitelist'"
 @endtask
 
