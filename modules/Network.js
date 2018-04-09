@@ -306,8 +306,8 @@ class Network {
                 // console.log('identity');
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
-                        this.identity,
-                        node.ot.router.getContactByNodeId(this.identity),
+                        identity,
+                        node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
                 console.log(config.network_bootstrap_nodes);
