@@ -15,7 +15,7 @@ globalEmitter.on('import-request', (data) => {
     });
 });
 globalEmitter.on('gs1-import-request', (data) => {
-    importer.importXMLgs1(data.filepath, (response) => {
+    importer.importXMLgs1(data.filepath).then((response) => {
         const {
             data_id,
             root_hash,
