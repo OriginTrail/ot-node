@@ -189,7 +189,7 @@ module.exports = () => {
                 });
 
 
-                storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
+                /*storage.storeObject(`Import_${data_id}`, { vertices: hash_pairs, root_hash }, (response) => {
                     // eslint-disable-next-line max-len
                     signing.signAndSend(data_id, utilities.sha3(data_id), utilities.sha3(tree.root())).then((response) => { // eslint-disable-line no-shadow
                         // eslint-disable-next-line global-require
@@ -216,7 +216,7 @@ module.exports = () => {
                     }).catch((err) => {
                         log.warn('Failed to write data fingerprint on blockchain!');
                     });
-                });
+                });*/
             });
         },
 
