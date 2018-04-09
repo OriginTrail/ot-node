@@ -28,7 +28,7 @@ class Utilities {
                     const prop = cnf.get({
                         plain: true,
                     }).key;
-                    if (prop === 'network_bootstrap_nodes' || prop === 'ssl_authority_paths') {
+                    if (prop === 'network_bootstrap_nodes' || prop === 'ssl_authority_paths' || prop === 'remote_access_whitelist') {
                         config[cnf.get({
                             plain: true,
                         }).key] = JSON.parse(cnf.get({
@@ -118,7 +118,6 @@ class Utilities {
         } catch (e) {
             // console.log(e);
         }
-
     }
 
     /**
