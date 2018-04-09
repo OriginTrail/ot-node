@@ -328,7 +328,7 @@ class Network {
             } else {
                 log.info('Joined');
                 /* eslint-disable-next-line no-undef */
-                callback(null, result);
+                callback(null, contact);
             }
         });
     }
