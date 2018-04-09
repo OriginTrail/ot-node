@@ -68,7 +68,7 @@ module.exports = () => {
 
         // eslint-disable-next-line no-shadow
         importXML: async function async(ot_xml_document, callback) {
-            /*        const options = {
+            const options = {
                 mode: 'text',
                 pythonPath: 'python3',
                 scriptPath: 'importers/',
@@ -143,7 +143,6 @@ module.exports = () => {
                     });
                 });
             });
-            */
         },
 
         importXMLgs1: async function async(ot_xml_document, callback) {

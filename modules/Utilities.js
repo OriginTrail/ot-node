@@ -255,6 +255,16 @@ class Utilities {
             charset: 'alphabetic',
         });
     }
+
+    /**
+     * Makes a copy of object
+     *
+     * @param object Obj
+     * @return object
+     */
+    static copyObject(Obj) {
+        return JSON.parse(JSON.stringify(Obj));
+    }
 }
 
 module.exports = Utilities;
