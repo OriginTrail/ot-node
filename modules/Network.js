@@ -198,6 +198,7 @@ class Network {
                         console.log('result');
                         console.log(res);
                     }).catch((e) => {
+                        console.log('error');
                         console.log(e);
                     });
                     MessageHandler.sendBroadcast('PORUKA', 'SVIMA');
