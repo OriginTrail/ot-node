@@ -1,101 +1,71 @@
-const product = require('./product')();
+const globalEvents = require('./GlobalEvents');
 const importer = require('./importer')();
-const blockchain = require('./blockchain')();
-const testing = require('./testing')();
-const signing = require('./blockchain_interface/ethereum/signing')();
-const utilities = require('./utilities');
+const MessageHandler = require('./MessageHandler');
+const Storage = require('./Database/SystemStorage');
+const Blockchain = require('./BlockChainInstance');
+const Graph = require('./Graph');
+const replication = require('./DataReplication');
+const deasync = require('deasync-promise');
 
-const log = utilities.getLogger();
-const config = utilities.getConfig();
+const { globalEmitter } = globalEvents;
+const log = require('./Utilities').getLogger();
 
-class EventHandlers {
-    constructor(data, socket) {
-        this.event = utilities.toSnakeCase(data.request);
+globalEmitter.on('import-request', (data) => {
+    importer.importXML(data.filepath, (response) => {
+        // emit response
+    });
+});
+globalEmitter.on('gs1-import-request', (data) => {
+    importer.importXMLgs1(data.filepath).then((response) => {
+        const {
+            data_id,
+            root_hash,
+            total_documents,
+            vertices,
+            edges,
+        } = response;
 
-        // get the first part of some-response => some
-        [this.eventPrefix] = data.request.split(/-(.+)/);
-
-        this.queryObject = data.queryObject;
-        this.clientRequest = data.clientRequest;
-
-        try {
-            this[this.event](socket);
-        } catch (err) {
-            socket.emit('event', {
-                response: 'Unsupported event',
+        deasync(Storage.connect());
+        Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
+            .then((data_info) => {
+                Blockchain.bc.writeRootHash(data_id, root_hash);
+                Graph.encryptVertices(
+                    '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+                    'b8eed150d20a9d5ec553c97104fbcf420c2c28c0',
+                    vertices,
+                    Storage,
+                ).then((encryptedVertices) => {
+                    log.info('[DC] Preparing to enter sendPayload');
+                    const data = {};
+                    data.vertices = vertices;
+                    data.edges = edges;
+                    data.data_id = data_id;
+                    data.encryptedVertices = encryptedVertices;
+                    replication.sendPayload(data).then(() => {
+                        log.info('[DC] Payload sent');
+                    });
+                }).catch((e) => {
+                    console.log(e);
+                });
             });
-        }
-    }
+    }).catch((e) => {
+        console.log(e);
+    });
+});
 
-    emitResponse(socket, response) {
-        socket.emit('event', {
-            response: `${this.eventPrefix}-response`,
-            responseData: response,
-            clientRequest: this.clientRequest,
+globalEmitter.on('replication-request', (data) => {
+
+});
+
+globalEmitter.on('payload-request', (data) => {
+    importer.importJSON(data)
+        .then(() => {
+            MessageHandler.sendDirectMessage(data.contact, 'replication-finished', 'success');
         });
-    }
+});
 
-    trailRequest(socket) {
-        product.getTrailByQuery(this.queryObject, (response) => {
-            this.emitResponse(socket, response);
-        });
+globalEmitter.on('replication-finished', (status) => {
+    if (status === 'success') {
+        // start challenging
     }
-
-    importRequest(socket) {
-        importer.importXML(this.queryObject.filepath, (response) => {
-            this.emitResponse(socket, response);
-        });
-    }
-
-    gs1importRequest(socket) {
-        importer.importXMLgs1(this.queryObject.filepath, (response) => {
-            this.emitResponse(socket, response);
-        });
-    }
-
-    blockchainRequest(socket) {
-        const batch_uid_hash = utilities.sha3(this.queryObject.batch_uid);
-        blockchain.getFingerprint(this.queryObject.owner, batch_uid_hash, (response) => {
-            this.emitResponse(socket, response);
-        });
-    }
-
-    expirationRequest(socket) {
-        product.getExpirationDates(this.queryObject, (response) => {
-            this.emitResponse(socket, response);
-        });
-    }
-
-    replicationRequest(socket) {
-        importer.importJSON(this.queryObject, () => {
-            log.info('[DH] JSON imported');
-            this.emitResponse(socket, {
-                status: 'success',
-                code: 200,
-                data: [],
-            });
-        });
-    }
-
-    testingRequest(socket) {
-        log.info('[DH] Event emitted: Testing Request Response');
-        // log.warn(this.queryObject);
-        testing.answerQuestion(this.queryObject, (answer) => {
-            this.emitResponse(socket, {
-                answer,
-                wallet: config.blockchain.settings.ethereum.wallet_address,
-                ip: config.NODE_IP,
-                port: config.RPC_API_PORT,
-            });
-        });
-    }
-
-    receiptRequest(socket) {
-        signing.sendConfirmation(this.queryObject, (response) => {
-            log.info('[DH] Event emitted: Receipt Request Response');
-            this.emitResponse(socket, []);
-        });
-    }
-}
-
-module.exports = EventHandlers;
+});

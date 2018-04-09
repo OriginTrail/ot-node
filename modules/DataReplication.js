@@ -1,83 +1,71 @@
-const axios = require('axios');
-const graph = require('./graph')();
-const testing = require('./testing')();
-const holding = require('./holding')();
-const utilities = require('./utilities');
-const signing = require('./blockchain_interface/ethereum/signing')();
+const graph = require('./Graph');
+const Challenge = require('./Challenge');
+const utilities = require('./Utilities');
+const config = require('./Config');
+const Blockchain = require('./BlockChainInstance');
+const MessageHandler = require('./MessageHandler');
+const Storage = require('./Storage');
+const deasync = require('deasync-promise');
 
-const log = utilities.getLogger();
-const config = utilities.getConfig();
+const log = require('./Utilities').getLogger();
 
 
 class DataReplication {
     /**
-    * Sends data to DH for replication
-    *
-    * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-    * @return object response
-    */
-    static sendPayload(data, callback) {
-        log.info('Entering sendPayload');
+   * Sends data to DH for replication
+   *
+   * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+   * @return object response
+   */
+    static sendPayload(data) {
+        return new Promise((resolve, reject) => {
+            log.info('Entering sendPayload');
 
-        const currentUnixTime = Math.floor(new Date() / 1000);
-        const min10 = currentUnixTime + 120 + 60; // End of testing period
-        const options_signing = {
-            dh_wallet: config.DH_WALLET,
-            import_id: data.data_id,
-            amount: data.vertices.length + data.edges.length,
-            start_time: currentUnixTime + 120,
-            total_time: 60,
-        };
-        signing.signAndAllow(options_signing).then((response) => {
-            graph.encryptVertices(
-                config.DH_NODE_IP,
-                config.DH_NODE_PORT,
-                data.vertices, (encryptedVertices) => {
-                    testing.generateTests(
-                        data.data_id,
-                        config.DH_NODE_IP,
-                        config.DH_NODE_PORT,
-                        config.blockchain.settings.ethereum.wallet_address,
-                        encryptedVertices.vertices,
-                        10,
-                        currentUnixTime + 120, min10,
-                        (res, err) => {
-                            log.info('[DC] Tests generated');
-                        },
-                    );
-                    const payload = JSON.stringify({
-                        vertices: encryptedVertices.vertices,
-                        public_key: encryptedVertices.public_key,
-                        edges: data.edges,
-                        data_id: data.data_id,
-                        dc_wallet: config.blockchain.settings.ethereum.wallet_address,
-                    });
-                    const options = {
-                        method: 'POST',
-                        url: `http://${config.DH_NODE_IP}:${config.DH_NODE_PORT}/api/replication`,
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Content-Length': payload.length,
-                        },
-                        data: payload,
-                    };
-                    try {
-                        axios(options).then((result) => {
-                            log.info('Payload sent');
-                            // eslint-disable-next-line max-len
-                            holding.addHoldingData(config.DH_WALLET, data.data_id, payload.public_key, () => {
-                                log.info('[DH] Holding data saved into database');
-                            });
-                            utilities.executeCallback(callback, result.data);
-                        }).catch((err) => {
-                            console.error(err);
-                        });
-                    } catch (e) {
-                        log.error('Payload not sent');
-                        console.error('DH connection failed');
-                    }
-                },
+            const currentUnixTime = Math.floor(new Date() / 1000);
+            const min10 = currentUnixTime + 120 + 60; // End of testing period
+            const options = {
+                dh_wallet: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+                import_id: data.data_id,
+                amount: data.vertices.length + data.edges.length,
+                start_time: currentUnixTime + 120,
+                total_time: 10 * 60,
+            };
+            try {
+                deasync(Blockchain.bc.increaseApproval(options.amount));
+                deasync(Blockchain.bc.initiateEscrow(
+                    options.dh_wallet,
+                    options.import_id,
+                    options.amount,
+                    options.total_time,
+                ));
+            } catch (e) {
+                console.log(e);
+            }
+
+            const tests = Challenge.generateTests(
+                config.identity, options.import_id, 10,
+                options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
             );
+            const payload = JSON.stringify({
+                vertices: data.encryptedVertices.vertices,
+                public_key: data.encryptedVertices.public_key,
+                edges: data.edges,
+                data_id: data.data_id,
+                dc_wallet: config.blockchain.wallet_address,
+            });
+
+            // send payload to DH
+            MessageHandler.sendDirectMessage(config.identity, 'payload-request', payload)
+                .then(() => {
+                    // save holding data config.DH_WALLET, data.data_id, payload.public_key
+                    Storage.models.holding_data.create({
+                        dc_id: config.identity,
+                        data_id: options.data_id,
+                        start_time: options.start_time,
+                        end_time: options.start_time + 120,
+                        total_token: options.amount,
+                    });
+                });
         });
     }
 }
