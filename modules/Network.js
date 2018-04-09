@@ -321,14 +321,14 @@ class Network {
             });
         }, (err, result) => {
             console.log(result);
-            console.log(result);
+            console.log(contact);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
             } else {
                 log.info('Joined');
                 /* eslint-disable-next-line no-undef */
-                callback(null, contact);
+                callback(null, result);
             }
         });
     }
