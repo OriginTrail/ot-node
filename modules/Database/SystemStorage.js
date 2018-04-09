@@ -45,7 +45,7 @@ class SystemStorage {
    * @param {object} params - Query parameters
    * @returns {Promise<any>}
    */
-    runSystemUpdate(update, params) {
+    static runSystemUpdate(update, params) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to database'));
