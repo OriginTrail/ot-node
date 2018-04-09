@@ -103,10 +103,10 @@ module.exports = {
         value: '[]',
     }, {
         key: 'is_bootstrap_node',
-        value: '1',
+        value: '0',
     }, {
         key: 'solve_hashes',
-        value: '0',
+        value: '1',
     },
     {
         key: 'remote_access_whitelist',
