@@ -21,7 +21,7 @@ class SystemStorage {
                 host: 'localhost',
                 dialect: 'sqlite',
                 operatorsAliases: false,
-                logging: false,
+                logging: true,
 
                 define: {
                     timestamps: false, // true by default
