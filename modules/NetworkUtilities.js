@@ -92,7 +92,7 @@ class NetworkUtilities {
         for (let c = 0; c < cpus; c += 1) {
             const index = Math.floor(kadence.constants.MAX_NODE_INDEX / cpus) * c;
             const solver = this.forkIdentityDerivationSolver(c, xprivkey, index, events);
-
+            console.log(solver);
             this.solvers.push(solver);
 
             solver.once('exit', (code) => {
