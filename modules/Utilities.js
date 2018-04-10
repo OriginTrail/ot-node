@@ -107,10 +107,12 @@ class Utilities {
 
             logger.log = function (level, msg) {
                 if (msg instanceof Error) {
+                    // eslint-disable-next-line prefer-rest-params
                     var args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
+                    // eslint-disable-next-line prefer-rest-params
                     origLog.apply(logger, arguments);
                 }
             };

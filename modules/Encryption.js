@@ -1,7 +1,6 @@
 var RSA = require('node-rsa');
 
 class Encryption {
-
     /**
      * Returns generated 512b RSA public-private key pair
      * @returns {privateKey: string, publicKey: string}
