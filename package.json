@@ -5,7 +5,8 @@
   "main": ".eslintrc.js",
   "scripts": {
     "test": "nyc mocha --recursive test",
-    "start": "node ot-node.js"
+    "start": "node ot-node.js",
+    "lint": "./node_modules/.bin/eslint --quiet ."
   },
   "devDependencies": {
     "babel-eslint": "^8.2.2",

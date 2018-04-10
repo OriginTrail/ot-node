@@ -233,6 +233,7 @@ class ArangoJS {
                     resolve('Collection created');
                 },
                 (err) => {
+                    console.log(err);
                     const errorCode = err.response.body.code;
                     if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                         resolve('Double insert');

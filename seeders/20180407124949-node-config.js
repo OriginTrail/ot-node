@@ -9,7 +9,7 @@ module.exports = {
     },
     {
         key: 'node_rpc_ip',
-        value: '127.0.0.1',
+        value: '192.168.100.144',
     }, {
         key: 'node_port',
         value: '5278',
@@ -100,7 +100,7 @@ module.exports = {
         value: '[]',
     }, {
         key: 'network_bootstrap_nodes',
-        value: '[]',
+        value: '["https://192.168.100.162/#27a975a7fb6a177c9af38c155b17208948cb8776"]',
     }, {
         key: 'is_bootstrap_node',
         value: '0',
