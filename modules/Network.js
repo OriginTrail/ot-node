@@ -20,13 +20,13 @@ var ns = {};
 
 
 /**
- * DHT module (Kademlia)
- */
+     * DHT module (Kademlia)
+     */
 
 class Network {
     /**
-   * Setup options and construct a node
-   */
+       * Setup options and construct a node
+       */
     constructor() {
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
@@ -36,9 +36,9 @@ class Network {
     }
 
     /**
-    * Starts the node
-    * @return {Promise<void>}
-    */
+       * Starts the node
+       * @return {Promise<void>}
+       */
     async start() {
         // Check config
         ns.verifyConfiguration(config);
@@ -83,14 +83,14 @@ class Network {
 
         log.info('Starting OT Node...');
 
-        // We use Hashcash for relaying messages to prevent abuse and make large scale
-        // DoS and spam attacks cost prohibitive
-        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 2,
-        }));
-
-        log.info('Hashcach initialised');
+        // // We use Hashcash for relaying messages to prevent abuse and make large scale
+        // // DoS and spam attacks cost prohibitive
+        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE'],
+        //     difficulty: 2,
+        // }));
+        //
+        // log.info('Hashcach initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
@@ -176,7 +176,7 @@ class Network {
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
             log.notify('OT Node listening ' +
-                `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
+              `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
             ns.registerControlInterface(config, node);
 
             if (parseInt(config.solve_hashes, 10)) {
@@ -194,7 +194,7 @@ class Network {
                     }
 
                     log.info(`Connected to network via ${entry[0]} ` +
-                        `(http://${entry[1].hostname}:${entry[1].port})`);
+                  `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
                     MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
@@ -229,11 +229,11 @@ class Network {
 
 
     /**
-    * Set contact data
-    * @param config
-    * @param parentkey
-    * @return {{hostname: *, protocol: string, port: number, xpub: *, index: number, agent: string}}
-    */
+       * Set contact data
+       * @param config
+       * @param parentkey
+       * @return {{hostname: *, protocol: string, port: number, xpub: *, index: number, agent: string}}
+       */
     setContact(config, parentkey) {
         const contact = {
             hostname: config.node_rpc_ip,
@@ -247,11 +247,11 @@ class Network {
     }
 
     /**
-    * HTTPS Transport
-    * @param config
-    * @return {HTTPSTransport}
-    * @private
-    */
+       * HTTPS Transport
+       * @param config
+       * @return {HTTPSTransport}
+       * @private
+       */
     _HTTPSTransport() {
         const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
         const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
@@ -264,10 +264,10 @@ class Network {
     }
 
     /**
-    * Join Network
-    * @param callback
-    * @return {Promise<void>}
-    */
+       * Join Network
+       * @param callback
+       * @return {Promise<void>}
+       */
     async joinNetwork(callback) {
         // const peers
         //     = config
@@ -311,4 +311,3 @@ class Network {
 
 
 module.exports = Network;
-
