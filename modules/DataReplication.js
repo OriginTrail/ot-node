@@ -58,7 +58,7 @@ class DataReplication {
             });
 
             // send payload to DH
-            MessageHandler.sendDirectMessage('f4d74f2ed9a239fbb0d41230bc561c6f9abb3d79', 'payload-request', payload)
+            MessageHandler.sendDirectMessage('7780bc74f3c0c95fd2c2bf2d7db889d38619eb60', 'payload-request', payload)
                 .then(() => {
                     // save holding data config.DH_WALLET, data.data_id, payload.public_key
                     // Storage.models.holding_data.create({
