@@ -92,7 +92,7 @@ class NetworkUtilities {
         for (let c = 0; c < cpus; c += 1) {
             const index = Math.floor(kadence.constants.MAX_NODE_INDEX / cpus) * c;
             const solver = this.forkIdentityDerivationSolver(c, xprivkey, index, events);
-            console.log(solver);
+
             this.solvers.push(solver);
 
             solver.once('exit', (code) => {
@@ -145,7 +145,7 @@ class NetworkUtilities {
         solver.on('error', (err) => {
             log.error(`Derivation ${c} error, ${err.message}`);
         });
-
+        console.log([xprv, index]);
         solver.send([xprv, index]);
 
         return solver;
