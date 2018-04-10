@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+  - "9"
+script:
+  - npm run lint
+  - npm start &>start.log &
+  - sleep 20
+  - jobs
+  - kill %1
+  - node isStartHealthy.js
+after_script:
+- rm -f start.log
