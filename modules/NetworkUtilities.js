@@ -138,14 +138,14 @@ class NetworkUtilities {
             if (msg.attempts) {
                 return events.emit('attempt');
             }
-
+            console.log(msg);
             events.emit('index', msg.index);
         });
 
         solver.on('error', (err) => {
             log.error(`Derivation ${c} error, ${err.message}`);
         });
-        console.log([xprv, index]);
+
         solver.send([xprv, index]);
 
         return solver;
