@@ -269,11 +269,11 @@ class Network {
    * @return {Promise<void>}
    */
     async joinNetwork(callback) {
-    // const peers
-    //     = config
-    //         .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        const peers
+        = config
+            .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
 
-        const peers = config.network_bootstrap_nodes;
+        // const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
