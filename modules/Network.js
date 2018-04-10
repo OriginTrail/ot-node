@@ -7,6 +7,7 @@ const leveldown = require('leveldown');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
+const deasync = require('deasync-promise');
 const fs = require('fs');
 var node = require('./Node');
 var code = require('./Node');
@@ -45,7 +46,7 @@ class Network {
 
 
         log.info('Checking SSL certificate');
-        ns.setSelfSignedCertificate(config);
+        deasync(ns.setSelfSignedCertificate(config));
 
         log.info('Getting the identity');
         this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
