@@ -1,6 +1,11 @@
 language: node_js
 node_js:
   - "9"
+before_script:
+  - touch touch modules/Database/system.db
+  - ./node_modules/.bin/sequelize db:migrate
+  - ./node_modules/.bin/sequelize db:seed:all
+  - mkdir keys
 script:
   - npm run lint
   - npm start &>start.log &
