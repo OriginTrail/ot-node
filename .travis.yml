@@ -9,4 +9,5 @@ script:
   - kill %1
   - node isStartHealthy.js
 after_script:
+- cat start.log
 - rm -f start.log
