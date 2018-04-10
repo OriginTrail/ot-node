@@ -6,6 +6,7 @@ const config = require('./Config');
 const Mtree = require('./mtree')();
 const Storage = require('./Storage');
 const async = require('async');
+const deasync = require('deasync-promise');
 const GSdb = require('./GraphStorageInstance');
 const replication = require('./Challenge');
 const Transactions = require('./Blockchain/Ethereum/Transactions');
@@ -13,7 +14,6 @@ const gs1 = require('./gs1-importer')();
 var Web3 = require('web3');
 
 const log = utilities.getLogger();
-const { db } = GSdb;
 
 module.exports = () => {
     const importer = {
@@ -21,8 +21,8 @@ module.exports = () => {
         async importJSON(json_document, callback) {
             log.info('Entering importJSON');
             const graph = json_document;
-            await db.createVertexCollection('ot_vertices', () => {});
-            await db.createEdgeCollection('ot_edges', () => {});
+            deasync(GSdb.db.createCollection('ot_vertices'));
+            deasync(GSdb.db.createCollection('ot_edges'));
 
             // eslint-disable-next-line  prefer-destructuring
             const vertices = graph.vertices;
@@ -31,9 +31,9 @@ module.exports = () => {
             const data_id = graph.import_id;
 
             async.each(vertices, (vertex, next) => {
-                db.addVertex('ot_vertices', vertex).then((import_status) => {
+                GSdb.db.addVertex('ot_vertices', vertex).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
+                        GSdb.db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -50,9 +50,9 @@ module.exports = () => {
             });
 
             async.each(edges, (edge, next) => {
-                db.addEdge('ot_edges', edge).then((import_status) => {
+                GSdb.db.addEdge('ot_edges', edge).then((import_status) => {
                     if (import_status === false) {
-                        db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
+                        GSdb.db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;

@@ -58,7 +58,7 @@ globalEmitter.on('replication-request', (data) => {
 });
 
 globalEmitter.on('payload-request', (data) => {
-    importer.importJSON(data)
+    importer.importJSON(data.payload)
         .then(() => {
             MessageHandler.sendDirectMessage(data.contact, 'replication-finished', 'success');
         });
