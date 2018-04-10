@@ -236,7 +236,7 @@ class NetworkUtilities {
         const parentkey = hdkey.fromExtendedKey(xprivkey)
             .derive(kadence.constants.HD_KEY_DERIVATION_PATH);
         const childkey = parentkey.deriveChild(parseInt(config.child_derivation_index, 10));
-        console.log(config.child_derivation_index);
+        console.log(parentkey);
         return {
             childkey,
             parentkey,
