@@ -113,6 +113,7 @@ class Network {
         }));
 
         // Store peers in cache
+
         node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         log.info('Validating solutions in wallet, this can take some time');

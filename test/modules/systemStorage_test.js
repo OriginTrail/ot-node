@@ -1,4 +1,4 @@
-const SystemStorage = require('./SystemStorage');
+const SystemStorage = require('../../modules/Database/SystemStorage');
 
 var sysdb = new SystemStorage();
 
