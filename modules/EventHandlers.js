@@ -28,10 +28,14 @@ globalEmitter.on('gs1-import-request', (data) => {
         deasync(Storage.connect());
         Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
             .then((data_info) => {
-                Blockchain.bc.writeRootHash(data_id, root_hash);
+                /*  Blockchain.bc.writeRootHash(data_id, root_hash).then((res) => {
+                    log.info('Fingerprint written on blockchain');
+                }).catch((e) => {
+                    // console.log('Error: ', e);
+                }) */
                 Graph.encryptVertices(
                     '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
-                    'b8eed150d20a9d5ec553c97104fbcf420c2c28c0',
+                    '27a975a7fb6a177c9af38c155b17208948cb8776',
                     vertices,
                     Storage,
                 ).then((encryptedVertices) => {

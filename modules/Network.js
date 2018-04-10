@@ -82,7 +82,7 @@ class Network {
         });
 
         log.info('Starting OT Node...');
-
+/*
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
         node.ot.hashcash = node.ot.plugin(kadence.hashcash({
@@ -90,13 +90,13 @@ class Network {
             difficulty: 2,
         }));
 
-        log.info('Hashcach initialised');
+        log.info('Hashcach initialised'); */
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
         // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        log.info('Eclipse protection initialised');
+        // log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(

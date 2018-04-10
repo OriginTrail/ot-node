@@ -17,18 +17,26 @@ class MessageHandler {
         });
     }
 
-    sendDirectMessage(contact, channel, msg) {
+    sendDirectMessage(key, channel, msg) {
+        msg.contact = [config.identity, node.ot.contact];
         return new Promise((resolve, reject) => {
-            node.ot.send(channel, {
-                message: msg,
-            }, contact, (err, response) => {
-                if (err) {
-                    reject(err);
-                }
+            node.ot.send(
+                channel, {
+                    message: msg,
+                }, ['91dcdcd20a37c7df2837aa102651f4eebd681783', {
+                    hostname: '192.168.100.144',
+                    protocol: 'https:',
+                    port: 5278,
+                }]
+                , (err, response) => {
+                    if (err) {
+                        reject(err);
+                    }
 
-                console.log('Response: ', response);
-                resolve(response);
-            });
+                    console.log('Response: ', response);
+                    resolve(response);
+                },
+            );
         });
     }
 

@@ -152,7 +152,7 @@ module.exports = () => {
                     }
 
                     const tree = new Mtree(hash_pairs);
-                    const root_hash = tree.root();
+                    const root_hash = utilities.sha3(tree.root());
 
                     log.info(`Import id: ${data_id}`);
                     log.info(`Import hash: ${root_hash}`);
