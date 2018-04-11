@@ -307,6 +307,7 @@ class Network {
                 log.important('Joined the network');
                 /* eslint-disable-next-line no-undef */
                 const contact = kadence.utils.parseContactURL(result);
+                config.dh = contact;
                 callback(null, contact);
             }
         });

@@ -116,6 +116,10 @@ module.exports = {
         key: 'node_rpc_port',
         value: '8900',
     },
+    {
+        key: 'dh_wallet',
+        value: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+    },
     ], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
