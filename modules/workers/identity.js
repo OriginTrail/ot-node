@@ -10,7 +10,7 @@ if (parseInt(process.env.kadence_TestNetworkEnabled, 10)) {
 
 process.once('message', ([xprv, index]) => {
     const identity = new kadence.eclipse.EclipseIdentity(xprv, index);
-    console.log(identity);
+
     let attempts = 0;
     const start = Date.now();
 
