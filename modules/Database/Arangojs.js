@@ -76,15 +76,14 @@ class ArangoJS {
     updateDocumentImports(collectionName, document, importNumber) {
         return new Promise((resolve, reject) => {
             this.getDocument(collectionName, document).then((document) => {
-                var imports = [];
+                var new_imports = [];
                 if (document.imports !== undefined) {
-                    console.log(document.imports);
-                    imports = document.imports;
+                    new_imports = document.imports;
                 }
 
-                imports.push(importNumber);
+                new_imports.push(importNumber);
 
-                document.imports = imports;
+                document.imports = new_imports;
                 this.updateDocument(collectionName, document).then((meta) => {
                     resolve(meta);
                 }).catch((err) => {
