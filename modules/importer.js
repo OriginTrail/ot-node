@@ -22,6 +22,7 @@ module.exports = () => {
             return new Promise((resolve, reject) => {
                 log.info('Entering importJSON');
                 const graph = json_document;
+
                 deasync(GSdb.db.createCollection('ot_vertices'));
                 deasync(GSdb.db.createCollection('ot_edges'));
 
@@ -30,18 +31,26 @@ module.exports = () => {
                 // eslint-disable-next-line  prefer-destructuring
                 const edges = graph.edges;
                 const data_id = graph.import_id;
-
                 async.each(
                     vertices, (vertex, next) => {
-                        GSdb.db.addDocument('ot_vertices', vertex).then(() => {
-                            GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id).then(() => {
+                        log.trace('Vertex importing');
+                        GSdb.db.addDocument('ot_vertices', vertex)
+                            .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
+                            .then(() => {
                                 next();
-                            }).catch((err) => {
-                                reject(err);
                             });
-                        }).catch((err) => {
-                            reject(err);
-                        });
+
+                        // GSdb.db.addDocument('ot_vertices', vertex).then(() => {
+                        //     console.log('Vertex added');
+                        //     GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id).then(() => {
+                        //         console.log('Vertex imported');
+                        //         next();
+                        //     }).catch((err) => {
+                        //         reject(err);
+                        //     });
+                        // }).catch((err) => {
+                        //     reject(err);
+                        // });
                     }
                     , () => {
                         async.each(edges, (edge, next) => {
