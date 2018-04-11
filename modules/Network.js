@@ -76,11 +76,19 @@ class Network {
         // const transport = new kadence.HTTPTransport();
 
         // Initialize protocol implementation
+        // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
             transport,
             contact,
-            storage: levelup(encoding(leveldown(`${__dirname}/../kad-storage/kadence.dht`))),
+            storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
+                table: 'node_data',
+            }, (err) => {
+                if (err) {
+                    log.error('Failed to create SQLite3 Kademlia adapter');
+                    throw err;
+                }
+            }),
         });
 
         log.info('Starting OT Node...');
