@@ -23,50 +23,39 @@ module.exports = () => {
                 log.info('Entering importJSON');
                 const graph = json_document;
 
-                deasync(GSdb.db.createCollection('ot_vertices'));
-                deasync(GSdb.db.createEdgeCollection('ot_edges'));
-
-                // eslint-disable-next-line  prefer-destructuring
-                const vertices = graph.vertices;
-                // eslint-disable-next-line  prefer-destructuring
-                const edges = graph.edges;
-                const data_id = graph.import_id;
-                async.each(
-                    vertices, (vertex, next) => {
-                        log.trace('Vertex importing');
-                        GSdb.db.addDocument('ot_vertices', vertex)
-                            .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
-                            .then(() => {
-                                next();
-                            });
-
-                        // GSdb.db.addDocument('ot_vertices', vertex).then(() => {
-                        //     console.log('Vertex added');
-                        //     GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id).then(() => {
-                        //         console.log('Vertex imported');
-                        //         next();
-                        //     }).catch((err) => {
-                        //         reject(err);
-                        //     });
-                        // }).catch((err) => {
-                        //     reject(err);
-                        // });
-                    }
-                    , () => {
-                        async.each(edges, (edge, next   ) => {
-                            GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
-                                GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
-                                    next();
-                                }).catch((err) => {
-                                    reject(err);
+                GSdb.db.createCollection('ot_vertices')
+                    .then(() => GSdb.db.createEdgeCollection('ot_edges'))
+                    .then(() => {
+                        // eslint-disable-next-line  prefer-destructuring
+                        const vertices = graph.vertices;
+                        // eslint-disable-next-line  prefer-destructuring
+                        const edges = graph.edges;
+                        const data_id = graph.import_id;
+                        async.each(
+                            vertices, (vertex, next) => {
+                                log.trace('Vertex importing');
+                                GSdb.db.addDocument('ot_vertices', vertex)
+                                    .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
+                                    .then(() => {
+                                        next();
+                                    });
+                            }
+                            , () => {
+                                async.each(edges, (edge, next) => {
+                                    GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
+                                        GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
+                                            next();
+                                        }).catch((err) => {
+                                            reject(err);
+                                        });
+                                    });
+                                }, () => {
+                                    log.info('JSON import complete');
+                                    resolve('success');
                                 });
-                            });
-                        }, () => {
-                            log.info('JSON import complete');
-                            resolve('success');
-                        });
-                    },
-                );
+                            },
+                        );
+                    });
             });
         },
 

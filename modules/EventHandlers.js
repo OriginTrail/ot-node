@@ -66,7 +66,7 @@ globalEmitter.on('replication-request', (data) => {
 globalEmitter.on('payload-request', (data) => {
     importer.importJSON(data.request.params.message.payload)
         .then(() => {
-            log.warn('[DH] Relication finished');
+            log.warn('[DH] Replication finished');
             MessageHandler.sendDirectMessage(data.request.contact, 'replication-finished', 'success').then((res) => {
                 console.log(res);
             }).catch((e) => {
