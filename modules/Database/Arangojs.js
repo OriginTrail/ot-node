@@ -156,7 +156,7 @@ class ArangoJS {
                 meta => resolve(meta),
                 (err) => {
                     const errorCode = err.response.body.code;
-                    if (IGNORE_DOUBLE_INSERT) {
+                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                         resolve('Double insert');
                     } else {
                         reject(err);

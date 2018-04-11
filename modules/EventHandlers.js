@@ -62,9 +62,18 @@ globalEmitter.on('replication-request', (data) => {
 });
 
 globalEmitter.on('payload-request', (data) => {
-    importer.importJSON(data.payload)
+    // console.log(data.request);
+    // console.log(data.request.params);
+    // console.log(data.request.params.message.payload);
+    // log.error(typeof data.params);
+    // process.exit(0);
+    importer.importJSON(data.request.params.message.payload)
         .then(() => {
-            MessageHandler.sendDirectMessage(data.contact, 'replication-finished', 'success');
+            MessageHandler.sendDirectMessage(data.request.contact, 'replication-finished', 'success').then((res) => {
+                console.log(res);
+            }).catch((e) => {
+                console.log(e);
+            });
         });
 });
 
