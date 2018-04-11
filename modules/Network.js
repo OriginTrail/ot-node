@@ -10,7 +10,6 @@ const async = require('async');
 const deasync = require('deasync-promise');
 const fs = require('fs');
 var node = require('./Node');
-var code = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const MessageHandler = require('./MessageHandler');
