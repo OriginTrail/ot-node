@@ -2,6 +2,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
+const leveldown = require('leveldown');
 const sqldown = require('sqldown');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
@@ -79,12 +80,7 @@ class Network {
             log,
             transport,
             contact,
-            storage: levelup(encoding(sqldown('./Database/system.db')), { table: 'node_data' }, (err) => {
-                if (err) {
-                    log.error('Failed to create SQLite3 Kademlia adapter');
-                    throw err;
-                }
-            }),
+            storage: levelup(encoding(leveldown(`${__dirname}/../kad-storage/kadence.dht`))),
         });
 
         log.info('Starting OT Node...');
@@ -95,12 +91,12 @@ class Network {
         node.ot.hashcash = node.ot.plugin(kadence.hashcash({
             methods: ['PUBLISH', 'SUBSCRIBE'],
             difficulty: 2,
-        }));*/
+        })); */
 
         log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
-/*
+        /*
         // Mitigate Eclipse attacks
         node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
