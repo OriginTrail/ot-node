@@ -297,6 +297,7 @@ class Network {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
                 done(null, (!err) && node.ot.router.size > 1);
+                console.log(node.ot.router);
             });
         }, (err, result) => {
             if (!result) {

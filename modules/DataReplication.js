@@ -30,7 +30,7 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-/*
+            /*
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -54,9 +54,9 @@ class DataReplication {
                     edges: data.edges,
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
-                }};
+                },
+            };
 
-            /*
 
             // send payload to DH
             MessageHandler.sendDirectMessage('d1b53b5ae7f2b4737a590f3148db0bd02211343e', 'payload-request', payload)
@@ -67,10 +67,9 @@ class DataReplication {
                     //     data_id: options.data_id,
                     //     start_time: options.start_time,
                     //     end_time: options.start_time + 120,
-                    //     total_token: options.amount,
+                    //    total_token: options.amount,
                     // });
                 });
-                */
         });
     }
 }
