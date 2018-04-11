@@ -75,7 +75,7 @@ globalEmitter.on('payload-request', (data) => {
 
 globalEmitter.on('replication-finished', (status) => {
     log.warn('Notified of finished replication, preparing to start challenges');
-    
+
     if (status === 'success') {
         // start challenging
     }
