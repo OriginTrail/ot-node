@@ -30,7 +30,7 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-/*
+            /*
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -54,7 +54,7 @@ class DataReplication {
                     edges: data.edges,
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
-                }
+                },
             });
 
             // send payload to DH

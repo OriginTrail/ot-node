@@ -18,6 +18,7 @@ class MessageHandler {
     }
 
     sendDirectMessage(key, channel, msg) {
+        // eslint-disable-next-line no-undef
         msg.contact = [config.identity, node.ot.contact];
         return new Promise((resolve, reject) => {
             node.ot.send(

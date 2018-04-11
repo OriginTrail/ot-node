@@ -1,6 +1,9 @@
+// eslint-disable-next-line import/no-unresolved
 const utilities = require('../../utilities');
 const Web3 = require('web3');
+// eslint-disable-next-line import/no-extraneous-dependencies
 const util = require('ethereumjs-util');
+// eslint-disable-next-line import/no-unresolved
 const signing = require('./signing');
 
 const EventEmitter = require('events');
