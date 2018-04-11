@@ -47,18 +47,19 @@ class DataReplication {
                 config.identity, options.import_id, 10,
                 options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
             );
-            const payload = JSON.stringify({
+            const payload = {
                 payload: {
                     vertices: data.encryptedVertices.vertices,
                     public_key: data.encryptedVertices.public_key,
                     edges: data.edges,
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
-                }
-            });
+                }};
+
+            /*
 
             // send payload to DH
-            MessageHandler.sendDirectMessage('7780bc74f3c0c95fd2c2bf2d7db889d38619eb60', 'payload-request', payload)
+            MessageHandler.sendDirectMessage('d1b53b5ae7f2b4737a590f3148db0bd02211343e', 'payload-request', payload)
                 .then(() => {
                     // save holding data config.DH_WALLET, data.data_id, payload.public_key
                     // Storage.models.holding_data.create({
@@ -69,6 +70,7 @@ class DataReplication {
                     //     total_token: options.amount,
                     // });
                 });
+                */
         });
     }
 }

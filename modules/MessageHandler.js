@@ -1,4 +1,6 @@
 var node = require('./Node');
+const config = require('./Config');
+
 
 class MessageHandler {
     connectToSeed(seed) {

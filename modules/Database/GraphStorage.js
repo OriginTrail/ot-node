@@ -139,8 +139,8 @@ class GraphStorage {
         this.db.addVertex(collection_name, vertex, callback);
     }
 
-    updateDocumentImports(collection_name, document_key, import_number, callback) {
-        this.db.updateDocumentImports(collection_name, document_key, import_number, callback);
+    updateDocumentImports(collectionName, document, importNumber) {
+        return this.db.updateDocumentImports(collectionName, document, importNumber);
     }
 
     /**
