@@ -160,6 +160,20 @@ class GraphStorage {
             }
         });
     }
+
+    createEdgeCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.createEdgeCollection(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
 }
 
 module.exports = GraphStorage;
