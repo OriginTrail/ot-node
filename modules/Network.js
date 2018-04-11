@@ -7,6 +7,7 @@ const leveldown = require('leveldown');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
+const deasync = require('deasync-promise');
 const fs = require('fs');
 var node = require('./Node');
 var code = require('./Node');
@@ -33,6 +34,7 @@ class Network {
 
         // Initialize private extended key
         utilities.createPrivateExtendedKey(kadence);
+        kadence.constants.T_RESPONSETIMEOUT = 20000;
     }
 
     /**
@@ -45,7 +47,7 @@ class Network {
 
 
         log.info('Checking SSL certificate');
-        ns.setSelfSignedCertificate(config);
+        deasync(ns.setSelfSignedCertificate(config));
 
         log.info('Getting the identity');
         this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
@@ -82,21 +84,21 @@ class Network {
         });
 
         log.info('Starting OT Node...');
-/*
+
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 2,
-        }));
+        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE'],
+        //     difficulty: 2,
+        // }));
 
-        log.info('Hashcach initialised'); */
+        log.info('Hashcach initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
         // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        // log.info('Eclipse protection initialised');
+        log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(
@@ -186,7 +188,7 @@ class Network {
             if (!parseInt(config.is_bootstrap_node, 10)) {
                 async.retry({
                     times: Infinity,
-                    interval: 1000,
+                    interval: 10000,
                 }, done => this.joinNetwork(done), (err, entry) => {
                     if (err) {
                         log.error(err.message);
@@ -269,11 +271,11 @@ class Network {
    * @return {Promise<void>}
    */
     async joinNetwork(callback) {
-    // const peers
-    //     = config
-    //         .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        const peers
+        = config
+            .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
 
-        const peers = config.network_bootstrap_nodes;
+        // const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
