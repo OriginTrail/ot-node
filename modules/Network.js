@@ -2,8 +2,8 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
+const sqldown = require('sqldown');
 const encoding = require('encoding-down');
-const leveldown = require('leveldown');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
@@ -79,7 +79,12 @@ class Network {
             log,
             transport,
             contact,
-            storage: levelup(encoding(leveldown(`${__dirname}/../kad-storage/kadence.dht`))),
+            storage: levelup(encoding(sqldown('./Database/system.db')), { table: 'node_data' }, (err) => {
+                if (err) {
+                    log.error('Failed to create SQLite3 Kademlia adapter');
+                    throw err;
+                }
+            }),
         });
 
         log.info('Starting OT Node...');
