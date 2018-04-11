@@ -59,7 +59,8 @@ class DataReplication {
 
 
             // send payload to DH
-            MessageHandler.sendDirectMessage(config.dh[0], 'payload-request', payload)
+
+            MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
                 .then(() => {
                     log.info(`Sent payload to ${config.dh[0]}`);
                     // save holding data config.DH_WALLET, data.data_id, payload.public_key
