@@ -31,9 +31,9 @@ module.exports = () => {
             const data_id = graph.import_id;
 
             async.each(vertices, (vertex, next) => {
-                GSdb.db.addVertex('ot_vertices', vertex).then((import_status) => {
+                GSdb.db.addDocument('ot_vertices', vertex).then((import_status) => {
                     if (import_status === false) {
-                        GSdb.db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
+                        GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;
@@ -50,9 +50,9 @@ module.exports = () => {
             });
 
             async.each(edges, (edge, next) => {
-                GSdb.db.addEdge('ot_edges', edge).then((import_status) => {
+                GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
                     if (import_status === false) {
-                        GSdb.db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
+                        GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
                             if (update_status === false) {
                                 log.info('Import error!');
                                 return;

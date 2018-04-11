@@ -1,4 +1,6 @@
 var node = require('./Node');
+const config = require('./Config');
+
 
 class MessageHandler {
     connectToSeed(seed) {
@@ -18,12 +20,11 @@ class MessageHandler {
     }
 
     sendDirectMessage(key, channel, msg) {
-        msg.contact = [config.identity, node.ot.contact];
         return new Promise((resolve, reject) => {
             node.ot.send(
                 channel, {
                     message: msg,
-                }, ['91dcdcd20a37c7df2837aa102651f4eebd681783', {
+                }, ['28f2b296464d78dd510e4195e7627d934540e425', {
                     hostname: '192.168.100.144',
                     protocol: 'https:',
                     port: 5278,
