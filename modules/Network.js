@@ -87,19 +87,20 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 2,
-        // }));
+        /*
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE'],
+            difficulty: 2,
+        }));*/
 
-        log.info('Hashcach initialised');
+        log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
-
+/*
         // Mitigate Eclipse attacks
-        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
-
+*/
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(
             this.xprivkey,
@@ -296,6 +297,7 @@ class Network {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
                 done(null, (!err) && node.ot.router.size > 1);
+                console.log(node.ot.router);
             });
         }, (err, result) => {
             if (!result) {
@@ -305,6 +307,7 @@ class Network {
                 log.important('Joined the network');
                 /* eslint-disable-next-line no-undef */
                 const contact = kadence.utils.parseContactURL(result);
+                config.dh = contact;
                 callback(null, contact);
             }
         });

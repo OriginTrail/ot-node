@@ -6,6 +6,7 @@ const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
 const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
+const config = require('./Config');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -33,9 +34,10 @@ globalEmitter.on('gs1-import-request', (data) => {
                 }).catch((e) => {
                     // console.log('Error: ', e);
                 }) */
+
                 Graph.encryptVertices(
-                    '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
-                    '27a975a7fb6a177c9af38c155b17208948cb8776',
+                    config.dh_wallet,
+                    config.dh[0],
                     vertices,
                     Storage,
                 ).then((encryptedVertices) => {
@@ -62,13 +64,20 @@ globalEmitter.on('replication-request', (data) => {
 });
 
 globalEmitter.on('payload-request', (data) => {
-    importer.importJSON(data.payload)
+    importer.importJSON(data.request.params.message.payload)
         .then(() => {
-            MessageHandler.sendDirectMessage(data.contact, 'replication-finished', 'success');
+            log.warn('[DH] Relication finished');
+            MessageHandler.sendDirectMessage(data.request.contact, 'replication-finished', 'success').then((res) => {
+                console.log(res);
+            }).catch((e) => {
+                console.log(e);
+            });
         });
 });
 
 globalEmitter.on('replication-finished', (status) => {
+    log.warn('Notified of finished replication, preparing to start challenges');
+
     if (status === 'success') {
         // start challenging
     }
