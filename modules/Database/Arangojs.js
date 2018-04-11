@@ -21,57 +21,6 @@ class ArangoJS {
         this.db.useBasicAuth(username, password);
     }
 
-    /**
-     * Creates vertex collection
-     * @param collection_name
-     * @returns {Promise<any>}
-     */
-    async createVertexCollection(collection_name) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collection_name);
-            collection.create().then(
-                () => {
-                    log.info('Document collection created');
-                    resolve(true);
-                },
-                (err) => {
-                    const errorCode = err.response.body.code;
-
-                    if (errorCode === 409) {
-                        log.info('Document collection already exists');
-                    } else {
-                        log.info(err);
-                    }
-                    reject(err);
-                },
-            );
-        });
-    }
-
-    /**
-     * Creates edge collection
-     * @param collection_name
-     * @returns {Promise<any>}
-     */
-    async createEdgeCollection(collection_name) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.edgeCollection(collection_name);
-            collection.create().then(
-                () => {
-                    log.info('Edge collection created');
-                    resolve(true);
-                },
-                (err) => {
-                    if (err.response.body.code === 409) {
-                        log.info('Edge collection already exists');
-                    } else {
-                        log.info(err);
-                    }
-                    reject(err);
-                },
-            );
-        });
-    }
 
     updateDocumentImports(collectionName, document, importNumber) {
         return new Promise((resolve, reject) => {
@@ -207,17 +156,42 @@ class ArangoJS {
                     resolve('Collection created');
                 },
                 (err) => {
-                    console.log('ovde');
                     const errorCode = err.response.body.code;
                     if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                         resolve('Double insert');
                     } else {
                         reject(err);
                     }
+                    return;
                 },
             ).catch((err) => {
                 console.log(err);
                 reject(err);
+                return;
+            });
+        });
+    }
+
+    createEdgeCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.edgeCollection(collectionName);
+            collection.create().then(
+                () => {
+                    resolve('Edge collection created');
+                },
+                (err) => {
+                    const errorCode = err.response.body.code;
+                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                        resolve('Double insert');
+                    } else {
+                        reject(err);
+                    }
+                    return;
+                },
+            ).catch((err) => {
+                console.log(err);
+                reject(err);
+                return;
             });
         });
     }

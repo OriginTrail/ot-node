@@ -44,7 +44,7 @@ module.exports = () => {
                         });
                     }
                     , () => {
-                        async.each(edges, (edge, next) => {
+                        async.each(edges, (edge, next   ) => {
                             GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
                                 GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
                                     next();
