@@ -62,13 +62,9 @@ globalEmitter.on('replication-request', (data) => {
 });
 
 globalEmitter.on('payload-request', (data) => {
-    // console.log(data.request);
-    // console.log(data.request.params);
-    // console.log(data.request.params.message.payload);
-    // log.error(typeof data.params);
-    // process.exit(0);
     importer.importJSON(data.request.params.message.payload)
         .then(() => {
+            log.warn('[DH] Relication finished');
             MessageHandler.sendDirectMessage(data.request.contact, 'replication-finished', 'success').then((res) => {
                 console.log(res);
             }).catch((e) => {
@@ -78,6 +74,7 @@ globalEmitter.on('payload-request', (data) => {
 });
 
 globalEmitter.on('replication-finished', (status) => {
+    log.warn('Notified of finished replication, preparing to start challenges');
     if (status === 'success') {
         // start challenging
     }
