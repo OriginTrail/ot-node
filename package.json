@@ -4,7 +4,7 @@
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
-    "test": "nyc mocha --recursive test",
+    "test": "nyc mocha --recursive test/modules/*.test.js",
     "start": "node ot-node.js",
     "lint": "./node_modules/.bin/eslint --quiet ."
   },

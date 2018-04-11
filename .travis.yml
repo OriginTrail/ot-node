@@ -8,6 +8,7 @@ before_script:
   - mkdir keys
 script:
   - npm run lint
+  - npm test
   - npm start &>start.log &
   - sleep 20
   - jobs
