@@ -55,9 +55,10 @@ class DataReplication {
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
                 },
+            };
+
 
             // send payload to DH
-
             MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
                 .then(() => {
                     log.info(`Sent payload to ${config.dh[0]}`);
