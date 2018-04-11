@@ -55,7 +55,7 @@ class Network {
 
         log.info('Checking the identity');
         // Check if identity is valid ?
-        deasync(ns.checkIdentity(this.identity, this.xprivkey));
+        ns.checkIdentity(this.identity, this.xprivkey);
 
         const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
 

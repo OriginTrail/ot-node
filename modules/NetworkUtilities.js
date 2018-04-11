@@ -265,7 +265,7 @@ class NetworkUtilities {
    * @param identity
    * @param xprivkeyd
    */
-    async checkIdentity(identity, xprivkey) {
+    checkIdentity(identity, xprivkey) {
         this.xprivkey = xprivkey;
         this.identity = identity;
         if (!identity.validate(this.xprivkey, this.index)) {
