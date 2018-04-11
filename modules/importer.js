@@ -18,54 +18,46 @@ const log = utilities.getLogger();
 module.exports = () => {
     const importer = {
 
-        async importJSON(json_document, callback) {
-            log.info('Entering importJSON');
-            const graph = json_document;
-            deasync(GSdb.db.createCollection('ot_vertices'));
-            deasync(GSdb.db.createCollection('ot_edges'));
+        importJSON(json_document, callback) {
+            return new Promise((resolve, reject) => {
+                log.info('Entering importJSON');
+                const graph = json_document;
+                deasync(GSdb.db.createCollection('ot_vertices'));
+                deasync(GSdb.db.createCollection('ot_edges'));
 
-            // eslint-disable-next-line  prefer-destructuring
-            const vertices = graph.vertices;
-            // eslint-disable-next-line  prefer-destructuring
-            const edges = graph.edges;
-            const data_id = graph.import_id;
+                // eslint-disable-next-line  prefer-destructuring
+                const vertices = graph.vertices;
+                // eslint-disable-next-line  prefer-destructuring
+                const edges = graph.edges;
+                const data_id = graph.import_id;
 
-            async.each(vertices, (vertex, next) => {
-                GSdb.db.addVertex('ot_vertices', vertex).then((import_status) => {
-                    if (import_status === false) {
-                        GSdb.db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
-                            if (update_status === false) {
-                                log.info('Import error!');
-                                return;
-                            }
-
-                            next();
+                async.each(
+                    vertices, (vertex, next) => {
+                        GSdb.db.addDocument('ot_vertices', vertex).then(() => {
+                            GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id).then(() => {
+                                next();
+                            }).catch((err) => {
+                                reject(err);
+                            });
+                        }).catch((err) => {
+                            reject(err);
                         });
-                    } else {
-                        next();
                     }
-                });
-            }, () => {
-
-            });
-
-            async.each(edges, (edge, next) => {
-                GSdb.db.addEdge('ot_edges', edge).then((import_status) => {
-                    if (import_status === false) {
-                        GSdb.db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
-                            if (update_status === false) {
-                                log.info('Import error!');
-                                return;
-                            }
-
-                            next();
+                    , () => {
+                        async.each(edges, (edge, next) => {
+                            GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
+                                GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
+                                    next();
+                                }).catch((err) => {
+                                    reject(err);
+                                });
+                            });
+                        }, () => {
+                            log.info('JSON import complete');
+                            resolve('success');
                         });
-                    } else {
-                        next();
-                    }
-                });
-            }, () => {
-                log.info('JSON import complete');
+                    },
+                );
             });
         },
 

@@ -24,7 +24,7 @@ class DataReplication {
             const currentUnixTime = Math.floor(new Date() / 1000);
             const min10 = currentUnixTime + 120 + 60; // End of testing period
             const options = {
-                dh_wallet: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+                dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
                 amount: data.vertices.length + data.edges.length,
                 start_time: currentUnixTime + 120,
@@ -44,10 +44,10 @@ class DataReplication {
             }
 */
             const tests = Challenge.generateTests(
-                config.identity, options.import_id, 10,
+                config.dh[0], options.import_id, 10,
                 options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
             );
-            const payload = JSON.stringify({
+            const payload = {
                 payload: {
                     vertices: data.encryptedVertices.vertices,
                     public_key: data.encryptedVertices.public_key,
@@ -55,20 +55,21 @@ class DataReplication {
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
                 },
-            });
 
             // send payload to DH
-            MessageHandler.sendDirectMessage('7780bc74f3c0c95fd2c2bf2d7db889d38619eb60', 'payload-request', payload)
+            MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
                 .then(() => {
+                    log.info(`Sent payload to ${config.dh[0]}`);
                     // save holding data config.DH_WALLET, data.data_id, payload.public_key
                     // Storage.models.holding_data.create({
                     //     dc_id: config.identity,
                     //     data_id: options.data_id,
                     //     start_time: options.start_time,
                     //     end_time: options.start_time + 120,
-                    //     total_token: options.amount,
+                    //    total_token: options.amount,
                     // });
                 });
+
         });
     }
 }
