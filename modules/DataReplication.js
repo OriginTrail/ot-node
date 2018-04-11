@@ -55,11 +55,10 @@ class DataReplication {
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
                 },
-            };
-
 
             // send payload to DH
-            MessageHandler.sendDirectMessage(config.dh[0], 'payload-request', payload)
+
+            MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
                 .then(() => {
                     log.info(`Sent payload to ${config.dh[0]}`);
                     // save holding data config.DH_WALLET, data.data_id, payload.public_key
@@ -71,7 +70,6 @@ class DataReplication {
                     //    total_token: options.amount,
                     // });
                 });
-
         });
     }
 }

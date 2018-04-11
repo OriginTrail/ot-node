@@ -1145,8 +1145,8 @@ module.exports = () => ({
 
                     try {
                         deasync(db.createCollection('ot_vertices'));
-                        deasync(db.createCollection('ot_edges'));
-                    } catch(err) {
+                        deasync(db.createEdgeCollection('ot_edges'));
+                    } catch (err) {
                         console.log(err);
                     }
 
