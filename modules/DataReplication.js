@@ -55,6 +55,8 @@ class DataReplication {
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
                 },
+            };
+
 
             // send payload to DH
 

@@ -24,7 +24,7 @@ module.exports = () => {
                 const graph = json_document;
 
                 deasync(GSdb.db.createCollection('ot_vertices'));
-                deasync(GSdb.db.createCollection('ot_edges'));
+                deasync(GSdb.db.createEdgeCollection('ot_edges'));
 
                 // eslint-disable-next-line  prefer-destructuring
                 const vertices = graph.vertices;
