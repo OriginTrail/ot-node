@@ -34,6 +34,7 @@ class Network {
 
         // Initialize private extended key
         utilities.createPrivateExtendedKey(kadence);
+        kadence.constants.T_RESPONSETIMEOUT = 10000;
     }
 
     /**
