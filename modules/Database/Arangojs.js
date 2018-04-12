@@ -162,12 +162,10 @@ class ArangoJS {
                     } else {
                         reject(err);
                     }
-                    return;
                 },
             ).catch((err) => {
                 console.log(err);
                 reject(err);
-                return;
             });
         });
     }
@@ -186,12 +184,10 @@ class ArangoJS {
                     } else {
                         reject(err);
                     }
-                    return;
                 },
             ).catch((err) => {
                 console.log(err);
                 reject(err);
-                return;
             });
         });
     }
