@@ -184,6 +184,34 @@ class OTNode {
                 globalEmitter.emit('gs1-import-request', queryObject);
             }
         });
+
+        server.post('/challenge-request', (req, res) => {
+            log.info('Challenge request received!');
+
+            const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            const remote_access = config.remote_access_whitelist;
+
+            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+                res.send({
+                    message: 'Unauthorized request',
+                    data: [],
+                });
+                return;
+            }
+
+            if (req.body === undefined || req.body.block_id === undefined) {
+                res.send({
+                    status: 400,
+                    message: 'Block ID file not provided!',
+                });
+            } else {
+                const message = {
+                    res,
+                    post_body: req.body,
+                };
+                globalEmitter.emit('challenge-request', message);
+            }
+        });
     }
 }
 

@@ -6,6 +6,7 @@ const Blockchain = require('./BlockChainInstance');
 const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
+const challenger = require('./Challenger');
 
 const log = require('./Utilities').getLogger();
 
@@ -30,7 +31,7 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-/*
+            /*
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -47,6 +48,13 @@ class DataReplication {
                 config.identity, options.import_id, 10,
                 options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
             );
+
+            Challenge.addTests(tests).then(() => {
+                challenger.startChallenging();
+            }, () => {
+                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            });
+
             const payload = JSON.stringify({
                 payload: {
                     vertices: data.encryptedVertices.vertices,
@@ -54,7 +62,7 @@ class DataReplication {
                     edges: data.edges,
                     data_id: data.data_id,
                     dc_wallet: config.blockchain.wallet_address,
-                }
+                },
             });
 
             // send payload to DH

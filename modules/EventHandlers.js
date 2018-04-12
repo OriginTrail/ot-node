@@ -6,6 +6,7 @@ const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
 const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
+const Challenge = require('./Challenge');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -72,4 +73,16 @@ globalEmitter.on('replication-finished', (status) => {
     if (status === 'success') {
         // start challenging
     }
+});
+
+globalEmitter.on('challenge-request', (data) => {
+    const challenge = data.post_body;
+
+    // TODO doktor: Check for data.
+    const answer = Challenge.answerTestQuestion(challenge.block_id, null, null);
+
+    data.res.send({
+        status: 200,
+        answer,
+    });
 });
