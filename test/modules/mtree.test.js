@@ -1,17 +1,15 @@
-const {
-    describe, it, afterEach, beforeEach,
-} = require('mocha');
+const { describe, it } = require('mocha');
 const { assert } = require('chai');
 
 const MTree = require('../../modules/mtree')();
 
 describe('MTree module', () => {
     const myData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const alsoMydata = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+    const alsoMyData = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
     const myRoot = 'aa7a7d7ebe68bc402a96b286ee29e8b008466e59d081e2f28065c5931f6c31e6';
     const alsoMyRoot = '6d1b77a76bc2984c4e381fe2eda402749866d5da1adb946f9358ec9288f0ceee';
     const myMTree = new MTree(myData);
-    const alsoMyTree = new MTree(alsoMydata);
+    const alsoMyTree = new MTree(alsoMyData);
 
     it('root() ', () => {
         assert.equal(myMTree.root(), myRoot);
