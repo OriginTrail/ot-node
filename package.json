@@ -6,7 +6,7 @@
   "scripts": {
     "test": "nyc mocha --recursive test/modules/*.test.js",
     "start": "node ot-node.js",
-    "lint": "./node_modules/.bin/eslint --quiet ."
+    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.2",
