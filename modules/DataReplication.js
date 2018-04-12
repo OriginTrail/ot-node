@@ -31,7 +31,7 @@ class DataReplication {
                 start_time: currentUnixTime + 120,
                 total_time: 10 * 60,
             };
-/*
+            /*
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -46,8 +46,15 @@ class DataReplication {
 */
             const tests = Challenge.generateTests(
                 config.dh[0], options.import_id, 10,
-                options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
+                options.start_time, options.start_time + 120, 16, data.encryptedVertices.vertices,
             );
+
+            Challenge.addTests(tests).then(() => {
+                challenger.startChallenging();
+            }, () => {
+                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            });
+
             const payload = {
                 payload: {
                     vertices: data.encryptedVertices.vertices,
@@ -58,15 +65,8 @@ class DataReplication {
                 },
             };
 
-          Challenge.addTests(tests).then(() => {
-            challenger.startChallenging();
-          }, () => {
-            log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
-          });
 
-
-
-          // send payload to DH
+            // send payload to DH
 
             MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
                 .then(() => {

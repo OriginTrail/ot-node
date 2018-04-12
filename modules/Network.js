@@ -233,6 +233,14 @@ class Network {
                         .catch((e) => {
                             console.log(e);
                         });
+
+                    MessageHandler.onDirectMessage('challenge-request')
+                        .then((payload) => {
+                            globalEmitter.emit('challenge-request', payload);
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
                 });
             }
         });
