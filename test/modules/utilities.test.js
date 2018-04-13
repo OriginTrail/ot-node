@@ -1,13 +1,28 @@
-const { describe, it, after } = require('mocha');
+const {
+    describe, it, after, before,
+} = require('mocha');
 const { assert, expect } = require('chai');
 const fs = require('fs');
+var models = require('../../models');
+const deasync = require('deasync-promise');
 const Utilities = require('../../modules/Utilities');
 const config = require('../../modules/Config');
+const Storage = require('../../modules/Storage');
 
-config.ssl_keypath = 'myKey.key';
-config.ssl_certificate_path = 'myCert.crt';
+let myConfig;
 
-describe('Utilities module', () => {
+// config.ssl_keypath = 'myKey.key';
+// config.ssl_certificate_path = 'myCert.crt';
+
+describe.only('Utilities module', () => {
+    before('loadConfig() ', () => {
+        Storage.models = deasync(models.sequelize.sync()).models;
+        Utilities.loadConfig().then((result) => {
+            // console.log(result);
+            myConfig = result;
+        });
+    });
+
     it('isEmptyObject ', () => {
         assert.isTrue(Utilities.isEmptyObject({}));
         assert.isFalse(Utilities.isEmptyObject([]));
@@ -33,28 +48,33 @@ describe('Utilities module', () => {
         assert.isFalse(Utilities.isIpEqual('192.168.0.1', '10.234.52.124'));
     });
 
-    it('generateSelfSignedCertificate()', async () => {
-        await Utilities.generateSelfSignedCertificate();
-        const myKey = fs.readFileSync(`${__dirname}/../../keys/${config.ssl_keypath}`, 'utf8');
-        expect(myKey).to.be.a('string');
-        assert.isTrue(/^\r?\n*-----BEGIN RSA PRIVATE KEY-----\r?\n/.test(myKey));
-        assert.isTrue(/\r?\n-----END RSA PRIVATE KEY-----\r?\n*$/.test(myKey));
-        const myCert = fs.readFileSync(`${__dirname}/../../keys/${config.ssl_certificate_path}`, 'utf8');
-        expect(myCert).to.be.a('string');
-        assert.isTrue(/^\r?\n*-----BEGIN CERTIFICATE-----\r?\n/.test(myCert));
-        assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
+    it('generateSelfSignedCertificate()', () => {
+        Utilities.generateSelfSignedCertificate().then((result) => {
+            const myKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_keypath}`, 'utf8');
+            expect(myKey).to.be.a('string');
+            assert.isTrue(/^\r?\n*-----BEGIN RSA PRIVATE KEY-----\r?\n/.test(myKey));
+            assert.isTrue(/\r?\n-----END RSA PRIVATE KEY-----\r?\n*$/.test(myKey));
+            const myCert = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_certificate_path}`, 'utf8');
+            expect(myCert).to.be.a('string');
+            assert.isTrue(/^\r?\n*-----BEGIN CERTIFICATE-----\r?\n/.test(myCert));
+            assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
+        });
     });
 
-    after('cleanup', () => {
-        fs.unlink(`${__dirname}/../../keys/${config.ssl_keypath}`, (error) => {
-            if (error) {
-                throw error;
-            }
+    it.skip('saveToConfig() ', () => {
+        const newVerboseLogging = 5;
+        Utilities.saveToConfig('verbose_logging', newVerboseLogging).then(() => {
+            console.log('OK');
         });
-        fs.unlink(`${__dirname}/../../keys/${config.ssl_certificate_path}`, (error) => {
-            if (error) {
-                throw error;
-            }
-        });
+        // Utilities.loadConfig().then((result) => {
+        //         assert.isTrue(result.newVerboseLogging, newVerboseLogging);
+        // });
     });
+
+    // after('cleanup', () => {
+    //     let keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
+    //     let certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
+    //     fs.unlinkSync(keyToDelete);
+    //     fs.unlinkSync(certToDelete);
+    // });
 });
