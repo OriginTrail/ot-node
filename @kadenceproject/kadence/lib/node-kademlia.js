@@ -184,7 +184,7 @@ class KademliaNode extends AbstractNode {
    */
   iterativeFindNode(key, callback) {
     key = key.toString('hex');
-    console.log('Finding node: ' + key);
+   // console.log('Finding node: ' + key);
     return this._iterativeFind('FIND_NODE', key, callback);
   }
   /**

@@ -29,7 +29,7 @@ class Network {
    * Setup options and construct a node
    */
     constructor() {
-        kadence.constants.T_RESPONSETIMEOUT = 10000;
+        kadence.constants.T_RESPONSETIMEOUT = 20000;
         kadence.constants.K = 3;
         kadence.constants.IDENTITY_DIFFICULTY = 2;
         kadence.constants.SOLUTION_DIFFICULTY = 2;
