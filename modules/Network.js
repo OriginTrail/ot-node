@@ -229,7 +229,12 @@ class Network {
                         console.log(e);
                     });
 
-                    // MessageHandler.sendDirectMessage('')
+                    MessageHandler.sendDirectMessage({ hostname: '178.62.44.108',
+                        protocol: 'https:',
+                        port: 5278,
+                        xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
+                        index: 3,
+                        agent: '1.0.0' }, 'ECHO', 'hello world');
 
 
                     MessageHandler.onDirectMessage('payload-request')
