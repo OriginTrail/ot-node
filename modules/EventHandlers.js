@@ -88,7 +88,7 @@ globalEmitter.on('challenge-request', (data) => {
     const challenge = data.post_body;
 
     // TODO doktor: Check for data.
-    const answer = Challenge.answerTestQuestion(challenge.block_id, null, null);
+    const answer = Challenge.answerTestQuestion(challenge.block_id, null, 16);
 
     data.res.send({
         status: 200,

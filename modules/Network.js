@@ -34,7 +34,7 @@ class Network {
 
         // Initialize private extended key
         utilities.createPrivateExtendedKey(kadence);
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
+        kadence.constants.T_RESPONSETIMEOUT = 100000;
     }
 
     /**
@@ -74,8 +74,6 @@ class Network {
 
         const transport = this._HTTPSTransport();
         // const transport = new kadence.HTTPTransport();
-
-        // Initialize protocol implementation
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
@@ -104,11 +102,11 @@ class Network {
         log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
-        /*
+
         // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
-*/
+
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(
             this.xprivkey,
