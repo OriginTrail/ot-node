@@ -22,7 +22,7 @@ class DataReplication {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');
 
-            const currentUnixTime = Date.now().getTime();
+            const currentUnixTime = Date.now();
             const min10 = currentUnixTime + 120 + 60; // End of testing period
             const options = {
                 dh_wallet: config.dh_wallet,
