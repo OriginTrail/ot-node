@@ -125,10 +125,12 @@ class HashCashPlugin {
     let payload = jsonrpc.parse(buffer.toString('utf8')).map((obj) => {
       return obj.payload;
     });
+    console.log("---- OUTGOING MASSAGE ~ | ~");
+    console.log(payload);
+
     let stampMessage = (this._opts.methods.includes(payload[0].method) ||
                        this._opts.methods.length === 0) &&
                        typeof payload[0].method !== 'undefined';
-
     if (!stampMessage) {
       return callback(null, data);
     }
