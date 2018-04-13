@@ -174,6 +174,20 @@ class GraphStorage {
             }
         });
     }
+
+    getVerticesByImportId(data_id, callback) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getVerticesByImportId(data_id, callback).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
 }
 
 module.exports = GraphStorage;

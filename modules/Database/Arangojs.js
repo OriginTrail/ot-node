@@ -191,6 +191,19 @@ class ArangoJS {
             });
         });
     }
+
+    getVerticesByImportId(data_id, callback) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+            const params = { importId: data_id };
+
+            this.runQuery(queryString, params).then((response) => {
+                resolve(response);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
 }
 
 module.exports = ArangoJS;
