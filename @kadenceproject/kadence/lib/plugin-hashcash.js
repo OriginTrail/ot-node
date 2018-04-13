@@ -73,7 +73,7 @@ class HashCashPlugin {
     if (!verifyMessage) {
       return callback(null, data);
     }
-
+  console.log("HashCashPlugin.METHOD" + HashCashPlugin.METHOD);
     let proof = payload.filter(m => m.method === HashCashPlugin.METHOD).pop();
     let contact = payload.filter(m => m.method === 'IDENTIFY').pop();
 
