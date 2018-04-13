@@ -74,7 +74,7 @@ class KademliaNode extends AbstractNode {
       this.once('join', callback);
       this.once('error', callback);
     }
-    console.log("Adding identity" + identity);
+    console.log("Adding identity: " + identity);
     this.router.addContactByNodeId(identity, contact);
     async.series([
       (next) => this.iterativeFindNode(this.identity.toString('hex'), next),
@@ -102,6 +102,8 @@ class KademliaNode extends AbstractNode {
     const start = Date.now();
 
     this.send('PING', [], contact, (err) => {
+      console.log('sending ping');
+      console.log(contact);
       callback(err, Date.now() - start);
     });
   }
