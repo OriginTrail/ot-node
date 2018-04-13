@@ -215,15 +215,15 @@ class Network {
               `(http://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                    MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                        // don't send replication request to yourself
-                        if (payload.identity !== this.identity) {
-                            log.important(`New replication request received from ${payload.identity}`);
-                            globalEmitter.emit('replication-request', payload);
-                        }
-                    }).catch((e) => {
-                        console.log(e);
-                    });
+                    // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
+                    //     // don't send replication request to yourself
+                    //     if (payload.identity !== this.identity) {
+                    //         log.important(`New replication request received from ${payload.identity}`);
+                    //         globalEmitter.emit('replication-request', payload);
+                    //     }
+                    // }).catch((e) => {
+                    //     console.log(e);
+                    // });
 
                     // MessageHandler.onDirectMessage('payload-request')
                     //     .then((payload) => {
