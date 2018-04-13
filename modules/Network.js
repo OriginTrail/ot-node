@@ -5,7 +5,7 @@ const levelup = require('levelup');
 const leveldown = require('leveldown');
 const sqldown = require('sqldown');
 const encoding = require('encoding-down');
-const kadence = require('@kadenceproject/kadence');
+const kadence = require('../@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
 const deasync = require('deasync-promise');
@@ -35,6 +35,7 @@ class Network {
         // Initialize private extended key
         utilities.createPrivateExtendedKey(kadence);
         kadence.constants.T_RESPONSETIMEOUT = 100000;
+        kadence.constants.K = 20;
     }
 
     /**

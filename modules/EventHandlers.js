@@ -61,7 +61,7 @@ globalEmitter.on('gs1-import-request', (data) => {
 });
 
 globalEmitter.on('replication-request', (data) => {
-
+console.log(data);
 });
 
 globalEmitter.on('payload-request', (data) => {

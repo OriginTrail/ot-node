@@ -1,0 +1,29 @@
+{
+  "config": {
+    "title": "Configuration Guide"
+  },
+  "quickstart": {
+    "title": "Getting Started"
+  },
+  "protocol": {
+    "title": "Protocol Specification"
+  },
+  "install": {
+    "title": "Installing Kadence"
+  },
+  "transport-adapters": {
+    "title": "Transport Adapters"
+  },
+  "messengers": {
+    "title": "Message Format"
+  },
+  "middleware": {
+    "title": "Middleware Stack"
+  },
+  "plugins": {
+    "title": "Using and Authoring Plugins"
+  },
+  "identities": {
+    "title": "Contacts and Identities"
+  }
+}

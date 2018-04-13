@@ -1,0 +1,21 @@
+{
+  "opts": {
+    "template": "node_modules/ink-docstrap/template"
+  },
+  "templates": {
+    "systemName": "Kadence",
+    "copyright":  "Copyright 2014 - 2018 Gordon Hall",
+    "includeDate": false,
+    "navType": "vertical",
+    "logoFile": "img/logo-header-space.png",
+    "theme": "kadence",
+    "linenums": false,
+    "collapseSymbols": false,
+    "inverseNav": false,
+    "outputSourceFiles": true,
+    "outputSourcePath": true,
+    "dateFormat": "",
+    "sort": "longname",
+    "syntaxTheme": "default"
+  }
+}
