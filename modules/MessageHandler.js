@@ -3,6 +3,8 @@ const config = require('./Config');
 
 
 class MessageHandler {
+
+
     connectToSeed(seed) {
 
     }

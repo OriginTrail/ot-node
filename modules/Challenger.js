@@ -1,5 +1,6 @@
 'use-strict';
 
+const config = require('./Config');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const MessageHandler = require('./MessageHandler');
@@ -18,7 +19,14 @@ function sendChallenge(challenge) {
         },
     };
 
-    MessageHandler.sendDirectMessage(challenge.dh_id, 'challenge-request', payload)
+
+    MessageHandler.onDirectMessage('challenge-request').then((response) => {
+        console.log(response);
+        console.log('lalalalalalala');
+    })
+
+    // TODO: broadcast
+    MessageHandler.sendDirectMessage(config.dh, 'challenge-request', payload)
         .then((response) => {
             log.info(`Challenge response: ${response}.`);
 
@@ -39,7 +47,8 @@ function sendChallenge(challenge) {
 function intervalFunc() {
     const time_now = Date.now();
 
-    Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs).then((challenges) => {
+    Challenge.getUnansweredTest(0, time_now + intervalMs).then((challenges) => {
+        console.log(challenges);
         if (challenges.length > 0) {
             challenges.forEach(challenge => sendChallenge(challenge));
         } else {

@@ -71,6 +71,7 @@ class OTNode {
             log.info(`Connected to graph database: ${this.graphDB.identify()}`);
             // TODO: System storage fix
             this.graph = new Graph(this.graphDB, new SystemStorage());
+
         } catch (err) {
             console.log(err);
         }
