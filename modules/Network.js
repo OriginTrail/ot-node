@@ -219,6 +219,12 @@ class Network {
                         console.log(e);
                     });
 
+                    node.ot.use('payload-request', (request, response, next) => {
+
+                        next();
+                    });
+
+
                     MessageHandler.onDirectMessage('payload-request')
                         .then((payload) => {
                             globalEmitter.emit('payload-request', payload);

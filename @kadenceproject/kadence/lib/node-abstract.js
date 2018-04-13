@@ -306,7 +306,7 @@ class AbstractNode extends EventEmitter {
     // NB: If middleware function takes 4 arguments, it is an error handler
     const type = middleware.length === 4 ? '_errors' : '_middlewares';
     const stack = this[type][method] = this[type][method] || [];
-    console.log(stack);
+    console.log(stack)
     stack.push(middleware);
   }
   /**
