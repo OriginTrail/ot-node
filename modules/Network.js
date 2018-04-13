@@ -31,7 +31,7 @@ class Network {
     constructor() {
         kadence.constants.T_RESPONSETIMEOUT = 10000;
         kadence.constants.K = 20;
-        kadence.IDENTITY_DIFFICULTY = 2;
+        kadence.constants.IDENTITY_DIFFICULTY = 2;
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
