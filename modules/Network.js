@@ -32,6 +32,7 @@ class Network {
         kadence.constants.T_RESPONSETIMEOUT = 10000;
         kadence.constants.K = 20;
         kadence.constants.IDENTITY_DIFFICULTY = 2;
+        kadence.constants.SOLUTION_DIFFICULTY = 2;
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
@@ -96,17 +97,17 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 2,
-        // }));
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE'],
+            difficulty: 2,
+        }));
 
         log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
-        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
