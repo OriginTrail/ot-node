@@ -190,6 +190,13 @@ class Network {
           `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
             ns.registerControlInterface(config, node);
 
+            node.ot.use((request, response, next) => {
+
+                globalEmitter.emit(request.method, request, response);
+
+                next();
+            });
+
             if (parseInt(config.solve_hashes, 10)) {
                 ns.spawnHashSolverProcesses();
             }
@@ -218,29 +225,29 @@ class Network {
                         console.log(e);
                     });
 
-                    MessageHandler.onDirectMessage('payload-request')
-                        .then((payload) => {
-                            globalEmitter.emit('payload-request', payload);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-
-                    MessageHandler.onDirectMessage('replication-finished')
-                        .then((status) => {
-                            globalEmitter.emit('replication-finished', status);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-
-                    MessageHandler.onDirectMessage('challenge-request')
-                        .then((payload) => {
-                            globalEmitter.emit('challenge-request', payload);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
+                    // MessageHandler.onDirectMessage('payload-request')
+                    //     .then((payload) => {
+                    //         globalEmitter.emit('payload-request', payload);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
+                    //
+                    // MessageHandler.onDirectMessage('replication-finished')
+                    //     .then((status) => {
+                    //         globalEmitter.emit('replication-finished', status);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
+                    //
+                    // MessageHandler.onDirectMessage('challenge-request')
+                    //     .then((payload) => {
+                    //         globalEmitter.emit('challenge-request', payload);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
                 });
             }
         });

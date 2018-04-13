@@ -39,22 +39,6 @@ class MessageHandler {
             );
         });
     }
-
-    onDirectMessage(channel) {
-        return new Promise((resolve, reject) => {
-            node.ot.use((request, response, next) => {
-                if (request.method === channel) {
-                    console.log(JSON.stringify(request));
-                    // response.send(request.params);
-                    resolve({
-                        request,
-                        response,
-                    });
-                }
-                next();
-            });
-        });
-    }
 }
 
 module.exports = new MessageHandler();
