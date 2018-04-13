@@ -175,7 +175,7 @@ class GraphStorage {
         });
     }
 
-    getVerticesByImportId(data_id, callback) {
+    getVerticesByImportId(data_id) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));

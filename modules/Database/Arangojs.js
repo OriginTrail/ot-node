@@ -192,7 +192,7 @@ class ArangoJS {
         });
     }
 
-    getVerticesByImportId(data_id, callback) {
+    getVerticesByImportId(data_id) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
             const params = { importId: data_id };
