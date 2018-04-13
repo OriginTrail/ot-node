@@ -36,6 +36,7 @@ class Network {
         utilities.createPrivateExtendedKey(kadence);
         kadence.constants.T_RESPONSETIMEOUT = 100000;
         kadence.constants.K = 20;
+        kadence.IDENTITY_DIFFICULTY = 2;
     }
 
     /**
