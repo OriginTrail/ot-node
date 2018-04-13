@@ -219,9 +219,14 @@ class Network {
                         console.log(e);
                     });
 
-                    node.ot.use('payload-request', (request, response, next) => {
+                    node.ot.use('ECHO', function(request, response, next) {
+                        let [message] = request.params;
 
-                        next();
+                        if (!message) {
+                            return next(new Error('Nothing to echo')); // Exit to the error stack
+                        }
+
+                        response.send([message]); // Respond back with the argument provided
                     });
 
 
