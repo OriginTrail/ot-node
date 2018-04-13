@@ -251,6 +251,7 @@ class AbstractNode extends EventEmitter {
    * @param {AbstractNode~sendCallback} [callback]
    */
   send(method, params, target, handler = () => null) {
+      console.log(target);
     const { router } = this;
     const id = uuid();
     const timestamp = Date.now();
