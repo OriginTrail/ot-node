@@ -122,7 +122,7 @@ class Network {
         }));
 
         // Store peers in cache
-        node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        // node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         log.info('Validating solutions in wallet, this can take some time');
         await node.ot.wallet.validate();
@@ -286,11 +286,11 @@ class Network {
    * @return {Promise<void>}
    */
     async joinNetwork(callback) {
-        const peers
-        = config
-            .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        // const peers
+        // = config
+        //    .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
 
-        // const peers = config.network_bootstrap_nodes;
+        const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
