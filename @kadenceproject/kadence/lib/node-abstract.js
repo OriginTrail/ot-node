@@ -195,7 +195,6 @@ class AbstractNode extends EventEmitter {
 
     // NB: Otherwise, check if we are waiting on a response to a pending
     // NB: message and fire the result handler
-      console.log(message);
     const { handler } = this._pending.get(message.payload.id);
     const handlerArgs = [
       (message.type === 'error'

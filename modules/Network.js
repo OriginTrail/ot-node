@@ -229,9 +229,7 @@ class Network {
                         console.log(e);
                     });
 
-                    node.ot.send('ECHO', {
-                        msg: 'msg'
-                    }, [ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
+                    node.ot.send('ECHO', 'adsd', [ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
                         { hostname: '178.62.44.108',
                             protocol: 'https:',
                             port: 5278,
