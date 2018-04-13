@@ -1,6 +1,9 @@
 const Utilities = require('./Utilities');
 const Encryption = require('./Encryption');
 
+const sysdb = require('./Database/SystemStorage');
+const GraphStorage = require('./GraphStorageInstance');
+
 /**
  * Private utility method used for encrypting a set of vertices
  * @param vertices    Vertices to be encrypted
@@ -21,22 +24,11 @@ function _encryptVertices(vertices, privateKey, publicKey) {
  */
 class Graph {
     /**
-     * Creates Graph abstraction
-     * @constructor
-     * @param sysdb        System DB
-     * @param graphStorage Graph storage
-     */
-    constructor(graphStorage, sysdb) {
-        this.sysdb = sysdb;
-        this.graphStorage = graphStorage;
-    }
-
-    /**
-     * Find vertex from Graph storage
+     * Find set of vertices from Graph storage
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
      */
-    findVertex(queryObject) {
+    findVertices(queryObject) {
         return new Promise((resolve, reject) => {
             let queryString = 'FOR v IN ot_vertices ';
             const params = {};
@@ -64,7 +56,7 @@ class Graph {
             }
             queryString += ' RETURN v';
 
-            this.graphStorage.runQuery(queryString, params).then((result) => {
+            GraphStorage.db.runQuery(queryString, params).then((result) => {
                 resolve(result);
             }).catch((err) => {
                 reject(err);
@@ -73,23 +65,23 @@ class Graph {
     }
 
     /**
-     * Runs traversal starting from particular vertex
+     * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
      * @returns {Promise<any>}
      */
-    runTraversal(startVertex) {
+    findTraversalPath(startVertex) {
         return new Promise((resolve, reject) => {
             if (startVertex === undefined || startVertex._id === undefined) {
                 resolve([]);
                 return;
             }
-            const maxPathLength = this.graphStorage.getDatabaseInfo().max_path_length;
-            const queryString = `FOR v, e, p IN 1 .. ${maxPathLength}
+            const maxPathLength = GraphStorage.db.getDatabaseInfo().max_path_length;
+            const queryString = `FOR vertice, edge, path IN 1 .. ${maxPathLength}
             OUTBOUND '${startVertex._id}'
             GRAPH 'origintrail_graph'
-            RETURN p`;
+            RETURN path`;
 
-            this.graphStorage.runQuery(queryString).then((result) => {
+            GraphStorage.db.runQuery(queryString).then((result) => {
                 resolve(result);
             }).catch((err) => {
                 reject(err);
@@ -243,10 +235,10 @@ class Graph {
     /**
      * Encrypts vertices with stored keys if they exist or with new created ones otherwise
      * @param dhWallet      DH node wallet
-     * @param dhKademilaId  DH node Kademlia ID
+     * @param dhKademliaId  DH node Kademlia ID
      * @param vertices      Vertices to be encrypted
      */
-    static encryptVertices(dhWallet, dhKademliaId, vertices, sysdb) {
+    static encryptVertices(dhWallet, dhKademliaId, vertices) {
         return new Promise((resolve, reject) => {
             sysdb.connect().then(() => {
                 const selectQuerySQL = 'SELECT dh.data_private_key, dh.data_public_key from data_holders as dh where dh.dh_wallet=? and dh.dh_kademlia_id=?';
