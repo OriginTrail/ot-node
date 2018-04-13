@@ -194,6 +194,16 @@ class Network {
             if (parseInt(config.solve_hashes, 10)) {
                 ns.spawnHashSolverProcesses();
             }
+
+            node.ot.use('ECHO', function(request, response, next) {
+                let [message] = request.params;
+
+                if (!message) {
+                    return next(new Error('Nothing to echo')); // Exit to the error stack
+                }
+
+                response.send([message]); // Respond back with the argument provided
+            });
             // if bootstrap node, don't join just wait and listen in seed mode
             if (!parseInt(config.is_bootstrap_node, 10)) {
                 async.retry({
@@ -219,15 +229,7 @@ class Network {
                         console.log(e);
                     });
 
-                    node.ot.use('ECHO', function(request, response, next) {
-                        let [message] = request.params;
 
-                        if (!message) {
-                            return next(new Error('Nothing to echo')); // Exit to the error stack
-                        }
-
-                        response.send([message]); // Respond back with the argument provided
-                    });
 
 
                     MessageHandler.onDirectMessage('payload-request')
