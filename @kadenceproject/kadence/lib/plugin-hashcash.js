@@ -65,10 +65,11 @@ class HashCashPlugin {
     let payload = jsonrpc.parse(data.toString('utf8')).map((obj) => {
       return obj.payload;
     });
+    console.log(payload);
     let verifyMessage = (this._opts.methods.includes(payload[0].method) ||
                         this._opts.methods.length === 0) &&
                         typeof payload[0].method !== 'undefined';
-    console.log(verifyMessage);
+    console.log("Verifies the proof of work on the request object " + verifyMessage);
     if (!verifyMessage) {
       return callback(null, data);
     }

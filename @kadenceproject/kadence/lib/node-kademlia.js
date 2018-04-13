@@ -103,7 +103,7 @@ class KademliaNode extends AbstractNode {
 
     this.send('PING', [], contact, (err) => {
       console.log('sending ping');
-      console.log(contact);
+      console.log("Contact: " + contact);
       callback(err, Date.now() - start);
     });
   }
