@@ -229,7 +229,7 @@ class Network {
                         console.log(e);
                     });
 
-                    MessageHandler.sendDirectMessage('7b46851d66a8e2fa1b13e568ee75d30838ffacb4', 'ECHO', 'hello world');
+                    MessageHandler.sendDirectMessage('dbf9773bd1c54cd94c47b39a0d824155296ab611', 'ECHO', 'hello world');
 
 
                     // MessageHandler.onDirectMessage('payload-request')
