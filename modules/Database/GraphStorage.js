@@ -180,7 +180,7 @@ class GraphStorage {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.getVerticesByImportId(data_id, callback).then((result) => {
+                this.db.getVerticesByImportId(data_id).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

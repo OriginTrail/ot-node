@@ -86,18 +86,19 @@ globalEmitter.on('replication-finished', (status) => {
 });
 
 globalEmitter.on('challenge-request', (data) => {
+    log.trace(`Challenge arrived: ${data.request.params.message.payload}`)
     const challenge = data.request.params.message.payload;
 
-    GraphStorage.getVerticesByImportId(challenge.import_id).then((vertexData) => {
+    GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
-
-        data.res.send({
+        log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
+        data.response.send({
             status: 200,
             answer,
         });
     }).catch((error) => {
-        log.err(`Failed to get data. ${error}.`);
-        data.res.send({
+        log.error(`Failed to get data. ${error}.`);
+        data.response.send({
             status: 500,
         });
     });
