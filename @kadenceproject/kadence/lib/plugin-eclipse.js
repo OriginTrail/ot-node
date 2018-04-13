@@ -67,7 +67,7 @@ class EclipseIdentity extends EventEmitter {
       .derive(constants.HD_KEY_DERIVATION_PATH);
     const child = parent.deriveChild(this.index);
     const result = utils.scrypt(child.publicKey);
-
+    console.log("Difficulty: " + constants.IDENTITY_DIFFICULTY);
     return utils.satisfiesDifficulty(result, constants.IDENTITY_DIFFICULTY);
   }
 
