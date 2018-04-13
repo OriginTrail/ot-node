@@ -229,7 +229,13 @@ class Network {
                         console.log(e);
                     });
 
-                    MessageHandler.sendDirectMessage('dbf9773bd1c54cd94c47b39a0d824155296ab611', 'ECHO', 'hello world');
+                    MessageHandler.sendDirectMessage([ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
+                        { hostname: '178.62.44.108',
+                            protocol: 'https:',
+                            port: 5278,
+                            xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
+                            index: 3,
+                            agent: '1.0.0' } ], 'ECHO', 'hello world');
 
 
                     // MessageHandler.onDirectMessage('payload-request')
