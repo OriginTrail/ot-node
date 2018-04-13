@@ -237,29 +237,29 @@ class Network {
                         agent: '1.0.0' }, 'ECHO', 'hello world');
 
 
-                    MessageHandler.onDirectMessage('payload-request')
-                        .then((payload) => {
-                            globalEmitter.emit('payload-request', payload);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-
-                    MessageHandler.onDirectMessage('replication-finished')
-                        .then((status) => {
-                            globalEmitter.emit('replication-finished', status);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-
-                    MessageHandler.onDirectMessage('challenge-request')
-                        .then((payload) => {
-                            globalEmitter.emit('challenge-request', payload);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
+                    // MessageHandler.onDirectMessage('payload-request')
+                    //     .then((payload) => {
+                    //         globalEmitter.emit('payload-request', payload);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
+                    //
+                    // MessageHandler.onDirectMessage('replication-finished')
+                    //     .then((status) => {
+                    //         globalEmitter.emit('replication-finished', status);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
+                    //
+                    // MessageHandler.onDirectMessage('challenge-request')
+                    //     .then((payload) => {
+                    //         globalEmitter.emit('challenge-request', payload);
+                    //     })
+                    //     .catch((e) => {
+                    //         console.log(e);
+                    //     });
                 });
             }
         });
