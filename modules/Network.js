@@ -229,13 +229,18 @@ class Network {
                         console.log(e);
                     });
 
-                    MessageHandler.sendDirectMessage([ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
+                    node.ot.send('ECHO', [
+                        msg: 'msg',
+                    ], [ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
                         { hostname: '178.62.44.108',
                             protocol: 'https:',
                             port: 5278,
                             xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
                             index: 3,
-                            agent: '1.0.0' } ], 'ECHO', 'hello world');
+                            agent: '1.0.0' } ], (err, resp) => {
+                        console.log(err)
+                        console.log(resp)
+                    });
 
 
                     // MessageHandler.onDirectMessage('payload-request')
