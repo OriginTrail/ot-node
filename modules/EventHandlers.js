@@ -4,6 +4,7 @@ const MessageHandler = require('./MessageHandler');
 const Storage = require('./Database/SystemStorage');
 const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
+const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
 const config = require('./Config');
@@ -85,13 +86,19 @@ globalEmitter.on('replication-finished', (status) => {
 });
 
 globalEmitter.on('challenge-request', (data) => {
-    const challenge = data.post_body;
+    const challenge = data.request.params.message.payload;
 
-    // TODO doktor: Check for data.
-    const answer = Challenge.answerTestQuestion(challenge.block_id, null, null);
+    GraphStorage.getVerticesByImportId(challenge.import_id).then((vertexData) => {
+        const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
 
-    data.res.send({
-        status: 200,
-        answer,
+        data.res.send({
+            status: 200,
+            answer,
+        });
+    }).catch((error) => {
+        log.err(`Failed to get data. ${error}.`);
+        data.res.send({
+            status: 500,
+        });
     });
 });

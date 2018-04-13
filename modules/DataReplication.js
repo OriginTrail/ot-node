@@ -22,14 +22,14 @@ class DataReplication {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');
 
-            const currentUnixTime = Math.floor(new Date() / 1000);
+            const currentUnixTime = Date.now().getTime();
             const min10 = currentUnixTime + 120 + 60; // End of testing period
             const options = {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
                 amount: data.vertices.length + data.edges.length,
-                start_time: currentUnixTime + 120,
-                total_time: 10 * 60,
+                start_time: currentUnixTime + 60000,
+                total_time: 10 * 60000,
             };
             /*
             try {

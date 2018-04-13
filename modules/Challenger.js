@@ -12,9 +12,10 @@ function sendChallenge(challenge) {
     log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
 
     const payload = {
-        block_id: challenge.block_id,
-        import_id: challenge.import_id,
-
+        payload: {
+            block_id: challenge.block_id,
+            import_id: challenge.import_id,
+        },
     };
 
     MessageHandler.sendDirectMessage(challenge.dh_id, 'challenge-request', payload)

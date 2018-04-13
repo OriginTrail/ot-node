@@ -1,3 +1,9 @@
+'use-strict';
+
+const {
+    describe, before, after, it,
+} = require('mocha');
+const { expect } = require('chai').expect
 const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
 
@@ -5,7 +11,7 @@ const Challenge = require('../../modules/Challenge');
 
 
 // Global declarations.
-var vertexData = [
+const vertexData = [
     { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
     { vertexKey: 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
     { vertexKey: 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
@@ -34,7 +40,7 @@ function checkBlocks(blocks, data) {
         blockSummed += blocks[i];
     }
 
-    if (dataSummed !== blockSummed) { throw new Error('Blocks and data are not the same.'); }
+    expect(dataSummed).to.equal(blockSummed);
 }
 
 function checkForTests(
@@ -124,5 +130,23 @@ function testGenerateTests() {
 }
 
 
-testBlocks();
-testGenerateTests();
+describe('Challenge tests', () => {
+    describe('Block generation', () => {
+        it('should be able to generate valid blocks', () => {
+
+        });
+
+        const tests = [
+            { args: [vertexData, 32] },
+            { args: [vertexData, 16] },
+            { args: [vertexData, 1] },
+        ];
+
+        tests.forEach((test) => {
+            it(`should correctly generate blocks of ${test.args[1]} size`, () => {
+                const blocks = Challenge.__getBlocks__(test.args[0], test.args[1]);
+                checkBlocks(blocks, test.args[0]);
+            });
+        });
+    });
+});
