@@ -29,14 +29,15 @@ class Network {
    * Setup options and construct a node
    */
     constructor() {
+        kadence.constants.T_RESPONSETIMEOUT = 10000;
+        kadence.constants.K = 20;
+        kadence.IDENTITY_DIFFICULTY = 2;
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
         // Initialize private extended key
+
         utilities.createPrivateExtendedKey(kadence);
-        kadence.constants.T_RESPONSETIMEOUT = 100000;
-        kadence.constants.K = 20;
-        kadence.IDENTITY_DIFFICULTY = 2;
     }
 
     /**
