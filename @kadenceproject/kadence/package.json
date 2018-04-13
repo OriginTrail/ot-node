@@ -1,0 +1,152 @@
+{
+  "_from": "@kadenceproject/kadence@^3.2.2",
+  "_id": "@kadenceproject/kadence@3.2.2",
+  "_inBundle": false,
+  "_integrity": "sha512-UvES6v/xizGY5df4wQpo8y/nkolJfDS8/b19U8+E+HGZYeRhKBspy9zVRXdjCEN7y5wt431rV+DFLs9do1m2HA==",
+  "_location": "/@kadenceproject/kadence",
+  "_phantomChildren": {
+    "deferred-leveldown": "2.0.3",
+    "ip": "1.1.5",
+    "level-errors": "1.1.2",
+    "level-iterator-stream": "2.0.0",
+    "os-tmpdir": "1.0.2",
+    "smart-buffer": "1.1.15",
+    "which": "1.3.0",
+    "xtend": "4.0.1"
+  },
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@kadenceproject/kadence@^3.2.2",
+    "name": "@kadenceproject/kadence",
+    "escapedName": "@kadenceproject%2fkadence",
+    "scope": "@kadenceproject",
+    "rawSpec": "^3.2.2",
+    "saveSpec": null,
+    "fetchSpec": "^3.2.2"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@kadenceproject/kadence/-/kadence-3.2.2.tgz",
+  "_shasum": "61b2865fe368015cf40d64fabe978a070535680d",
+  "_spec": "@kadenceproject/kadence@^3.2.2",
+  "_where": "/Users/vladimirlelicanin/Sites/vagrant/ot-node-test",
+  "author": {
+    "name": "Gordon Hall",
+    "email": "gordonh@member.fsf.org"
+  },
+  "bin": {
+    "kadence": "bin/kadence.js"
+  },
+  "bugs": {
+    "url": "https://github.com/kadence/kadence/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "omphalos",
+      "url": "https://github.com/omphalos"
+    },
+    {
+      "name": "Alexander Leitner",
+      "url": "https://github.com/aleitner"
+    },
+    {
+      "name": "Trey Griffith",
+      "url": "https://github.com/treygriffith"
+    }
+  ],
+  "dependencies": {
+    "async": "2.6.0",
+    "atbf": "1.1.0",
+    "boscar": "2.0.0",
+    "bunyan": "1.8.12",
+    "bunyan-rotating-file-stream": "1.6.3",
+    "bytes": "3.0.0",
+    "commander": "2.9.0",
+    "concat-stream": "1.6.0",
+    "daemon": "1.1.0",
+    "diglet": "1.0.6",
+    "encoding-down": "4.0.0",
+    "hdkey": "0.8.0",
+    "hsv3": "1.1.4",
+    "ip": "1.1.5",
+    "json-stable-stringify": "1.0.1",
+    "jsonrpc-lite": "1.3.0",
+    "knuth-shuffle": "1.0.8",
+    "leveldown": "3.0.0",
+    "levelup": "2.0.1",
+    "lru-cache": "4.1.1",
+    "merge": "1.2.0",
+    "metapipe": "2.0.1",
+    "mkdirp": "0.5.1",
+    "ms": "2.1.1",
+    "nat-pmp": "1.0.0",
+    "nat-upnp": "1.1.1",
+    "network": "0.4.1",
+    "npid": "0.4.0",
+    "pem": "1.9.7",
+    "rc": "1.2.1",
+    "scrypt": "6.0.3",
+    "secp256k1": "3.5.0",
+    "semver": "5.1.0",
+    "socks": "1.1.10",
+    "split": "1.0.1",
+    "tiny": "0.0.10",
+    "uuid": "3.2.1"
+  },
+  "deprecated": false,
+  "description": "extensible, hardened, and flexible distributed systems framework",
+  "devDependencies": {
+    "chai": "^2.2.0",
+    "coveralls": "^2.11.2",
+    "eslint": "^3.14.0",
+    "gh-pages": "^0.9.0",
+    "ink-docstrap": "github:kadence/docstrap",
+    "istanbul": "^1.1.0-alpha.1",
+    "jsdoc": "^3.4.0",
+    "memdown": "^2.0.0",
+    "mocha": "^2.2.4",
+    "proxyquire": "^1.8.0",
+    "rimraf": "^2.6.1",
+    "sinon": "^2.4.1"
+  },
+  "directories": {
+    "test": "test",
+    "lib": "lib",
+    "doc": "doc"
+  },
+  "engines": {
+    "node": "^8.9.3"
+  },
+  "homepage": "https://github.com/kadence/kadence#readme",
+  "keywords": [],
+  "license": "AGPL-3.0",
+  "main": "index.js",
+  "name": "@kadenceproject/kadence",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kadence/kadence.git"
+  },
+  "scripts": {
+    "coverage": "istanbul cover _mocha -- --recursive",
+    "e2e-tests": "mocha test/*.e2e.js",
+    "generate-docs": "mkdir -p ./jsdoc && rm -r ./jsdoc && jsdoc index.js lib -r -R README.md -u ./doc -c .jsdoc.json --verbose -d ./jsdoc",
+    "integration-tests": "mocha test/*.integration.js",
+    "linter": "eslint ./index.js ./lib ./test",
+    "publish-docs": "gh-pages -d jsdoc --repo git@github.com:kadence/kadence.github.io.git -b master",
+    "test": "npm run unit-tests && npm run integration-tests && npm run e2e-tests && npm run linter",
+    "unit-tests": "mocha test/*.unit.js"
+  },
+  "version": "3.2.2",
+  "warnings": [
+    {
+      "code": "ENOTSUP",
+      "required": {
+        "node": "^8.9.3"
+      },
+      "pkgid": "@kadenceproject/kadence@3.2.2"
+    }
+  ]
+}

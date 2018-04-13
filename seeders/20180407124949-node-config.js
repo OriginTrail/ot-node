@@ -9,7 +9,7 @@ module.exports = {
     },
     {
         key: 'node_rpc_ip',
-        value: '192.168.100.144',
+        value: '192.168.100.159',
     }, {
         key: 'node_port',
         value: '5278',
@@ -115,6 +115,10 @@ module.exports = {
     {
         key: 'node_rpc_port',
         value: '8900',
+    },
+    {
+        key: 'dh_wallet',
+        value: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
     },
     ], {}),
 

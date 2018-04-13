@@ -81,11 +81,32 @@ class Challenge {
      */
     static completeTest(testId) {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery(
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery(
                     'UPDATE data_challenges SET answered=? WHERE id=?',
-                    [Date.now(), testId],
+                    [Date.now().getTime(), testId],
+                ).then((rows) => {
+                    resolve(rows);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
+     * Returns promise that marks test as failed with given ID as answered.
+     * @param testID Test ID.
+     * @returns {Promise<any>}
+     */
+    static failTest(testId) {
+        return new Promise((resolve, reject) => {
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery(
+                    'UPDATE data_challenges SET answered=? WHERE id=?',
+                    [-Date.now().getTime(), testId],
                 ).then((rows) => {
                     resolve(rows);
                 }).catch((err) => {
@@ -105,16 +126,15 @@ class Challenge {
      */
     static addTests(tests) {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
+            SystemStorage.connect().then(() => {
                 // Delete any old tests
-                deasync(db.runSystemQuery(
+                deasync(SystemStorage.runSystemQuery(
                     'DELETE FROM data_challenges WHERE dh_id=? AND import_id=?',
                     [tests[0].dhId, tests[0].importId],
                 ));
                 for (let i = 0; i < tests.length; i += 1) {
                     // This should be done synchronously.
-                    deasync(db.runSystemQuery(
+                    deasync(SystemStorage.runSystemQuery(
                         'INSERT INTO data_challenges (time, block_id, answer, dh_id, import_id) VALUES (?, ?, ?, ?, ?)',
                         [tests[i].time, tests[i].block, tests[i].answer, tests[i].dhId,
                             tests[i].importId],
@@ -135,11 +155,33 @@ class Challenge {
      */
     static getTests(dhtId, importId) {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery(
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery(
                     'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=?',
                     [dhtId, importId],
+                ).then((rows) => {
+                    resolve(rows);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
+     * Returns promise of all unanswered challenges between startTime and endTime.
+     * @param startTime Unix time in milliseconds.
+     * @param endTime Unix time in milliseconds.
+     * @returns {Promise}
+     */
+    static getUnansweredTest(startTime, endTime) {
+        return new Promise((resolve, reject) => {
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery(
+                    'select id, time, block_id, answer, dh_id, import_id from data_challenges where time between ? AND ? AND answered IS NULL',
+                    [startTime, endTime],
                 ).then((rows) => {
                     resolve(rows);
                 }).catch((err) => {
@@ -159,9 +201,8 @@ class Challenge {
      */
     static getNextTest(dhId, importId) {
         return new Promise((resolve, reject) => {
-            const db = new SystemStorage();
-            db.connect().then(() => {
-                db.runSystemQuery(
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery(
                     // todo add import id
                     'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered NOT NULL',
                     [dhId, importId, Date.now()],

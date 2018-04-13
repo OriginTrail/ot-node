@@ -2,15 +2,15 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
-const encoding = require('encoding-down');
 const leveldown = require('leveldown');
-const kadence = require('@kadenceproject/kadence');
+const sqldown = require('sqldown');
+const encoding = require('encoding-down');
+const kadence = require('../@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
 const deasync = require('deasync-promise');
 const fs = require('fs');
 var node = require('./Node');
-var code = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const MessageHandler = require('./MessageHandler');
@@ -29,12 +29,16 @@ class Network {
    * Setup options and construct a node
    */
     constructor() {
+        kadence.constants.T_RESPONSETIMEOUT = 10000;
+        kadence.constants.K = 20;
+        kadence.constants.IDENTITY_DIFFICULTY = 2;
+        kadence.constants.SOLUTION_DIFFICULTY = 2;
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
         // Initialize private extended key
+
         utilities.createPrivateExtendedKey(kadence);
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
     }
 
     /**
@@ -74,30 +78,36 @@ class Network {
 
         const transport = this._HTTPSTransport();
         // const transport = new kadence.HTTPTransport();
-
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
             transport,
             contact,
-            storage: levelup(encoding(leveldown(`${__dirname}/../kad-storage/kadence.dht`))),
+            storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
+                table: 'node_data',
+            }, (err) => {
+                if (err) {
+                    log.error('Failed to create SQLite3 Kademlia adapter');
+                    throw err;
+                }
+            }),
         });
 
         log.info('Starting OT Node...');
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 2,
-        // }));
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE', 'FIND_NODE', 'PING'],
+            difficulty: 2,
+        }));
 
-        log.info('Hashcach initialised');
+        log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
         node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
-        // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
+        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
         log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
@@ -115,7 +125,7 @@ class Network {
         }));
 
         // Store peers in cache
-        node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        // node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         log.info('Validating solutions in wallet, this can take some time');
         await node.ot.wallet.validate();
@@ -224,6 +234,14 @@ class Network {
                         .catch((e) => {
                             console.log(e);
                         });
+
+                    MessageHandler.onDirectMessage('challenge-request')
+                        .then((payload) => {
+                            globalEmitter.emit('challenge-request', payload);
+                        })
+                        .catch((e) => {
+                            console.log(e);
+                        });
                 });
             }
         });
@@ -271,11 +289,11 @@ class Network {
    * @return {Promise<void>}
    */
     async joinNetwork(callback) {
-        const peers
-        = config
-            .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
+        // const peers
+        // = config
+        //    .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
 
-        // const peers = config.network_bootstrap_nodes;
+        const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
@@ -305,6 +323,7 @@ class Network {
                 log.important('Joined the network');
                 /* eslint-disable-next-line no-undef */
                 const contact = kadence.utils.parseContactURL(result);
+                config.dh = contact;
                 callback(null, contact);
             }
         });

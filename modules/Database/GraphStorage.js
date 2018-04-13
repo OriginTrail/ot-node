@@ -139,8 +139,8 @@ class GraphStorage {
         this.db.addVertex(collection_name, vertex, callback);
     }
 
-    updateDocumentImports(collection_name, document_key, import_number, callback) {
-        this.db.updateDocumentImports(collection_name, document_key, import_number, callback);
+    updateDocumentImports(collectionName, document, importNumber) {
+        return this.db.updateDocumentImports(collectionName, document, importNumber);
     }
 
     /**
@@ -153,6 +153,20 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.createCollection(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    createEdgeCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.createEdgeCollection(collectionName).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
