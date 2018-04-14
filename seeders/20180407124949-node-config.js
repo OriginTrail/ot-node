@@ -100,7 +100,7 @@ module.exports = {
         value: '[]',
     }, {
         key: 'network_bootstrap_nodes',
-        value: '["https://192.168.100.162/#27a975a7fb6a177c9af38c155b17208948cb8776"]',
+        value: '["http://192.168.100.162/#27a975a7fb6a177c9af38c155b17208948cb8776"]',
     }, {
         key: 'is_bootstrap_node',
         value: '0',
