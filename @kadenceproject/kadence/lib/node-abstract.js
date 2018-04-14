@@ -149,6 +149,8 @@ class AbstractNode extends EventEmitter {
     this.transport
       .on('error', (err) => this.logger.warn(err.message.toLowerCase()))
       .on('unpipe', (source) => source.pipe(this.transport));
+    console.log(data)
+    console.log(source)
 
     setInterval(() => this._timeout(), constants.T_RESPONSETIMEOUT);
   }
