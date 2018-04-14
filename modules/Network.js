@@ -231,7 +231,7 @@ class Network {
 
                     node.ot.send('ECHO', 'adsd', [ '7b46851d66a8e2fa1b13e568ee75d30838ffacb4',
                         { hostname: '178.62.44.108',
-                            protocol: 'https:',
+                            protocol: 'http:',
                             port: 5278,
                             xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
                             index: 3,
@@ -279,7 +279,7 @@ class Network {
     setContact(config, parentkey) {
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'https:',
+            protocol: 'http:',
             port: parseInt(config.node_port, 10),
             xpub: parentkey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
