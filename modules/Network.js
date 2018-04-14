@@ -230,7 +230,7 @@ class Network {
                     // });
 
                     setTimeout(() => {
-                        node.ot.send('payload-sending', ['some message'], [ 'e70920db5c778365bef29e5d397333875d24895b',
+                        node.ot.send('payload-sending', { mds: 'some message'}, [ 'e70920db5c778365bef29e5d397333875d24895b',
                             { hostname: '178.62.44.108',
                                 protocol: 'http:',
                                 port: 5278,
