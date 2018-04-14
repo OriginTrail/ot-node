@@ -339,7 +339,7 @@ class AbstractNode extends EventEmitter {
     const self = this;
     const { method } = request;
     console.log("REQUEST:");
-    console.log(request);
+    console.log(request.method);
 
     // NB: First pass the the arguments through the * middleware stack
     // NB: Then pass the arguments through the METHOD middleware stack
