@@ -81,6 +81,8 @@ class KademliaNode extends AbstractNode {
       (next) => this.refresh(this.router.getClosestBucket() + 1, next)
     ], (err) => {
       if (err) {
+          console.log('JOIN ERR');
+          console.log(err)
         this.emit('error', err);
       } else {
         this.emit('join');
