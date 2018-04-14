@@ -30,7 +30,7 @@ class Network {
    */
     constructor() {
         kadence.constants.T_RESPONSETIMEOUT = 20000;
-        kadence.constants.K = 3;
+        kadence.constants.K = 20;
         kadence.constants.IDENTITY_DIFFICULTY = 2;
         kadence.constants.SOLUTION_DIFFICULTY = 2;
         ns = new NetworkUtilities();
