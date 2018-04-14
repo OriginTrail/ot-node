@@ -195,7 +195,7 @@ class Network {
                 ns.spawnHashSolverProcesses();
             }
 
-            node.ot.use('ECHO', function(request, response, next) {
+            node.ot.use('payload-sending', function(request, response, next) {
                 let [message] = request.params;
 
                 if (!message) {
@@ -230,7 +230,7 @@ class Network {
                     // });
 
                     setTimeout(() => {
-                        node.ot.send('ECHO', ['some message'], [ 'e70920db5c778365bef29e5d397333875d24895b',
+                        node.ot.send('payload-sending', ['some message'], [ 'e70920db5c778365bef29e5d397333875d24895b',
                             { hostname: '178.62.44.108',
                                 protocol: 'http:',
                                 port: 5278,
