@@ -70,7 +70,7 @@ class HashCashPlugin {
     let verifyMessage = (this._opts.methods.includes(payload[0].method) ||
                         this._opts.methods.length === 0) &&
                         typeof payload[0].method !== 'undefined';
-    console.log("Verifies the proof of work on the request object " + verifyMessage);
+    // console.log("Verifies the proof of work on the request object " + verifyMessage);
     if (!verifyMessage) {
       return callback(null, data);
     }
