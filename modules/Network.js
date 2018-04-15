@@ -234,11 +234,11 @@ class Network {
                         if(this.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
                             node.ot.send('payload-sending', ['some message'], ['b1b97e15976587d893af72a849034aba9a0dd90f',
                                 {
-                                    hostname: '178.62.44.108',
+                                    hostname: '167.99.202.146',
                                     protocol: 'https:',
                                     port: 5278,
-                                    xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
-                                    index: 3,
+                                    xpub: 'xpub6ABpFrTAJj3DAYaZLgF3c4jzU2cud6y48SxUuALQaFAKLAa2BMJBN2AkwxkpRm4HAeeMMfS2E29FHzpfA2UeRWDti5cQ25dKtJQJeSBWxqp',
+                                    index: 1,
                                     agent: '1.0.0'
                                 }], (err, resp) => {
                                 console.log(resp)
