@@ -149,7 +149,7 @@ class HashCashPlugin {
       payload[0].method,
       this._opts.difficulty,
       (err, result) => {
-          console.log('Err' + err);
+          console.log('Err ' + result);
         let delta = Date.now() - now;
         let proof = jsonrpc.notification(HashCashPlugin.METHOD, [
           result.header
