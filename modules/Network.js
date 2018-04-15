@@ -331,10 +331,6 @@ class Network {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
             return node.ot.router.events.once('add', (identity) => {
-                console.log(kadence.utils.getContactURL([
-                    identity,
-                    node.ot.router.getContactByNodeId(identity),
-                ]));
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
@@ -352,6 +348,7 @@ class Network {
                 done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
+            console.log(err);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
