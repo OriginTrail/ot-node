@@ -144,7 +144,7 @@ class HashCashPlugin {
 
     this._node.logger.warn(`mining hashcash stamp for ${payload[0].method}`);
     HashCashPlugin.create(
-      this._node.identity.toString('hex'),
+      'b1b97e15976587d893af72a849034aba9a0dd90f',
       target[0],
       payload[0].method,
       this._opts.difficulty,
