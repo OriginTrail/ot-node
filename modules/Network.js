@@ -82,7 +82,7 @@ class Network {
         node.ot = new kadence.KademliaNode({
             log,
             transport,
-            // identity: this.identity,
+            identity: Buffer.from(this.identity, 'hex'),
             contact,
             storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
                 table: 'node_data',
