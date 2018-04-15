@@ -235,9 +235,9 @@ class Network {
                     console.log(this.identity);
                     console.log(node.ot.identity.toString('hex'));
                     setTimeout(() => {
-                        if(this.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
+                        if(this.identity === "239ef749d27d9cf0e5d203a24da52556a12cedd4") {
                             console.log('JA SALJEM');
-                            node.ot.send('payload-sending', ['some message'], ['80ca7a0771c118f2d45c4624884682c547c33ba4',
+                            node.ot.send('payload-sending', ['some message'], ['b34ce75bd9da9dd538067d766c00991d87c772d7',
                                 {
                                     hostname: '167.99.202.146',
                                     protocol: 'https:',
