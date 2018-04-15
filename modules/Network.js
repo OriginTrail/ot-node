@@ -190,58 +190,6 @@ class Network {
               `(https://${entry[1].hostname}:${entry[1].port})`);
                 log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                //     // don't send replication request to yourself
-                //     if (payload.identity !== this.identity) {
-                //         log.important(`New replication request received from ${payload.identity}`);
-                //         globalEmitter.emit('replication-request', payload);
-                //     }
-                // }).catch((e) => {
-                //     console.log(e);
-                // });
-
-                console.log(this.identity);
-                console.log(node.ot.identity.toString('hex'));
-                setTimeout(() => {
-                    if (this.identity === '239ef749d27d9cf0e5d203a24da52556a12cedd4') {
-                        console.log('JA SALJEM');
-                        node.ot.send('payload-sending', { msg: 'some message' }, ['b34ce75bd9da9dd538067d766c00991d87c772d7',
-                            {
-                                hostname: '167.99.202.146',
-                                protocol: 'https:',
-                                port: 5278,
-                                xpub: 'xpub6ABpFrTAJj3DAYaZLgF3c4jzU2cud6y48SxUuALQaFAKLAa2BMJBN2AkwxkpRm4HAeeMMfS2E29FHzpfA2UeRWDti5cQ25dKtJQJeSBWxqp',
-                                index: 1,
-                                agent: '1.0.0',
-                            }], (err, resp) => {
-                            console.log(resp);
-                        });
-                    }
-                }, 10000);
-
-                // MessageHandler.onDirectMessage('payload-request')
-                //     .then((payload) => {
-                //         globalEmitter.emit('payload-request', payload);
-                //     })
-                //     .catch((e) => {
-                //         console.log(e);
-                //     });
-                //
-                // MessageHandler.onDirectMessage('replication-finished')
-                //     .then((status) => {
-                //         globalEmitter.emit('replication-finished', status);
-                //     })
-                //     .catch((e) => {
-                //         console.log(e);
-                //     });
-                //
-                // MessageHandler.onDirectMessage('challenge-request')
-                //     .then((payload) => {
-                //         globalEmitter.emit('challenge-request', payload);
-                //     })
-                //     .catch((e) => {
-                //         console.log(e);
-                //     });
             });
         });
     }
@@ -284,9 +232,7 @@ class Network {
     }
 
     /**
-   * Join Network
-   * @param callback
-   * @return {Promise<void>}
+     * Join network
    */
     joinNetwork(callback) {
         const peers = config.network_bootstrap_nodes;
@@ -350,13 +296,13 @@ class Network {
             });
         });
         node.ot.plugin((node) => {
-            node.payloadRequest = (text, callback) => {
+            node.payloadRequest = (message, callback) => {
                 const neighbor = [
                     ...node.router.getClosestContactsToKey(this.identity).entries(),
                 ].shift();
-                node.send('payload-request', [{ message: text }], neighbor, callback);
+                node.send('payload-request', { message }, neighbor, callback);
             };
-            node.replicationFinished = (text, callback) => {
+            node.replicationFinished = (message, callback) => {
 
             };
         });
