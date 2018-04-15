@@ -332,6 +332,8 @@ class Network {
             log.trace('Running in seed mode (waiting for connections)');
 
             return node.ot.router.events.once('add', (identity) => {
+                console.log('trying to join');
+                console.log(identity);
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
