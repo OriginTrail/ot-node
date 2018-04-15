@@ -65,8 +65,8 @@ class HashCashPlugin {
     let payload = jsonrpc.parse(data.toString('utf8')).map((obj) => {
       return obj.payload;
     });
-    console.log('Comes to verify: ');
-    console.log(payload);
+    // console.log('Comes to verify: ');
+    // console.log(payload);
     let verifyMessage = (this._opts.methods.includes(payload[0].method) ||
                         this._opts.methods.length === 0) &&
                         typeof payload[0].method !== 'undefined';
@@ -74,7 +74,7 @@ class HashCashPlugin {
     if (!verifyMessage) {
       return callback(null, data);
     }
-    
+
     let proof = payload.filter(m => m.method === HashCashPlugin.METHOD).pop();
     let contact = payload.filter(m => m.method === 'IDENTIFY').pop();
 
