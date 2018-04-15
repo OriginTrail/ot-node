@@ -1,4 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
 class SystemStorage {
     /**
@@ -7,7 +8,7 @@ class SystemStorage {
      */
     static connect() {
         return new Promise((resolve, reject) => {
-            var db_connection = new sqlite3.Database('./modules/Database/system.db', (err) => {
+            var db_connection = new sqlite3.Database(path.join(__dirname, 'system.db'), (err) => {
                 if (err) {
                     reject(err.message);
                 } else {

@@ -24,7 +24,10 @@ var pjson = require('./package.json');
 const log = Utilities.getLogger();
 const { globalEmitter } = globalEvents;
 
-
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    // application specific logging, throwing an error, or other logic here
+});
 /**
  * Main node object
  */
@@ -97,7 +100,7 @@ class OTNode {
     startRPC() {
         const server = restify.createServer({
             name: 'RPC server',
-            version: '0.5.0',
+            version: pjson.version,
         });
 
         server.use(restify.plugins.acceptParser(server.acceptable));
@@ -135,18 +138,7 @@ class OTNode {
                     message: 'Input file not provided!',
                 });
             } else {
-                const selected_importer = 'default_importer';
-
-                const post_body = req.body;
-
                 const input_file = req.files.importfile.path;
-
-                const reqNum = Utilities.getRandomInt(10000000000);
-
-                // if (req.body.noreplicate ===undefined) {
-                //     replication.replicate(input_file);
-                // }
-
                 const queryObject = {
                     filepath: input_file,
                 };
@@ -175,12 +167,7 @@ class OTNode {
                     message: 'Input file not provided!',
                 });
             } else {
-                const post_body = req.body;
-
                 const input_file = req.files.importfile.path;
-
-                const reqNum = Utilities.getRandomInt(10000000000);
-
                 const queryObject = {
                     filepath: input_file,
                 };

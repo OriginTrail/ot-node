@@ -8,6 +8,7 @@ const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
 const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
+const Challenge = require('./Challenge');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -69,7 +70,7 @@ globalEmitter.on('gs1-import-request', (data) => {
 });
 
 globalEmitter.on('replication-request', (data) => {
-
+    console.log(data);
 });
 
 globalEmitter.on('payload-request', (data) => {
@@ -90,4 +91,16 @@ globalEmitter.on('replication-finished', (status) => {
     if (status === 'success') {
         // start challenging
     }
+});
+
+globalEmitter.on('challenge-request', (data) => {
+    const challenge = data.post_body;
+
+    // TODO doktor: Check for data.
+    const answer = Challenge.answerTestQuestion(challenge.block_id, null, 16);
+
+    data.res.send({
+        status: 200,
+        answer,
+    });
 });
