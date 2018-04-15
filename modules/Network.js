@@ -345,10 +345,10 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
+                console.log(err)
                 done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
-            console.log(err);
             if (!result) {
                 log.error('Failed to join network, will retry in 1 minute');
                 callback(new Error('Failed to join network'));
