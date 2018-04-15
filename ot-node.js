@@ -2,6 +2,7 @@ const Network = require('./modules/Network');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Graph = require('./modules/Graph');
+const Product = require('./modules/Product');
 const SystemStorage = require('./modules/Database/SystemStorage');
 const Blockchain = require('./modules/Blockchain');
 const deasync = require('deasync-promise');
@@ -11,8 +12,11 @@ const restify = require('restify');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+
 const BCInstance = require('./modules/BlockChainInstance');
+const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
+const ProductInstance = require('./modules/ProductInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -61,16 +65,16 @@ class OTNode {
             console.log(err);
         }
 
+        // wire instances
         GSInstance.db = new GraphStorage(selectedDatabase);
-        this.graphDB = GSInstance.db;
         BCInstance.bc = new Blockchain(selectedBlockchain);
+        ProductInstance.p = new Product();
+        GraphInstance.g = new Graph();
 
         // Connecting to graph database
         try {
-            deasync(this.graphDB.connect());
-            log.info(`Connected to graph database: ${this.graphDB.identify()}`);
-            // TODO: System storage fix
-            this.graph = new Graph(this.graphDB, new SystemStorage());
+            deasync(GSInstance.db.connect());
+            log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
         } catch (err) {
             console.log(err);
         }
@@ -183,6 +187,14 @@ class OTNode {
 
                 globalEmitter.emit('gs1-import-request', queryObject);
             }
+        });
+
+        server.get('/api/trail/batches', (req, res) => {
+            const queryObject = req.query;
+            globalEmitter.emit('trail', {
+                query: queryObject,
+                response: res,
+            });
         });
     }
 }

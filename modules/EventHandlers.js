@@ -7,6 +7,7 @@ const Graph = require('./Graph');
 const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
 const config = require('./Config');
+const ProductInstance = require('./ProductInstance');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -14,6 +15,14 @@ const log = require('./Utilities').getLogger();
 globalEmitter.on('import-request', (data) => {
     importer.importXML(data.filepath, (response) => {
         // emit response
+    });
+});
+globalEmitter.on('trail', (data) => {
+    ProductInstance.p.getTrailByQuery(data.query).then((res) => {
+        data.response.send(res);
+    }).catch(() => {
+        log.error(`Failed to get trail for query ${data.query}`);
+        data.response.send(500); // TODO rethink about status codes
     });
 });
 globalEmitter.on('gs1-import-request', (data) => {
