@@ -1,6 +1,8 @@
 language: node_js
 node_js:
   - "9"
+env:
+  - NODE_ENV=test
 before_script:
   - touch modules/Database/system.db
   - ./node_modules/.bin/sequelize db:migrate
@@ -12,7 +14,6 @@ before_script:
   - ./setup_arangodb.sh
   - rm -rf ArangoDB-3.2.2.tar.gz
 script:
-  - export NODE_ENV=test
   - npm run lint
   - npm test
   - npm start &>start.log &
