@@ -70,6 +70,7 @@ class Network {
 
         log.notify(`My identity: ${this.identity}`);
         config.identity = this.identity;
+        console.log(Buffer.from(this.identity, 'hex'));
 
         log.info('Initializing network');
 
