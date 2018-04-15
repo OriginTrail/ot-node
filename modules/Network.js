@@ -2,7 +2,6 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const log = require('./Utilities').getLogger();
 const levelup = require('levelup');
-const leveldown = require('leveldown');
 const sqldown = require('sqldown');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
@@ -13,7 +12,6 @@ const fs = require('fs');
 var node = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
-const MessageHandler = require('./MessageHandler');
 const globalEvents = require('./GlobalEvents');
 
 const { globalEmitter } = globalEvents;
@@ -31,8 +29,10 @@ class Network {
     constructor() {
         kadence.constants.T_RESPONSETIMEOUT = 20000;
         kadence.constants.K = 20;
-        kadence.constants.IDENTITY_DIFFICULTY = 2;
-        kadence.constants.SOLUTION_DIFFICULTY = 2;
+        if (parseInt(config.test_network, 10)) {
+            kadence.constants.IDENTITY_DIFFICULTY = 2;
+            kadence.constants.SOLUTION_DIFFICULTY = 2;
+        }
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
@@ -168,7 +168,7 @@ class Network {
 
             async.retry({
                 times: Infinity,
-                interval: 10000,
+                interval: 60000,
             }, done => this.joinNetwork(done), (err, entry) => {
                 if (err) {
                     log.error(err.message);
@@ -241,11 +241,11 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
-                done(null, (!err) && node.ot.router.size >= 1);
+                done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
             if (!result) {
-                log.error('Failed to join network, will retry in 1 minute');
+                log.error('Failed to join network, will retry in 1 minute. Bootstrap node is probably not online.');
                 callback(new Error('Failed to join network'));
             } else {
                 log.important('Joined the network');
