@@ -98,7 +98,7 @@ class Network {
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
         node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE', 'FIND_NODE', 'PING'],
+            methods: ['PUBLISH', 'SUBSCRIBE', 'FIND_NODE', 'PING', 'IDENTIFY'],
             difficulty: 2,
         }));
 
