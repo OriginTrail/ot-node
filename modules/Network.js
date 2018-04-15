@@ -29,12 +29,16 @@ class Network {
    * Setup options and construct a node
    */
     constructor() {
+        kadence.constants.T_RESPONSETIMEOUT = 20000;
+        kadence.constants.K = 20;
+        kadence.constants.IDENTITY_DIFFICULTY = 2;
+        kadence.constants.SOLUTION_DIFFICULTY = 2;
         ns = new NetworkUtilities();
         this.index = parseInt(config.child_derivation_index, 10);
 
         // Initialize private extended key
+
         utilities.createPrivateExtendedKey(kadence);
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
     }
 
     /**
@@ -73,13 +77,12 @@ class Network {
         const contact = this.setContact(config, parentkey);
 
         const transport = this._HTTPSTransport();
-        // const transport = new kadence.HTTPTransport();
 
-        // Initialize protocol implementation
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
             transport,
+            identity: Buffer.from(this.identity, 'hex'),
             contact,
             storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
                 table: 'node_data',
@@ -95,46 +98,19 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        /*
         node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 2,
-        })); */
-
+            methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
+            difficulty: 10,
+        }));
         log.info('Hashcash initialised');
-        // Quasar - A Probabilistic Publish-Subscribe System
-        node.ot.quasar = node.ot.plugin(kadence.quasar());
-        /*
-        // Mitigate Eclipse attacks
-        node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        log.info('Eclipse protection initialised');
-*/
+
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(
             this.xprivkey,
             parseInt(config.child_derivation_index, 10),
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
-
         log.info('Spartacus initialised');
-
-        node.ot.permission = node.ot.plugin(kadence.permission({
-            privateKey: node.ot.spartacus.privateKey,
-            walletPath: `${__dirname}/../data/wallet.dat`,
-        }));
-
-        // Store peers in cache
-        node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
-
-        log.info('Validating solutions in wallet, this can take some time');
-        await node.ot.wallet.validate();
-
-        // Hibernate when bandwidth thresholds are reached
-        // node.ot.hibernate = node.ot.plugin(kadence.hibernate({
-        //     limit: config.BandwidthAccountingMax,
-        //     interval: config.BandwidthAccountingReset,
-        //     reject: ['FIND_VALUE', 'STORE'],
-        // }));
 
         // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
@@ -169,10 +145,7 @@ class Network {
             ]));
         }
 
-        // Handle any fatal errors
-        node.ot.on('error', (err) => {
-            log.error(err.message.toLowerCase());
-        });
+        this.registerRoutes();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -181,7 +154,6 @@ class Network {
         }
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
-            // https://127.0.0.1:8000/#ea48d3f07a5241291ed0b4cab6483fa8b8fcc123
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
@@ -193,48 +165,20 @@ class Network {
             if (parseInt(config.solve_hashes, 10)) {
                 ns.spawnHashSolverProcesses();
             }
-            // if bootstrap node, don't join just wait and listen in seed mode
-            if (!parseInt(config.is_bootstrap_node, 10)) {
-                async.retry({
-                    times: Infinity,
-                    interval: 10000,
-                }, done => this.joinNetwork(done), (err, entry) => {
-                    if (err) {
-                        log.error(err.message);
-                        process.exit(1);
-                    }
 
-                    log.info(`Connected to network via ${entry[0]} ` +
-              `(http://${entry[1].hostname}:${entry[1].port})`);
-                    log.info(`Discovered ${node.ot.router.size} peers from seed`);
+            async.retry({
+                times: Infinity,
+                interval: 10000,
+            }, done => this.joinNetwork(done), (err, entry) => {
+                if (err) {
+                    log.error(err.message);
+                    process.exit(1);
+                }
 
-                    MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                        // don't send replication request to yourself
-                        if (payload.identity !== this.identity) {
-                            log.important(`New replication request received from ${payload.identity}`);
-                            globalEmitter.emit('replication-request', payload);
-                        }
-                    }).catch((e) => {
-                        console.log(e);
-                    });
-
-                    MessageHandler.onDirectMessage('payload-request')
-                        .then((payload) => {
-                            globalEmitter.emit('payload-request', payload);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-
-                    MessageHandler.onDirectMessage('replication-finished')
-                        .then((status) => {
-                            globalEmitter.emit('replication-finished', status);
-                        })
-                        .catch((e) => {
-                            console.log(e);
-                        });
-                });
-            }
+                log.info(`Connected to network via ${entry[0]} ` +
+              `(https://${entry[1].hostname}:${entry[1].port})`);
+                log.info(`Discovered ${node.ot.router.size} peers from seed`);
+            });
         });
     }
 
@@ -275,20 +219,13 @@ class Network {
     }
 
     /**
-   * Join Network
-   * @param callback
-   * @return {Promise<void>}
+     * Join network
    */
-    async joinNetwork(callback) {
-        const peers
-        = config
-            .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
-
-        // const peers = config.network_bootstrap_nodes;
+    joinNetwork(callback) {
+        const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
-
             return node.ot.router.events.once('add', (identity) => {
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
@@ -304,7 +241,7 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
-                done(null, (!err) && node.ot.router.size > 1);
+                done(null, (!err) && node.ot.router.size >= 1);
             });
         }, (err, result) => {
             if (!result) {
@@ -317,6 +254,49 @@ class Network {
                 config.dh = contact;
                 callback(null, contact);
             }
+        });
+    }
+
+    registerRoutes() {
+        node.ot.use('payload-request', (request, response, next) => {
+            log.info('payload-request received');
+            globalEmitter.emit('payload-request', request);
+            response.send({
+                status: 'OK',
+            });
+        });
+        node.ot.use('replication-finished', (request, response, next) => {
+            log.info('replication-finished received');
+            globalEmitter.emit('replication-finished', request);
+            response.send({
+                status: 'OK',
+            });
+        });
+        node.ot.use('payload-request', (err, request, response, next) => {
+            response.send({
+                error: 'error',
+            });
+        });
+        node.ot.use('replication-finished', (err, request, response, next) => {
+            response.send({
+                error: 'error',
+            });
+        });
+        node.ot.plugin((node) => {
+            node.payloadRequest = (message, callback) => {
+                const neighbor = [
+                    ...node.router.getClosestContactsToKey(this.identity).entries(),
+                ].shift();
+                node.send('payload-request', { message }, neighbor, callback);
+            };
+            node.replicationFinished = (message, callback) => {
+
+            };
+        });
+        // Define a global custom error handler rule, simply by including the `err`
+        // argument in the handler
+        node.ot.use((err, request, response, next) => {
+            response.send({ error: err.message });
         });
     }
 }

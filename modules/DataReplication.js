@@ -6,6 +6,8 @@ const Blockchain = require('./BlockChainInstance');
 const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
+const challenger = require('./Challenger');
+const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
@@ -45,8 +47,15 @@ class DataReplication {
 */
             const tests = Challenge.generateTests(
                 config.dh[0], options.import_id, 10,
-                options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
+                options.start_time, options.start_time + 120, 16, data.encryptedVertices.vertices,
             );
+
+            Challenge.addTests(tests).then(() => {
+                challenger.startChallenging();
+            }, () => {
+                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            });
+
             const payload = {
                 payload: {
                     vertices: data.encryptedVertices.vertices,
@@ -57,21 +66,10 @@ class DataReplication {
                 },
             };
 
-
             // send payload to DH
-
-            MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
-                .then(() => {
-                    log.info(`Sent payload to ${config.dh[0]}`);
-                    // save holding data config.DH_WALLET, data.data_id, payload.public_key
-                    // Storage.models.holding_data.create({
-                    //     dc_id: config.identity,
-                    //     data_id: options.data_id,
-                    //     start_time: options.start_time,
-                    //     end_time: options.start_time + 120,
-                    //    total_token: options.amount,
-                    // });
-                });
+            node.ot.payloadRequest(payload, () => {
+                log.info('Payload request sent');
+            });
         });
     }
 }

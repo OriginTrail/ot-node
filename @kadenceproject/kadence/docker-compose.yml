@@ -1,0 +1,20 @@
+version: '2'
+services:
+  kadence:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    environment:
+      - kadence_TestNetworkEnabled=1
+      - kadence_ControlSockEnabled=0
+      - kadence_ControlPortEnabled=1
+    volumes:
+      - ./bin:/root/kadence/bin
+      - ./lib:/root/kadence/lib
+      - ./test:/root/kadence/test
+      - ./index.js:/root/kadence/index.js
+      - ./node_modules:/root/kadence/node_modules
+      - ./package.json:/root/kadence/package.json
+    ports:
+      - "6274:5274"
+      - "127.0.0.1:6275:5275"
