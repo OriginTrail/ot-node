@@ -170,7 +170,7 @@ class Network {
             }
 
             node.ot.use('payload-sending', (request, response, next) => {
-                const [message] = request.params;
+                const message = request.params;
                 console.log('Stigla poruka: ');
                 console.log(message);
 
