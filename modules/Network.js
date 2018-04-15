@@ -345,6 +345,7 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
+                console.log(node.ot.router.size );
                 done(null, (!err) && node.ot.router.size > 1);
             });
         }, (err, result) => {
