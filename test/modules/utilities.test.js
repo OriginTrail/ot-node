@@ -82,8 +82,6 @@ describe.only('Utilities module', () => {
         assert.hasAllKeys(myResult, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
         assert.equal(myResult.database_system, 'arango_db');
-        assert.equal(myResult.username, 'root');
-        assert.equal(myResult.password, 'root');
         assert.equal(myResult.database, 'origintrail');
     });
 
