@@ -197,6 +197,8 @@ class Network {
 
             node.ot.use('payload-sending', function(request, response, next) {
                 let [message] = request.params;
+                console.log('Stigla poruka: ');
+                console.log(message);
 
                 if (!message) {
                     return next(new Error('Nothing to echo')); // Exit to the error stack
