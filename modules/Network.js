@@ -77,7 +77,7 @@ class Network {
         const contact = this.setContact(config, parentkey);
 
         const transport = this._HTTPSTransport();
-        // const transport = new kadence.HTTPTransport();
+
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
@@ -102,14 +102,7 @@ class Network {
             methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
             difficulty: 10,
         }));
-
         log.info('Hashcash initialised');
-        // Quasar - A Probabilistic Publish-Subscribe System
-        // node.ot.quasar = node.ot.plugin(kadence.quasar());
-
-        // Mitigate Eclipse attacks
-       // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
-        log.info('Eclipse protection initialised');
 
         // Mitigate Spartacus attacks - Sybil
         node.ot.spartacus = node.ot.plugin(kadence.spartacus(
@@ -117,26 +110,7 @@ class Network {
             parseInt(config.child_derivation_index, 10),
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
-
         log.info('Spartacus initialised');
-
-        // node.ot.permission = node.ot.plugin(kadence.permission({
-        //     privateKey: node.ot.spartacus.privateKey,
-        //     walletPath: `${__dirname}/../data/wallet.dat`,
-        // }));
-
-        // Store peers in cache
-        // node.ot.rolodex = node.ot.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
-
-        log.info('Validating solutions in wallet, this can take some time');
-        // await node.ot.wallet.validate();
-
-        // Hibernate when bandwidth thresholds are reached
-        // node.ot.hibernate = node.ot.plugin(kadence.hibernate({
-        //     limit: config.BandwidthAccountingMax,
-        //     interval: config.BandwidthAccountingReset,
-        //     reject: ['FIND_VALUE', 'STORE'],
-        // }));
 
         // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
@@ -183,7 +157,6 @@ class Network {
         }
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
-            // https://127.0.0.1:8000/#ea48d3f07a5241291ed0b4cab6483fa8b8fcc123
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
@@ -196,8 +169,8 @@ class Network {
                 ns.spawnHashSolverProcesses();
             }
 
-            node.ot.use('payload-sending', function(request, response, next) {
-                let [message] = request.params;
+            node.ot.use('payload-sending', (request, response, next) => {
+                const [message] = request.params;
                 console.log('Stigla poruka: ');
                 console.log(message);
 
@@ -207,75 +180,72 @@ class Network {
 
                 response.send([message]); // Respond back with the argument provided
             });
-            // if bootstrap node, don't join just wait and listen in seed mode
-            if (!parseInt(config.is_bootstrap_node, 10)) {
-                async.retry({
-                    times: Infinity,
-                    interval: 10000,
-                }, done => this.joinNetwork(done), (err, entry) => {
-                    if (err) {
-                        log.error(err.message);
-                        process.exit(1);
-                    }
+            async.retry({
+                times: Infinity,
+                interval: 10000,
+            }, done => this.joinNetwork(done), (err, entry) => {
+                if (err) {
+                    log.error(err.message);
+                    process.exit(1);
+                }
 
-                    log.info(`Connected to network via ${entry[0]} ` +
+                log.info(`Connected to network via ${entry[0]} ` +
               `(https://${entry[1].hostname}:${entry[1].port})`);
-                    log.info(`Discovered ${node.ot.router.size} peers from seed`);
+                log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
-                    // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
-                    //     // don't send replication request to yourself
-                    //     if (payload.identity !== this.identity) {
-                    //         log.important(`New replication request received from ${payload.identity}`);
-                    //         globalEmitter.emit('replication-request', payload);
-                    //     }
-                    // }).catch((e) => {
-                    //     console.log(e);
-                    // });
+                // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
+                //     // don't send replication request to yourself
+                //     if (payload.identity !== this.identity) {
+                //         log.important(`New replication request received from ${payload.identity}`);
+                //         globalEmitter.emit('replication-request', payload);
+                //     }
+                // }).catch((e) => {
+                //     console.log(e);
+                // });
 
-                    console.log(this.identity);
-                    console.log(node.ot.identity.toString('hex'));
-                    setTimeout(() => {
-                        if(this.identity === "239ef749d27d9cf0e5d203a24da52556a12cedd4") {
-                            console.log('JA SALJEM');
-                            node.ot.send('payload-sending', ['some message'], ['b34ce75bd9da9dd538067d766c00991d87c772d7',
-                                {
-                                    hostname: '167.99.202.146',
-                                    protocol: 'https:',
-                                    port: 5278,
-                                    xpub: 'xpub6ABpFrTAJj3DAYaZLgF3c4jzU2cud6y48SxUuALQaFAKLAa2BMJBN2AkwxkpRm4HAeeMMfS2E29FHzpfA2UeRWDti5cQ25dKtJQJeSBWxqp',
-                                    index: 1,
-                                    agent: '1.0.0'
-                                }], (err, resp) => {
-                                console.log(resp)
-                            });
-                        }
-                    }, 10000);
+                console.log(this.identity);
+                console.log(node.ot.identity.toString('hex'));
+                setTimeout(() => {
+                    if (this.identity === '239ef749d27d9cf0e5d203a24da52556a12cedd4') {
+                        console.log('JA SALJEM');
+                        node.ot.send('payload-sending', ['some message'], ['b34ce75bd9da9dd538067d766c00991d87c772d7',
+                            {
+                                hostname: '167.99.202.146',
+                                protocol: 'https:',
+                                port: 5278,
+                                xpub: 'xpub6ABpFrTAJj3DAYaZLgF3c4jzU2cud6y48SxUuALQaFAKLAa2BMJBN2AkwxkpRm4HAeeMMfS2E29FHzpfA2UeRWDti5cQ25dKtJQJeSBWxqp',
+                                index: 1,
+                                agent: '1.0.0',
+                            }], (err, resp) => {
+                            console.log(resp);
+                        });
+                    }
+                }, 10000);
 
-                    // MessageHandler.onDirectMessage('payload-request')
-                    //     .then((payload) => {
-                    //         globalEmitter.emit('payload-request', payload);
-                    //     })
-                    //     .catch((e) => {
-                    //         console.log(e);
-                    //     });
-                    //
-                    // MessageHandler.onDirectMessage('replication-finished')
-                    //     .then((status) => {
-                    //         globalEmitter.emit('replication-finished', status);
-                    //     })
-                    //     .catch((e) => {
-                    //         console.log(e);
-                    //     });
-                    //
-                    // MessageHandler.onDirectMessage('challenge-request')
-                    //     .then((payload) => {
-                    //         globalEmitter.emit('challenge-request', payload);
-                    //     })
-                    //     .catch((e) => {
-                    //         console.log(e);
-                    //     });
-                });
-            }
+                // MessageHandler.onDirectMessage('payload-request')
+                //     .then((payload) => {
+                //         globalEmitter.emit('payload-request', payload);
+                //     })
+                //     .catch((e) => {
+                //         console.log(e);
+                //     });
+                //
+                // MessageHandler.onDirectMessage('replication-finished')
+                //     .then((status) => {
+                //         globalEmitter.emit('replication-finished', status);
+                //     })
+                //     .catch((e) => {
+                //         console.log(e);
+                //     });
+                //
+                // MessageHandler.onDirectMessage('challenge-request')
+                //     .then((payload) => {
+                //         globalEmitter.emit('challenge-request', payload);
+                //     })
+                //     .catch((e) => {
+                //         console.log(e);
+                //     });
+            });
         });
     }
 
@@ -295,7 +265,7 @@ class Network {
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
         };
-        console.log(contact)
+        console.log(contact);
         return contact;
     }
 
