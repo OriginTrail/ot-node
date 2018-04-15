@@ -214,6 +214,7 @@ class HashCashPlugin {
    */
   /* eslint max-params: [2, 5] */
   static create(sender = '00', target = '00', method = '00', bits = 8, cb) {
+      console.log(sender, target, method, bits);
     let header = {
       ver: 1,
       bits: bits,
