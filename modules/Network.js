@@ -96,12 +96,12 @@ class Network {
 
         log.info('Starting OT Node...');
 
-        // We use Hashcash for relaying messages to prevent abuse and make large scale
-        // DoS and spam attacks cost prohibitive
-        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
-        //     difficulty: 10,
-        // }));
+        We use Hashcash for relaying messages to prevent abuse and make large scale
+        DoS and spam attacks cost prohibitive
+        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
+            difficulty: 10,
+        }));
 
         log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
