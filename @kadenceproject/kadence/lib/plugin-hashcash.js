@@ -142,7 +142,7 @@ class HashCashPlugin {
       return callback(null, data);
     }
 
-    this._node.logger.debug(`mining hashcash stamp for ${payload[0].method}`);
+    this._node.logger.warn(`mining hashcash stamp for ${payload[0].method}`);
     HashCashPlugin.create(
       this._node.identity.toString('hex'),
       target[0],
