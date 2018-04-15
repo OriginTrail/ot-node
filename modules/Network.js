@@ -231,7 +231,7 @@ class Network {
 
                     console.log(this.identity);
                     setTimeout(() => {
-                        if(node.ot.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
+                        if(this.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
                             node.ot.send('payload-sending', ['some message'], ['b1b97e15976587d893af72a849034aba9a0dd90f',
                                 {
                                     hostname: '178.62.44.108',
