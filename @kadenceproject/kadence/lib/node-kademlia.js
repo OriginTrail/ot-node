@@ -76,7 +76,7 @@ class KademliaNode extends AbstractNode {
     }
     console.log("Adding identity: " + identity);
     this.router.addContactByNodeId(identity, contact);
-    console.log(this.identity.toString('hex'));
+    console.log(this.router.getClosestBucket());
     async.series([
       (next) => this.iterativeFindNode(this.identity.toString('hex'), next),
       (next) => this.refresh(this.router.getClosestBucket() + 1, next)
@@ -187,7 +187,7 @@ class KademliaNode extends AbstractNode {
    */
   iterativeFindNode(key, callback) {
     key = key.toString('hex');
-    console.log('Finding node: ' + key);
+    //console.log('Finding node: ' + key);
     return this._iterativeFind('FIND_NODE', key, callback);
   }
   /**
