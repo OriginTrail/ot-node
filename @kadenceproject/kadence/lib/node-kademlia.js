@@ -86,6 +86,7 @@ class KademliaNode extends AbstractNode {
           console.log(err)
         this.emit('error', err);
       } else {
+          console.log('proslo')
         this.emit('join');
       }
 

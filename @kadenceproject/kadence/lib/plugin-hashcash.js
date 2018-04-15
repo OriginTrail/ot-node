@@ -100,10 +100,10 @@ class HashCashPlugin {
       assert(sender === contact.params[0], 'Invalid sender in proof');
       console.log(target);
       console.log(this._node.identity);
-      // assert(
-      //   Buffer.compare(target, this._node.identity) === 0,
-      //   'Invalid target in proof'
-      // );
+      assert(
+        Buffer.compare(target, this._node.identity) === 0,
+        'Invalid target in proof'
+      );
       assert(method === payload[0].method, 'Invalid proof for called method');
 
       let now = Date.now();
