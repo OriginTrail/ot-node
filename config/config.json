@@ -17,7 +17,13 @@
     "host": "127.0.0.1",
     "dialect": "sqlite",
     "storage": "./modules/Database/system.db",
-    "migrationStorageTableName": "sequelize_meta"
+    "migrationStorageTableName": "sequelize_meta",
+    "logging": false,
+    "operatorsAliases": false,
+    "define": {
+      "underscored": true,
+      "timestamps": false
+    }
   },
   "production": {
     "database": "main",

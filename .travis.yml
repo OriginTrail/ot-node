@@ -12,6 +12,7 @@ before_script:
   - ./setup_arangodb.sh
   - rm -rf ArangoDB-3.2.2.tar.gz
 script:
+  - export NODE_ENV=test
   - npm run lint
   - npm test
   - npm start &>start.log &
