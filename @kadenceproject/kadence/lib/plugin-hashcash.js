@@ -83,7 +83,11 @@ class HashCashPlugin {
     }
 
     let stamp = HashCashPlugin.parse(proof.params[0]);
+    console.log('stamp');
+    console.log(stamp);
     let sender = stamp.resource.substr(0, 40);
+    console.log('sender')
+    console.log(sender)
     let target = Buffer.from(stamp.resource.substr(40, 40), 'hex');
     let method = Buffer.from(
       stamp.resource.substr(80),
