@@ -211,7 +211,7 @@ class Network {
             if (!parseInt(config.is_bootstrap_node, 10)) {
                 async.retry({
                     times: Infinity,
-                    interval: 10000,
+                    interval: 60000,
                 }, done => this.joinNetwork(done), (err, entry) => {
                     if (err) {
                         log.error(err.message);
