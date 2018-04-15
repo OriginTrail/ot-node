@@ -166,17 +166,6 @@ class Network {
                 ns.spawnHashSolverProcesses();
             }
 
-            node.ot.use('payload-sending', (request, response, next) => {
-                const message = request.params;
-                console.log('Stigla poruka: ');
-                console.log(message);
-
-                if (!message) {
-                    return next(new Error('Nothing to echo')); // Exit to the error stack
-                }
-
-                response.send([message]); // Respond back with the argument provided
-            });
             async.retry({
                 times: Infinity,
                 interval: 10000,
@@ -189,7 +178,6 @@ class Network {
                 log.info(`Connected to network via ${entry[0]} ` +
               `(https://${entry[1].hostname}:${entry[1].port})`);
                 log.info(`Discovered ${node.ot.router.size} peers from seed`);
-
             });
         });
     }
@@ -210,7 +198,6 @@ class Network {
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
         };
-        console.log(contact);
         return contact;
     }
 
