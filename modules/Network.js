@@ -145,10 +145,7 @@ class Network {
             ]));
         }
 
-        // Handle any fatal errors
-        node.ot.on('error', (err) => {
-            log.error(err.message.toLowerCase());
-        });
+        this.registerRoutes();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -208,7 +205,7 @@ class Network {
                 setTimeout(() => {
                     if (this.identity === '239ef749d27d9cf0e5d203a24da52556a12cedd4') {
                         console.log('JA SALJEM');
-                        node.ot.send('payload-sending', { msg: 'some message'}, ['b34ce75bd9da9dd538067d766c00991d87c772d7',
+                        node.ot.send('payload-sending', { msg: 'some message' }, ['b34ce75bd9da9dd538067d766c00991d87c772d7',
                             {
                                 hostname: '167.99.202.146',
                                 protocol: 'https:',
@@ -291,11 +288,7 @@ class Network {
    * @param callback
    * @return {Promise<void>}
    */
-    async joinNetwork(callback) {
-        // const peers
-        // = config
-        //    .network_bootstrap_nodes.concat(await node.ot.rolodex.getBootstrapCandidates());
-
+    joinNetwork(callback) {
         const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
@@ -315,7 +308,6 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
-                // console.log(node.ot.router );
                 done(null, (!err) && node.ot.router.size >= 1);
             });
         }, (err, result) => {
@@ -329,6 +321,49 @@ class Network {
                 config.dh = contact;
                 callback(null, contact);
             }
+        });
+    }
+
+    registerRoutes() {
+        node.ot.use('payload-request', (request, response, next) => {
+            log.info('payload-request received');
+            globalEmitter.emit('payload-request', request);
+            response.send({
+                status: 'OK',
+            });
+        });
+        node.ot.use('replication-finished', (request, response, next) => {
+            log.info('replication-finished received');
+            globalEmitter.emit('replication-finished', request);
+            response.send({
+                status: 'OK',
+            });
+        });
+        node.ot.use('payload-request', (err, request, response, next) => {
+            response.send({
+                error: 'error',
+            });
+        });
+        node.ot.use('replication-finished', (err, request, response, next) => {
+            response.send({
+                error: 'error',
+            });
+        });
+        node.ot.plugin((node) => {
+            node.payloadRequest = (text, callback) => {
+                const neighbor = [
+                    ...node.router.getClosestContactsToKey(this.identity).entries(),
+                ].shift();
+                node.send('payload-request', [{ message: text }], neighbor, callback);
+            };
+            node.replicationFinished = (text, callback) => {
+
+            };
+        });
+        // Define a global custom error handler rule, simply by including the `err`
+        // argument in the handler
+        node.ot.use((err, request, response, next) => {
+            response.send({ error: err.message });
         });
     }
 }
