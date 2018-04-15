@@ -94,6 +94,8 @@ class HashCashPlugin {
       assert(this._cache.get(stamp.toString()) !== 1, 'Cannot reuse proof');
       assert(stamp.bits === this._opts.difficulty, 'Invalid proof difficulty');
       assert(sender === contact.params[0], 'Invalid sender in proof');
+      console.log(target);
+      console.log(this._node.identity);
       assert(
         Buffer.compare(target, this._node.identity) === 0,
         'Invalid target in proof'
