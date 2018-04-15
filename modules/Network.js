@@ -242,18 +242,6 @@ class Network {
                         });
                     }, 10000);
 
-                    // node.ot.send('ECHO', 'adsd', [ 'e70920db5c778365bef29e5d397333875d24895b',
-                    //     { hostname: '178.62.44.108',
-                    //         protocol: 'http:',
-                    //         port: 5278,
-                    //         xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
-                    //         index: 3,
-                    //         agent: '1.0.0' } ], (err, resp) => {
-                    //     console.log(err)
-                    //     console.log(resp)
-                    // });
-
-
                     // MessageHandler.onDirectMessage('payload-request')
                     //     .then((payload) => {
                     //         globalEmitter.emit('payload-request', payload);
@@ -292,7 +280,7 @@ class Network {
     setContact(config, parentkey) {
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentkey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
