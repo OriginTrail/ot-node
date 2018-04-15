@@ -82,7 +82,7 @@ class Network {
         node.ot = new kadence.KademliaNode({
             log,
             transport,
-            identity: Buffer.from(this.identity, 'hex'),
+            identity: Buffer.from('b1b97e15976587d893af72a849034aba9a0dd90a', 'hex'),
             contact,
             storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
                 table: 'node_data',
@@ -211,7 +211,7 @@ class Network {
             if (!parseInt(config.is_bootstrap_node, 10)) {
                 async.retry({
                     times: Infinity,
-                    interval: 60000,
+                    interval: 10000,
                 }, done => this.joinNetwork(done), (err, entry) => {
                     if (err) {
                         log.error(err.message);
