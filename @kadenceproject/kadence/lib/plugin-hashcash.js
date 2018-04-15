@@ -93,7 +93,7 @@ class HashCashPlugin {
       stamp.resource.substr(80),
       'hex'
     ).toString('utf8');
-
+    console.log('difficulty ' + this._opts.difficulty);
     try {
       assert(this._cache.get(stamp.toString()) !== 1, 'Cannot reuse proof');
       assert(stamp.bits === this._opts.difficulty, 'Invalid proof difficulty');
