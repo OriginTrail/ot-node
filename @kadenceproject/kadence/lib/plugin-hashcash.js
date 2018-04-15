@@ -128,7 +128,7 @@ class HashCashPlugin {
     });
     // console.log("---- OUTGOING MASSAGE ~ | ~");
     // console.log(payload);
-    console.log(this._opts.methods);
+    // console.log(this._opts.methods);
     let stampMessage = (this._opts.methods.includes(payload[0].method) ||
                        this._opts.methods.length === 0) &&
                        typeof payload[0].method !== 'undefined';
