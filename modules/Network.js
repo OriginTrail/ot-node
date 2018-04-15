@@ -230,6 +230,7 @@ class Network {
                     // });
 
                     console.log(this.identity);
+                    console.log(node.ot.identity.toString('hex'));
                     setTimeout(() => {
                         if(this.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
                             node.ot.send('payload-sending', ['some message'], ['b1b97e15976587d893af72a849034aba9a0dd90f',
