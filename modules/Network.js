@@ -76,8 +76,8 @@ class Network {
         // Initialize public contact data
         const contact = this.setContact(config, parentkey);
 
-        // const transport = this._HTTPSTransport();
-        const transport = new kadence.HTTPTransport();
+        const transport = this._HTTPSTransport();
+        // const transport = new kadence.HTTPTransport();
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
             log,
@@ -216,7 +216,7 @@ class Network {
                     }
 
                     log.info(`Connected to network via ${entry[0]} ` +
-              `(http://${entry[1].hostname}:${entry[1].port})`);
+              `(https://${entry[1].hostname}:${entry[1].port})`);
                     log.info(`Discovered ${node.ot.router.size} peers from seed`);
 
                     // MessageHandler.onBroadcastMessage('replication-request').then((payload) => {
@@ -230,9 +230,9 @@ class Network {
                     // });
 
                     setTimeout(() => {
-                        node.ot.send('payload-sending', { mds: 'some message'}, [ 'e70920db5c778365bef29e5d397333875d24895b',
+                        node.ot.send('payload-sending', ['some message'], [ 'e70920db5c778365bef29e5d397333875d24895b',
                             { hostname: '178.62.44.108',
-                                protocol: 'http:',
+                                protocol: 'https:',
                                 port: 5278,
                                 xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
                                 index: 3,
