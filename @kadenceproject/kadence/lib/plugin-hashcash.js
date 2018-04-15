@@ -144,11 +144,12 @@ class HashCashPlugin {
 
     this._node.logger.warn(`mining hashcash stamp for ${payload[0].method}`);
     HashCashPlugin.create(
-      'b1b97e15976587d893af72a849034aba9a0dd90f',
+      this._node.identity.toString('hex'),
       target[0],
       payload[0].method,
       this._opts.difficulty,
       (err, result) => {
+          console.log('Err' + err);
         let delta = Date.now() - now;
         let proof = jsonrpc.notification(HashCashPlugin.METHOD, [
           result.header
