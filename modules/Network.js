@@ -330,8 +330,8 @@ class Network {
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
-
             return node.ot.router.events.once('add', (identity) => {
+                console.log(identity);
                 config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
