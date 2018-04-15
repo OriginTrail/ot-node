@@ -230,15 +230,19 @@ class Network {
                     // });
 
                     setTimeout(() => {
-                        node.ot.send('payload-sending', ['some message'], [ 'e70920db5c778365bef29e5d397333875d24895b',
-                            { hostname: '178.62.44.108',
-                                protocol: 'https:',
-                                port: 5278,
-                                xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
-                                index: 3,
-                                agent: '1.0.0' } ], (err, resp) => {
-                            console.log(resp)
-                        });
+                        if(node.ot.identity === "b1b97e15976587d893af72a849034aba9a0dd90f") {
+                            node.ot.send('payload-sending', ['some message'], ['b1b97e15976587d893af72a849034aba9a0dd90f',
+                                {
+                                    hostname: '178.62.44.108',
+                                    protocol: 'https:',
+                                    port: 5278,
+                                    xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
+                                    index: 3,
+                                    agent: '1.0.0'
+                                }], (err, resp) => {
+                                console.log(resp)
+                            });
+                        }
                     }, 10000);
 
                     // MessageHandler.onDirectMessage('payload-request')
