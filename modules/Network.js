@@ -99,7 +99,7 @@ class Network {
         // DoS and spam attacks cost prohibitive
         node.ot.hashcash = node.ot.plugin(kadence.hashcash({
             methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
-            difficulty: 2,
+            difficulty: 5,
         }));
 
         log.info('Hashcash initialised');

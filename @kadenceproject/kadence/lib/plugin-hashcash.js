@@ -156,7 +156,6 @@ class HashCashPlugin {
         ]);
 
         this._node.logger.warn(`mined stamp ${result.header} in ${delta}ms`);
-        process.kill(0);
         payload.push(proof);
         callback(null, [
           id,
