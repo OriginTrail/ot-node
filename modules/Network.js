@@ -237,7 +237,6 @@ class Network {
                                 xpub: 'xpub6Ab8B6r9jBoLXLmUMwzXBUGxwB5wii4NA8tsGV7CpXppYNu4UAJyKXfraHmGWwUSzkVoyFEPQZf55VgMHjjUAqzstaG59r9ZQKCtmguePdH',
                                 index: 3,
                                 agent: '1.0.0' } ], (err, resp) => {
-                            console.log(err)
                             console.log(resp)
                         });
                     }, 10000);
