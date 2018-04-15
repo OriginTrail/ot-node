@@ -82,7 +82,7 @@ class Network {
         node.ot = new kadence.KademliaNode({
             log,
             transport,
-            identity: this.identity,
+            // identity: this.identity,
             contact,
             storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
                 table: 'node_data',
@@ -105,7 +105,7 @@ class Network {
 
         log.info('Hashcash initialised');
         // Quasar - A Probabilistic Publish-Subscribe System
-        //node.ot.quasar = node.ot.plugin(kadence.quasar());
+        // node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // Mitigate Eclipse attacks
         // node.ot.eclipse = node.ot.plugin(kadence.eclipse());
