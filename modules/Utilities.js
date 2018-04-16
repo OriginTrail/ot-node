@@ -47,6 +47,12 @@ class Utilities {
         });
     }
 
+    /**
+     * Saves value to configuration
+     * @param property      Property name
+     * @param val           Property value
+     * @returns {Promise}
+     */
     static saveToConfig(property, val) {
         return new Promise((resolve, reject) => {
             Storage.models.node_config.find({
@@ -54,9 +60,14 @@ class Utilities {
             }).then((row) => {
                 row.value = val;
                 row.save().then(() => {
-                    deasync(Utilities.loadConfig());
-                    resolve(row);
+                    Utilities.loadConfig().then(() => {
+                        resolve(row);
+                    }).catch((err) => {
+                        reject(err);
+                    });
                 });
+            }).catch((err) => {
+                reject(err);
             });
         });
     }
