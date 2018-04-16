@@ -104,14 +104,6 @@ class Network {
         }));
         log.info('Hashcash initialised');
 
-        // Mitigate Spartacus attacks - Sybil
-        node.ot.spartacus = node.ot.plugin(kadence.spartacus(
-            this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        ));
-        log.info('Spartacus initialised');
-
         // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
             // noinspection JSAnnotator
