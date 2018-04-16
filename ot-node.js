@@ -170,6 +170,7 @@ class OTNode {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
                     filepath: input_file,
+                    contact: req.contact,
                 };
 
                 globalEmitter.emit('gs1-import-request', queryObject);

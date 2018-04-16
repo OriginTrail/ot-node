@@ -1,11 +1,18 @@
+'use-strict';
+
+const {
+    describe, before, beforeEach, after, afterEach, it,
+} = require('mocha');
+var { expect } = require('chai');
 const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
+const SystemStorage = require('../../modules/Database/SystemStorage');
 
 // TODO: Rewrite this for Mocha tests.
 
 
 // Global declarations.
-var vertexData = [
+const vertexData = [
     { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
     { vertexKey: 'vertex1', data: ' ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation' },
     { vertexKey: 'vertex2', data: ' ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis' },
@@ -34,7 +41,7 @@ function checkBlocks(blocks, data) {
         blockSummed += blocks[i];
     }
 
-    if (dataSummed !== blockSummed) { throw new Error('Blocks and data are not the same.'); }
+    expect(dataSummed).to.equal(blockSummed);
 }
 
 function checkForTests(
@@ -56,12 +63,12 @@ function checkForTests(
     let previousTestTime = startTime;
 
     tests.forEach((test) => {
-        assert.deepEqual(test.dhId, expectedDhId);
-        assert.deepEqual(test.importId, expectedImportId);
-        assert(test.time > startTime, `Test time: ${new Date(test.time)}, start time: ${new Date(startTime)}`);
-        assert(test.time <= endTime, `Test time: ${new Date(test.time)}, end time: ${new Date(endTime)}`);
-        assert(test.time > previousTestTime);
-        assert.deepEqual(test.answer, blocks[test.block]);
+        expect(test.dhId).to.equal(expectedDhId);
+        expect(test.importId).to.equal(expectedImportId);
+        expect(test.time).to.be.greaterThan(startTime, `Test time: ${new Date(test.time)}, start time: ${new Date(startTime)}`);
+        expect(test.time).to.be.lessThan(endTime, `Test time: ${new Date(test.time)}, end time: ${new Date(endTime)}`);
+        expect(test.time).to.be.greaterThan(previousTestTime);
+        expect(test.answer).to.equal(blocks[test.block]);
 
         previousTestTime = test.time;
     });
@@ -120,9 +127,56 @@ function testGenerateTests() {
     testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 10, startTime, endTime, -1, vertexData);
     };
-    assert.throws(testFunc, 'Negatice block size asked. Should crash!');
+    assert.throws(testFunc, 'Negative block size asked. Should crash!');
 }
 
+describe('Challenge tests', () => {
+    describe('Block generation', () => {
+        const blockTests = [
+            { args: [vertexData, 32] },
+            { args: [vertexData, 16] },
+            { args: [vertexData, 1] },
+        ];
 
-testBlocks();
-testGenerateTests();
+        blockTests.forEach((test) => {
+            it(`should correctly generate blocks of ${test.args[1]} size`, () => {
+                const blocks = Challenge.__getBlocks__(test.args[0], test.args[1]);
+                checkBlocks(blocks, test.args[0]);
+            });
+        });
+    });
+
+    describe('Test generation', () => {
+        beforeEach('restore db', async () => {
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery('DELETE FROM data_challenges', []);
+            });
+        });
+        afterEach('restore db', async () => {
+
+        });
+
+        const dataCreatorId = 'dummyDC';
+        const importId = 'dummyImportId';
+
+        const startTime = new Date('May 1, 2018 03:24:00').getTime();
+        const endTime = new Date('January 1, 2019 00:24:00').getTime();
+
+
+        const challengeTests = [
+            { args: [dataCreatorId, importId, 10, startTime, endTime, 32, vertexData] },
+            { args: [dataCreatorId, importId, 10, startTime, endTime, 16, vertexData] },
+            { args: [dataCreatorId, importId, 10, startTime, endTime, 1, vertexData] },
+        ];
+
+        challengeTests.forEach((test) => {
+            it(`should correctly generate ${test.args[2]} challenges of ${test.args[5]} size`, () => {
+                const tests = Challenge.generateTests(...test.args);
+                checkForTests(
+                    tests, test.args[3], test.args[4],
+                    test.args[5], test.args[0], test.args[1], test.args[6],
+                );
+            });
+        });
+    });
+});
