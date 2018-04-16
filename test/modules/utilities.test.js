@@ -67,8 +67,13 @@ describe('Utilities module', () => {
 
     it('saveToConfig() ', () => {
         const newVerboseLogging = 7;
-        Utilities.saveToConfig('verbose_logging', newVerboseLogging).then((result) => {
-            assert.equal(result.value, 7);
+        Utilities.saveToConfig('verbose_logging', newVerboseLogging).then(() => {
+            // reload config and check the value
+            Utilities.loadConfig().then((config) => {
+                assert(config.verbose_logging, 7);
+            }).catch((error) => {
+                console.log(error);
+            });
         }).catch((error) => {
             console.log(error); // TODO handle error propertly
         });

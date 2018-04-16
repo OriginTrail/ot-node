@@ -51,7 +51,6 @@ class Utilities {
      * Saves value to configuration
      * @param property      Property name
      * @param val           Property value
-     * @returns {Promise}
      */
     static saveToConfig(property, val) {
         return new Promise((resolve, reject) => {
@@ -59,8 +58,11 @@ class Utilities {
                 where: { key: property },
             }).then((row) => {
                 row.value = val;
-                return row.save().then(() => row.value);
-            }).then(row => row.value).then(row => resolve(row))
+                return row.save();
+            }).then(() => Utilities.loadConfig())
+                .then(() => {
+                    resolve();
+                })
                 .catch((err) => {
                     reject(err);
                 });
