@@ -49,6 +49,9 @@ globalEmitter.on('gs1-import-request', (data) => {
 
                 const [contactId, contact] = node.ot.getNearestNeighbour();
 
+
+                const [contactId, contact] = node.ot.getNearestNeighbour();
+
                 Graph.encryptVertices(
                     contact.wallet,
                     contactId,
