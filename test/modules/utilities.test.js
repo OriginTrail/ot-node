@@ -68,7 +68,7 @@ describe('Utilities module', () => {
     it('saveToConfig() ', () => {
         const newVerboseLogging = 7;
         Utilities.saveToConfig('verbose_logging', newVerboseLogging).then((result) => {
-            assert.equal(result.value, 7);
+            assert.equal(result, 7);
         }).catch((error) => {
             console.log(error); // TODO handle error propertly
         });
