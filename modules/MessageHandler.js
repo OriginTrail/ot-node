@@ -21,7 +21,6 @@ class MessageHandler {
         });
     }
 
-
     sendDirectMessage(contact, channel, msg) {
         return new Promise((resolve, reject) => {
             node.ot.send(

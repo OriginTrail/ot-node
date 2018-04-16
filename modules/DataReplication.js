@@ -45,6 +45,12 @@ class DataReplication {
                 console.log(e);
             }
 */
+
+            data.encryptedVertices.vertices.sort((a, b) => {
+                if (a._key < b._key) { return -1; } else if (a._key > b._key) { return 1; }
+                return 0;
+            });
+
             const tests = Challenge.generateTests(
                 config.dh[0], options.import_id.toString(), 1,
                 options.start_time, options.start_time + 120, 16, data.encryptedVertices.vertices,

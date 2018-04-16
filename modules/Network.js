@@ -189,6 +189,7 @@ class Network {
             xpub: parentkey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
+            wallet: config.node_wallet,
         };
         return contact;
     }
@@ -233,7 +234,7 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
-                done(null, (!err) && node.ot.router.size > 1);
+                done(null, (!err) && node.ot.router.size >= 1);
             });
         }, (err, result) => {
             if (!result) {
@@ -252,7 +253,7 @@ class Network {
     registerRoutes() {
         node.ot.use('payload-request', (request, response, next) => {
             log.info('payload-request received');
-            globalEmitter.emit('payload-request', request);
+            globalEmitter.emit('payload-request', request, response);
             response.send({
                 status: 'OK',
             });
@@ -264,6 +265,12 @@ class Network {
                 status: 'OK',
             });
         });
+        node.ot.use('challenge-request', (request, response, next) => {
+            log.info('challenge-request received');
+            globalEmitter.emit('kad-challenge-request', request, response);
+        });
+
+
         node.ot.use('payload-request', (err, request, response, next) => {
             response.send({
                 error: 'error',
@@ -275,6 +282,10 @@ class Network {
             });
         });
         node.ot.plugin((node) => {
+            node.getNearestNeighbour = () => {
+                return [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
+            }
+
             node.payloadRequest = (message, callback) => {
                 const neighbor = [
                     ...node.router.getClosestContactsToKey(this.identity).entries(),
@@ -284,6 +295,10 @@ class Network {
             node.replicationFinished = (message, callback) => {
 
             };
+            node.challengeRequest = (message, contactId, callback) => {
+                const contact = node.router.getContactByNodeId(contactId);
+                node.send('challenge-request', { message }, [contactId, contact], callback);
+            };
         });
         // Define a global custom error handler rule, simply by including the `err`
         // argument in the handler
@@ -291,6 +306,7 @@ class Network {
             response.send({ error: err.message });
         });
     }
+
 }
 
 

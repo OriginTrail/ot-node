@@ -194,7 +194,7 @@ class ArangoJS {
 
     getVerticesByImportId(data_id) {
         return new Promise((resolve, reject) => {
-            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false RETURN v';
+            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
             if (typeof data_id !== 'number') {
                 data_id = parseInt(data_id, 10);

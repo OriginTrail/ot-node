@@ -10,6 +10,7 @@ const deasync = require('deasync-promise');
 const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
+const node = require('./Node');
 
 const { globalEmitter } = globalEvents;
 const log = require('./Utilities').getLogger();
@@ -46,9 +47,12 @@ globalEmitter.on('gs1-import-request', (data) => {
                     // console.log('Error: ', e);
                 }) */
 
+
+                const [contactId, contact] = node.ot.getNearestNeighbour();
+
                 Graph.encryptVertices(
-                    config.dh_wallet,
-                    config.dh[0],
+                    contact.wallet,
+                    contactId,
                     vertices,
                     Storage,
                 ).then((encryptedVertices) => {
@@ -74,49 +78,51 @@ globalEmitter.on('replication-request', (data, response) => {
 
 });
 
-globalEmitter.on('payload-request', (data, response) => {
-    importer.importJSON(data.params.message.payload)
+globalEmitter.on('payload-request', (request, response) => {
+    importer.importJSON(request.params.message.payload)
         .then(() => {
             log.warn('[DH] Replication finished');
-            MessageHandler.sendDirectMessage(data.contact, 'replication-finished', 'success').then((res) => {
-                console.log(res);
-            }).catch((e) => {
-                console.log(e);
+            response.send({
+                message: 'replication-finished',
+                status: 'success',
+            }, (err) => {
+                if (err) {
+                    log.error('payload-request: failed to send reply', err);
+                }
             });
         });
+
+    // TODO doktor: send fail in case of fail.
 });
 
 globalEmitter.on('replication-finished', (status, response) => {
     log.warn('Notified of finished replication, preparing to start challenges');
 
     if (status === 'success') {
-        // start challenging
+        // TODO doktor: start challenging
     }
 });
 
-globalEmitter.on('challenge-request', (data, response) => {
-    log.trace(`Challenge arrived: ${data.request.params.message.payload}`)
-    const challenge = data.request.params.message.payload;
+globalEmitter.on('kad-challenge-request', (request, response) => {
+    log.trace(`Challenge arrived: ${request.params.message.payload}`);
+    const challenge = request.params.message.payload;
 
     GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
-        data.response.send({
-            status: 200,
+        response.send({
+            status: 'success',
             answer,
+        }, (error) => {
+            log.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
         });
     }).catch((error) => {
         log.error(`Failed to get data. ${error}.`);
-        data.response.send({
-            status: 500,
-        });
-
-        // TODO doktor: Check for data.
-        const answer = Challenge.answerTestQuestion(challenge.block_id, null, 16);
 
         response.send({
-            status: 200,
-            answer,
+            status: 'fail',
+        }, (error) => {
+            log.error(`Failed to send 'fail' status.v Error: ${error}.`);
         });
     });
 });
