@@ -65,9 +65,13 @@ describe('Utilities module', () => {
         assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
     });
 
-    // TODO this one gives me back unfulfilled Promise, needs investiation
-    it.skip('saveToConfig() ', async () => {
-        const result = await Utilities.saveToConfig('test_network', '2');
+    it('saveToConfig() ', () => {
+        const newVerboseLogging = 7;
+        Utilities.saveToConfig('verbose_logging', newVerboseLogging).then((result) => {
+            assert.equal(result.value, 7);
+        }).catch((error) => {
+            console.log(error); // TODO handle error propertly
+        });
     });
 
     it('createPrivateExtendedKey()', () => {
