@@ -28,7 +28,7 @@ class DataReplication {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
                 amount: data.vertices.length + data.edges.length,
-                start_time: currentUnixTime + 60000,
+                start_time: currentUnixTime,
                 total_time: 10 * 60000,
             };
             /*
@@ -51,8 +51,9 @@ class DataReplication {
             });
 
             const tests = Challenge.generateTests(
-                config.dh[0], options.import_id.toString(), 1,
-                options.start_time, options.start_time + 120, 16, data.encryptedVertices.vertices,
+                config.dh[0], options.import_id.toString(), 10,
+                options.start_time, options.start_time + options.total_time,
+                16, data.encryptedVertices.vertices,
             );
 
             Challenge.addTests(tests).then(() => {
