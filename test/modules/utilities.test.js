@@ -18,6 +18,15 @@ describe('Utilities module', () => {
 
         Utilities.loadConfig().then((result) => {
             myConfig = result;
+            assert.hasAllKeys(
+                result, ['node_wallet', 'node_private_key', 'node_rpc_ip', 'node_port',
+                    'node_kademlia_id', 'selected_graph_database', 'selected_blockchain', 'request_timeout', 'ssl_keypath',
+                    'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
+                    'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
+                    'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
+                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port'],
+                'Some config items are missing',
+            );
         });
     });
 
@@ -33,12 +42,14 @@ describe('Utilities module', () => {
 
     it('getRandomInt check', () => {
         const max11 = Utilities.getRandomInt(11);
-        assert.isAtLeast(max11, 0) && assert.isAtMost(max11, 11);
+        assert.isAtLeast(max11, 0);
+        assert.isAtMost(max11, 11);
     });
 
     it('getRandomIntRange check', () => {
         const max15max33 = Utilities.getRandomIntRange(15, 33);
-        assert.isAtLeast(max15max33, 15) && assert.isAtMost(max15max33, 33);
+        assert.isAtLeast(max15max33, 15);
+        assert.isAtMost(max15max33, 33);
     });
 
     it('getRandomString check', () => {
