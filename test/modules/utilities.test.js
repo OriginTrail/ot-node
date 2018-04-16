@@ -12,7 +12,7 @@ const kadence = require('@kadenceproject/kadence');
 
 let myConfig;
 
-describe.only('Utilities module', () => {
+describe('Utilities module', () => {
     before('loadConfig() should populate myConfig object', () => {
         Storage.models = deasync(models.sequelize.sync()).models;
 
