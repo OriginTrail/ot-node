@@ -3,7 +3,6 @@ const Challenge = require('./Challenge');
 const utilities = require('./Utilities');
 const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
-const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
 const challenger = require('./Challenger');

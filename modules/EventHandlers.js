@@ -1,6 +1,5 @@
 const globalEvents = require('./GlobalEvents');
 const importer = require('./importer')();
-const MessageHandler = require('./MessageHandler');
 const Storage = require('./Database/SystemStorage');
 const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
