@@ -71,6 +71,8 @@ describe('Utilities module', () => {
             // reload config and check the value
             Utilities.loadConfig().then((config) => {
                 assert(config.verbose_logging, 7);
+            }).catch((error) => {
+                console.log(error);
             });
         }).catch((error) => {
             console.log(error); // TODO handle error propertly
