@@ -59,16 +59,11 @@ class Utilities {
                 where: { key: property },
             }).then((row) => {
                 row.value = val;
-                row.save().then(() => {
-                    Utilities.loadConfig().then(() => {
-                        resolve(row);
-                    }).catch((err) => {
-                        reject(err);
-                    });
+                return row.save().then(() => row.value);
+            }).then(row => row.value).then(row => resolve(row))
+                .catch((err) => {
+                    reject(err);
                 });
-            }).catch((err) => {
-                reject(err);
-            });
         });
     }
 
