@@ -3,9 +3,10 @@ const Challenge = require('./Challenge');
 const utilities = require('./Utilities');
 const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
-const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
+const challenger = require('./Challenger');
+const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
@@ -21,15 +22,16 @@ class DataReplication {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');
 
-            const currentUnixTime = Math.floor(new Date() / 1000);
+            const currentUnixTime = Date.now();
             const min10 = currentUnixTime + 120 + 60; // End of testing period
             const options = {
-                dh_wallet: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+                dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
                 amount: data.vertices.length + data.edges.length,
-                start_time: currentUnixTime + 120,
-                total_time: 10 * 60,
+                start_time: currentUnixTime,
+                total_time: 10 * 60000,
             };
+
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -42,30 +44,37 @@ class DataReplication {
                 console.log(e);
             }
 
-            const tests = Challenge.generateTests(
-                config.identity, options.import_id, 10,
-                options.start_time, options.start_time + 120, 10, data.encryptedVertices.vertices,
-            );
-            const payload = JSON.stringify({
-                vertices: data.encryptedVertices.vertices,
-                public_key: data.encryptedVertices.public_key,
-                edges: data.edges,
-                data_id: data.data_id,
-                dc_wallet: config.blockchain.wallet_address,
+            data.encryptedVertices.vertices.sort((a, b) => {
+                if (a._key < b._key) { return -1; } else if (a._key > b._key) { return 1; }
+                return 0;
             });
 
+            const tests = Challenge.generateTests(
+                config.dh[0], options.import_id.toString(), 10,
+                options.start_time, options.start_time + options.total_time,
+                16, data.encryptedVertices.vertices,
+            );
+
+            Challenge.addTests(tests).then(() => {
+                challenger.startChallenging();
+            }, () => {
+                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            });
+
+            const payload = {
+                payload: {
+                    vertices: data.encryptedVertices.vertices,
+                    public_key: data.encryptedVertices.public_key,
+                    edges: data.edges,
+                    data_id: data.data_id,
+                    dc_wallet: config.blockchain.wallet_address,
+                },
+            };
+
             // send payload to DH
-            MessageHandler.sendDirectMessage(config.identity, 'payload-request', payload)
-                .then(() => {
-                    // save holding data config.DH_WALLET, data.data_id, payload.public_key
-                    Storage.models.holding_data.create({
-                        dc_id: config.identity,
-                        data_id: options.data_id,
-                        start_time: options.start_time,
-                        end_time: options.start_time + 120,
-                        total_token: options.amount,
-                    });
-                });
+            node.ot.payloadRequest(payload, () => {
+                log.info('Payload request sent');
+            });
         });
     }
 }

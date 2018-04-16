@@ -1,7 +1,7 @@
 const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const NodeRSA = require('node-rsa');
-const encryption = require('../../modules/encryption')();
+const encryption = require('../../modules/Encryption');
 
 const privateFormatId = 'pkcs8-private';
 const publicFormatId = 'pkcs8-public';

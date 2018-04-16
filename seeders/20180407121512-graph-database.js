@@ -1,14 +1,14 @@
-
+require('dotenv').config();
 
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('graph_database', [{
         database_system: 'arango_db',
-        username: 'root',
-        password: 'root',
+        username: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
         host: 'localhost',
-        port: 8529,
+        port: process.env.DB_PORT,
         max_path_length: 1000,
-        database: 'origintrail',
+        database: process.env.DB_DATABASE,
     }], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('graph_database', null, {}),

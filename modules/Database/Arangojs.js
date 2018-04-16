@@ -21,104 +21,27 @@ class ArangoJS {
         this.db.useBasicAuth(username, password);
     }
 
-    /**
-     * Creates vertex collection
-     * @param collection_name
-     * @returns {Promise<any>}
-     */
-    async createVertexCollection(collection_name) {
+
+    updateDocumentImports(collectionName, document, importNumber) {
         return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collection_name);
-            collection.create().then(
-                () => {
-                    log.info('Document collection created');
-                    resolve(true);
-                },
-                (err) => {
-                    if (err.response.body.code === 409) {
-                        log.info('Document collection already exists');
-                    } else {
-                        log.info(err);
-                    }
-                    reject(err);
-                },
-            );
-        });
-    }
-
-    /**
-     * Creates edge collection
-     * @param collection_name
-     * @returns {Promise<any>}
-     */
-    async createEdgeCollection(collection_name) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.edgeCollection(collection_name);
-            collection.create().then(
-                () => {
-                    log.info('Edge collection created');
-                    resolve(true);
-                },
-                (err) => {
-                    if (err.response.body.code === 409) {
-                        log.info('Edge collection already exists');
-                    } else {
-                        log.info(err);
-                    }
-                    reject(err);
-                },
-            );
-        });
-    }
-
-
-    addVertex(collection_name, vertex, callback) {
-        const collection = this.db.collection(collection_name);
-        collection.save(vertex).then(
-            meta => Utilities.executeCallback(callback, true),
-            (err) => {
-                // console.error('Failed to save document:', err)
-                Utilities.executeCallback(callback, false);
-            },
-        );
-    }
-
-    addEdge(collection_name, edge, callback) {
-        const collection = this.db.collection(collection_name);
-        collection.save(edge).then(
-            meta => Utilities.executeCallback(callback, true),
-            (err) => {
-                // console.error('Failed to save document:', err)
-                Utilities.executeCallback(callback, false);
-            },
-        );
-    }
-
-    updateDocumentImports(collection_name, document_key, import_number, callback) {
-        const collection = this.db.collection(collection_name);
-        collection.document(document_key).then(
-            (doc) => {
-                var imports = [];
-                if (doc !== undefined && doc.imports !== undefined) {
-                    /* eslint-disable-next-line prefer-destructuring */
-                    imports = doc.imports;
+            this.getDocument(collectionName, document).then((document) => {
+                var new_imports = [];
+                if (document.imports !== undefined) {
+                    new_imports = document.imports;
                 }
-                if (imports.indexOf(import_number) === -1) {
-                    imports.push(import_number);
-                    collection.update(document_key, { imports }).then(
-                        meta => Utilities.executeCallback(callback, true),
-                        (err) => {
-                            log.info(err);
-                            Utilities.executeCallback(callback, false);
-                        },
-                    );
-                }
-            },
-            (err) => {
-                log.info(err);
-                Utilities.executeCallback(callback, false);
-            },
-        );
+
+                new_imports.push(importNumber);
+
+                document.imports = new_imports;
+                this.updateDocument(collectionName, document).then((meta) => {
+                    resolve(meta);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
     }
 
     /**
@@ -156,7 +79,7 @@ class ArangoJS {
                 meta => resolve(meta),
                 (err) => {
                     const errorCode = err.response.body.code;
-                    if (IGNORE_DOUBLE_INSERT) {
+                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                         resolve('Double insert');
                     } else {
                         reject(err);
@@ -242,6 +165,47 @@ class ArangoJS {
                 },
             ).catch((err) => {
                 console.log(err);
+                reject(err);
+            });
+        });
+    }
+
+    createEdgeCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.edgeCollection(collectionName);
+            collection.create().then(
+                () => {
+                    resolve('Edge collection created');
+                },
+                (err) => {
+                    const errorCode = err.response.body.code;
+                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                        resolve('Double insert');
+                    } else {
+                        reject(err);
+                    }
+                },
+            ).catch((err) => {
+                console.log(err);
+                reject(err);
+            });
+        });
+    }
+
+    getVerticesByImportId(data_id) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+
+            if (typeof data_id !== 'number') {
+                data_id = parseInt(data_id, 10);
+            }
+
+            const params = { importId: data_id };
+
+            this.runQuery(queryString, params).then((response) => {
+                resolve(response);
+            }).catch((err) => {
+                reject(err);
             });
         });
     }

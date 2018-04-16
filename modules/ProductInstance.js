@@ -1,6 +1,6 @@
 let instance = null;
 
-class Config {
+class ProductInstance {
     constructor() {
         if (!instance) {
             instance = this;
@@ -9,4 +9,4 @@ class Config {
     }
 }
 
-module.exports = new Config();
+module.exports = new ProductInstance();

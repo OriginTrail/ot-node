@@ -1,6 +1,6 @@
 let instance = null;
 
-class Storage {
+class GraphInstance {
     constructor() {
         if (!instance) {
             instance = this;
@@ -9,4 +9,4 @@ class Storage {
     }
 }
 
-module.exports = new Storage();
+module.exports = new GraphInstance();

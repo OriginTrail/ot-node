@@ -138,7 +138,6 @@ class NetworkUtilities {
             if (msg.attempts) {
                 return events.emit('attempt');
             }
-
             events.emit('index', msg.index);
         });
 

@@ -6,6 +6,7 @@ const config = require('./Config');
 const Mtree = require('./mtree')();
 const Storage = require('./Storage');
 const async = require('async');
+const deasync = require('deasync-promise');
 const GSdb = require('./GraphStorageInstance');
 const replication = require('./Challenge');
 const Transactions = require('./Blockchain/Ethereum/Transactions');
@@ -13,59 +14,48 @@ const gs1 = require('./gs1-importer')();
 var Web3 = require('web3');
 
 const log = utilities.getLogger();
-const { db } = GSdb;
 
 module.exports = () => {
     const importer = {
 
-        async importJSON(json_document, callback) {
-            log.info('Entering importJSON');
-            const graph = json_document;
-            await db.createVertexCollection('ot_vertices', () => {});
-            await db.createEdgeCollection('ot_edges', () => {});
+        importJSON(json_document, callback) {
+            return new Promise((resolve, reject) => {
+                log.info('Entering importJSON');
+                const graph = json_document;
 
-            // eslint-disable-next-line  prefer-destructuring
-            const vertices = graph.vertices;
-            // eslint-disable-next-line  prefer-destructuring
-            const edges = graph.edges;
-            const data_id = graph.import_id;
-
-            async.each(vertices, (vertex, next) => {
-                db.addVertex('ot_vertices', vertex).then((import_status) => {
-                    if (import_status === false) {
-                        db.updateDocumentImports('ot_vertices', vertex._key, data_id).then((update_status) => {
-                            if (update_status === false) {
-                                log.info('Import error!');
-                                return;
+                GSdb.db.createCollection('ot_vertices')
+                    .then(() => GSdb.db.createEdgeCollection('ot_edges'))
+                    .then(() => {
+                        // eslint-disable-next-line  prefer-destructuring
+                        const vertices = graph.vertices;
+                        // eslint-disable-next-line  prefer-destructuring
+                        const edges = graph.edges;
+                        const { data_id } = graph.data_id;
+                        async.each(
+                            vertices, (vertex, next) => {
+                                log.trace('Vertex importing');
+                                GSdb.db.addDocument('ot_vertices', vertex)
+                                    .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
+                                    .then(() => {
+                                        next();
+                                    });
                             }
-
-                            next();
-                        });
-                    } else {
-                        next();
-                    }
-                });
-            }, () => {
-
-            });
-
-            async.each(edges, (edge, next) => {
-                db.addEdge('ot_edges', edge).then((import_status) => {
-                    if (import_status === false) {
-                        db.updateDocumentImports('ot_edges', edge._key, data_id).then((update_status) => {
-                            if (update_status === false) {
-                                log.info('Import error!');
-                                return;
-                            }
-
-                            next();
-                        });
-                    } else {
-                        next();
-                    }
-                });
-            }, () => {
-                log.info('JSON import complete');
+                            , () => {
+                                async.each(edges, (edge, next) => {
+                                    GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
+                                        GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
+                                            next();
+                                        }).catch((err) => {
+                                            reject(err);
+                                        });
+                                    });
+                                }, () => {
+                                    log.info('JSON import complete');
+                                    resolve('success');
+                                });
+                            },
+                        );
+                    });
             });
         },
 
@@ -152,7 +142,7 @@ module.exports = () => {
                     }
 
                     const tree = new Mtree(hash_pairs);
-                    const root_hash = tree.root();
+                    const root_hash = utilities.sha3(tree.root());
 
                     log.info(`Import id: ${data_id}`);
                     log.info(`Import hash: ${root_hash}`);

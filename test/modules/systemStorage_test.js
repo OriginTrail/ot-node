@@ -1,4 +1,6 @@
-const SystemStorage = require('./SystemStorage');
+// TODO rewrite this test for mocha
+
+const SystemStorage = require('../../modules/Database/SystemStorage');
 
 var sysdb = new SystemStorage();
 
