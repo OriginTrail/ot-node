@@ -6,7 +6,7 @@
   "scripts": {
     "test": "nyc mocha --recursive test/modules/*.test.js",
     "start": "node ot-node.js",
-    "db_create": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
+    "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js"
   },
   "devDependencies": {
@@ -46,6 +46,7 @@
     "boscar": "^2.0.0",
     "bunyan": "^1.8.12",
     "deasync-promise": "^1.0.1",
+    "dotenv": "^5.0.1",
     "encoding-down": "^4.0.0",
     "eth-lightwallet": "^3.0.1",
     "ethereumjs-abi": "^0.6.5",

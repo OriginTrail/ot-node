@@ -1,4 +1,10 @@
+require('dotenv').config();
+const log = require('../modules/Utilities').getLogger();
 
+if (process.env.NODE_ENV !== 'test' && !(process.env.NODE_WALLET && process.env.NODE_PRIVATE_KEY)) {
+    log.error('You have to set node wallet and private key in .env');
+    process.kill(0);
+}
 
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('blockchain_data', [{
@@ -11,8 +17,8 @@ module.exports = {
         escrow_contract_address: '0xa6563b91684a63dff511e8d5b06189e2b9ef291d',
         rpc_node_host: 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt',
         rpc_node_port: '80',
-        wallet_address: '0xE1E9c5379C5df627a8De3a951fA493028394A050',
-        wallet_private_key: 'd67bb11304e908bec02cdeb457cb16773676a89efbb8bed96d5f66aa1b49da75',
+        wallet_address: process.env.NODE_WALLET,
+        wallet_private_key: process.env.NODE_PRIVATE_KEY,
     }], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('blockchain_data', null, {}),

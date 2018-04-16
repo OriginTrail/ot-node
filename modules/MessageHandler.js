@@ -27,7 +27,7 @@ class MessageHandler {
             node.ot.send(
                 channel, {
                     message: msg,
-                }, contact
+                }, [], contact
                 , (err, response) => {
                     if (err) {
                         reject(err);

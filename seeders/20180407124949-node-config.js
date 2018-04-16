@@ -1,28 +1,22 @@
+require('dotenv').config();
+
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'node_wallet',
-        value: '0xE1E9c5379C5df627a8De3a951fA493028394A050',
+        value: process.env.NODE_WALLET,
     },
     {
         key: 'node_private_key',
-        value: 'd67bb11304e908bec02cdeb457cb16773676a89efbb8bed96d5f66aa1b49da75',
+        value: process.env.NODE_PRIVATE_KEY,
     },
     {
         key: 'node_rpc_ip',
-        value: '192.168.100.159',
+        value: process.env.NODE_IP,
     }, {
         key: 'node_port',
-        value: '5278',
+        value: process.env.NODE_PORT,
     }, {
         key: 'node_kademlia_id',
-        value: '',
-    },
-    {
-        key: 'is_beacon',
-        value: 'false',
-    },
-    {
-        key: 'kademlia_seed_ip',
         value: '',
     },
     {
@@ -70,7 +64,7 @@ module.exports = {
         value: '443',
     }, {
         key: 'traverse_nat_enabled',
-        value: '0',
+        value: process.env.TRAVERSE_NAT_ENABLED,
     }, {
         key: 'traverse_port_forward_ttl',
         value: '0',
@@ -94,31 +88,24 @@ module.exports = {
         value: '0',
     }, {
         key: 'test_network',
-        value: '1',
+        value: process.env.TEST_NETWORK_ENABLED,
     }, {
         key: 'ssl_authority_paths',
         value: '[]',
     }, {
         key: 'network_bootstrap_nodes',
-        value: '["https://192.168.100.162/#27a975a7fb6a177c9af38c155b17208948cb8776"]',
-    }, {
-        key: 'is_bootstrap_node',
-        value: '0',
+        value: `["${process.env.BOOTSTRAP_NODE}"]`,
     }, {
         key: 'solve_hashes',
         value: '0',
     },
     {
         key: 'remote_access_whitelist',
-        value: '[]',
+        value: `["${process.env.IMPORT_WHITELIST}"]`,
     },
     {
         key: 'node_rpc_port',
-        value: '8900',
-    },
-    {
-        key: 'dh_wallet',
-        value: '0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE',
+        value: process.env.NODE_RPC_PORT,
     },
     ], {}),
 

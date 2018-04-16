@@ -7,6 +7,7 @@ const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
 const challenger = require('./Challenger');
+const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
@@ -65,21 +66,10 @@ class DataReplication {
                 },
             };
 
-
             // send payload to DH
-
-            MessageHandler.sendDirectMessage(config.dh, 'payload-request', payload)
-                .then(() => {
-                    log.info(`Sent payload to ${config.dh[0]}`);
-                    // save holding data config.DH_WALLET, data.data_id, payload.public_key
-                    // Storage.models.holding_data.create({
-                    //     dc_id: config.identity,
-                    //     data_id: options.data_id,
-                    //     start_time: options.start_time,
-                    //     end_time: options.start_time + 120,
-                    //    total_token: options.amount,
-                    // });
-                });
+            node.ot.payloadRequest(payload, () => {
+                log.info('Payload request sent');
+            });
         });
     }
 }

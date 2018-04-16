@@ -8,6 +8,7 @@ const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
 const deasync = require('deasync-promise');
 const config = require('./Config');
+const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 
 const { globalEmitter } = globalEvents;
@@ -16,6 +17,14 @@ const log = require('./Utilities').getLogger();
 globalEmitter.on('import-request', (data) => {
     importer.importXML(data.filepath, (response) => {
         // emit response
+    });
+});
+globalEmitter.on('trail', (data) => {
+    ProductInstance.p.getTrailByQuery(data.query).then((res) => {
+        data.response.send(res);
+    }).catch(() => {
+        log.error(`Failed to get trail for query ${data.query}`);
+        data.response.send(500); // TODO rethink about status codes
     });
 });
 globalEmitter.on('gs1-import-request', (data) => {
@@ -101,5 +110,14 @@ globalEmitter.on('challenge-request', (data, response) => {
         data.response.send({
             status: 500,
         });
+
+        // TODO doktor: Check for data.
+        const answer = Challenge.answerTestQuestion(challenge.block_id, null, 16);
+
+        response.send({
+            status: 200,
+            answer,
+        });
     });
 });
+

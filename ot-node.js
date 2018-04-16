@@ -2,6 +2,7 @@ const Network = require('./modules/Network');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Graph = require('./modules/Graph');
+const Product = require('./modules/Product');
 const SystemStorage = require('./modules/Database/SystemStorage');
 const Blockchain = require('./modules/Blockchain');
 const deasync = require('deasync-promise');
@@ -11,8 +12,11 @@ const restify = require('restify');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+
 const BCInstance = require('./modules/BlockChainInstance');
+const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
+const ProductInstance = require('./modules/ProductInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -20,7 +24,10 @@ var pjson = require('./package.json');
 const log = Utilities.getLogger();
 const { globalEmitter } = globalEvents;
 
-
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    // application specific logging, throwing an error, or other logic here
+});
 /**
  * Main node object
  */
@@ -61,17 +68,16 @@ class OTNode {
             console.log(err);
         }
 
+        // wire instances
         GSInstance.db = new GraphStorage(selectedDatabase);
-        this.graphDB = GSInstance.db;
         BCInstance.bc = new Blockchain(selectedBlockchain);
+        ProductInstance.p = new Product();
+        GraphInstance.g = new Graph();
 
         // Connecting to graph database
         try {
-            deasync(this.graphDB.connect());
-            log.info(`Connected to graph database: ${this.graphDB.identify()}`);
-            // TODO: System storage fix
-            this.graph = new Graph(this.graphDB, new SystemStorage());
-
+            deasync(GSInstance.db.connect());
+            log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
         } catch (err) {
             console.log(err);
         }
@@ -94,7 +100,7 @@ class OTNode {
     startRPC() {
         const server = restify.createServer({
             name: 'RPC server',
-            version: '0.5.0',
+            version: pjson.version,
         });
 
         server.use(restify.plugins.acceptParser(server.acceptable));
@@ -132,18 +138,7 @@ class OTNode {
                     message: 'Input file not provided!',
                 });
             } else {
-                const selected_importer = 'default_importer';
-
-                const post_body = req.body;
-
                 const input_file = req.files.importfile.path;
-
-                const reqNum = Utilities.getRandomInt(10000000000);
-
-                // if (req.body.noreplicate ===undefined) {
-                //     replication.replicate(input_file);
-                // }
-
                 const queryObject = {
                     filepath: input_file,
                 };
@@ -172,18 +167,21 @@ class OTNode {
                     message: 'Input file not provided!',
                 });
             } else {
-                const post_body = req.body;
-
                 const input_file = req.files.importfile.path;
-
-                const reqNum = Utilities.getRandomInt(10000000000);
-
                 const queryObject = {
                     filepath: input_file,
                 };
 
                 globalEmitter.emit('gs1-import-request', queryObject);
             }
+        });
+
+        server.get('/api/trail/batches', (req, res) => {
+            const queryObject = req.query;
+            globalEmitter.emit('trail', {
+                query: queryObject,
+                response: res,
+            });
         });
     }
 }

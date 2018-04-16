@@ -1,6 +1,8 @@
 language: node_js
 node_js:
   - "9"
+env:
+  - NODE_ENV=test
 before_script:
   - touch modules/Database/system.db
   - ./node_modules/.bin/sequelize db:migrate
