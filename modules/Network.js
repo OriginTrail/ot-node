@@ -64,7 +64,6 @@ class Network {
 
         const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
 
-
         this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
             .toString('hex');
 
@@ -233,7 +232,7 @@ class Network {
         async.detectSeries(peers, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
-                done(null, (!err) && node.ot.router.size > 1);
+                done(null, (!err) && node.ot.router.size >= 1);
             });
         }, (err, result) => {
             if (!result) {
