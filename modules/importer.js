@@ -30,7 +30,7 @@ module.exports = () => {
                         const vertices = graph.vertices;
                         // eslint-disable-next-line  prefer-destructuring
                         const edges = graph.edges;
-                        const data_id = graph.import_id;
+                        const { data_id } = graph.data_id;
                         async.each(
                             vertices, (vertex, next) => {
                                 log.trace('Vertex importing');
