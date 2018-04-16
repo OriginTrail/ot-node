@@ -112,6 +112,45 @@ describe('Utilities module', () => {
         assert.equal(myResult.blockchain_title, 'Ethereum');
     });
 
+    it('sortObject() should return object sorted by keys', () => {
+        const unsorted = {
+            b: 'asdsad',
+            36: 'masdas',
+            '-1': 'minus one',
+            a: 'dsfdsfsdf',
+            A: 'dsfdsfsdf',
+            p: '12345',
+            _: '???????',
+            D: {
+                b: 'asdsad', c: 'masdas', a: 'dsfdsfsdf', p: 'mmmmmmmm', _: '???????',
+            },
+        };
+
+        const expectedSorted = {
+            36: 'masdas',
+            '-1': 'minus one',
+            _: '???????',
+            a: 'dsfdsfsdf',
+            A: 'dsfdsfsdf',
+            b: 'asdsad',
+            D:
+                {
+                    _: '???????',
+                    a: 'dsfdsfsdf',
+                    b: 'asdsad',
+                    c: 'masdas',
+                    p: 'mmmmmmmm',
+                },
+            p: '12345',
+        };
+
+        const actualSorted = Utilities.sortObject(unsorted);
+        // compare values at indexes
+        for (let index = 0; index < Object.keys(expectedSorted).length; index += 1) {
+            assert.equal(actualSorted.index, expectedSorted.index);
+        }
+    });
+
     after('cleanup', () => {
         const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
         const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
