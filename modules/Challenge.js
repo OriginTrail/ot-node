@@ -84,7 +84,7 @@ class Challenge {
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery(
                     'UPDATE data_challenges SET answered=? WHERE id=?',
-                    [Date.now().getTime(), testId],
+                    [Date.now(), testId],
                 ).then((rows) => {
                     resolve(rows);
                 }).catch((err) => {
@@ -106,7 +106,7 @@ class Challenge {
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery(
                     'UPDATE data_challenges SET answered=? WHERE id=?',
-                    [-Date.now().getTime(), testId],
+                    [-Date.now(), testId],
                 ).then((rows) => {
                     resolve(rows);
                 }).catch((err) => {
