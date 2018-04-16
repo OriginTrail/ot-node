@@ -282,9 +282,8 @@ class Network {
             });
         });
         node.ot.plugin((node) => {
-            node.getNearestNeighbour = () => {
-                return [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
-            }
+            node.getNearestNeighbour = () =>
+                [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
 
             node.payloadRequest = (message, callback) => {
                 const neighbor = [
@@ -306,8 +305,6 @@ class Network {
             response.send({ error: err.message });
         });
     }
-
 }
-
 
 module.exports = Network;
