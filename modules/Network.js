@@ -9,14 +9,13 @@ const config = require('./Config');
 const async = require('async');
 const deasync = require('deasync-promise');
 const fs = require('fs');
-var node = require('./Node');
+const node = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const globalEvents = require('./GlobalEvents');
 
 const { globalEmitter } = globalEvents;
-var ns = {};
-
+let ns = {};
 
 /**
  * DHT module (Kademlia)
@@ -24,8 +23,8 @@ var ns = {};
 
 class Network {
     /**
-   * Setup options and construct a node
-   */
+     * Setup options and construct a node
+     */
     constructor() {
         kadence.constants.T_RESPONSETIMEOUT = 20000;
         kadence.constants.K = 20;
@@ -37,18 +36,16 @@ class Network {
         this.index = parseInt(config.child_derivation_index, 10);
 
         // Initialize private extended key
-
         utilities.createPrivateExtendedKey(kadence);
     }
 
     /**
-   * Starts the node
-   * @return {Promise<void>}
-   */
+     * Starts the node
+     * @return {Promise<void>}
+     */
     async start() {
-    // Check config
+        // Check config
         ns.verifyConfiguration(config);
-
 
         log.info('Checking SSL certificate');
         deasync(ns.setSelfSignedCertificate(config));
@@ -57,15 +54,11 @@ class Network {
         this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
         this.identity = new kadence.eclipse.EclipseIdentity(this.xprivkey, this.index);
 
-
         log.info('Checking the identity');
-        // Check if identity is valid ?
-        ns.checkIdentity(this.identity, this.xprivkey);
+        ns.checkIdentity(this.identity, this.xprivkey); // Check if identity is valid
 
         const { childkey, parentkey } = ns.getIdentityKeys(this.xprivkey);
-
-        this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey)
-            .toString('hex');
+        this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey).toString('hex');
 
         log.notify(`My identity: ${this.identity}`);
         config.identity = this.identity;
@@ -73,9 +66,22 @@ class Network {
         log.info('Initializing network');
 
         // Initialize public contact data
-        const contact = this.setContact(config, parentkey);
+        const contact = {
+            hostname: config.node_rpc_ip,
+            protocol: 'https:',
+            port: parseInt(config.node_port, 10),
+            xpub: parentkey.publicExtendedKey,
+            index: parseInt(config.child_derivation_index, 10),
+            agent: kadence.version.protocol,
+            wallet: config.node_wallet,
+        };
 
-        const transport = this._HTTPSTransport();
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
+        // Initialize transport adapter
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         node.ot = new kadence.KademliaNode({
@@ -94,6 +100,9 @@ class Network {
         });
 
         log.info('Starting OT Node...');
+
+        // Enable Quasar plugin used for publish/subscribe mechanism
+        node.ot.quasar = node.plugin(kadence.quasar());
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
@@ -135,7 +144,6 @@ class Network {
                 }),
             ]));
         }
-
         this.registerRoutes();
 
         // Use verbose logging if enabled
@@ -160,7 +168,7 @@ class Network {
             async.retry({
                 times: Infinity,
                 interval: 60000,
-            }, done => this.joinNetwork(done), (err, entry) => {
+            }, done => this.join(done), (err, entry) => {
                 if (err) {
                     log.error(err.message);
                     process.exit(1);
@@ -173,47 +181,10 @@ class Network {
         });
     }
 
-
-    /**
-   * Set contact data
-   * @param config
-   * @param parentkey
-   * @return {{hostname: *, protocol: string, port: number, xpub: *, index: number, agent: string}}
-   */
-    setContact(config, parentkey) {
-        const contact = {
-            hostname: config.node_rpc_ip,
-            protocol: 'https:',
-            port: parseInt(config.node_port, 10),
-            xpub: parentkey.publicExtendedKey,
-            index: parseInt(config.child_derivation_index, 10),
-            agent: kadence.version.protocol,
-            wallet: config.node_wallet,
-        };
-        return contact;
-    }
-
-    /**
-   * HTTPS Transport
-   * @param config
-   * @return {HTTPSTransport}
-   * @private
-   */
-    _HTTPSTransport() {
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
-
-        // Initialize transport adapter
-        const transport = new kadence.HTTPSTransport({ key, cert, ca });
-
-        return transport;
-    }
-
     /**
      * Join network
-   */
-    joinNetwork(callback) {
+     */
+    join(callback) {
         const peers = config.network_bootstrap_nodes;
         if (peers.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
@@ -225,7 +196,7 @@ class Network {
                         node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
-                this.joinNetwork(callback);
+                this.join(callback);
             });
         }
 
@@ -241,7 +212,6 @@ class Network {
                 callback(new Error('Failed to join network'));
             } else {
                 log.important('Joined the network');
-                /* eslint-disable-next-line no-undef */
                 const contact = kadence.utils.parseContactURL(result);
                 config.dh = contact;
                 callback(null, contact);
@@ -249,7 +219,16 @@ class Network {
         });
     }
 
+    /**
+     * Register Kademlia routes and error handlers
+     */
     registerRoutes() {
+        node.ot.quasar.quasarSubscribe('bidding-broadcast-channel', (message, error) => {
+            log.info('New bidding offer received');
+            // TODO implement
+        });
+
+        // add payload-request route
         node.ot.use('payload-request', (request, response, next) => {
             log.info('payload-request received');
             globalEmitter.emit('payload-request', request, response);
@@ -257,6 +236,15 @@ class Network {
                 status: 'OK',
             });
         });
+
+        // add payload-request error handler
+        node.ot.use('payload-request', (err, request, response, next) => {
+            response.send({
+                error: 'payload-request error',
+            });
+        });
+
+        // add replication-finished route
         node.ot.use('replication-finished', (request, response, next) => {
             log.info('replication-finished received');
             globalEmitter.emit('replication-finished', request);
@@ -264,42 +252,73 @@ class Network {
                 status: 'OK',
             });
         });
+
+        // add replication-finished error handler
+        node.ot.use('replication-finished', (err, request, response, next) => {
+            response.send({
+                error: 'replication-finished error',
+            });
+        });
+
+        // add challenge-request route
         node.ot.use('challenge-request', (request, response, next) => {
             log.info('challenge-request received');
             globalEmitter.emit('kad-challenge-request', request, response);
         });
 
+        // add challenge-request error handler
+        node.ot.use('challenge-request', (err, request, response, next) => {
+            response.send({
+                error: 'challenge-request error',
+            });
+        });
 
-        node.ot.use('payload-request', (err, request, response, next) => {
-            response.send({
-                error: 'error',
-            });
-        });
-        node.ot.use('replication-finished', (err, request, response, next) => {
-            response.send({
-                error: 'error',
-            });
-        });
+        // creates Kadence plugin for RPC calls
         node.ot.plugin((node) => {
+            /**
+             * Helper method for getting nearest contact (used for testing purposes only)
+             * @returns {*}
+             */
             node.getNearestNeighbour = () =>
                 [...node.router.getClosestContactsToKey(this.identity).entries()].shift();
 
-            node.payloadRequest = (message, callback) => {
-                const neighbor = [
-                    ...node.router.getClosestContactsToKey(this.identity).entries(),
-                ].shift();
-                node.send('payload-request', { message }, neighbor, callback);
-            };
-            node.replicationFinished = (message, callback) => {
+            /**
+             * Gets contact by ID
+             * @param contactId Contact ID
+             * @returns {{"{": Object}|Array}
+             */
+            node.getContact = contactId => node.router.getContactByNodeId(contactId);
 
+            /**
+             * Sends payload request to DH
+             * @param message   Payload to be sent
+             * @param contact   Contact to be sent to
+             * @param callback  Response/Error callback
+             */
+            node.payloadRequest = (message, contact, callback) => {
+                node.send('payload-request', { message }, contact, callback);
             };
-            node.challengeRequest = (message, contactId, callback) => {
-                const contact = node.router.getContactByNodeId(contactId);
-                node.send('challenge-request', { message }, [contactId, contact], callback);
+
+            /**
+             * Sends replication finished direct message
+             * @param message   Payload to be sent
+             * @param callback  Response/Error callback
+             */
+            node.replicationFinished = (message, callback) => {
+                // TODO implement
+            };
+
+            /**
+             * Sends challenge request direct message
+             * @param message   Payload to be sent
+             * @param contact   Contant to be sent to
+             * @param callback  Response/Error callback
+             */
+            node.challengeRequest = (message, contact, callback) => {
+                node.send('challenge-request', { message }, [contact, contact], callback);
             };
         });
-        // Define a global custom error handler rule, simply by including the `err`
-        // argument in the handler
+        // Define a global custom error handler rule
         node.ot.use((err, request, response, next) => {
             response.send({ error: err.message });
         });

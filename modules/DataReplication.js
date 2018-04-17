@@ -72,7 +72,7 @@ class DataReplication {
             };
 
             // send payload to DH
-            node.ot.payloadRequest(payload, () => {
+            node.ot.payloadRequest(payload, node.ot.getNearestNeighbour(), () => {
                 log.info('Payload request sent');
             });
         });
