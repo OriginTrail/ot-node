@@ -20,7 +20,6 @@ let ns = {};
 /**
  * DHT module (Kademlia)
  */
-
 class Network {
     /**
      * Setup options and construct a node
@@ -98,7 +97,6 @@ class Network {
                 }
             }),
         });
-
         log.info('Starting OT Node...');
 
         // Enable Quasar plugin used for publish/subscribe mechanism
@@ -112,37 +110,12 @@ class Network {
         }));
         log.info('Hashcash initialised');
 
-        // Use Tor for an anonymous overlay
         if (parseInt(config.onion_enabled, 10)) {
-            // noinspection JSAnnotator
-            kadence.constants.T_RESPONSETIMEOUT = 20000;
-            node.ot.onion = node.plugin(kadence.onion({
-                dataDirectory: `${__dirname}/../data/hidden_service`,
-                virtualPort: config.onion_virtual_port,
-                localMapping: `127.0.0.1:${config.node_port}`,
-                torrcEntries: {
-                    CircuitBuildTimeout: 10,
-                    KeepalivePeriod: 60,
-                    NewCircuitPeriod: 60,
-                    NumEntryGuards: 8,
-                    Log: 'notice stdout',
-                },
-                passthroughLoggingEnabled: 1,
-            }));
+            this.enableOnion();
         }
 
         if (parseInt(config.traverse_nat_enabled, 10)) {
-            log.info('Trying NAT traversal');
-            node.ot.traverse = node.ot.plugin(kadence.traverse([
-                new kadence.traverse.UPNPStrategy({
-                    mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                    publicPort: parseInt(node.ot.contact.port, 10),
-                }),
-                new kadence.traverse.NATPMPStrategy({
-                    mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                    publicPort: parseInt(node.ot.contact.port, 10),
-                }),
-            ]));
+            this.enableNatTraversal();
         }
         this.registerRoutes();
 
@@ -157,8 +130,7 @@ class Network {
         }
 
         node.ot.listen(parseInt(config.node_port, 10), () => {
-            log.notify('OT Node listening ' +
-          `at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
+            log.notify(`OT Node listening at https://${node.ot.contact.hostname}:${node.ot.contact.port}`);
             ns.registerControlInterface(config, node);
 
             if (parseInt(config.solve_hashes, 10)) {
@@ -174,11 +146,42 @@ class Network {
                     process.exit(1);
                 }
 
-                log.info(`Connected to network via ${entry[0]} ` +
-              `(https://${entry[1].hostname}:${entry[1].port})`);
+                log.info(`Connected to network via ${entry[0]} (https://${entry[1].hostname}:${entry[1].port})`);
                 log.info(`Discovered ${node.ot.router.size} peers from seed`);
             });
         });
+    }
+
+    static enableNatTraversal() {
+        log.info('Trying NAT traversal');
+        node.ot.traverse = node.ot.plugin(kadence.traverse([
+            new kadence.traverse.UPNPStrategy({
+                mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
+                publicPort: parseInt(node.ot.contact.port, 10),
+            }),
+            new kadence.traverse.NATPMPStrategy({
+                mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
+                publicPort: parseInt(node.ot.contact.port, 10),
+            }),
+        ]));
+    }
+
+    static enableOnion() {
+        log.info('Use Tor for an anonymous overlay');
+        kadence.constants.T_RESPONSETIMEOUT = 20000;
+        node.ot.onion = node.plugin(kadence.onion({
+            dataDirectory: `${__dirname}/../data/hidden_service`,
+            virtualPort: config.onion_virtual_port,
+            localMapping: `127.0.0.1:${config.node_port}`,
+            torrcEntries: {
+                CircuitBuildTimeout: 10,
+                KeepalivePeriod: 60,
+                NewCircuitPeriod: 60,
+                NumEntryGuards: 8,
+                Log: 'notice stdout',
+            },
+            passthroughLoggingEnabled: 1,
+        }));
     }
 
     /**
