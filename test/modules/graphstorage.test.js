@@ -35,7 +35,6 @@ describe('GraphStorage module', () => {
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
         selectedDatabase.database = myDatabaseName;
-        console.log(selectedDatabase);
 
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
