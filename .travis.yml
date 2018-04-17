@@ -7,7 +7,6 @@ before_script:
   - touch modules/Database/system.db
   - ./node_modules/.bin/sequelize db:migrate
   - ./node_modules/.bin/sequelize db:seed:all
-  - mkdir keys
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh

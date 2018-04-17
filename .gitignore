@@ -25,3 +25,4 @@ Envoy.blade.php
 !/data/wallet.dat/.gitkeep
 /modules/Database/system.db
 @kadenceproject
+test.*
