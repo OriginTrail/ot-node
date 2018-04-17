@@ -165,7 +165,7 @@ class NetworkUtilities {
 
         if (parseInt(config.control_port_enabled, 10)) {
             log.info(`Binding controller to port ${config.control_port}`);
-            log.listen(parseInt(config.control_port, 10), '0.0.0.0');
+            controller.listen(parseInt(config.control_port, 10), '0.0.0.0');
         }
 
         if (parseInt(config.control_sock_enabled, 10)) {
