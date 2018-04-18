@@ -109,6 +109,7 @@ class ArangoJS {
                 },
             ).catch((err) => {
                 console.log(err);
+                reject(err);
             });
         });
     }
@@ -131,6 +132,7 @@ class ArangoJS {
                 },
             ).catch((err) => {
                 console.log(err);
+                reject(err);
             });
         });
     }
