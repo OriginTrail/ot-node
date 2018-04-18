@@ -45,7 +45,142 @@ contract EscrowHolder {
 
 	ERC20 public token;
 
+	function EscrowHolder(address tokenAddress)
+	public{
+		require ( tokenAddress != address(0) );
+		token = ERC20(tokenAddress);
+	}
+	
+
+	/*    ----------------------------- BIDDING -----------------------------     */
+
+	
+	struct OfferDefinition{
+		uint total_escrow_time;
+		uint offer_choose_time;
+		uint min_number_of_bids;
+		uint token_amount;
+		uint data_size;
+		uint replication_factor;
+		uint stake_needed;
+		uint num_of_bids;
+		uint total_bid_token_amount;
+		uint256 seed;
+		bool active;
+	}
+
+	struct BidDefinition{
+		address DH_wallet;
+		uint node_id;
+		uint token_amount;
+		bool active;
+	}
+
+	mapping(address => mapping(uint => OfferDefinition)) public offer;
+	mapping(address => mapping(uint => mapping(uint => BidDefinition))) public bid; 
+
+	event OfferCreated(address DC_wallet, uint data_id, uint total_escrow_time, uint tokens_per_DH, uint data_size);
+	event OfferCanceled(address DC_wallet, uint data_id);
+	event BiddingPhaseCompleted(address DC_wallet, uint data_id);
+	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
+
+	function createOffer(uint data_id, uint total_escrow_time, uint max_offer_time, uint min_number_of_applicants, 
+		uint tokens_per_DH, uint data_size, uint replication_factor)
+	public returns (uint choose_phase_start_time){
+
+		require(total_escrow_time > 0 && tokens_per_DH > 0 && replication_factor > 1);
+		require(offer[msg.sender][data_id].active == false);
+
+		require(token.allowance(msg.sender,this) >= SafeMath.mul(tokens_per_DH,replication_factor));
+		token.transferFrom(msg.sender,this,SafeMath.mul(tokens_per_DH,replication_factor));
+		
+		offer[msg.sender][data_id].total_escrow_time = total_escrow_time;
+		offer[msg.sender][data_id].offer_choose_time = block.number + max_offer_time;
+		offer[msg.sender][data_id].min_number_of_bids = min_number_of_applicants;
+		offer[msg.sender][data_id].token_amount = tokens_per_DH;
+		offer[msg.sender][data_id].data_size = data_size;
+		offer[msg.sender][data_id].replication_factor = replication_factor;
+		offer[msg.sender][data_id].num_of_bids = 0;
+		offer[msg.sender][data_id].seed = block.number;
+		offer[msg.sender][data_id].active = true;
+
+		choose_phase_start_time = block.number + max_offer_time;
+
+		OfferCreated(msg.sender, data_id, total_escrow_time, tokens_per_DH, data_size);
+	}
+
+	function cancelOffer(uint data_id)
+	public{
+		offer[msg.sender][data_id].active = false;
+
+		OfferCanceled(msg.sender, data_id);
+	}
+
+	function addBid(address DC_wallet, uint node_id, uint data_id, uint token_amount)
+	public returns (uint bidIndex){
+
+		require(offer[DC_wallet][data_id].active);
+		require(token_amount <= offer[DC_wallet][data_id].token_amount);
+		require(token_amount > 0);
+
+		bidIndex = offer[DC_wallet][data_id].num_of_bids;
+
+		bid[DC_wallet][data_id][bidIndex].DH_wallet = msg.sender;
+		bid[DC_wallet][data_id][bidIndex].node_id = node_id;
+		bid[DC_wallet][data_id][bidIndex].token_amount = token_amount;
+		bid[DC_wallet][data_id][bidIndex].active = true;
+
+		OfferDefinition storage this_offer = offer[msg.sender][data_id];
+
+		this_offer.num_of_bids = bidIndex + 1;
+		this_offer.total_bid_token_amount.add(token_amount);
+		this_offer.seed.add(block.number);
+
+		if (offer[msg.sender][data_id].offer_choose_time <= block.number) BiddingPhaseCompleted( DC_wallet, data_id);
+	}
+
+	function cancelBid(address DC_wallet, uint data_id, uint bidIndex)
+	public{
+		require(bid[DC_wallet][data_id][bidIndex].DH_wallet == msg.sender);
+		require(bid[DC_wallet][data_id][bidIndex].active);
+
+		offer[DC_wallet][data_id].total_bid_token_amount.sub(bid[DC_wallet][data_id][bidIndex].token_amount);
+
+		bid[DC_wallet][data_id][bidIndex].token_amount = 0;
+		bid[DC_wallet][data_id][bidIndex].active = false;
+	}
+	
+	function chooseBids(uint data_id)
+	public returns (uint256[] chosen_data_holders){
+
+		OfferDefinition storage this_offer = offer[msg.sender][data_id];
+		
+		require(this_offer.min_number_of_bids <= this_offer.num_of_bids);
+		require(this_offer.offer_choose_time >= block.number);
+
+		uint N = this_offer.replication_factor;
+		chosen_data_holders = new uint256[](N);
+		uint256 i = 0;
+		uint256 seed = this_offer.seed;
+		while(i < N){
+			uint nextIndex = (seed * this_offer.num_of_bids + block.number) % this_offer.total_bid_token_amount;
+			uint256 j = 0;
+			uint256 sum = bid[msg.sender][data_id][j].token_amount;
+			while(sum < nextIndex){
+				j++;
+				sum.add(bid[msg.sender][data_id][j].token_amount);
+			}
+			chosen_data_holders[i] = j;
+			this_offer.total_bid_token_amount.sub(bid[msg.sender][data_id][j].token_amount);
+			bid[msg.sender][data_id][j].token_amount = 0;
+			i++;
+		}
+
+	}
+
+
 	/*    ----------------------------- ESCROW -----------------------------     */
+
 
 	enum EscrowStatus {initiated, active, canceled, completed}
 
@@ -67,21 +202,14 @@ contract EscrowHolder {
 	event EscrowCanceled(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCompleted(address DC_wallet, address DH_wallet, uint data_id);
 
-	function EscrowHolder(address tokenAddress)
-	public{
-		require ( tokenAddress != address(0) );
-		token = ERC20(tokenAddress);
-	}
+
 
 	function initiateEscrow(address DH_wallet, uint data_id, uint token_amount,	uint total_time)
 	public {
 		require(escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.active
-		&&  escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
+			&&  escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
 
 		require(token_amount > 0 && total_time > 0);
-
-		require(token.allowance(msg.sender,this) >= token_amount);
-		token.transferFrom(msg.sender,this,token_amount);
 
 		escrow[msg.sender][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, 0, 0, total_time, EscrowStatus.initiated);
 
@@ -95,8 +223,8 @@ contract EscrowHolder {
 		EscrowDefinition storage escrow_def = escrow[DC_wallet][msg.sender][data_id];
 
 		require(escrow_def.token_amount == token_amount &&
-		escrow_def.escrow_status == EscrowStatus.initiated &&
-		escrow_def.total_time == total_time);
+			escrow_def.escrow_status == EscrowStatus.initiated &&
+			escrow_def.total_time == total_time);
 
 		escrow_def.last_confirmation_time = block.number;
 		escrow_def.end_time = SafeMath.add(block.number, total_time);
@@ -111,7 +239,7 @@ contract EscrowHolder {
 		EscrowDefinition storage this_escrow = escrow[DC_wallet][msg.sender][data_id];
 
 		require(this_escrow.escrow_status != EscrowStatus.initiated &&
-		this_escrow.escrow_status != EscrowStatus.completed);
+			this_escrow.escrow_status != EscrowStatus.completed);
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
@@ -138,13 +266,12 @@ contract EscrowHolder {
 		}
 	}
 
-
 	function cancelEscrow(address DH_wallet, uint256 data_id)
 	public {
 		EscrowDefinition storage this_escrow = escrow[msg.sender][DH_wallet][data_id];
 
 		require(this_escrow.escrow_status != EscrowStatus.completed &&
-		this_escrow.escrow_status != EscrowStatus.canceled);
+			this_escrow.escrow_status != EscrowStatus.canceled);
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
