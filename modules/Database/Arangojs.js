@@ -209,6 +209,24 @@ class ArangoJS {
             });
         });
     }
+
+    getEdgesByImportId(data_id) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+
+            if (typeof data_id !== 'number') {
+                data_id = parseInt(data_id, 10);
+            }
+
+            const params = { importId: data_id };
+
+            this.runQuery(queryString, params).then((response) => {
+                resolve(response);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
 }
 
 module.exports = ArangoJS;

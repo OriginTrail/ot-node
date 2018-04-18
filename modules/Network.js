@@ -14,6 +14,9 @@ const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const globalEvents = require('./GlobalEvents');
 
+// TODO remove below after SC intro
+const SmartContractInstance = require('./temp/MockSmartContractInstance');
+
 const { globalEmitter } = globalEvents;
 let ns = {};
 
@@ -100,7 +103,7 @@ class Network {
         log.info('Starting OT Node...');
 
         // Enable Quasar plugin used for publish/subscribe mechanism
-        node.ot.quasar = node.plugin(kadence.quasar());
+        node.ot.quasar = node.ot.plugin(kadence.quasar());
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
@@ -117,7 +120,7 @@ class Network {
         if (parseInt(config.traverse_nat_enabled, 10)) {
             this.enableNatTraversal();
         }
-        this.registerRoutes();
+        this._registerRoutes();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -140,7 +143,7 @@ class Network {
             async.retry({
                 times: Infinity,
                 interval: 60000,
-            }, done => this.join(done), (err, entry) => {
+            }, done => this._joinNetwork(done), (err, entry) => {
                 if (err) {
                     log.error(err.message);
                     process.exit(1);
@@ -185,11 +188,11 @@ class Network {
     }
 
     /**
-     * Join network
+     * Join network if there are some of the bootstrap nodes
      */
-    join(callback) {
-        const peers = config.network_bootstrap_nodes;
-        if (peers.length === 0) {
+    _joinNetwork(callback) {
+        const bootstrapNodes = config.network_bootstrap_nodes;
+        if (bootstrapNodes.length === 0) {
             log.warn('No bootstrap seeds provided and no known profiles');
             log.trace('Running in seed mode (waiting for connections)');
             return node.ot.router.events.once('add', (identity) => {
@@ -199,12 +202,12 @@ class Network {
                         node.ot.router.getContactByNodeId(identity),
                     ]),
                 ];
-                this.join(callback);
+                this._joinNetwork(callback);
             });
         }
 
-        log.info(`Joining network from ${peers.length} seeds`);
-        async.detectSeries(peers, (url, done) => {
+        log.info(`Joining network from ${bootstrapNodes.length} seeds`);
+        async.detectSeries(bootstrapNodes, (url, done) => {
             const contact = kadence.utils.parseContactURL(url);
             node.ot.join(contact, (err) => {
                 done(null, (!err) && node.ot.router.size >= 1);
@@ -225,10 +228,10 @@ class Network {
     /**
      * Register Kademlia routes and error handlers
      */
-    registerRoutes() {
-        node.ot.quasar.quasarSubscribe('bidding-broadcast-channel', (message, error) => {
+    _registerRoutes() {
+        node.ot.quasar.quasarSubscribe('bidding-broadcast-channel', (message, err) => {
             log.info('New bidding offer received');
-            // TODO implement
+            globalEmitter.emit('bidding-broadcast', message);
         });
 
         // add payload-request route
@@ -276,6 +279,25 @@ class Network {
             });
         });
 
+        // TODO remove temp add bid route
+        node.ot.use('add-bid', (request, response, next) => {
+            log.info('add-bid');
+            const { offerId, bid } = request.params.message;
+            bid.id = request.id;
+            SmartContractInstance.sc.addDhBid(offerId, bid);
+            response.send({
+                status: 'OK',
+            });
+        });
+
+        // TODO remove temp add bid route
+        node.ot.use('add-bid', (err, request, response, next) => {
+            log.error('add-bid failed');
+            response.send({
+                error: 'add-bid error',
+            });
+        });
+
         // creates Kadence plugin for RPC calls
         node.ot.plugin((node) => {
             /**
@@ -319,6 +341,17 @@ class Network {
              */
             node.challengeRequest = (message, contact, callback) => {
                 node.send('challenge-request', { message }, [contact, contact], callback);
+            };
+
+            /**
+             * Sends add bid to DC
+             * TODO remove after SC intro
+             * @param message   Payload to be sent
+             * @param contact   Contant to be sent to
+             * @param callback  Response/Error callback
+             */
+            node.addBid = (message, contact, callback) => {
+                node.send('add-bid', { message }, contact, callback);
             };
         });
         // Define a global custom error handler rule

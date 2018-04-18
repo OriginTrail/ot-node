@@ -13,11 +13,11 @@ const log = require('./Utilities').getLogger();
 
 class DataReplication {
     /**
-   * Sends data to DH for replication
-   *
-   * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-   * @return object response
-   */
+     * Sends data to DH for replication
+     *
+     * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+     * @return object response
+     */
     static sendPayload(data) {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');

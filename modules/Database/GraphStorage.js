@@ -188,6 +188,25 @@ class GraphStorage {
             }
         });
     }
+
+    /**
+     * Gets edges by import ID from the underlying database
+     * @param data_id       Import ID
+     * @returns {Promise}
+     */
+    getEdgesByImportId(data_id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getEdgesByImportId(data_id).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
 }
 
 module.exports = GraphStorage;
