@@ -157,6 +157,96 @@ class Ethereum {
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, dataId], options);
     }
+
+    /**
+     * Creates an offer on Ethereum blockchain.
+     * @param dataId ID of data
+     * @param totalEscrowTime Total time of the escrow
+     * @param maxOfferTime Maximum offer time
+     * @param minNumberOfApplicants Minimum number of required applicants
+     * @param tokensPerDh Amount of tokens payed to each DH
+     * @param dataSize Size of the data
+     * @param replicationFactor Number of desired replications
+     * @returns {Promise<any>}
+     */
+    createOffer(
+        dataId, totalEscrowTime, maxOfferTime, minNumberOfApplicants,
+        tokensPerDh, dataSize, replicationFactor,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'createOffer',
+            [dataId, totalEscrowTime, maxOfferTime, minNumberOfApplicants,
+                tokensPerDh, dataSize, replicationFactor], options,
+        );
+    }
+
+    /**
+     * Adds bid to the offer on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param tokenAmount Amount of token that will be paid if chosen in the bid
+     * @returns {Promise<any>}
+     */
+    addBid(dcWallet, dataId, tokenAmount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'addBid',
+            [dcWallet, dataId, tokenAmount], options,
+        );
+    }
+
+    /**
+     * Cancel the bid on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param bidIndex Index of the bid
+     * @returns {Promise<any>}
+     */
+    cancelBid(dcWallet, dataId, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'cancelBid',
+            [dcWallet, dataId, bidIndex], options,
+        );
+    }
+
+    /**
+     * Starts choosing bids from contract escrow on Ethereum blockchain
+     * @param dataId ID of data of the bid
+     * @returns {Promise<any>}
+     */
+    chooseBids(dataId) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'chooseBids',
+            [dataId], options,
+        );
+    }
 }
 
 module.exports = Ethereum;

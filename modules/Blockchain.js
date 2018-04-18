@@ -77,6 +77,57 @@ class Blockchain {
     payOut(dcWallet, dataId) {
         return this.blockchain.payOut(dcWallet, dataId);
     }
+
+    /**
+     *
+     * @param dataId
+     * @param totalEscrowTime
+     * @param maxOfferTime
+     * @param minNumberOfApplicants
+     * @param tokensPerDh
+     * @param dataSize
+     * @param replicationFactor
+     */
+    createOffer(
+        dataId, totalEscrowTime, maxOfferTime, minNumberOfApplicants,
+        tokensPerDh, dataSize, replicationFactor,
+    ) {
+        return this.blockchain.createOffer(
+            dataId, totalEscrowTime, maxOfferTime, minNumberOfApplicants,
+            tokensPerDh, dataSize, replicationFactor,
+        );
+    }
+
+    /**
+     * Adds bid to the offer on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param tokenAmount Amount of token that will be paid if chosen in the bid
+     * @returns {Promise<any>}
+     */
+    addBid(dcWallet, dataId, tokenAmount) {
+        return this.blockchain.addBid(dcWallet, dataId, tokenAmount);
+    }
+
+    /**
+     * Cancel the bid on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param bidIndex Index of the bid
+     * @returns {Promise<any>}
+     */
+    cancelBid(dcWallet, dataId, bidIndex) {
+        return this.blockchain.cancelBid(dcWallet, dataId, bidIndex);
+    }
+
+    /**
+     * Starts choosing bids from contract escrow on Ethereum blockchain
+     * @param dataId ID of data of the bid
+     * @returns {Promise<any>}
+     */
+    chooseBids(dataId) {
+        return this.blockchain.chooseBids(dataId);
+    }
 }
 
 module.exports = Blockchain;
