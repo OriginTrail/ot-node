@@ -47,17 +47,25 @@ class Utilities {
         });
     }
 
+    /**
+     * Saves value to configuration
+     * @param property      Property name
+     * @param val           Property value
+     */
     static saveToConfig(property, val) {
         return new Promise((resolve, reject) => {
             Storage.models.node_config.find({
                 where: { key: property },
             }).then((row) => {
                 row.value = val;
-                row.save().then(() => {
-                    deasync(Utilities.loadConfig());
-                    resolve(row);
+                return row.save();
+            }).then(() => Utilities.loadConfig())
+                .then(() => {
+                    resolve();
+                })
+                .catch((err) => {
+                    reject(err);
                 });
-            });
         });
     }
 

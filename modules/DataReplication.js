@@ -3,7 +3,6 @@ const Challenge = require('./Challenge');
 const utilities = require('./Utilities');
 const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
-const MessageHandler = require('./MessageHandler');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
 const challenger = require('./Challenger');
@@ -23,16 +22,16 @@ class DataReplication {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');
 
-            const currentUnixTime = Math.floor(new Date() / 1000);
+            const currentUnixTime = Date.now();
             const min10 = currentUnixTime + 120 + 60; // End of testing period
             const options = {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
                 amount: data.vertices.length + data.edges.length,
-                start_time: currentUnixTime + 120,
-                total_time: 10 * 60,
+                start_time: currentUnixTime,
+                total_time: 10 * 60000,
             };
-            /*
+
             try {
                 deasync(Blockchain.bc.increaseApproval(options.amount));
                 deasync(Blockchain.bc.initiateEscrow(
@@ -44,10 +43,16 @@ class DataReplication {
             } catch (e) {
                 console.log(e);
             }
-*/
+
+            data.encryptedVertices.vertices.sort((a, b) => {
+                if (a._key < b._key) { return -1; } else if (a._key > b._key) { return 1; }
+                return 0;
+            });
+
             const tests = Challenge.generateTests(
-                config.dh[0], options.import_id, 10,
-                options.start_time, options.start_time + 120, 16, data.encryptedVertices.vertices,
+                config.dh[0], options.import_id.toString(), 10,
+                options.start_time, options.start_time + options.total_time,
+                16, data.encryptedVertices.vertices,
             );
 
             Challenge.addTests(tests).then(() => {

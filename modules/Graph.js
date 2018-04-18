@@ -252,7 +252,7 @@ class Graph {
                         resolve({ vertices, public_key: publicKey });
                     } else {
                         const keyPair = Encryption.generateKeyPair();
-                        const updateKeysSQL = 'UPDATE data_holders SET data_private_key=? and data_public_key=? where dh_wallet=? and dh_kademlia_id=?';
+                        const updateKeysSQL = 'INSERT INTO data_holders (data_private_key, data_public_key, dh_wallet, dh_kademlia_id)VALUES (?, ?, ?, ?)';
                         const updateQueryParams = [
                             keyPair.privateKey,
                             keyPair.publicKey,

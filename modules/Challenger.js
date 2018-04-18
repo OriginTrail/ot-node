@@ -2,7 +2,7 @@
 
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const MessageHandler = require('./MessageHandler');
+const node = require('./Node');
 
 const log = Utilities.getLogger();
 const intervalMs = 1500;
@@ -12,27 +12,37 @@ function sendChallenge(challenge) {
     log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
 
     const payload = {
-        block_id: challenge.block_id,
-        import_id: challenge.import_id,
-
+        payload: {
+            block_id: challenge.block_id,
+            import_id: challenge.import_id,
+        },
     };
 
-    MessageHandler.sendDirectMessage(challenge.dh_id, 'challenge-request', payload)
-        .then((response) => {
-            log.info(`Challenge response: ${response}.`);
+    node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
+        if (error) {
+            log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
+            return;
+        }
 
-            if (response.answer === challenge.answer) {
-                log.trace('Successfully answered to challenge.');
-                // TODO doktor: Handle promise.
-                Challenge.completeTest(challenge.id);
-            } else {
-                log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                // TODO doktor: Handle promise.
-                Challenge.failTest(challenge.id);
-            }
-        }, (error) => {
-            log.error(`Failed to send challenge to ${challenge.dh_id}. Error: ${error}.`);
-        });
+        if (typeof response.status === 'undefined') {
+            log.warn('challenge-request: Missing status');
+            return;
+        }
+
+        if (response.status !== 'success') {
+            log.trace('challenge-request: Response not successful.');
+        }
+
+        if (response.answer === challenge.answer) {
+            log.trace('Successfully answered to challenge.');
+            // TODO doktor: Handle promise.
+            Challenge.completeTest(challenge.id);
+        } else {
+            log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+            // TODO doktor: Handle promise.
+            Challenge.failTest(challenge.id);
+        }
+    });
 }
 
 function intervalFunc() {
@@ -54,7 +64,11 @@ exports.intervalMs = intervalMs;
 
 exports.startChallenging = function startChallenging() {
     if (timerId === undefined) {
-        setInterval(intervalFunc, intervalMs);
+        // TODO doktor: temp solution to delay.
+        // Should be started after replication-finished received.
+        setTimeout(() => {
+            setInterval(intervalFunc, intervalMs);
+        }, 30000);
         log.info(`Started challenging timer at ${intervalMs}ms.`);
     }
 };

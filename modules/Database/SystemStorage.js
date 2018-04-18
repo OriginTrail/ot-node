@@ -8,14 +8,18 @@ class SystemStorage {
      */
     static connect() {
         return new Promise((resolve, reject) => {
-            var db_connection = new sqlite3.Database(path.join(__dirname, 'system.db'), (err) => {
-                if (err) {
-                    reject(err.message);
-                } else {
-                    this.db = db_connection;
-                    resolve(db_connection);
-                }
-            });
+            if (typeof this.db === 'undefined') {
+                var db_connection = new sqlite3.Database(path.join(__dirname, 'system.db'), (err) => {
+                    if (err) {
+                        reject(err.message);
+                    } else {
+                        this.db = db_connection;
+                        resolve(this.db);
+                    }
+                });
+            } else {
+                resolve(this.db);
+            }
         });
     }
 
