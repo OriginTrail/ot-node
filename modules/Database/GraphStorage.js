@@ -131,12 +131,12 @@ class GraphStorage {
         return this.selectedDatabase;
     }
 
-    addEdge(collection_name, edge, callback) {
-        this.db.addDocument(collection_name, edge, callback);
+    addEdge(collection_name, edge) {
+        return this.addDocument(collection_name, edge);
     }
 
-    addVertex(collection_name, vertex, callback) {
-        this.db.addVertex(collection_name, vertex, callback);
+    addVertex(collection_name, vertex) {
+        return this.addDocument(collection_name, vertex);
     }
 
     updateDocumentImports(collectionName, document, importNumber) {

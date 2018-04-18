@@ -172,5 +172,16 @@ describe('Arangojs module ', async () => {
             assert.include(response.imports, newImportValue);
         });
     });
+
+    it('getVerticesByImportId() ', async () => {
+        await testDb.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+            assert.deepEqual(response[0].data, vertexOne.data);
+            assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+            assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+            assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+            assert.deepEqual(response[0].imports, vertexOne.imports);
+            assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        });
+    });
 });
 
