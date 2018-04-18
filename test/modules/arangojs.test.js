@@ -118,6 +118,12 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
+    it('trying to add same document again should resut in double insert', () => {
+        testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
+            assert.equal(response, 'Double insert');
+        });
+    });
+
     it('.addDocument() should save edge in Edge Document Collection', () => {
         testDb.addDocument(edgeCollectionName, edgeOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
@@ -175,6 +181,17 @@ describe('Arangojs module ', async () => {
 
     it('getVerticesByImportId() ', async () => {
         await testDb.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+            assert.deepEqual(response[0].data, vertexOne.data);
+            assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+            assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+            assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+            assert.deepEqual(response[0].imports, vertexOne.imports);
+            assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        });
+    });
+
+    it('getVerticesByImportId() with valid string importId value ', async () => {
+        await testDb.getVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);

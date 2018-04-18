@@ -27,6 +27,8 @@ let selectedDatabase;
 let systemDb;
 let myGraphStorage;
 let myGraphStorageConnection;
+let myInvalidGraphStorage;
+let myInvalidGraphConnection;
 
 describe('GraphStorage module', () => {
     before('loadSelectedDatabaseInfo()', async () => {
@@ -54,6 +56,16 @@ describe('GraphStorage module', () => {
         assert.equal(myGraphStorage.db.identify(), 'ArangoJS');
     });
 
+    it('Unable to connect to graph database scenario', async () => {
+        myInvalidGraphStorage = new GraphStorage();
+        try {
+            myInvalidGraphConnection = await myInvalidGraphStorage.connect();
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Unable to connect to graph database') >= 0);
+        }
+    });
+
+
     it('getDatabaseInfo() ', () => {
         const result = myGraphStorage.getDatabaseInfo();
         assert.equal(result, selectedDatabase);
@@ -64,6 +76,15 @@ describe('GraphStorage module', () => {
         await myGraphStorage.runQuery('RETURN @value', { value: now }).then((response) => {
             assert.approximately(response[0], now, 1000, 'Resulted time is approx same as current');
         });
+    });
+
+    it('.runQuery() on invalid instance should not give back result', async () => {
+        const now = Date.now();
+        try {
+            await myInvalidGraphStorage.runQuery('RETURN @value', { value: now });
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+        }
     });
 
     it('.createCollection() should create Document Collection', async () => {
@@ -99,6 +120,15 @@ describe('GraphStorage module', () => {
         myGraphStorage.addVertex(documentCollectionName, vertexOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
+    });
+
+    it('adding 2nd vertex from invalid storage should fail', async () => {
+        try {
+            const result =
+                await myInvalidGraphStorage.addDocument(documentCollectionName, vertexTwo);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+        }
     });
 
     it('.addEdge() should save edge in Edge Document Collection', () => {
@@ -151,6 +181,14 @@ describe('GraphStorage module', () => {
             assert.deepEqual(response[0].imports, vertexOne.imports);
             assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
         });
+    });
+
+    it('call to getVerticesByImportId() from invalid storage should fail', async () => {
+        try {
+            const result = await myInvalidGraphStorage.getVerticesByImportId(vertexOne.imports[0]);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+        }
     });
 
     after('drop myGraphStorage db', async () => {
