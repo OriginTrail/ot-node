@@ -10,6 +10,7 @@ const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const node = require('./Node');
+const Promise = require('async');
 const Utilities = require('./Utilities');
 
 // TODO remove below after SC intro
@@ -73,16 +74,16 @@ globalEmitter.on('gs1-import-request', (data) => {
 globalEmitter.on('replication-request', (request, response) => {
     log.trace('replication-request received');
 
-    let importId;
     let price;
+    let importId;
     const { dataId } = request.params.message;
-    const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
     const { wallet } = request.contact[1];
+    const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
 
     if (dataId) {
         // TODO: decouple import ID from data id or load it from database.
         importId = dataId;
-        price = bid.price;
+        ({ price } = bid);
     }
 
     if (!importId || !wallet) {
@@ -94,7 +95,6 @@ globalEmitter.on('replication-request', (request, response) => {
 
     const verticesPromise = GraphStorage.db.getVerticesByImportId(importId);
     const edgesPromise = GraphStorage.db.getEdgesByImportId(importId);
-
 
     Promise.all([verticesPromise, edgesPromise]).then((values) => {
         const vertices = values[0];
