@@ -340,7 +340,7 @@ class Network {
              * @param callback  Response/Error callback
              */
             node.challengeRequest = (message, contact, callback) => {
-                node.send('challenge-request', { message }, [contact, contact], callback);
+                node.send('challenge-request', { message }, contact, callback);
             };
 
             /**
