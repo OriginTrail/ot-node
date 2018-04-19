@@ -3,10 +3,10 @@ const {
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
-
 const Graph = require('../../modules/Graph');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
+
 
 const deasync = require('deasync-promise');
 
@@ -324,28 +324,18 @@ describe('graph module ', () => {
         assert.equal(encryptedData, encryptedVertex.data);
     });
     it('encryptVertices()', async () => {
-        const keyPair = {};
-        SystemStorage.connect()
-            .then(() => {
-                const selectQuerySQL = 'SELECT dh.data_private_key, dh.data_public_key from data_holders as dh where dh.dh_wallet=? and dh.dh_kademlia_id=?';
-                SystemStorage.runSystemQuery(selectQuerySQL, ['wallet_1', 'kademila_1'])
-                    .then((response) => {
-                        keyPair.privateKey = response[0].data_private_key;
-                        keyPair.publicKey = response[0].data_public_key;
-                    });
-            });
-
         const vertexData = 1;
 
-        const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]);
+        const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
         assert.isNotNull(encryptedVertices);
         const encryptedVertex = encryptedVertices.vertices[0];
         assert.isNotNull(encryptedVertex);
 
-        const encryptedData = Encryption.encryptRawData(vertexData, keyPair.privateKey);
-        assert.isNotNull(encryptedData);
-        assert.equal(encryptedData, encryptedVertex.data);
+        // eslint-disable-next-line max-len
+        const decryptedVertices = await Graph.decryptVertices(encryptedVertices.vertices, encryptedVertices.vertices[0].decryption_key);
+        assert.isTrue(decryptedVertices[0].data === vertexData);
     });
+
     // TODO
     it.skip('Encrypt vertices, key found test', () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
