@@ -97,6 +97,14 @@ describe('Arangojs module ', async () => {
         assert.equal(info.length, 2);
     });
 
+    it('.createEdgeCollection() with null as collection name', async () => {
+        try {
+            await testDb.createEdgeCollection(null);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: illegal name') >= 0);
+        }
+    });
+
     it('.addDocument() should save vertex in Document Collection', () => {
         testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
@@ -122,6 +130,14 @@ describe('Arangojs module ', async () => {
         testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
             assert.equal(response, 'Double insert');
         });
+    });
+
+    it('trying to add null document', async () => {
+        try {
+            await testDb.addDocument(documentCollectionName, null);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: invalid document type') >= 0);
+        }
     });
 
     it('.addDocument() should save edge in Edge Document Collection', () => {
