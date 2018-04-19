@@ -76,12 +76,12 @@ globalEmitter.on('replication-request', (request, response) => {
     let importId;
     let price;
     const { dataId } = request.params.message;
-    const { bid } = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
+    const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
     const { wallet } = request.contact[1];
 
-    if (!request.params.message.dataId) {
+    if (dataId) {
         // TODO: decouple import ID from data id or load it from database.
-        importId = request.params.message.dataId;
+        importId = dataId;
         price = bid.price;
     }
 
@@ -201,16 +201,16 @@ globalEmitter.on('offer-ended', (message) => {
     // TODO: Trigger escrow to end bidding and notify chosen.
     const bids = SmartContractInstance.sc.choose(scId);
 
-    bids.forEach(bid => {
+    bids.forEach((bid) => {
         console.log(bid);
         node.ot.biddingWon(
             { dataId: scId },
-            bid.id, (error) => {
+            bid.dhId, (error) => {
                 if (error) {
                     log.warn(error);
                 }
             },
-        )
+        );
     });
 });
 
@@ -225,7 +225,7 @@ globalEmitter.on('kad-bidding-won', (message) => {
     const dcId = SmartContractInstance.sc.getDcForBid(dataId);
 
 
-    node.ot.replicationRequest({ dataId: scId }, dcId, (err) => {
+    node.ot.replicationRequest({ dataId }, dcId, (err) => {
         if (err) {
             log.warn(err);
         }

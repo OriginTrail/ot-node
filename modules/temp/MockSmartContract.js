@@ -52,7 +52,7 @@ class MockSmartContract {
     }
 
     getBid(dataId, dhId) {
-        return this.dhs[dataId].find(element => element.bid.id === dhId);
+        return this.dhs[dataId].find(element => element.dhId === dhId);
     }
 }
 
