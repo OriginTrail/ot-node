@@ -289,7 +289,7 @@ class Network {
         node.ot.use('add-bid', (request, response, next) => {
             log.info('add-bid');
             const { offerId, bid } = request.params.message;
-            bid.id = request.id;
+            bid.dhId = request.contact[0];
             SmartContractInstance.sc.addDhBid(offerId, bid);
             response.send({
                 status: 'OK',

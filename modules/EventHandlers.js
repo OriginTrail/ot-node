@@ -74,15 +74,14 @@ globalEmitter.on('replication-request', (request, response) => {
     log.trace('replication-request received');
 
     let importId;
-    let wallet;
     let price;
     const { dataId } = request.params.message;
-    const { bid } = SmartContractInstance.sc.getBid(dataId, request.id);
+    const { bid } = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
+    const { wallet } = request.contact[1];
 
     if (!request.params.message.dataId) {
         // TODO: decouple import ID from data id or load it from database.
         importId = request.params.message.dataId;
-        wallet = bid.wallet;
         price = bid.price;
     }
 
@@ -183,8 +182,6 @@ globalEmitter.on('bidding-broadcast', (message) => {
         offerId: scId,
         bid: {
             price: 1,
-            wallet: config.node_wallet,
-            dhId: config.identity, // TODO: This field should be added by DC upon arrival of this message.
         },
     }, dcId, (err) => {
         if (err) {
@@ -207,7 +204,7 @@ globalEmitter.on('offer-ended', (message) => {
     bids.forEach(bid => {
         console.log(bid);
         node.ot.biddingWon(
-            { offerId: scId },
+            { dataId: scId },
             bid.id, (error) => {
                 if (error) {
                     log.warn(error);
@@ -221,11 +218,11 @@ globalEmitter.on('offer-ended', (message) => {
 globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
 
-    const { scId } = message;
+    const { dataId } = message.params.message;
 
     // Now request data to check validity of offer.
 
-    const dcId = SmartContractInstance.sc.getDcForBid(scId);
+    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
 
 
     node.ot.replicationRequest({ dataId: scId }, dcId, (err) => {
