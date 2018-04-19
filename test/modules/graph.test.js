@@ -323,7 +323,7 @@ describe('graph module ', () => {
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
     });
-    it('encryptVertices()', async () => {
+    it('decryptVertices() of encryptVertices() should give back original data', async () => {
         const vertexData = 1;
 
         const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
