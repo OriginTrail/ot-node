@@ -27,7 +27,7 @@ class DataReplication {
             const options = {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
-                amount: data.vertices.length + data.edges.length,
+                amount: data.amout,
                 start_time: currentUnixTime,
                 total_time: 10 * 60000,
             };

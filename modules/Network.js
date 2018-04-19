@@ -250,6 +250,12 @@ class Network {
             });
         });
 
+        // add replication-request route
+        node.ot.use('replication-request', (request, response, next) => {
+            log.info('replication-requestreceived');
+            globalEmitter.emit('replication-request', request);
+        });
+
         // add replication-finished route
         node.ot.use('replication-finished', (request, response, next) => {
             log.info('replication-finished received');
@@ -298,6 +304,19 @@ class Network {
             });
         });
 
+        // add kad-bidding-won route
+        node.ot.use('kad-bidding-won', (request, response, next) => {
+            log.info('kad-bidding-won received');
+            globalEmitter.emit('kad-bidding-won', request, response);
+        });
+
+        // add kad-bidding-won error handler
+        node.ot.use('kad-bidding-won', (err, request, response, next) => {
+            response.send({
+                error: 'kad-bidding-won error',
+            });
+        });
+
         // creates Kadence plugin for RPC calls
         node.ot.plugin((node) => {
             /**
@@ -317,11 +336,23 @@ class Network {
             /**
              * Sends payload request to DH
              * @param message   Payload to be sent
-             * @param contact   Contact to be sent to
+             * @param contactId  KADemlia contact ID to be sent to
              * @param callback  Response/Error callback
              */
-            node.payloadRequest = (message, contact, callback) => {
-                node.send('payload-request', { message }, contact, callback);
+            node.payloadRequest = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('payload-request', { message }, [contactId, contact], callback);
+            };
+
+            /**
+             * Sends replication request to the DC
+             * @param message
+             * @param contactId KADemlia contact ID to be sent to
+             * @param callback
+             */
+            node.replicationRequest = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('replication-request', { message }, [contactId, contact], callback);
             };
 
             /**
@@ -336,22 +367,29 @@ class Network {
             /**
              * Sends challenge request direct message
              * @param message   Payload to be sent
-             * @param contact   Contant to be sent to
+             * @param contactId  KADemlia contact ID to be sent to
              * @param callback  Response/Error callback
              */
-            node.challengeRequest = (message, contact, callback) => {
-                node.send('challenge-request', { message }, [contact, contact], callback);
+            node.challengeRequest = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('challenge-request', { message }, [contactId, contact], callback);
             };
 
             /**
              * Sends add bid to DC
              * TODO remove after SC intro
              * @param message   Payload to be sent
-             * @param contact   Contant to be sent to
+             * @param contactId  KADemlia contact ID to be sent to
              * @param callback  Response/Error callback
              */
-            node.addBid = (message, contact, callback) => {
-                node.send('add-bid', { message }, contact, callback);
+            node.addBid = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('add-bid', { message }, [contactId, contact], callback);
+            };
+
+            node.biddingWon = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-bidding-won', { message }, [contactId, contact], callback);
             };
         });
         // Define a global custom error handler rule

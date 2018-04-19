@@ -7,6 +7,9 @@ class MockSmartContract {
     constructor() {
         this.offers = [];
         this.dhs = [];
+        this.dcs = [];
+
+        // TODO: Check for already send offers and bids in database and start timers.
     }
 
     /**
@@ -22,7 +25,7 @@ class MockSmartContract {
             globalEmitter.emit('offer-ended', {
                 scId: dataId,
             });
-        }, 5 * 1000);
+        }, 15 * 1000);
         return dataId;
     }
 
@@ -33,11 +36,23 @@ class MockSmartContract {
         this.dhs[dataId].push(dhBid);
     }
 
+    addDcOffer(dataId, dcId) {
+        this.dcs[dataId] = dcId;
+    }
+
     /**
      * Choose some of the DHs
      */
     choose(dataId) {
         return this.dhs[dataId];
+    }
+
+    getDcForBid(dataId) {
+        return this.dcs[dataId];
+    }
+
+    getBid(dataId, dhId) {
+        return this.dhs[dataId].find(element => element.bid.id === dhId);
     }
 }
 

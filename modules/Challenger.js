@@ -18,8 +18,7 @@ function sendChallenge(challenge) {
         },
     };
 
-    const dataHolder = node.ot.getContact(challenge.dh);
-    node.ot.challengeRequest(payload, dataHolder, (error, response) => {
+    node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;
