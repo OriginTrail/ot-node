@@ -13,11 +13,11 @@ const log = require('./Utilities').getLogger();
 
 class DataReplication {
     /**
-   * Sends data to DH for replication
-   *
-   * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-   * @return object response
-   */
+     * Sends data to DH for replication
+     *
+     * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+     * @return object response
+     */
     static sendPayload(data) {
         return new Promise((resolve, reject) => {
             log.info('Entering sendPayload');
@@ -27,7 +27,7 @@ class DataReplication {
             const options = {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
-                amount: data.vertices.length + data.edges.length,
+                amount: data.amout,
                 start_time: currentUnixTime,
                 total_time: 10 * 60000,
             };
@@ -72,7 +72,7 @@ class DataReplication {
             };
 
             // send payload to DH
-            node.ot.payloadRequest(payload, () => {
+            node.ot.payloadRequest(payload, node.ot.getNearestNeighbour(), () => {
                 log.info('Payload request sent');
             });
         });

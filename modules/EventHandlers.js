@@ -10,9 +10,14 @@ const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const node = require('./Node');
+const Promise = require('async');
+const Utilities = require('./Utilities');
+
+// TODO remove below after SC intro
+const SmartContractInstance = require('./temp/MockSmartContractInstance');
 
 const { globalEmitter } = globalEvents;
-const log = require('./Utilities').getLogger();
+const log = Utilities.getLogger();
 
 globalEmitter.on('import-request', (data) => {
     importer.importXML(data.filepath, (response) => {
@@ -33,8 +38,6 @@ globalEmitter.on('gs1-import-request', (data) => {
             data_id,
             root_hash,
             total_documents,
-            vertices,
-            edges,
         } = response;
 
         deasync(Storage.connect());
@@ -46,24 +49,21 @@ globalEmitter.on('gs1-import-request', (data) => {
                     // console.log('Error: ', e);
                 });
 
-                const [contactId, contact] = node.ot.getNearestNeighbour();
-                Graph.encryptVertices(
-                    contact.wallet,
-                    contactId,
-                    vertices,
-                    Storage,
-                ).then((encryptedVertices) => {
-                    log.info('[DC] Preparing to enter sendPayload');
-                    const data = {};
-                    data.vertices = vertices;
-                    data.edges = edges;
-                    data.data_id = data_id;
-                    data.encryptedVertices = encryptedVertices;
-                    replication.sendPayload(data).then(() => {
-                        log.info('[DC] Payload sent');
-                    });
-                }).catch((e) => {
-                    console.log(e);
+                // TODO set real offer params
+                const offerParams = {
+                    price: Utilities.getRandomIntRange(1, 10),
+                    name: `Crazy data for ${total_documents} documents`,
+                };
+
+                // TODO call real SC
+                const scId = SmartContractInstance.sc.createOffer(data_id, offerParams);
+                log.info(`Created offer ${scId}`);
+
+                const dcId = config.identity;
+                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
+                    scId,
+                    dcId,
+                    offerParams,
                 });
             });
     }).catch((e) => {
@@ -71,8 +71,55 @@ globalEmitter.on('gs1-import-request', (data) => {
     });
 });
 
-globalEmitter.on('replication-request', (data, response) => {
+globalEmitter.on('replication-request', (request, response) => {
+    log.trace('replication-request received');
 
+    let price;
+    let importId;
+    const { dataId } = request.params.message;
+    const { wallet } = request.contact[1];
+    const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
+
+    if (dataId) {
+        // TODO: decouple import ID from data id or load it from database.
+        importId = dataId;
+        ({ price } = bid);
+    }
+
+    if (!importId || !wallet) {
+        const errorMessage = 'Asked replication without providing offer ID or wallet not found.';
+        log.warn(errorMessage);
+        response.send({ status: 'fail', error: errorMessage });
+        return;
+    }
+
+    const verticesPromise = GraphStorage.db.getVerticesByImportId(importId);
+    const edgesPromise = GraphStorage.db.getEdgesByImportId(importId);
+
+    Promise.all([verticesPromise, edgesPromise]).then((values) => {
+        const vertices = values[0];
+        const edges = values[1];
+
+        Graph.encryptVertices(
+            wallet,
+            request.id,
+            vertices,
+            Storage,
+        ).then((encryptedVertices) => {
+            log.info('[DC] Preparing to enter sendPayload');
+            const data = {};
+            data.vertices = vertices;
+            data.edges = edges;
+            data.data_id = dataId;
+            data.amount = price;
+            data.encryptedVertices = encryptedVertices;
+            replication.sendPayload(data).then(() => {
+                log.info('[DC] Payload sent');
+            });
+        }).catch((e) => {
+            console.log(e);
+        });
+    });
 });
 
 globalEmitter.on('payload-request', (request, response) => {
@@ -121,6 +168,67 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
         }, (error) => {
             log.error(`Failed to send 'fail' status.v Error: ${error}.`);
         });
+    });
+});
+
+globalEmitter.on('bidding-broadcast', (message) => {
+    const { scId, dcId, offerParams } = message;
+    log.trace(`Received bidding. Name: ${offerParams.name}, price ${offerParams.price}.`);
+
+    // TODO store offer if we want to participate.
+
+    // TODO remove after SC intro
+    node.ot.addBid({
+        offerId: scId,
+        bid: {
+            price: 1,
+        },
+    }, dcId, (err) => {
+        if (err) {
+            log.warn(err);
+        } else {
+            log.trace(`Bid sent to ${dcId}.`);
+            SmartContractInstance.sc.addDcOffer(scId, dcId);
+        }
+    });
+});
+
+globalEmitter.on('offer-ended', (message) => {
+    const { scId } = message;
+
+    log.info(`Offer ${scId} has ended.`);
+
+    // TODO: Trigger escrow to end bidding and notify chosen.
+    const bids = SmartContractInstance.sc.choose(scId);
+
+    bids.forEach((bid) => {
+        console.log(bid);
+        node.ot.biddingWon(
+            { dataId: scId },
+            bid.dhId, (error) => {
+                if (error) {
+                    log.warn(error);
+                }
+            },
+        );
+    });
+});
+
+
+globalEmitter.on('kad-bidding-won', (message) => {
+    log.info('Wow I won bidding. Let\'s get into it.');
+
+    const { dataId } = message.params.message;
+
+    // Now request data to check validity of offer.
+
+    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
+
+
+    node.ot.replicationRequest({ dataId }, dcId, (err) => {
+        if (err) {
+            log.warn(err);
+        }
     });
 });
 

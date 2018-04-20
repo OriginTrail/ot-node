@@ -18,7 +18,7 @@ function sendChallenge(challenge) {
         },
     };
 
-    node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
+    node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;

@@ -23,6 +23,7 @@ class Ethereum {
         this.otContractAddress = blockchainConfig.ot_contract_address;
         this.tokenContractAddress = blockchainConfig.token_contract_address;
         this.escrowContractAddress = blockchainConfig.escrow_contract_address;
+        this.biddingContractAddress = blockchainConfig.bidding_contract_address;
 
 
         // OT contract data
@@ -157,6 +158,148 @@ class Ethereum {
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, dataId], options);
     }
+
+    /**
+     * Creates offer for the data storing on the Ethereum blockchain.
+     * @param dataId Data ID of the bid
+     * @param nodeId KADemlia node ID of offer creator
+     * @param totalEscrowTime Total time of the escrow in milliseconds
+     * @param MinStakeAmount Minimum stake in tokens
+     * @param biddingTime Total time of the bid in milliseconds
+     * @param minNumberOfBids Number of bid required for offer to be successful
+     * @param dataSize Size of the data for storing in bytes
+     * @param ReplicationFactor Number of replications
+     * @returns {Promise<any>} Return choose start-time.
+     */
+    createOffer(
+        dataId, nodeId,
+        totalEscrowTime, MinStakeAmount,
+        biddingTime,
+        minNumberOfBids,
+        dataSize, ReplicationFactor,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.biddingContractAddress, 'createOffer',
+            [dataId, nodeId,
+                totalEscrowTime, MinStakeAmount,
+                biddingTime,
+                minNumberOfBids,
+                dataSize, ReplicationFactor], options,
+        );
+    }
+
+    /**
+     * Cancel offer for data storing on Ethereum blockchain.
+     * @param dataId Data if of the offer.
+     */
+    cancelOffer(dataId) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.biddingContractAddress, 'cancelOffer',
+            [dataId], options,
+        );
+    }
+
+    /**
+     * Adds bid to the offer on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param nodeId KADemlia ID of this node
+     * @param tokenAmount Amount of token that will be paid if chosen in the bid
+     * @param stakeAmount Amount of stake in tokens.
+     * @returns {Promise<any>} Index of the bid.
+     */
+    addBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.biddingContractAddress, 'addBid',
+            [dcWallet, dataId, nodeId, tokenAmount, stakeAmount], options,
+        );
+    }
+
+    /**
+     * Cancel the bid on Ethereum blockchain
+     * @param dcWallet Wallet of the bidder
+     * @param dataId ID of the data of the bid
+     * @param bidIndex Index of the bid
+     * @returns {Promise<any>}
+     */
+    cancelBid(dcWallet, dataId, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.biddingContractAddress, 'cancelBid',
+            [dcWallet, dataId, bidIndex], options,
+        );
+    }
+
+    /**
+     * Reveals the bid of the offer
+     * @param dcWallet Wallet of the DC who's offer is
+     * @param dataId Id of the data in the offer
+     * @param nodeId KADemlia ID of bidder
+     * @param tokenAmount Amount of the token
+     * @param stakeAmount Amount of the stake
+     * @param bidIndex Index of the bid
+     * @returns {Promise<any>}
+     */
+    revealBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'revealBid',
+            [dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex], options,
+        );
+    }
+
+    /**
+     * Starts choosing bids from contract escrow on Ethereum blockchain
+     * @param dataId ID of data of the bid
+     * @returns {Promise<any>}
+     */
+    chooseBids(dataId) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'chooseBids',
+            [dataId], options,
+        );
+    }
+
 }
 
 module.exports = Ethereum;
