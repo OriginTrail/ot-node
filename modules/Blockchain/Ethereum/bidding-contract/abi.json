@@ -1,420 +1,437 @@
 [
    {
-      "constant":false,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "indexed": false,
+            "name": "DH_wallet",
+            "type": "address"
          },
          {
-            "name":"node_id",
-            "type":"uint256"
-         },
-         {
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"stake_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"bidIndex",
-            "type":"uint256"
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"revealBid",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "BidTaken",
+      "type": "event"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"data_id",
-            "type":"uint256"
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"DC_node_id",
-            "type":"uint256"
+            "name": "data_id",
+            "type": "uint256"
          },
          {
-            "name":"total_escrow_time",
-            "type":"uint256"
+            "name": "node_id",
+            "type": "uint256"
          },
          {
-            "name":"min_stake_amount",
-            "type":"uint256"
+            "name": "token_amount",
+            "type": "uint256"
          },
          {
-            "name":"bidding_phase_time",
-            "type":"uint256"
-         },
-         {
-            "name":"min_number_of_bids",
-            "type":"uint256"
-         },
-         {
-            "name":"data_size",
-            "type":"uint256"
-         },
-         {
-            "name":"replication_factor",
-            "type":"uint256"
+            "name": "stake_amount",
+            "type": "uint256"
          }
       ],
-      "name":"createOffer",
-      "outputs":[
+      "name": "addBid",
+      "outputs": [
          {
-            "name":"choose_start_time",
-            "type":"uint256"
+            "name": "bidIndex",
+            "type": "uint256"
          }
       ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"data_id",
-            "type":"uint256"
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "name": "bidIndex",
+            "type": "uint256"
          }
       ],
-      "name":"chooseBids",
-      "outputs":[
-         {
-            "name":"chosen_data_holders",
-            "type":"uint256[]"
-         }
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "cancelBid",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":true,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
-         },
-         {
-            "name":"",
-            "type":"uint256"
-         },
-         {
-            "name":"",
-            "type":"uint256"
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"bid",
-      "outputs":[
-         {
-            "name":"bid_hash",
-            "type":"bytes32"
-         },
-         {
-            "name":"DH_wallet",
-            "type":"address"
-         },
-         {
-            "name":"node_id",
-            "type":"uint256"
-         },
-         {
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"stake_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"active",
-            "type":"bool"
-         },
-         {
-            "name":"chosen",
-            "type":"bool"
-         }
-      ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "cancelOffer",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
-         },
-         {
-            "name":"data_id",
-            "type":"uint256"
-         },
-         {
-            "name":"node_id",
-            "type":"uint256"
-         },
-         {
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"stake_amount",
-            "type":"uint256"
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"addBid",
-      "outputs":[
+      "name": "chooseBids",
+      "outputs": [
          {
-            "name":"bidIndex",
-            "type":"uint256"
+            "name": "chosen_data_holders",
+            "type": "uint256[]"
          }
       ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
+            "name": "data_id",
+            "type": "uint256"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "name": "DC_node_id",
+            "type": "uint256"
          },
          {
-            "name":"bidIndex",
-            "type":"uint256"
+            "name": "total_escrow_time",
+            "type": "uint256"
+         },
+         {
+            "name": "min_stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "bidding_phase_time",
+            "type": "uint256"
+         },
+         {
+            "name": "min_number_of_bids",
+            "type": "uint256"
+         },
+         {
+            "name": "data_size",
+            "type": "uint256"
+         },
+         {
+            "name": "replication_factor",
+            "type": "uint256"
          }
       ],
-      "name":"cancelBid",
-      "outputs":[
-
+      "name": "createOffer",
+      "outputs": [
+         {
+            "name": "choose_start_time",
+            "type": "uint256"
+         }
       ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":true,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"",
-            "type":"uint256"
+            "indexed": false,
+            "name": "DC_node_id",
+            "type": "uint256"
+         },
+         {
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "indexed": false,
+            "name": "total_escrow_time",
+            "type": "uint256"
+         },
+         {
+            "indexed": false,
+            "name": "min_stake_amount",
+            "type": "uint256"
+         },
+         {
+            "indexed": false,
+            "name": "data_size",
+            "type": "uint256"
          }
       ],
-      "name":"offer",
-      "outputs":[
-         {
-            "name":"total_escrow_time",
-            "type":"uint256"
-         },
-         {
-            "name":"min_stake_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"reveal_start_time",
-            "type":"uint256"
-         },
-         {
-            "name":"choose_start_time",
-            "type":"uint256"
-         },
-         {
-            "name":"min_number_of_bids",
-            "type":"uint256"
-         },
-         {
-            "name":"data_size",
-            "type":"uint256"
-         },
-         {
-            "name":"replication_factor",
-            "type":"uint256"
-         },
-         {
-            "name":"number_of_bids",
-            "type":"uint256"
-         },
-         {
-            "name":"number_of_bids_revealed",
-            "type":"uint256"
-         },
-         {
-            "name":"total_bid_token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"random_number_seed",
-            "type":"uint256"
-         },
-         {
-            "name":"active",
-            "type":"bool"
-         }
-      ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "OfferCreated",
+      "type": "event"
    },
    {
-      "constant":true,
-      "inputs":[
-
-      ],
-      "name":"escrow",
-      "outputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "name": "bidIndex",
+            "type": "uint256"
          }
       ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "getBid",
+      "outputs": [
+         {
+            "name": "isBidChosen",
+            "type": "bool"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":false,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"data_id",
-            "type":"uint256"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"cancelOffer",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "OfferCanceled",
+      "type": "event"
    },
    {
-      "constant":true,
-      "inputs":[
-
-      ],
-      "name":"token",
-      "outputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "name": "node_id",
+            "type": "uint256"
+         },
+         {
+            "name": "token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "bidIndex",
+            "type": "uint256"
          }
       ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "revealBid",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "inputs":[
+      "inputs": [
          {
-            "name":"tokenAddress",
-            "type":"address"
+            "name": "tokenAddress",
+            "type": "address"
          },
          {
-            "name":"escrowAddress",
-            "type":"address"
+            "name": "escrowAddress",
+            "type": "address"
          }
       ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"constructor"
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
+            "name": "",
+            "type": "address"
          },
          {
-            "indexed":false,
-            "name":"DC_node_id",
-            "type":"uint256"
+            "name": "",
+            "type": "uint256"
          },
          {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"total_escrow_time",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"min_stake_amount",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"data_size",
-            "type":"uint256"
+            "name": "",
+            "type": "uint256"
          }
       ],
-      "name":"OfferCreated",
-      "type":"event"
+      "name": "bid",
+      "outputs": [
+         {
+            "name": "bid_hash",
+            "type": "bytes32"
+         },
+         {
+            "name": "DH_wallet",
+            "type": "address"
+         },
+         {
+            "name": "node_id",
+            "type": "uint256"
+         },
+         {
+            "name": "token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "active",
+            "type": "bool"
+         },
+         {
+            "name": "chosen",
+            "type": "bool"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [],
+      "name": "escrow",
+      "outputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
+            "name": "",
+            "type": "address"
          }
       ],
-      "name":"OfferCanceled",
-      "type":"event"
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
+            "name": "",
+            "type": "address"
          },
          {
-            "indexed":false,
-            "name":"DH_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
+            "name": "",
+            "type": "uint256"
          }
       ],
-      "name":"BidTaken",
-      "type":"event"
+      "name": "offer",
+      "outputs": [
+         {
+            "name": "total_escrow_time",
+            "type": "uint256"
+         },
+         {
+            "name": "min_stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "reveal_start_time",
+            "type": "uint256"
+         },
+         {
+            "name": "choose_start_time",
+            "type": "uint256"
+         },
+         {
+            "name": "min_number_of_bids",
+            "type": "uint256"
+         },
+         {
+            "name": "data_size",
+            "type": "uint256"
+         },
+         {
+            "name": "replication_factor",
+            "type": "uint256"
+         },
+         {
+            "name": "number_of_bids",
+            "type": "uint256"
+         },
+         {
+            "name": "number_of_bids_revealed",
+            "type": "uint256"
+         },
+         {
+            "name": "total_bid_token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "random_number_seed",
+            "type": "uint256"
+         },
+         {
+            "name": "active",
+            "type": "bool"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+   },
+   {
+      "constant": true,
+      "inputs": [],
+      "name": "token",
+      "outputs": [
+         {
+            "name": "",
+            "type": "address"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    }
 ]

@@ -154,10 +154,25 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
  * Handles bidding-broadcast on the DH side
  */
 globalEmitter.on('bidding-broadcast', (message) => {
-    const { scId, dcId, offerParams } = message;
-    log.trace(`Received bidding. Name: ${offerParams.name}, price ${offerParams.price}.`);
+    log.info('bidding-broadcast received');
 
-    DHService.handleOffer(dcId, scId, offerParams);
+    const {
+        dataId,
+        dcId,
+        dcWallet,
+        totalEscrowTime,
+        minStakeAmount,
+        totalDocuments,
+    } = message;
+
+    DHService.handleOffer(
+        dcWallet,
+        dcId,
+        dataId,
+        totalEscrowTime,
+        minStakeAmount,
+        totalDocuments, // TODO think about it
+    );
 });
 
 globalEmitter.on('offer-ended', (message) => {
