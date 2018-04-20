@@ -52,6 +52,7 @@ globalEmitter.on('gs1-import-request', (data) => {
                 // TODO set real offer params
                 const offerParams = {
                     price: Utilities.getRandomIntRange(1, 10),
+                    dataSizeBytes: 900,
                     name: `Crazy data for ${total_documents} documents`,
                 };
 
