@@ -15,7 +15,7 @@ class Ethereum {
      */
     constructor(blockchainConfig) {
         // Loading Web3
-        this.web3 = new Web3(new Web3.providers.WebsocketProvider(`${blockchainConfig.rpc_node_host}`));
+        this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
         this.transactions = new Transactions(
             this.web3,
             blockchainConfig.wallet_private_key,

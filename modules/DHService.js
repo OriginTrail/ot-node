@@ -5,9 +5,6 @@ const Blockchain = require('./Blockchain');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
-
 const log = Utilities.getLogger();
 
 /**
