@@ -201,8 +201,25 @@ globalEmitter.on('kad-bidding-won', (message) => {
 
 globalEmitter.on('eth-offer-created', (event) => {
     log.info('eth-offer-created');
+    // ( DC_wallet, DC_node_id,  data_id,  total_escrow_time,  min_stake_amount,  data_size);
 
-    DHService.handleOffer(event.args.data_id, )
+    const {
+        DC_wallet,
+        DC_node_id,
+        data_id,
+        total_escrow_time,
+        min_stake_amount,
+        data_size,
+    } = event.returnValues;
+
+    DHService.handleOffer(
+        DC_wallet,
+        DC_node_id,
+        data_id,
+        total_escrow_time,
+        min_stake_amount,
+        data_size,
+    );
 });
 
 globalEmitter.on('eth-offer-canceled', (event) => {
@@ -211,5 +228,14 @@ globalEmitter.on('eth-offer-canceled', (event) => {
 
 globalEmitter.on('eth-bid-taken', (event) => {
     log.info('eth-bid-taken');
+
+    const {
+        DC_wallet,
+        DC_node_id,
+        data_id,
+        total_escrow_time,
+        min_stake_amount,
+        data_size,
+    } = event.returnValues;
 });
 

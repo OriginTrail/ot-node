@@ -1,5 +1,6 @@
 const node = require('./Node');
 const config = require('./Config');
+const Blockchain = require('./Blockchain');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -16,10 +17,15 @@ class DHService {
     /**
      * Handles new offer
      *
-     * @param dcId          DC Kademlia ID
-     * @param offerParams   Offer parameters
      */
-    static handleOffer(dcId, offerParams) {
+    static handleOffer(
+        dcWallet,
+        dcNodeId,
+        dataId,
+        totalEscrowTime,
+        price,
+        dataSizeBytes,
+    ) {
         // TODO store offer if we want to participate.
 
         const minPrice = config.dh_min_price;
@@ -27,9 +33,6 @@ class DHService {
         const maxDataSizeBytes = config.dh_max_data_size_bytes;
 
         let chosenPrice = null;
-        const {
-            dataId, dcWallet, price, dataSizeBytes,
-        } = offerParams;
 
         if (price > minPrice && price < maxPrice) {
             chosenPrice = Utilities.getRandomIntRange(minPrice, maxPrice);
@@ -46,35 +49,24 @@ class DHService {
         }
 
         // TODO remove after SC intro
-        node.ot.addBid({
-            bid: {
-                price: chosenPrice,
-            },
-        }, dcId, (err) => {
-            if (err) {
-                log.warn(err);
-            } else {
-                log.trace(`Bid sent to ${dcId}.`);
-                // SmartContractInstance.sc.addDcOffer(offerId, dcId);
-            }
-        });
 
-        const bidIndex = 1; // TODO change after SC intro
-        Models.bids.create({
-            bid_index: bidIndex,
-            offer_id: 1,
-            price: chosenPrice,
-            data_id: dataId,
-            dc_wallet: dcWallet,
-            dc_id: dcId,
-            total_escrow_time: 10, // TODO change after SC intro
-            stake: 1, // TODO remove hard-coded value
-            data_size_bytes: dataSizeBytes,
-        }).then((bid) => {
-            log.info('Created new bid');
-        }).catch((err) => {
-            log.error('Failed to insert new bid.');
-        });
+        Blockchain.bc.addBid(dcWallet, dataId, config.identity, chosenPrice, 1000).then((bidIndex) => {
+            Models.bids.create({
+                bid_index: bidIndex,
+                offer_id: 1,
+                price: chosenPrice,
+                data_id: dataId,
+                dc_wallet: dcWallet,
+                dc_id: dcNodeId,
+                total_escrow_time: totalEscrowTime,
+                stake: 1000, // TODO remove hard-coded value
+                data_size_bytes: dataSizeBytes,
+            }).then((bid) => {
+                log.info('Created new bid');
+            }).catch((err) => {
+                log.error('Failed to insert new bid.');
+            });
+        }).catch(error => log.error(error));
     }
 }
 

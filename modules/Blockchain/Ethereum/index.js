@@ -15,7 +15,7 @@ class Ethereum {
      */
     constructor(blockchainConfig) {
         // Loading Web3
-        this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
+        this.web3 = new Web3(new Web3.providers.WebsocketProvider(`${blockchainConfig.rpc_node_host}`));
         this.transactions = new Transactions(
             this.web3,
             blockchainConfig.wallet_private_key,
@@ -60,44 +60,27 @@ class Ethereum {
         // Storing config data
         this.config = blockchainConfig;
 
-        this.biddingContract.events.OfferCreated(
-            {},
-            (error, event) => { console.log('HANDLER', event, error); },
-        )
+        this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
                 globalEmitter.emit('eth-offer-created', event);
             })
-            .on('changed', (event) => {
-                // remove event from local database
-                console.log(event);
+            .on('error', log.warn);
+
+        this.biddingContract.events.OfferCanceled()
+            .on('data', (event) => {
+                console.log(event); // same results as the optional callback above
+                globalEmitter.emit('eth-offer-canceled', event);
             })
-            .on('error', console.error);
+            .on('error', log.warn);
 
+        this.biddingContract.events.BidTaken()
+            .on('data', (event) => {
+                console.log(event); // same results as the optional callback above
+                globalEmitter.emit('eth-bid-taken', event);
+            })
+            .on('error', log.warn);
 
-        // this.biddingContract.events.OfferCreated(null, (error, event) => {
-        //     if (error) {
-        //         log.warn(`OfferCreated(). ${error}.`);
-        //     } else {
-        //         globalEmitter.emit('eth-offer-created', event);
-        //     }
-        // });
-        //
-        // this.biddingContract.events.OfferCanceled.watch((error, event) => {
-        //     if (error) {
-        //         log.warn(`OfferCanceled(). ${error}.`);
-        //     } else {
-        //         globalEmitter.emit('eth-offer-canceled', event);
-        //     }
-        // });
-        // this.biddingContract.events.BidTaken.watch((error, event) => {
-        //     if (error) {
-        //         log.warn(`BidTaken(). ${error}.`);
-        //     } else {
-        //         globalEmitter.emit('eth-bid-taken', event);
-        //     }
-        //
-        // });
 
         log.info('Selected blockchain: Ethereum');
     }
