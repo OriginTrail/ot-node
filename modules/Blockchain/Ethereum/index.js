@@ -23,6 +23,7 @@ class Ethereum {
         this.otContractAddress = blockchainConfig.ot_contract_address;
         this.tokenContractAddress = blockchainConfig.token_contract_address;
         this.escrowContractAddress = blockchainConfig.escrow_contract_address;
+        this.biddingContractAddress = blockchainConfig.bidding_contract_address;
 
 
         // OT contract data
@@ -185,7 +186,7 @@ class Ethereum {
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'createOffer',
+            this.biddingContractAddress, 'createOffer',
             [dataId, nodeId,
                 totalEscrowTime, MinStakeAmount,
                 biddingTime,
@@ -207,7 +208,7 @@ class Ethereum {
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'cancelOffer',
+            this.biddingContractAddress, 'cancelOffer',
             [dataId], options,
         );
     }
@@ -225,12 +226,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.biddingContractAddress,
         };
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'addBid',
+            this.biddingContractAddress, 'addBid',
             [dcWallet, dataId, nodeId, tokenAmount, stakeAmount], options,
         );
     }
@@ -251,7 +252,7 @@ class Ethereum {
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'cancelBid',
+            this.biddingContractAddress, 'cancelBid',
             [dcWallet, dataId, bidIndex], options,
         );
     }
