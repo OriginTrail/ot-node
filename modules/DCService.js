@@ -59,10 +59,10 @@ class DCService {
                     replicationFactor,
                 });
             }).catch((err) => {
-                log.warn(`Failed to create offer. ${err}`);
+                log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
             });
-        }).catch((error) => {
-            log.warn(`Failed to increase bidding approval. ${error}`);
+        }).catch((err) => {
+            log.warn(`Failed to increase bidding approval. ${JSON.stringify(err)}`);
         });
     }
 }
