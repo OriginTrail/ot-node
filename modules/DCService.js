@@ -58,8 +58,12 @@ class DCService {
                     totalDocuments,
                     replicationFactor,
                 });
+            }).catch((err) => {
+                log.warn(`Failed to create offer. ${err}`);
             });
-        }).catch(error => log.warn(error));
+        }).catch((error) => {
+            log.warn(`Failed to increase bidding approval. ${error}`);
+        });
     }
 }
 
