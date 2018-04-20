@@ -145,11 +145,11 @@ contract Bidding {
 		require(stake_amount >= offer[DC_wallet][data_id].min_stake_amount);
 		require(token_amount > 0);
 
-	    uint256 bidIndex = offer[DC_wallet][data_id].number_of_bids;
+		uint256 bidIndex = offer[DC_wallet][data_id].number_of_bids;
 
 		bid[DC_wallet][data_id][bidIndex].bid_hash = keccak256(msg.sender, node_id, token_amount, stake_amount);
 
-	 	offer[DC_wallet][data_id].number_of_bids = SafeMath.add(offer[DC_wallet][data_id].number_of_bids, 1);
+		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
 		
 		return bidIndex;
 	}
@@ -171,8 +171,8 @@ contract Bidding {
 
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
-		this_offer.total_bid_token_amount = SafeMath.add(this_offer.total_bid_token_amount, token_amount);
-		this_offer.random_number_seed = SafeMath.add(this_offer.random_number_seed, block.number);//FIX
+		this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.add(token_amount);
+		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
 	}
 
@@ -181,7 +181,7 @@ contract Bidding {
 		require(bid[DC_wallet][data_id][bidIndex].DH_wallet == msg.sender);
 		require(bid[DC_wallet][data_id][bidIndex].active);
 
-		offer[DC_wallet][data_id].total_bid_token_amount = SafeMath.sub(offer[DC_wallet][data_id].total_bid_token_amount, bid[DC_wallet][data_id][bidIndex].token_amount);
+		offer[DC_wallet][data_id].total_bid_token_amount = offer[DC_wallet][data_id].total_bid_token_amount.sub(bid[DC_wallet][data_id][bidIndex].token_amount);
 
 		bid[DC_wallet][data_id][bidIndex].token_amount = 0;
 		bid[DC_wallet][data_id][bidIndex].active = false;
@@ -206,14 +206,14 @@ contract Bidding {
 			uint256 sum = bid[msg.sender][data_id][j].token_amount;
 			while(sum < nextIndex){
 				j++;
-				sum = SafeMath.add(sum, bid[msg.sender][data_id][j].token_amount);
+				sum = sum.add(bid[msg.sender][data_id][j].token_amount);
 			}
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
 			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount
 				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount){
-				    
-                this_offer.total_bid_token_amount = SafeMath.sub(this_offer.total_bid_token_amount, chosenBid.token_amount);
-			    chosenBid.token_amount = 0;
+				
+				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
+				chosenBid.token_amount = 0;
 				token.transferFrom(msg.sender,escrow,chosenBid.token_amount);
 				
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
@@ -223,8 +223,8 @@ contract Bidding {
 				BidTaken(msg.sender, chosenBid.DH_wallet, data_id);
 			}
 			else{
-                this_offer.total_bid_token_amount = SafeMath.sub(this_offer.total_bid_token_amount, chosenBid.token_amount);
-			    chosenBid.token_amount = 0;
+				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
+				chosenBid.token_amount = 0;
 			}
 		}
 
