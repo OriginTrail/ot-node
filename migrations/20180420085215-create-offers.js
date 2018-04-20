@@ -9,6 +9,8 @@ module.exports = {
         },
         offer_id: {
             type: Sequelize.STRING,
+            allowNull: false,
+            unique: true,
         },
         data_lifespan: {
             type: Sequelize.INTEGER,
@@ -26,6 +28,9 @@ module.exports = {
             type: Sequelize.REAL,
         },
         data_size_bytes: {
+            type: Sequelize.INTEGER,
+        },
+        replication_number: {
             type: Sequelize.INTEGER,
         },
         root_hash: {
