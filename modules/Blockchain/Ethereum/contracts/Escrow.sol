@@ -45,7 +45,15 @@ contract EscrowHolder {
 
 	ERC20 public token;
 
+	function EscrowHolder(address tokenAddress)
+	public{
+		require ( tokenAddress != address(0) );
+		token = ERC20(tokenAddress);
+	}
+
+
 	/*    ----------------------------- ESCROW -----------------------------     */
+
 
 	enum EscrowStatus {initiated, active, canceled, completed}
 
@@ -67,21 +75,14 @@ contract EscrowHolder {
 	event EscrowCanceled(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCompleted(address DC_wallet, address DH_wallet, uint data_id);
 
-	function EscrowHolder(address tokenAddress)
-	public{
-		require ( tokenAddress != address(0) );
-		token = ERC20(tokenAddress);
-	}
+
 
 	function initiateEscrow(address DH_wallet, uint data_id, uint token_amount,	uint total_time)
 	public {
 		require(escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.active
-		&&  escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
+			&&  escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
 
 		require(token_amount > 0 && total_time > 0);
-
-		require(token.allowance(msg.sender,this) >= token_amount);
-		token.transferFrom(msg.sender,this,token_amount);
 
 		escrow[msg.sender][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, 0, 0, total_time, EscrowStatus.initiated);
 
@@ -95,8 +96,8 @@ contract EscrowHolder {
 		EscrowDefinition storage escrow_def = escrow[DC_wallet][msg.sender][data_id];
 
 		require(escrow_def.token_amount == token_amount &&
-		escrow_def.escrow_status == EscrowStatus.initiated &&
-		escrow_def.total_time == total_time);
+			escrow_def.escrow_status == EscrowStatus.initiated &&
+			escrow_def.total_time == total_time);
 
 		escrow_def.last_confirmation_time = block.number;
 		escrow_def.end_time = SafeMath.add(block.number, total_time);
@@ -111,7 +112,7 @@ contract EscrowHolder {
 		EscrowDefinition storage this_escrow = escrow[DC_wallet][msg.sender][data_id];
 
 		require(this_escrow.escrow_status != EscrowStatus.initiated &&
-		this_escrow.escrow_status != EscrowStatus.completed);
+			this_escrow.escrow_status != EscrowStatus.completed);
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
@@ -138,13 +139,12 @@ contract EscrowHolder {
 		}
 	}
 
-
 	function cancelEscrow(address DH_wallet, uint256 data_id)
 	public {
 		EscrowDefinition storage this_escrow = escrow[msg.sender][DH_wallet][data_id];
 
 		require(this_escrow.escrow_status != EscrowStatus.completed &&
-		this_escrow.escrow_status != EscrowStatus.canceled);
+			this_escrow.escrow_status != EscrowStatus.canceled);
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
