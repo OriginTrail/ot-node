@@ -172,6 +172,17 @@ class Blockchain {
     chooseBids(dataId) {
         return this.blockchain.chooseBids(dataId);
     }
+
+    /**
+     *
+     * @param dcWallet
+     * @param dataId
+     * @param bidIndex
+     * @returns {Promise<any>}
+     */
+    getBid(dcWallet, dataId, bidIndex) {
+        return this.blockchain.getBid(dcWallet, dataId, bidIndex);
+    }
 }
 
 module.exports = Blockchain;

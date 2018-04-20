@@ -346,6 +346,27 @@ class Ethereum {
             [dataId], options,
         );
     }
+
+    /**
+     *
+     * @param dcWallet
+     * @param dataId
+     * @param bidIndex
+     * @returns {Promise<any>}
+     */
+    getBid(dcWallet, dataId, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.warn('Initiating escrow');
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'getBid',
+            [dcWallet, dataId, bidIndex], options,
+        );
+    }
 }
 
 module.exports = Ethereum;
