@@ -44,7 +44,7 @@ contract Bidding {
 	using SafeMath for uint256;
 
 	ERC20 public token;
-	address private escrow;
+	address public escrow;
 
 	function Bidding(address tokenAddress, address escrowAddress)
 	public{
@@ -75,6 +75,7 @@ contract Bidding {
 
 		//Parameters for use during the bidding mechanism
 		uint256 number_of_bids;
+		uint256 number_of_bids_revealed;
 		uint total_bid_token_amount;
 		uint random_number_seed;
 		bool active;
@@ -92,13 +93,13 @@ contract Bidding {
 	mapping(address => mapping(uint => OfferDefinition)) public offer;
 	mapping(address => mapping(uint => mapping(uint => BidDefinition))) public bid; 
 
-	event OfferCreated(address DC_wallet, uint data_id, uint total_escrow_time, uint min_stake_amount, uint data_size);
+	event OfferCreated(address DC_wallet,uint DC_node_id, uint data_id, uint total_escrow_time, uint min_stake_amount, uint data_size);
 	event OfferCanceled(address DC_wallet, uint data_id);
 	// event RevealPhaseStarted(address DC_wallet, uint data_id);
 	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
 	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
 
-	function createOffer(uint data_id,
+	function createOffer(uint data_id, uint DC_node_id,
 		uint total_escrow_time, uint min_stake_amount,
 		uint bidding_phase_time,
 		uint min_number_of_bids, 
@@ -116,15 +117,17 @@ contract Bidding {
 		//offer[msg.sender][data_id].min_token_amount = min_token_amount;
 		offer[msg.sender][data_id].min_stake_amount = min_stake_amount;
 
-		offer[msg.sender][data_id].reveal_start_time = block.number + bidding_phase_time;
-		choose_start_time = offer[msg.sender][data_id].choose_start_time = block.number + 2 * bidding_phase_time;
+		offer[msg.sender][data_id].reveal_start_time = block.timestamp + bidding_phase_time;
+		choose_start_time = offer[msg.sender][data_id].choose_start_time = block.timestamp + 2 * bidding_phase_time;
 		offer[msg.sender][data_id].min_number_of_bids = min_number_of_bids;
 
 		offer[msg.sender][data_id].data_size = data_size;
 		offer[msg.sender][data_id].replication_factor = replication_factor;
-
+		
+	    offer[msg.sender][data_id].number_of_bids = 0;
+	    offer[msg.sender][data_id].number_of_bids_revealed = 0;
 		offer[msg.sender][data_id].active = true;
-		OfferCreated(msg.sender, data_id, total_escrow_time, min_stake_amount, data_size);
+		OfferCreated(msg.sender, DC_node_id, data_id, total_escrow_time, min_stake_amount, data_size);
 	}
 
 
@@ -137,19 +140,18 @@ contract Bidding {
 	}
 
 	function addBid(address DC_wallet, uint data_id, uint node_id, uint token_amount, uint stake_amount)
-	public returns (uint){
+	public returns (uint bidIndex){
 		require(offer[DC_wallet][data_id].active);
-		require(offer[DC_wallet][data_id].reveal_start_time > block.number);
+		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
 
 		// require(token_amount <= offer[DC_wallet][data_id].token_amount);
 		require(stake_amount >= offer[DC_wallet][data_id].min_stake_amount);
 		require(token_amount > 0);
 
-		uint256 bidIndex = offer[DC_wallet][data_id].number_of_bids;
+		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
+		bidIndex = offer[DC_wallet][data_id].number_of_bids;
 
 		bid[DC_wallet][data_id][bidIndex].bid_hash = keccak256(msg.sender, node_id, token_amount, stake_amount);
-
-		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
 		
 		return bidIndex;
 	}
@@ -158,8 +160,8 @@ contract Bidding {
 	public {
 
 		require(offer[DC_wallet][data_id].active);
-		require(offer[DC_wallet][data_id].reveal_start_time <= block.number);
-		require(offer[DC_wallet][data_id].choose_start_time > block.number);
+		require(offer[DC_wallet][data_id].reveal_start_time <= block.timestamp);
+		require(offer[DC_wallet][data_id].choose_start_time > block.timestamp);
 
 		require(bid[DC_wallet][data_id][bidIndex].bid_hash == keccak256(msg.sender, node_id, token_amount, stake_amount));
 
@@ -172,6 +174,7 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
 		this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.add(token_amount);
+		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
 	}
@@ -182,6 +185,7 @@ contract Bidding {
 		require(bid[DC_wallet][data_id][bidIndex].active);
 
 		offer[DC_wallet][data_id].total_bid_token_amount = offer[DC_wallet][data_id].total_bid_token_amount.sub(bid[DC_wallet][data_id][bidIndex].token_amount);
+		offer[DC_wallet][data_id].number_of_bids_revealed = offer[DC_wallet][data_id].number_of_bids_revealed.sub(1);
 
 		bid[DC_wallet][data_id][bidIndex].token_amount = 0;
 		bid[DC_wallet][data_id][bidIndex].active = false;
@@ -192,16 +196,17 @@ contract Bidding {
 
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
-		require(this_offer.min_number_of_bids <= this_offer.number_of_bids);
-		require(this_offer.choose_start_time <= block.number);
+		require(this_offer.min_number_of_bids <= this_offer.number_of_bids_revealed);
+		require(this_offer.choose_start_time <= block.timestamp);
 
 		uint N = this_offer.replication_factor;
 		chosen_data_holders = new uint256[](N);
 		
 		uint256 i = 0;
 		uint256 seed = this_offer.random_number_seed;
-		while(i < N){										//FIX: Should be hash(block.hash)
-			uint nextIndex = (seed * this_offer.number_of_bids + block.number) % this_offer.total_bid_token_amount;
+		while(i < N && N >= this_offer.number_of_bids_revealed){	//FIX: Should be hash(block.hash)
+			
+			uint nextIndex = (seed * this_offer.number_of_bids + block.timestamp) % this_offer.total_bid_token_amount;
 			uint256 j = 0;
 			uint256 sum = bid[msg.sender][data_id][j].token_amount;
 			while(sum < nextIndex){
@@ -211,22 +216,25 @@ contract Bidding {
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
 			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount
 				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount){
-				
+
+				this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.sub(1);
 				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
+				uint amount_to_transfer = chosenBid.token_amount;
 				chosenBid.token_amount = 0;
-				token.transferFrom(msg.sender,escrow,chosenBid.token_amount);
+				token.transferFrom(msg.sender,escrow,amount_to_transfer);
 				
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
-				
 				chosen_data_holders[i] = j;
 				i++;
 				BidTaken(msg.sender, chosenBid.DH_wallet, data_id);
 			}
 			else{
+				this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.sub(1);
 				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
 				chosenBid.token_amount = 0;
 			}
 		}
+
 
 	}
 }
