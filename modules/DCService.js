@@ -46,8 +46,18 @@ class DCService {
                 minNumberOfBids,
                 totalDocuments, replicationFactor,
             ).then((startTime) => {
-                log.info(`Offer written to blockchain. Can start revealing ${startTime}.`);
-                console.log(startTime);
+                log.info('Offer written to blockchain. Broadcast event.');
+                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
+                    dataId,
+                    dcId: config.identity,
+                    dcWallet: config.node_wallet,
+                    totalEscrowTime,
+                    minStakeAmount,
+                    biddingTime,
+                    minNumberOfBids,
+                    totalDocuments,
+                    replicationFactor,
+                });
             });
         }).catch(error => log.warn(error));
     }

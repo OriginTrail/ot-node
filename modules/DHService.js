@@ -49,24 +49,24 @@ class DHService {
         }
 
         // TODO remove after SC intro
-
-        Blockchain.bc.addBid(dcWallet, dataId, config.identity, chosenPrice, 1000).then((bidIndex) => {
-            Models.bids.create({
-                bid_index: bidIndex,
-                offer_id: 1,
-                price: chosenPrice,
-                data_id: dataId,
-                dc_wallet: dcWallet,
-                dc_id: dcNodeId,
-                total_escrow_time: totalEscrowTime,
-                stake: 1000, // TODO remove hard-coded value
-                data_size_bytes: dataSizeBytes,
-            }).then((bid) => {
-                log.info('Created new bid');
-            }).catch((err) => {
-                log.error('Failed to insert new bid.');
-            });
-        }).catch(error => log.error(error));
+        Blockchain.bc.addBid(dcWallet, dataId, config.identity, chosenPrice, 1000)
+            .then((bidIndex) => {
+                Models.bids.create({
+                    bid_index: bidIndex,
+                    offer_id: 1,
+                    price: chosenPrice,
+                    data_id: dataId,
+                    dc_wallet: dcWallet,
+                    dc_id: dcNodeId,
+                    total_escrow_time: totalEscrowTime,
+                    stake: 1000, // TODO remove hard-coded value
+                    data_size_bytes: dataSizeBytes,
+                }).then((bid) => {
+                    log.info('Created new bid');
+                }).catch((err) => {
+                    log.error('Failed to insert new bid.');
+                });
+            }).catch(error => log.error(error));
     }
 }
 
