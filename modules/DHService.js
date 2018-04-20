@@ -17,10 +17,9 @@ class DHService {
      * Handles new offer
      *
      * @param dcId          DC Kademlia ID
-     * @param offerId       Offer ID
      * @param offerParams   Offer parameters
      */
-    static handleOffer(dcId, offerId, offerParams) {
+    static handleOffer(dcId, offerParams) {
         // TODO store offer if we want to participate.
 
         const minPrice = config.dh_min_price;
@@ -48,7 +47,6 @@ class DHService {
 
         // TODO remove after SC intro
         node.ot.addBid({
-            offerId,
             bid: {
                 price: chosenPrice,
             },
@@ -57,7 +55,7 @@ class DHService {
                 log.warn(err);
             } else {
                 log.trace(`Bid sent to ${dcId}.`);
-                SmartContractInstance.sc.addDcOffer(offerId, dcId);
+                // SmartContractInstance.sc.addDcOffer(offerId, dcId);
             }
         });
 
