@@ -142,6 +142,10 @@
          {
             "name":"active",
             "type":"bool"
+         },
+         {
+            "name":"chosen",
+            "type":"bool"
          }
       ],
       "payable":false,

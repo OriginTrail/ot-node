@@ -88,6 +88,7 @@ contract Bidding {
 		uint token_amount;
 		uint stake_amount;
 		bool active;
+		bool chosen;
 	}
 
 	mapping(address => mapping(uint => OfferDefinition)) public offer;
@@ -225,6 +226,7 @@ contract Bidding {
 				token.transferFrom(msg.sender,escrow,amount_to_transfer);
 				
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
+				chosenBid.chosen = true;
 				chosen_data_holders[i] = j;
 				i++;
 				BidTaken(msg.sender, chosenBid.DH_wallet, data_id);
@@ -232,6 +234,7 @@ contract Bidding {
 			else{
 				this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.sub(1);
 				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
+				chosenBid.active = false;
 				chosenBid.token_amount = 0;
 			}
 		}
