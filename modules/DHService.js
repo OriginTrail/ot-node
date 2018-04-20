@@ -19,8 +19,6 @@ class DHService {
      * @param offerParams   Offer parameters
      */
     static handleOffer(dcId, offerId, offerParams) {
-        log.trace(`Received bidding. Name: ${offerParams.name}, price ${offerParams.price}.`);
-
         // TODO store offer if we want to participate.
 
         // TODO remove after SC intro
