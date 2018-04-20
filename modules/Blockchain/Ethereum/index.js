@@ -2,6 +2,9 @@ const Web3 = require('web3');
 const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
+const globalEvents = require('../../GlobalEvents');
+
+const { globalEmitter } = globalEvents;
 
 const log = Utilities.getLogger();
 
@@ -47,8 +50,54 @@ class Ethereum {
             this.escrowContractAddress,
         );
 
+        const biddingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/bidding-contract/abi.json');
+        this.biddingContractAbi = JSON.parse(biddingAbiFile);
+        this.biddingContract = new this.web3.eth.Contract(
+            this.biddingContractAbi,
+            this.biddingContractAddress,
+        );
+
         // Storing config data
         this.config = blockchainConfig;
+
+        this.biddingContract.events.OfferCreated(
+            {},
+            (error, event) => { console.log('HANDLER', event, error); },
+        )
+            .on('data', (event) => {
+                console.log(event); // same results as the optional callback above
+                globalEmitter.emit('eth-offer-created', event);
+            })
+            .on('changed', (event) => {
+                // remove event from local database
+                console.log(event);
+            })
+            .on('error', console.error);
+
+
+        // this.biddingContract.events.OfferCreated(null, (error, event) => {
+        //     if (error) {
+        //         log.warn(`OfferCreated(). ${error}.`);
+        //     } else {
+        //         globalEmitter.emit('eth-offer-created', event);
+        //     }
+        // });
+        //
+        // this.biddingContract.events.OfferCanceled.watch((error, event) => {
+        //     if (error) {
+        //         log.warn(`OfferCanceled(). ${error}.`);
+        //     } else {
+        //         globalEmitter.emit('eth-offer-canceled', event);
+        //     }
+        // });
+        // this.biddingContract.events.BidTaken.watch((error, event) => {
+        //     if (error) {
+        //         log.warn(`BidTaken(). ${error}.`);
+        //     } else {
+        //         globalEmitter.emit('eth-bid-taken', event);
+        //     }
+        //
+        // });
 
         log.info('Selected blockchain: Ethereum');
     }
@@ -299,7 +348,6 @@ class Ethereum {
             [dataId], options,
         );
     }
-
 }
 
 module.exports = Ethereum;

@@ -1,7 +1,6 @@
 const globalEvents = require('./GlobalEvents');
 const importer = require('./importer')();
 const Storage = require('./Database/SystemStorage');
-const Blockchain = require('./BlockChainInstance');
 const Graph = require('./Graph');
 const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
@@ -12,6 +11,7 @@ const Challenge = require('./Challenge');
 const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
+const DCService = require('./DCService');
 
 // TODO remove below after SC intro
 const SmartContractInstance = require('./temp/MockSmartContractInstance');
@@ -43,29 +43,7 @@ globalEmitter.on('gs1-import-request', (data) => {
         deasync(Storage.connect());
         Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
             .then((data_info) => {
-                Blockchain.bc.writeRootHash(data_id, root_hash).then((res) => {
-                    log.info('Fingerprint written on blockchain');
-                }).catch((e) => {
-                    console.log('Error: ', e);
-                });
-
-                // TODO set real offer params
-                const offerParams = {
-                    price: Utilities.getRandomIntRange(1, 10),
-                    dataSizeBytes: 900,
-                    name: `Crazy data for ${total_documents} documents`,
-                };
-
-                // TODO call real SC
-                const scId = SmartContractInstance.sc.createOffer(data_id, offerParams);
-                log.info(`Created offer ${scId}`);
-
-                const dcId = config.identity;
-                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
-                    scId,
-                    dcId,
-                    offerParams,
-                });
+                DCService.createOffer(data_id, root_hash, total_documents);
             });
     }).catch((e) => {
         console.log(e);
@@ -219,5 +197,19 @@ globalEmitter.on('kad-bidding-won', (message) => {
             log.warn(err);
         }
     });
+});
+
+globalEmitter.on('eth-offer-created', (event) => {
+    log.info('eth-offer-created');
+
+    DHService.handleOffer(event.args.data_id, )
+});
+
+globalEmitter.on('eth-offer-canceled', (event) => {
+    log.info('eth-offer-canceled');
+});
+
+globalEmitter.on('eth-bid-taken', (event) => {
+    log.info('eth-bid-taken');
 });
 
