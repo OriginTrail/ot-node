@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         start_tender_time: DataTypes.INTEGER,
         tender_duration: DataTypes.INTEGER,
         min_number_applicants: DataTypes.INTEGER,
-        price_tokens: DataTypes.REAL,
+        price_tokens: DataTypes.INTEGER,
         data_size_bytes: DataTypes.INTEGER,
         replication_number: DataTypes.INTEGER,
         root_hash: DataTypes.STRING,

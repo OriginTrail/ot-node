@@ -25,7 +25,7 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         price_tokens: {
-            type: Sequelize.REAL,
+            type: Sequelize.INTEGER,
         },
         data_size_bytes: {
             type: Sequelize.INTEGER,
