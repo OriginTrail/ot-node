@@ -46,7 +46,7 @@ globalEmitter.on('gs1-import-request', (data) => {
                 Blockchain.bc.writeRootHash(data_id, root_hash).then((res) => {
                     log.info('Fingerprint written on blockchain');
                 }).catch((e) => {
-                console.log('Error: ', e);
+                    console.log('Error: ', e);
                 });
 
                 // TODO set real offer params
