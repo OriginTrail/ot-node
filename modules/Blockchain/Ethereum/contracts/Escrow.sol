@@ -75,8 +75,6 @@ contract EscrowHolder {
 	event EscrowCanceled(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCompleted(address DC_wallet, address DH_wallet, uint data_id);
 
-
-
 	function initiateEscrow(address DH_wallet, uint data_id, uint token_amount,	uint total_time)
 	public {
 		require(escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.active

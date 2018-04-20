@@ -108,6 +108,7 @@ contract Bidding {
 
 		require(total_escrow_time > 0 && min_number_of_bids > 0 && 
 			bidding_phase_time > 0 && replication_factor > 1);
+		require(replication_factor <= min_number_of_bids);
 		require(offer[msg.sender][data_id].active == false);
 
 		// require(token.allowance(msg.sender,this) >= SafeMath.mul(tokens_per_DH,replication_factor));
