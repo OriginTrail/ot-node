@@ -75,8 +75,6 @@ contract EscrowHolder {
 	event EscrowCanceled(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCompleted(address DC_wallet, address DH_wallet, uint data_id);
 
-
-
 	function initiateEscrow(address DH_wallet, uint data_id, uint token_amount,	uint total_time)
 	public {
 		require(escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.active
@@ -99,8 +97,8 @@ contract EscrowHolder {
 			escrow_def.escrow_status == EscrowStatus.initiated &&
 			escrow_def.total_time == total_time);
 
-		escrow_def.last_confirmation_time = block.number;
-		escrow_def.end_time = SafeMath.add(block.number, total_time);
+		escrow_def.last_confirmation_time = block.timestamp;
+		escrow_def.end_time = SafeMath.add(block.timestamp, total_time);
 
 		escrow_def.escrow_status = EscrowStatus.active;
 		isVerified = true;
@@ -116,7 +114,7 @@ contract EscrowHolder {
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
-			uint end_time = block.number;
+			uint end_time = block.timestamp;
 			if(end_time > this_escrow.end_time){
 				amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 				this_escrow.escrow_status = EscrowStatus.completed;
@@ -148,8 +146,8 @@ contract EscrowHolder {
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
-			uint cancelation_time = block.number;
-			if(this_escrow.end_time < block.number) cancelation_time = this_escrow.end_time;
+			uint cancelation_time = block.timestamp;
+			if(this_escrow.end_time < block.timestamp) cancelation_time = this_escrow.end_time;
 			amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time;
 			this_escrow.escrow_status = EscrowStatus.canceled;
 		}
