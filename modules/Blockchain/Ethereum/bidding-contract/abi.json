@@ -207,50 +207,6 @@
             "type": "uint256"
          },
          {
-            "name": "bidIndex",
-            "type": "uint256"
-         }
-      ],
-      "name": "getBid",
-      "outputs": [
-         {
-            "name": "isBidChosen",
-            "type": "bool"
-         }
-      ],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-   },
-   {
-      "anonymous": false,
-      "inputs": [
-         {
-            "indexed": false,
-            "name": "DC_wallet",
-            "type": "address"
-         },
-         {
-            "indexed": false,
-            "name": "data_id",
-            "type": "uint256"
-         }
-      ],
-      "name": "OfferCanceled",
-      "type": "event"
-   },
-   {
-      "constant": false,
-      "inputs": [
-         {
-            "name": "DC_wallet",
-            "type": "address"
-         },
-         {
-            "name": "data_id",
-            "type": "uint256"
-         },
-         {
             "name": "node_id",
             "type": "uint256"
          },
@@ -272,6 +228,23 @@
       "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
+   },
+   {
+      "anonymous": false,
+      "inputs": [
+         {
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
+         }
+      ],
+      "name": "OfferCanceled",
+      "type": "event"
    },
    {
       "inputs": [
@@ -347,6 +320,56 @@
          {
             "name": "",
             "type": "address"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+   },
+   {
+      "constant": true,
+      "inputs": [
+         {
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "name": "bidIndex",
+            "type": "uint256"
+         }
+      ],
+      "name": "getBid",
+      "outputs": [
+         {
+            "name": "isBidChosen",
+            "type": "bool"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+   },
+   {
+      "constant": true,
+      "inputs": [
+         {
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         }
+      ],
+      "name": "getOfferStatus",
+      "outputs": [
+         {
+            "name": "isBidChosen",
+            "type": "bool"
          }
       ],
       "payable": false,
