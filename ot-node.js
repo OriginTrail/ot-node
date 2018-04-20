@@ -12,6 +12,17 @@ const restify = require('restify');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+var app = require('http').createServer();
+var remote = require('socket.io')(app);
+
+
+app.listen(3000);
+remote.on('connection', (socket) => {
+    socket.emit('news', { hello: 'world' });
+    socket.on('news', (data) => {
+        console.log(data);
+    });
+});
 
 const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
