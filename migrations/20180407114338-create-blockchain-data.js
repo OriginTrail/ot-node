@@ -28,6 +28,9 @@ module.exports = {
         escrow_contract_address: {
             type: Sequelize.STRING,
         },
+        bidding_contract_address: {
+            type: Sequelize.STRING,
+        },
         rpc_node_host: {
             type: Sequelize.STRING,
         },
