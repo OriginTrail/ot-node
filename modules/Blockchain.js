@@ -35,6 +35,15 @@ class Blockchain {
     }
 
     /**
+     * Increase token approval for bidding contract
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseBiddingApproval(tokenAmountIncrease) {
+        return this.blockchain.increaseBiddingApproval(tokenAmountIncrease);
+    }
+
+    /**
      * Initiating escrow for data holding
      * @param {string} - dhWallet
      * @param {number} - dataId

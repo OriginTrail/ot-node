@@ -20,12 +20,12 @@ class MockSmartContract {
         this.dhs[dataId] = [];
 
         // simulate timed event
-        setTimeout(() => {
-            log.info('Offer ended');
-            globalEmitter.emit('offer-ended', {
-                scId: dataId,
-            });
-        }, 15 * 1000);
+        // setTimeout(() => {
+        //     log.info('Offer ended');
+        //     globalEmitter.emit('offer-ended', {
+        //         scId: dataId,
+        //     });
+        // }, 15 * 1000);
         return dataId;
     }
 

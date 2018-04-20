@@ -38,16 +38,18 @@ class DCService {
         const scId = SmartContractInstance.sc.createOffer(dataId, offerParams);
         log.info(`Created offer ${scId}`);
 
-        const dcId = config.identity;
-        Blockchain.bc.createOffer(
-            dataId, config.identity,
-            totalEscrowTime, minStakeAmount,
-            biddingTime,
-            minNumberOfBids,
-            totalDocuments, replicationFactor,
-        ).then((startTime) => {
-            log.info(`Offer written to blockchain. Can start revealing ${startTime}.`);
-        });
+        Blockchain.bc.increaseBiddingApproval(minStakeAmount).then(() => {
+            Blockchain.bc.createOffer(
+                dataId, config.identity,
+                totalEscrowTime, minStakeAmount,
+                biddingTime,
+                minNumberOfBids,
+                totalDocuments, replicationFactor,
+            ).then((startTime) => {
+                log.info(`Offer written to blockchain. Can start revealing ${startTime}.`);
+                console.log(startTime);
+            });
+        }).catch(error => log.warn(error));
     }
 }
 

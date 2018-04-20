@@ -120,6 +120,21 @@ class Ethereum {
     }
 
     /**
+     * Increase token approval for Bidding contract on Ethereum blockchain
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseBiddingApproval(tokenAmountIncrease) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+        log.warn('Increasing approval');
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
+    }
+
+    /**
      * Initiating escrow for data holding on Ethereum blockchain
      * @param {string} - dhWallet
      * @param {number} - dataId
@@ -213,13 +228,13 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.biddingContractAddress,
         };
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.biddingContractAddress, 'createOffer',
-            [dataId, nodeId,
+            this.biddingContractAbi, 'createOffer',
+            [dataId, `0x${nodeId}`,
                 totalEscrowTime, MinStakeAmount,
                 biddingTime,
                 minNumberOfBids,
@@ -235,12 +250,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.biddingContractAddress,
         };
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.biddingContractAddress, 'cancelOffer',
+            this.biddingContractAbi, 'cancelOffer',
             [dataId], options,
         );
     }
@@ -263,7 +278,7 @@ class Ethereum {
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.biddingContractAddress, 'addBid',
+            this.biddingContractAbi, 'addBid',
             [dcWallet, dataId, nodeId, tokenAmount, stakeAmount], options,
         );
     }
@@ -284,7 +299,7 @@ class Ethereum {
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.biddingContractAddress, 'cancelBid',
+            this.biddingContractAbi, 'cancelBid',
             [dcWallet, dataId, bidIndex], options,
         );
     }
@@ -303,13 +318,13 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.biddingContractAddress,
         };
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'revealBid',
-            [dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex], options,
+            this.biddingContractAbi, 'revealBid',
+            [dcWallet, dataId, `0x${nodeId}`, tokenAmount, stakeAmount, bidIndex], options,
         );
     }
 
@@ -322,12 +337,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.biddingContractAddress,
         };
 
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
-            this.escrowContractAbi, 'chooseBids',
+            this.biddingContractAbi, 'chooseBids',
             [dataId], options,
         );
     }
