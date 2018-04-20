@@ -10,8 +10,8 @@ const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const node = require('./Node');
-const Promise = require('async');
 const Utilities = require('./Utilities');
+const DHService = require('./DHService');
 
 // TODO remove below after SC intro
 const SmartContractInstance = require('./temp/MockSmartContractInstance');
@@ -46,7 +46,7 @@ globalEmitter.on('gs1-import-request', (data) => {
                 Blockchain.bc.writeRootHash(data_id, root_hash).then((res) => {
                     log.info('Fingerprint written on blockchain');
                 }).catch((e) => {
-                    // console.log('Error: ', e);
+                console.log('Error: ', e);
                 });
 
                 // TODO set real offer params
@@ -171,26 +171,14 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
     });
 });
 
+/**
+ * Handles bidding-broadcast on the DH side
+ */
 globalEmitter.on('bidding-broadcast', (message) => {
     const { scId, dcId, offerParams } = message;
     log.trace(`Received bidding. Name: ${offerParams.name}, price ${offerParams.price}.`);
 
-    // TODO store offer if we want to participate.
-
-    // TODO remove after SC intro
-    node.ot.addBid({
-        offerId: scId,
-        bid: {
-            price: 1,
-        },
-    }, dcId, (err) => {
-        if (err) {
-            log.warn(err);
-        } else {
-            log.trace(`Bid sent to ${dcId}.`);
-            SmartContractInstance.sc.addDcOffer(scId, dcId);
-        }
-    });
+    DHService.handleOffer(dcId, scId, offerParams);
 });
 
 globalEmitter.on('offer-ended', (message) => {
