@@ -32,7 +32,7 @@ class DHService {
         let chosenPrice = null;
 
         if (price > minPrice && price < maxPrice) {
-            chosenPrice = Utilities.getRandomIntRange(minPrice, maxPrice);
+            chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
         }
 
         if (chosenPrice == null) {
@@ -45,9 +45,8 @@ class DHService {
             return;
         }
 
-        // TODO remove after SC intro
-        log.trace(`Adding a bid for DC waller ${dcWallet} and data ID ${dataId}`);
-        Blockchain.bc.addBid(dcWallet, dataId, config.identity, 20, 1000)
+        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
+        Blockchain.bc.addBid(dcWallet, dataId, config.identity, chosenPrice, dataSizeBytes)
             .then((bidIndex) => {
                 Models.bids.create({
                     bid_index: bidIndex,
