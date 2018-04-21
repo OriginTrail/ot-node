@@ -26,7 +26,6 @@ class DHService {
         dataSizeBytes,
     ) {
         // TODO store offer if we want to participate.
-
         const minPrice = config.dh_min_price;
         const maxPrice = config.dh_max_price;
         const maxStakeAmount = config.dh_max_stake;
@@ -80,7 +79,11 @@ class DHService {
                                 stake,
                                 data_size_bytes: dataSizeBytes,
                             }).then((bid) => {
-                                log.info(`Created new bid. ${JSON.stringify(bid)}`);
+                                log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
+                                DHService.scheduleRevealBid(
+                                    dcWallet, dataId, chosenPrice,
+                                    stake, bidIndex, totalEscrowTime,
+                                );
                             }).catch((err) => {
                                 log.error(`Failed to insert new bid. ${err}`);
                             });
@@ -91,6 +94,31 @@ class DHService {
             }).catch((error) => {
                 log.error(error);
             });
+    }
+
+    /**
+     * Schedule reveal before todtalEscrowTime
+     * @param dcWallet          DC wallet
+     * @param dataId            Data ID
+     * @param price             Price
+     * @param stake             Stake
+     * @param bidIndex          Bid indez
+     * @param totalEscrowTime   Total escrow time
+     * @private
+     */
+    static scheduleRevealBid(dcWallet, dataId, price, stake, bidIndex, totalEscrowTime) {
+        function revealBid(dcWallet, dataId, price, stake, bidIndex) {
+            Blockchain.bc.revealBid(dcWallet, dataId, config.identity, price, stake, bidIndex)
+                .then(() => {
+                    log.info(`Bid revealed for import ${dataId} and DC ${dcWallet}`);
+                }).catch((err) => {
+                    log.warn(`Failed to reveal bid for import ${dataId} and DC ${dcWallet}. ${err}`);
+                });
+        }
+        setTimeout(
+            revealBid, 2000,
+            dcWallet, dataId, price, stake, bidIndex,
+        );
     }
 }
 
