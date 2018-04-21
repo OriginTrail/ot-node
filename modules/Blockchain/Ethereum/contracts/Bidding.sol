@@ -79,6 +79,7 @@ contract Bidding {
 		uint total_bid_token_amount;
 		uint random_number_seed;
 		bool active;
+		bool finalized;
 	}
 
 	struct BidDefinition{
@@ -94,11 +95,16 @@ contract Bidding {
 	mapping(address => mapping(uint => OfferDefinition)) public offer;
 	mapping(address => mapping(uint => mapping(uint => BidDefinition))) public bid; 
 
+	uint256 x;
+
 	event OfferCreated(address DC_wallet,uint DC_node_id, uint data_id, uint total_escrow_time, uint min_stake_amount, uint data_size);
 	event OfferCanceled(address DC_wallet, uint data_id);
 	// event RevealPhaseStarted(address DC_wallet, uint data_id);
 	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
+	event AddedBid(address DC_wallet,uint data_id, uint bidIndex, address DH_wallet, uint node_id, bytes32 bid_hash);
 	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
+	event OfferFinalized(address DC_wallet,uint data_id);
+	event XwasSet(uint x);
 
 	function createOffer(
 	uint data_id, 
@@ -132,6 +138,7 @@ contract Bidding {
 	    offer[msg.sender][data_id].number_of_bids = 0;
 	    offer[msg.sender][data_id].number_of_bids_revealed = 0;
 		offer[msg.sender][data_id].active = true;
+		offer[msg.sender][data_id].finalized = false;
 		OfferCreated(msg.sender, DC_node_id, data_id, total_escrow_time, min_stake_amount, data_size);
 	}
 
@@ -144,14 +151,14 @@ contract Bidding {
 		OfferCanceled(msg.sender, data_id);
 	}
 
-    function getBid(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool isBidChosen){
+    function isBidChosen(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool isBidChosen){
         return bid[DC_wallet][data_id][bidIndex].chosen;
     }
-    function getOfferStatus(address DC_wallet, uint data_id) public constant returns (bool isBidChosen){
-        return offer[DC_wallet][data_id].active;
+    function getOfferStatus(address DC_wallet, uint data_id) public constant returns (bool isOfferFinal){
+        return offer[DC_wallet][data_id].finalized;
     }
     
-	function addBid(address DC_wallet, uint data_id, uint node_id, uint token_amount, uint stake_amount)
+	function addBid(address DC_wallet, uint data_id, uint node_id, bytes32 bid_hash)
 	public returns (uint bidIndex){
 		require(offer[DC_wallet][data_id].active);
 		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
@@ -163,8 +170,11 @@ contract Bidding {
 		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
 		bidIndex = offer[DC_wallet][data_id].number_of_bids;
 
-		bid[DC_wallet][data_id][bidIndex].bid_hash = keccak256(msg.sender, node_id, token_amount, stake_amount);
+		// fix
+		bid[DC_wallet][data_id][bidIndex].bid_hash = bid_hash;
 		
+		// bid[DC_wallet][data_id][bidIndex].bid_hash = keccak256(msg.sender, node_id, token_amount, stake_amount);
+		AddedBid(DC_wallet,data_id, bidIndex, msg.sender, node_id, bid_hash );
 		return bidIndex;
 	}
 
@@ -188,6 +198,8 @@ contract Bidding {
 		this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.add(token_amount);
 		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
+
+		RevealedBid(DC_wallet,msg.sender, node_id,data_id, token_amount, stake_amount)
 
 	}
 
@@ -249,6 +261,18 @@ contract Bidding {
 			}
 		}
 
+		offer[msg.sender][data_id].finalized = true;
 
+		OfferFinalized(msg.sender,data_id);
+
+	}
+
+	function setX(uint256 novi_x) public{
+		x = novi_x;
+		XwasSet(x);
+	}
+
+	function getX() public constant returns (uint256 x){
+		return x;
 	}
 }
