@@ -225,7 +225,7 @@ contract Bidding {
 		
 		uint256 i = 0;
 		uint256 seed = this_offer.random_number_seed;
-		while(i < N && N >= this_offer.number_of_bids_revealed){	//FIX: Should be hash(block.hash)
+		while(i < N && N <= this_offer.number_of_bids_revealed){	//FIX: Should be hash(block.hash)
 			
 			uint nextIndex = (seed * this_offer.number_of_bids + block.timestamp) % this_offer.total_bid_token_amount;
 			uint256 j = 0;
@@ -237,7 +237,7 @@ contract Bidding {
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
 			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount
 				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount){
-				
+
 				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
 				uint amount_to_transfer = chosenBid.token_amount;
 				chosenBid.token_amount = 0;
