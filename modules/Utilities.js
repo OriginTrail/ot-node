@@ -324,5 +324,3 @@ class Utilities {
 }
 
 module.exports = Utilities;
-
-console.log(_.)
