@@ -76,7 +76,7 @@ contract Bidding {
 		//Parameters for use during the bidding mechanism
 		uint256 number_of_bids;
 		uint256 number_of_bids_revealed;
-		uint total_bid_token_amount;
+		uint total_bid_chance;
 		uint random_number_seed;
 		bool active;
 		bool finalized;
@@ -88,6 +88,7 @@ contract Bidding {
 		uint node_id;
 		uint token_amount;
 		uint stake_amount;
+		uint chance;
 		bool active;
 		bool chosen;
 	}
@@ -188,11 +189,12 @@ contract Bidding {
 		bid[DC_wallet][data_id][bidIndex].node_id = node_id;
 		bid[DC_wallet][data_id][bidIndex].token_amount = token_amount;
 		bid[DC_wallet][data_id][bidIndex].stake_amount = stake_amount;
+		bid[DC_wallet][data_id][bidIndex].chance = 500000000 / token_amount;
 		bid[DC_wallet][data_id][bidIndex].active = true;
 
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
-		this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.add(token_amount);
+		this_offer.total_bid_chance = this_offer.total_bid_chance.add(500000000 / token_amount);
 		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
@@ -205,10 +207,10 @@ contract Bidding {
 		require(bid[DC_wallet][data_id][bidIndex].DH_wallet == msg.sender);
 		require(bid[DC_wallet][data_id][bidIndex].active);
 
-		offer[DC_wallet][data_id].total_bid_token_amount = offer[DC_wallet][data_id].total_bid_token_amount.sub(bid[DC_wallet][data_id][bidIndex].token_amount);
+		offer[DC_wallet][data_id].total_bid_chance = offer[DC_wallet][data_id].total_bid_chance.sub(bid[DC_wallet][data_id][bidIndex].chance);
 		offer[DC_wallet][data_id].number_of_bids_revealed = offer[DC_wallet][data_id].number_of_bids_revealed.sub(1);
 
-		bid[DC_wallet][data_id][bidIndex].token_amount = 0;
+		bid[DC_wallet][data_id][bidIndex].chance = 0;
 		bid[DC_wallet][data_id][bidIndex].active = false;
 	}
 
@@ -227,20 +229,20 @@ contract Bidding {
 		uint256 seed = this_offer.random_number_seed;
 		while(i < N && N <= this_offer.number_of_bids_revealed){	//FIX: Should be hash(block.hash)
 			
-			uint nextIndex = (seed * this_offer.number_of_bids + block.timestamp) % this_offer.total_bid_token_amount;
+			uint nextIndex = (seed * this_offer.number_of_bids + block.timestamp) % this_offer.total_bid_chance;
 			uint256 j = 0;
-			uint256 sum = bid[msg.sender][data_id][j].token_amount;
+			uint256 sum = bid[msg.sender][data_id][j].chance;
 			while(sum < nextIndex){
 				j++;
-				sum = sum.add(bid[msg.sender][data_id][j].token_amount);
+				sum = sum.add(bid[msg.sender][data_id][j].chance);
 			}
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
-			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount
-				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount){
+			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.chance
+				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.chance){
 
-				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
-				uint amount_to_transfer = chosenBid.token_amount;
-				chosenBid.token_amount = 0;
+				this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
+				uint amount_to_transfer = chosenBid.chance;
+				chosenBid.chance = 0;
 				token.transferFrom(msg.sender,escrow,amount_to_transfer);
 				
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
@@ -251,9 +253,9 @@ contract Bidding {
 			}
 			else{
 				this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.sub(1);
-				this_offer.total_bid_token_amount = this_offer.total_bid_token_amount.sub(chosenBid.token_amount);
+				this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
 				chosenBid.active = false;
-				chosenBid.token_amount = 0;
+				chosenBid.chance = 0;
 			}
 		}
 
