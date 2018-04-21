@@ -142,12 +142,11 @@ class Blockchain {
      * @param dcWallet Wallet of the bidder
      * @param dataId ID of the data of the bid
      * @param nodeId KADemlia ID of this node
-     * @param tokenAmount Amount of token that will be paid if chosen in the bid
-     * @param stakeAmount Amount of stake in tokens.
+     * @param bidHash Hashed bid that will be revealed once revealBid() is called
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount) {
-        return this.blockchain.addBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount);
+    addBid(dcWallet, dataId, nodeId, bidHash) {
+        return this.blockchain.addBid(dcWallet, dataId, nodeId, bidHash);
     }
 
     /**
