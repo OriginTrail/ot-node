@@ -12,10 +12,10 @@ const log = Utilities.getLogger();
 
 // TODO
 const totalEscrowTime = 10 * 60 * 1000; // 10 minute
-const replicationFactor = 1;
+const replicationFactor = 10;
 const biddingTime = 1 * 60 * 1000; // 1 minute
-const minNumberOfBids = 1;
-const minStakeAmount = 1e18;
+const minNumberOfBids = 20;
+const minStakeAmount = 2;
 /**
  * DC operations (handling new offers, etc.)
  */

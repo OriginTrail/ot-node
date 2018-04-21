@@ -1,6 +1,6 @@
 const node = require('./Node');
 const config = require('./Config');
-const Blockchain = require('./Blockchain');
+const Blockchain = require('./BlockChainInstance');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -35,7 +35,7 @@ class DHService {
             chosenPrice = Utilities.getRandomIntRange(minPrice, maxPrice);
         }
 
-        if (price == null) {
+        if (chosenPrice == null) {
             log.trace(`Skipping offer because of price. Offer price is ${price}.`);
             return;
         }
@@ -46,11 +46,11 @@ class DHService {
         }
 
         // TODO remove after SC intro
-        Blockchain.bc.addBid(dcWallet, dataId, config.identity, chosenPrice, 1000)
+        log.trace(`Adding a bid for DC waller ${dcWallet} and data ID ${dataId}`);
+        Blockchain.bc.addBid(dcWallet, dataId, config.identity, 20, 1000)
             .then((bidIndex) => {
                 Models.bids.create({
                     bid_index: bidIndex,
-                    offer_id: 1,
                     price: chosenPrice,
                     data_id: dataId,
                     dc_wallet: dcWallet,
@@ -59,11 +59,13 @@ class DHService {
                     stake: 1000, // TODO remove hard-coded value
                     data_size_bytes: dataSizeBytes,
                 }).then((bid) => {
-                    log.info('Created new bid');
+                    log.info(`Created new bid. ${JSON.stringify(bid)}`);
                 }).catch((err) => {
-                    log.error('Failed to insert new bid.');
+                    log.error(`Failed to insert new bid. ${JSON.stringify(err)}`);
                 });
-            }).catch(error => log.error(error));
+            }).catch((error) => {
+                log.error(error);
+            });
     }
 }
 
