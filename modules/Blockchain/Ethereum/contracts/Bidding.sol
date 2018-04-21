@@ -100,15 +100,18 @@ contract Bidding {
 	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
 	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
 
-	function createOffer(uint data_id, uint DC_node_id,
-		uint total_escrow_time, uint min_stake_amount,
+	function createOffer(
+	uint data_id, 
+	uint DC_node_id,
+		uint total_escrow_time, 
+		uint min_stake_amount,
 		uint bidding_phase_time,
 		uint min_number_of_bids, 
-		uint data_size, uint replication_factor)
+		uint data_size, 
+		uint replication_factor)
 	public returns (uint choose_start_time){
 
-		require(total_escrow_time > 0 && min_number_of_bids > 0 && 
-			bidding_phase_time > 0 && replication_factor > 1);
+		require(total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 1);
 		require(replication_factor <= min_number_of_bids);
 		require(offer[msg.sender][data_id].active == false);
 
@@ -141,6 +144,13 @@ contract Bidding {
 		OfferCanceled(msg.sender, data_id);
 	}
 
+    function getBid(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool isBidChosen){
+        return bid[DC_wallet][data_id][bidIndex].chosen;
+    }
+    function getOfferStatus(address DC_wallet, uint data_id) public constant returns (bool isBidChosen){
+        return offer[DC_wallet][data_id].active;
+    }
+    
 	function addBid(address DC_wallet, uint data_id, uint node_id, uint token_amount, uint stake_amount)
 	public returns (uint bidIndex){
 		require(offer[DC_wallet][data_id].active);
