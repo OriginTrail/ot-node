@@ -75,13 +75,14 @@ class DHService {
                                 data_id: dataId,
                                 dc_wallet: dcWallet,
                                 dc_id: dcNodeId,
+                                hash: bidHash,
                                 total_escrow_time: totalEscrowTime,
                                 stake,
                                 data_size_bytes: dataSizeBytes,
                             }).then((bid) => {
                                 log.info(`Created new bid. ${JSON.stringify(bid)}`);
                             }).catch((err) => {
-                                log.error(`Failed to insert new bid. ${JSON.stringify(err)}`);
+                                log.error(`Failed to insert new bid. ${err}`);
                             });
                         }
                     }

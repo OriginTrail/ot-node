@@ -19,6 +19,9 @@ module.exports = {
         dc_wallet: {
             type: Sequelize.STRING,
         },
+        hash: {
+            type: Sequelize.STRING,
+        },
         dc_id: {
             type: Sequelize.STRING,
         },

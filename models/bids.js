@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     const bids = sequelize.define('bids', {
         bid_index: DataTypes.INTEGER,
         price: DataTypes.INTEGER,
+        hash: DataTypes.STRING(128),
         data_id: DataTypes.INTEGER,
         dc_wallet: DataTypes.STRING,
         dc_id: DataTypes.STRING,
