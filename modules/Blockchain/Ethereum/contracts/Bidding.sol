@@ -103,6 +103,7 @@ contract Bidding {
 	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
 	event AddedBid(address DC_wallet,uint data_id, uint bidIndex, address DH_wallet, uint node_id, bytes32 bid_hash);
 	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
+	event RevealedBid(address DC_wallet, address DH_wallet,  uint node_id,uint data_id,  uint token_amount, uint stake_amount);
 	event OfferFinalized(address DC_wallet,uint data_id);
 	event XwasSet(uint x);
 
@@ -163,10 +164,6 @@ contract Bidding {
 		require(offer[DC_wallet][data_id].active);
 		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
 
-		// require(token_amount <= offer[DC_wallet][data_id].token_amount);
-		require(stake_amount >= offer[DC_wallet][data_id].min_stake_amount);
-		require(token_amount > 0);
-
 		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
 		bidIndex = offer[DC_wallet][data_id].number_of_bids;
 
@@ -199,7 +196,7 @@ contract Bidding {
 		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
-		RevealedBid(DC_wallet,msg.sender, node_id,data_id, token_amount, stake_amount)
+		RevealedBid(DC_wallet,msg.sender, node_id,data_id, token_amount, stake_amount);
 
 	}
 
