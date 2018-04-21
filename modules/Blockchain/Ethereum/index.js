@@ -286,8 +286,10 @@ class Ethereum {
                 }
             }).catch((err) => {
                 log.error(`Failed to get past events for ${event}`);
-                clearTimeout(looper);
-                callback(null, err);
+                const stop = callback(null, err);
+                if (stop) {
+                    clearTimeout(looper);
+                }
             });
         }, periodMills);
     }
