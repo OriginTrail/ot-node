@@ -124,6 +124,20 @@ class Blockchain {
     }
 
     /**
+     * Subscribe to a particular event
+     * @param contractName   Ethereum contract instance
+     * @param event          Event name
+     * @param eventOpts      Event options (filter, range, etc.)
+     * @param callback       Callback to be executed on success/error (callback returns stop flag)
+     * @param periodMills    Repeating period for checking past events
+     * @param untilMills     Subscription termination
+     */
+    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills)  {
+        return this.blockchain
+            .subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills);
+    }
+
+    /**
      * Adds bid to the offer on Ethereum blockchain
      * @param dcWallet Wallet of the bidder
      * @param dataId ID of the data of the bid

@@ -28,7 +28,6 @@ class Ethereum {
         this.escrowContractAddress = blockchainConfig.escrow_contract_address;
         this.biddingContractAddress = blockchainConfig.bidding_contract_address;
 
-
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
         this.otContractAbi = JSON.parse(contractAbiFile);
@@ -56,6 +55,10 @@ class Ethereum {
             this.biddingContractAbi,
             this.biddingContractAddress,
         );
+
+        this.contractsByName = {
+            BIDDING_CONTRACT: this.biddingContract,
+        };
 
         // Storing config data
         this.config = blockchainConfig;
@@ -258,6 +261,34 @@ class Ethereum {
             this.biddingContractAbi, 'cancelOffer',
             [dataId], options,
         );
+    }
+
+    /**
+     * Subscribe to a particular event
+     * @param contractName   Ethereum contract instance
+     * @param event          Event name
+     * @param eventOpts      Event options (filter, range, etc.)
+     * @param callback       Callback to be executed on success/error (callback returns stop flag)
+     * @param periodMills    Repeating period for checking past events
+     * @param untilMills     Subscription termination
+     */
+    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills) {
+        const looper = setInterval(() => {
+            if (untilMills < Date.now()) {
+                log.trace('Looper for event is going to be unsubscribed');
+                clearTimeout(looper);
+                return;
+            }
+            this.contractsByName[contractName].getPastEvents(event, eventOpts).then((events) => {
+                const stop = callback(events);
+                if (stop) {
+                    clearTimeout(looper);
+                }
+            }).catch((err) => {
+                log.error(`Failed to get past events for ${event}`);
+                clearTimeout(looper);
+            });
+        }, periodMills);
     }
 
     /**
