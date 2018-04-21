@@ -1,79 +1,79 @@
-[
-   {
+[  
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"node_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"token_amount",
             "type":"uint256"
          },
-         {
+         {  
             "name":"stake_amount",
             "type":"uint256"
          },
-         {
+         {  
             "name":"bidIndex",
             "type":"uint256"
          }
       ],
       "name":"revealBid",
-      "outputs":[
+      "outputs":[  
 
       ],
       "payable":false,
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"DC_node_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"total_escrow_time",
             "type":"uint256"
          },
-         {
+         {  
             "name":"min_stake_amount",
             "type":"uint256"
          },
-         {
+         {  
             "name":"bidding_phase_time",
             "type":"uint256"
          },
-         {
+         {  
             "name":"min_number_of_bids",
             "type":"uint256"
          },
-         {
+         {  
             "name":"data_size",
             "type":"uint256"
          },
-         {
+         {  
             "name":"replication_factor",
             "type":"uint256"
          }
       ],
       "name":"createOffer",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"choose_start_time",
             "type":"uint256"
          }
@@ -82,17 +82,17 @@
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"data_id",
             "type":"uint256"
          }
       ],
       "name":"chooseBids",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"chosen_data_holders",
             "type":"uint256[]"
          }
@@ -101,49 +101,53 @@
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"",
             "type":"address"
          },
-         {
+         {  
             "name":"",
             "type":"uint256"
          },
-         {
+         {  
             "name":"",
             "type":"uint256"
          }
       ],
       "name":"bid",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"bid_hash",
             "type":"bytes32"
          },
-         {
+         {  
             "name":"DH_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"node_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"token_amount",
             "type":"uint256"
          },
-         {
+         {  
             "name":"stake_amount",
             "type":"uint256"
          },
-         {
+         {  
+            "name":"chance",
+            "type":"uint256"
+         },
+         {  
             "name":"active",
             "type":"bool"
          },
-         {
+         {  
             "name":"chosen",
             "type":"bool"
          }
@@ -152,54 +156,54 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"bidIndex",
             "type":"uint256"
          }
       ],
       "name":"cancelBid",
-      "outputs":[
+      "outputs":[  
 
       ],
       "payable":false,
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"novi_x",
             "type":"uint256"
          }
       ],
       "name":"setX",
-      "outputs":[
+      "outputs":[  
 
       ],
       "payable":false,
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
+      "inputs":[  
 
       ],
       "name":"getX",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"x",
             "type":"uint256"
          }
@@ -208,21 +212,21 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"data_id",
             "type":"uint256"
          }
       ],
       "name":"getOfferStatus",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"isOfferFinal",
             "type":"bool"
          }
@@ -231,69 +235,69 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"",
             "type":"address"
          },
-         {
+         {  
             "name":"",
             "type":"uint256"
          }
       ],
       "name":"offer",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"total_escrow_time",
             "type":"uint256"
          },
-         {
+         {  
             "name":"min_stake_amount",
             "type":"uint256"
          },
-         {
+         {  
             "name":"reveal_start_time",
             "type":"uint256"
          },
-         {
+         {  
             "name":"choose_start_time",
             "type":"uint256"
          },
-         {
+         {  
             "name":"min_number_of_bids",
             "type":"uint256"
          },
-         {
+         {  
             "name":"data_size",
             "type":"uint256"
          },
-         {
+         {  
             "name":"replication_factor",
             "type":"uint256"
          },
-         {
+         {  
             "name":"number_of_bids",
             "type":"uint256"
          },
-         {
+         {  
             "name":"number_of_bids_revealed",
             "type":"uint256"
          },
-         {
-            "name":"total_bid_token_amount",
+         {  
+            "name":"total_bid_chance",
             "type":"uint256"
          },
-         {
+         {  
             "name":"random_number_seed",
             "type":"uint256"
          },
-         {
+         {  
             "name":"active",
             "type":"bool"
          },
-         {
+         {  
             "name":"finalized",
             "type":"bool"
          }
@@ -302,25 +306,25 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"bidIndex",
             "type":"uint256"
          }
       ],
       "name":"isBidChosen",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"isBidChosen",
             "type":"bool"
          }
@@ -329,29 +333,29 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"node_id",
             "type":"uint256"
          },
-         {
+         {  
             "name":"bid_hash",
             "type":"bytes32"
          }
       ],
       "name":"addBid",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"bidIndex",
             "type":"uint256"
          }
@@ -360,14 +364,14 @@
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
+      "inputs":[  
 
       ],
       "name":"escrow",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"",
             "type":"address"
          }
@@ -376,30 +380,30 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
+   {  
       "constant":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "name":"data_id",
             "type":"uint256"
          }
       ],
       "name":"cancelOffer",
-      "outputs":[
+      "outputs":[  
 
       ],
       "payable":false,
       "stateMutability":"nonpayable",
       "type":"function"
    },
-   {
+   {  
       "constant":true,
-      "inputs":[
+      "inputs":[  
 
       ],
       "name":"token",
-      "outputs":[
-         {
+      "outputs":[  
+         {  
             "name":"",
             "type":"address"
          }
@@ -408,13 +412,13 @@
       "stateMutability":"view",
       "type":"function"
    },
-   {
-      "inputs":[
-         {
+   {  
+      "inputs":[  
+         {  
             "name":"tokenAddress",
             "type":"address"
          },
-         {
+         {  
             "name":"escrowAddress",
             "type":"address"
          }
@@ -423,35 +427,35 @@
       "stateMutability":"nonpayable",
       "type":"constructor"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"DC_node_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"total_escrow_time",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"min_stake_amount",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_size",
             "type":"uint256"
@@ -460,15 +464,15 @@
       "name":"OfferCreated",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
@@ -477,35 +481,35 @@
       "name":"OfferCanceled",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"bidIndex",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"DH_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"node_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"bid_hash",
             "type":"bytes32"
@@ -514,20 +518,20 @@
       "name":"AddedBid",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"DH_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
@@ -536,35 +540,35 @@
       "name":"BidTaken",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"DH_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"node_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"token_amount",
             "type":"uint256"
          },
-         {
+         {  
             "indexed":false,
             "name":"stake_amount",
             "type":"uint256"
@@ -573,15 +577,15 @@
       "name":"RevealedBid",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"DC_wallet",
             "type":"address"
          },
-         {
+         {  
             "indexed":false,
             "name":"data_id",
             "type":"uint256"
@@ -590,10 +594,10 @@
       "name":"OfferFinalized",
       "type":"event"
    },
-   {
+   {  
       "anonymous":false,
-      "inputs":[
-         {
+      "inputs":[  
+         {  
             "indexed":false,
             "name":"x",
             "type":"uint256"
