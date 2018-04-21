@@ -7,11 +7,6 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        offer_id: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            unique: true,
-        },
         data_lifespan: {
             type: Sequelize.INTEGER,
         },
@@ -35,14 +30,6 @@ module.exports = {
         },
         root_hash: {
             type: Sequelize.STRING,
-        },
-        createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-        },
-        updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('offers'),

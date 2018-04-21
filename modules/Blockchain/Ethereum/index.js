@@ -128,9 +128,9 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
+            to: this.tokenContractAddress,
         };
-        log.warn('Increasing approval');
+        log.warn('Increasing bidding approval');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
     }
 
@@ -234,7 +234,7 @@ class Ethereum {
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
-            [dataId, `0x${nodeId}`,
+            [dataId, this._normalizeNodeId(nodeId),
                 totalEscrowTime, MinStakeAmount,
                 biddingTime,
                 minNumberOfBids,
@@ -279,7 +279,7 @@ class Ethereum {
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [dcWallet, dataId, nodeId, tokenAmount, stakeAmount], options,
+            [dcWallet, dataId, this._normalizeNodeId(nodeId), tokenAmount, stakeAmount], options,
         );
     }
 
@@ -324,7 +324,7 @@ class Ethereum {
         log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'revealBid',
-            [dcWallet, dataId, `0x${nodeId}`, tokenAmount, stakeAmount, bidIndex], options,
+            [dcWallet, dataId, this._normalizeNodeId(`0x${nodeId}`), tokenAmount, stakeAmount, bidIndex], options,
         );
     }
 
@@ -366,6 +366,16 @@ class Ethereum {
             this.biddingContractAbi, 'getBid',
             [dcWallet, dataId, bidIndex], options,
         );
+    }
+
+    /**
+     * Normalizes Kademlia node ID
+     * @param nodeId     Kademlia node ID
+     * @returns {string} Normalized node ID
+     * @private
+     */
+    _normalizeNodeId(nodeId) {
+        return `0x${nodeId}`;
     }
 }
 

@@ -10,11 +10,6 @@ module.exports = {
         bid_index: {
             type: Sequelize.INTEGER,
         },
-        offer_id: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            unique: true,
-        },
         price: {
             type: Sequelize.INTEGER,
         },
@@ -35,14 +30,6 @@ module.exports = {
         },
         data_size_bytes: {
             type: Sequelize.INTEGER,
-        },
-        createdAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
-        },
-        updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),
