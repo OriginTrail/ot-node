@@ -27,22 +27,9 @@ class DataReplication {
             const options = {
                 dh_wallet: config.dh_wallet,
                 import_id: data.data_id,
-                amount: data.amout,
                 start_time: currentUnixTime,
                 total_time: 10 * 60000,
             };
-
-            try {
-                deasync(Blockchain.bc.increaseApproval(options.amount));
-                deasync(Blockchain.bc.initiateEscrow(
-                    options.dh_wallet,
-                    options.import_id,
-                    options.amount,
-                    options.total_time,
-                ));
-            } catch (e) {
-                console.log(e);
-            }
 
             data.encryptedVertices.vertices.sort((a, b) => {
                 if (a._key < b._key) { return -1; } else if (a._key > b._key) { return 1; }
@@ -50,7 +37,7 @@ class DataReplication {
             });
 
             const tests = Challenge.generateTests(
-                config.dh[0], options.import_id.toString(), 10,
+                data.contact, options.import_id.toString(), 10,
                 options.start_time, options.start_time + options.total_time,
                 16, data.encryptedVertices.vertices,
             );
@@ -72,7 +59,7 @@ class DataReplication {
             };
 
             // send payload to DH
-            node.ot.payloadRequest(payload, node.ot.getNearestNeighbour(), () => {
+            node.ot.payloadRequest(payload, data.contact, () => {
                 log.info('Payload request sent');
             });
         });
