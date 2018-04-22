@@ -104,9 +104,8 @@ class DCService {
                     log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
                 });
         }
-        setTimeout(
-            // change time period in order to test choose bids
-            chooseBids, totalEscrowTime, dataId);
+        // change time period in order to test choose bids
+        setTimeout(chooseBids, totalEscrowTime * 1000, dataId);
     }
 }
 
