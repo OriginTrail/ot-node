@@ -119,7 +119,7 @@ contract Bidding {
 		uint replication_factor)
 	public returns (uint choose_start_time){
 
-		require(total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 1);
+		require(total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 0);
 		require(replication_factor <= min_number_of_bids);
 		require(offer[msg.sender][data_id].active == false);
 
@@ -165,9 +165,9 @@ contract Bidding {
 		require(offer[DC_wallet][data_id].active);
 		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
 
-		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
 		bidIndex = offer[DC_wallet][data_id].number_of_bids;
-
+		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
+		
 		// fix
 		bid[DC_wallet][data_id][bidIndex].bid_hash = bid_hash;
 		
@@ -192,7 +192,7 @@ contract Bidding {
 		bid[DC_wallet][data_id][bidIndex].chance = 500000000 / token_amount;
 		bid[DC_wallet][data_id][bidIndex].active = true;
 
-		OfferDefinition storage this_offer = offer[msg.sender][data_id];
+		OfferDefinition storage this_offer = offer[DC_wallet][data_id];
 
 		this_offer.total_bid_chance = this_offer.total_bid_chance.add(500000000 / token_amount);
 		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
