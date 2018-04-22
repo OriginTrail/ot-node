@@ -55,7 +55,6 @@ class ArangoJS {
             this.db.query(queryString, params).then((cursor) => {
                 resolve(cursor.all());
             }).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -103,7 +102,6 @@ class ArangoJS {
                     reject(err);
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -126,7 +124,6 @@ class ArangoJS {
                     reject(err);
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -161,7 +158,6 @@ class ArangoJS {
                     }
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -183,7 +179,6 @@ class ArangoJS {
                     }
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });

@@ -199,7 +199,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('updateDocument() should aslo add/append data', async () => {
+    it('updateDocument() should also add/append data', async () => {
         const updatetedEdgeOne = {
             _key: '6eb743d84a605b2ab6be67a373b883d4',
             edge_type: 'OWNED_BY',

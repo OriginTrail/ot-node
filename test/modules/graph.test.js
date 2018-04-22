@@ -444,7 +444,7 @@ describe('graph module ', () => {
         });
     });
 
-    it('.findTraversalPath() with non valid startVertex', async () => {
+    it('.findTraversalPath() with non valid startVertex should fail', async () => {
         // db alredy connected and ot_vertices exists
         const myStartVertex = {
             _id: undefined,
@@ -458,19 +458,16 @@ describe('graph module ', () => {
         }
     });
 
-    it('.findTraversalPath() with valid non existing startVertex', async () => {
+    it('.findTraversalPath() with non existing startVertex should fail', async () => {
         // db alredy connected and ot_vertices exists
         const myStartVertex = {
-            _id: 12345,
+            _id: 0,
         };
 
-        GraphInstance.g.findTraversalPath(myStartVertex)
-            .then((response) => {
-                console.log(response);
-            })
-            .catch((error) => {
-                // TODO properly catch ArangoError: AQL: document not found error
-                assert.equal(error.code, 404);
-            });
+        try {
+            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+        } catch (error) {
+            assert.equal(error.code, 404);
+        }
     });
 });
