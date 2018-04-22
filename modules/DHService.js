@@ -116,7 +116,8 @@ class DHService {
                 });
         }
         setTimeout(
-            revealBid, 2000,
+            // change time period in order to test reveal
+            revealBid, Math.round((6 / 8) * totalEscrowTime * 1000),
             dcWallet, dataId, price, stake, bidIndex,
         );
     }
