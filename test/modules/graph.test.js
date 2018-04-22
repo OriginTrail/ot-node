@@ -1,20 +1,57 @@
 const {
-    describe, it, afterEach, beforeEach,
+    describe, it, afterEach, beforeEach, before, after,
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
 const Graph = require('../../modules/Graph');
+const GraphInstance = require('../../modules/GraphInstance');
+var models = require('../../models');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
-
-
+const Storage = require('../../modules/Storage');
+const Utilities = require('../../modules/Utilities');
+// eslint-disable-next-line  prefer-destructuring
+const Database = require('arangojs').Database;
+const GraphStorage = require('../../modules/Database/GraphStorage');
+const databaseData = require('./test_data/database-data.js');
 const deasync = require('deasync-promise');
 
+const myUserName = 'otuser';
+const myPassword = 'otpass';
+const myDatabaseName = 'origintrail';
+
+
+let selectedDatabase;
+let systemDb;
+
 describe('graph module ', () => {
+    before('loadSelectedDatabaseInfo() and init origintrail GraphStorage', async () => {
+        Storage.models = deasync(models.sequelize.sync()).models;
+        selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
+        assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
+            'host', 'port', 'max_path_length', 'database']);
+
+        systemDb = new Database();
+        systemDb.useBasicAuth('root', 'root');
+        await systemDb.createDatabase(
+            myDatabaseName,
+            [{ username: myUserName, passwd: myPassword, active: true }],
+        );
+
+        // GraphStorage = new GraphStorage(selectedDatabase);
+    });
+
+    after('drop origintrail db', async () => {
+        systemDb = new Database();
+        systemDb.useBasicAuth('root', 'root');
+        await systemDb.dropDatabase(myDatabaseName);
+    });
+
     // TODO reenable with fix of .skipped tests
     // beforeEach('create stubs', async () => {
     //     this.encrytionMock = sinon.sandbox.mock(Encryption);
     // });
+
     // TODO reenable with fix of .skipped tests
     // afterEach('restore stubs', async () => {
     //     this.encrytionMock.restore();
@@ -365,5 +402,15 @@ describe('graph module ', () => {
         const encryptedData = Encryption.encryptRawData(vertexData, keyPair.privateKey);
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
+    });
+
+    it('.findVertices() with empty query should give fail', async () => {
+        const myGraph = new Graph();
+        try {
+            await myGraph.findVertices();
+        } catch (error) {
+            // Utilities.isEmptyObject() will complain
+            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
+        }
     });
 });

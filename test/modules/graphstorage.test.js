@@ -31,7 +31,7 @@ let myInvalidGraphStorage;
 let myInvalidGraphConnection;
 
 describe('GraphStorage module', () => {
-    before('loadSelectedDatabaseInfo()', async () => {
+    before('loadSelectedDatabaseInfo() and init myGraphStorage', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
         selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
@@ -108,6 +108,42 @@ describe('GraphStorage module', () => {
             await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('attempt to create doc Collection on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.createCollection(documentCollectionName);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to create edge Collection on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.createEdgeCollection(edgeCollectionName);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to getDocument on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.getDocument(documentCollectionName, vertexOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to updateDocumentImports on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.updateDocumentImports(
+                edgeCollectionName,
+                // eslint-disable-next-line no-underscore-dangle
+                edgeOne._key, newImportValue,
+            );
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Cannot read property \'updateDocumentImports\' of undefined') >= 0);
         }
     });
 
