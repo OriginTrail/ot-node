@@ -238,8 +238,8 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [dataId, this._normalizeNodeId(nodeId),
-                totalEscrowTime, MinStakeAmount,
-                biddingTime,
+                Math.round(totalEscrowTime / 1000), MinStakeAmount,
+                Math.round(biddingTime / 1000),
                 minNumberOfBids,
                 dataSize, ReplicationFactor], options,
         );
