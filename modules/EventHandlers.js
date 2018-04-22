@@ -57,12 +57,12 @@ globalEmitter.on('replication-request', (request, response) => {
     let importId;
     const { dataId } = request.params.message;
     const { wallet } = request.contact[1];
-    const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
+    // const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
 
     if (dataId) {
         // TODO: decouple import ID from data id or load it from database.
         importId = dataId;
-        ({ price } = bid);
+        // ({ price } = bid);
     }
 
     if (!importId || !wallet) {
@@ -81,16 +81,16 @@ globalEmitter.on('replication-request', (request, response) => {
 
         Graph.encryptVertices(
             wallet,
-            request.id,
+            request.contact[0],
             vertices,
             Storage,
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
+            data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
             data.data_id = dataId;
-            data.amount = price;
             data.encryptedVertices = encryptedVertices;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
@@ -102,18 +102,8 @@ globalEmitter.on('replication-request', (request, response) => {
 });
 
 globalEmitter.on('payload-request', (request, response) => {
-    importer.importJSON(request.params.message.payload)
-        .then(() => {
-            log.warn('[DH] Replication finished');
-            response.send({
-                message: 'replication-finished',
-                status: 'success',
-            }, (err) => {
-                if (err) {
-                    log.error('payload-request: failed to send reply', err);
-                }
-            });
-        });
+    log.trace(`payload-request arrived from ${request.contact[0]}`);
+    DHService.handleImport(request.params.message.payload);
 
     // TODO doktor: send fail in case of fail.
 });
