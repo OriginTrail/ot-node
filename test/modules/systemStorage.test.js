@@ -19,6 +19,14 @@ describe('SystemStorage module', () => {
         assert.equal(result[0].Date, new Date().toISOString().slice(0, 10));
     });
 
+    it('runSystemQuery() with hazardous query', async () => {
+        try {
+            const result = await SystemStorage.runSystemQuery('SELECT Date1(?) as Date', ['now']);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('SQLITE_ERROR: no such function: Date1') >= 0);
+        }
+    });
+
     it('runSystemUpdate() ', async () => {
         // TODO better update query needed
         const result = await SystemStorage.runSystemUpdate('SELECT Date(?) as Date', ['now']);

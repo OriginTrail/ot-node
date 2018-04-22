@@ -13,19 +13,20 @@ const Utilities = require('../../modules/Utilities');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
 const GraphStorage = require('../../modules/Database/GraphStorage');
+const GSInstance = require('../../modules/GraphStorageInstance');
 const databaseData = require('./test_data/database-data.js');
 const deasync = require('deasync-promise');
 
 const myUserName = 'otuser';
 const myPassword = 'otpass';
-const myDatabaseName = 'origintrail';
+const myDatabaseName = 'test_graph';
 
 
 let selectedDatabase;
 let systemDb;
 
 describe('graph module ', () => {
-    before('loadSelectedDatabaseInfo() and init origintrail GraphStorage', async () => {
+    before('loadSelectedDatabaseInfo() and init GraphStorage', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
         selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
@@ -37,11 +38,13 @@ describe('graph module ', () => {
             myDatabaseName,
             [{ username: myUserName, passwd: myPassword, active: true }],
         );
+        selectedDatabase.database = myDatabaseName;
 
-        // GraphStorage = new GraphStorage(selectedDatabase);
+        GSInstance.db = new GraphStorage(selectedDatabase);
+        GraphInstance.g = new Graph();
     });
 
-    after('drop origintrail db', async () => {
+    after('drop myDatabaseName db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
         await systemDb.dropDatabase(myDatabaseName);
@@ -412,5 +415,62 @@ describe('graph module ', () => {
             // Utilities.isEmptyObject() will complain
             assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
         }
+    });
+
+    it('.findVertices() when still not connected to graph db should fail', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        try {
+            const result = await GraphInstance.g.findVertices(queryObject);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('.findVertices() on top of empty collection should find nothing', async () => {
+        await GSInstance.db.connect();
+        await GSInstance.db.createCollection('ot_vertices').then((response) => {
+            assert.equal(response, 'Collection created');
+        });
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        await GraphInstance.g.findVertices(queryObject).then((response) => {
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        });
+    });
+
+    it('.findTraversalPath() with non valid startVertex', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: undefined,
+        };
+        try {
+            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it('.findTraversalPath() with valid non existing startVertex', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: 12345,
+        };
+
+        GraphInstance.g.findTraversalPath(myStartVertex)
+            .then((response) => {
+                console.log(response);
+            })
+            .catch((error) => {
+                // TODO properly catch ArangoError: AQL: document not found error
+                assert.equal(error.code, 404);
+            });
     });
 });
