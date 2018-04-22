@@ -87,9 +87,10 @@ class DHService {
                             }).catch((err) => {
                                 log.error(`Failed to insert new bid. ${err}`);
                             });
+                            return true;
                         }
                     }
-                    return true;
+                    return false;
                 }, 5000, Date.now() + 20000);
             }).catch((error) => {
                 log.error(error);
@@ -111,6 +112,7 @@ class DHService {
             Blockchain.bc.revealBid(dcWallet, dataId, config.identity, price, stake, bidIndex)
                 .then(() => {
                     log.info(`Bid revealed for import ${dataId} and DC ${dcWallet}`);
+                    DHService.scheduleOfferFinalizedCheck();
                 }).catch((err) => {
                     log.warn(`Failed to reveal bid for import ${dataId} and DC ${dcWallet}. ${err}`);
                 });
@@ -120,6 +122,66 @@ class DHService {
             revealBid, Math.round((6 / 8) * totalEscrowTime * 1000),
             dcWallet, dataId, price, stake, bidIndex,
         );
+    }
+
+    /**
+     * Schedule check whether the offer is finalized or not
+     * @param dataId    Data ID
+     * @param dcWallet  DC wallet
+     */
+    static scheduleOfferFinalizedCheck(dataId, dcWallet) {
+        Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        }, (data, err) => {
+            if (err) {
+                log.error(err);
+                return true;
+            }
+            // filter events manually since Web3 filtering is not working
+            for (const event of data) {
+                const eventDataId = event.returnValues.data_id;
+                const eventDcWallet = event.returnValues.DC_wallet;
+
+                if (Number(eventDataId) === dataId
+                    && eventDcWallet === dcWallet) {
+                    log.info(`Offer for data ${dataId} successfully finalized. Check if the bid is chosen.`);
+                    DHService.scheduleBidChosenCheck(dataId, dcWallet);
+                    return true;
+                }
+            }
+            return false;
+        }, 5000, Date.now() + 10000);
+    }
+
+    /**
+     * Schedule check for whether the bid is chosed for the particular import
+     * @param dataId    Data ID
+     * @param dcWallet  DC wallet
+     */
+    static scheduleBidChosenCheck(dataId, dcWallet) {
+        Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'BidTaken', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        }, (data, err) => {
+            if (err) {
+                log.error(err);
+                return true;
+            }
+            // filter events manually since Web3 filtering is not working
+            for (const event of data) {
+                const eventDataId = event.returnValues.data_id;
+                const eventDhWallet = event.returnValues.DH_wallet;
+                const eventDcWallet = event.returnValues.DC_wallet;
+
+                if (Number(eventDataId) === dataId
+                    && eventDhWallet === config.node_wallet && eventDcWallet === dcWallet) {
+                    log.info(`The bid is chosen for DC ${dcWallet} and data ${dataId}`);
+                    return true;
+                }
+            }
+            return false;
+        }, 5000, Date.now() + 20000);
     }
 }
 
