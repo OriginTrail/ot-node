@@ -58,12 +58,55 @@ class DCService {
                     totalDocuments,
                     replicationFactor,
                 });
+                DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
                 log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
             });
         }).catch((err) => {
             log.warn(`Failed to increase bidding approval. ${JSON.stringify(err)}`);
         });
+    }
+
+
+    /**
+     * Schedule chose DHs
+     * @param dataId            Data ID
+     * @param totalEscrowTime   Total escrow time
+     */
+    static scheduleChooseBids(dataId, totalEscrowTime) {
+        function chooseBids(dataId) {
+            Blockchain.bc.chooseBids(dataId)
+                .then(() => {
+                    log.info(`Bids choose called for data ${dataId}`);
+
+                    Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
+                        fromBlock: 0,
+                        toBlock: 'latest',
+                    }, (data, err) => {
+                        if (err) {
+                            log.error(err);
+                            return true;
+                        }
+                        // filter events manually since Web3 filtering is not working
+                        for (const event of data) {
+                            const eventDataId = event.returnValues.data_id;
+                            const eventDcWallet = event.returnValues.DC_wallet;
+
+                            if (Number(eventDataId) === dataId
+                                && eventDcWallet === config.node_wallet) {
+                                log.info(`Offer for data ${dataId} successfully finalized`);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }, 5000, Date.now() + 10000);
+                }).catch((err) => {
+                    log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
+                });
+        }
+        setTimeout(
+            // change time period in order to test choose bids
+            chooseBids, totalEscrowTime, dataId);
     }
 }
 
