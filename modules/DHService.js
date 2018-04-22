@@ -50,8 +50,8 @@ class DHService {
         ).toString('hex');
 
         log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
-        Blockchain.bc.addBid(dcWallet, dataId, config.identity, bidHash)
-            .then(() => {
+        Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
+            .then((tx) => {
                 Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'AddedBid', {
                     fromBlock: 0,
                     toBlock: 'latest',
