@@ -237,13 +237,12 @@ contract Bidding {
 				sum = sum.add(bid[msg.sender][data_id][j].chance);
 			}
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
-			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.chance
-				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.chance){
+			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount + chosenBid.stake_amount
+				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount + chosenBid.stake_amount){
 
 				this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
-				uint amount_to_transfer = chosenBid.chance;
+				uint amount_to_transfer = chosenBid.token_amount + chosenBid.stake_amount;
 				chosenBid.chance = 0;
-				token.transferFrom(msg.sender,escrow,amount_to_transfer);
 				
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
 				chosenBid.chosen = true;
@@ -258,6 +257,11 @@ contract Bidding {
 				chosenBid.chance = 0;
 			}
 		}
+
+        if (amount_to_transfer >0){
+            token.transferFrom(msg.sender,escrow,amount_to_transfer);    
+        }
+        
 
 		offer[msg.sender][data_id].finalized = true;
 
