@@ -323,6 +323,7 @@ describe('graph module ', () => {
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
     });
+
     it('decryptVertices() of encryptVertices() should give back original data', async () => {
         const vertexData = 1;
 

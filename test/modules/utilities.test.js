@@ -9,6 +9,7 @@ const Utilities = require('../../modules/Utilities');
 const config = require('../../modules/Config');
 const Storage = require('../../modules/Storage');
 const kadence = require('@kadenceproject/kadence');
+const databaseData = require('./test_data/database-data.js');
 
 let myConfig;
 
@@ -148,6 +149,27 @@ describe('Utilities module', () => {
         // compare values at indexes
         for (let index = 0; index < Object.keys(expectedSorted).length; index += 1) {
             assert.equal(actualSorted.index, expectedSorted.index);
+        }
+    });
+
+    it('copyObject() check', () => {
+        const edgeOne = databaseData.edges[0];
+        const copyEdgeOne = Utilities.copyObject(edgeOne);
+        assert.deepEqual(edgeOne, copyEdgeOne);
+    });
+
+    it('executeCallback() callback not defined scenario', async () => {
+        // helper function
+        function first(timeInterval) {
+            setTimeout(() => function () {
+                console.log('Helper function log');
+            }, 1000);
+        }
+        try {
+            const result = await Utilities.executeCallback(first(), false);
+            assert.isUndefined(result);
+        } catch (error) {
+            console.log(error);
         }
     });
 

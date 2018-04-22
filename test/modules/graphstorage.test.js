@@ -87,6 +87,30 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('attempt to save vertex in non existing Document Collection should fail', async () => {
+        try {
+            await myGraphStorage.addVertex(documentCollectionName, vertexOne);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
+        }
+    });
+
+    it('attempt to save edge in non existing Edge Collection should fail', async () => {
+        try {
+            await myGraphStorage.addEdge(edgeCollectionName, edgeOne);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
+        try {
+            await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
     it('.createCollection() should create Document Collection', async () => {
         // first time creating Document Collection
         await myGraphStorage.createCollection(documentCollectionName).then((response) => {
@@ -121,6 +145,7 @@ describe('GraphStorage module', () => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
+
 
     it('adding 2nd vertex from invalid storage should fail', async () => {
         try {
