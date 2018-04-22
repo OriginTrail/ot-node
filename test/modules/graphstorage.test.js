@@ -46,6 +46,7 @@ describe('GraphStorage module', () => {
         );
 
         myGraphStorage = new GraphStorage(selectedDatabase);
+        expect(myGraphStorage).to.be.an.instanceof(GraphStorage);
     });
 
     it('connect() and identify()', async () => {

@@ -52,17 +52,12 @@ class ArangoJS {
      */
     runQuery(queryString, params) {
         return new Promise((resolve, reject) => {
-            try {
-                this.db.query(queryString, params).then((cursor) => {
-                    resolve(cursor.all());
-                }).catch((err) => {
-                    console.log(err);
-                    reject(err);
-                });
-            } catch (err) {
+            this.db.query(queryString, params).then((cursor) => {
+                resolve(cursor.all());
+            }).catch((err) => {
                 console.log(err);
                 reject(err);
-            }
+            });
         });
     }
 
