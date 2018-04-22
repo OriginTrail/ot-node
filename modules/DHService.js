@@ -102,16 +102,17 @@ class DHService {
         Models.bids.findOne({ where: { data_id: data.data_id } }).then((bidModel) => {
             // TODO: Check data before signing escrow.
 
+            const bid = bidModel.get({ plain: true });
             importer.importJSON(data)
                 .then(() => {
                     log.trace('[DH] Replication finished');
 
-                    Blockchain.bc.increaseApproval(bidModel.price).then(() => {
+                    Blockchain.bc.increaseApproval(bid.price).then(() => {
                         Blockchain.bc.verifyEscrow(
                             config.node_wallet,
                             data.data_id,
-                            bidModel.price,
-                            bidModel.total_escrow_time,
+                            bid.price,
+                            bid.total_escrow_time,
                         ).catch((error) => {
                             log.error(`Failed to verify escrow. ${error}`);
                         });
@@ -208,7 +209,8 @@ class DHService {
                     log.info(`The bid is chosen for DC ${dcWallet} and data ${dataId}`);
 
                     Models.bid.findOne({ where: { data_id: dataId } }).then((bidModel) => {
-                        node.ot.replicationRequest({ dataId, wallet: config.node_wallet }, bidModel.dc_id, (err) => {
+                        const bid = bidModel.get({ plain: true });
+                        node.ot.replicationRequest({ dataId, wallet: config.node_wallet }, bid.dc_id, (err) => {
                             if (err) {
                                 log.warn(`Failed to send replication request ${err}`);
                                 // TODO Cancel bid here.
