@@ -52,17 +52,11 @@ class ArangoJS {
      */
     runQuery(queryString, params) {
         return new Promise((resolve, reject) => {
-            try {
-                this.db.query(queryString, params).then((cursor) => {
-                    resolve(cursor.all());
-                }).catch((err) => {
-                    console.log(err);
-                    reject(err);
-                });
-            } catch (err) {
-                console.log(err);
+            this.db.query(queryString, params).then((cursor) => {
+                resolve(cursor.all());
+            }).catch((err) => {
                 reject(err);
-            }
+            });
         });
     }
 
@@ -108,7 +102,7 @@ class ArangoJS {
                     reject(err);
                 },
             ).catch((err) => {
-                console.log(err);
+                reject(err);
             });
         });
     }
@@ -130,7 +124,7 @@ class ArangoJS {
                     reject(err);
                 },
             ).catch((err) => {
-                console.log(err);
+                reject(err);
             });
         });
     }
@@ -164,7 +158,6 @@ class ArangoJS {
                     }
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -186,7 +179,6 @@ class ArangoJS {
                     }
                 },
             ).catch((err) => {
-                console.log(err);
                 reject(err);
             });
         });
@@ -195,6 +187,24 @@ class ArangoJS {
     getVerticesByImportId(data_id) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+
+            if (typeof data_id !== 'number') {
+                data_id = parseInt(data_id, 10);
+            }
+
+            const params = { importId: data_id };
+
+            this.runQuery(queryString, params).then((response) => {
+                resolve(response);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    getEdgesByImportId(data_id) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
             if (typeof data_id !== 'number') {
                 data_id = parseInt(data_id, 10);

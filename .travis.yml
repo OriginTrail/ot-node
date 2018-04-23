@@ -4,6 +4,7 @@ node_js:
 env:
   - NODE_ENV=test
 before_script:
+  - cp .env.example .env
   - touch modules/Database/system.db
   - ./node_modules/.bin/sequelize db:migrate
   - ./node_modules/.bin/sequelize db:seed:all
@@ -17,10 +18,9 @@ script:
   - npm test
   - npm start &>start.log &
   - sleep 20
-  # [RS] npm start is not healthy atm, enable back once it is
-  # - jobs
-  # - kill %1
-  # - node isStartHealthy.js
+  - jobs
+  - kill %1
+  - node isStartHealthy.js
 after_script:
   - cat start.log
   - rm -f start.log

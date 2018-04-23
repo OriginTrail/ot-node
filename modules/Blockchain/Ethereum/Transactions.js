@@ -37,7 +37,6 @@ class Transactions {
             newTransaction.args,
             newTransaction.options,
         );
-
         const transaction = new Tx(rawTx);
         transaction.sign(this.privateKey);
 

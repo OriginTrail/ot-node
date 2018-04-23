@@ -1,5 +1,5 @@
 const { describe, it } = require('mocha');
-const { assert } = require('chai');
+const { assert, expect } = require('chai');
 
 const MTree = require('../../modules/mtree')();
 
@@ -16,6 +16,9 @@ describe('MTree module', () => {
         assert.equal(myMTree.root().length, 64);
         assert.equal(alsoMyTree.root(), alsoMyRoot);
         assert.equal(alsoMyTree.root().length, 64);
+
+        expect(myMTree).to.be.an.instanceof(MTree);
+        expect(alsoMyTree).to.be.an.instanceof(MTree);
     });
 
     it('digestFn() ', () => {

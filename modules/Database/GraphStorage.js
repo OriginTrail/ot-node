@@ -131,12 +131,12 @@ class GraphStorage {
         return this.selectedDatabase;
     }
 
-    addEdge(collection_name, edge, callback) {
-        this.db.addDocument(collection_name, edge, callback);
+    addEdge(collection_name, edge) {
+        return this.addDocument(collection_name, edge);
     }
 
-    addVertex(collection_name, vertex, callback) {
-        this.db.addVertex(collection_name, vertex, callback);
+    addVertex(collection_name, vertex) {
+        return this.addDocument(collection_name, vertex);
     }
 
     updateDocumentImports(collectionName, document, importNumber) {
@@ -181,6 +181,25 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.getVerticesByImportId(data_id).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Gets edges by import ID from the underlying database
+     * @param data_id       Import ID
+     * @returns {Promise}
+     */
+    getEdgesByImportId(data_id) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getEdgesByImportId(data_id).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

@@ -8,9 +8,6 @@ const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 
-// TODO: Rewrite this for Mocha tests.
-
-
 // Global declarations.
 const vertexData = [
     { vertexKey: 'vertex0', data: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt' },
@@ -114,6 +111,8 @@ function testGenerateTests() {
         Challenge.generateTests(dataCreatorId, importId, 0, startTime, endTime, 32, vertexData);
     };
     assert.throws(testFunc, 'Zero tests asked. Should crash!');
+
+    // Negative amount of challenges to generate.
     testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, -1, startTime, endTime, 32, vertexData);
     };
@@ -124,6 +123,8 @@ function testGenerateTests() {
         Challenge.generateTests(dataCreatorId, importId, 10, startTime, endTime, 0, vertexData);
     };
     assert.throws(testFunc, 'Zero block size asked. Should crash!');
+
+    // Negative block size.
     testFunc = function testFunc() {
         Challenge.generateTests(dataCreatorId, importId, 10, startTime, endTime, -1, vertexData);
     };
@@ -139,7 +140,7 @@ describe('Challenge tests', () => {
         ];
 
         blockTests.forEach((test) => {
-            it(`should correctly generate blocks of ${test.args[1]} size`, () => {
+            it(`should correctly generate blocks of ${test.args[1]} bytes`, () => {
                 const blocks = Challenge.__getBlocks__(test.args[0], test.args[1]);
                 checkBlocks(blocks, test.args[0]);
             });
@@ -170,7 +171,7 @@ describe('Challenge tests', () => {
         ];
 
         challengeTests.forEach((test) => {
-            it(`should correctly generate ${test.args[2]} challenges of ${test.args[5]} size`, () => {
+            it(`should correctly generate ${test.args[2]} challenges of ${test.args[5]} bytes`, () => {
                 const tests = Challenge.generateTests(...test.args);
                 checkForTests(
                     tests, test.args[3], test.args[4],

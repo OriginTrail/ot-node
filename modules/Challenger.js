@@ -18,7 +18,7 @@ function sendChallenge(challenge) {
         },
     };
 
-    node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
+    node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;
@@ -52,7 +52,7 @@ function intervalFunc() {
         if (challenges.length > 0) {
             challenges.forEach(challenge => sendChallenge(challenge));
         } else {
-            log.trace('No challenges found.');
+            //  log.trace('No challenges found.');
         }
     }).catch((err) => {
         log.error(`Failed to get unanswered challenges. Error: ${err}.`);
