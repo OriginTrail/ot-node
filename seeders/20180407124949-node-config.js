@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const bootstrap_node = (process.env.BOOTSTRAP_NODE) ? `"${process.env.BOOTSTRAP_NODE}"` : '';
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'node_wallet',
@@ -94,7 +95,7 @@ module.exports = {
         value: '[]',
     }, {
         key: 'network_bootstrap_nodes',
-        value: `["${process.env.BOOTSTRAP_NODE}"]`,
+        value: `[${bootstrap_node}]`,
     }, {
         key: 'solve_hashes',
         value: '0',
