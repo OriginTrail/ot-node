@@ -97,6 +97,14 @@ describe('Arangojs module ', async () => {
         assert.equal(info.length, 2);
     });
 
+    it('.createEdgeCollection() with null as collection name', async () => {
+        try {
+            await testDb.createEdgeCollection(null);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: illegal name') >= 0);
+        }
+    });
+
     it('.addDocument() should save vertex in Document Collection', () => {
         testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
@@ -116,6 +124,20 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex.vertex_key, vertexOne.vertex_key);
         // eslint-disable-next-line no-underscore-dangle
         assert.equal(retrievedVertex._key, vertexOne._key);
+    });
+
+    it('trying to add same document again should resut in double insert', () => {
+        testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
+            assert.equal(response, 'Double insert');
+        });
+    });
+
+    it('trying to add null document', async () => {
+        try {
+            await testDb.addDocument(documentCollectionName, null);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: invalid document type') >= 0);
+        }
     });
 
     it('.addDocument() should save edge in Edge Document Collection', () => {
@@ -175,6 +197,17 @@ describe('Arangojs module ', async () => {
 
     it('getVerticesByImportId() ', async () => {
         await testDb.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+            assert.deepEqual(response[0].data, vertexOne.data);
+            assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+            assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+            assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+            assert.deepEqual(response[0].imports, vertexOne.imports);
+            assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        });
+    });
+
+    it('getVerticesByImportId() with valid string importId value ', async () => {
+        await testDb.getVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);

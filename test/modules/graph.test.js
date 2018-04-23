@@ -3,20 +3,22 @@ const {
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
-
 const Graph = require('../../modules/Graph');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 
+
 const deasync = require('deasync-promise');
 
 describe('graph module ', () => {
-    beforeEach('restore stubs', async () => {
-        this.encrytionMock = sinon.sandbox.mock(Encryption);
-    });
-    afterEach('restore stubs', async () => {
-        this.encrytionMock.restore();
-    });
+    // TODO reenable with fix of .skipped tests
+    // beforeEach('create stubs', async () => {
+    //     this.encrytionMock = sinon.sandbox.mock(Encryption);
+    // });
+    // TODO reenable with fix of .skipped tests
+    // afterEach('restore stubs', async () => {
+    //     this.encrytionMock.restore();
+    // });
     it('BFS empty graph', () => {
         const test_raw_graph = {};
         const traversal = Graph.bfs(test_raw_graph, 1111, false);
@@ -295,7 +297,7 @@ describe('graph module ', () => {
             },
         });
     });
-    // TODO RS
+    // TODO
     it.skip('Encrypt vertices, key not found test', () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
         const sysdb = new SystemStorageStub();
@@ -321,7 +323,20 @@ describe('graph module ', () => {
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
     });
-    // TODO RS
+    it('decryptVertices() of encryptVertices() should give back original data', async () => {
+        const vertexData = 1;
+
+        const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
+        assert.isNotNull(encryptedVertices);
+        const encryptedVertex = encryptedVertices.vertices[0];
+        assert.isNotNull(encryptedVertex);
+
+        // eslint-disable-next-line max-len
+        const decryptedVertices = await Graph.decryptVertices(encryptedVertices.vertices, encryptedVertices.vertices[0].decryption_key);
+        assert.isTrue(decryptedVertices[0].data === vertexData);
+    });
+
+    // TODO
     it.skip('Encrypt vertices, key found test', () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
         const sysdb = new SystemStorageStub();
