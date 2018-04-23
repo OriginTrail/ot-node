@@ -26,11 +26,10 @@ class DHService {
         minStakeAmount,
         dataSizeBytes,
     ) {
-        // TODO store offer if we want to participate.
-        const minPrice = config.dh_min_price;
-        const maxPrice = config.dh_max_price;
-        const maxStakeAmount = config.dh_max_stake;
-        const maxDataSizeBytes = config.dh_max_data_size_bytes;
+        const minPrice = parseInt(config.dh_min_price, 10);
+        const maxPrice = parseInt(config.dh_max_price, 10);
+        const maxStakeAmount = parseInt(config.dh_max_stake, 10);
+        const maxDataSizeBytes = parseInt(config.dh_max_data_size_bytes, 10);
 
         const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
 
