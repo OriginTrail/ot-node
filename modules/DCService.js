@@ -147,13 +147,13 @@ class DCService {
                 const eventDcWallet = event.returnValues.DC_wallet;
 
                 if (Number(eventDataId) === dataId && eventDcWallet === config.node_wallet) {
-                    log.info(`The bid is chosen for DC ${eventDcWallet} and data ${dataId}`);
+                    log.info(`The bid is chosen for DH ${eventDhWallet} and data ${dataId}`);
 
                     // Sign escrow.
-                    Models.offers.create({ where: { id: dataId } }).then((offerModel) => {
+                    Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
                         const offer = offerModel.get({ plain: true });
                         Blockchain.bc.increaseBiddingApproval(offer.price_tokens).then(() => {
-                            Blockchain.bc.initiateEscrow(eventDhWallet, offer.price_tokens).catch((error) => {
+                            Blockchain.bc.initiateEscrow(eventDhWallet, dataId, offer.price_tokens, offer.data_lifespan).catch((error) => {
                                 log.error(`Failed find offer with data ID ${dataId}. ${error}`);
                             });
                         }).catch(error => log.error(error));
