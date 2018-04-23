@@ -5,7 +5,6 @@ const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
 const Storage = require('./Storage');
 const deasync = require('deasync-promise');
-const challenger = require('./Challenger');
 const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
@@ -42,10 +41,8 @@ class DataReplication {
                 16, data.encryptedVertices.vertices,
             );
 
-            Challenge.addTests(tests).then(() => {
-                challenger.startChallenging();
-            }, () => {
-                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            Challenge.addTests(tests).catch((error) => {
+                log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}. ${error}`);
             });
 
             const payload = {

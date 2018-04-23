@@ -153,7 +153,7 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, totalTime], options);
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, Math.round(totalTime / 1000)], options);
     }
 
     /**
@@ -172,7 +172,7 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, totalTime], options);
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, Math.round(totalTime / 1000)], options);
     }
 
     /**
@@ -205,7 +205,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - payOut');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, dataId], options);
     }
 
@@ -234,7 +234,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - createOffer');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [dataId, this._normalizeNodeId(nodeId),
@@ -256,7 +256,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - cancelOffer');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelOffer',
             [dataId], options,
@@ -309,7 +309,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [dcWallet, dataId, this._normalizeNodeId(nodeId), bidHash], options,
@@ -330,7 +330,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - cancelBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelBid',
             [dcWallet, dataId, bidIndex], options,
@@ -354,7 +354,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - revealBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'revealBid',
             [dcWallet, dataId, this._normalizeNodeId(nodeId), tokenAmount, stakeAmount, bidIndex], options,
@@ -373,7 +373,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
             [dataId], options,
@@ -394,7 +394,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Initiating escrow - getBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'getBid',
             [dcWallet, dataId, bidIndex], options,

@@ -38,35 +38,48 @@ class DCService {
         const scId = SmartContractInstance.sc.createOffer(dataId, offerParams);
         log.info(`Created offer ${scId}`);
 
-        Blockchain.bc.increaseBiddingApproval(minStakeAmount).then(() => {
-            Blockchain.bc.createOffer(
-                dataId, config.identity,
-                totalEscrowTime, minStakeAmount,
-                biddingTime,
-                minNumberOfBids,
-                totalDocuments, replicationFactor,
-            ).then((startTime) => {
-                log.info('Offer written to blockchain. Broadcast event.');
-                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
-                    dataId,
-                    dcId: config.identity,
-                    dcWallet: config.node_wallet,
-                    totalEscrowTime,
-                    minStakeAmount,
+        Models.offers.create({
+            id: dataId,
+            data_lifespan: totalEscrowTime,
+            start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
+            tender_duration: biddingTime,
+            min_number_applicants: minNumberOfBids,
+            price_tokens: offerParams.price,
+            data_size_bytes: offerParams.dataSizeBytes,
+            replication_number: replicationFactor,
+            root_hash: rootHash,
+        }).then((offer) => {
+            Blockchain.bc.increaseBiddingApproval(minStakeAmount).then(() => {
+                Blockchain.bc.createOffer(
+                    dataId, config.identity,
+                    totalEscrowTime, minStakeAmount,
                     biddingTime,
                     minNumberOfBids,
-                    totalDocuments,
-                    replicationFactor,
+                    totalDocuments, replicationFactor,
+                ).then((startTime) => {
+                    log.info('Offer written to blockchain. Broadcast event.');
+                    node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
+                        dataId,
+                        dcId: config.identity,
+                        dcWallet: config.node_wallet,
+                        totalEscrowTime,
+                        minStakeAmount,
+                        biddingTime,
+                        minNumberOfBids,
+                        totalDocuments,
+                        replicationFactor,
+                    });
+                    DCService.scheduleChooseBids(dataId, totalEscrowTime);
+                }).catch((err) => {
+                    log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
                 });
-                DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
-                log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
+                log.warn(`Failed to increase bidding approval. ${JSON.stringify(err)}`);
             });
-        }).catch((err) => {
-            log.warn(`Failed to increase bidding approval. ${JSON.stringify(err)}`);
+        }).catch((error) => {
+            log.error(`Failed to write offer to DB. ${error}`);
         });
     }
-
 
     /**
      * Schedule chose DHs
@@ -134,12 +147,13 @@ class DCService {
                 const eventDcWallet = event.returnValues.DC_wallet;
 
                 if (Number(eventDataId) === dataId && eventDcWallet === config.node_wallet) {
-                    log.info(`The bid is chosen for DC ${eventDcWallet} and data ${dataId}`);
+                    log.info(`The bid is chosen for DH ${eventDhWallet} and data ${dataId}`);
 
                     // Sign escrow.
-                    Models.offers({ where: { id: dataId } }).then((offerModel) => {
-                        Blockchain.bc.increaseBiddingApproval(offerModel.price_tokens).then(() => {
-                            Blockchain.bc.initiateEscrow(eventDhWallet, offerModel.price_tokens).catch((error) => {
+                    Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
+                        const offer = offerModel.get({ plain: true });
+                        Blockchain.bc.increaseBiddingApproval(offer.price_tokens).then(() => {
+                            Blockchain.bc.initiateEscrow(eventDhWallet, dataId, offer.price_tokens, offer.data_lifespan).catch((error) => {
                                 log.error(`Failed find offer with data ID ${dataId}. ${error}`);
                             });
                         }).catch(error => log.error(error));
