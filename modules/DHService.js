@@ -3,6 +3,7 @@ const config = require('./Config');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
 const Blockchain = require('./BlockChainInstance');
+const importer = require('./importer')();
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -102,6 +103,35 @@ class DHService {
                 log.error(x);
                 log.error(y);
             });
+    }
+
+    static handleImport(data) {
+        Models.bids.findOne({ where: { data_id: data.data_id } }).then((bidModel) => {
+            // TODO: Check data before signing escrow.
+
+            const bid = bidModel.get({ plain: true });
+            importer.importJSON(data)
+                .then(() => {
+                    log.trace('[DH] Replication finished');
+
+                    Blockchain.bc.increaseApproval(bid.price).then(() => {
+                        Blockchain.bc.verifyEscrow(
+                            config.node_wallet,
+                            data.data_id,
+                            bid.price,
+                            bid.total_escrow_time,
+                        ).catch((error) => {
+                            log.error(`Failed to verify escrow. ${error}`);
+                        });
+                    }).catch((error) => {
+                        log.error(`Failed to increase approval. ${error}`);
+                    });
+                }).catch((error) => {
+                    log.error(`Failed to import data. ${error}`);
+                });
+        }).catch((error) => {
+            log.error(`Couldn't find bid with data ID ${data.data_id}. ${error}.`);
+        });
     }
 
     /**
@@ -214,6 +244,17 @@ class DHService {
                 if (Number(eventDataId) === dataId
                     && eventDhWallet === config.node_wallet && eventDcWallet === dcWallet) {
                     log.info(`The bid is chosen for DC ${dcWallet} and data ${dataId}`);
+
+                    Models.bid.findOne({ where: { data_id: dataId } }).then((bidModel) => {
+                        const bid = bidModel.get({ plain: true });
+                        node.ot.replicationRequest({ dataId, wallet: config.node_wallet }, bid.dc_id, (err) => {
+                            if (err) {
+                                log.warn(`Failed to send replication request ${err}`);
+                                // TODO Cancel bid here.
+                            }
+                        });
+                    });
+
                     return true;
                 }
             }

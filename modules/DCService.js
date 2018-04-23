@@ -97,6 +97,7 @@ class DCService {
                                 if (Number(eventDataId) === dataId
                                     && eventDcWallet === config.node_wallet) {
                                     log.info(`Offer for data ${dataId} successfully finalized`);
+                                    DCService.handleFinalizedOffer(dataId);
                                     return true;
                                 }
                             }
@@ -111,6 +112,42 @@ class DCService {
         }
         // change time period in order to test choose bids
         setTimeout(chooseBids, 4 * 60 * 1000, dataId);
+    }
+
+    /**
+     * Process finalized offer
+     * @param dataId    Data ID
+     */
+    static handleFinalizedOffer(dataId) {
+        Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'BidTaken', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        }, (data, err) => {
+            if (err) {
+                log.error(err);
+                return true;
+            }
+            // filter events manually since Web3 filtering is not working
+            for (const event of data) {
+                const eventDataId = event.returnValues.data_id;
+                const eventDhWallet = event.returnValues.DH_wallet;
+                const eventDcWallet = event.returnValues.DC_wallet;
+
+                if (Number(eventDataId) === dataId && eventDcWallet === config.node_wallet) {
+                    log.info(`The bid is chosen for DC ${eventDcWallet} and data ${dataId}`);
+
+                    // Sign escrow.
+                    Models.offers({ where: { id: dataId } }).then((offerModel) => {
+                        Blockchain.bc.increaseBiddingApproval(offerModel.price_tokens).then(() => {
+                            Blockchain.bc.initiateEscrow(eventDhWallet, offerModel.price_tokens).catch((error) => {
+                                log.error(`Failed find offer with data ID ${dataId}. ${error}`);
+                            });
+                        }).catch(error => log.error(error));
+                    }).catch(error => log.error(error));
+                }
+            }
+            return true;
+        }, 5000, Date.now() + 20000);
     }
 }
 
