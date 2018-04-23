@@ -66,6 +66,10 @@
             "type":"uint256"
          },
          {
+            "name":"stake_amount",
+            "type":"uint256"
+         },
+         {
             "name":"last_confirmation_time",
             "type":"uint256"
          },
@@ -87,6 +91,58 @@
       "type":"function"
    },
    {
+      "constant":true,
+      "inputs":[
+
+      ],
+      "name":"owner",
+      "outputs":[
+         {
+            "name":"",
+            "type":"address"
+         }
+      ],
+      "payable":false,
+      "stateMutability":"view",
+      "type":"function"
+   },
+   {
+      "constant":false,
+      "inputs":[
+         {
+            "name":"DC_wallet",
+            "type":"address"
+         },
+         {
+            "name":"DH_wallet",
+            "type":"address"
+         },
+         {
+            "name":"data_id",
+            "type":"uint256"
+         },
+         {
+            "name":"token_amount",
+            "type":"uint256"
+         },
+         {
+            "name":"stake_amount",
+            "type":"uint256"
+         },
+         {
+            "name":"total_time",
+            "type":"uint256"
+         }
+      ],
+      "name":"initiateEscrow",
+      "outputs":[
+
+      ],
+      "payable":false,
+      "stateMutability":"nonpayable",
+      "type":"function"
+   },
+   {
       "constant":false,
       "inputs":[
          {
@@ -99,6 +155,10 @@
          },
          {
             "name":"token_amount",
+            "type":"uint256"
+         },
+         {
+            "name":"stake_amount",
             "type":"uint256"
          },
          {
@@ -121,23 +181,11 @@
       "constant":false,
       "inputs":[
          {
-            "name":"DH_wallet",
+            "name":"newOwner",
             "type":"address"
-         },
-         {
-            "name":"data_id",
-            "type":"uint256"
-         },
-         {
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"total_time",
-            "type":"uint256"
          }
       ],
-      "name":"initiateEscrow",
+      "name":"transferOwnership",
       "outputs":[
 
       ],
@@ -188,6 +236,21 @@
          {
             "indexed":false,
             "name":"data_id",
+            "type":"uint256"
+         },
+         {
+            "indexed":false,
+            "name":"token_amount",
+            "type":"uint256"
+         },
+         {
+            "indexed":false,
+            "name":"stake_amount",
+            "type":"uint256"
+         },
+         {
+            "indexed":false,
+            "name":"total_time",
             "type":"uint256"
          }
       ],
@@ -258,6 +321,23 @@
          }
       ],
       "name":"EscrowCompleted",
+      "type":"event"
+   },
+   {
+      "anonymous":false,
+      "inputs":[
+         {
+            "indexed":true,
+            "name":"previousOwner",
+            "type":"address"
+         },
+         {
+            "indexed":true,
+            "name":"newOwner",
+            "type":"address"
+         }
+      ],
+      "name":"OwnershipTransferred",
       "type":"event"
    }
 ]

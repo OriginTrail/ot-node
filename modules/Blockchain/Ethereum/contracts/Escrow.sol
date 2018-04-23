@@ -25,7 +25,45 @@ library SafeMath {
 		return c;
 	}
 }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
 contract ERC20Basic {
 	uint256 public totalSupply;
 	function balanceOf(address who) public constant returns (uint256);
@@ -40,7 +78,7 @@ contract ERC20 is ERC20Basic {
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-contract EscrowHolder {
+contract EscrowHolder is Ownable{
 	using SafeMath for uint256;
 
 	ERC20 public token;
@@ -60,6 +98,8 @@ contract EscrowHolder {
 	struct EscrowDefinition{
 		uint token_amount;
 		uint tokens_sent;
+		
+		uint stake_amount;
 
 		uint last_confirmation_time;
 		uint end_time;
@@ -70,30 +110,31 @@ contract EscrowHolder {
 
 	mapping(address => mapping(address => mapping(uint => EscrowDefinition))) public escrow;
 
-	event EscrowInitated(address DC_wallet, address DH_wallet, uint data_id);
+	event EscrowInitated(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time);
 	event EscrowVerified(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCanceled(address DC_wallet, address DH_wallet, uint data_id);
 	event EscrowCompleted(address DC_wallet, address DH_wallet, uint data_id);
 
-	function initiateEscrow(address DH_wallet, uint data_id, uint token_amount,	uint total_time)
-	public {
-		require(escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.active
-			&&  escrow[msg.sender][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
+	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time)
+	public onlyOwner{
+		require(escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.active
+			&&  escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
 
 		require(token_amount > 0 && total_time > 0);
 
-		escrow[msg.sender][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, 0, 0, total_time, EscrowStatus.initiated);
+		escrow[DC_wallet][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, stake_amount, 0, 0, total_time, EscrowStatus.initiated);
 
-		EscrowInitated(msg.sender, DH_wallet, data_id);
+		EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time);
 	}
 
-	function verifyEscrow(address DC_wallet, uint data_id, uint token_amount, uint total_time)
+	function verifyEscrow(address DC_wallet, uint data_id, uint token_amount, uint stake_amount, uint total_time)
 	public returns (bool isVerified){
 		isVerified = false;
 
 		EscrowDefinition storage escrow_def = escrow[DC_wallet][msg.sender][data_id];
 
 		require(escrow_def.token_amount == token_amount &&
+		    escrow_def.stake_amount == stake_amount &&
 			escrow_def.escrow_status == EscrowStatus.initiated &&
 			escrow_def.total_time == total_time);
 
@@ -116,6 +157,10 @@ contract EscrowHolder {
 		if(this_escrow.escrow_status == EscrowStatus.active){
 			uint end_time = block.timestamp;
 			if(end_time > this_escrow.end_time){
+			    uint stake_to_send = this_escrow.stake_amount;
+			    this_escrow.stake_amount = 0;
+			    if(stake_to_send > 0) token.transfer(msg.sender, stake_to_send);
+			    
 				amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 				this_escrow.escrow_status = EscrowStatus.completed;
 				EscrowCompleted(DC_wallet, msg.sender, data_id);
@@ -164,10 +209,13 @@ contract EscrowHolder {
 		else {
 			this_escrow.escrow_status = EscrowStatus.canceled;
 		}
+		
+		uint stake_to_send = this_escrow.stake_amount;
+	    this_escrow.stake_amount = 0;
+		if(stake_to_send > 0) token.transfer(DH_wallet, stake_to_send);
 
 		if(amount_to_send > 0) token.transfer(msg.sender, amount_to_send);
 		EscrowCanceled(msg.sender, DH_wallet, data_id);
 	}
 
 }
-

@@ -40,17 +40,22 @@ contract ERC20 is ERC20Basic {
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+contract EscrowHolder {
+     function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount,uint stake_amount, uint total_time) public;
+}
+
 contract Bidding {
 	using SafeMath for uint256;
 
 	ERC20 public token;
-	address public escrow;
+	EscrowHolder public escrow;
+	uint TOTAL_NUM_TOKENS = 500000000;
 
 	function Bidding(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
-		escrow = escrowAddress;
+		escrow = EscrowHolder(escrowAddress);
 	}
 
 
@@ -60,7 +65,7 @@ contract Bidding {
 	struct OfferDefinition{
 		//Parameters of one escrow
 		uint total_escrow_time;
-		// uint max_token_amount;
+		uint max_token_amount;
 		uint min_stake_amount; 
 
 		//Parameters for the bidding 
@@ -98,7 +103,7 @@ contract Bidding {
 
 	uint256 x;
 
-	event OfferCreated(address DC_wallet,uint DC_node_id, uint data_id, uint total_escrow_time, uint min_stake_amount, uint data_size);
+	event OfferCreated(address DC_wallet,uint DC_node_id, uint data_id, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint data_size);
 	event OfferCanceled(address DC_wallet, uint data_id);
 	// event RevealPhaseStarted(address DC_wallet, uint data_id);
 	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
@@ -112,6 +117,7 @@ contract Bidding {
 	uint data_id, 
 	uint DC_node_id,
 		uint total_escrow_time, 
+		uint max_token_amount,
 		uint min_stake_amount,
 		uint bidding_phase_time,
 		uint min_number_of_bids, 
@@ -119,7 +125,7 @@ contract Bidding {
 		uint replication_factor)
 	public returns (uint choose_start_time){
 
-		require(total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 0);
+		require(max_token_amount > 0 && total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 0);
 		require(replication_factor <= min_number_of_bids);
 		require(offer[msg.sender][data_id].active == false);
 
@@ -127,7 +133,7 @@ contract Bidding {
 		// token.transferFrom(msg.sender,this,SafeMath.mul(tokens_per_DH,replication_factor));
 		
 		offer[msg.sender][data_id].total_escrow_time = total_escrow_time;
-		//offer[msg.sender][data_id].min_token_amount = min_token_amount;
+		offer[msg.sender][data_id].max_token_amount = max_token_amount;
 		offer[msg.sender][data_id].min_stake_amount = min_stake_amount;
 
 		offer[msg.sender][data_id].reveal_start_time = block.timestamp + bidding_phase_time;
@@ -141,7 +147,7 @@ contract Bidding {
 	    offer[msg.sender][data_id].number_of_bids_revealed = 0;
 		offer[msg.sender][data_id].active = true;
 		offer[msg.sender][data_id].finalized = false;
-		OfferCreated(msg.sender, DC_node_id, data_id, total_escrow_time, min_stake_amount, data_size);
+		OfferCreated(msg.sender, DC_node_id, data_id, total_escrow_time,max_token_amount, min_stake_amount, data_size);
 	}
 
 
@@ -153,7 +159,7 @@ contract Bidding {
 		OfferCanceled(msg.sender, data_id);
 	}
 
-    function isBidChosen(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool isBidChosen){
+    function isBidChosen(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool _isBidChosen){
         return bid[DC_wallet][data_id][bidIndex].chosen;
     }
     function getOfferStatus(address DC_wallet, uint data_id) public constant returns (bool isOfferFinal){
@@ -165,9 +171,9 @@ contract Bidding {
 		require(offer[DC_wallet][data_id].active);
 		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
 
-		bidIndex = offer[DC_wallet][data_id].number_of_bids;
+		bidIndex = offer[DC_wallet][data_id].number_of_bids;	
 		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
-		
+    
 		// fix
 		bid[DC_wallet][data_id][bidIndex].bid_hash = bid_hash;
 		
@@ -182,19 +188,20 @@ contract Bidding {
 		require(offer[DC_wallet][data_id].active);
 		require(offer[DC_wallet][data_id].reveal_start_time <= block.timestamp);
 		require(offer[DC_wallet][data_id].choose_start_time > block.timestamp);
-
+        require(offer[DC_wallet][data_id].max_token_amount >= token_amount);
+        
 		require(bid[DC_wallet][data_id][bidIndex].bid_hash == keccak256(msg.sender, node_id, token_amount, stake_amount));
 
 		bid[DC_wallet][data_id][bidIndex].DH_wallet = msg.sender;
 		bid[DC_wallet][data_id][bidIndex].node_id = node_id;
 		bid[DC_wallet][data_id][bidIndex].token_amount = token_amount;
 		bid[DC_wallet][data_id][bidIndex].stake_amount = stake_amount;
-		bid[DC_wallet][data_id][bidIndex].chance = 500000000 / token_amount;
+		bid[DC_wallet][data_id][bidIndex].chance = TOTAL_NUM_TOKENS / token_amount;
 		bid[DC_wallet][data_id][bidIndex].active = true;
 
 		OfferDefinition storage this_offer = offer[DC_wallet][data_id];
 
-		this_offer.total_bid_chance = this_offer.total_bid_chance.add(500000000 / token_amount);
+		this_offer.total_bid_chance = this_offer.total_bid_chance.add(TOTAL_NUM_TOKENS / token_amount);
 		this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.add(1);
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
@@ -214,8 +221,7 @@ contract Bidding {
 		bid[DC_wallet][data_id][bidIndex].active = false;
 	}
 
-	function chooseBids(uint data_id)
-	public returns (uint256[] chosen_data_holders){
+	function chooseBids(uint data_id) public returns (uint256[] chosen_data_holders){
 
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
@@ -227,6 +233,7 @@ contract Bidding {
 		
 		uint256 i = 0;
 		uint256 seed = this_offer.random_number_seed;
+		
 		while(i < N && N <= this_offer.number_of_bids_revealed){	//FIX: Should be hash(block.hash)
 			
 			uint nextIndex = (seed * this_offer.number_of_bids + block.timestamp) % this_offer.total_bid_chance;
@@ -237,13 +244,21 @@ contract Bidding {
 				sum = sum.add(bid[msg.sender][data_id][j].chance);
 			}
 			BidDefinition storage chosenBid = bid[msg.sender][data_id][j];
-			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.token_amount + chosenBid.stake_amount
-				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.token_amount + chosenBid.stake_amount){
+			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.stake_amount
+				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.stake_amount){
 
-				this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
-				uint amount_to_transfer = chosenBid.token_amount + chosenBid.stake_amount;
+                // Accumulate funds to send in one Tx 
+				uint stake_to_transfer = chosenBid.stake_amount;
+				chosenBid.stake_amount = 0;
 				chosenBid.chance = 0;
-				
+				// transfering stake
+				if(stake_to_transfer > 0) token.transferFrom(chosenBid.DH_wallet,escrow,stake_to_transfer);    
+                
+                
+                //(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time)
+
+                //Initiating new escrow
+                escrow.initiateEscrow(msg.sender, chosenBid.DH_wallet, data_id, chosenBid.token_amount, stake_to_transfer, this_offer.total_escrow_time);	
 				//TODO Ako DC odmah salje pare ovde racunati koliko treba da mu se vrati
 				chosenBid.chosen = true;
 				chosen_data_holders[i] = j;
@@ -252,29 +267,19 @@ contract Bidding {
 			}
 			else{
 				this_offer.number_of_bids_revealed = this_offer.number_of_bids_revealed.sub(1);
-				this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
+			    chosenBid.chance = 0;
 				chosenBid.active = false;
-				chosenBid.chance = 0;
+				
 			}
+			chosenBid.chance = 0;
+			this_offer.total_bid_chance = this_offer.total_bid_chance.sub(chosenBid.chance);
 		}
 
-        if (amount_to_transfer >0){
-            token.transferFrom(msg.sender,escrow,amount_to_transfer);    
-        }
         
-
+        
 		offer[msg.sender][data_id].finalized = true;
-
 		OfferFinalized(msg.sender,data_id);
 
 	}
 
-	function setX(uint256 novi_x) public{
-		x = novi_x;
-		XwasSet(x);
-	}
-
-	function getX() public constant returns (uint256 x){
-		return x;
-	}
 }
