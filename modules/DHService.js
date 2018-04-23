@@ -96,9 +96,8 @@ class DHService {
                     }
                     return false;
                 }, 5000, Date.now() + 20000);
-            }).catch((x, y) => {
-                log.error(x);
-                log.error(y);
+            }).catch((err) => {
+                log.error(err);
             });
     }
 
