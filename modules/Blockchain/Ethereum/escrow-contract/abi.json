@@ -1,343 +1,336 @@
 [
    {
-      "constant":false,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
+            "indexed": true,
+            "name": "previousOwner",
+            "type": "address"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "indexed": true,
+            "name": "newOwner",
+            "type": "address"
          }
       ],
-      "name":"payOut",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "OwnershipTransferred",
+      "type": "event"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"DH_wallet",
-            "type":"address"
+            "name": "DH_wallet",
+            "type": "address"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"cancelEscrow",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "cancelEscrow",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":true,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"",
-            "type":"address"
+            "indexed": false,
+            "name": "DH_wallet",
+            "type": "address"
          },
          {
-            "name":"",
-            "type":"uint256"
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "name":"escrow",
-      "outputs":[
-         {
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"tokens_sent",
-            "type":"uint256"
-         },
-         {
-            "name":"stake_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"last_confirmation_time",
-            "type":"uint256"
-         },
-         {
-            "name":"end_time",
-            "type":"uint256"
-         },
-         {
-            "name":"total_time",
-            "type":"uint256"
-         },
-         {
-            "name":"escrow_status",
-            "type":"uint8"
-         }
-      ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "EscrowCompleted",
+      "type": "event"
    },
    {
-      "constant":true,
-      "inputs":[
-
-      ],
-      "name":"owner",
-      "outputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "indexed": false,
+            "name": "DH_wallet",
+            "type": "address"
+         },
+         {
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "EscrowCanceled",
+      "type": "event"
    },
    {
-      "constant":false,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"DH_wallet",
-            "type":"address"
+            "indexed": false,
+            "name": "DH_wallet",
+            "type": "address"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          },
          {
-            "name":"token_amount",
-            "type":"uint256"
+            "indexed": false,
+            "name": "token_amount",
+            "type": "uint256"
          },
          {
-            "name":"stake_amount",
-            "type":"uint256"
+            "indexed": false,
+            "name": "stake_amount",
+            "type": "uint256"
          },
          {
-            "name":"total_time",
-            "type":"uint256"
+            "indexed": false,
+            "name": "total_time",
+            "type": "uint256"
          }
       ],
-      "name":"initiateEscrow",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "EscrowInitated",
+      "type": "event"
    },
    {
-      "constant":false,
-      "inputs":[
+      "anonymous": false,
+      "inputs": [
          {
-            "name":"DC_wallet",
-            "type":"address"
+            "indexed": false,
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "name":"data_id",
-            "type":"uint256"
+            "indexed": false,
+            "name": "DH_wallet",
+            "type": "address"
          },
          {
-            "name":"token_amount",
-            "type":"uint256"
+            "indexed": false,
+            "name": "data_id",
+            "type": "uint256"
          },
          {
-            "name":"stake_amount",
-            "type":"uint256"
-         },
-         {
-            "name":"total_time",
-            "type":"uint256"
+            "indexed": false,
+            "name": "verification_successful",
+            "type": "bool"
          }
       ],
-      "name":"verifyEscrow",
-      "outputs":[
-         {
-            "name":"isVerified",
-            "type":"bool"
-         }
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "EscrowVerified",
+      "type": "event"
    },
    {
-      "constant":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"newOwner",
-            "type":"address"
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "DH_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
+         },
+         {
+            "name": "token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "total_time",
+            "type": "uint256"
          }
       ],
-      "name":"transferOwnership",
-      "outputs":[
-
-      ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"function"
+      "name": "initiateEscrow",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "constant":true,
-      "inputs":[
-
-      ],
-      "name":"token",
-      "outputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"",
-            "type":"address"
+            "name": "DC_wallet",
+            "type": "address"
+         },
+         {
+            "name": "data_id",
+            "type": "uint256"
          }
       ],
-      "payable":false,
-      "stateMutability":"view",
-      "type":"function"
+      "name": "payOut",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "name":"tokenAddress",
-            "type":"address"
+            "name": "newOwner",
+            "type": "address"
          }
       ],
-      "payable":false,
-      "stateMutability":"nonpayable",
-      "type":"constructor"
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "inputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"DH_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"token_amount",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"stake_amount",
-            "type":"uint256"
-         },
-         {
-            "indexed":false,
-            "name":"total_time",
-            "type":"uint256"
+            "name": "tokenAddress",
+            "type": "address"
          }
       ],
-      "name":"EscrowInitated",
-      "type":"event"
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": false,
+      "inputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
+            "name": "DC_wallet",
+            "type": "address"
          },
          {
-            "indexed":false,
-            "name":"DH_wallet",
-            "type":"address"
+            "name": "data_id",
+            "type": "uint256"
          },
          {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
+            "name": "token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "total_time",
+            "type": "uint256"
          }
       ],
-      "name":"EscrowVerified",
-      "type":"event"
+      "name": "verifyEscrow",
+      "outputs": [
+         {
+            "name": "isVerified",
+            "type": "bool"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
+            "name": "",
+            "type": "address"
          },
          {
-            "indexed":false,
-            "name":"DH_wallet",
-            "type":"address"
+            "name": "",
+            "type": "address"
          },
          {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
+            "name": "",
+            "type": "uint256"
          }
       ],
-      "name":"EscrowCanceled",
-      "type":"event"
+      "name": "escrow",
+      "outputs": [
+         {
+            "name": "token_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "tokens_sent",
+            "type": "uint256"
+         },
+         {
+            "name": "stake_amount",
+            "type": "uint256"
+         },
+         {
+            "name": "last_confirmation_time",
+            "type": "uint256"
+         },
+         {
+            "name": "end_time",
+            "type": "uint256"
+         },
+         {
+            "name": "total_time",
+            "type": "uint256"
+         },
+         {
+            "name": "escrow_status",
+            "type": "uint8"
+         }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
          {
-            "indexed":false,
-            "name":"DC_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"DH_wallet",
-            "type":"address"
-         },
-         {
-            "indexed":false,
-            "name":"data_id",
-            "type":"uint256"
+            "name": "",
+            "type": "address"
          }
       ],
-      "name":"EscrowCompleted",
-      "type":"event"
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    },
    {
-      "anonymous":false,
-      "inputs":[
+      "constant": true,
+      "inputs": [],
+      "name": "token",
+      "outputs": [
          {
-            "indexed":true,
-            "name":"previousOwner",
-            "type":"address"
-         },
-         {
-            "indexed":true,
-            "name":"newOwner",
-            "type":"address"
+            "name": "",
+            "type": "address"
          }
       ],
-      "name":"OwnershipTransferred",
-      "type":"event"
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
    }
 ]

@@ -150,7 +150,7 @@ contract EscrowHolder is Ownable{
 
 		escrow_def.escrow_status = EscrowStatus.active;
 		isVerified = true;
-		EscrowVerified(DC_wallet, msg.sender, data_id);
+		EscrowVerified(DC_wallet, msg.sender, data_id, isVerified);
 	}
 
 	function payOut(address DC_wallet, uint data_id)

@@ -247,15 +247,11 @@ contract Bidding {
 			if(token.allowance(chosenBid.DH_wallet,this) >= chosenBid.stake_amount
 				&& token.balanceOf(chosenBid.DH_wallet) >= chosenBid.stake_amount){
 
-                // Accumulate funds to send in one Tx 
 				uint stake_to_transfer = chosenBid.stake_amount;
 				chosenBid.stake_amount = 0;
 				chosenBid.chance = 0;
-				// transfering stake
-				if(stake_to_transfer > 0) token.transferFrom(chosenBid.DH_wallet,escrow,stake_to_transfer);    
-                
-                
-                //(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time)
+				// // transfering stake
+				// if(stake_to_transfer > 0) token.transferFrom(chosenBid.DH_wallet,escrow,stake_to_transfer);    
 
                 //Initiating new escrow
                 escrow.initiateEscrow(msg.sender, chosenBid.DH_wallet, data_id, chosenBid.token_amount, stake_to_transfer, this_offer.total_escrow_time);	
