@@ -131,7 +131,7 @@ function testGenerateTests() {
     assert.throws(testFunc, 'Negative block size asked. Should crash!');
 }
 
-describe('Challenge tests', () => {
+describe.only('Challenge tests', () => {
     describe('Block generation', () => {
         const blockTests = [
             { args: [vertexData, 32] },
@@ -210,29 +210,50 @@ describe('Challenge tests', () => {
             console.log(generatedTests);
             console.log('_______________________');
 
-            Challenge.addTests(generatedTests).then(() => {
+            // Challenge.addTests(generatedTests).then(() => {
+            //     console.log('Test are added to db');
+            // }).catch((error) => {
+            //     console.log(error);
+            // });
+            try {
+                Challenge.addTests(generatedTests);
                 console.log('Test are added to db');
-            }).catch((error) => {
+            } catch (error) {
                 console.log(error);
-            });
+            }
         });
 
-        it('getTests()', () => {
-            Challenge.getTests(myDataCreatorId, myImportId).then((response) => {
+        it('getTests()', async () => {
+            // return Challenge.getTests(myDataCreatorId, myImportId).then((response) => {
+            //     console.log('Retrieved tests:');
+            //     console.log(response);
+            // }).catch((error) => {
+            //     console.log(error);
+            // });
+
+            try {
+                const result = await Challenge.getTests(myDataCreatorId, myImportId);
                 console.log('Retrieved tests:');
-                console.log(response);
-            }).catch((error) => {
+                console.log(result);
+            } catch (error) {
                 console.log(error);
-            });
+            }
         });
 
-        it('getUnansweredTest()', () => {
-            Challenge.getUnansweredTest(myStartTime, myEndTime).then((response) => {
+        it('getUnansweredTest()', async () => {
+            // return Challenge.getUnansweredTest(myStartTime, myEndTime).then((response) => {
+            //     console.log('Retrieved unanswered tests:');
+            //     console.log(response);
+            // }).catch((error) => {
+            //     console.log(error);
+            // });
+            try {
+                const result = await Challenge.getUnansweredTest(myStartTime, myEndTime);
                 console.log('Retrieved unanswered tests:');
-                console.log(response);
-            }).catch((error) => {
+                console.log(result);
+            } catch (error) {
                 console.log(error);
-            });
+            }
         });
     });
 });
