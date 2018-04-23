@@ -125,7 +125,7 @@ class DCService {
                             log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
                         });
                 }).catch((err) => {
-                    log.watch(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                    log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
                 });
             }
             // change time period in order to test choose bids

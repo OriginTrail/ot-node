@@ -26,16 +26,15 @@ class DHService {
         minStakeAmount,
         dataSizeBytes,
     ) {
-        // TODO store offer if we want to participate.
-        const minPrice = config.dh_min_price;
-        const maxPrice = config.dh_max_price;
-        const maxStakeAmount = config.dh_max_stake;
-        const maxDataSizeBytes = config.dh_max_data_size_bytes;
+        const minPrice = parseInt(config.dh_min_price, 10);
+        const maxPrice = parseInt(config.dh_max_price, 10);
+        const maxStakeAmount = parseInt(config.dh_max_stake, 10);
+        const maxDataSizeBytes = parseInt(config.dh_max_data_size_bytes, 10);
 
         const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
 
         if (minStakeAmount > maxStakeAmount) {
-            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${maxStakeAmount}.`);
+            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
             return;
         }
         const stake = Math.round(Utilities.getRandomIntRange(minStakeAmount, maxStakeAmount));
@@ -47,7 +46,7 @@ class DHService {
 
         const bidHash = abi.soliditySHA3(
             ['address', 'uint256', 'uint256', 'uint256'],
-            [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
+            [config.node_wallet, new BN(config.identity, 16), new BN(`${chosenPrice}`), new BN(`${stake}`)],
         ).toString('hex');
 
         log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
@@ -97,9 +96,8 @@ class DHService {
                     }
                     return false;
                 }, 5000, Date.now() + 20000);
-            }).catch((x, y) => {
-                log.error(x);
-                log.error(y);
+            }).catch((err) => {
+                log.error(err);
             });
     }
 
