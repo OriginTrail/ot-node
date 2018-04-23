@@ -149,12 +149,10 @@ describe('Challenge tests', () => {
 
     describe('Test generation', () => {
         beforeEach('restore db', async () => {
+            console.log('BEFORE EACH RUNNING');
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery('DELETE FROM data_challenges', []);
             });
-        });
-        afterEach('restore db', async () => {
-
         });
 
         const dataCreatorId = 'dummyDC';
@@ -177,6 +175,63 @@ describe('Challenge tests', () => {
                     tests, test.args[3], test.args[4],
                     test.args[5], test.args[0], test.args[1], test.args[6],
                 );
+            });
+        });
+    });
+
+    describe('Adding tests', () => {
+        const myDataCreatorId = 'dummyDC';
+        const myImportId = 'dummyImportId';
+        const myStartTime = new Date('May 1, 2018 03:24:00').getTime();
+        const myEndTime = new Date('January 1, 2019 00:24:00').getTime();
+        console.log(myStartTime, myEndTime);
+
+        before('cleanup db', async () => {
+            try {
+                await SystemStorage.connect();
+            } catch (error) {
+                console.log('Smth went wrong with SystemStorage.connect()');
+                console.log(error);
+            }
+
+            try {
+                await SystemStorage.runSystemQuery('DELETE FROM data_challenges', []);
+            } catch (error) {
+                console.log('Smth went wrong with SystemStorage.runSystemQuery()');
+                console.log(error);
+            }
+            console.log('BEFORE DONE');
+        });
+
+        it('Adding challenges ', () => {
+            // eslint-disable-next-line max-len
+            const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, 10, myStartTime, myEndTime, 32, vertexData);
+            console.log('_______________________');
+            console.log(generatedTests);
+            console.log('_______________________');
+
+            Challenge.addTests(generatedTests).then(() => {
+                console.log('Test are added to db');
+            }).catch((error) => {
+                console.log(error);
+            });
+        });
+
+        it('getTests()', () => {
+            Challenge.getTests(myDataCreatorId, myImportId).then((response) => {
+                console.log('Retrieved tests:');
+                console.log(response);
+            }).catch((error) => {
+                console.log(error);
+            });
+        });
+
+        it('getUnansweredTest()', () => {
+            Challenge.getUnansweredTest(myStartTime, myEndTime).then((response) => {
+                console.log('Retrieved unanswered tests:');
+                console.log(response);
+            }).catch((error) => {
+                console.log(error);
             });
         });
     });
