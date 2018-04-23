@@ -1,20 +1,60 @@
 const {
-    describe, it, afterEach, beforeEach,
+    describe, it, afterEach, beforeEach, before, after,
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
 const Graph = require('../../modules/Graph');
+const GraphInstance = require('../../modules/GraphInstance');
+var models = require('../../models');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
-
-
+const Storage = require('../../modules/Storage');
+const Utilities = require('../../modules/Utilities');
+// eslint-disable-next-line  prefer-destructuring
+const Database = require('arangojs').Database;
+const GraphStorage = require('../../modules/Database/GraphStorage');
+const GSInstance = require('../../modules/GraphStorageInstance');
+const databaseData = require('./test_data/database-data.js');
 const deasync = require('deasync-promise');
 
+const myUserName = 'otuser';
+const myPassword = 'otpass';
+const myDatabaseName = 'test_graph';
+
+
+let selectedDatabase;
+let systemDb;
+
 describe('graph module ', () => {
+    before('loadSelectedDatabaseInfo() and init GraphStorage', async () => {
+        Storage.models = deasync(models.sequelize.sync()).models;
+        selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
+        assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
+            'host', 'port', 'max_path_length', 'database']);
+
+        systemDb = new Database();
+        systemDb.useBasicAuth('root', 'root');
+        await systemDb.createDatabase(
+            myDatabaseName,
+            [{ username: myUserName, passwd: myPassword, active: true }],
+        );
+        selectedDatabase.database = myDatabaseName;
+
+        GSInstance.db = new GraphStorage(selectedDatabase);
+        GraphInstance.g = new Graph();
+    });
+
+    after('drop myDatabaseName db', async () => {
+        systemDb = new Database();
+        systemDb.useBasicAuth('root', 'root');
+        await systemDb.dropDatabase(myDatabaseName);
+    });
+
     // TODO reenable with fix of .skipped tests
     // beforeEach('create stubs', async () => {
     //     this.encrytionMock = sinon.sandbox.mock(Encryption);
     // });
+
     // TODO reenable with fix of .skipped tests
     // afterEach('restore stubs', async () => {
     //     this.encrytionMock.restore();
@@ -323,6 +363,7 @@ describe('graph module ', () => {
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
     });
+
     it('decryptVertices() of encryptVertices() should give back original data', async () => {
         const vertexData = 1;
 
@@ -364,5 +405,68 @@ describe('graph module ', () => {
         const encryptedData = Encryption.encryptRawData(vertexData, keyPair.privateKey);
         assert.isNotNull(encryptedData);
         assert.equal(encryptedData, encryptedVertex.data);
+    });
+
+    it('.findVertices() with empty query should fail', async () => {
+        try {
+            await GraphInstance.g.findVertices();
+        } catch (error) {
+            // Utilities.isEmptyObject() will complain
+            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
+        }
+    });
+
+    it('.findVertices() when still not connected to graph db should fail', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        try {
+            const result = await GraphInstance.g.findVertices(queryObject);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('.findVertices() on top of empty collection should find nothing', async () => {
+        await GSInstance.db.connect();
+        await GSInstance.db.createCollection('ot_vertices').then((response) => {
+            assert.equal(response, 'Collection created');
+        });
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        await GraphInstance.g.findVertices(queryObject).then((response) => {
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        });
+    });
+
+    it('.findTraversalPath() with non valid startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: undefined,
+        };
+        try {
+            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it('.findTraversalPath() with non existing startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: 0,
+        };
+
+        try {
+            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+        } catch (error) {
+            assert.equal(error.code, 404);
+        }
     });
 });

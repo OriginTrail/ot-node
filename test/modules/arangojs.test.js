@@ -17,6 +17,7 @@ const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
 const edgeOne = databaseData.edges[0];
 const newImportValue = 2520345631;
+const oneMoreImportValue = 2520345639;
 
 let systemDb;
 let testDb;
@@ -33,18 +34,13 @@ describe('Arangojs module ', async () => {
         testDb = new ArangoJs(myUserName, myPassword, myDatabaseName, '127.0.0.1', '8529');
     });
 
-    after('drop testDb db', async () => {
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.dropDatabase(myDatabaseName);
-    });
-
     it('.identify() should return correct name', () => {
         assert(testDb.identify(), 'ArangoJS');
     });
 
     it('should see one system and one custom database', async () => {
         expect(testDb.db.name).to.be.equal('testDb');
+        expect(systemDb).to.be.an.instanceof(Database);
         const listOfDatabases = await testDb.db.listDatabases();
         assert.equal(listOfDatabases[0], '_system');
         assert.equal(listOfDatabases[1], 'testDb');
@@ -95,6 +91,14 @@ describe('Arangojs module ', async () => {
         assert.equal(data.name, edgeCollectionName);
         const info = await testDb.db.listCollections();
         assert.equal(info.length, 2);
+    });
+
+    it('.createEdgeCollection() with system collection name should be illegal', async () => {
+        try {
+            await testDb.createCollection('_statistics');
+        } catch (e) {
+            assert.isTrue(e.toString().indexOf('ArangoError: illegal name') >= 0);
+        }
     });
 
     it('.createEdgeCollection() with null as collection name', async () => {
@@ -195,6 +199,32 @@ describe('Arangojs module ', async () => {
         });
     });
 
+    it('updateDocument() should also add/append data', async () => {
+        const updatetedEdgeOne = {
+            _key: '6eb743d84a605b2ab6be67a373b883d4',
+            edge_type: 'OWNED_BY',
+            data_provider: 'WALLET_ID',
+            imports: [1520345631, 1234567890],
+            _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
+            _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+        };
+
+        try {
+            testDb.updateDocument(
+                edgeCollectionName,
+                // eslint-disable-next-line no-underscore-dangle
+                updatetedEdgeOne,
+            );
+        } catch (error) {
+            console.log(error);
+        }
+
+        // check value of new imports
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            assert.isTrue(response.imports.length === 2);
+        });
+    });
+
     it('getVerticesByImportId() ', async () => {
         await testDb.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
@@ -215,6 +245,12 @@ describe('Arangojs module ', async () => {
             assert.deepEqual(response[0].imports, vertexOne.imports);
             assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
         });
+    });
+
+    after('drop testDb db', async () => {
+        systemDb = new Database();
+        systemDb.useBasicAuth('root', 'root');
+        await systemDb.dropDatabase(myDatabaseName);
     });
 });
 

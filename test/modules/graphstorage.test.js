@@ -31,7 +31,7 @@ let myInvalidGraphStorage;
 let myInvalidGraphConnection;
 
 describe('GraphStorage module', () => {
-    before('loadSelectedDatabaseInfo()', async () => {
+    before('loadSelectedDatabaseInfo() and init myGraphStorage', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
         selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
@@ -46,6 +46,7 @@ describe('GraphStorage module', () => {
         );
 
         myGraphStorage = new GraphStorage(selectedDatabase);
+        expect(myGraphStorage).to.be.an.instanceof(GraphStorage);
     });
 
     it('connect() and identify()', async () => {
@@ -87,6 +88,66 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('attempt to save vertex in non existing Document Collection should fail', async () => {
+        try {
+            await myGraphStorage.addVertex(documentCollectionName, vertexOne);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
+        }
+    });
+
+    it('attempt to save edge in non existing Edge Collection should fail', async () => {
+        try {
+            await myGraphStorage.addEdge(edgeCollectionName, edgeOne);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
+        try {
+            await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('attempt to create doc Collection on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.createCollection(documentCollectionName);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to create edge Collection on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.createEdgeCollection(edgeCollectionName);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to getDocument on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.getDocument(documentCollectionName, vertexOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to updateDocumentImports on non existing db should fail', async () => {
+        try {
+            await myInvalidGraphStorage.updateDocumentImports(
+                edgeCollectionName,
+                // eslint-disable-next-line no-underscore-dangle
+                edgeOne._key, newImportValue,
+            );
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Cannot read property \'updateDocumentImports\' of undefined') >= 0);
+        }
+    });
+
     it('.createCollection() should create Document Collection', async () => {
         // first time creating Document Collection
         await myGraphStorage.createCollection(documentCollectionName).then((response) => {
@@ -121,6 +182,7 @@ describe('GraphStorage module', () => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
+
 
     it('adding 2nd vertex from invalid storage should fail', async () => {
         try {
