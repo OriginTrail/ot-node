@@ -245,7 +245,7 @@ class DHService {
                     && eventDhWallet === config.node_wallet && eventDcWallet === dcWallet) {
                     log.info(`The bid is chosen for DC ${dcWallet} and data ${dataId}`);
 
-                    Models.bid.findOne({ where: { data_id: dataId } }).then((bidModel) => {
+                    Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
                         const bid = bidModel.get({ plain: true });
                         node.ot.replicationRequest({ dataId, wallet: config.node_wallet }, bid.dc_id, (err) => {
                             if (err) {

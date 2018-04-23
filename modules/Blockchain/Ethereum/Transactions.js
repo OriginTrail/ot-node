@@ -38,6 +38,12 @@ class Transactions {
             newTransaction.options,
         );
 
+        console.log(
+            newTransaction.method,
+            newTransaction.args,
+            newTransaction.options,
+        );
+
         const transaction = new Tx(rawTx);
         transaction.sign(this.privateKey);
 
