@@ -105,13 +105,13 @@ describe('Utilities module', () => {
         assert.equal(myResult.database_system, 'arango_db');
     });
 
-    it('loadSelectedBlockchainInfo()', async () => {
-        const myResult = await Utilities.loadSelectedBlockchainInfo();
-        assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
-            'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
-            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key']);
-        assert.equal(myResult.blockchain_title, 'Ethereum');
-    });
+//     it('loadSelectedBlockchainInfo()', async () => {
+//         const myResult = await Utilities.loadSelectedBlockchainInfo();
+//         assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
+//             'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
+//             'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key']);
+//         assert.equal(myResult.blockchain_title, 'Ethereum');
+//     });
 
     it('sortObject() should return object sorted by keys', () => {
         const unsorted = {
