@@ -407,10 +407,9 @@ describe('graph module ', () => {
         assert.equal(encryptedData, encryptedVertex.data);
     });
 
-    it('.findVertices() with empty query should give fail', async () => {
-        const myGraph = new Graph();
+    it('.findVertices() with empty query should fail', async () => {
         try {
-            await myGraph.findVertices();
+            await GraphInstance.g.findVertices();
         } catch (error) {
             // Utilities.isEmptyObject() will complain
             assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
