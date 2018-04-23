@@ -344,7 +344,9 @@ class Ethereum {
         log.warn('Initiating escrow - revealBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'revealBid',
-            [dcWallet, dataId, this._normalizeNodeId(nodeId), tokenAmount, stakeAmount, bidIndex], options,
+            [dcWallet,
+                dataId,
+                this._normalizeNodeId(nodeId), tokenAmount, stakeAmount, bidIndex], options,
         );
     }
 

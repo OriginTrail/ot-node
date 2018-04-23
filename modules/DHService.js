@@ -104,22 +104,25 @@ class DHService {
     static handleImport(data) {
         Models.bids.findOne({ where: { data_id: data.data_id } }).then((bidModel) => {
             // TODO: Check data before signing escrow.
-
             const bid = bidModel.get({ plain: true });
             importer.importJSON(data)
                 .then(() => {
                     log.trace('[DH] Replication finished');
-
-                    Blockchain.bc.verifyEscrow(
-                        config.node_wallet,
-                        data.data_id,
-                        bid.price,
-                        bid.total_escrow_time,
-                    ).then(() => {
+                    Blockchain.bc.increaseApproval(bid.stake).then(() => {
+                        Blockchain.bc.verifyEscrow(
+                            bid.dc_wallet,
+                            data.data_id,
+                            bid.price,
+                            bid.stake,
+                            bid.total_escrow_time,
+                        ).then(() => {
                         // TODO No need to notify DC. DC should catch event from verifyEscrow().
-                        node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
-                    }).catch((error) => {
-                        log.error(`Failed to verify escrow. ${error}`);
+                            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
+                        }).catch((error) => {
+                            log.error(`Failed to verify escrow. ${error}`);
+                        });
+                    }).catch((e) => {
+                        log.error(`Failed to verify escrow. ${e}`);
                     });
                 }).catch((error) => {
                     log.error(`Failed to import data. ${error}`);
@@ -151,7 +154,7 @@ class DHService {
         }
         setTimeout(
             // change time period in order to test reveal
-            revealBid, 2 * 60 * 1000,
+            revealBid, 150 * 1000,
             dcWallet, dataId, price, stake, bidIndex,
         );
     }
@@ -242,12 +245,18 @@ class DHService {
 
                     Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
                         const bid = bidModel.get({ plain: true });
-                        node.ot.replicationRequest({ dataId, wallet: config.node_wallet }, bid.dc_id, (err) => {
-                            if (err) {
-                                log.warn(`Failed to send replication request ${err}`);
+                        node.ot.replicationRequest(
+                            {
+                                dataId,
+                                wallet: config.node_wallet,
+                            },
+                            bid.dc_id, (err) => {
+                                if (err) {
+                                    log.warn(`Failed to send replication request ${err}`);
                                 // TODO Cancel bid here.
-                            }
-                        });
+                                }
+                            },
+                        );
                     });
 
                     return true;

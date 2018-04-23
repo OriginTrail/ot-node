@@ -53,7 +53,7 @@ class Blockchain {
      * @returns {Promise}
      */
     verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime) {
-        return this.blockchain.verifyEscrow(dcWallet, dataId, tokenAmount, totalTime);
+        return this.blockchain.verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime);
     }
 
     /**
@@ -126,7 +126,7 @@ class Blockchain {
      * @param periodMills    Repeating period for checking past events
      * @param untilMills     Subscription termination
      */
-    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills)  {
+    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills) {
         return this.blockchain
             .subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills);
     }
@@ -136,7 +136,8 @@ class Blockchain {
      * @param dcWallet Wallet of the bidder
      * @param dataId ID of the data of the bid
      * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once revealBid() is called. @note token amount cannot be greater then max token amount
+     * @param bidHash Hashed bid that will be revealed once
+     * revealBid() is called. @note token amount cannot be greater then max token amount
      * @returns {Promise<any>} Index of the bid.
      */
     addBid(dcWallet, dataId, nodeId, bidHash) {

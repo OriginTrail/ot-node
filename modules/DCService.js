@@ -13,10 +13,10 @@ const log = Utilities.getLogger();
 // TODO
 const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 2 * 60 * 1000;
+const biddingTime = 1 * 60 * 1000;
 const minNumberOfBids = 1;
-const minStakeAmount = 2e18;
-const maxTokenAmount = 10e18;
+const minStakeAmount = 5;
+const maxTokenAmount = 10;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -94,39 +94,40 @@ class DCService {
             function chooseBids(dataId) {
                 log.info(`Choose bids for data ${dataId}`);
 
-                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number).then(() => {
-                    Blockchain.bc.chooseBids(dataId)
-                        .then(() => {
-                            log.info(`Bids choose called for data ${dataId}`);
+                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
+                    .then(() => {
+                        Blockchain.bc.chooseBids(dataId)
+                            .then(() => {
+                                log.info(`Bids choose called for data ${dataId}`);
 
-                            Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
-                                fromBlock: 0,
-                                toBlock: 'latest',
-                            }, (data, err) => {
-                                if (err) {
-                                    log.error(err);
-                                    return true;
-                                }
-                                // filter events manually since Web3 filtering is not working
-                                for (const event of data) {
-                                    const eventDataId = event.returnValues.data_id;
-                                    const eventDcWallet = event.returnValues.DC_wallet;
-
-                                    if (Number(eventDataId) === dataId
-                                        && eventDcWallet === config.node_wallet) {
-                                        log.info(`Offer for data ${dataId} successfully finalized`);
-                                        DCService.handleFinalizedOffer(dataId);
+                                Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
+                                    fromBlock: 0,
+                                    toBlock: 'latest',
+                                }, (data, err) => {
+                                    if (err) {
+                                        log.error(err);
                                         return true;
                                     }
-                                }
-                                return false;
-                            }, 5000, Date.now() + totalEscrowTime);
-                        }).catch((err) => {
-                            log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
-                        });
-                }).catch((err) => {
-                    log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
-                });
+                                    // filter events manually since Web3 filtering is not working
+                                    for (const event of data) {
+                                        const eventDataId = event.returnValues.data_id;
+                                        const eventDcWallet = event.returnValues.DC_wallet;
+
+                                        if (Number(eventDataId) === dataId
+                                        && eventDcWallet === config.node_wallet) {
+                                            log.info(`Offer for data ${dataId} successfully finalized`);
+                                            DCService.handleFinalizedOffer(dataId);
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                }, 5000, Date.now() + totalEscrowTime);
+                            }).catch((err) => {
+                                log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
+                            });
+                    }).catch((err) => {
+                        log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                    });
             }
             // change time period in order to test choose bids
             setTimeout(chooseBids, 2 * offer.tender_duration, dataId);

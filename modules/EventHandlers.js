@@ -88,6 +88,7 @@ globalEmitter.on('replication-request', (request, response) => {
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
+            /* eslint-disable-next-line */
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
@@ -113,10 +114,7 @@ globalEmitter.on('payload-request', (request) => {
 
 globalEmitter.on('replication-finished', (status) => {
     log.warn('Notified of finished replication, preparing to start challenges');
-
-    if (status === 'success') {
-        challenger.startChallenging();
-    }
+    challenger.startChallenging();
 });
 
 globalEmitter.on('kad-challenge-request', (request, response) => {
