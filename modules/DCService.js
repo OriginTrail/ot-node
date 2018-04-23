@@ -15,7 +15,8 @@ const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
 const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
-const minStakeAmount = 2;
+const minStakeAmount = 2e18;
+const maxTokenAmount = 10e18;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -48,33 +49,33 @@ class DCService {
             data_size_bytes: offerParams.dataSizeBytes,
             replication_number: replicationFactor,
             root_hash: rootHash,
+            max_token_amount: maxTokenAmount,
         }).then((offer) => {
-            Blockchain.bc.increaseBiddingApproval(minStakeAmount).then(() => {
-                Blockchain.bc.createOffer(
-                    dataId, config.identity,
-                    totalEscrowTime, minStakeAmount,
+            Blockchain.bc.createOffer(
+                dataId, config.identity,
+                totalEscrowTime,
+                maxTokenAmount,
+                minStakeAmount,
+                biddingTime,
+                minNumberOfBids,
+                totalDocuments, replicationFactor,
+            ).then((startTime) => {
+                log.info('Offer written to blockchain. Broadcast event.');
+                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
+                    dataId,
+                    dcId: config.identity,
+                    dcWallet: config.node_wallet,
+                    totalEscrowTime,
+                    maxTokenAmount,
+                    minStakeAmount,
                     biddingTime,
                     minNumberOfBids,
-                    totalDocuments, replicationFactor,
-                ).then((startTime) => {
-                    log.info('Offer written to blockchain. Broadcast event.');
-                    node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
-                        dataId,
-                        dcId: config.identity,
-                        dcWallet: config.node_wallet,
-                        totalEscrowTime,
-                        minStakeAmount,
-                        biddingTime,
-                        minNumberOfBids,
-                        totalDocuments,
-                        replicationFactor,
-                    });
-                    DCService.scheduleChooseBids(dataId, totalEscrowTime);
-                }).catch((err) => {
-                    log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
+                    totalDocuments,
+                    replicationFactor,
                 });
+                DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
-                log.warn(`Failed to increase bidding approval. ${JSON.stringify(err)}`);
+                log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
             });
         }).catch((error) => {
             log.error(`Failed to write offer to DB. ${error}`);
@@ -87,44 +88,51 @@ class DCService {
      * @param totalEscrowTime   Total escrow time
      */
     static scheduleChooseBids(dataId, totalEscrowTime) {
-        function chooseBids(dataId) {
-            log.info(`Choose bids for data ${dataId}`);
-            Blockchain.bc.increaseBiddingApproval(10e22).then(() => {
-                Blockchain.bc.chooseBids(dataId)
-                    .then(() => {
-                        log.info(`Bids choose called for data ${dataId}`);
+        Models.offers({ where: { id: dataId } }).then((offerModel) => {
+            const offer = offerModel.get({ plain: true });
 
-                        Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
-                            fromBlock: 0,
-                            toBlock: 'latest',
-                        }, (data, err) => {
-                            if (err) {
-                                log.error(err);
-                                return true;
-                            }
-                            // filter events manually since Web3 filtering is not working
-                            for (const event of data) {
-                                const eventDataId = event.returnValues.data_id;
-                                const eventDcWallet = event.returnValues.DC_wallet;
+            function chooseBids(dataId) {
+                log.info(`Choose bids for data ${dataId}`);
 
-                                if (Number(eventDataId) === dataId
-                                    && eventDcWallet === config.node_wallet) {
-                                    log.info(`Offer for data ${dataId} successfully finalized`);
-                                    DCService.handleFinalizedOffer(dataId);
+                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number).then(() => {
+                    Blockchain.bc.chooseBids(dataId)
+                        .then(() => {
+                            log.info(`Bids choose called for data ${dataId}`);
+
+                            Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
+                                fromBlock: 0,
+                                toBlock: 'latest',
+                            }, (data, err) => {
+                                if (err) {
+                                    log.error(err);
                                     return true;
                                 }
-                            }
-                            return false;
-                        }, 5000, Date.now() + totalEscrowTime);
-                    }).catch((err) => {
-                        log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
-                    });
-            }).catch((err) => {
-                log.watch(`Failed to increase allowance. ${JSON.stringify(err)}`);
-            });
-        }
-        // change time period in order to test choose bids
-        setTimeout(chooseBids, 4 * 60 * 1000, dataId);
+                                // filter events manually since Web3 filtering is not working
+                                for (const event of data) {
+                                    const eventDataId = event.returnValues.data_id;
+                                    const eventDcWallet = event.returnValues.DC_wallet;
+
+                                    if (Number(eventDataId) === dataId
+                                        && eventDcWallet === config.node_wallet) {
+                                        log.info(`Offer for data ${dataId} successfully finalized`);
+                                        DCService.handleFinalizedOffer(dataId);
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }, 5000, Date.now() + totalEscrowTime);
+                        }).catch((err) => {
+                            log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
+                        });
+                }).catch((err) => {
+                    log.watch(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                });
+            }
+            // change time period in order to test choose bids
+            setTimeout(chooseBids, 2 * offer.tender_duration, dataId);
+        }).catch((error) => {
+            log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
+        });
     }
 
     /**
@@ -148,16 +156,6 @@ class DCService {
 
                 if (Number(eventDataId) === dataId && eventDcWallet === config.node_wallet) {
                     log.info(`The bid is chosen for DH ${eventDhWallet} and data ${dataId}`);
-
-                    // Sign escrow.
-                    Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
-                        const offer = offerModel.get({ plain: true });
-                        Blockchain.bc.increaseBiddingApproval(offer.price_tokens).then(() => {
-                            Blockchain.bc.initiateEscrow(eventDhWallet, dataId, offer.price_tokens, offer.data_lifespan).catch((error) => {
-                                log.error(`Failed find offer with data ID ${dataId}. ${error}`);
-                            });
-                        }).catch(error => log.error(error));
-                    }).catch(error => log.error(error));
                 }
             }
             return true;

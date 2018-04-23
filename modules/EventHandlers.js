@@ -104,7 +104,7 @@ globalEmitter.on('replication-request', (request, response) => {
     response.send({ status: 'succes' });
 });
 
-globalEmitter.on('payload-request', (request, response) => {
+globalEmitter.on('payload-request', (request) => {
     log.trace(`payload-request arrived from ${request.contact[0]}`);
     DHService.handleImport(request.params.message.payload);
 

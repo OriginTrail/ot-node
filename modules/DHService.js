@@ -53,6 +53,9 @@ class DHService {
         log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
         Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
             .then((tx) => {
+                // Sign escrow.
+                Blockchain.bc.increaseBiddingApproval(stake).catch(error => log.error(`Failed to increase approval. ${error}.`));
+
                 Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'AddedBid', {
                     fromBlock: 0,
                     toBlock: 'latest',
@@ -82,15 +85,10 @@ class DHService {
                             }).then((bid) => {
                                 log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
 
-                                Blockchain.bc.increaseBiddingApproval(chosenPrice + stake)
-                                    .then(() => {
-                                        DHService.scheduleRevealBid(
-                                            dcWallet, dataId, chosenPrice,
-                                            stake, bidIndex, totalEscrowTime,
-                                        );
-                                    }).catch((err) => {
-                                        log.error(`Failed to give allowance. ${JSON.stringify(err)}`);
-                                    });
+                                DHService.scheduleRevealBid(
+                                    dcWallet, dataId, chosenPrice,
+                                    stake, bidIndex, totalEscrowTime,
+                                );
                             }).catch((err) => {
                                 log.error(`Failed to insert new bid. ${err}`);
                             });
@@ -114,20 +112,16 @@ class DHService {
                 .then(() => {
                     log.trace('[DH] Replication finished');
 
-                    Blockchain.bc.increaseApproval(bid.price).then(() => {
-                        Blockchain.bc.verifyEscrow(
-                            config.node_wallet,
-                            data.data_id,
-                            bid.price,
-                            bid.total_escrow_time,
-                        ).then(() => {
-                            // TODO No need to notify DC. DC should catch event from verifyEscrow().
-                            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
-                        }).catch((error) => {
-                            log.error(`Failed to verify escrow. ${error}`);
-                        });
+                    Blockchain.bc.verifyEscrow(
+                        config.node_wallet,
+                        data.data_id,
+                        bid.price,
+                        bid.total_escrow_time,
+                    ).then(() => {
+                        // TODO No need to notify DC. DC should catch event from verifyEscrow().
+                        node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
                     }).catch((error) => {
-                        log.error(`Failed to increase approval. ${error}`);
+                        log.error(`Failed to verify escrow. ${error}`);
                     });
                 }).catch((error) => {
                     log.error(`Failed to import data. ${error}`);

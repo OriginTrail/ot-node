@@ -44,26 +44,15 @@ class Blockchain {
     }
 
     /**
-     * Initiating escrow for data holding
-     * @param {string} - dhWallet
-     * @param {number} - dataId
-     * @param {number} - tokenAmount
-     * @param {number} - totalTime
-     * @returns {Promise}
-     */
-    initiateEscrow(dhWallet, dataId, tokenAmount, totalTime) {
-        return this.blockchain.initiateEscrow(dhWallet, dataId, tokenAmount, totalTime);
-    }
-
-    /**
      * Verify escrow contract contract data and start data holding process
      * @param {string} - dcWallet
      * @param {number} - dataId
      * @param {number} - tokenAmount
+     * @param {number} - stakeAmount
      * @param {number} - totalTime
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, dataId, tokenAmount, totalTime) {
+    verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime) {
         return this.blockchain.verifyEscrow(dcWallet, dataId, tokenAmount, totalTime);
     }
 
@@ -92,6 +81,7 @@ class Blockchain {
      * @param dataId Data ID of the offer.
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
+     * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
      * @param biddingTime Total time of the bid in milliseconds
      * @param minNumberOfBids Number of bid required for offer to be successful
@@ -101,14 +91,18 @@ class Blockchain {
      */
     createOffer(
         dataId, nodeId,
-        totalEscrowTime, MinStakeAmount,
+        totalEscrowTime,
+        maxTokenAmount,
+        MinStakeAmount,
         biddingTime,
         minNumberOfBids,
         dataSize, ReplicationFactor,
     ) {
         return this.blockchain.createOffer(
             dataId, nodeId,
-            totalEscrowTime, MinStakeAmount,
+            totalEscrowTime,
+            maxTokenAmount,
+            MinStakeAmount,
             biddingTime,
             minNumberOfBids,
             dataSize, ReplicationFactor,
@@ -142,7 +136,7 @@ class Blockchain {
      * @param dcWallet Wallet of the bidder
      * @param dataId ID of the data of the bid
      * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once revealBid() is called
+     * @param bidHash Hashed bid that will be revealed once revealBid() is called. @note token amount cannot be greater then max token amount
      * @returns {Promise<any>} Index of the bid.
      */
     addBid(dcWallet, dataId, nodeId, bidHash) {

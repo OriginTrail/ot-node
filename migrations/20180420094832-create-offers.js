@@ -31,6 +31,9 @@ module.exports = {
         root_hash: {
             type: Sequelize.STRING,
         },
+        max_token_amount: {
+            type: Sequelize.INTEGER,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('offers'),
 };

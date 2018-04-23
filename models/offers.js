@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         data_size_bytes: DataTypes.INTEGER,
         replication_number: DataTypes.INTEGER,
         root_hash: DataTypes.STRING,
+        max_token_amount: DataTypes.INTEGER,
     }, {});
     offers.associate = function (models) {
     // associations can be defined here

@@ -138,33 +138,15 @@ class Ethereum {
     }
 
     /**
-     * Initiating escrow for data holding on Ethereum blockchain
-     * @param {string} - dhWallet
-     * @param {number} - dataId
-     * @param {number} - tokenAmount
-     * @param {number} - totalTime
-     * @returns {Promise}
-     */
-    initiateEscrow(dhWallet, dataId, tokenAmount, totalTime) {
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
-        };
-
-        log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'initiateEscrow', [dhWallet, dataId, tokenAmount, Math.round(totalTime / 1000)], options);
-    }
-
-    /**
      * Verify escrow contract contract data and start data holding process on Ethereum blockchain
      * @param {string} - dcWallet
      * @param {number} - dataId
      * @param {number} - tokenAmount
+     * @param {number} - stakeAmount
      * @param {number} - totalTime
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, dataId, tokenAmount, totalTime) {
+    verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -172,7 +154,7 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, Math.round(totalTime / 1000)], options);
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
     }
 
     /**
@@ -214,6 +196,7 @@ class Ethereum {
      * @param dataId Data ID of the bid
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
+     * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
      * @param biddingTime Total time of the bid in milliseconds
      * @param minNumberOfBids Number of bid required for offer to be successful
@@ -223,7 +206,9 @@ class Ethereum {
      */
     createOffer(
         dataId, nodeId,
-        totalEscrowTime, MinStakeAmount,
+        totalEscrowTime,
+        maxTokenAmount,
+        MinStakeAmount,
         biddingTime,
         minNumberOfBids,
         dataSize, ReplicationFactor,
@@ -238,7 +223,9 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [dataId, this._normalizeNodeId(nodeId),
-                Math.round(totalEscrowTime / 1000), MinStakeAmount,
+                Math.round(totalEscrowTime / 1000),
+                maxTokenAmount,
+                MinStakeAmount,
                 Math.round(biddingTime / 1000),
                 minNumberOfBids,
                 dataSize, ReplicationFactor], options,
