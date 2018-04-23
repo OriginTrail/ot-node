@@ -358,10 +358,12 @@ class Network {
             /**
              * Sends replication finished direct message
              * @param message   Payload to be sent
+             * @param contactId KADemlia contact ID to be sent to
              * @param callback  Response/Error callback
              */
-            node.replicationFinished = (message, callback) => {
-                // TODO implement
+            node.replicationFinished = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('replication-finished', { message }, [contactId, contact], callback);
             };
 
             /**

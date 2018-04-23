@@ -8,6 +8,7 @@ const deasync = require('deasync-promise');
 const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
+const challenger = require('./Challenger');
 const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
@@ -99,6 +100,8 @@ globalEmitter.on('replication-request', (request, response) => {
             console.log(e);
         });
     });
+
+    response.send({ status: 'succes' });
 });
 
 globalEmitter.on('payload-request', (request, response) => {
@@ -108,11 +111,11 @@ globalEmitter.on('payload-request', (request, response) => {
     // TODO doktor: send fail in case of fail.
 });
 
-globalEmitter.on('replication-finished', (status, response) => {
+globalEmitter.on('replication-finished', (status) => {
     log.warn('Notified of finished replication, preparing to start challenges');
 
     if (status === 'success') {
-        // TODO doktor: start challenging
+        challenger.startChallenging();
     }
 });
 
