@@ -17,6 +17,8 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
+const MockSmartContract = require('./modules/temp/MockSmartContract');
+const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -73,6 +75,7 @@ class OTNode {
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
+        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
