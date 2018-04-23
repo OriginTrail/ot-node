@@ -80,10 +80,16 @@ class DHService {
                                 data_size_bytes: dataSizeBytes,
                             }).then((bid) => {
                                 log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
-                                DHService.scheduleRevealBid(
-                                    dcWallet, dataId, chosenPrice,
-                                    stake, bidIndex, totalEscrowTime,
-                                );
+
+                                Blockchain.bc.increaseBiddingApproval(chosenPrice + stake)
+                                    .then(() => {
+                                        DHService.scheduleRevealBid(
+                                            dcWallet, dataId, chosenPrice,
+                                            stake, bidIndex, totalEscrowTime,
+                                        );
+                                    }).catch((err) => {
+                                        log.error(`Failed to give allowance. ${JSON.stringify(err)}`);
+                                    });
                             }).catch((err) => {
                                 log.error(`Failed to insert new bid. ${err}`);
                             });
@@ -92,8 +98,9 @@ class DHService {
                     }
                     return false;
                 }, 5000, Date.now() + 20000);
-            }).catch((error) => {
-                log.error(error);
+            }).catch((x, y) => {
+                log.error(x);
+                log.error(y);
             });
     }
 
@@ -112,16 +119,46 @@ class DHService {
             Blockchain.bc.revealBid(dcWallet, dataId, config.identity, price, stake, bidIndex)
                 .then(() => {
                     log.info(`Bid revealed for import ${dataId} and DC ${dcWallet}`);
-                    DHService.scheduleOfferFinalizedCheck();
+                    DHService.checkIfRevealed(dcWallet, dataId);
                 }).catch((err) => {
-                    log.warn(`Failed to reveal bid for import ${dataId} and DC ${dcWallet}. ${err}`);
+                    log.warn(`Failed to reveal bid for import ${dataId} and DC ${dcWallet}. ${JSON.stringify(err)}`);
                 });
         }
         setTimeout(
             // change time period in order to test reveal
-            revealBid, Math.round((6 / 8) * totalEscrowTime * 1000),
+            revealBid, 2 * 60 * 1000,
             dcWallet, dataId, price, stake, bidIndex,
         );
+    }
+
+    /**
+     * Check whether bid has successfully been revealed
+     * @param dcWallet  DH wallet
+     * @param dataId    Data ID
+     */
+    static checkIfRevealed(dcWallet, dataId) {
+        Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'RevealedBid', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        }, (data, err) => {
+            if (err) {
+                log.error(err);
+                return true;
+            }
+            // filter events manually since Web3 filtering is not working
+            for (const event of data) {
+                const eventDataId = event.returnValues.data_id;
+                const eventDcWallet = event.returnValues.DC_wallet;
+
+                if (Number(eventDataId) === dataId
+                    && eventDcWallet === dcWallet) {
+                    log.info(`Successfully revealed bid for data ${dataId}.`);
+                    DHService.scheduleOfferFinalizedCheck(dataId, dcWallet);
+                    return true;
+                }
+            }
+            return false;
+        }, 5000, Date.now() + (15 * 60 * 1000));
     }
 
     /**
@@ -151,7 +188,7 @@ class DHService {
                 }
             }
             return false;
-        }, 5000, Date.now() + 10000);
+        }, 5000, Date.now() + (15 * 60 * 1000));
     }
 
     /**
@@ -181,7 +218,7 @@ class DHService {
                 }
             }
             return false;
-        }, 5000, Date.now() + 20000);
+        }, 5000, Date.now() + (15 * 60 * 1000));
     }
 }
 
