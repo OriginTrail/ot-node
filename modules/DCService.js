@@ -13,10 +13,10 @@ const log = Utilities.getLogger();
 // TODO
 const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 1 * 60 * 1000;
+const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = 5;
-const maxTokenAmount = 10;
+const maxTokenAmount = 1000;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -83,10 +83,10 @@ class DCService {
     }
 
     /**
-     * Schedule chose DHs
-     * @param dataId            Data ID
-     * @param totalEscrowTime   Total escrow time
-     */
+   * Schedule chose DHs
+   * @param dataId            Data ID
+   * @param totalEscrowTime   Total escrow time
+   */
     static scheduleChooseBids(dataId, totalEscrowTime) {
         Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
             const offer = offerModel.get({ plain: true });
@@ -114,7 +114,7 @@ class DCService {
                                         const eventDcWallet = event.returnValues.DC_wallet;
 
                                         if (Number(eventDataId) === dataId
-                                        && eventDcWallet === config.node_wallet) {
+                            && eventDcWallet === config.node_wallet) {
                                             log.info(`Offer for data ${dataId} successfully finalized`);
                                             DCService.handleFinalizedOffer(dataId);
                                             return true;
@@ -137,9 +137,9 @@ class DCService {
     }
 
     /**
-     * Process finalized offer
-     * @param dataId    Data ID
-     */
+   * Process finalized offer
+   * @param dataId    Data ID
+   */
     static handleFinalizedOffer(dataId) {
         Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'BidTaken', {
             fromBlock: 0,

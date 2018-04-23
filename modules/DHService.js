@@ -15,9 +15,9 @@ const log = Utilities.getLogger();
  */
 class DHService {
     /**
-     * Handles new offer
-     *
-     */
+   * Handles new offer
+   *
+   */
     static handleOffer(
         dcWallet,
         dcNodeId,
@@ -69,7 +69,7 @@ class DHService {
                         const eventDhWallet = event.returnValues.DH_wallet;
 
                         if (Number(eventDataId) === dataId
-                            && eventDhWallet === config.node_wallet) {
+                  && eventDhWallet === config.node_wallet) {
                             const { bidIndex } = event.returnValues;
                             Models.bids.create({
                                 bid_index: bidIndex,
@@ -116,7 +116,7 @@ class DHService {
                             bid.stake,
                             bid.total_escrow_time,
                         ).then(() => {
-                        // TODO No need to notify DC. DC should catch event from verifyEscrow().
+                            // TODO No need to notify DC. DC should catch event from verifyEscrow().
                             node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
                         }).catch((error) => {
                             log.error(`Failed to verify escrow. ${error}`);
@@ -133,15 +133,15 @@ class DHService {
     }
 
     /**
-     * Schedule reveal before todtalEscrowTime
-     * @param dcWallet          DC wallet
-     * @param dataId            Data ID
-     * @param price             Price
-     * @param stake             Stake
-     * @param bidIndex          Bid indez
-     * @param totalEscrowTime   Total escrow time
-     * @private
-     */
+   * Schedule reveal before todtalEscrowTime
+   * @param dcWallet          DC wallet
+   * @param dataId            Data ID
+   * @param price             Price
+   * @param stake             Stake
+   * @param bidIndex          Bid indez
+   * @param totalEscrowTime   Total escrow time
+   * @private
+   */
     static scheduleRevealBid(dcWallet, dataId, price, stake, bidIndex, totalEscrowTime) {
         function revealBid(dcWallet, dataId, price, stake, bidIndex) {
             Blockchain.bc.revealBid(dcWallet, dataId, config.identity, price, stake, bidIndex)
@@ -153,17 +153,17 @@ class DHService {
                 });
         }
         setTimeout(
-            // change time period in order to test reveal
-            revealBid, 150 * 1000,
+        // change time period in order to test reveal
+            revealBid, 2 * 60 * 1000,
             dcWallet, dataId, price, stake, bidIndex,
         );
     }
 
     /**
-     * Check whether bid has successfully been revealed
-     * @param dcWallet  DH wallet
-     * @param dataId    Data ID
-     */
+   * Check whether bid has successfully been revealed
+   * @param dcWallet  DH wallet
+   * @param dataId    Data ID
+   */
     static checkIfRevealed(dcWallet, dataId) {
         Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'RevealedBid', {
             fromBlock: 0,
@@ -179,7 +179,7 @@ class DHService {
                 const eventDcWallet = event.returnValues.DC_wallet;
 
                 if (Number(eventDataId) === dataId
-                    && eventDcWallet === dcWallet) {
+            && eventDcWallet === dcWallet) {
                     log.info(`Successfully revealed bid for data ${dataId}.`);
                     DHService.scheduleOfferFinalizedCheck(dataId, dcWallet);
                     return true;
@@ -190,10 +190,10 @@ class DHService {
     }
 
     /**
-     * Schedule check whether the offer is finalized or not
-     * @param dataId    Data ID
-     * @param dcWallet  DC wallet
-     */
+   * Schedule check whether the offer is finalized or not
+   * @param dataId    Data ID
+   * @param dcWallet  DC wallet
+   */
     static scheduleOfferFinalizedCheck(dataId, dcWallet) {
         Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'OfferFinalized', {
             fromBlock: 0,
@@ -209,7 +209,7 @@ class DHService {
                 const eventDcWallet = event.returnValues.DC_wallet;
 
                 if (Number(eventDataId) === dataId
-                    && eventDcWallet === dcWallet) {
+            && eventDcWallet === dcWallet) {
                     log.info(`Offer for data ${dataId} successfully finalized. Check if the bid is chosen.`);
                     DHService.scheduleBidChosenCheck(dataId, dcWallet);
                     return true;
@@ -220,10 +220,10 @@ class DHService {
     }
 
     /**
-     * Schedule check for whether the bid is chosed for the particular import
-     * @param dataId    Data ID
-     * @param dcWallet  DC wallet
-     */
+   * Schedule check for whether the bid is chosed for the particular import
+   * @param dataId    Data ID
+   * @param dcWallet  DC wallet
+   */
     static scheduleBidChosenCheck(dataId, dcWallet) {
         Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'BidTaken', {
             fromBlock: 0,
@@ -240,7 +240,7 @@ class DHService {
                 const eventDcWallet = event.returnValues.DC_wallet;
 
                 if (Number(eventDataId) === dataId
-                    && eventDhWallet === config.node_wallet && eventDcWallet === dcWallet) {
+            && eventDhWallet === config.node_wallet && eventDcWallet === dcWallet) {
                     log.info(`The bid is chosen for DC ${dcWallet} and data ${dataId}`);
 
                     Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
@@ -253,7 +253,7 @@ class DHService {
                             bid.dc_id, (err) => {
                                 if (err) {
                                     log.warn(`Failed to send replication request ${err}`);
-                                // TODO Cancel bid here.
+                                    // TODO Cancel bid here.
                                 }
                             },
                         );
