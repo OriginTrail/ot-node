@@ -34,7 +34,7 @@ class DHService {
         const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
 
         if (minStakeAmount > maxStakeAmount) {
-            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${maxStakeAmount}.`);
+            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
             return;
         }
         const stake = Math.round(Utilities.getRandomIntRange(minStakeAmount, maxStakeAmount));
@@ -46,7 +46,7 @@ class DHService {
 
         const bidHash = abi.soliditySHA3(
             ['address', 'uint256', 'uint256', 'uint256'],
-            [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
+            [config.node_wallet, new BN(config.identity, 16), new BN(`${chosenPrice}`), new BN(`${stake}`)],
         ).toString('hex');
 
         log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
