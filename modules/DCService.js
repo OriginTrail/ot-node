@@ -88,7 +88,7 @@ class DCService {
      * @param totalEscrowTime   Total escrow time
      */
     static scheduleChooseBids(dataId, totalEscrowTime) {
-        Models.offers({ where: { id: dataId } }).then((offerModel) => {
+        Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
             const offer = offerModel.get({ plain: true });
 
             function chooseBids(dataId) {
