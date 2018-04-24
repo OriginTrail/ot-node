@@ -39,13 +39,17 @@ globalEmitter.on('gs1-import-request', (data) => {
             data_id,
             root_hash,
             total_documents,
+            vertices,
         } = response;
 
-        deasync(Storage.connect());
-        Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
-            .then((data_info) => {
-                DCService.createOffer(data_id, root_hash, total_documents);
-            });
+        Storage.connect().then(() => {
+            Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
+                .then((data_info) => {
+                    DCService.createOffer(data_id, root_hash, total_documents, vertices);
+                });
+        }).catch((err) => {
+            log.warn(err);
+        });
     }).catch((e) => {
         console.log(e);
     });
