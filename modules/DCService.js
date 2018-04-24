@@ -74,10 +74,14 @@ class DCService {
                     totalDocuments,
                     replicationFactor,
                 });
-                log.trace('Started offer');
+                log.trace('Started bidding time');
                 setTimeout(() => {
-                    log.trace = ('Reveal time started');
+                    log.trace = ('Started reveal time');
                 }, biddingTime);
+
+                setTimeout(() => {
+                    log.trace = ('Started choose time');
+                }, biddingTime * 2);
 
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
