@@ -45,7 +45,8 @@ class DCService {
             max_token_amount: maxTokenAmount.toString(),
         }).then((offer) => {
             Blockchain.bc.createOffer(
-                dataId, config.identity,
+                dataId,
+                config.identity,
                 totalEscrowTime,
                 maxTokenAmount,
                 minStakeAmount,
