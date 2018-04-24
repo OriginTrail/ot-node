@@ -123,11 +123,13 @@ globalEmitter.on('replication-finished', (status) => {
 });
 
 globalEmitter.on('kad-challenge-request', (request, response) => {
-    log.trace(`Challenge arrived: ${request.params.message.payload}`);
+    log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
     GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
+        console.log(vertexData);
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
+        console.log(answer);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
         response.send({
             status: 'success',

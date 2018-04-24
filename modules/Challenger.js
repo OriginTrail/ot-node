@@ -17,12 +17,8 @@ function sendChallenge(challenge) {
             import_id: challenge.import_id,
         },
     };
-    // TODO: obrisati
-    console.log(payload, challenge.dh);
 
     node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
-        console.log(error);
-        console.log(response);
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;
