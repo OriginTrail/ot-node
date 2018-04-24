@@ -5,20 +5,6 @@ const sysdb = require('./Database/SystemStorage');
 const GraphStorage = require('./GraphStorageInstance');
 
 /**
- * Private utility method used for encrypting a set of vertices
- * @param vertices    Vertices to be encrypted
- * @param privateKey  Private key used for encryption
- * @param publicKey   Public key used for decryption
- */
-function _encryptVertices(vertices, privateKey, publicKey) {
-    for (const id in vertices) {
-        const vertex = vertices[id];
-        vertex.data = Encryption.encryptObject(vertex.data, privateKey);
-        vertex.decryption_key = publicKey;
-    }
-}
-
-/**
  * Graph class encapsulates every operation related to
  * graph manipulation such as traversing, transforming, etc.
  */
@@ -248,7 +234,7 @@ class Graph {
                         const privateKey = rows[0].data_private_key;
                         const publicKey = rows[0].data_public_key;
 
-                        _encryptVertices(vertices, privateKey, publicKey);
+                        Graph.encryptVerticesWithKeys(vertices, privateKey, publicKey);
                         resolve({ vertices, public_key: publicKey });
                     } else {
                         const keyPair = Encryption.generateKeyPair();
@@ -260,7 +246,10 @@ class Graph {
                             dhKademliaId];
 
                         sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
-                            _encryptVertices(vertices, keyPair.privateKey, keyPair.publicKey);
+                            Graph.encryptVerticesWithKeys(
+                                vertices, keyPair.privateKey,
+                                keyPair.publicKey,
+                            );
                             resolve({ vertices, public_key: keyPair.publicKey });
                         }).catch((err) => {
                             reject(err);
@@ -273,6 +262,20 @@ class Graph {
                 reject(err);
             });
         });
+    }
+
+    /**
+     * Encrypt vertices data with specified public and private keys
+     * @param vertices    Vertices to be encrypted
+     * @param privateKey  Private key used for encryption
+     * @param publicKey   Public key used for decryption
+     */
+    static encryptVerticesWithKeys(vertices, privateKey, publicKey) {
+        for (const id in vertices) {
+            const vertex = vertices[id];
+            vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            vertex.decryption_key = publicKey;
+        }
     }
 
     /**
