@@ -127,9 +127,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
     const challenge = request.params.message.payload;
 
     GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
-        console.log(vertexData);
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
-        console.log(answer);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
         response.send({
             status: 'success',

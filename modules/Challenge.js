@@ -228,6 +228,7 @@ class Challenge {
      */
     static answerTestQuestion(blockId, vertexData, blockSize) {
         const blocks = this.__getBlocks__(vertexData, blockSize);
+        console.log(blocks);
         return blocks[blockId];
     }
 
