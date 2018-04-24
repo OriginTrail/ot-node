@@ -1,6 +1,4 @@
 const SystemStorage = require('./Database/SystemStorage');
-const deasync = require('deasync-promise');
-
 const log = require('./Utilities').getLogger();
 
 class Challenge {
@@ -127,22 +125,26 @@ class Challenge {
     static addTests(tests) {
         return new Promise((resolve, reject) => {
             SystemStorage.connect().then(() => {
-                // Delete any old tests
-                deasync(SystemStorage.runSystemQuery(
+                SystemStorage.runSystemQuery(
                     'DELETE FROM data_challenges WHERE dh_id=? AND import_id=?',
                     [tests[0].dhId, tests[0].importId],
-                ));
-                for (let i = 0; i < tests.length; i += 1) {
-                    // This should be done synchronously.
-                    deasync(SystemStorage.runSystemQuery(
-                        'INSERT INTO data_challenges (time, block_id, answer, dh_id, import_id) VALUES (?, ?, ?, ?, ?)',
-                        [tests[i].time, tests[i].block, tests[i].answer, tests[i].dhId,
-                            tests[i].importId],
-                    ));
-                }
-                resolve();
-            }).catch((err) => {
-                reject(err);
+                ).then(() => {
+                    for (let i = 0; i < tests.length; i += 1) {
+                        SystemStorage.runSystemQuery(
+                            'INSERT INTO data_challenges (time, block_id, answer, dh_id, import_id) VALUES (?, ?, ?, ?, ?)',
+                            [tests[i].time, tests[i].block, tests[i].answer, tests[i].dhId,
+                                tests[i].importId],
+                        ).then(() => {
+                            resolve();
+                        }).catch((error) => {
+                            reject(error);
+                        });
+                    }
+                }).catch((error) => {
+                    reject(error);
+                });
+            }).catch((error) => {
+                reject(error);
             });
         });
     }
@@ -204,7 +206,7 @@ class Challenge {
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery(
                     // todo add import id
-                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered NOT NULL',
+                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered IS NULL',
                     [dhId, importId, Date.now()],
                 ).then((rows) => {
                     resolve(rows);
