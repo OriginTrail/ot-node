@@ -149,7 +149,6 @@ describe.only('Challenge tests', () => {
 
     describe('Test generation', () => {
         beforeEach('restore db', async () => {
-            console.log('BEFORE EACH RUNNING');
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery('DELETE FROM data_challenges', []);
             });
@@ -200,23 +199,17 @@ describe.only('Challenge tests', () => {
                 console.log('Smth went wrong with SystemStorage.runSystemQuery()');
                 console.log(error);
             }
-            console.log('BEFORE DONE');
         });
 
-        it('Adding challenges ', () => {
+        it('Adding challenges ', async () => {
             // eslint-disable-next-line max-len
             const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, 10, myStartTime, myEndTime, 32, vertexData);
             console.log('_______________________');
             console.log(generatedTests);
             console.log('_______________________');
 
-            // Challenge.addTests(generatedTests).then(() => {
-            //     console.log('Test are added to db');
-            // }).catch((error) => {
-            //     console.log(error);
-            // });
             try {
-                Challenge.addTests(generatedTests);
+                await Challenge.addTests(generatedTests);
                 console.log('Test are added to db');
             } catch (error) {
                 console.log(error);
@@ -224,13 +217,6 @@ describe.only('Challenge tests', () => {
         });
 
         it('getTests()', async () => {
-            // return Challenge.getTests(myDataCreatorId, myImportId).then((response) => {
-            //     console.log('Retrieved tests:');
-            //     console.log(response);
-            // }).catch((error) => {
-            //     console.log(error);
-            // });
-
             try {
                 const result = await Challenge.getTests(myDataCreatorId, myImportId);
                 console.log('Retrieved tests:');
@@ -241,12 +227,6 @@ describe.only('Challenge tests', () => {
         });
 
         it('getUnansweredTest()', async () => {
-            // return Challenge.getUnansweredTest(myStartTime, myEndTime).then((response) => {
-            //     console.log('Retrieved unanswered tests:');
-            //     console.log(response);
-            // }).catch((error) => {
-            //     console.log(error);
-            // });
             try {
                 const result = await Challenge.getUnansweredTest(myStartTime, myEndTime);
                 console.log('Retrieved unanswered tests:');
