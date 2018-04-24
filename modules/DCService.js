@@ -18,7 +18,7 @@ const biddingTime = 20 * 1000;
 const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('10000000');
+const maxTokenAmount = new BN('10000');
 /**
  * DC operations (handling new offers, etc.)
  */
