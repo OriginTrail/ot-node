@@ -74,6 +74,11 @@ class DCService {
                     totalDocuments,
                     replicationFactor,
                 });
+                log.trace('Started offer');
+                setTimeout(() => {
+                    log.trace = ('Reveal time started');
+                }, biddingTime);
+
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
                 log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
