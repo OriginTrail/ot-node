@@ -17,12 +17,8 @@ const replicationFactor = 1;
 const biddingTime = 20 * 1000;
 const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
-<<<<<<< HEAD
-const minStakeAmount = new BN('100000000000000000');
-=======
-const minStakeAmount = new BN('1000000000000000000');
->>>>>>> af88963c58cae77830b249d72603e0254ec44a56
-const maxTokenAmount = new BN('100000000000000000000');
+const minStakeAmount = new BN('100');
+const maxTokenAmount = new BN('10000000');
 /**
  * DC operations (handling new offers, etc.)
  */
