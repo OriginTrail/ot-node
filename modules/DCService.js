@@ -1,6 +1,7 @@
 const node = require('./Node');
 const config = require('./Config');
 const Blockchain = require('./BlockChainInstance');
+const BN = require('bn.js');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -16,7 +17,7 @@ const replicationFactor = 1;
 const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = 5;
-const maxTokenAmount = 1000;
+const maxTokenAmount = new BN('100000000000000000000');
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -30,8 +31,8 @@ class DCService {
 
         // TODO set real offer params
         const offerParams = {
-            price: Utilities.getRandomIntRange(1, 10),
-            dataSizeBytes: 900,
+            price: `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`,
+            dataSizeBytes: '90000000',
             name: `Crazy data for ${totalDocuments} documents`,
         };
 
@@ -49,7 +50,7 @@ class DCService {
             data_size_bytes: offerParams.dataSizeBytes,
             replication_number: replicationFactor,
             root_hash: rootHash,
-            max_token_amount: maxTokenAmount,
+            max_token_amount: maxTokenAmount.toString(),
         }).then((offer) => {
             Blockchain.bc.createOffer(
                 dataId, config.identity,
