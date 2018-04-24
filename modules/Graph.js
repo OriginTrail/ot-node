@@ -270,7 +270,7 @@ class Graph {
      * @param privateKey  Private key used for encryption
      * @param publicKey   Public key used for decryption
      */
-    encryptVerticesWithKeys(vertices, privateKey, publicKey) {
+    static encryptVerticesWithKeys(vertices, privateKey, publicKey) {
         for (const id in vertices) {
             const vertex = vertices[id];
             vertex.data = Encryption.encryptObject(vertex.data, privateKey);
