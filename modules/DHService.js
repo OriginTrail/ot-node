@@ -153,7 +153,7 @@ class DHService {
         }
         setTimeout(
         // change time period in order to test reveal
-            revealBid, 1000,
+            revealBid, 30 * 1000,
             dcWallet, dataId, price, stake, bidIndex,
         );
     }
