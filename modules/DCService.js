@@ -13,7 +13,7 @@ const log = Utilities.getLogger();
 // TODO
 const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 20 * 1000;
+const biddingTime = 100 * 1000;
 const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = 5;
@@ -76,11 +76,11 @@ class DCService {
                 });
                 log.trace('Started bidding time');
                 setTimeout(() => {
-                    log.trace(`Started reveal time ${Date.now()}`);
+                    log.trace(`Started reveal time ${Date.now() / 1000}`);
                 }, biddingTime);
 
                 setTimeout(() => {
-                    log.trace(`Started choose time ${Date.now()}`);
+                    log.trace(`Started choose time ${Date.now() / 1000}`);
                 }, biddingTime * 2);
 
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
