@@ -153,7 +153,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Verifying escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
     }
 

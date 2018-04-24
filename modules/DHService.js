@@ -122,7 +122,6 @@ class DHService {
             importer.importJSON(data)
                 .then(() => {
                     log.trace('[DH] Replication finished');
-                    console.log(bid.stake);
                     Blockchain.bc.increaseApproval(bid.stake).then(() => {
                         Blockchain.bc.verifyEscrow(
                             bid.dc_wallet,
