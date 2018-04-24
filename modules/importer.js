@@ -31,9 +31,9 @@ module.exports = () => {
                         // eslint-disable-next-line  prefer-destructuring
                         const edges = graph.edges;
                         const { data_id } = graph.data_id;
+                        log.trace('Vertex importing');
                         async.each(
                             vertices, (vertex, next) => {
-                                log.trace('Vertex importing');
                                 GSdb.db.addDocument('ot_vertices', vertex)
                                     .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
                                     .then(() => {

@@ -240,7 +240,6 @@ class Challenge {
      * @private
      */
     static __getBlocks__(vertexData, blockSizeBytes) {
-        console.log(blockSizeBytes);
         const blocks = [];
         let block = String();
         let byteIndex = 0;
