@@ -31,15 +31,18 @@ class DHService {
         const maxStakeAmount = new BN(config.dh_max_stake, 10);
         const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
-        // const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
-        const chosenPrice = minPrice;
+        let temp = maxPrice.sub(minPrice);
+        temp = Utilities.getRandomIntRange(0, temp.toNumber());
+        const chosenPrice = minPrice.add(new BN(temp.toString()));
 
         if (minStakeAmount > maxStakeAmount) {
             log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
             return;
         }
-        // const stake = Math.round(Utilities.getRandomIntRange(minStakeAmount, maxStakeAmount));
-        const stake = minStakeAmount;
+
+        temp = maxStakeAmount.sub(minStakeAmount);
+        temp = Utilities.getRandomIntRange(0, temp.toNumber());
+        const stake = minPrice.add(new BN(temp.toString()));
 
         if (maxDataSizeBytes.lt(dataSizeBytes)) {
             log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);

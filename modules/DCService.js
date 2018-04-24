@@ -30,8 +30,8 @@ class DCService {
 
         // TODO set real offer params
         const offerParams = {
-            price: Utilities.getRandomIntRange(1, 10),
-            dataSizeBytes: 900,
+            price: `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`,
+            dataSizeBytes: '90000000',
             name: `Crazy data for ${totalDocuments} documents`,
         };
 
