@@ -248,7 +248,6 @@ class Challenge {
 
         for (let i = 0; i < vertexData.length; i += 1) {
             const { data } = vertexData[i];
-            console.log(data);
             for (let j = 0; j < data.length;) {
                 bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
 
