@@ -26,17 +26,7 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        try {
-            await Blockchain.bc.increaseApproval(options.amount);
-            await Blockchain.bc.initiateEscrow(
-                options.dh_wallet,
-                options.import_id,
-                options.amount,
-                options.total_time,
-            );
-        } catch (e) {
-            console.log(e);
-        }
+     
 
         data = this.sortEncryptedVertices(data);
 
