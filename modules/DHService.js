@@ -78,14 +78,14 @@ class DHService {
                             const { bidIndex } = event.returnValues;
                             Models.bids.create({
                                 bid_index: bidIndex,
-                                price: chosenPrice,
+                                price: chosenPrice.toString(),
                                 data_id: dataId,
                                 dc_wallet: dcWallet,
                                 dc_id: dcNodeId,
                                 hash: bidHash,
-                                total_escrow_time: totalEscrowTime,
-                                stake,
-                                data_size_bytes: dataSizeBytes,
+                                total_escrow_time: totalEscrowTime.toString(),
+                                stake: stake.toString(),
+                                data_size_bytes: dataSizeBytes.toString(),
                             }).then((bid) => {
                                 log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
 
