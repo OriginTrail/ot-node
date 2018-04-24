@@ -13,6 +13,7 @@ const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
+const BN = require('bn.js');
 
 // TODO remove below after SC intro
 const SmartContractInstance = require('./temp/MockSmartContractInstance');
@@ -44,7 +45,7 @@ globalEmitter.on('gs1-import-request', (data) => {
         deasync(Storage.connect());
         Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
             .then((data_info) => {
-                DCService.createOffer(data_id, root_hash, total_documents);
+                DCService.createOffer(data_id, root_hash, new BN(total_documents));
             });
     }).catch((e) => {
         console.log(e);
@@ -153,7 +154,7 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcWallet,
         totalEscrowTime,
         minStakeAmount,
-        totalDocuments,
+        dataSizeBytes,
     } = message;
 
     DHService.handleOffer(
@@ -161,8 +162,8 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcId,
         dataId,
         totalEscrowTime,
-        minStakeAmount,
-        totalDocuments, // TODO think about it
+        new BN(minStakeAmount),
+        new BN(dataSizeBytes),
     );
 });
 

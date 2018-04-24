@@ -16,13 +16,13 @@ const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
 const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
-const minStakeAmount = 5;
+const minStakeAmount = new BN('1000000000000000000');
 const maxTokenAmount = new BN('100000000000000000000');
 /**
  * DC operations (handling new offers, etc.)
  */
 class DCService {
-    static createOffer(dataId, rootHash, totalDocuments) {
+    static createOffer(dataId, rootHash, dataSizeBytes) {
         Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
@@ -33,7 +33,7 @@ class DCService {
         const offerParams = {
             price: `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`,
             dataSizeBytes: '90000000',
-            name: `Crazy data for ${totalDocuments} documents`,
+            name: `Crazy data for ${dataSizeBytes.toString()} bytes`,
         };
 
         // TODO call real SC
@@ -59,7 +59,8 @@ class DCService {
                 minStakeAmount,
                 biddingTime,
                 minNumberOfBids,
-                totalDocuments, replicationFactor,
+                dataSizeBytes,
+                replicationFactor,
             ).then((startTime) => {
                 log.info('Offer written to blockchain. Broadcast event.');
                 node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
@@ -67,11 +68,11 @@ class DCService {
                     dcId: config.identity,
                     dcWallet: config.node_wallet,
                     totalEscrowTime,
-                    maxTokenAmount,
-                    minStakeAmount,
+                    maxTokenAmount: maxTokenAmount.toString(),
+                    minStakeAmount: minStakeAmount.toString(),
                     biddingTime,
                     minNumberOfBids,
-                    totalDocuments,
+                    dataSizeBytes: dataSizeBytes.toString(),
                     replicationFactor,
                 });
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
