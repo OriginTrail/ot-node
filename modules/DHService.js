@@ -26,34 +26,37 @@ class DHService {
         minStakeAmount,
         dataSizeBytes,
     ) {
-        const minPrice = new BN(config.dh_min_price, 10);
-        const maxPrice = new BN(config.dh_max_price, 10);
-        const maxStakeAmount = new BN(config.dh_max_stake, 10);
-        const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
+        try {
+            const minPrice = new BN(config.dh_min_price, 10);
+            const maxPrice = new BN(config.dh_max_price, 10);
+            const maxStakeAmount = new BN(config.dh_max_stake, 10);
+            const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
-        let temp = maxPrice.sub(minPrice);
-        temp = Utilities.getRandomIntRange(0, temp.toNumber());
-        const chosenPrice = minPrice.add(new BN(temp.toString()));
+            let temp = maxPrice.sub(minPrice);
+            temp = Utilities.getRandomIntRange(0, temp.toNumber());
+            const chosenPrice = minPrice.add(new BN(temp.toString()));
 
-        if (minStakeAmount > maxStakeAmount) {
-            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
-            return;
+            if (minStakeAmount > maxStakeAmount) {
+                log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
+                return;
+            }
+
+            temp = maxStakeAmount.sub(minStakeAmount);
+            temp = Utilities.getRandomIntRange(0, temp.toNumber());
+            const stake = minPrice.add(new BN(temp.toString()));
+
+            if (maxDataSizeBytes.lt(dataSizeBytes)) {
+                log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
+                return;
+            }
+
+            const bidHash = abi.soliditySHA3(
+                ['address', 'uint', 'uint', 'uint'],
+                [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
+            ).toString('hex');
+        } catch (e) {
+            console.log(e);
         }
-
-        temp = maxStakeAmount.sub(minStakeAmount);
-        temp = Utilities.getRandomIntRange(0, temp.toNumber());
-        const stake = minPrice.add(new BN(temp.toString()));
-
-        if (maxDataSizeBytes.lt(dataSizeBytes)) {
-            log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
-            return;
-        }
-
-        const bidHash = abi.soliditySHA3(
-            ['address', 'uint', 'uint', 'uint'],
-            [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
-        ).toString('hex');
-
         log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
         Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
             .then((tx) => {
