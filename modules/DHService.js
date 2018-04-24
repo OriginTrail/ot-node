@@ -49,7 +49,7 @@ class DHService {
             [config.node_wallet, new BN(config.identity, 16), new BN(`${chosenPrice}`), new BN(`${stake}`)],
         ).toString('hex');
 
-        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
+        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
         Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
             .then((tx) => {
                 // Sign escrow.
