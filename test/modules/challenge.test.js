@@ -131,7 +131,7 @@ function testGenerateTests() {
     assert.throws(testFunc, 'Negative block size asked. Should crash!');
 }
 
-describe.only('Challenge tests', () => {
+describe('Challenge tests', () => {
     describe('Block generation', () => {
         const blockTests = [
             { args: [vertexData, 32] },
@@ -179,6 +179,8 @@ describe.only('Challenge tests', () => {
     });
 
     describe('Adding tests', () => {
+        const numberOfChallengesToGenerate = 10;
+
         const myDataCreatorId = 'dummyDC';
         const myImportId = 'dummyImportId';
         const myStartTime = new Date('May 1, 2018 03:24:00').getTime();
@@ -203,37 +205,35 @@ describe.only('Challenge tests', () => {
 
         it('Adding challenges ', async () => {
             // eslint-disable-next-line max-len
-            const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, 10, myStartTime, myEndTime, 32, vertexData);
-            console.log('_______________________');
-            console.log(generatedTests);
-            console.log('_______________________');
+            const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, numberOfChallengesToGenerate, myStartTime, myEndTime, 32, vertexData);
 
             try {
                 await Challenge.addTests(generatedTests);
-                console.log('Test are added to db');
             } catch (error) {
                 console.log(error);
             }
         });
 
         it('getTests()', async () => {
-            try {
-                const result = await Challenge.getTests(myDataCreatorId, myImportId);
-                console.log('Retrieved tests:');
-                console.log(result);
-            } catch (error) {
-                console.log(error);
-            }
+            const result = await Challenge.getTests(myDataCreatorId, myImportId);
+            expect(result.length).to.be.equal(numberOfChallengesToGenerate);
         });
 
         it('getUnansweredTest()', async () => {
-            try {
-                const result = await Challenge.getUnansweredTest(myStartTime, myEndTime);
-                console.log('Retrieved unanswered tests:');
-                console.log(result);
-            } catch (error) {
-                console.log(error);
-            }
+            const result = await Challenge.getUnansweredTest(myStartTime, myEndTime);
+            expect(result.length).to.be.equal(numberOfChallengesToGenerate);
+        });
+
+        it('getNextTest()', async () => {
+            const result = await Challenge.getNextTest(myDataCreatorId, myImportId);
+            expect(result.length).to.be.equal(10);
+        });
+
+        it.skip('completeTest()', async () => {
+            const testIdToComplete = 271;
+
+            const result = await Challenge.completeTest(testIdToComplete);
+            console.log(result);
         });
     });
 });

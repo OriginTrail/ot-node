@@ -208,7 +208,7 @@ class Challenge {
             SystemStorage.connect().then(() => {
                 SystemStorage.runSystemQuery(
                     // todo add import id
-                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered NOT NULL',
+                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered IS NULL',
                     [dhId, importId, Date.now()],
                 ).then((rows) => {
                     resolve(rows);
