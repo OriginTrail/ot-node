@@ -131,7 +131,7 @@ function testGenerateTests() {
     assert.throws(testFunc, 'Negative block size asked. Should crash!');
 }
 
-describe('Challenge tests', () => {
+describe.only('Challenge tests', () => {
     describe('Block generation', () => {
         const blockTests = [
             { args: [vertexData, 32] },
@@ -178,14 +178,16 @@ describe('Challenge tests', () => {
         });
     });
 
-    describe('Adding tests', () => {
+    describe('Adding challenges to db', () => {
         const numberOfChallengesToGenerate = 10;
-
+        const numberOfChallengesToAnswer = 5;
+        const numberOfChallengesToFail = 1;
+        const idOfTestToFail = 6;
+        const byteSize = 32;
         const myDataCreatorId = 'dummyDC';
         const myImportId = 'dummyImportId';
         const myStartTime = new Date('May 1, 2018 03:24:00').getTime();
         const myEndTime = new Date('January 1, 2019 00:24:00').getTime();
-        console.log(myStartTime, myEndTime);
 
         before('cleanup db', async () => {
             try {
@@ -205,7 +207,7 @@ describe('Challenge tests', () => {
 
         it('Adding challenges ', async () => {
             // eslint-disable-next-line max-len
-            const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, numberOfChallengesToGenerate, myStartTime, myEndTime, 32, vertexData);
+            const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, numberOfChallengesToGenerate, myStartTime, myEndTime, byteSize, vertexData);
 
             try {
                 await Challenge.addTests(generatedTests);
@@ -226,14 +228,24 @@ describe('Challenge tests', () => {
 
         it('getNextTest()', async () => {
             const result = await Challenge.getNextTest(myDataCreatorId, myImportId);
-            expect(result.length).to.be.equal(10);
+            expect(result.length).to.be.equal(numberOfChallengesToGenerate);
         });
 
-        it.skip('completeTest()', async () => {
-            const testIdToComplete = 271;
+        it('completeTest()', async () => {
+            for (let j = 1; j <= numberOfChallengesToAnswer; j += 1) {
+                await Challenge.completeTest(j); // eslint-disable-line no-await-in-loop
+            }
 
-            const result = await Challenge.completeTest(testIdToComplete);
-            console.log(result);
+            const numberOfUnanswered = await Challenge.getUnansweredTest(myStartTime, myEndTime);
+            // eslint-disable-next-line max-len
+            expect(numberOfUnanswered.length).to.be.equal(numberOfChallengesToGenerate - numberOfChallengesToAnswer);
+        });
+
+        it('failTest()', async () => {
+            const failedTestResult = await Challenge.failTest(idOfTestToFail);
+            const numberOfUnanswered = await Challenge.getUnansweredTest(myStartTime, myEndTime);
+            // eslint-disable-next-line max-len
+            expect(numberOfUnanswered.length).to.be.equal(numberOfChallengesToGenerate - numberOfChallengesToAnswer - 1);
         });
     });
 });
