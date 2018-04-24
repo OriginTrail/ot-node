@@ -20,7 +20,7 @@ function sendChallenge(challenge) {
     // TODO: obrisati
     console.log(payload, challenge.dh);
 
-    node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
+    node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
         console.log(error);
         console.log(response);
         if (error) {
