@@ -36,6 +36,8 @@ class DHService {
             temp = Utilities.getRandomIntRange(0, temp.toNumber());
             const chosenPrice = minPrice.add(new BN(temp.toString()));
 
+            console.log(minStakeAmount.toString());
+            console.log(maxStakeAmount.toString());
             if (minStakeAmount > maxStakeAmount) {
                 log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
                 return;
