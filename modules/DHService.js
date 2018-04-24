@@ -44,8 +44,6 @@ class DHService {
                 return;
             }
 
-            console.log(maxStakeAmount.toString(), minStakeAmount.toString());
-
             temp = maxStakeAmount.sub(minStakeAmount);
             temp = Utilities.getRandomIntRange(0, temp.toNumber());
             const stake = minPrice.add(new BN(temp.toString()));

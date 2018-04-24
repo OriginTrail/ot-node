@@ -228,7 +228,6 @@ class Challenge {
      */
     static answerTestQuestion(blockId, vertexData, blockSize) {
         const blocks = this.__getBlocks__(vertexData, blockSize);
-        console.log(blocks);
         return blocks[blockId];
     }
 
@@ -241,6 +240,7 @@ class Challenge {
      * @private
      */
     static __getBlocks__(vertexData, blockSizeBytes) {
+        console.log(blockSizeBytes);
         const blocks = [];
         let block = String();
         let byteIndex = 0;
@@ -248,6 +248,7 @@ class Challenge {
 
         for (let i = 0; i < vertexData.length; i += 1) {
             const { data } = vertexData[i];
+            console.log(data);
             for (let j = 0; j < data.length;) {
                 bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
 
