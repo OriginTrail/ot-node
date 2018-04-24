@@ -26,30 +26,32 @@ class DHService {
         minStakeAmount,
         dataSizeBytes,
     ) {
-        const minPrice = parseInt(config.dh_min_price, 10);
-        const maxPrice = parseInt(config.dh_max_price, 10);
-        const maxStakeAmount = parseInt(config.dh_max_stake, 10);
-        const maxDataSizeBytes = parseInt(config.dh_max_data_size_bytes, 10);
+        const minPrice = new BN(config.dh_min_price, 10);
+        const maxPrice = new BN(config.dh_max_price, 10);
+        const maxStakeAmount = new BN(config.dh_max_stake, 10);
+        const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
-        const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
+        // const chosenPrice = Math.round(Utilities.getRandomIntRange(minPrice, maxPrice));
+        const chosenPrice = minPrice;
 
         if (minStakeAmount > maxStakeAmount) {
             log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
             return;
         }
-        const stake = Math.round(Utilities.getRandomIntRange(minStakeAmount, maxStakeAmount));
+        // const stake = Math.round(Utilities.getRandomIntRange(minStakeAmount, maxStakeAmount));
+        const stake = minStakeAmount;
 
-        if (maxDataSizeBytes < dataSizeBytes) {
+        if (maxDataSizeBytes.lt(dataSizeBytes)) {
             log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
             return;
         }
 
         const bidHash = abi.soliditySHA3(
-            ['address', 'uint256', 'uint256', 'uint256'],
-            [config.node_wallet, new BN(config.identity, 16), new BN(`${chosenPrice}`), new BN(`${stake}`)],
+            ['address', 'uint', 'uint', 'uint'],
+            [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
         ).toString('hex');
 
-        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}`);
+        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId}. Hash ${bidHash}.`);
         Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
             .then((tx) => {
                 // Sign escrow.
