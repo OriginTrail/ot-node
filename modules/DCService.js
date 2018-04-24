@@ -1,6 +1,10 @@
 const node = require('./Node');
 const config = require('./Config');
+const Encryption = require('./Encryption');
+const GraphInstance = require('./GraphInstance');
+const GraphStorageInstance = require('./GraphStorageInstance');
 const Blockchain = require('./BlockChainInstance');
+const bytes = require('utf8-length')
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -21,7 +25,7 @@ const maxTokenAmount = 1000;
  * DC operations (handling new offers, etc.)
  */
 class DCService {
-    static createOffer(dataId, rootHash, totalDocuments) {
+    static createOffer(dataId, rootHash, totalDocuments, vertices) {
         Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
@@ -39,6 +43,7 @@ class DCService {
         const scId = SmartContractInstance.sc.createOffer(dataId, offerParams);
         log.info(`Created offer ${scId}`);
 
+        const importSizeInBytes = this._calculateImportSize(vertices);
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
@@ -46,7 +51,7 @@ class DCService {
             tender_duration: biddingTime,
             min_number_applicants: minNumberOfBids,
             price_tokens: offerParams.price,
-            data_size_bytes: offerParams.dataSizeBytes,
+            data_size_bytes: importSizeInBytes,
             replication_number: replicationFactor,
             root_hash: rootHash,
             max_token_amount: maxTokenAmount,
@@ -58,7 +63,8 @@ class DCService {
                 minStakeAmount,
                 biddingTime,
                 minNumberOfBids,
-                totalDocuments, replicationFactor,
+                importSizeInBytes,
+                replicationFactor,
             ).then((startTime) => {
                 log.info('Offer written to blockchain. Broadcast event.');
                 node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
@@ -70,7 +76,7 @@ class DCService {
                     minStakeAmount,
                     biddingTime,
                     minNumberOfBids,
-                    totalDocuments,
+                    importSizeInBytes,
                     replicationFactor,
                 });
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
@@ -80,6 +86,18 @@ class DCService {
         }).catch((error) => {
             log.error(`Failed to write offer to DB. ${error}`);
         });
+    }
+
+    /**
+     * Calculates more or less accurate size of the import
+     * @param vertices   Collection of vertices
+     * @returns {number} Size in bytes
+     * @private
+     */
+    static _calculateImportSize(vertices) {
+        const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
+        GraphInstance.g.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
+        return bytes(JSON.stringify(vertices));
     }
 
     /**
