@@ -131,6 +131,7 @@ class DHService {
                             bid.total_escrow_time,
                         ).then(() => {
                             // TODO No need to notify DC. DC should catch event from verifyEscrow().
+                            log.important('Finished negotiation. Job starting. Waiting for challenges.');
                             node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
                         }).catch((error) => {
                             log.error(`Failed to verify escrow. ${error}`);
