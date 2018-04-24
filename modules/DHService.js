@@ -83,7 +83,6 @@ class DHService {
                                 data_size_bytes: dataSizeBytes,
                             }).then((bid) => {
                                 log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
-
                                 DHService.scheduleRevealBid(
                                     dcWallet, dataId, chosenPrice,
                                     stake, bidIndex, totalEscrowTime,
@@ -154,7 +153,7 @@ class DHService {
         }
         setTimeout(
         // change time period in order to test reveal
-            revealBid, 2 * 60 * 1000,
+            revealBid, 1000,
             dcWallet, dataId, price, stake, bidIndex,
         );
     }

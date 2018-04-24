@@ -13,7 +13,8 @@ const log = Utilities.getLogger();
 // TODO
 const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 2 * 60 * 1000;
+const biddingTime = 60 * 1000;
+const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = 5;
 const maxTokenAmount = 1000;
@@ -43,7 +44,7 @@ class DCService {
             id: dataId,
             data_lifespan: totalEscrowTime,
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
-            tender_duration: biddingTime,
+            tender_duration: tenderDuration,
             min_number_applicants: minNumberOfBids,
             price_tokens: offerParams.price,
             data_size_bytes: offerParams.dataSizeBytes,
