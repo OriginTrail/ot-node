@@ -13,6 +13,7 @@ const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
+const BN = require('bn.js');
 
 // TODO remove below after SC intro
 const SmartContractInstance = require('./temp/MockSmartContractInstance');
@@ -157,7 +158,7 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcWallet,
         totalEscrowTime,
         minStakeAmount,
-        totalDocuments,
+        dataSizeBytes,
     } = message;
 
     DHService.handleOffer(
@@ -165,8 +166,8 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcId,
         dataId,
         totalEscrowTime,
-        minStakeAmount,
-        totalDocuments, // TODO think about it
+        new BN(minStakeAmount),
+        new BN(dataSizeBytes),
     );
 });
 

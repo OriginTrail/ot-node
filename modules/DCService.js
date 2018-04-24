@@ -1,7 +1,7 @@
 const node = require('./Node');
 const config = require('./Config');
 const Encryption = require('./Encryption');
-const GraphInstance = require('./GraphInstance');
+const Graph = require('./Graph');
 const Blockchain = require('./BlockChainInstance');
 const bytes = require('utf8-length');
 const BN = require('bn.js');
@@ -16,7 +16,7 @@ const totalEscrowTime = 6 * 60 * 1000;
 const replicationFactor = 1;
 const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
-const minStakeAmount = 5;
+const minStakeAmount = new BN('1000000000000000000');
 const maxTokenAmount = new BN('100000000000000000000');
 /**
  * DC operations (handling new offers, etc.)
@@ -29,7 +29,7 @@ class DCService {
             console.log('Error: ', e);
         });
 
-        const importSizeInBytes = this._calculateImportSize(vertices);
+        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const price = `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`;
         Models.offers.create({
             id: dataId,
@@ -38,7 +38,7 @@ class DCService {
             tender_duration: biddingTime,
             min_number_applicants: minNumberOfBids,
             price_tokens: price,
-            data_size_bytes: importSizeInBytes,
+            data_size_bytes: importSizeInBytes.toString(),
             replication_number: replicationFactor,
             root_hash: rootHash,
             max_token_amount: maxTokenAmount.toString(),
@@ -59,11 +59,11 @@ class DCService {
                     dcId: config.identity,
                     dcWallet: config.node_wallet,
                     totalEscrowTime,
-                    maxTokenAmount,
-                    minStakeAmount,
+                    maxTokenAmount: maxTokenAmount.toString(),
+                    minStakeAmount: minStakeAmount.toString(),
                     biddingTime,
                     minNumberOfBids,
-                    importSizeInBytes,
+                    importSizeInBytes: importSizeInBytes.toString(),
                     replicationFactor,
                 });
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
@@ -83,7 +83,7 @@ class DCService {
      */
     static _calculateImportSize(vertices) {
         const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
-        GraphInstance.g.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
+        Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
         return bytes(JSON.stringify(vertices));
     }
 

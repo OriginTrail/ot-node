@@ -36,7 +36,7 @@ class DHService {
         const chosenPrice = minPrice.add(new BN(temp.toString()));
 
         if (minStakeAmount > maxStakeAmount) {
-            log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
+            log.trace(`Skipping offer because of the min stake (${minStakeAmount})is bigger than max stake is (${maxStakeAmount}).`);
             return;
         }
 
