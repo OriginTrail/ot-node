@@ -26,8 +26,6 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-     
-
         data = this.sortEncryptedVertices(data);
 
         const tests = Challenge.generateTests(

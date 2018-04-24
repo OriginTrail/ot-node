@@ -341,6 +341,7 @@ class Network {
              */
             node.payloadRequest = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
+                console.log(contact);
                 node.send('payload-request', { message }, [contactId, contact], callback);
             };
 
