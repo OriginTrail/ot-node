@@ -11,7 +11,7 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         price: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         data_id: {
             type: Sequelize.INTEGER,
@@ -29,10 +29,10 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         stake: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         data_size_bytes: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),

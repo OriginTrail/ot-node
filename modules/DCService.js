@@ -2,15 +2,12 @@ const node = require('./Node');
 const config = require('./Config');
 const Encryption = require('./Encryption');
 const GraphInstance = require('./GraphInstance');
-const GraphStorageInstance = require('./GraphStorageInstance');
 const Blockchain = require('./BlockChainInstance');
-const bytes = require('utf8-length')
+const bytes = require('utf8-length');
+const BN = require('bn.js');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
-
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
 
 const log = Utilities.getLogger();
 
@@ -20,7 +17,7 @@ const replicationFactor = 1;
 const biddingTime = 2 * 60 * 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = 5;
-const maxTokenAmount = 1000;
+const maxTokenAmount = new BN('100000000000000000000');
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -32,29 +29,19 @@ class DCService {
             console.log('Error: ', e);
         });
 
-        // TODO set real offer params
-        const offerParams = {
-            price: Utilities.getRandomIntRange(1, 10),
-            dataSizeBytes: 900,
-            name: `Crazy data for ${totalDocuments} documents`,
-        };
-
-        // TODO call real SC
-        const scId = SmartContractInstance.sc.createOffer(dataId, offerParams);
-        log.info(`Created offer ${scId}`);
-
         const importSizeInBytes = this._calculateImportSize(vertices);
+        const price = `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`;
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             tender_duration: biddingTime,
             min_number_applicants: minNumberOfBids,
-            price_tokens: offerParams.price,
+            price_tokens: price,
             data_size_bytes: importSizeInBytes,
             replication_number: replicationFactor,
             root_hash: rootHash,
-            max_token_amount: maxTokenAmount,
+            max_token_amount: maxTokenAmount.toString(),
         }).then((offer) => {
             Blockchain.bc.createOffer(
                 dataId, config.identity,
