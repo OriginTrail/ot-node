@@ -61,59 +61,60 @@ class DHService {
                 ['address', 'uint', 'uint', 'uint'],
                 [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
             ).toString('hex');
+
+            log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
+            Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
+                .then((tx) => {
+                // Sign escrow.
+                    Blockchain.bc.increaseBiddingApproval(stake).catch(error => log.error(`Failed to increase approval. ${error}.`));
+
+                    Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'AddedBid', {
+                        fromBlock: 0,
+                        toBlock: 'latest',
+                    }, (data, err) => {
+                        if (err) {
+                            log.error(err);
+                            return true;
+                        }
+                        // filter events manually since Web3 filtering is not working
+                        for (const event of data) {
+                            const eventDataId = event.returnValues.data_id;
+                            const eventDhWallet = event.returnValues.DH_wallet;
+
+                            if (Number(eventDataId) === dataId
+                  && eventDhWallet === config.node_wallet) {
+                                const { bidIndex } = event.returnValues;
+                                Models.bids.create({
+                                    bid_index: bidIndex,
+                                    price: chosenPrice.toString(),
+                                    data_id: dataId,
+                                    dc_wallet: dcWallet,
+                                    dc_id: dcNodeId,
+                                    hash: bidHash,
+                                    total_escrow_time: totalEscrowTime.toString(),
+                                    stake: stake.toString(),
+                                    data_size_bytes: dataSizeBytes.toString(),
+                                }).then((bid) => {
+                                    log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
+
+                                    DHService.scheduleRevealBid(
+                                        dcWallet, dataId, chosenPrice,
+                                        stake, bidIndex, totalEscrowTime,
+                                    );
+                                }).catch((err) => {
+                                    log.error(`Failed to insert new bid. ${err}`);
+                                });
+                                return true;
+                            }
+                        }
+                        return false;
+                    }, 5000, Date.now() + 20000);
+                }).catch((err) => {
+                    log.error(err);
+                });
         } catch (e) {
             console.log(e);
         }
-        log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
-        Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
-            .then((tx) => {
-                // Sign escrow.
-                Blockchain.bc.increaseBiddingApproval(stake).catch(error => log.error(`Failed to increase approval. ${error}.`));
-
-                Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'AddedBid', {
-                    fromBlock: 0,
-                    toBlock: 'latest',
-                }, (data, err) => {
-                    if (err) {
-                        log.error(err);
-                        return true;
-                    }
-                    // filter events manually since Web3 filtering is not working
-                    for (const event of data) {
-                        const eventDataId = event.returnValues.data_id;
-                        const eventDhWallet = event.returnValues.DH_wallet;
-
-                        if (Number(eventDataId) === dataId
-                  && eventDhWallet === config.node_wallet) {
-                            const { bidIndex } = event.returnValues;
-                            Models.bids.create({
-                                bid_index: bidIndex,
-                                price: chosenPrice.toString(),
-                                data_id: dataId,
-                                dc_wallet: dcWallet,
-                                dc_id: dcNodeId,
-                                hash: bidHash,
-                                total_escrow_time: totalEscrowTime.toString(),
-                                stake: stake.toString(),
-                                data_size_bytes: dataSizeBytes.toString(),
-                            }).then((bid) => {
-                                log.info(`Created new bid for import ${dataId}. Schedule reveal... `);
-
-                                DHService.scheduleRevealBid(
-                                    dcWallet, dataId, chosenPrice,
-                                    stake, bidIndex, totalEscrowTime,
-                                );
-                            }).catch((err) => {
-                                log.error(`Failed to insert new bid. ${err}`);
-                            });
-                            return true;
-                        }
-                    }
-                    return false;
-                }, 5000, Date.now() + 20000);
-            }).catch((err) => {
-                log.error(err);
-            });
     }
 
     static handleImport(data) {
