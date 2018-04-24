@@ -36,6 +36,9 @@ class DHService {
             temp = Utilities.getRandomIntRange(0, temp.toNumber());
             const chosenPrice = minPrice.add(new BN(temp.toString()));
 
+            minStakeAmount = new BN(minStakeAmount);
+            dataSizeBytes = new BN(dataSizeBytes);
+
             console.log(minStakeAmount.toString());
             console.log(maxStakeAmount.toString());
             if (minStakeAmount > maxStakeAmount) {
@@ -44,6 +47,7 @@ class DHService {
             }
 
             console.log(maxStakeAmount.toString(), minStakeAmount.toString());
+
             temp = maxStakeAmount.sub(minStakeAmount);
             temp = Utilities.getRandomIntRange(0, temp.toNumber());
             const stake = minPrice.add(new BN(temp.toString()));
