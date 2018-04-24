@@ -25,7 +25,8 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port'],
+                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
+                    'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake'],
                 'Some config items are missing',
             );
         });
