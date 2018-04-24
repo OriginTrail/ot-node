@@ -17,8 +17,12 @@ function sendChallenge(challenge) {
             import_id: challenge.import_id,
         },
     };
+    // TODO: obrisati
+    console.log(payload, challenge.dh);
 
     node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
+        console.log(error);
+        console.log(response);
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;
@@ -47,8 +51,6 @@ function sendChallenge(challenge) {
 
 function intervalFunc() {
     const time_now = Date.now();
-    // TODO: obrisati
-    console.log(time_now - intervalMs, time_now + intervalMs);
     Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs).then((challenges) => {
         if (challenges.length > 0) {
             challenges.forEach(challenge => sendChallenge(challenge));
