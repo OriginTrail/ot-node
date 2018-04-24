@@ -29,7 +29,7 @@ class DataReplication {
         data = this.sortEncryptedVertices(data);
 
         const tests = Challenge.generateTests(
-            config.dh[0], options.import_id.toString(), 10,
+            data.contact, options.import_id.toString(), 10,
             options.start_time, options.start_time + options.total_time,
             16, data.encryptedVertices.vertices,
         );
@@ -51,7 +51,7 @@ class DataReplication {
         };
 
         // send payload to DH
-        node.ot.payloadRequest(payload, () => {
+        node.ot.payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
     }

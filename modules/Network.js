@@ -391,7 +391,6 @@ class Network {
             };
 
             node.biddingWon = (message, contactId, callback) => {
-                console.log(contactId);
                 const contact = node.getContact(contactId);
                 node.send('kad-bidding-won', { message }, [contactId, contact], callback);
             };
