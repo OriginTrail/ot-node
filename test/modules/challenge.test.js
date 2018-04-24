@@ -131,7 +131,7 @@ function testGenerateTests() {
     assert.throws(testFunc, 'Negative block size asked. Should crash!');
 }
 
-describe.only('Challenge tests', () => {
+describe('Challenge tests', () => {
     describe('Block generation', () => {
         const blockTests = [
             { args: [vertexData, 32] },
