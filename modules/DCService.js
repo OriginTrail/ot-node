@@ -76,11 +76,11 @@ class DCService {
                 });
                 log.trace('Started bidding time');
                 setTimeout(() => {
-                    log.trace('Started reveal time');
+                    log.trace(`Started reveal time ${Date.now()}`);
                 }, biddingTime);
 
                 setTimeout(() => {
-                    log.trace('Started choose time');
+                    log.trace(`Started choose time ${Date.now()}`);
                 }, biddingTime * 2);
 
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
