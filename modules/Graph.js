@@ -246,7 +246,10 @@ class Graph {
                             dhKademliaId];
 
                         sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
-                            Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
+                            Graph.encryptVerticesWithKeys(
+                                vertices, keyPair.privateKey,
+                                keyPair.publicKey,
+                            );
                             resolve({ vertices, public_key: keyPair.publicKey });
                         }).catch((err) => {
                             reject(err);

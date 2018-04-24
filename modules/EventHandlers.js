@@ -49,7 +49,7 @@ globalEmitter.on('gs1-import-request', (data) => {
                 });
         }).catch((err) => {
             log.warn(err);
-        })
+        });
     }).catch((e) => {
         console.log(e);
     });
