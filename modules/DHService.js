@@ -55,11 +55,11 @@ class DHService {
 
             const bidHash = abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint'],
-                [config.node_wallet, config.identity, chosenPrice, stake],
+                [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
             ).toString('hex');
 
             log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
-            Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
+            Blockchain.bc.addBid(dcWallet, dataId, new BN(config.identity, 16)`0x${bidHash}`)
                 .then((tx) => {
                 // Sign escrow.
                     Blockchain.bc.increaseBiddingApproval(stake).catch(error => log.error(`Failed to increase approval. ${error}.`));
@@ -157,7 +157,10 @@ class DHService {
    */
     static scheduleRevealBid(dcWallet, dataId, price, stake, bidIndex, totalEscrowTime) {
         function revealBid(dcWallet, dataId, price, stake, bidIndex) {
-            Blockchain.bc.revealBid(dcWallet, dataId, config.identity, price, stake, bidIndex)
+            Blockchain.bc.revealBid(
+                dcWallet, dataId, new BN(config.identity, 16),
+                price, stake, bidIndex,
+            )
                 .then(() => {
                     log.info(`Bid revealed for import ${dataId} and DC ${dcWallet}`);
                     DHService.checkIfRevealed(dcWallet, dataId);
