@@ -14,8 +14,8 @@ const giveMeEscrowHolder = function giveMeEscrowHolder() {
 };
 
 const giveMeBidding = function giveMeBidding() {
-	const escrow = Bidding.deployed();
-	return escrow;
+	const bidding = Bidding.deployed();
+	return bidding;
 };
 
 var token;
