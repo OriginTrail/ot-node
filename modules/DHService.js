@@ -63,7 +63,7 @@ class DHService {
                 .then((tx) => {
                 // Sign escrow.
                     Blockchain.bc.increaseBiddingApproval(stake).catch(error => log.error(`Failed to increase approval. ${error}.`));
-
+                    log.trace('Bidding approval increased');
                     Blockchain.bc.subscribeToEvent('BIDDING_CONTRACT', 'AddedBid', {
                         fromBlock: 0,
                         toBlock: 'latest',
