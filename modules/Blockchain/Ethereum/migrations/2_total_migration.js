@@ -4,6 +4,7 @@ var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var OTFingerprintStore = artifacts.require('OTFingerprintStore');
 var Bidding = artifacts.require('Bidding');
 
+
 const giveMeTracToken = function giveMeTracToken() {
 	const token = TracToken.deployed();
 	return token;
@@ -59,27 +60,46 @@ module.exports = (deployer, network, accounts) => {
 						.then( () => {
 							token.mint(DC_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
 							.then( () => {
-		    					token.mint(DH_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
-		    					.then( () => {
-			    					token.finishMinting({ from: accounts[0] }).catch( e => console.log(e))
-			    					.then( () => {
+								token.mint(DH_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
+								.then( () => {
+									token.finishMinting({ from: accounts[0] }).catch( e => console.log(e))
+									.then( () => {
 										console.log("\n\n \t Contract adressess on ganache:");
 										console.log("\t OT-fingerprint address: \t" + fingerprint.address);
 										console.log("\t Token contract address: \t" + token.address);
 										console.log("\t Escrow contract address: \t" + escrow.address);
 										console.log("\t Bidding contract address: \t" + bidding.address);
 									});
-			    				});
-		    				});
+								});
+							});
 						});
 					});
 				});
 			});
-			
+
 		});
 		break;
 		case "rinkeby":
-			console.log("NEMOJ DA IDES OVOM ULICOM!!!");
+		tokenAddress = '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882';
+		fingerprintAddress = '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d';
+		deployer.deploy(EscrowHolder, tokenAddress)
+		.then(() => giveMeEscrowHolder())
+		.then( (result) => {
+			escrow = result;
+			deployer.deploy(Bidding, tokenAddress, result.address)
+			.then( () => giveMeBidding())
+			.then( (result) => {
+				bidding = result;
+				escrow.transferOwnership(bidding.address)
+				.then( () => {
+					console.log("\n\n \t Contract adressess on rinkeby:");
+					console.log("\t OT-fingerprint address: \t" + fingerprintAddress + " (not changed)");
+					console.log("\t Token contract address: \t" + tokenAddress + " (not changed)");
+					console.log("\t Escrow contract address: \t" + escrow.address);
+					console.log("\t Bidding contract address: \t" + bidding.address);
+				});
+			});
+		});
 		break;
 	}
 
