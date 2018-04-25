@@ -1,6 +1,6 @@
 {
-  "name": "origintrail-node-0.5a",
-  "version": "0.5.0",
+  "name": "origintrail-node-0.6a",
+  "version": "0.6.0",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
@@ -73,6 +73,7 @@
     "sqlite3": "^4.0.0",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "utf8-length": "latest"
   }
 }

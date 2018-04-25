@@ -30,38 +30,38 @@ library SafeMath {
  * @dev The Ownable contract has an owner address, and provides basic authorization control
  * functions, this simplifies the implementation of "user permissions".
  */
- contract Ownable {
- 	address public owner;
+contract Ownable {
+	address public owner;
 
 
- 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-   function Ownable() public {
-   	owner = msg.sender;
-   }
+	/**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+	function Ownable() public {
+		owner = msg.sender;
+	}
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-   modifier onlyOwner() {
-   	require(msg.sender == owner);
-   	_;
-   }
+	/**
+     * @dev Throws if called by any account other than the owner.
+     */
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-   function transferOwnership(address newOwner) public onlyOwner {
-   	require(newOwner != address(0));
-   	emit OwnershipTransferred(owner, newOwner);
-   	owner = newOwner;
-   }
+	/**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+	function transferOwnership(address newOwner) public onlyOwner {
+		require(newOwner != address(0));
+		emit OwnershipTransferred(owner, newOwner);
+		owner = newOwner;
+	}
 
 }
 contract ERC20Basic {
@@ -98,7 +98,7 @@ contract EscrowHolder is Ownable{
 	struct EscrowDefinition{
 		uint token_amount;
 		uint tokens_sent;
-		
+
 		uint stake_amount;
 
 		uint last_confirmation_time;
@@ -118,7 +118,7 @@ contract EscrowHolder is Ownable{
 	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time)
 	public onlyOwner{
 		require(escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.active
-			&&  escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
+		&&  escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
 
 		require(token_amount > 0 && total_time > 0);
 
@@ -135,11 +135,11 @@ contract EscrowHolder is Ownable{
 		isVerified = false;
 
 		EscrowDefinition storage escrow_def = escrow[DC_wallet][msg.sender][data_id];
-		
+
 		require(escrow_def.token_amount == token_amount &&
-			escrow_def.stake_amount == stake_amount &&
-			escrow_def.escrow_status == EscrowStatus.initiated &&
-			escrow_def.total_time == total_time);
+		escrow_def.stake_amount == stake_amount &&
+		escrow_def.escrow_status == EscrowStatus.initiated &&
+		escrow_def.total_time == total_time);
 
 		//Transfer the stake_amount to the escrow
 		require(token.allowance(msg.sender,this) >= stake_amount);
@@ -193,7 +193,7 @@ contract EscrowHolder is Ownable{
 		EscrowDefinition storage this_escrow = escrow[msg.sender][DH_wallet][data_id];
 
 		require(this_escrow.escrow_status != EscrowStatus.completed &&
-			this_escrow.escrow_status != EscrowStatus.canceled);
+		this_escrow.escrow_status != EscrowStatus.canceled);
 
 		uint256 amount_to_send;
 		if(this_escrow.escrow_status == EscrowStatus.active){
@@ -214,7 +214,7 @@ contract EscrowHolder is Ownable{
 			this_escrow.tokens_sent.add(amount_to_send);
 			token.transfer(msg.sender, amount_to_send);
 		}
-		
+
 		//Calculate the amount to send back to DH and transfer the money back
 		amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 		if(amount_to_send > 0) {

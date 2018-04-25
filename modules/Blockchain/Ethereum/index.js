@@ -118,7 +118,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        log.warn('Increasing approval');
+        log.warn('Increasing approval for escrow');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
     }
 
@@ -153,7 +153,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        log.warn('Verifying escrow');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
     }
 

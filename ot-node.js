@@ -122,7 +122,7 @@ class OTNode {
      */
     exposeAPIRoutes(server) {
         server.post('/import', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -151,7 +151,7 @@ class OTNode {
         });
 
         server.post('/import_gs1', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
