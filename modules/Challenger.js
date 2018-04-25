@@ -18,7 +18,7 @@ function sendChallenge(challenge) {
         },
     };
 
-    node.ot.challengeRequest(payload, challenge.dh, (error, response) => {
+    node.ot.challengeRequest(payload, challenge.dh_id, (error, response) => {
         if (error) {
             log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
             return;
@@ -47,7 +47,6 @@ function sendChallenge(challenge) {
 
 function intervalFunc() {
     const time_now = Date.now();
-
     Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs).then((challenges) => {
         if (challenges.length > 0) {
             challenges.forEach(challenge => sendChallenge(challenge));

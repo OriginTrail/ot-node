@@ -12,12 +12,13 @@ const Models = require('../models');
 const log = Utilities.getLogger();
 
 // TODO
-const totalEscrowTime = 6 * 60 * 1000;
+const totalEscrowTime = 10 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 2 * 60 * 1000;
+const biddingTime = 100 * 1000;
+const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
-const minStakeAmount = new BN('1000000000000000000');
-const maxTokenAmount = new BN('100000000000000000000');
+const minStakeAmount = new BN('100');
+const maxTokenAmount = new BN('10000000');
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -30,12 +31,12 @@ class DCService {
         });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}000000000000000000`;
+        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
-            tender_duration: biddingTime,
+            tender_duration: tenderDuration,
             min_number_applicants: minNumberOfBids,
             price_tokens: price,
             data_size_bytes: importSizeInBytes.toString(),
@@ -44,7 +45,8 @@ class DCService {
             max_token_amount: maxTokenAmount.toString(),
         }).then((offer) => {
             Blockchain.bc.createOffer(
-                dataId, config.identity,
+                dataId,
+                config.identity,
                 totalEscrowTime,
                 maxTokenAmount,
                 minStakeAmount,
@@ -66,6 +68,15 @@ class DCService {
                     importSizeInBytes: importSizeInBytes.toString(),
                     replicationFactor,
                 });
+                log.trace('Started bidding time');
+                setTimeout(() => {
+                    log.trace(`Started reveal time ${Math.round(Date.now() / 1000)}`);
+                }, biddingTime);
+
+                setTimeout(() => {
+                    log.trace(`Started choose time ${Math.round(Date.now() / 1000)}`);
+                }, biddingTime * 2);
+
                 DCService.scheduleChooseBids(dataId, totalEscrowTime);
             }).catch((err) => {
                 log.warn(`Failed to create offer. ${JSON.stringify(err)}`);

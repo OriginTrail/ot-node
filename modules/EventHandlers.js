@@ -123,7 +123,7 @@ globalEmitter.on('replication-finished', (status) => {
 });
 
 globalEmitter.on('kad-challenge-request', (request, response) => {
-    log.trace(`Challenge arrived: ${request.params.message.payload}`);
+    log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
     GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
