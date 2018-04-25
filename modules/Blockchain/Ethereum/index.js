@@ -261,11 +261,11 @@ class Ethereum {
      */
     subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills) {
         const looper = setInterval(() => {
-            if (untilMills < Date.now()) {
-                log.trace('Looper for event is going to be unsubscribed');
-                clearTimeout(looper);
-                return;
-            }
+            // if (untilMills < Date.now()) {
+            //     log.trace('Looper for event is going to be unsubscribed');
+            //     clearTimeout(looper);
+            //     return;
+            // }
             this.contractsByName[contractName].getPastEvents(event, eventOpts).then((events) => {
                 const stop = callback(events);
                 if (stop) {
