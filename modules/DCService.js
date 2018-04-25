@@ -14,7 +14,7 @@ const log = Utilities.getLogger();
 // TODO
 const totalEscrowTime = 10 * 60 * 1000;
 const replicationFactor = 1;
-const biddingTime = 100 * 1000;
+const biddingTime = 140 * 1000;
 const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = new BN('100');
