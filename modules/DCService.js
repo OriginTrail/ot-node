@@ -31,7 +31,7 @@ class DCService {
         });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}000`;
+        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
