@@ -12,7 +12,7 @@ const Models = require('../models');
 const log = Utilities.getLogger();
 
 // TODO
-const totalEscrowTime = 6 * 60 * 1000;
+const totalEscrowTime = 10 * 60 * 1000;
 const replicationFactor = 1;
 const biddingTime = 80 * 1000;
 const tenderDuration = biddingTime + 1000;
