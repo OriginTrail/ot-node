@@ -55,7 +55,7 @@ class DHService {
 
             const bidHash = abi.soliditySHA3(
                 ['address', 'uint', 'uint', 'uint'],
-                [config.node_wallet, new BN(config.identity, 16), chosenPrice, stake],
+                [config.node_wallet, config.identity, chosenPrice, stake],
             ).toString('hex');
 
             log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
