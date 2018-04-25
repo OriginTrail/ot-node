@@ -89,8 +89,14 @@ contract('Escrow testing', async (accounts) => {
         let response = await util.getBlockNumber.call();
 
         await instance.initiateEscrow(
-            DC_wallet, DH_wallet, data_id, 100000000, 100000000, escrowDuration, { from: DC_wallet })
-        .then((result) => {
+            DC_wallet,
+            DH_wallet,
+            data_id,
+            100000000,
+            100000000,
+            escrowDuration,
+            { from: DC_wallet },
+        ).then((result) => {
             console.log(`\t Initiate escrow - Gas used : ${result.receipt.gasUsed}`);
         });
 
@@ -99,7 +105,7 @@ contract('Escrow testing', async (accounts) => {
 
         let token_amount = response[0];
         token_amount = token_amount.toNumber();
-        
+
         let tokens_sent = response[1];
         tokens_sent = tokens_sent.toNumber();
 
@@ -118,19 +124,19 @@ contract('Escrow testing', async (accounts) => {
         let status = response[6];
         status = status.toNumber();
         switch (status) {
-            case 0:
+        case 0:
             status = 'initated';
             break;
-            case 1:
+        case 1:
             status = 'verified';
             break;
-            case 2:
+        case 2:
             status = 'canceled';
             break;
-            case 3:
+        case 3:
             status = 'completed';
             break;
-            default:
+        default:
             status = 'err';
             break;
         }
@@ -162,27 +168,32 @@ contract('Escrow testing', async (accounts) => {
         let error;
         try {
             await instance.verifyEscrow(
-                DC_wallet, data_id, 3 * 100000000,100000000, escrowDuration,
+                DC_wallet,
+                data_id,
+                3 * 100000000,
+                100000000,
+                escrowDuration,
                 { from: DH_wallet },
-                ).then((result) => {
-                    console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
-                });
-            } catch (e) {
-                error = e;
-            }
+            ).then((result) => {
+                console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
+            });
+        } catch (e) {
+            error = e;
+        }
 
-            assert.notEqual(error, undefined, 'Error must be thrown');
-            assert.isAbove(error.message.search('Exception while processing transaction: revert'), -1, 'revert error must be returned');
-        });
+        assert.notEqual(error, undefined, 'Error must be thrown');
+        assert.isAbove(error.message.search('Exception while processing transaction: revert'), -1, 'revert error must be returned');
+    });
 
-    it('Should increase DH-escrow approval before verification', async() => {
+    // eslint-disable-next-line no-undef
+    it('Should increase DH-escrow approval before verification', async () => {
         const escrowInstance = await EscrowHolder.deployed();
         const tokenInstance = await TracToken.deployed();
 
-        await tokenInstance.increaseApproval( escrow_address, 100000000, { from: DH_wallet });
+        await tokenInstance.increaseApproval(escrow_address, 100000000, { from: DH_wallet });
 
-        let response = await tokenInstance.allowance.call(DH_wallet, escrowInstance.address);
-        let allowance_DH = response.toNumber();
+        const response = await tokenInstance.allowance.call(DH_wallet, escrowInstance.address);
+        const allowance_DH = response.toNumber();
         console.log(`\t allowance_DH: ${allowance_DH}`);
 
         assert.equal(allowance_DH, 100000000, 'The proper amount was not allowed');
@@ -195,32 +206,32 @@ contract('Escrow testing', async (accounts) => {
         await instance.verifyEscrow(
             DC_wallet, data_id, 100000000, 100000000, escrowDuration,
             { from: DH_wallet },
-            ).then((result) => {
-                console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
-            });
-
-            const response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
-            let status = response[6];
-            status = status.toNumber();
-            switch (status) {
-                case 0:
-                status = 'initated';
-                break;
-                case 1:
-                status = 'verified';
-                break;
-                case 2:
-                status = 'canceled';
-                break;
-                case 3:
-                status = 'completed';
-                break;
-                default:
-                status = 'err';
-                break;
-            }
-
-            console.log(`\t Status: ${status}`);
-            assert.equal(status, 'verified', "Escrow wasn't verified");
+        ).then((result) => {
+            console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
         });
+
+        const response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
+        let status = response[6];
+        status = status.toNumber();
+        switch (status) {
+        case 0:
+            status = 'initated';
+            break;
+        case 1:
+            status = 'verified';
+            break;
+        case 2:
+            status = 'canceled';
+            break;
+        case 3:
+            status = 'completed';
+            break;
+        default:
+            status = 'err';
+            break;
+        }
+
+        console.log(`\t Status: ${status}`);
+        assert.equal(status, 'verified', "Escrow wasn't verified");
+    });
 });

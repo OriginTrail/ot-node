@@ -1,4 +1,5 @@
-var HDWalletProvider = require('truffle-hdwallet-provider');// eslint-disable-line import/no-unresolved
+var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
+
 var mnemonic = '<INSERT MNEOMONIC OF YOUR METAMASK HERE>';
 
 module.exports = {
@@ -18,9 +19,7 @@ module.exports = {
         },
 
         rinkeby: {
-            provider: function () {
-                return new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/<INSERT INFURA ACCESS KEY HERE>');
-            },
+            provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/<INSERT INFURA ACCESS KEY HERE>'),
             network_id: 3,
             gas: 4000000,
         },
