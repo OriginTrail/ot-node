@@ -1,6 +1,7 @@
 var EscrowHolder = artifacts.require('EscrowHolder'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
+var OTFingerprintStore = artifacts.require('OTFingerprintStore');
 var Bidding = artifacts.require('Bidding');
 
 const giveMeTracToken = function giveMeTracToken() {
@@ -18,9 +19,14 @@ const giveMeBidding = function giveMeBidding() {
 	return bidding;
 };
 
+const giveMeFingerprint = function giveMeFingerprint() {
+	const fingerprint = OTFingerprintStore.deployed();
+	return fingerprint;
+};
 var token;
 var escrow;
 var bidding;
+var fingerprint;
 
 var DC_wallet;
 var DH_wallet;
@@ -45,21 +51,27 @@ module.exports = (deployer, network, accounts) => {
 				.then( () => giveMeBidding())
 				.then( (result) => {
 					bidding = result;
-					escrow.transferOwnership(bidding.address)
-					.then( () => {
-						token.mint(DC_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
+					deployer.deploy(OTFingerprintStore)
+					.then( () => giveMeFingerprint())
+					.then( (result) => {
+						fingerprint = result;
+						escrow.transferOwnership(bidding.address)
 						.then( () => {
-	    					token.mint(DH_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
-	    					.then( () => {
-		    					token.finishMinting({ from: accounts[0] }).catch( e => console.log(e))
+							token.mint(DC_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
+							.then( () => {
+		    					token.mint(DH_wallet, amountToMint, { from: accounts[0] }).catch( e => console.log(e))
 		    					.then( () => {
-									console.log("\n\n \t Contract adressess on ganache:");
-									console.log("\t Token contract address: \t" + token.address);
-									console.log("\t Escrow contract address: \t" + escrow.address);
-									console.log("\t Bidding contract address: \t" + bidding.address);
-								});
+			    					token.finishMinting({ from: accounts[0] }).catch( e => console.log(e))
+			    					.then( () => {
+										console.log("\n\n \t Contract adressess on ganache:");
+										console.log("\t OT-fingerprint address: \t" + fingerprint.address);
+										console.log("\t Token contract address: \t" + token.address);
+										console.log("\t Escrow contract address: \t" + escrow.address);
+										console.log("\t Bidding contract address: \t" + bidding.address);
+									});
+			    				});
 		    				});
-	    				});
+						});
 					});
 				});
 			});
