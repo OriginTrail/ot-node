@@ -15,6 +15,7 @@ node.log
 keys
 data
 modules/blockchain_interface/ethereum/build/*
+modules/Blockchain/Ethereum/build/
 hidden_service
 !*.gitkeep
 Envoy.blade.php
