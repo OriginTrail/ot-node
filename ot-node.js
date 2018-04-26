@@ -39,6 +39,14 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
+        // make sure arango database exists
+        try {
+            deasync(Utilities.checkDoesStorageDbExists());
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+        }
+
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
 
