@@ -40,6 +40,9 @@ class OTNode {
      */
     bootstrap() {
         try {
+            // check if all dependencies are installed
+            deasync(Utilities.checkInstalledDependencies());
+            log.info('npm modules dependences check done');
             // make sure arango database exists
             deasync(Utilities.checkDoesStorageDbExists());
             log.info('Storage database check done');

@@ -73,6 +73,33 @@ class Utilities {
     }
 
     /**
+     * Check if all dependencies from package.json are installed
+     * @returns {Promise<any>} containing error array:
+     *   error: []            // when everything is OK, error array is empty
+     *   error: array,        // if not OK, array of logged errors is returned
+     */
+    static checkInstalledDependencies() {
+        return new Promise((resolve, reject) => {
+            // eslint-disable-next-line global-require
+            require('check-dependencies')({
+                packageManager: 'npm',
+                // eslint-disable-next-line no-template-curly-in-string
+                packageDir: '${__dirname}/../',
+                install: false,
+                scopeList: ['dependencies', 'devDependencies'],
+                verbose: false,
+            }).then((output) => {
+                if (!output.depsWereOk) {
+                    reject(output.error);
+                }
+                resolve(output.error);
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * Returns winston logger
      * @returns {*} - log function
      */
