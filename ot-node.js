@@ -39,8 +39,6 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
-
-        
         try {
             // make sure arango database exists
             deasync(Utilities.checkDoesStorageDbExists());
