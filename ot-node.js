@@ -39,6 +39,14 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
+        // Checking root folder stucture
+        try {
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure checked');
+        } catch (err) {
+            console.log(err);
+        }
+
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
 
