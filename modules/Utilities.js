@@ -360,6 +360,29 @@ class Utilities {
 
         return sortedObj;
     }
+
+    /**
+     * Checks for expected ot-node directory structure
+     * @returns {void}
+     */
+    static checkOtNodeDirStructure() {
+        const log = this.getLogger();
+        try {
+            if (!fs.existsSync(`${__dirname}/../keys`)) {
+                fs.mkdirSync(`${__dirname}/../keys`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named keys');
+        }
+
+        try {
+            if (!fs.existsSync(`${__dirname}/../data`)) {
+                fs.mkdirSync(`${__dirname}/../data`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named data');
+        }
+    }
 }
 
 module.exports = Utilities;

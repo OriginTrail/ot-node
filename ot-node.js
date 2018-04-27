@@ -39,10 +39,15 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
-        // make sure arango database exists
+
+        
         try {
+            // make sure arango database exists
             deasync(Utilities.checkDoesStorageDbExists());
             log.info('Storage database check done');
+            // Checking root folder stucture
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure checked');
         } catch (err) {
             console.log(err);
         }
