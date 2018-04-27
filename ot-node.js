@@ -48,7 +48,7 @@ class OTNode {
             log.info('Storage database check done');
             // Checking root folder stucture
             Utilities.checkOtNodeDirStructure();
-            log.info('ot-node folder structure checked');
+            log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
         }
