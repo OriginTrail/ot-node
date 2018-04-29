@@ -52,7 +52,7 @@ describe('Utilities module', () => {
         const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
         assert.equal(responseFromApi.statusCode, 200);
         const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
-        assert(responseFromApi.body.result, responseFromWeb3);
+        assert.equal(responseFromApi.body.result, responseFromWeb3);
     });
 
     it('loadSelectedBlockchainInfo()', async () => {
