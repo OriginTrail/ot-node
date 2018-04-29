@@ -8,6 +8,8 @@ const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
 const randomString = require('randomstring');
+const Web3 = require('web3');
+const request = require('superagent');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
 require('dotenv').config();
@@ -382,6 +384,80 @@ class Utilities {
         } catch (error) {
             log.warn('Failed to create folder named data');
         }
+    }
+
+    /**
+     * Check on which network blockchain is running on
+     * @returns {Promise<any>}
+     */
+    static getNodeNetworkType() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.net.getNetworkType()
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api methods endpoint
+     * @returns {Promise<any>}
+     */
+    static getInfuraRinkebyApiMethods() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/methods')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api eth_blockNumber method endpoint
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberInfuraRinkebyApiMethod() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/eth_blockNumber')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Gets block number from web3
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberFromWeb3() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.getBlockNumber()
+                    .then((result) => {
+                        resolve(web3.utils.numberToHex(result));
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 }
 
