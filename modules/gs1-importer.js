@@ -442,6 +442,8 @@ module.exports = () => ({
                                             }
                                         }
 
+                                        const new_obj = {};
+                                        const sanitized_object_data = sanitize(object_data, new_obj, ['urn:', 'ot:', 'mda:', 'object:']);
 
                                         locations[business_location_id] = {};
                                         locations[business_location_id].identifiers = {};
@@ -451,7 +453,7 @@ module.exports = () => ({
                                         locations[business_location_id]
                                             .identifiers.uid = business_location_id;
                                         locations[business_location_id]
-                                            .data = utilities.copyObject(data_object);
+                                            .data = utilities.copyObject(sanitized_object_data);
                                         locations[business_location_id].vertex_type = 'BUSINESS_LOCATION';
                                         locations[business_location_id]._key = md5(`business_location_${sender_id}_${business_location_id}`);
                                     }

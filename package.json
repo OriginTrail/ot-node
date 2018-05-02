@@ -40,6 +40,7 @@
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
     "@kadenceproject/kadence": "^3.2.2",
+    "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
     "bn.js": "^4.11.8",
@@ -59,6 +60,7 @@
     "lodash": "^4.17.5",
     "md5": "^2.2.1",
     "ms": "^2.1.1",
+    "neo4j-driver": "^1.5.0",
     "node-rsa": "^0.4.2",
     "nodeify": "^1.0.1",
     "pem": "^1.12.3",
@@ -73,6 +75,7 @@
     "sqlite3": "^4.0.0",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "uuid": "latest"
   }
 }

@@ -89,11 +89,7 @@ class Product {
                 }
 
                 const start_vertex = vertices[0];
-                GraphInstance.g.findTraversalPath(start_vertex).then((raw_graph_data) => {
-                    const copiedRawGraph = Utilities.copyObject(raw_graph_data);
-                    const virtualGraph = Graph.convertToVirtualGraph(copiedRawGraph);
-
-
+                GraphInstance.g.findTraversalPath(start_vertex).then((virtualGraph) => {
                     const returnBFS = Utilities.copyObject(virtualGraph);
                     const BFSt = Graph.bfs(
                         Utilities.copyObject(returnBFS.data),

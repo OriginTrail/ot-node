@@ -1,5 +1,6 @@
 const Utilities = require('../Utilities');
 const ArangoJS = require('./Arangojs');
+const Neo4j = require('./Neo4j');
 
 const log = Utilities.getLogger();
 
@@ -28,10 +29,58 @@ class GraphStorage {
                     );
                     resolve(this.db);
                     break;
+                case 'neo4j':
+                    this.db = new Neo4j(
+                        this.selectedDatabase.username,
+                        this.selectedDatabase.password,
+                        this.selectedDatabase.database,
+                        this.selectedDatabase.host,
+                        this.selectedDatabase.port,
+                    );
+                    resolve(this.db);
+                    break;
                 default:
                     log.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
+            }
+        });
+    }
+
+    /**
+     * Find set of vertices from Graph storage
+     * @param queryObject       Query for getting vertices
+     * @returns {Promise<any>}
+     */
+    findVertices(queryObject) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findVertices(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Finds traversal path starting from particular vertex
+     * @param startVertex       Starting vertex
+     * @returns {Promise<any>}
+     */
+    findTraversalPath(startVertex) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findTraversalPath(startVertex).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
             }
         });
     }
@@ -139,6 +188,12 @@ class GraphStorage {
         return this.addDocument(collection_name, vertex);
     }
 
+    /**
+     * Updates document with the import ID
+     * @param collectionName
+     * @param document
+     * @param importNumber
+     */
     updateDocumentImports(collectionName, document, importNumber) {
         return this.db.updateDocumentImports(collectionName, document, importNumber);
     }
@@ -146,6 +201,7 @@ class GraphStorage {
     /**
      * Create document collection, if collection does not exist
      * @param collectionName
+     * @return {Promise}
      */
     createCollection(collectionName) {
         return new Promise((resolve, reject) => {
@@ -161,6 +217,11 @@ class GraphStorage {
         });
     }
 
+    /**
+     * Creates edge collection, if collection does not exist
+     * @param collectionName
+     * @return {Promise}
+     */
     createEdgeCollection(collectionName) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
@@ -175,12 +236,17 @@ class GraphStorage {
         });
     }
 
-    getVerticesByImportId(data_id) {
+    /**
+     * Get list of vertices by import ID
+     * @param importId   Import ID
+     * @return {Promise}
+     */
+    getVerticesByImportId(importId) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.getVerticesByImportId(data_id).then((result) => {
+                this.db.getVerticesByImportId(importId).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
