@@ -7,7 +7,6 @@ const sysdb = require('./Database/SystemStorage');
  * graph manipulation such as traversing, transforming, etc.
  */
 class Graph {
-
     /**
      * Traversing through the trail graph in Breadth-first manner
      * @param trailGraph          Virtual graph data

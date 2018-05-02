@@ -320,6 +320,7 @@ class Neo4jDB {
      * @return
      */
     findTraversalPath(startVertex) {
+        const that = this;
         return new Promise((resolve, reject) => {
             const key = '_key';
             const value = startVertex._key;
@@ -328,57 +329,57 @@ class Neo4jDB {
             this.session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k,length(r) as s ORDER BY s`)
                 .then(this._transformProperties)
                 .then((result) => {
-                const vertices = {};
+                    const vertices = {};
 
-                Promise.all(result.records.map(r => new Promise((resolve) => {
-                    const leftNode = r.get('n');
-                    const relations = r.get('r');
-                    const rightNode = r.get('k');
+                    Promise.all(result.records.map(r => new Promise((resolve) => {
+                        const leftNode = r.get('n');
+                        const relations = r.get('r');
+                        const rightNode = r.get('k');
 
-                    let first = Promise.resolve();
-                    if (!vertices[leftNode.properties._key]) {
-                        first = this.find('_key', leftNode.properties._key).then((r) => {
-                            r.key = r._key;
-                            delete r._key;
-                            vertices[r.key] = r;
-                            vertices[r.key].edges = [];
-                        });
-                    }
-
-                    let second = Promise.resolve();
-                    if (!vertices[rightNode.properties._key]) {
-                        second = this.find('_key', rightNode.properties._key).then((r) => {
-                            r.key = r._key;
-                            delete r._key;
-                            vertices[r.key] = r;
-                            vertices[r.key].edges = [];
-                        });
-                    }
-
-                    Promise.all([first, second]).then(() => {
-                        let relation = relations[0];
-                        for (let i = 0; i < relations.length - 1; i += 1) {
-                            relation = relations[i];
+                        let first = Promise.resolve();
+                        if (!vertices[leftNode.properties._key]) {
+                            first = this.find('_key', leftNode.properties._key).then((r) => {
+                                r.key = r._key;
+                                delete r._key;
+                                vertices[r.key] = r;
+                                vertices[r.key].edges = [];
+                            });
                         }
-                        const toInsertNode = vertices[relation.properties._to];
-                        Object.assign(relation, relation.properties);
-                        delete relation.properties;
-                        delete relation.identity;
-                        delete relation.start;
-                        delete relation.end;
-                        toInsertNode.edges.push(relation);
-                        resolve();
+
+                        let second = Promise.resolve();
+                        if (!vertices[rightNode.properties._key]) {
+                            second = this.find('_key', rightNode.properties._key).then((r) => {
+                                r.key = r._key;
+                                delete r._key;
+                                vertices[r.key] = r;
+                                vertices[r.key].edges = [];
+                            });
+                        }
+
+                        Promise.all([first, second]).then(() => {
+                            let relation = relations[0];
+                            for (let i = 0; i < relations.length - 1; i += 1) {
+                                relation = relations[i];
+                            }
+                            const toInsertNode = vertices[relation.properties._to];
+                            Object.assign(relation, relation.properties);
+                            delete relation.properties;
+                            delete relation.identity;
+                            delete relation.start;
+                            delete relation.end;
+                            toInsertNode.edges.push(relation);
+                            resolve();
+                        });
+                    }))).then(() => {
+                        const res = [];
+                        for (const k in vertices) {
+                            res.push(vertices[k]);
+                        }
+                        resolve(res);
+                    }).catch((err) => {
+                        reject(err);
                     });
-                }))).then(() => {
-                    const res = [];
-                    for (const k in vertices) {
-                        res.push(vertices[k]);
-                    }
-                    resolve(res);
-                }).catch((err) => {
-                    reject(err);
                 });
-            });
         });
     }
 
@@ -399,7 +400,7 @@ class Neo4jDB {
     runQuery(queryString, params) {
         return new Promise((resolve, reject) => {
             resolve();
-        })
+        });
     }
 
     /**
@@ -411,7 +412,7 @@ class Neo4jDB {
     updateDocument(collectionName, document) {
         return new Promise((resolve, reject) => {
             resolve();
-        })
+        });
     }
 
     /**
@@ -422,7 +423,7 @@ class Neo4jDB {
     getDocument(collectionName, documentKey) {
         return new Promise((resolve, reject) => {
             resolve();
-        })
+        });
     }
 
     /**
@@ -472,13 +473,13 @@ class Neo4jDB {
     createCollection(collectionName) {
         return new Promise((resolve, reject) => {
             resolve();
-        })
+        });
     }
 
     createEdgeCollection(collectionName) {
         return new Promise((resolve, reject) => {
             resolve();
-        })
+        });
     }
 
     /**
@@ -487,6 +488,7 @@ class Neo4jDB {
      * @return {Promise}
      */
     getVerticesByImportId(importId) {
+        const that = this;
         return new Promise((resolve, reject) => {
             this.session.run(`match(n) where ${importId} in n.imports return n`).then((result) => {
                 const nodePromises = [];
@@ -497,10 +499,10 @@ class Neo4jDB {
                     resolve(nodes);
                 }).catch((err) => {
                     reject(err);
-                })
+                });
             }).catch((err) => {
                 reject(err);
-            })
+            });
         });
     }
 
@@ -523,10 +525,9 @@ class Neo4jDB {
                 resolve(res);
             }).catch((err) => {
                 reject(err);
-            })
+            });
         });
     }
-
 }
 
 module.exports = Neo4jDB;
