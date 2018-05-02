@@ -25,16 +25,9 @@ class Neo4jDB {
                     result += `${p}: ${JSON.stringify(obj[p])},`;
                 }
             } else if (Array.isArray(obj[p])) {
-                let isComposite = false;
-                for (const item in obj[p]) {
-                    if (typeof item === 'object') {
-                        isComposite = true;
-                        break;
-                    }
-                }
                 const array = [];
-                for (const item in obj[p]) {
-                    if (isComposite) {
+                for (const item of obj[p]) {
+                    if (typeof item === 'object') {
                         array.push(JSON.stringify(item));
                     } else {
                         array.push(item);
