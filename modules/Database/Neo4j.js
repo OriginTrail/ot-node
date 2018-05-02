@@ -384,49 +384,6 @@ class Neo4jDB {
     }
 
     /**
-     * Identify selected database as Neo4j
-     * @returns {string} - Graph database identifier string
-     */
-    identify() {
-        return 'Neo4j';
-    }
-
-    /**
-     * Runs query on selected database
-     * @param {string} - queryString - Query string
-     * @param {object} - params - Query parameters
-     * @returns {Promise<any>}
-     */
-    runQuery(queryString, params) {
-        return new Promise((resolve, reject) => {
-            resolve();
-        });
-    }
-
-    /**
-     * Update document in selected graph database
-     * @param {string} - collectionName
-     * @param {object} - document
-     * @returns {Promise<any>}
-     */
-    updateDocument(collectionName, document) {
-        return new Promise((resolve, reject) => {
-            resolve();
-        });
-    }
-
-    /**
-     * Get document from selected graph database
-     * @param collectionName
-     * @param document
-     */
-    getDocument(collectionName, documentKey) {
-        return new Promise((resolve, reject) => {
-            resolve();
-        });
-    }
-
-    /**
      * Add edge
      * @param collection_name
      * @param edge
@@ -463,22 +420,6 @@ class Neo4jDB {
             }).catch((err) => {
                 reject(err);
             });
-        });
-    }
-
-    /**
-     * Create document collection, if collection does not exist
-     * @param collectionName
-     */
-    createCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            resolve();
-        });
-    }
-
-    createEdgeCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            resolve();
         });
     }
 
@@ -526,6 +467,32 @@ class Neo4jDB {
             }).catch((err) => {
                 reject(err);
             });
+        });
+    }
+
+    /**
+     * Identify selected database as Neo4j
+     * @returns {string} - Graph database identifier string
+     */
+    identify() {
+        return 'Neo4j';
+    }
+
+    createCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            resolve();
+        });
+    }
+
+    createEdgeCollection(collectionName) {
+        return new Promise((resolve, reject) => {
+            resolve();
+        });
+    }
+
+    getDocument(collectionName, documentKey) {
+        return new Promise((resolve, reject) => {
+            resolve();
         });
     }
 }

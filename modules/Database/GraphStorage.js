@@ -86,26 +86,6 @@ class GraphStorage {
     }
 
     /**
-     * Runs query on selected database
-     * @param {string} - queryString - Query string
-     * @param {object} - params - Query parameters
-     * @returns {Promise<any>}
-     */
-    runQuery(queryString, params) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.runQuery(queryString, params).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Add new document into given collection on selected database
      * @param {string} - collectionName
      * @param {object} - document
@@ -117,26 +97,6 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.addDocument(collectionName, document).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
-     * Update document in selected graph database
-     * @param {string} - collectionName
-     * @param {object} - document
-     * @returns {Promise<any>}
-     */
-    updateDocument(collectionName, document) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.updateDocument(collectionName, document).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

@@ -72,22 +72,6 @@ describe('GraphStorage module', () => {
         assert.equal(result, selectedDatabase);
     });
 
-    it('.runQuery() should give back result', async () => {
-        const now = Date.now();
-        await myGraphStorage.runQuery('RETURN @value', { value: now }).then((response) => {
-            assert.approximately(response[0], now, 1000, 'Resulted time is approx same as current');
-        });
-    });
-
-    it('.runQuery() on invalid instance should not give back result', async () => {
-        const now = Date.now();
-        try {
-            await myInvalidGraphStorage.runQuery('RETURN @value', { value: now });
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
-        }
-    });
-
     it('attempt to save vertex in non existing Document Collection should fail', async () => {
         try {
             await myGraphStorage.addVertex(documentCollectionName, vertexOne);
@@ -104,13 +88,6 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
-        try {
-            await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
-        }
-    });
 
     it('attempt to create doc Collection on non existing db should fail', async () => {
         try {
@@ -128,13 +105,6 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('attempt to getDocument on non existing db should fail', async () => {
-        try {
-            await myInvalidGraphStorage.getDocument(documentCollectionName, vertexOne._key);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
-    });
 
     it('attempt to updateDocumentImports on non existing db should fail', async () => {
         try {
@@ -196,41 +166,6 @@ describe('GraphStorage module', () => {
     it('.addEdge() should save edge in Edge Document Collection', () => {
         myGraphStorage.addEdge(edgeCollectionName, edgeOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
-    });
-
-    it('getDocument() by vertexKey should give back vertex itself', async () => {
-        await myGraphStorage.getDocument(documentCollectionName, vertexOne._key)
-            .then((response) => {
-                assert.deepEqual(response._key, vertexOne._key);
-                assert.deepEqual(response.data, vertexOne.data);
-            });
-    });
-
-    it('getDocument() by edgeKey should give back edge itself', async () => {
-        await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
-            // eslint-disable-next-line no-underscore-dangle
-            assert.equal(response._from, edgeOne._from);
-            // eslint-disable-next-line no-underscore-dangle
-            assert.equal(response._to, edgeOne._to);
-            // eslint-disable-next-line no-underscore-dangle
-            assert.equal(response._key, edgeOne._key);
-        });
-    });
-
-    it('updateDocumentImports() should add/append data', async () => {
-        // this will implicitly call testDb.updateDocument()
-        await myGraphStorage.updateDocumentImports(
-            edgeCollectionName,
-            // eslint-disable-next-line no-underscore-dangle
-            edgeOne._key, newImportValue,
-        ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
-        });
-
-        // check value of imports
-        await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
-            assert.include(response.imports, newImportValue);
         });
     });
 

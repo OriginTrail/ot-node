@@ -53,6 +53,15 @@ describe('Arangojs module ', async () => {
         });
     });
 
+    it('.runQuery() on invalid instance should not give back result', async () => {
+        const now = Date.now();
+        try {
+            await testDb.runQuery('RETURN @value', { value: now });
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+        }
+    });
+
     it('.createCollection() should create Document Collection', async () => {
         // first time creating Document Collection
         await testDb.createCollection(documentCollectionName).then((response) => {
@@ -163,6 +172,57 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._to, edgeOne._to);
         // eslint-disable-next-line no-underscore-dangle
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
+    });
+
+    it('updateDocumentImports() should add/append data', async () => {
+        // this will implicitly call testDb.updateDocument()
+        await testDb.updateDocumentImports(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            edgeOne._key, newImportValue,
+        ).then((response) => {
+            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+        });
+
+        // check value of imports
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            assert.include(response.imports, newImportValue);
+        });
+    });
+
+    it('getDocument() by vertexKey should give back vertex itself', async () => {
+        await testDb.getDocument(documentCollectionName, vertexOne._key)
+            .then((response) => {
+                assert.deepEqual(response._key, vertexOne._key);
+                assert.deepEqual(response.data, vertexOne.data);
+            });
+    });
+
+    it('attempt to getDocument on non existing db should fail', async () => {
+        try {
+            await testDb.getDocument(documentCollectionName, vertexOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
+        try {
+            await testDb.getDocument(edgeCollectionName, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('getDocument() by edgeKey should give back edge itself', async () => {
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._from, edgeOne._from);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._to, edgeOne._to);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._key, edgeOne._key);
+        });
     });
 
     it('getDocument() by vertexKey should give back vertex itself', async () => {
