@@ -72,9 +72,10 @@
     "solidity-sha3": "^0.4.1",
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.0",
+    "superagent": "^3.8.2",
+    "utf8-length": "latest",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19",
-    "utf8-length": "latest"
+    "xml2js": "^0.4.19"
   }
 }
