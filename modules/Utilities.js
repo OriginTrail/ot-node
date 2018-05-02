@@ -10,9 +10,8 @@ const _ = require('lodash');
 const randomString = require('randomstring');
 const Web3 = require('web3');
 const request = require('superagent');
-// eslint-disable-next-line  prefer-destructuring
-const Database = require('arangojs').Database;
-const Web3 = require('web3');
+const { Database } = require('arangojs');
+
 require('dotenv').config();
 
 
