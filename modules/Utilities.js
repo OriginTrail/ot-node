@@ -8,6 +8,9 @@ const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
 const randomString = require('randomstring');
+// eslint-disable-next-line  prefer-destructuring
+const Database = require('arangojs').Database;
+require('dotenv').config();
 
 
 class Utilities {
@@ -145,6 +148,42 @@ class Utilities {
                     .then((gdb) => {
                         resolve(gdb.get({ plain: true }));
                     });
+            });
+        });
+    }
+
+    /**
+     * Check does origintrail database exists, otherwise create one
+     * @returns {Promise<any>}
+     */
+    static checkDoesStorageDbExists() {
+        return new Promise((resolve, reject) => {
+            const systemDb = new Database();
+            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+            systemDb.listDatabases().then((result) => {
+                let databaseAlreadyExists = false;
+                for (let i = 0; i < result.length; i += 1) {
+                    if (result[i].toString() === process.env.DB_DATABASE) {
+                        databaseAlreadyExists = true;
+                    }
+                }
+                if (!databaseAlreadyExists) {
+                    systemDb.createDatabase(
+                        process.env.DB_DATABASE,
+                        [{
+                            username: process.env.DB_USERNAME,
+                            passwd: process.env.DB_PASSWORD,
+                            active: true,
+                        }],
+                    ).then((result) => {
+                        resolve();
+                    }).catch((error) => {
+                        reject(error);
+                    });
+                }
+                resolve();
+            }).catch((error) => {
+                reject(error);
             });
         });
     }
@@ -320,6 +359,29 @@ class Utilities {
         }
 
         return sortedObj;
+    }
+
+    /**
+     * Checks for expected ot-node directory structure
+     * @returns {void}
+     */
+    static checkOtNodeDirStructure() {
+        const log = this.getLogger();
+        try {
+            if (!fs.existsSync(`${__dirname}/../keys`)) {
+                fs.mkdirSync(`${__dirname}/../keys`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named keys');
+        }
+
+        try {
+            if (!fs.existsSync(`${__dirname}/../data`)) {
+                fs.mkdirSync(`${__dirname}/../data`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named data');
+        }
     }
 }
 

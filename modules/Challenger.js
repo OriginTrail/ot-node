@@ -47,12 +47,11 @@ function sendChallenge(challenge) {
 
 function intervalFunc() {
     const time_now = Date.now();
-
     Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs).then((challenges) => {
         if (challenges.length > 0) {
             challenges.forEach(challenge => sendChallenge(challenge));
         } else {
-            log.trace('No challenges found.');
+            //  log.trace('No challenges found.');
         }
     }).catch((err) => {
         log.error(`Failed to get unanswered challenges. Error: ${err}.`);

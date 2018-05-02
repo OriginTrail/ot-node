@@ -17,6 +17,8 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
+const MockSmartContract = require('./modules/temp/MockSmartContract');
+const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -37,6 +39,17 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
+        try {
+            // make sure arango database exists
+            deasync(Utilities.checkDoesStorageDbExists());
+            log.info('Storage database check done');
+            // Checking root folder stucture
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure checked');
+        } catch (err) {
+            console.log(err);
+        }
+
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
 
@@ -73,6 +86,7 @@ class OTNode {
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
+        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
@@ -119,7 +133,7 @@ class OTNode {
      */
     exposeAPIRoutes(server) {
         server.post('/import', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -148,7 +162,7 @@ class OTNode {
         });
 
         server.post('/import_gs1', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;

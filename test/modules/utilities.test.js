@@ -25,10 +25,19 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port'],
+                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
+                    'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake'],
                 'Some config items are missing',
             );
         });
+    });
+
+    it('loadSelectedBlockchainInfo()', async () => {
+        const myResult = await Utilities.loadSelectedBlockchainInfo();
+        assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
+            'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
+            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address']);
+        assert.equal(myResult.blockchain_title, 'Ethereum');
     });
 
     it('isEmptyObject check', () => {
@@ -105,13 +114,6 @@ describe('Utilities module', () => {
         assert.equal(myResult.database_system, 'arango_db');
     });
 
-    it('loadSelectedBlockchainInfo()', async () => {
-        const myResult = await Utilities.loadSelectedBlockchainInfo();
-        assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
-            'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
-            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key']);
-        assert.equal(myResult.blockchain_title, 'Ethereum');
-    });
 
     it('sortObject() should return object sorted by keys', () => {
         const unsorted = {

@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         ot_contract_address: DataTypes.STRING(50),
         token_contract_address: DataTypes.STRING(50),
         escrow_contract_address: DataTypes.STRING(50),
+        bidding_contract_address: DataTypes.STRING(50),
         rpc_node_host: DataTypes.STRING(256),
         rpc_node_port: DataTypes.INTEGER,
         wallet_address: DataTypes.STRING(50),
