@@ -194,36 +194,38 @@ class Neo4jDB {
     }
 
     /**
-     * Get single vertex
+     * Gets all CONTAINS edges and forms one vertex
      * @param key           Vertex property key
      * @param value         Vertex property value
      * @returns {Promise}
      */
-    find(key, value) {
+    fetchVertex(key, value) {
         return new Promise((resolve, reject) => {
-            this.session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *1..]->(k) RETURN n,r,k`).then(this._transformProperties).then((result) => {
-                const json = {};
-                for (const r of result.records) {
-                    const leftNode = r.get('n');
-                    const relations = r.get('r');
-                    const rightNode = r.get('k');
+            this.session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *1..]->(k) RETURN n,r,k`)
+                .then(this._transformProperties)
+                .then((result) => {
+                    const json = {};
+                    for (const r of result.records) {
+                        const leftNode = r.get('n');
+                        const relations = r.get('r');
+                        const rightNode = r.get('k');
 
-                    Object.assign(json, leftNode.properties);
-                    const nestedKeys = [];
-                    for (const relation of relations) {
-                        nestedKeys.push(relation.properties.value);
-                    }
+                        Object.assign(json, leftNode.properties);
+                        const nestedKeys = [];
+                        for (const relation of relations) {
+                            nestedKeys.push(relation.properties.value);
+                        }
 
-                    let tempJson = json;
-                    for (let i = 0; i < nestedKeys.length - 1; i += 1) {
-                        tempJson = tempJson[nestedKeys[i]];
+                        let tempJson = json;
+                        for (let i = 0; i < nestedKeys.length - 1; i += 1) {
+                            tempJson = tempJson[nestedKeys[i]];
+                        }
+                        tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
                     }
-                    tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
-                }
-                resolve(json);
-            }).catch((err) => {
-                reject(err);
-            });
+                    resolve(json);
+                }).catch((err) => {
+                    reject(err);
+                });
         });
     }
 
@@ -294,7 +296,7 @@ class Neo4jDB {
             this.session.run(query).then(this._transformProperties).then((result) => {
                 const nodePromises = [];
                 for (const record of result.records) {
-                    nodePromises.push(that.find('_key', record._fields[0].properties._key));
+                    nodePromises.push(that.fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
                     resolve(nodes);
@@ -333,7 +335,7 @@ class Neo4jDB {
 
                         let first = Promise.resolve();
                         if (!vertices[leftNode.properties._key]) {
-                            first = this.find('_key', leftNode.properties._key).then((r) => {
+                            first = this.fetchVertex('_key', leftNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
@@ -343,7 +345,7 @@ class Neo4jDB {
 
                         let second = Promise.resolve();
                         if (!vertices[rightNode.properties._key]) {
-                            second = this.find('_key', rightNode.properties._key).then((r) => {
+                            second = this.fetchVertex('_key', rightNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
@@ -429,7 +431,7 @@ class Neo4jDB {
             this.session.run(`match(n) where ${importId} in n.imports return n`).then((result) => {
                 const nodePromises = [];
                 for (const record of result.records) {
-                    nodePromises.push(that.find('_key', record._fields[0].properties._key));
+                    nodePromises.push(that.fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
                     resolve(nodes);
