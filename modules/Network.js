@@ -285,9 +285,8 @@ class Network {
         // TODO remove temp add bid route
         node.ot.use('add-bid', (request, response, next) => {
             log.info('add-bid');
-            const { offerId, bid } = request.params.message;
+            const { bid } = request.params.message;
             [bid.dhId] = request.contact;
-            SmartContractInstance.sc.addDhBid(offerId, bid);
             response.send({
                 status: 'OK',
             });
