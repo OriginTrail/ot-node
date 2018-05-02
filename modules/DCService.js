@@ -31,7 +31,21 @@ class DCService {
         });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+
+        const potentialPrice = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+        let price;
+        this._checkDCTokenBalance().then((availableFunds) => {
+            if (potentialPrice > availableFunds) {
+                // all-in for offer price
+                price = availableFunds;
+            } else {
+                // there are sufficient funds, go forward with initial offer price
+                price = potentialPrice;
+            }
+        }).catch((err) => {
+            log.warn(`Failed to determine offer price. ${JSON.stringify(err)}`);
+        });
+
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
@@ -98,6 +112,11 @@ class DCService {
         return bytes(JSON.stringify(vertices));
     }
 
+    static async _checkDCTokenBalance() {
+        const dc_token_balance = await Utilities.getAlphaTracTokenBalance();
+        return dc_token_balance;
+    }
+
     /**
    * Schedule chose DHs
    * @param dataId            Data ID
@@ -130,7 +149,7 @@ class DCService {
                                         const eventDcWallet = event.returnValues.DC_wallet;
 
                                         if (Number(eventDataId) === dataId
-                            && eventDcWallet === config.node_wallet) {
+                                            && eventDcWallet === config.node_wallet) {
                                             log.info(`Offer for data ${dataId} successfully finalized`);
                                             DCService.handleFinalizedOffer(dataId);
                                             return true;
