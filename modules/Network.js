@@ -14,9 +14,6 @@ const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const globalEvents = require('./GlobalEvents');
 
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
-
 const { globalEmitter } = globalEvents;
 let ns = {};
 
