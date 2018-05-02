@@ -56,6 +56,7 @@
     "knex": "^0.14.5",
     "leveldown": "^3.0.0",
     "levelup": "^2.0.2",
+    "libxml-xsd": "^0.5.2",
     "lodash": "^4.17.5",
     "md5": "^2.2.1",
     "ms": "^2.1.1",
@@ -71,9 +72,9 @@
     "solidity-sha3": "^0.4.1",
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.0",
+    "utf8-length": "latest",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19",
-    "utf8-length": "latest"
+    "xml2js": "^0.4.19"
   }
 }

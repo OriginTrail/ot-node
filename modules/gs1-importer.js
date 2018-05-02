@@ -2,10 +2,12 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
 const deasync = require('deasync-promise');
+const xsd = require('libxml-xsd');
 
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
+const validator = require('validator');
 
 // Update import data
 
@@ -65,13 +67,121 @@ function sanitize(old_obj, new_obj, patterns) {
 
 function Error(message) {
     console.log(`Error: ${message}`);
+    return message;
+}
+
+// validate
+function providerIdValidation(provider_id, validation_object) {
+    const data = provider_id;
+    const object = validation_object;
+    if (data.length === 12) {
+        return true;
+    }
     return false;
 }
+
+function emailValidation(email) {
+    const result = validator.isEmail(email);
+
+    if (result) {
+        return true;
+    }
+    return false;
+}
+
+function dateTimeValidation(date) {
+    const result = validator.isISO8601(date);
+
+    if (result) {
+        return true;
+    }
+    return false;
+}
+
+function countryValidation(country) {
+    const postal_code = country;
+
+    if (postal_code.length > 2) {
+        return false;
+    }
+    return true;
+}
+
+function postalCodeValidation(code) {
+    const result = validator.isNumeric(code);
+
+    if (result) {
+        return true;
+    }
+    return false;
+}
+
+function longLatValidation(data) {
+    const result = validator.isLatLong(data);
+    if (result) {
+        return true;
+    }
+    return false;
+}
+
+function ean13Validation(code) {
+    const ean = code;
+
+    var checkSum = ean.split('').reduce((p, v, i) => (i % 2 == 0 ? p + 1 * v : p + 3 * v), 0);
+
+    if (checkSum % 10 != 0) {
+        return false;
+    }
+    return true;
+}
+
+function numberValidation(num) {
+    const number = validator.isDecimal(num, { locale: 'en-AU' });
+
+    if (number) {
+        return true;
+    }
+    return false;
+}
+
+function ethWalletValidation(wallet) {
+    const eth_wallet = wallet;
+
+    const first_char = eth_wallet.charAt(0);
+    const second_char = eth_wallet.charAt(1);
+    const rest = eth_wallet.substr(2);
+    const rest_hex = validator.isHexadecimal(rest);
+
+    var valid = false;
+
+    if (rest_hex && rest.length === 40) {
+        valid = true;
+    }
+
+    if (first_char === '0' && second_char === 'x' && valid) {
+        return true;
+    }
+    return false;
+}
+
 
 module.exports = () => ({
     parseGS1(gs1_xml_file, callback) {
         const { db } = GSInstance;
         var gs1_xml = fs.readFileSync(gs1_xml_file);
+
+        xsd.parseFile('./importers/EPCglobal-epcis-masterdata-1_2.xsd', (err, schema) => {
+            if (err) {
+                throw Error('Invalid XML structure!');
+            }
+
+            schema.validate(gs1_xml.toString(), (err, validationErrors) => {
+                if (err) {
+                    throw Error('Invalid XML structure!');
+                }
+            });
+        });
+
         parseString(
             gs1_xml,
             { explicitArray: false, mergeAttrs: true },
@@ -126,10 +236,23 @@ module.exports = () => ({
                 // READING EPCIS Document
                 const doc = findValuesHelper(result, 'epcis:EPCISDocument', []);
                 if (doc.length <= 0) {
-                    return Error('Missing EPCISDocument element!');
+                    throw Error('Missing EPCISDocument element!');
                 }
 
+
                 const EPCISDocument_element = result['epcis:EPCISDocument'];
+
+
+                const creation_date_head_check = findValuesHelper(EPCISDocument_element, 'creationDate', []);
+                if (creation_date_head_check.length > 0) {
+                    var temp_creation_date_head = EPCISDocument_element.creationDate;
+                }
+                const creation_date_head = temp_creation_date_head;
+
+                var creation_date_head_validation = dateTimeValidation(creation_date_head);
+                if (!creation_date_head_validation) {
+                    throw Error('Invalid Date and Time format. Please use format defined by ISO 8601 standard!');
+                }
 
                 const new_obj = {};
                 sanitized_EPCIS_document = sanitize(EPCISDocument_element, new_obj, ['sbdh:', 'xmlns:']);
@@ -137,44 +260,81 @@ module.exports = () => ({
 
                 const head = findValuesHelper(sanitized_EPCIS_document, 'EPCISHeader', []);
                 if (head.length <= 0) {
-                    return Error('Missing EPCISHeader element for EPCISDocument element!');
+                    throw Error('Missing EPCISHeader element for EPCISDocument element!');
                 }
                 const EPCISHeader_element = sanitized_EPCIS_document.EPCISHeader;
 
 
                 const standard_doc_header = findValuesHelper(EPCISHeader_element, 'StandardBusinessDocumentHeader', []);
                 if (standard_doc_header.length <= 0) {
-                    return Error('Missing StandardBusinessDocumentHeader element for EPCISHeader element!');
+                    throw Error('Missing StandardBusinessDocumentHeader element for EPCISHeader element!');
                 }
                 const StandardBusinessDocumentHeader_element =
                     EPCISHeader_element.StandardBusinessDocumentHeader;
 
 
+                const document_id_check = findValuesHelper(StandardBusinessDocumentHeader_element, 'DocumentIdentification', []);
+                if (document_id_check.length > 0) {
+                    var tempDocument_identification_element = StandardBusinessDocumentHeader_element.DocumentIdentification;
+                }
+                const Document_identification_element = tempDocument_identification_element;
+
+                const creation_date_check = findValuesHelper(Document_identification_element, 'CreationDateAndTime', []);
+                if (creation_date_check.length > 0) {
+                    var tempCreationDate_element = Document_identification_element.CreationDateAndTime;
+                }
+                const CreationDate_element = tempCreationDate_element;
+
+
+                const date_validation_result = dateTimeValidation(CreationDate_element);
+
+                if (!date_validation_result) {
+                    throw Error('Invalid Date and Time format. Please use format defined by ISO 8601 standard!');
+                }
+
+
                 // //SENDER
                 const send = findValuesHelper(StandardBusinessDocumentHeader_element, 'Sender', []);
                 if (send.length <= 0) {
-                    return Error('Missing Sender element for StandardBusinessDocumentHeader element!');
+                    throw Error('Missing Sender element for StandardBusinessDocumentHeader element!');
                 }
                 const Sender_element = StandardBusinessDocumentHeader_element.Sender;
 
 
                 const send_id = findValuesHelper(Sender_element, 'Identifier', []);
                 if (send_id.length <= 0) {
-                    return Error('Missing Identifier element for Sender element!');
+                    throw Error('Missing Identifier element for Sender element!');
                 }
                 const sender_id_element = Sender_element.Identifier;
+
+                const contact_info_check = findValuesHelper(Sender_element, 'ContactInformation', []);
+                if (contact_info_check.length > 0) {
+                    var temp_contact_info = Sender_element.ContactInformation;
+                }
+                const contact_info_sender_element = temp_contact_info;
+
+                const email_check = findValuesHelper(contact_info_sender_element, 'EmailAddress', []);
+                if (email_check.length > 0) {
+                    var temp_email_check = contact_info_sender_element.EmailAddress;
+                }
+                const sender_email = temp_email_check;
+
+                const email_validation = emailValidation(sender_email);
+                if (!email_validation) {
+                    throw Error('This email adress is not valid!');
+                }
 
 
                 const sendid = findValuesHelper(sender_id_element, '_', []);
                 if (sendid.length <= 0) {
-                    return Error('Missing _ element for sender_id element!');
+                    throw Error('Missing _ element for sender_id element!');
                 }
                 const sender_id = sender_id_element._;
 
 
                 const contact_info = findValuesHelper(Sender_element, 'ContactInformation', []);
                 if (contact_info.length <= 0) {
-                    return Error('Missing ContactInformation element for Sender element!');
+                    throw Error('Missing ContactInformation element for Sender element!');
                 }
                 const ContactInformation_element = Sender_element.ContactInformation;
 
@@ -182,35 +342,52 @@ module.exports = () => ({
                 // ///RECEIVER
                 const receive = findValuesHelper(StandardBusinessDocumentHeader_element, 'Receiver', []);
                 if (receive.length <= 0) {
-                    return Error('Missing Receiver element for StandardBusinessDocumentHeader element!');
+                    throw Error('Missing Receiver element for StandardBusinessDocumentHeader element!');
                 }
                 const Receiver_element = StandardBusinessDocumentHeader_element.Receiver;
 
 
                 const receive_id = findValuesHelper(Receiver_element, 'Identifier', []);
                 if (receive_id.length <= 0) {
-                    return Error('Missing Identifier element for Receiver element!');
+                    throw Error('Missing Identifier element for Receiver element!');
                 }
                 const receiver_id_element = Receiver_element.Identifier;
+
+                const receiver_contact_info_check = findValuesHelper(Receiver_element, 'ContactInformation', []);
+                if (receiver_contact_info_check.length > 0) {
+                    var temp_contact_info_receiver = Receiver_element.ContactInformation;
+                }
+                const contact_info_receiver_element = temp_contact_info_receiver;
+
+                const email_check_receiver = findValuesHelper(contact_info_receiver_element, 'EmailAddress', []);
+                if (email_check_receiver.length > 0) {
+                    var temp_email_check_receiver = contact_info_receiver_element.EmailAddress;
+                }
+                const receiver_email = temp_email_check_receiver;
+
+                const email_validation_receiver = emailValidation(receiver_email);
+                if (!email_validation_receiver) {
+                    throw Error('This email adress is not valid!');
+                }
 
 
                 const receiveid = findValuesHelper(receiver_id_element, '_', []);
                 if (receiveid.length <= 0) {
-                    return Error('Missing Identifier element for Receiver element!');
+                    throw Error('Missing Identifier element for Receiver element!');
                 }
                 const receiver_id = receiver_id_element._;
 
 
                 const contact_info_rec = findValuesHelper(Receiver_element, 'ContactInformation', []);
                 if (contact_info_rec.length <= 0) {
-                    return Error('Missing ContactInformation element for Receiver element!');
+                    throw Error('Missing ContactInformation element for Receiver element!');
                 }
                 const ContactInformation_element_receiver = Receiver_element.ContactInformation;
 
 
                 const doc_identification = findValuesHelper(StandardBusinessDocumentHeader_element, 'DocumentIdentification', []);
                 if (doc_identification.length <= 0) {
-                    return Error('Missing DocumentIdentification element for StandardBusinessDocumentHeader element!');
+                    throw Error('Missing DocumentIdentification element for StandardBusinessDocumentHeader element!');
                 }
                 const DocumentIdentification_element =
                     StandardBusinessDocumentHeader_element.DocumentIdentification;
@@ -218,7 +395,7 @@ module.exports = () => ({
 
                 const bus_scope = findValuesHelper(StandardBusinessDocumentHeader_element, 'BusinessScope', []);
                 if (bus_scope.length <= 0) {
-                    return Error('Missing BusinessScope element for StandardBusinessDocumentHeader element!');
+                    throw Error('Missing BusinessScope element for StandardBusinessDocumentHeader element!');
                 }
                 const BusinessScope_element =
                     StandardBusinessDocumentHeader_element.BusinessScope;
@@ -251,28 +428,28 @@ module.exports = () => ({
 
                 const ext = findValuesHelper(EPCISHeader_element, 'extension', []);
                 if (ext.length <= 0) {
-                    return Error('Missing extension element for EPCISHeader element!');
+                    throw Error('Missing extension element for EPCISHeader element!');
                 }
                 const extension_element = EPCISHeader_element.extension;
 
 
                 const epcis_master = findValuesHelper(extension_element, 'EPCISMasterData', []);
                 if (epcis_master.length <= 0) {
-                    return Error('Missing EPCISMasterData element for extension element!');
+                    throw Error('Missing EPCISMasterData element for extension element!');
                 }
                 const EPCISMasterData_element = extension_element.EPCISMasterData;
 
 
                 const vocabulary_li = findValuesHelper(EPCISMasterData_element, 'VocabularyList', []);
                 if (vocabulary_li.length <= 0) {
-                    return Error('Missing VocabularyList element for EPCISMasterData element!');
+                    throw Error('Missing VocabularyList element for EPCISMasterData element!');
                 }
                 const VocabularyList_element = EPCISMasterData_element.VocabularyList;
 
 
                 const vocabulary = findValuesHelper(VocabularyList_element, 'Vocabulary', []);
                 if (vocabulary.length <= 0) {
-                    return Error('Missing Vocabulary element for VocabularyList element!');
+                    throw Error('Missing Vocabulary element for VocabularyList element!');
                 }
                 Vocabulary_elements = VocabularyList_element.Vocabulary;
 
@@ -302,7 +479,7 @@ module.exports = () => ({
 
                             const typ = findValuesHelper(pro, 'type', []);
                             if (typ.length <= 0) {
-                                return Error('Missing type element for element!');
+                                throw Error('Missing type element for element!');
                             }
                             const v_type = pro.type;
 
@@ -312,7 +489,7 @@ module.exports = () => ({
 
                                 const voc_el_list = findValuesHelper(Bussines_location_elements, 'VocabularyElementList', []);
                                 if (voc_el_list.length === 0) {
-                                    return Error('Missing VocabularyElementList element for element!');
+                                    throw Error('Missing VocabularyElementList element for element!');
                                 }
                                 VocabularyElementList_element =
                                     Bussines_location_elements.VocabularyElementList;
@@ -331,7 +508,7 @@ module.exports = () => ({
 
                                         const loc_id = findValuesHelper(v, 'id', []);
                                         if (loc_id.length <= 0) {
-                                            return Error('Missing id element for VocabularyElement element!');
+                                            throw Error('Missing id element for VocabularyElement element!');
                                         }
                                         const str = v.id;
                                         business_location_id = str.replace('urn:epc:id:sgln:', '');
@@ -339,9 +516,10 @@ module.exports = () => ({
 
                                         const attr = findValuesHelper(v, 'attribute', []);
                                         if (attr.length <= 0) {
-                                            return Error('Missing attribute element for VocabularyElement element!');
+                                            throw Error('Missing attribute element for VocabularyElement element!');
                                         }
                                         const { attribute } = v;
+
 
                                         for (const y in attribute) {
                                             const kk = attribute[y];
@@ -349,10 +527,27 @@ module.exports = () => ({
 
                                             const att_id = findValuesHelper(kk, 'id', []);
                                             if (att_id.length <= 0) {
-                                                return Error('Missing id attribute for element!');
+                                                throw Error('Missing id attribute for element!');
                                             }
                                             const str = kk.id;
                                             attribute_id = str;
+
+                                            const attribute_value = kk._;
+
+
+                                            if (attribute_id === 'urn:ts:location:country') {
+                                                var country_validation = countryValidation(attribute_value);
+                                                if (!country_validation) {
+                                                    throw Error('Invalid country code. Please use two characters!');
+                                                }
+                                            }
+
+                                            if (attribute_id === 'urn:ts:location:postalCode') {
+                                                var postal_code_validation = postalCodeValidation(attribute_value);
+                                                if (!postal_code_validation) {
+                                                    throw Error('Invalid postal code!');
+                                                }
+                                            }
 
 
                                             data_object[attribute_id] = kk._;
@@ -361,13 +556,13 @@ module.exports = () => ({
                                         var children_elements;
                                         const children_check = findValuesHelper(v, 'children', []);
                                         if (children_check.length === 0) {
-                                            return Error('Missing children element for element!');
+                                            throw Error('Missing children element for element!');
                                         }
                                         children_elements = v.children;
 
 
                                         if (findValuesHelper(children_elements, 'id', []).length === 0) {
-                                            return Error('Missing id element in children element for business location!');
+                                            throw Error('Missing id element in children element for business location!');
                                         }
 
                                         const children_id = children_elements.id;
@@ -421,7 +616,7 @@ module.exports = () => ({
 
                                                     const att_id = findValuesHelper(kk, 'id', []);
                                                     if (att_id.length <= 0) {
-                                                        return Error('Missing id attribute for element!');
+                                                        throw Error('Missing id attribute for element!');
                                                     }
                                                     const str = kk.id;
                                                     attribute_id = str;
@@ -456,44 +651,49 @@ module.exports = () => ({
                                         locations[business_location_id]._key = md5(`business_location_${sender_id}_${business_location_id}`);
                                     }
                                 }
-                            }
-
-                            var Participant_elements;
-                            var exten_element;
-                            var OTVocabularyElement_element;
-                            var participant_id;
-                            var attribute_elements;
-                            // /////PARTICIPANT///////////
-                            if (v_type === 'urn:ot:mda:participant') {
+                            } else if (v_type === 'urn:ot:mda:participant') {
+                                var Participant_elements;
+                                var exten_element;
+                                var OTVocabularyElement_element;
+                                var participant_id;
+                                var attribute_elements;
+                                // /////PARTICIPANT///////////
                                 Participant_elements = pro;
 
                                 const extension_check = findValuesHelper(Participant_elements, 'extension', []);
                                 if (extension_check.length === 0) {
-                                    return Error('Missing extension element for Participant element!');
+                                    throw Error('Missing extension element for Participant element!');
                                 }
                                 exten_element = Participant_elements.extension;
 
 
                                 const ot_voc_check = findValuesHelper(exten_element, 'OTVocabularyElement', []);
                                 if (ot_voc_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement for extension element!');
+                                    throw Error('Missing OTVocabularyElement for extension element!');
                                 }
                                 OTVocabularyElement_element = exten_element.OTVocabularyElement;
 
-
+                                var temp_participant_id;
                                 const participant_id_check = findValuesHelper(OTVocabularyElement_element, 'id', []);
                                 if (participant_id_check.length === 0) {
-                                    return Error('Missing id for Participant element!');
+                                    throw Error('Missing id for Participant element!');
+                                } else {
+                                    temp_participant_id = OTVocabularyElement_element.id;
                                 }
-                                participant_id = OTVocabularyElement_element.id;
 
+                                if (!temp_participant_id.includes('urn:ot:mda:participant', 0) == true) {
+                                    throw Error('Invalid Participant ID');
+                                } else {
+                                    participant_id = temp_participant_id;
+                                }
 
                                 const attribute_check = findValuesHelper(OTVocabularyElement_element, 'attribute', []);
                                 if (attribute_check.length === 0) {
-                                    return Error('Missing attribute for Participant element!');
+                                    throw Error('Missing attribute for Participant element!');
                                 }
                                 attribute_elements = OTVocabularyElement_element.attribute;
 
+                                // console.log(OTVocabularyElement_element)
 
                                 participants_data = {};
 
@@ -503,18 +703,24 @@ module.exports = () => ({
                                     var value;
                                     const value_check = findValuesHelper(attribute_el, '_', []);
                                     if (value_check.length === 0) {
-                                        return Error('Missing value for attribute element!');
+                                        throw Error('Missing value for attribute element!');
                                     }
                                     value = attribute_el._;
 
 
                                     var attr_id;
+                                    var temp_attr_id;
                                     const attr_id_check = findValuesHelper(attribute_el, 'id', []);
                                     if (attr_id_check.length === 0) {
-                                        return Error('Missing id element for attribute element!');
+                                        throw Error('Missing id element for attribute element!');
+                                    } else {
+                                        temp_attr_id = attribute_el.id;
                                     }
-                                    attr_id = attribute_el.id.replace('urn:ot:mda:participant:', '');
-
+                                    if (!temp_attr_id.includes('urn:ot:mda:participant', 0) == true) {
+                                        throw Error('Invalid Attribute ID');
+                                    } else {
+                                        attr_id = temp_attr_id.replace('urn:ot:mda:participant:', '');
+                                    }
 
                                     participants_data[attr_id] = value;
                                 }
@@ -529,18 +735,15 @@ module.exports = () => ({
                                     .data = utilities.copyObject(participants_data);
                                 participants[participant_id].vertex_type = 'PARTICIPANT';
                                 participants[participant_id]._key = md5(`participant_${sender_id}_${participant_id}`);
-                            }
-
-
-                            var Object_elements;
-                            // ////OBJECT////////
-                            if (v_type === 'urn:ot:mda:object') {
+                            } else if (v_type === 'urn:ot:mda:object') {
+                                var Object_elements;
+                                // ////OBJECT////////
                                 Object_elements = pro;
 
                                 var extensio_element;
                                 const extensio_check = findValuesHelper(Object_elements, 'extension', []);
                                 if (extensio_check.length === 0) {
-                                    return Error('Missing extension element for Object element!');
+                                    throw Error('Missing extension element for Object element!');
                                 }
                                 extensio_element = Object_elements.extension;
 
@@ -548,7 +751,7 @@ module.exports = () => ({
                                 var OTVocabularyEl;
                                 const OTVocabularyEl_check = findValuesHelper(extensio_element, 'OTVocabularyElement', []);
                                 if (OTVocabularyEl_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement element for extension element!');
+                                    throw Error('Missing OTVocabularyElement element for extension element!');
                                 }
                                 OTVocabularyEl = extensio_element.OTVocabularyElement;
 
@@ -556,7 +759,7 @@ module.exports = () => ({
                                 var object_id;
                                 const object_id_check = findValuesHelper(OTVocabularyEl, 'id', []);
                                 if (object_id_check.length === 0) {
-                                    return Error('Missing id element for OTVocabularyElement!');
+                                    throw Error('Missing id element for OTVocabularyElement!');
                                 }
                                 object_id = OTVocabularyEl.id;
 
@@ -564,7 +767,7 @@ module.exports = () => ({
                                 var object_attribute_elements;
                                 const attribute_el_check = findValuesHelper(OTVocabularyEl, 'attribute', []);
                                 if (attribute_el_check.length === 0) {
-                                    return Error('Missing attribute element for OTVocabularyElement!');
+                                    throw Error('Missing attribute element for OTVocabularyElement!');
                                 }
                                 object_attribute_elements = OTVocabularyEl.attribute;
 
@@ -573,20 +776,40 @@ module.exports = () => ({
                                     var single_attribute;
                                     single_attribute = object_attribute_elements[rr];
 
+                                    var temp_single_attribute_id;
                                     var single_attribute_id;
                                     const single_attribute_id_check = findValuesHelper(single_attribute, 'id', []);
                                     if (single_attribute_id_check.length === 0) {
-                                        return Error('Missing id element for attribute element!');
+                                        throw Error('Missing id element for attribute element!');
+                                    } else {
+                                        temp_single_attribute_id = single_attribute.id;
                                     }
-                                    single_attribute_id = single_attribute.id;
+
+                                    if (!temp_single_attribute_id.includes('urn:ot:mda:object:', 0) == true) {
+                                        throw Error('Invalid Attribute ID');
+                                    } else {
+                                        single_attribute_id = temp_single_attribute_id;
+                                    }
+
+
+                                    // console.log(temp_single_attribute_id)
 
 
                                     var single_attribute_value;
                                     const single_attribute_value_check = findValuesHelper(single_attribute, '_', []);
                                     if (single_attribute_value_check.length === 0) {
-                                        return Error('Missing value element for attribute element!');
+                                        throw Error('Missing value element for attribute element!');
                                     }
                                     single_attribute_value = single_attribute._;
+
+
+                                    if (single_attribute_id === 'urn:ot:mda:object:ean13') {
+                                        var ean13_validation = ean13Validation(single_attribute_value);
+                                        // console.log(ean13_validation)
+                                        if (!ean13_validation) {
+                                            throw Error('EAN13 code is not valid!');
+                                        }
+                                    }
 
 
                                     object_data[single_attribute_id] = single_attribute_value;
@@ -602,17 +825,15 @@ module.exports = () => ({
                                     objects[object_id].vertex_type = 'OBJECT';
                                     objects[object_id]._key = md5(`object_${sender_id}_${object_id}`);
                                 }
-                            }
-
-                            var Batch_elements;
-                            // //////BATCH/////////
-                            if (v_type === 'urn:ot:mda:batch') {
+                            } else if (v_type === 'urn:ot:mda:batch') {
+                                var Batch_elements;
+                                // //////BATCH/////////
                                 Batch_elements = pro;
 
                                 var batch_extension;
                                 const batch_extension_check = findValuesHelper(Batch_elements, 'extension', []);
                                 if (batch_extension_check.length === 0) {
-                                    return Error('Missing extension element for Batch element!');
+                                    throw Error('Missing extension element for Batch element!');
                                 }
                                 batch_extension = Batch_elements.extension;
 
@@ -620,19 +841,21 @@ module.exports = () => ({
                                 var OTVoc_El_elements;
                                 const OTVoc_El_elements_check = findValuesHelper(batch_extension, 'OTVocabularyElement', []);
                                 if (OTVoc_El_elements_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement element for extension element!');
+                                    throw Error('Missing OTVocabularyElement element for extension element!');
                                 }
                                 OTVoc_El_elements = batch_extension.OTVocabularyElement;
 
 
                                 var ot_vocabulary_element;
                                 for (const g in OTVoc_El_elements) {
+                                    var object_id_instance = false;
+                                    var valid_attribute = false;
                                     ot_vocabulary_element = OTVoc_El_elements[g];
 
                                     var batch_id;
                                     const batch_id_element_check = findValuesHelper(ot_vocabulary_element, 'id', []);
                                     if (batch_id_element_check.length === 0) {
-                                        return Error('Missing id element for OTVocabularyElement!');
+                                        throw Error('Missing id element for OTVocabularyElement!');
                                     }
                                     batch_id = ot_vocabulary_element.id;
 
@@ -640,7 +863,7 @@ module.exports = () => ({
                                     var batch_attribute_el;
                                     const batch_attribute_el_check = findValuesHelper(ot_vocabulary_element, 'attribute', []);
                                     if (batch_attribute_el_check.length === 0) {
-                                        return Error('Missing attribute element for OTVocabularyElement!');
+                                        throw Error('Missing attribute element for OTVocabularyElement!');
                                     }
                                     batch_attribute_el = ot_vocabulary_element.attribute;
 
@@ -650,19 +873,44 @@ module.exports = () => ({
                                         single = batch_attribute_el[one];
 
                                         var batch_attribute_id;
+                                        var temp_batch_attribute_id;
                                         const batch_attribute_id_check = findValuesHelper(single, 'id', []);
                                         if (batch_attribute_id_check.length === 0) {
-                                            return Error('Missing id element for attribute element!');
+                                            throw Error('Missing id element for attribute element!');
+                                        } else {
+                                            temp_batch_attribute_id = single.id;
                                         }
-                                        batch_attribute_id = single.id;
+
+
+                                        if (temp_batch_attribute_id.includes('urn:ot:mda:batch:objectid', 0) && object_id_instance == false) {
+                                            object_id_instance = true;
+                                        } else if (temp_batch_attribute_id.includes('urn:ot:mda:batch:', 0)) {
+                                            valid_attribute = true;
+                                        } else {
+                                            throw Error('Invalid Attribute ID');
+                                        }
 
 
                                         var batch_attribute_value;
                                         const batch_attribute_value_check = findValuesHelper(single, '_', []);
                                         if (batch_attribute_value_check.length === 0) {
-                                            return Error('Missing value element for attribute element!');
+                                            throw Error('Missing value element for attribute element!');
                                         }
                                         batch_attribute_value = single._;
+
+                                        if (temp_batch_attribute_id === 'urn:ot:mda:batch:productiondate') {
+                                            var production_date_validation = dateTimeValidation(batch_attribute_value);
+                                            if (!production_date_validation) {
+                                                throw Error('Invalid date and time format for production date!');
+                                            }
+                                        }
+
+                                        if (temp_batch_attribute_id === 'urn:ot:mda:batch:expirationdate') {
+                                            var expiration_date_validation = dateTimeValidation(batch_attribute_value);
+                                            if (!expiration_date_validation) {
+                                                throw Error('Invalid date and time format for expiration date!');
+                                            }
+                                        }
 
 
                                         batch_data[batch_attribute_id] = batch_attribute_value;
@@ -689,7 +937,20 @@ module.exports = () => ({
                                         batches[batch_id].vertex_type = 'BATCH';
                                         batches[batch_id]._key = md5(`batch_${sender_id}_${batch_id}`);
                                     }
+
+
+                                    // console.log(valid_attribute)
+
+                                    if (!object_id_instance) {
+                                        throw Error('Missing Object ID');
+                                    } else if (valid_attribute) {
+                                        batch_attribute_id = temp_batch_attribute_id;
+                                    } else {
+                                        throw Error('Invalid Attribute ID');
+                                    }
                                 }
+                            } else {
+                                throw Error('Invalid Vocabulary type');
                             }
                         }
                     }
@@ -701,7 +962,7 @@ module.exports = () => ({
                     const body_element = EPCISDocument_element.EPCISBody;
 
                     if (findValuesHelper(result, 'EventList', []).length === 0) {
-                        return Error('Missing EventList element');
+                        throw Error('Missing EventList element');
                     }
 
                     var event_list_element = body_element.EventList;
@@ -725,24 +986,29 @@ module.exports = () => ({
                             if (event_type === 'ObjectEvent') {
                                 // eventTime
                                 if (findValuesHelper(event, 'eventTime', []).length === 0) {
-                                    return Error('Missing eventTime element for event!');
+                                    throw Error('Missing eventTime element for event!');
                                 }
 
                                 const event_time = event.eventTime;
 
+                                var event_time_validation = dateTimeValidation(event_time);
+                                if (!event_time_validation) {
+                                    throw Error('Invalid date and time format for event time!');
+                                }
+
                                 if (typeof event_time !== 'string') {
-                                    return Error('Multiple eventTime elements found!');
+                                    throw Error('Multiple eventTime elements found!');
                                 }
 
                                 // eventTimeZoneOffset
                                 if (findValuesHelper(event, 'eventTimeZoneOffset', []).length === 0) {
-                                    return Error('Missing event_time_zone_offset element for event!');
+                                    throw Error('Missing event_time_zone_offset element for event!');
                                 }
 
                                 const event_time_zone_offset = event.eventTimeZoneOffset;
 
                                 if (typeof event_time_zone_offset !== 'string') {
-                                    return Error('Multiple event_time_zone_offset elements found!');
+                                    throw Error('Multiple event_time_zone_offset elements found!');
                                 }
 
                                 let event_id = `${sender_id}:${event_time}Z${event_time_zone_offset}`;
@@ -753,7 +1019,7 @@ module.exports = () => ({
 
 
                                     if (findValuesHelper(baseExtension_element, 'eventID', []).length === 0) {
-                                        return Error('Missing eventID in baseExtension!');
+                                        throw Error('Missing eventID in baseExtension!');
                                     }
 
                                     event_id = baseExtension_element.eventID;
@@ -761,13 +1027,13 @@ module.exports = () => ({
 
                                 // epcList
                                 if (findValuesHelper(event, 'epcList', []).length === 0) {
-                                    return Error('Missing epcList element for event!');
+                                    throw Error('Missing epcList element for event!');
                                 }
 
                                 const { epcList } = event;
 
                                 if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                    return Error('Missing epc element in epcList for event!');
+                                    throw Error('Missing epc element in epcList for event!');
                                 }
 
                                 const { epc } = epcList;
@@ -784,7 +1050,7 @@ module.exports = () => ({
                                     const read_point_element = event.readPoint;
 
                                     if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                        return Error('Missing id for readPoint!');
+                                        throw Error('Missing id for readPoint!');
                                     }
 
                                     read_point = read_point_element.id;
@@ -797,10 +1063,38 @@ module.exports = () => ({
                                     const biz_location_element = event.bizLocation;
 
                                     if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                        return Error('Missing id for bizLocation!');
+                                        throw Error('Missing id for bizLocation!');
                                     }
 
                                     biz_location = biz_location_element.id;
+                                }
+
+                                // extension
+                                if (findValuesHelper(event, 'extension', []).length !== 0) {
+                                    const obj_event_extension_element = event.extension;
+                                    const quantityElement_element = obj_event_extension_element.quantityList.quantityElement;
+                                    const extensionElement_extension = obj_event_extension_element.extension;
+
+                                    for (const element in quantityElement_element) {
+                                        const single_element = quantityElement_element[element];
+
+                                        const quantity = single_element.quantity;
+
+                                        const quantity_validation = numberValidation(quantity);
+                                        if (!quantity_validation) {
+                                            throw Error('Invalid format for quantity element!');
+                                        }
+                                    }
+
+
+                                    for (const element in extensionElement_extension) {
+                                        const temperature = extensionElement_extension[element];
+
+                                        const temperature_validation = numberValidation(temperature);
+                                        if (!temperature_validation) {
+                                            throw Error('Invalid format for temperature element!');
+                                        }
+                                    }
                                 }
 
                                 const object_event = {
@@ -844,24 +1138,24 @@ module.exports = () => ({
                             } else if (event_type === 'AggregationEvent') {
                                 // eventTime
                                 if (findValuesHelper(event, 'eventTime', []).length === 0) {
-                                    return Error('Missing eventTime element for event!');
+                                    throw Error('Missing eventTime element for event!');
                                 }
 
                                 const event_time = event.eventTime;
 
                                 if (typeof event_time !== 'string') {
-                                    return Error('Multiple eventTime elements found!');
+                                    throw Error('Multiple eventTime elements found!');
                                 }
 
                                 // eventTimeZoneOffset
                                 if (findValuesHelper(event, 'eventTimeZoneOffset', []).length === 0) {
-                                    return Error('Missing event_time_zone_offset element for event!');
+                                    throw Error('Missing event_time_zone_offset element for event!');
                                 }
 
                                 const event_time_zone_offset = event.eventTimeZoneOffset;
 
                                 if (typeof event_time_zone_offset !== 'string') {
-                                    return Error('Multiple event_time_zone_offset elements found!');
+                                    throw Error('Multiple event_time_zone_offset elements found!');
                                 }
 
                                 let event_id = `${sender_id}:${event_time}Z${event_time_zone_offset}`;
@@ -872,7 +1166,7 @@ module.exports = () => ({
 
 
                                     if (findValuesHelper(baseExtension_element, 'eventID', []).length === 0) {
-                                        return Error('Missing eventID in baseExtension!');
+                                        throw Error('Missing eventID in baseExtension!');
                                     }
 
                                     event_id = baseExtension_element.eventID;
@@ -880,7 +1174,7 @@ module.exports = () => ({
 
                                 // parentID
                                 if (findValuesHelper(event, 'parentID', []).length === 0) {
-                                    return Error('Missing parentID element for Aggregation event!');
+                                    throw Error('Missing parentID element for Aggregation event!');
                                 }
 
                                 const parent_id = event.parentID;
@@ -889,13 +1183,13 @@ module.exports = () => ({
                                 let child_epcs = [];
 
                                 if (findValuesHelper(event, 'childEPCs', []).length === 0) {
-                                    return Error('Missing childEPCs element for event!');
+                                    throw Error('Missing childEPCs element for event!');
                                 }
 
                                 const epcList = event.childEPCs;
 
                                 if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                    return Error('Missing epc element in epcList for event!');
+                                    throw Error('Missing epc element in epcList for event!');
                                 }
 
                                 const { epc } = epcList;
@@ -912,7 +1206,7 @@ module.exports = () => ({
                                     const read_point_element = event.readPoint;
 
                                     if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                        return Error('Missing id for readPoint!');
+                                        throw Error('Missing id for readPoint!');
                                     }
 
                                     read_point = read_point_element.id;
@@ -924,7 +1218,7 @@ module.exports = () => ({
                                     const biz_location_element = event.bizLocation;
 
                                     if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                        return Error('Missing id for bizLocation!');
+                                        throw Error('Missing id for bizLocation!');
                                     }
 
                                     biz_location = biz_location_element.id;
@@ -997,7 +1291,7 @@ module.exports = () => ({
                                         if (ext_event_type === 'TransformationEvent') {
                                             // eventTime
                                             if (findValuesHelper(ext_event, 'transformationID', []).length === 0) {
-                                                return Error('Missing transformationID element for event!');
+                                                throw Error('Missing transformationID element for event!');
                                             }
 
                                             const ext_event_id = ext_event.transformationID;
@@ -1006,13 +1300,13 @@ module.exports = () => ({
                                             let input_epcs = [];
 
                                             if (findValuesHelper(ext_event, 'inputEPCList', []).length === 0) {
-                                                return Error('Missing inputEPCList element for event!');
+                                                throw Error('Missing inputEPCList element for event!');
                                             }
 
                                             const epcList = ext_event.inputEPCList;
 
                                             if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                                return Error('Missing epc element in epcList for event!');
+                                                throw Error('Missing epc element in epcList for event!');
                                             }
 
                                             const { epc } = epcList;
@@ -1030,7 +1324,7 @@ module.exports = () => ({
                                                 const epcList = ext_event.outputEPCList;
 
                                                 if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                                    return Error('Missing epc element in epcList for event!');
+                                                    throw Error('Missing epc element in epcList for event!');
                                                 }
 
                                                 const { epc } = epcList;
@@ -1049,7 +1343,7 @@ module.exports = () => ({
                                                 const read_point_element = ext_event.readPoint;
 
                                                 if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                                    return Error('Missing id for readPoint!');
+                                                    throw Error('Missing id for readPoint!');
                                                 }
 
                                                 read_point = read_point_element.id;
@@ -1079,7 +1373,7 @@ module.exports = () => ({
                                                     ext_event.bizLocation;
 
                                                 if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                                    return Error('Missing id for bizLocation!');
+                                                    throw Error('Missing id for bizLocation!');
                                                 }
 
                                                 biz_location = biz_location_element.id;
@@ -1123,12 +1417,12 @@ module.exports = () => ({
                                                 });
                                             }
                                         } else {
-                                            return Error(`Unsupported event type: ${event_type}`);
+                                            throw Error(`Unsupported event type: ${event_type}`);
                                         }
                                     }
                                 }
                             } else {
-                                return Error(`Unsupported event type: ${event_type}`);
+                                throw Error(`Unsupported event type: ${event_type}`);
                             }
                         }
                     }
