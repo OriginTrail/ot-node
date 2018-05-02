@@ -67,15 +67,17 @@ class ArangoJS {
      * @param startVertex       Starting vertex
      * @returns {Promise<any>}
      */
-    findTraversalPath(startVertex) {
+    findTraversalPath(startVertex, depth) {
         const that = this;
         return new Promise((resolve, reject) => {
             if (startVertex === undefined || startVertex._id === undefined) {
                 resolve([]);
                 return;
             }
-            const maxPathLength = that.getDatabaseInfo().max_path_length;
-            const queryString = `FOR vertice, edge, path IN 1 .. ${maxPathLength}
+            if (!depth) {
+                depth = that.getDatabaseInfo().max_path_length;
+            }
+            const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
             OUTBOUND '${startVertex._id}'
             GRAPH 'origintrail_graph'
             RETURN path`;

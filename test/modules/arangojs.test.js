@@ -360,7 +360,7 @@ describe('Arangojs module ', async () => {
         };
 
         try {
-            const response = await testDb.findTraversalPath(myStartVertex);
+            const response = await testDb.findTraversalPath(myStartVertex, 1);
         } catch (error) {
             assert.equal(error.code, 404);
         }

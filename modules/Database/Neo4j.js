@@ -319,12 +319,14 @@ class Neo4jDB {
      * @param startVertex Start vertex
      * @return
      */
-    findTraversalPath(startVertex) {
+    findTraversalPath(startVertex, depth) {
         const that = this;
         return new Promise((resolve, reject) => {
             const key = '_key';
             const value = startVertex._key;
-            const depth = that.getDatabaseInfo().max_path_length;
+            if (!depth) {
+                depth = that.getDatabaseInfo().max_path_length;
+            }
 
             this.session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k,length(r) as s ORDER BY s`)
                 .then(this._transformProperties)
