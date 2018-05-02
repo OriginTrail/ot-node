@@ -307,6 +307,65 @@ describe('Arangojs module ', async () => {
         });
     });
 
+    it('.findVertices() with empty query should fail', async () => {
+        try {
+            await testDb.findVertices();
+        } catch (error) {
+            // Utilities.isEmptyObject() will complain
+            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
+        }
+    });
+
+    it('.findVertices() when still not connected to graph db should fail', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        try {
+            const result = await testDb.findVertices(queryObject);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('.findVertices() on top of empty collection should find nothing', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        await testDb.findVertices(queryObject).then((response) => {
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        });
+    });
+
+    it('.findTraversalPath() with non valid startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: undefined,
+        };
+        try {
+            const response = await testDb.findTraversalPath(myStartVertex);
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it('.findTraversalPath() with non existing startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: 0,
+        };
+
+        try {
+            const response = await testDb.findTraversalPath(myStartVertex);
+        } catch (error) {
+            assert.equal(error.code, 404);
+        }
+    });
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
