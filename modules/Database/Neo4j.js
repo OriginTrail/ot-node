@@ -231,6 +231,7 @@ class Neo4jDB {
      * Gets all CONTAINS edges and forms one vertex
      * @param key           Vertex property key
      * @param value         Vertex property value
+     * @param session       Pass session if it's already opened
      * @returns {Promise}
      * @private
      */
@@ -238,15 +239,12 @@ class Neo4jDB {
         return new Promise((resolve, reject) => {
             let sessionCreated = false;
             if (!session) {
-                session = this.driver.session();
                 sessionCreated = true;
+                session = this.driver.session();
             }
             session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *0..]->(k) RETURN n,r,k`)
                 .then(this._transformProperties)
                 .then((result) => {
-                    if (sessionCreated) {
-                        session.close();
-                    }
                     const json = {};
                     for (const r of result.records) {
                         const leftNode = r.get('n');
@@ -266,6 +264,9 @@ class Neo4jDB {
                             }
                             tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
                         }
+                    }
+                    if (sessionCreated) {
+                        session.close();
                     }
                     resolve(json);
                 }).catch((err) => {
@@ -345,7 +346,7 @@ class Neo4jDB {
             session.run(query).then(this._transformProperties).then((result) => {
                 const nodePromises = [];
                 for (const record of result.records) {
-                    nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key, session));
+                    nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
                     session.close();
@@ -389,7 +390,7 @@ class Neo4jDB {
 
                         let first = Promise.resolve();
                         if (!vertices[leftNode.properties._key]) {
-                            first = this._fetchVertex('_key', leftNode.properties._key, session).then((r) => {
+                            first = this._fetchVertex('_key', leftNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
@@ -399,7 +400,7 @@ class Neo4jDB {
 
                         let second = Promise.resolve();
                         if (!vertices[rightNode.properties._key]) {
-                            second = this._fetchVertex('_key', rightNode.properties._key, session).then((r) => {
+                            second = this._fetchVertex('_key', rightNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
