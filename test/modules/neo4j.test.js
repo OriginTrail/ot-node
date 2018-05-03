@@ -59,15 +59,12 @@ describe('Neo4j module ', async () => {
         });
     });
     it('find traversal', async () => {
-        // const createOne = testDb.addDocument('ot_vertices', vertexOne);
-        // const createTwo = testDb.addDocument('ot_vertices', vertexTwo);
-        // const createEdge = testDb.addDocument('ot_edges', edgeOne);
-        //
-        // await Promise.all([createOne, createTwo, createEdge]).then((res) => {
-        //     testDb.findTraversalPath(vertexOne, 2).then((path) => {
-        //         // compare
-        //     });
-        // });
+        await testDb.addDocument('ot_vertices', vertexOne);
+        await testDb.addDocument('ot_vertices', vertexTwo);
+        await testDb.addDocument('ot_edges', edgeOne);
+
+        const path = await testDb.findTraversalPath(vertexOne, 2);
+        assert.equal(path.length, 2);
     });
 
     it('.createEdge(edge) should create Edge', () => {
