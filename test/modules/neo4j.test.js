@@ -9,7 +9,7 @@ const stringify = require('json-stable-stringify');
 
 
 const myUsername = 'neo4j';
-const myPassword = 'otpass';
+const myPassword = 'pass';
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';
@@ -27,7 +27,7 @@ let db;
 
 describe('Neo4j module ', async () => {
     before('create and use testDb db', async () => {
-        //TODO kreirati novu bazu
+        // TODO kreirati novu bazu
 
         testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port);
     });
@@ -41,12 +41,16 @@ describe('Neo4j module ', async () => {
     });
 
     it('create and retrieve vertices', () => {
-        testDb.createVertex(vertexOne).then(() => {
-            testDb.findVertices(vertexOne._key).then((result) => {
-                assert.equal(stringify(vertexOne), result)
-            })
-        })
-    })
+        testDb.addDocument('ot_vertices', vertexOne).then(() => {
+            testDb.findVertices({ _key: vertexOne._key }).then((result) => {
+                assert.equal(stringify(vertexOne), stringify(result));
+            }).catch((err) => {
+                console.log(err);
+            });
+        }).catch((err) => {
+            console.log(err);
+        });
+    });
 
     it('.createEdge(edge) should create Edge', () => {
 
@@ -54,16 +58,13 @@ describe('Neo4j module ', async () => {
 
     it('_transformProperty() should transform Neo4j property to Javascript compatible one'), () => {
 
-    }
+    };
 
 
     after('drop testDb db', async () => {
-        /*systemDb = new Database();
+        /* systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
-        await systemDb.dropDatabase(myDatabaseName);*/
-        session.close();
-        driver.close();
-
+        await systemDb.dropDatabase(myDatabaseName); */
     });
 });
 

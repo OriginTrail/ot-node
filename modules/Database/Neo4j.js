@@ -74,6 +74,7 @@ class Neo4jDB {
      * Create vertex
      * @param value Vertex document
      * @returns {Promise}
+     * @private
      */
     _createVertex(value) {
         return new Promise((resolve, reject) => {
@@ -118,6 +119,7 @@ class Neo4jDB {
      * Create edge
      * @param edge  Edge document
      * @returns {Promise}
+     * @private
      */
     _createEdge(edge) {
         return new Promise((resolve, reject) => {
