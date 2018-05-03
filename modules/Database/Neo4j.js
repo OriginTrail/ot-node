@@ -505,7 +505,6 @@ class Neo4jDB {
             resolve();
         });
     }
-
 }
 
 module.exports = Neo4jDB;
