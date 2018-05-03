@@ -1,13 +1,10 @@
 const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 
-const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'pass'));
-
 class Neo4jDB {
     constructor(username, password, database, host, port) {
-        // TODO add proper params
-        this.driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'pass'));
-        this.session = driver.session();
+        this.driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(username, password));
+        this.session = this.driver.session();
     }
 
     /**
