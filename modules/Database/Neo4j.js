@@ -80,9 +80,16 @@ class Neo4jDB {
      */
     _createVertex(value) {
         return new Promise((resolve, reject) => {
+            if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
+                reject(new Error(`Invalid vertex ${JSON.stringify(value)}`));
+                return;
+            }
             if (typeof value === 'object') {
                 let session = this.driver.session();
-                const nonObjectProps = `{${Neo4jDB._getPropertiesString(value)}}`;
+                let nonObjectProps = Neo4jDB._getPropertiesString(value);
+                if (nonObjectProps.length > 0) {
+                    nonObjectProps = `{${nonObjectProps}}`;
+                }
                 session.run(`CREATE (a ${nonObjectProps}) RETURN a`).then((r) => {
                     session.close();
                     const nodeId = r.records[0]._fields[0].identity.toString();
