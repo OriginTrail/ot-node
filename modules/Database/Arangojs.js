@@ -65,6 +65,7 @@ class ArangoJS {
     /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
+     * @param depth             Explicit traversal depth
      * @returns {Promise<any>}
      */
     findTraversalPath(startVertex, depth) {

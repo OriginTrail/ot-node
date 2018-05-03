@@ -2,6 +2,14 @@ const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 
 class Neo4jDB {
+    /**
+     * Neo4jDB constructor
+     * @param username  Username
+     * @param password  Password
+     * @param database  Database name
+     * @param host      Database connection host
+     * @param port      Database connection port
+     */
     constructor(username, password, database, host, port) {
         this.driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(username, password));
         this.session = this.driver.session();
@@ -24,7 +32,7 @@ class Neo4jDB {
             } else if (Array.isArray(obj[p])) {
                 const array = [];
                 for (const item of obj[p]) {
-                    if (typeof item === 'object') {
+                    if (typeof item === 'object' || Array.isArray(item)) {
                         array.push(JSON.stringify(item));
                     } else {
                         array.push(item);
@@ -34,9 +42,6 @@ class Neo4jDB {
                     result += `${p}: ${JSON.stringify(array)},`;
                 }
             }
-        }
-        if (result.endsWith(',')) {
-            result = result.slice(0, result.length - 1);
         }
         if (result.endsWith(',')) {
             result = result.slice(0, result.length - 1);
@@ -310,6 +315,7 @@ class Neo4jDB {
     /**
      * Find traversal path for key/value start
      * @param startVertex Start vertex
+     * @param depth       Explicit traversal depth
      * @return
      */
     findTraversalPath(startVertex, depth) {
