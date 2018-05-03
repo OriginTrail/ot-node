@@ -124,14 +124,66 @@ function longLatValidation(data) {
     return false;
 }
 
-function ean13Validation(code) {
-    const ean = code;
+function ean13Validation(eanCode) {
+    // Check if only digits
+    const ValidChars = '0123456789';
+    for (let i = 0; i < eanCode.length; i += 1) {
+        const digit = eanCode.charAt(i);
+        if (ValidChars.indexOf(digit) === -1) {
+            return false;
+        }
+    }
 
-    var checkSum = ean.split('').reduce((p, v, i) => (i % 2 == 0 ? p + 1 * v : p + 3 * v), 0);
+    // Add five 0 if the code has only 8 digits or 12
+    if (eanCode.length === 8) {
+        eanCode = `00000${eanCode}`;
+    } else if (eanCode.length === 12) {
+        eanCode = `0${eanCode}`;
+    }
 
-    if (checkSum % 10 != 0) {
+    // Check for 13 digits otherwise
+    if (eanCode.length !== 13) {
         return false;
     }
+
+    // Get the check number
+    const originalCheck = parseInt(eanCode.substring(eanCode.length - 1), 10);
+    eanCode = eanCode.substring(0, eanCode.length - 1);
+
+    // Add even numbers together
+    let even = Number(eanCode.charAt(1)) +
+        Number(eanCode.charAt(3)) +
+        Number(eanCode.charAt(5)) +
+        Number(eanCode.charAt(7)) +
+        Number(eanCode.charAt(9)) +
+        Number(eanCode.charAt(11));
+    // Multiply this result by 3
+    even *= 3;
+
+    // Add odd numbers together
+    const odd = Number(eanCode.charAt(0)) +
+        Number(eanCode.charAt(2)) +
+        Number(eanCode.charAt(4)) +
+        Number(eanCode.charAt(6)) +
+        Number(eanCode.charAt(8)) +
+        Number(eanCode.charAt(10));
+
+    // Add two totals together
+    const total = even + odd;
+
+    // Calculate the checksum
+    // Divide total by 10 and store the remainder
+    let checksum = total % 10;
+    // If result is not 0 then take away 10
+    if (checksum !== 0) {
+        checksum = 10 - checksum;
+    }
+
+    // Return the result
+    if (checksum !== originalCheck) {
+        return false;
+    }
+
     return true;
 }
 
@@ -188,8 +240,8 @@ module.exports = () => ({
             /* eslint-disable consistent-return */
             async (err, result) => {
                 /**
-                 * Variables
-                 */
+                     * Variables
+                     */
 
                 var sanitized_EPCIS_document;
 
@@ -270,18 +322,20 @@ module.exports = () => ({
                     throw Error('Missing StandardBusinessDocumentHeader element for EPCISHeader element!');
                 }
                 const StandardBusinessDocumentHeader_element =
-                    EPCISHeader_element.StandardBusinessDocumentHeader;
+                        EPCISHeader_element.StandardBusinessDocumentHeader;
 
 
                 const document_id_check = findValuesHelper(StandardBusinessDocumentHeader_element, 'DocumentIdentification', []);
                 if (document_id_check.length > 0) {
-                    var tempDocument_identification_element = StandardBusinessDocumentHeader_element.DocumentIdentification;
+                    var tempDocument_identification_element =
+                            StandardBusinessDocumentHeader_element.DocumentIdentification;
                 }
                 const Document_identification_element = tempDocument_identification_element;
 
                 const creation_date_check = findValuesHelper(Document_identification_element, 'CreationDateAndTime', []);
                 if (creation_date_check.length > 0) {
-                    var tempCreationDate_element = Document_identification_element.CreationDateAndTime;
+                    var tempCreationDate_element =
+                            Document_identification_element.CreationDateAndTime;
                 }
                 const CreationDate_element = tempCreationDate_element;
 
@@ -390,7 +444,7 @@ module.exports = () => ({
                     throw Error('Missing DocumentIdentification element for StandardBusinessDocumentHeader element!');
                 }
                 const DocumentIdentification_element =
-                    StandardBusinessDocumentHeader_element.DocumentIdentification;
+                        StandardBusinessDocumentHeader_element.DocumentIdentification;
 
 
                 const bus_scope = findValuesHelper(StandardBusinessDocumentHeader_element, 'BusinessScope', []);
@@ -398,7 +452,7 @@ module.exports = () => ({
                     throw Error('Missing BusinessScope element for StandardBusinessDocumentHeader element!');
                 }
                 const BusinessScope_element =
-                    StandardBusinessDocumentHeader_element.BusinessScope;
+                        StandardBusinessDocumentHeader_element.BusinessScope;
 
 
                 sender.sender_id = {};
@@ -492,15 +546,15 @@ module.exports = () => ({
                                     throw Error('Missing VocabularyElementList element for element!');
                                 }
                                 VocabularyElementList_element =
-                                    Bussines_location_elements.VocabularyElementList;
+                                        Bussines_location_elements.VocabularyElementList;
 
 
                                 for (const k in VocabularyElementList_element) {
                                     data_object = {};
 
                                     const VocabularyElement_element =
-                                        VocabularyElementList_element[k];
-                                    // console.log(VocabularyElement_element)
+                                            VocabularyElementList_element[k];
+                                        // console.log(VocabularyElement_element)
 
                                     for (const x in VocabularyElement_element) {
                                         const v = VocabularyElement_element[x];
@@ -529,21 +583,22 @@ module.exports = () => ({
                                             if (att_id.length <= 0) {
                                                 throw Error('Missing id attribute for element!');
                                             }
-                                            const str = kk.id;
-                                            attribute_id = str;
+                                            attribute_id = kk.id;
 
                                             const attribute_value = kk._;
 
 
                                             if (attribute_id === 'urn:ts:location:country') {
-                                                var country_validation = countryValidation(attribute_value);
+                                                const country_validation =
+                                                        countryValidation(attribute_value);
                                                 if (!country_validation) {
                                                     throw Error('Invalid country code. Please use two characters!');
                                                 }
                                             }
 
                                             if (attribute_id === 'urn:ts:location:postalCode') {
-                                                var postal_code_validation = postalCodeValidation(attribute_value);
+                                                const postal_code_validation =
+                                                        postalCodeValidation(attribute_value);
                                                 if (!postal_code_validation) {
                                                     throw Error('Invalid postal code!');
                                                 }
@@ -553,12 +608,11 @@ module.exports = () => ({
                                             data_object[attribute_id] = kk._;
                                         }
 
-                                        var children_elements;
                                         const children_check = findValuesHelper(v, 'children', []);
                                         if (children_check.length === 0) {
                                             throw Error('Missing children element for element!');
                                         }
-                                        children_elements = v.children;
+                                        const children_elements = v.children;
 
 
                                         if (findValuesHelper(children_elements, 'id', []).length === 0) {
@@ -618,8 +672,7 @@ module.exports = () => ({
                                                     if (att_id.length <= 0) {
                                                         throw Error('Missing id attribute for element!');
                                                     }
-                                                    const str = kk.id;
-                                                    attribute_id = str;
+                                                    attribute_id = kk.id;
 
 
                                                     attribute_id = attribute_id.replace('urn:ot:location:', '');
@@ -652,28 +705,25 @@ module.exports = () => ({
                                     }
                                 }
                             } else if (v_type === 'urn:ot:mda:participant') {
-                                var Participant_elements;
-                                var exten_element;
-                                var OTVocabularyElement_element;
-                                var participant_id;
-                                var attribute_elements;
+                                let participant_id;
                                 // /////PARTICIPANT///////////
-                                Participant_elements = pro;
+                                const Participant_elements = pro;
 
                                 const extension_check = findValuesHelper(Participant_elements, 'extension', []);
                                 if (extension_check.length === 0) {
                                     throw Error('Missing extension element for Participant element!');
                                 }
-                                exten_element = Participant_elements.extension;
+                                const exten_element = Participant_elements.extension;
 
 
                                 const ot_voc_check = findValuesHelper(exten_element, 'OTVocabularyElement', []);
                                 if (ot_voc_check.length === 0) {
                                     throw Error('Missing OTVocabularyElement for extension element!');
                                 }
-                                OTVocabularyElement_element = exten_element.OTVocabularyElement;
+                                const OTVocabularyElement_element =
+                                    exten_element.OTVocabularyElement;
 
-                                var temp_participant_id;
+                                let temp_participant_id;
                                 const participant_id_check = findValuesHelper(OTVocabularyElement_element, 'id', []);
                                 if (participant_id_check.length === 0) {
                                     throw Error('Missing id for Participant element!');
@@ -681,7 +731,7 @@ module.exports = () => ({
                                     temp_participant_id = OTVocabularyElement_element.id;
                                 }
 
-                                if (!temp_participant_id.includes('urn:ot:mda:participant', 0) == true) {
+                                if (!temp_participant_id.includes('urn:ot:mda:participant', 0) === true) {
                                     throw Error('Invalid Participant ID');
                                 } else {
                                     participant_id = temp_participant_id;
@@ -691,7 +741,7 @@ module.exports = () => ({
                                 if (attribute_check.length === 0) {
                                     throw Error('Missing attribute for Participant element!');
                                 }
-                                attribute_elements = OTVocabularyElement_element.attribute;
+                                const attribute_elements = OTVocabularyElement_element.attribute;
 
                                 // console.log(OTVocabularyElement_element)
 
@@ -700,23 +750,22 @@ module.exports = () => ({
                                 for (const zx in attribute_elements) {
                                     const attribute_el = attribute_elements[zx];
 
-                                    var value;
                                     const value_check = findValuesHelper(attribute_el, '_', []);
                                     if (value_check.length === 0) {
                                         throw Error('Missing value for attribute element!');
                                     }
-                                    value = attribute_el._;
+                                    const value = attribute_el._;
 
 
-                                    var attr_id;
-                                    var temp_attr_id;
+                                    let attr_id;
+                                    let temp_attr_id;
                                     const attr_id_check = findValuesHelper(attribute_el, 'id', []);
                                     if (attr_id_check.length === 0) {
                                         throw Error('Missing id element for attribute element!');
                                     } else {
                                         temp_attr_id = attribute_el.id;
                                     }
-                                    if (!temp_attr_id.includes('urn:ot:mda:participant', 0) == true) {
+                                    if (!temp_attr_id.includes('urn:ot:mda:participant', 0) === true) {
                                         throw Error('Invalid Attribute ID');
                                     } else {
                                         attr_id = temp_attr_id.replace('urn:ot:mda:participant:', '');
@@ -736,48 +785,41 @@ module.exports = () => ({
                                 participants[participant_id].vertex_type = 'PARTICIPANT';
                                 participants[participant_id]._key = md5(`participant_${sender_id}_${participant_id}`);
                             } else if (v_type === 'urn:ot:mda:object') {
-                                var Object_elements;
+                                const Object_elements = pro;
                                 // ////OBJECT////////
-                                Object_elements = pro;
-
-                                var extensio_element;
                                 const extensio_check = findValuesHelper(Object_elements, 'extension', []);
                                 if (extensio_check.length === 0) {
                                     throw Error('Missing extension element for Object element!');
                                 }
-                                extensio_element = Object_elements.extension;
+                                const extensio_element = Object_elements.extension;
 
 
-                                var OTVocabularyEl;
                                 const OTVocabularyEl_check = findValuesHelper(extensio_element, 'OTVocabularyElement', []);
                                 if (OTVocabularyEl_check.length === 0) {
                                     throw Error('Missing OTVocabularyElement element for extension element!');
                                 }
-                                OTVocabularyEl = extensio_element.OTVocabularyElement;
+                                const OTVocabularyEl = extensio_element.OTVocabularyElement;
 
 
-                                var object_id;
                                 const object_id_check = findValuesHelper(OTVocabularyEl, 'id', []);
                                 if (object_id_check.length === 0) {
                                     throw Error('Missing id element for OTVocabularyElement!');
                                 }
-                                object_id = OTVocabularyEl.id;
+                                var object_id = OTVocabularyEl.id;
 
 
-                                var object_attribute_elements;
                                 const attribute_el_check = findValuesHelper(OTVocabularyEl, 'attribute', []);
                                 if (attribute_el_check.length === 0) {
                                     throw Error('Missing attribute element for OTVocabularyElement!');
                                 }
-                                object_attribute_elements = OTVocabularyEl.attribute;
+                                const object_attribute_elements = OTVocabularyEl.attribute;
 
 
                                 for (const rr in object_attribute_elements) {
-                                    var single_attribute;
-                                    single_attribute = object_attribute_elements[rr];
+                                    const single_attribute = object_attribute_elements[rr];
 
-                                    var temp_single_attribute_id;
-                                    var single_attribute_id;
+                                    let temp_single_attribute_id;
+                                    let single_attribute_id;
                                     const single_attribute_id_check = findValuesHelper(single_attribute, 'id', []);
                                     if (single_attribute_id_check.length === 0) {
                                         throw Error('Missing id element for attribute element!');
@@ -785,7 +827,7 @@ module.exports = () => ({
                                         temp_single_attribute_id = single_attribute.id;
                                     }
 
-                                    if (!temp_single_attribute_id.includes('urn:ot:mda:object:', 0) == true) {
+                                    if (!temp_single_attribute_id.includes('urn:ot:mda:object:', 0) === true) {
                                         throw Error('Invalid Attribute ID');
                                     } else {
                                         single_attribute_id = temp_single_attribute_id;
@@ -794,17 +836,17 @@ module.exports = () => ({
 
                                     // console.log(temp_single_attribute_id)
 
-
-                                    var single_attribute_value;
-                                    const single_attribute_value_check = findValuesHelper(single_attribute, '_', []);
+                                    const single_attribute_value_check =
+                                            findValuesHelper(single_attribute, '_', []);
                                     if (single_attribute_value_check.length === 0) {
                                         throw Error('Missing value element for attribute element!');
                                     }
-                                    single_attribute_value = single_attribute._;
+                                    const single_attribute_value = single_attribute._;
 
 
                                     if (single_attribute_id === 'urn:ot:mda:object:ean13') {
-                                        var ean13_validation = ean13Validation(single_attribute_value);
+                                        const ean13_validation =
+                                            ean13Validation(single_attribute_value);
                                         // console.log(ean13_validation)
                                         if (!ean13_validation) {
                                             throw Error('EAN13 code is not valid!');
@@ -826,53 +868,47 @@ module.exports = () => ({
                                     objects[object_id]._key = md5(`object_${sender_id}_${object_id}`);
                                 }
                             } else if (v_type === 'urn:ot:mda:batch') {
-                                var Batch_elements;
+                                const Batch_elements = pro;
                                 // //////BATCH/////////
-                                Batch_elements = pro;
 
-                                var batch_extension;
                                 const batch_extension_check = findValuesHelper(Batch_elements, 'extension', []);
                                 if (batch_extension_check.length === 0) {
                                     throw Error('Missing extension element for Batch element!');
                                 }
-                                batch_extension = Batch_elements.extension;
+                                const batch_extension = Batch_elements.extension;
 
 
-                                var OTVoc_El_elements;
                                 const OTVoc_El_elements_check = findValuesHelper(batch_extension, 'OTVocabularyElement', []);
                                 if (OTVoc_El_elements_check.length === 0) {
                                     throw Error('Missing OTVocabularyElement element for extension element!');
                                 }
-                                OTVoc_El_elements = batch_extension.OTVocabularyElement;
+                                const OTVoc_El_elements = batch_extension.OTVocabularyElement;
 
 
-                                var ot_vocabulary_element;
+                                let ot_vocabulary_element;
                                 for (const g in OTVoc_El_elements) {
-                                    var object_id_instance = false;
-                                    var valid_attribute = false;
+                                    let object_id_instance = false;
+                                    let valid_attribute = false;
                                     ot_vocabulary_element = OTVoc_El_elements[g];
 
-                                    var batch_id;
                                     const batch_id_element_check = findValuesHelper(ot_vocabulary_element, 'id', []);
                                     if (batch_id_element_check.length === 0) {
                                         throw Error('Missing id element for OTVocabularyElement!');
                                     }
-                                    batch_id = ot_vocabulary_element.id;
+                                    const batch_id = ot_vocabulary_element.id;
 
 
-                                    var batch_attribute_el;
                                     const batch_attribute_el_check = findValuesHelper(ot_vocabulary_element, 'attribute', []);
                                     if (batch_attribute_el_check.length === 0) {
                                         throw Error('Missing attribute element for OTVocabularyElement!');
                                     }
-                                    batch_attribute_el = ot_vocabulary_element.attribute;
+                                    const batch_attribute_el = ot_vocabulary_element.attribute;
 
 
-                                    var single;
+                                    let single;
                                     for (const one in batch_attribute_el) {
                                         single = batch_attribute_el[one];
 
-                                        var batch_attribute_id;
                                         var temp_batch_attribute_id;
                                         const batch_attribute_id_check = findValuesHelper(single, 'id', []);
                                         if (batch_attribute_id_check.length === 0) {
@@ -882,7 +918,7 @@ module.exports = () => ({
                                         }
 
 
-                                        if (temp_batch_attribute_id.includes('urn:ot:mda:batch:objectid', 0) && object_id_instance == false) {
+                                        if (temp_batch_attribute_id.includes('urn:ot:mda:batch:objectid', 0) && object_id_instance === false) {
                                             object_id_instance = true;
                                         } else if (temp_batch_attribute_id.includes('urn:ot:mda:batch:', 0)) {
                                             valid_attribute = true;
@@ -890,30 +926,30 @@ module.exports = () => ({
                                             throw Error('Invalid Attribute ID');
                                         }
 
-
-                                        var batch_attribute_value;
                                         const batch_attribute_value_check = findValuesHelper(single, '_', []);
                                         if (batch_attribute_value_check.length === 0) {
                                             throw Error('Missing value element for attribute element!');
                                         }
-                                        batch_attribute_value = single._;
+                                        const batch_attribute_value = single._;
 
                                         if (temp_batch_attribute_id === 'urn:ot:mda:batch:productiondate') {
-                                            var production_date_validation = dateTimeValidation(batch_attribute_value);
+                                            const production_date_validation =
+                                                dateTimeValidation(batch_attribute_value);
                                             if (!production_date_validation) {
                                                 throw Error('Invalid date and time format for production date!');
                                             }
                                         }
 
                                         if (temp_batch_attribute_id === 'urn:ot:mda:batch:expirationdate') {
-                                            var expiration_date_validation = dateTimeValidation(batch_attribute_value);
+                                            const expiration_date_validation =
+                                                dateTimeValidation(batch_attribute_value);
                                             if (!expiration_date_validation) {
                                                 throw Error('Invalid date and time format for expiration date!');
                                             }
                                         }
 
 
-                                        batch_data[batch_attribute_id] = batch_attribute_value;
+                                        batch_data[temp_batch_attribute_id] = batch_attribute_value;
 
                                         const new_obj = {};
                                         const sanitized_batch_data = sanitize(batch_data, new_obj, ['urn:', 'ot:', 'mda:', 'batch:']);
@@ -944,7 +980,7 @@ module.exports = () => ({
                                     if (!object_id_instance) {
                                         throw Error('Missing Object ID');
                                     } else if (valid_attribute) {
-                                        batch_attribute_id = temp_batch_attribute_id;
+                                        // batch_attribute_id = temp_batch_attribute_id;
                                     } else {
                                         throw Error('Invalid Attribute ID');
                                     }
@@ -1072,13 +1108,15 @@ module.exports = () => ({
                                 // extension
                                 if (findValuesHelper(event, 'extension', []).length !== 0) {
                                     const obj_event_extension_element = event.extension;
-                                    const quantityElement_element = obj_event_extension_element.quantityList.quantityElement;
-                                    const extensionElement_extension = obj_event_extension_element.extension;
+                                    const quantityElement_element =
+                                        obj_event_extension_element.quantityList.quantityElement;
+                                    const extensionElement_extension =
+                                        obj_event_extension_element.extension;
 
                                     for (const element in quantityElement_element) {
                                         const single_element = quantityElement_element[element];
 
-                                        const quantity = single_element.quantity;
+                                        const { quantity } = single_element;
 
                                         const quantity_validation = numberValidation(quantity);
                                         if (!quantity_validation) {
@@ -1090,7 +1128,8 @@ module.exports = () => ({
                                     for (const element in extensionElement_extension) {
                                         const temperature = extensionElement_extension[element];
 
-                                        const temperature_validation = numberValidation(temperature);
+                                        const temperature_validation =
+                                            numberValidation(temperature);
                                         if (!temperature_validation) {
                                             throw Error('Invalid format for temperature element!');
                                         }
@@ -1236,7 +1275,7 @@ module.exports = () => ({
 
 
                                 aggregation_events[event_id] =
-                                    utilities.copyObject(aggregation_event);
+                                        utilities.copyObject(aggregation_event);
 
                                 for (const bi in child_epcs) {
                                     child_batches_edges.push({
@@ -1360,7 +1399,7 @@ module.exports = () => ({
                                             };
 
                                             transformation_events[ext_event_id] =
-                                                utilities.copyObject(transformation_event);
+                                                    utilities.copyObject(transformation_event);
 
                                             // bizLocation
                                             let biz_location;
@@ -1370,7 +1409,7 @@ module.exports = () => ({
                                                 [],
                                             ).length !== 0) {
                                                 const biz_location_element =
-                                                    ext_event.bizLocation;
+                                                        ext_event.bizLocation;
 
                                                 if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
                                                     throw Error('Missing id for bizLocation!');
@@ -1427,11 +1466,11 @@ module.exports = () => ({
                         }
                     }
 
-                    var vertices_list = [];
-                    var edges_list = [];
-                    var import_id = Date.now();
+                    const vertices_list = [];
+                    const edges_list = [];
+                    const import_id = Date.now();
 
-                    var temp_participants = [];
+                    const temp_participants = [];
                     for (const i in participants) {
                         temp_participants.push(participants[i]);
                         vertices_list.push(participants[i]);
@@ -1454,7 +1493,7 @@ module.exports = () => ({
                         console.log('Writing participants complete');
                     });
 
-                    var temp_objects = [];
+                    const temp_objects = [];
                     for (const i in objects) {
                         temp_objects.push(objects[i]);
                         vertices_list.push(objects[i]);
@@ -1470,7 +1509,7 @@ module.exports = () => ({
                         console.log('Writing objects complete');
                     });
 
-                    var temp_locations = [];
+                    const temp_locations = [];
                     for (const i in locations) {
                         temp_locations.push(locations[i]);
                         vertices_list.push(locations[i]);
@@ -1486,7 +1525,7 @@ module.exports = () => ({
                         console.log('Writing business locations complete');
                     });
 
-                    var temp_batches = [];
+                    const temp_batches = [];
                     for (const i in batches) {
                         temp_batches.push(batches[i]);
                         vertices_list.push(batches[i]);
@@ -1503,7 +1542,7 @@ module.exports = () => ({
                     });
 
 
-                    var temp_object_events = [];
+                    const temp_object_events = [];
                     for (const i in object_events) {
                         temp_object_events.push(object_events[i]);
                         vertices_list.push(object_events[i]);
@@ -1519,7 +1558,7 @@ module.exports = () => ({
                         console.log('Writing object events complete');
                     });
 
-                    var temp_aggregation_events = [];
+                    const temp_aggregation_events = [];
                     for (const i in aggregation_events) {
                         temp_aggregation_events.push(aggregation_events[i]);
                         vertices_list.push(aggregation_events[i]);
@@ -1535,7 +1574,7 @@ module.exports = () => ({
                         console.log('Writing aggregation events complete');
                     });
 
-                    var temp_transformation_events = [];
+                    const temp_transformation_events = [];
                     for (const i in transformation_events) {
                         temp_transformation_events.push(transformation_events[i]);
                         vertices_list.push(transformation_events[i]);

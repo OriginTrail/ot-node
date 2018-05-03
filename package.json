@@ -73,6 +73,7 @@
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.0",
     "utf8-length": "latest",
+    "validator": "^9.4.1",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
     "xml2js": "^0.4.19"
