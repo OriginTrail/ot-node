@@ -97,7 +97,7 @@ class Neo4jDB {
                     const objectProps = Neo4jDB._getNestedObjects(value);
                     const vertexPromises = [];
 
-                    Promise.all(objectProps.map(objectProp => new Promise((resolve) => {
+                    const handleObjectProp = objectProp => new Promise((resolve) => {
                         const { edge, subvalue } = objectProp;
                         vertexPromises.push(this._createVertex(subvalue, true)
                             .then((subnodeId) => {
@@ -110,7 +110,9 @@ class Neo4jDB {
                             }).catch((err) => {
                                 reject(err);
                             }));
-                    }))).then(() => {
+                    });
+
+                    Promise.all(objectProps.map(handleObjectProp)).then(() => {
                         if (!keepSession) {
                             session.close();
                         }
