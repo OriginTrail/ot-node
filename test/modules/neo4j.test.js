@@ -65,15 +65,21 @@ describe('Neo4j module ', async () => {
             throw new Error(`Failed to create a vertice. ${err}`);
         }));
     });
+    it('find traversal', () => {
+        const createOne = testDb.addDocument('ot_vertices', vertexOne);
+        const createTwo = testDb.addDocument('ot_vertices', vertexTwo);
+        const createEdge = testDb.addDocument('ot_edges', edgeOne);
+
+        deasync(Promise.all([createOne, createTwo, createEdge]).then((res) => {
+            deasync(testDb.findTraversalPath(vertexOne, 2).then((path) => {
+                // compare
+            }));
+        }));
+    });
 
     it('.createEdge(edge) should create Edge', () => {
 
     });
-
-    // it('_transformProperty() should transform Neo4j property to Javascript compatible one'), () => {
-    //
-    // };
-
 
     after('drop testDb db', async () => {
         await testDb.clear();
