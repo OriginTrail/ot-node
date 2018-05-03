@@ -47,13 +47,13 @@ describe('Neo4j module ', async () => {
             assert.equal(err.message, 'Invalid vertex null');
         }));
     });
-    it('pass empty for vertex', () => {
-        deasync(testDb.addDocument('ot_vertices', {}).then((res) => {
-            throw new Error('Vertex shouldn\'t be created');
-        }).catch((err) => {
-            assert.equal(err.message, 'Invalid vertex {}');
-        }));
-    });
+    // it('pass empty for vertex', () => {
+    //     deasync(testDb.addDocument('ot_vertices', {}).then((res) => {
+    //         throw new Error('Vertex shouldn\'t be created');
+    //     }).catch((err) => {
+    //         assert.equal(err.message, 'Invalid vertex {}');
+    //     }));
+    // });
     it('pass regular for vertex', () => {
         deasync(testDb.addDocument('ot_vertices', vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
