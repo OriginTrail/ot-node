@@ -74,24 +74,24 @@ class Neo4jDB {
 
     /**
      * Create vertex
-     * @param value Vertex document
+     * @param value         Vertex document
+     * @param keepSession   Keep session alive or not (recursion sake)
      * @returns {Promise}
      * @private
      */
-    _createVertex(value) {
+    _createVertex(value, keepSession) {
         return new Promise((resolve, reject) => {
             if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
                 reject(new Error(`Invalid vertex ${JSON.stringify(value)}`));
                 return;
             }
             if (typeof value === 'object') {
-                let session = this.driver.session();
+                const session = this.driver.session();
                 let nonObjectProps = Neo4jDB._getPropertiesString(value);
                 if (nonObjectProps.length > 0) {
                     nonObjectProps = `{${nonObjectProps}}`;
                 }
                 session.run(`CREATE (a ${nonObjectProps}) RETURN a`).then((r) => {
-                    session.close();
                     const nodeId = r.records[0]._fields[0].identity.toString();
 
                     const objectProps = Neo4jDB._getNestedObjects(value);
@@ -99,25 +99,27 @@ class Neo4jDB {
 
                     Promise.all(objectProps.map(objectProp => new Promise((resolve) => {
                         const { edge, subvalue } = objectProp;
-                        vertexPromises.push(this._createVertex(subvalue)
+                        vertexPromises.push(this._createVertex(subvalue, true)
                             .then((subnodeId) => {
-                                session = this.driver.session();
                                 session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`)
                                     .then((r) => {
-                                        session.close();
                                         resolve(nodeId);
                                     }).catch((err) => {
-                                        session.close();
                                         reject(err);
                                     });
                             }).catch((err) => {
                                 reject(err);
                             }));
                     }))).then(() => {
+                        if (!keepSession) {
+                            session.close();
+                        }
                         resolve(nodeId);
                     });
                 }).catch((err) => {
-                    session.close();
+                    if (!keepSession) {
+                        session.close();
+                    }
                     reject(err);
                 });
             }
