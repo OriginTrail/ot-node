@@ -75,7 +75,7 @@ class ArangoJS {
                 resolve([]);
                 return;
             }
-            if (!depth) {
+            if (depth == null) {
                 depth = that.getDatabaseInfo().max_path_length;
             }
             const queryString = `FOR vertice, edge, path IN 1 .. ${depth}

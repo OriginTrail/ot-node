@@ -344,7 +344,7 @@ class Neo4jDB {
         return new Promise((resolve, reject) => {
             const key = '_key';
             const value = startVertex._key;
-            if (!depth) {
+            if (depth == null) {
                 depth = that.getDatabaseInfo().max_path_length;
             }
 
