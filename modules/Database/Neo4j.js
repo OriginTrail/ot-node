@@ -486,23 +486,26 @@ class Neo4jDB {
         return 'Neo4j';
     }
 
+    /**
+     * This method is not applicable in Neo4jDB
+     * @deprecated
+     */
     createCollection(collectionName) {
         return new Promise((resolve, reject) => {
             resolve();
         });
     }
 
+    /**
+     * This method is not applicable in Neo4jDB
+     * @deprecated
+     */
     createEdgeCollection(collectionName) {
         return new Promise((resolve, reject) => {
             resolve();
         });
     }
 
-    getDocument(collectionName, documentKey) {
-        return new Promise((resolve, reject) => {
-            resolve();
-        });
-    }
 }
 
 module.exports = Neo4jDB;
