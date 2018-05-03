@@ -71,7 +71,7 @@ class Neo4jDB {
      * @param value Vertex document
      * @returns {Promise}
      */
-    createVertex(value) {
+    _createVertex(value) {
         return new Promise((resolve, reject) => {
             if (typeof value === 'object') {
                 const nonObjectProps = `{${Neo4jDB._getPropertiesString(value)}}`;
@@ -83,7 +83,7 @@ class Neo4jDB {
 
                     Promise.all(objectProps.map(objectProp => new Promise((resolve) => {
                         const { edge, subvalue } = objectProp;
-                        vertexPromises.push(this.createVertex(subvalue).then((subnodeId) => {
+                        vertexPromises.push(this._createVertex(subvalue).then((subnodeId) => {
                             this.session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`).then((r) => {
                                 resolve(nodeId);
                             }).catch((err) => {
@@ -107,7 +107,7 @@ class Neo4jDB {
      * @param edge  Edge document
      * @returns {Promise}
      */
-    createEdge(edge) {
+    _createEdge(edge) {
         return new Promise((resolve, reject) => {
             const edgeType = edge.edge_type;
             const to = edge._to.slice(edge._to.indexOf('/') + 1);
@@ -198,8 +198,9 @@ class Neo4jDB {
      * @param key           Vertex property key
      * @param value         Vertex property value
      * @returns {Promise}
+     * @private
      */
-    fetchVertex(key, value) {
+    _fetchVertex(key, value) {
         return new Promise((resolve, reject) => {
             this.session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *1..]->(k) RETURN n,r,k`)
                 .then(this._transformProperties)
@@ -296,7 +297,7 @@ class Neo4jDB {
             this.session.run(query).then(this._transformProperties).then((result) => {
                 const nodePromises = [];
                 for (const record of result.records) {
-                    nodePromises.push(that.fetchVertex('_key', record._fields[0].properties._key));
+                    nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
                     resolve(nodes);
@@ -335,7 +336,7 @@ class Neo4jDB {
 
                         let first = Promise.resolve();
                         if (!vertices[leftNode.properties._key]) {
-                            first = this.fetchVertex('_key', leftNode.properties._key).then((r) => {
+                            first = this._fetchVertex('_key', leftNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
@@ -345,7 +346,7 @@ class Neo4jDB {
 
                         let second = Promise.resolve();
                         if (!vertices[rightNode.properties._key]) {
-                            second = this.fetchVertex('_key', rightNode.properties._key).then((r) => {
+                            second = this._fetchVertex('_key', rightNode.properties._key).then((r) => {
                                 r.key = r._key;
                                 delete r._key;
                                 vertices[r.key] = r;
@@ -387,7 +388,7 @@ class Neo4jDB {
      * @return {Promise}
      */
     addEdge(collection_name, edge) {
-        return this.createEdge(edge);
+        return this._createEdge(edge);
     }
 
     /**
@@ -397,7 +398,7 @@ class Neo4jDB {
      * @return {Promise}
      */
     addVertex(collection_name, vertex) {
-        return this.createVertex(vertex);
+        return this._createVertex(vertex);
     }
 
     /**
@@ -431,7 +432,7 @@ class Neo4jDB {
             this.session.run(`match(n) where ${importId} in n.imports return n`).then((result) => {
                 const nodePromises = [];
                 for (const record of result.records) {
-                    nodePromises.push(that.fetchVertex('_key', record._fields[0].properties._key));
+                    nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
                     resolve(nodes);
@@ -455,9 +456,9 @@ class Neo4jDB {
         return new Promise((resolve, reject) => {
             let promise = null;
             if (collectionName === 'ot_vertices') {
-                promise = that.createVertex(document);
+                promise = that._createVertex(document);
             } else {
-                promise = that.createEdge(document);
+                promise = that._createEdge(document);
             }
             promise.then((res) => {
                 resolve(res);

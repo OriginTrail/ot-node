@@ -140,14 +140,6 @@ class GraphStorage {
         return this.selectedDatabase;
     }
 
-    addEdge(collection_name, edge) {
-        return this.addDocument(collection_name, edge);
-    }
-
-    addVertex(collection_name, vertex) {
-        return this.addDocument(collection_name, vertex);
-    }
-
     /**
      * Updates document with the import ID
      * @param collectionName

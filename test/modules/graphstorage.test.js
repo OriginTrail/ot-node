@@ -74,7 +74,7 @@ describe('GraphStorage module', () => {
 
     it('attempt to save vertex in non existing Document Collection should fail', async () => {
         try {
-            await myGraphStorage.addVertex(documentCollectionName, vertexOne);
+            await myGraphStorage.addDocument(documentCollectionName, vertexOne);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
         }
@@ -82,7 +82,7 @@ describe('GraphStorage module', () => {
 
     it('attempt to save edge in non existing Edge Collection should fail', async () => {
         try {
-            await myGraphStorage.addEdge(edgeCollectionName, edgeOne);
+            await myGraphStorage.addDocument(edgeCollectionName, edgeOne);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
         }
@@ -148,7 +148,7 @@ describe('GraphStorage module', () => {
     });
 
     it('.addVertex() should save vertex in Document Collection', () => {
-        myGraphStorage.addVertex(documentCollectionName, vertexOne).then((response) => {
+        myGraphStorage.addDocument(documentCollectionName, vertexOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
@@ -164,7 +164,7 @@ describe('GraphStorage module', () => {
     });
 
     it('.addEdge() should save edge in Edge Document Collection', () => {
-        myGraphStorage.addEdge(edgeCollectionName, edgeOne).then((response) => {
+        myGraphStorage.addDocument(edgeCollectionName, edgeOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
