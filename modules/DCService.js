@@ -6,8 +6,6 @@ const Blockchain = require('./BlockChainInstance');
 const bytes = require('utf8-length');
 const BN = require('bn.js');
 const deasync = require('deasync-promise');
-
-
 const Utilities = require('./Utilities');
 const Models = require('../models');
 
@@ -33,9 +31,8 @@ class DCService {
             console.log('Error: ', e);
         });
 
-        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-
         let price;
+        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const availableFunds = deasync(Utilities.getAlphaTracTokenBalance());
         const potentialPrice = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
 
