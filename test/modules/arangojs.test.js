@@ -269,15 +269,11 @@ describe('Arangojs module ', async () => {
             _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
         };
 
-        try {
-            testDb.updateDocument(
-                edgeCollectionName,
-                // eslint-disable-next-line no-underscore-dangle
-                updatetedEdgeOne,
-            );
-        } catch (error) {
-            console.log(error);
-        }
+        await testDb.updateDocument(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            updatetedEdgeOne,
+        );
 
         // check value of new imports
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
