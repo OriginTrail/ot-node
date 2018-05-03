@@ -5,6 +5,8 @@ const Graph = require('./Graph');
 const Blockchain = require('./BlockChainInstance');
 const bytes = require('utf8-length');
 const BN = require('bn.js');
+const deasync = require('deasync-promise');
+
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -19,6 +21,7 @@ const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = new BN('100');
 const maxTokenAmount = new BN('10000000');
+
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -32,19 +35,17 @@ class DCService {
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
-        const potentialPrice = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
         let price;
-        this._checkDCTokenBalance().then((availableFunds) => {
-            if (potentialPrice > availableFunds) {
-                // all-in for offer price
-                price = availableFunds;
-            } else {
-                // there are sufficient funds, go forward with initial offer price
-                price = potentialPrice;
-            }
-        }).catch((err) => {
-            log.warn(`Failed to determine offer price. ${JSON.stringify(err)}`);
-        });
+        const availableFunds = deasync(Utilities.getAlphaTracTokenBalance());
+        const potentialPrice = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+
+        if (Number(potentialPrice) > Number(availableFunds)) {
+            // not enought funds in wallet, give all-in for a price
+            price = availableFunds;
+        } else {
+            // sufficient funds, go further
+            price = potentialPrice;
+        }
 
         Models.offers.create({
             id: dataId,
@@ -110,11 +111,6 @@ class DCService {
         const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
         Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
         return bytes(JSON.stringify(vertices));
-    }
-
-    static async _checkDCTokenBalance() {
-        const dc_token_balance = await Utilities.getAlphaTracTokenBalance();
-        return dc_token_balance;
     }
 
     /**
