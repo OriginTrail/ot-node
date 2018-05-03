@@ -1,6 +1,9 @@
 const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 
+/**
+ * Neo4j storage adapter
+ */
 class Neo4jDB {
     /**
      * Neo4jDB constructor
@@ -215,7 +218,7 @@ class Neo4jDB {
     _fetchVertex(key, value) {
         return new Promise((resolve, reject) => {
             const session = this.driver.session();
-            session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *1..]->(k) RETURN n,r,k`)
+            session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *0..]->(k) RETURN n,r,k`)
                 .then(this._transformProperties)
                 .then((result) => {
                     session.close();
@@ -231,11 +234,13 @@ class Neo4jDB {
                             nestedKeys.push(relation.properties.value);
                         }
 
-                        let tempJson = json;
-                        for (let i = 0; i < nestedKeys.length - 1; i += 1) {
-                            tempJson = tempJson[nestedKeys[i]];
+                        if (relations.length > 0) {
+                            let tempJson = json;
+                            for (let i = 0; i < nestedKeys.length - 1; i += 1) {
+                                tempJson = tempJson[nestedKeys[i]];
+                            }
+                            tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
                         }
-                        tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
                     }
                     resolve(json);
                 }).catch((err) => {
