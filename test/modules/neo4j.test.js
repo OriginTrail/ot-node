@@ -9,7 +9,7 @@ const stringify = require('json-stable-stringify');
 const deasync = require('deasync-promise');
 
 const myUsername = 'neo4j';
-const myPassword = 'pass';
+const myPassword = 'neo4j';
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';
