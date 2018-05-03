@@ -79,14 +79,18 @@ class Neo4jDB {
      * @returns {Promise}
      * @private
      */
-    _createVertex(value, keepSession) {
+    _createVertex(value, session) {
         return new Promise((resolve, reject) => {
+            let sessionCreated = false;
             if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
                 reject(new Error(`Invalid vertex ${JSON.stringify(value)}`));
                 return;
             }
             if (typeof value === 'object') {
-                const session = this.driver.session();
+                if (!session) {
+                    session = this.driver.session();
+                    sessionCreated = true;
+                }
                 let nonObjectProps = Neo4jDB._getPropertiesString(value);
                 if (nonObjectProps.length > 0) {
                     nonObjectProps = `{${nonObjectProps}}`;
@@ -99,7 +103,7 @@ class Neo4jDB {
 
                     const handleObjectProp = objectProp => new Promise((resolve) => {
                         const { edge, subvalue } = objectProp;
-                        vertexPromises.push(this._createVertex(subvalue, true)
+                        vertexPromises.push(this._createVertex(subvalue, session)
                             .then((subnodeId) => {
                                 session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`)
                                     .then((r) => {
@@ -113,13 +117,13 @@ class Neo4jDB {
                     });
 
                     Promise.all(objectProps.map(handleObjectProp)).then(() => {
-                        if (!keepSession) {
+                        if (sessionCreated) {
                             session.close();
                         }
                         resolve(nodeId);
                     });
                 }).catch((err) => {
-                    if (!keepSession) {
+                    if (sessionCreated) {
                         session.close();
                     }
                     reject(err);
