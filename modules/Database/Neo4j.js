@@ -1,6 +1,8 @@
 const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 
+const log = Utilities.getLogger();
+
 /**
  * Neo4j storage adapter
  */
@@ -444,7 +446,7 @@ class Neo4jDB {
         const that = this;
         return new Promise((resolve, reject) => {
             const session = this.driver.session();
-            session.run(`match(n) where ${importId} in n.imports return n`).then((result) => {
+            session.run(`match (n) where ${importId} in n.imports return n`).then((result) => {
                 session.close();
                 const nodePromises = [];
                 for (const record of result.records) {
@@ -491,6 +493,29 @@ class Neo4jDB {
      */
     identify() {
         return 'Neo4j';
+    }
+
+    /**
+     * Shut down the driver
+     */
+    close() {
+        this.driver.close();
+    }
+
+    /**
+     * Clear the db
+     * @return {Promise}
+     */
+    clear() {
+        return new Promise((resolve, reject) => {
+            const session = this.driver.session();
+            session.run('match (n) detach delete n').then((result) => {
+                log.debug('Cleared the database.');
+                resolve();
+            }).catch((err) => {
+                reject(err);
+            });
+        });
     }
 
     /**

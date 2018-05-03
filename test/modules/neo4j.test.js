@@ -6,7 +6,7 @@ const { assert, expect } = require('chai');
 const Neo4j = require('../../modules/Database/Neo4j.js');
 const databaseData = require('./test_data/database-data.js');
 const stringify = require('json-stable-stringify');
-
+const deasync = require('deasync-promise');
 
 const myUsername = 'neo4j';
 const myPassword = 'pass';
@@ -41,27 +41,29 @@ describe('Neo4j module ', async () => {
     });
 
     it('create and retrieve vertices', () => {
-        testDb.addDocument('ot_vertices', vertexOne).then(() => {
+        deasync(testDb.addDocument('ot_vertices', vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
-                assert.equal(stringify(vertexOne), stringify(result));
+                assert.deepEqual(vertexOne, result[0]);
             }).catch((err) => {
-                console.log(err);
+                throw new Error(`Failed to find vertice. ${err}`);
             });
         }).catch((err) => {
-            console.log(err);
-        });
+            throw new Error(`Failed to create a vertice. ${err}`);
+        }));
     });
 
     it('.createEdge(edge) should create Edge', () => {
 
     });
 
-    it('_transformProperty() should transform Neo4j property to Javascript compatible one'), () => {
-
-    };
+    // it('_transformProperty() should transform Neo4j property to Javascript compatible one'), () => {
+    //
+    // };
 
 
     after('drop testDb db', async () => {
+        await testDb.clear();
+        testDb.close();
         /* systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
         await systemDb.dropDatabase(myDatabaseName); */
