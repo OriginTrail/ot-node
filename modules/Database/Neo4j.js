@@ -75,22 +75,17 @@ class Neo4jDB {
     /**
      * Create vertex
      * @param value         Vertex document
-     * @param keepSession   Keep session alive or not (recursion sake)
      * @returns {Promise}
      * @private
      */
-    _createVertex(value, session) {
+    _createVertex(value) {
         return new Promise((resolve, reject) => {
-            let sessionCreated = false;
+            const session = this.driver.session();
             if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
                 reject(new Error(`Invalid vertex ${JSON.stringify(value)}`));
                 return;
             }
             if (typeof value === 'object') {
-                if (!session) {
-                    session = this.driver.session();
-                    sessionCreated = true;
-                }
                 let nonObjectProps = Neo4jDB._getPropertiesString(value);
                 if (nonObjectProps.length > 0) {
                     nonObjectProps = `{${nonObjectProps}}`;
@@ -103,7 +98,7 @@ class Neo4jDB {
 
                     const handleObjectProp = objectProp => new Promise((resolve) => {
                         const { edge, subvalue } = objectProp;
-                        vertexPromises.push(this._createVertex(subvalue, session)
+                        vertexPromises.push(this._createVertex(subvalue)
                             .then((subnodeId) => {
                                 session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`)
                                     .then(() => {
@@ -117,15 +112,13 @@ class Neo4jDB {
                     });
 
                     Promise.all(objectProps.map(handleObjectProp)).then(() => {
-                        if (sessionCreated) {
-                            session.close();
-                        }
+                        session.close();
                         resolve(nodeId);
+                    }).catch((err) => {
+                        reject(err);
                     });
                 }).catch((err) => {
-                    if (sessionCreated) {
-                        session.close();
-                    }
+                    session.close();
                     reject(err);
                 });
             }
@@ -231,20 +224,17 @@ class Neo4jDB {
      * Gets all CONTAINS edges and forms one vertex
      * @param key           Vertex property key
      * @param value         Vertex property value
-     * @param session       Pass session if it's already opened
      * @returns {Promise}
      * @private
      */
-    _fetchVertex(key, value, session) {
+    _fetchVertex(key, value) {
         return new Promise((resolve, reject) => {
-            let sessionCreated = false;
-            if (!session) {
-                sessionCreated = true;
-                session = this.driver.session();
-            }
+            const session = this.driver.session();
             session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *0..]->(k) RETURN n,r,k`)
                 .then(this._transformProperties)
                 .then((result) => {
+                    session.close();
+
                     const json = {};
                     for (const r of result.records) {
                         const leftNode = r.get('n');
@@ -265,14 +255,9 @@ class Neo4jDB {
                             tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
                         }
                     }
-                    if (sessionCreated) {
-                        session.close();
-                    }
                     resolve(json);
                 }).catch((err) => {
-                    if (sessionCreated) {
-                        session.close();
-                    }
+                    session.close();
                     reject(err);
                 });
         });
@@ -344,15 +329,14 @@ class Neo4jDB {
             query += ' return n';
             const session = this.driver.session();
             session.run(query).then(this._transformProperties).then((result) => {
+                session.close();
                 const nodePromises = [];
                 for (const record of result.records) {
                     nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key));
                 }
                 Promise.all(nodePromises).then((nodes) => {
-                    session.close();
                     resolve(nodes);
                 }).catch((err) => {
-                    session.close();
                     reject(err);
                 });
             }).catch((err) => {
@@ -381,6 +365,7 @@ class Neo4jDB {
             session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k,length(r) as s ORDER BY s`)
                 .then(this._transformProperties)
                 .then((result) => {
+                    session.close();
                     const vertices = {};
 
                     Promise.all(result.records.map(r => new Promise((resolve) => {
@@ -420,7 +405,6 @@ class Neo4jDB {
                             delete relation.start;
                             delete relation.end;
                             toInsertNode.edges.push(relation);
-                            session.close();
                             resolve();
                         });
                     }))).then(() => {
@@ -473,12 +457,13 @@ class Neo4jDB {
         return new Promise((resolve, reject) => {
             const session = this.driver.session();
             session.run(`match (n) where ${importId} in n.imports return n`).then((result) => {
+                session.close();
+
                 const nodePromises = [];
                 for (const record of result.records) {
                     nodePromises.push(that._fetchVertex('_key', record._fields[0].properties._key, session));
                 }
                 Promise.all(nodePromises).then((nodes) => {
-                    session.close();
                     resolve(nodes);
                 }).catch((err) => {
                     reject(err);
