@@ -8,8 +8,10 @@ const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
 const randomString = require('randomstring');
-// eslint-disable-next-line  prefer-destructuring
-const Database = require('arangojs').Database;
+const Web3 = require('web3');
+const request = require('superagent');
+const { Database } = require('arangojs');
+
 require('dotenv').config();
 
 
@@ -69,6 +71,33 @@ class Utilities {
                 .catch((err) => {
                     reject(err);
                 });
+        });
+    }
+
+    /**
+     * Check if all dependencies from package.json are installed
+     * @returns {Promise<any>} containing error array:
+     *   error: []            // when everything is OK, error array is empty
+     *   error: array,        // if not OK, array of logged errors is returned
+     */
+    static checkInstalledDependencies() {
+        return new Promise((resolve, reject) => {
+            // eslint-disable-next-line global-require
+            require('check-dependencies')({
+                packageManager: 'npm',
+                // eslint-disable-next-line no-template-curly-in-string
+                packageDir: '${__dirname}/../',
+                install: false,
+                scopeList: ['dependencies', 'devDependencies'],
+                verbose: false,
+            }).then((output) => {
+                if (!output.depsWereOk) {
+                    reject(output.error);
+                }
+                resolve(output.error);
+            }).catch((error) => {
+                reject(error);
+            });
         });
     }
 
@@ -306,6 +335,53 @@ class Utilities {
     }
 
     /**
+     * Get NODE_WALLETs balance in Ether
+     * @return {Promise<any>}
+     */
+    static getBalanceInEthers() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.getBalance(config.wallet_address).then((result) => {
+                    const balance = web3.utils.fromWei(result, 'ether');
+                    resolve(balance);
+                }).catch((error) => {
+                    reject(error);
+                });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Get NODE_WALLETs ATRAC token balance in Ether
+     * @return {Promise<any>}
+     */
+    static getAlphaTracTokenBalance() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                const wallet_address_minus0x = (config.wallet_address).substring(2);
+                // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
+                var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
+                web3.eth.call({
+                    to: config.token_contract_address,
+                    data: contractData,
+                }).then((result) => {
+                    const tokensInWei = web3.utils.toBN(result).toString();
+                    const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
+                    resolve(tokensInEther);
+                }).catch((error) => {
+                    reject(error);
+                });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * Makes a copy of object
      *
      * @param object Obj
@@ -382,6 +458,80 @@ class Utilities {
         } catch (error) {
             log.warn('Failed to create folder named data');
         }
+    }
+
+    /**
+     * Check on which network blockchain is running on
+     * @returns {Promise<any>}
+     */
+    static getNodeNetworkType() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.net.getNetworkType()
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api methods endpoint
+     * @returns {Promise<any>}
+     */
+    static getInfuraRinkebyApiMethods() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/methods')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api eth_blockNumber method endpoint
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberInfuraRinkebyApiMethod() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/eth_blockNumber')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Gets block number from web3
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberFromWeb3() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.getBlockNumber()
+                    .then((result) => {
+                        resolve(web3.utils.numberToHex(result));
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
     }
 }
 
