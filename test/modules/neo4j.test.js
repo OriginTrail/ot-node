@@ -1,5 +1,5 @@
 const {
-    describe, before, after, it, afterEach
+    describe, before, after, it, afterEach,
 } = require('mocha');
 const { assert, expect } = require('chai');
 
@@ -34,16 +34,12 @@ describe('Neo4j module ', async () => {
 
     });
     it('pass null for vertex', async () => {
-        await testDb.addDocument('ot_vertices', null).then((res) => {
-            console.log('should not happen'); // TODO handle
-        }).catch((err) => {
+        await testDb.addDocument('ot_vertices', null).catch((err) => {
             assert.equal(err.message, 'Invalid vertex null');
         });
     });
     it('pass empty for vertex', async () => {
-        await testDb.addDocument('ot_vertices', {}).then((res) => {
-            console.log('should not happen'); // TODO handle
-        }).catch((err) => {
+        await testDb.addDocument('ot_vertices', {}).catch((err) => {
             assert.equal(err.message, 'Invalid vertex {}');
         });
     });
@@ -51,16 +47,10 @@ describe('Neo4j module ', async () => {
         await testDb.addDocument('ot_vertices', vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
                 assert.deepEqual(vertexOne, result[0]);
-            }).catch((err) => {
-                console.log('should not happen'); // TODO handle
             });
-        }).catch((err) => {
-            console.log('should not happen'); // TODO handle
         });
     });
     it('.findTraversalPath() with regular vertices', async () => {
-        await testDb.clear();
-
         await testDb.addDocument('ot_vertices', vertexOne);
         await testDb.addDocument('ot_vertices', vertexTwo);
         await testDb.addDocument('ot_edges', edgeOne);
@@ -109,7 +99,7 @@ describe('Neo4j module ', async () => {
         await testDb.addDocument('ot_edges', edges[0]);
         await testDb.addDocument('ot_edges', edges[1]);
 
-        const path = await testDb.findTraversalPath({_key: '0'}, 3);
+        const path = await testDb.findTraversalPath({ _key: '0' }, 3);
         console.log(JSON.stringify(path));
         assert.equal(path.length, 3);
     });
@@ -117,9 +107,9 @@ describe('Neo4j module ', async () => {
     it('.createEdge(edge) should create Edge', () => {
     });
 
-/*    afterEach('clear testDb after each test', async () => {
+    /*    afterEach('clear testDb after each test', async () => {
         await testDb.clear();
-    });*/
+    }); */
 
     afterEach('drop testDb db', async () => {
         await testDb.clear();
