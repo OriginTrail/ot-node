@@ -366,6 +366,7 @@ async function parseGS1(gs1XmlFile, callback) {
             const actorsVertices = [];
             const productVertices = [];
             const batchesVertices = [];
+            const eventVertices = [];
 
             const sender = {
                 sender_id: {
@@ -393,8 +394,6 @@ async function parseGS1(gs1XmlFile, callback) {
             const vocabularyElements = arrayze(vocabularyListElement.Vocabulary);
 
             for (const vocabularyElement of vocabularyElements) {
-                console.log(vocabularyElement);
-
                 switch (vocabularyElement.type) {
                 case 'urn:ot:mda:actor':
                     actors = actors.concat(parseActors(vocabularyElement.VocabularyElementList));
@@ -454,6 +453,10 @@ async function parseGS1(gs1XmlFile, callback) {
             const objectClassActorId = 'dafdsafas';
             const objectClassProductId = 'dafdsafas';
             const objectClassBatchId = 'dafdsafas';
+            const objectEventTransportId = 'dafdsafas';
+            const objectEventTransformationId = 'dafdsafas';
+            const objectEventObservationId = 'dafdsafas';
+            const objectEventOwnershipId = 'dafdsafas';
 
 
             // _from: location key _to: ObjectClass_location
@@ -517,9 +520,44 @@ async function parseGS1(gs1XmlFile, callback) {
 
             // Store vertices in db. Update versions
 
+
+            function getClassId(event) {
+                // TODO: Support all other types.
+                if (event.action && event.action === 'OBSERVE') {
+                    return objectEventObservationId;
+                } else  {
+                    return objectEventTransformationId;
+                }
+            }
+
             for (const event of events) {
                 // Do stuff for events. Create edges.
+                const data = {
+                    object_class_id: getClassId(event),
+                    data: event,
+                    vertex_type: 'EVENT',
+                };
+
+                eventVertices.push({
+                    _key: md5(`event_${sender.sender_id}_${data}`),
+                    _id: event.eventTime,
+                    data,
+                });
             }
+
+            await db.createCollection('ot_vertices');
+            await db.createEdgeCollection('ot_edges');
+
+            const allVertices =
+                locationVertices
+                    .concat(actorsVertices)
+                    .concat(productVertices)
+                    .concat(batchesVertices)
+                    .concat(eventVertices);
+
+            await Promise.all(allVertices.map(vertex => db.addDocument('ot_vertices', vertex)));
+
+            console.log('Done parsing and importing.');
         },
     );
 }
