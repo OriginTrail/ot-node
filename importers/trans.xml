@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Sample XML file for GS1 OriginTrail importer with Header with master data and ObjectEvent-->
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis-masterdata:xsd:1 EPCglobal-epcis-masterdata-1_2.xsd">
+	<EPCISHeader>
+		<sbdh:StandardBusinessDocumentHeader>
+			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+			<sbdh:Sender><!-- Mandatory -->
+				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
+				<sbdh:Identifier Authority="OriginTrail">CARENGINES_PROVIDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:ContactInformation> <!-- Mandatory-->
+					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
+					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				
+				</sbdh:ContactInformation>
+			</sbdh:Sender>
+			<sbdh:Receiver> <!-- Mandatory -->
+				<sbdh:Identifier Authority="OriginTrail">AIRTRANSPORT_PROVIDER_ID</sbdh:Identifier>  <!-- Mandatory-->
+				<sbdh:ContactInformation> <!-- Mandatory-->
+					<sbdh:Contact>John Doe</sbdh:Contact> <!-- Mandatory -->
+					<sbdh:EmailAddress>John_Doe@airtransport.com</sbdh:EmailAddress> <!-- Optional -->
+				</sbdh:ContactInformation>
+			</sbdh:Receiver>
+			<sbdh:DocumentIdentification> <!-- Mandatory-->
+				<sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
+				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
+				<sbdh:InstanceIdentifier>100003</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
+				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
+				<sbdh:CreationDateAndTime>2003-07-09T00:31:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+			</sbdh:DocumentIdentification>
+			<sbdh:BusinessScope> <!-- Optional -->
+				<sbdh:Scope>
+					<sbdh:Type>BusinessProcess</sbdh:Type>
+					<sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+					<sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+				</sbdh:Scope>
+			</sbdh:BusinessScope>			
+		</sbdh:StandardBusinessDocumentHeader>
+		<extension>
+			<EPCISMasterData>
+				<VocabularyList>
+					<Vocabulary type="urn:ot:mda:actor">				
+						<VocabularyElementList>
+							<VocabularyElement id="urn:ot:actor:id:AirplaneAB123">																
+								<attribute id="urn:ot:actor:person:id:name">Boing AB-123</attribute>				
+								<attribute id="urn:ot:actor:category">Machine</attribute>				
+						    </VocabularyElement>													
+						</VocabularyElementList>				
+					</Vocabulary>				
+					<Vocabulary type="urn:ot:mda:product">	
+						<VocabularyElementList>
+							<VocabularyElement id="urn:ot:mda:product:id:#1A">
+								<attribute id="urn:ot:mda:product:category">Transport Pallet</attribute>								
+								<attribute id="urn:ot:mda:product:description">Pallet</attribute>								
+							</VocabularyElement>						
+						</VocabularyElementList>
+					</Vocabulary>	
+					<Vocabulary type="urn:ot:mda:location">
+						<VocabularyElementList>
+							<VocabularyElement id="urn:ot:mda:location:Storage.F12">								
+								<attribute id="urn:ot:mda:location:category">Physical location</attribute>
+								<attribute id="urn:ot:mda:location:description">Storage F12</attribute>		
+								<children>
+									<id>urn:epc:id:sgln:6104898.16234.1</id>
+									<id>urn:epc:id:sgln:6104898.16234.2</id>
+									<id>urn:epc:id:sgln:6104898.16234.3</id>
+								</children>
+							</VocabularyElement>
+							<VocabularyElement id="urn:ot:mda:location:Storage.F13">								
+								<attribute id="urn:ot:mda:location:category">Physical location</attribute>
+								<attribute id="urn:ot:mda:location:description">Storage F13</attribute>		
+								<children>
+									<id>urn:epc:id:sgln:6104898.55555.1</id>
+									<id>urn:epc:id:sgln:6104898.55555.2</id>
+									<id>urn:epc:id:sgln:6104898.55555.3</id>
+								</children>
+							</VocabularyElement>
+						</VocabularyElementList>
+					</Vocabulary>					
+				</VocabularyList>
+			</EPCISMasterData>
+		</extension>
+	</EPCISHeader>
+	<EPCISBody>
+		<EventList>	
+			<ObjectEvent>
+				<eventTime>2015-04-16T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+				<epcList>
+					<epc>urn:ot:mda:product:id:#1A</epc>
+				</epcList>
+				<action>OBSERVE</action> <!-- Mandatory-->
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+				<readPoint> <!-- Optional -->
+					<id>urn:epc:id:sgln:6104898.16234.3</id>
+				</readPoint>
+				<bizLocation> <!-- Optional -->
+					<id>urn:ot:mda:location:Storage.F13</id>
+				</bizLocation>
+				<extension>
+					<quantityList> <!-- Optional -->
+						<quantityElement>			 
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+							<quantity>1.0</quantity>
+							<uom>PCS</uom>
+						</quantityElement>			 	
+					</quantityList>
+					<extension>
+						<OTEventClass>Transport</OTEventClass>
+						<OTEventType>Shipment</OTEventType>
+					</extension>
+				</extension>
+			</ObjectEvent>	
+		  <ObjectEvent>
+			 <eventTime>2015-04-17T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
+			 <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+			 <epcList>
+			 	<epc>urn:ot:mda:product:id:#1A</epc>
+			 </epcList>
+		  	<action>OBSERVE</action> <!-- Mandatory-->
+		  	<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+		  	<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+		  	<readPoint> <!-- Optional -->
+		  		<id>urn:epc:id:sgln:6104898.55555.1</id>
+		  	</readPoint>
+		  	<bizLocation> <!-- Optional -->
+		  		<id>urn:ot:mda:location:Storage.F13</id>
+		  	</bizLocation>
+		  	<extension>
+		  		<quantityList> <!-- Optional -->
+		  			<quantityElement>			 
+					 	<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+						 <quantity>1.0</quantity>
+						 <uom>PCS</uom>
+					 </quantityElement>			 	
+			 	</quantityList>
+				<extension>
+					<OTEventClass>OwnershipTransfer</OTEventClass>
+				 	<OTEventType>Receipt</OTEventType>
+				 	<Direction>Output</Direction>
+				 	<ActorNodeId>0x123456789234567</ActorNodeId>
+				</extension>
+			 </extension>
+		 </ObjectEvent>			
+		</EventList>
+	 </EPCISBody>
+</epcis:EPCISDocument>
