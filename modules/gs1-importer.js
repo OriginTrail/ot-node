@@ -246,7 +246,6 @@ function parseLocations(vocabularyElementList) {
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: arrayze(element.children),
-            vertex_type: 'LOCATION',
             // TODO: Add participant ID.
         };
 
@@ -272,7 +271,6 @@ function parseActors(vocabularyElementList) {
             type: 'actor',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
-            vertex_type: 'ACTOR',
             // TODO: Add participant ID.
         };
 
@@ -298,7 +296,6 @@ function parseProducts(vocabularyElementList) {
             type: 'product',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
-            vertex_type: 'PRODUCT',
             // TODO: Add participant ID.
         };
 
@@ -324,7 +321,6 @@ function parseBatches(vocabularyElementList) {
             type: 'batch',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
-            vertex_type: 'BATCH',
             // TODO: Add participant ID.
         };
 
@@ -366,6 +362,10 @@ async function parseGS1(gs1XmlFile, callback) {
             let products = [];
             let batches = [];
             const events = [];
+            const locationVertices = [];
+            const actorsVertices = [];
+            const productVertices = [];
+            const batchesVertices = [];
 
             const sender = {
                 sender_id: {
@@ -446,7 +446,80 @@ async function parseGS1(gs1XmlFile, callback) {
                 }
             }
 
-            console.log(events);
+            // Storniraj master data.
+
+
+            // pre-fetch from DB.
+            const objectClassLocationId = 'dafdsafas';
+            const objectClassActorId = 'dafdsafas';
+            const objectClassProductId = 'dafdsafas';
+            const objectClassBatchId = 'dafdsafas';
+
+
+            // _from: location key _to: ObjectClass_location
+
+
+            for (const location of locations) {
+                const data = {
+                    object_class_id: objectClassLocationId,
+                    data: location,
+                    vertex_type: 'LOCATION',
+                };
+
+                locationVertices.push({
+                    _key: md5(`business_location_${sender.sender_id}_${data}`),
+                    _id: location.id,
+                    data,
+                });
+            }
+
+            for (const actor of actors) {
+                const data = {
+                    object_class_id: objectClassActorId,
+                    data: actor,
+                    vertex_type: 'ACTOR',
+                };
+
+                actorsVertices.push({
+                    _key: md5(`actor_${sender.sender_id}_${data}`),
+                    _id: actor.id,
+                    data,
+                });
+            }
+
+            for (const product of products) {
+                const data = {
+                    object_class_id: objectClassProductId,
+                    data: product,
+                    vertex_type: 'PRODUCT',
+                };
+
+                productVertices.push({
+                    _key: md5(`product_${sender.sender_id}_${data}`),
+                    _id: product.id,
+                    data,
+                });
+            }
+
+            for (const batch of batches) {
+                const data = {
+                    object_class_id: objectClassBatchId,
+                    data: batch,
+                    vertex_type: 'BATCH',
+                };
+
+                batchesVertices.push({
+                    _key: md5(`bath_${sender.sender_id}_${data}`),
+                    _id: batch.id,
+                    data,
+                });
+            }
+
+            // Store vertices in db. Update versions
+
+            for (const event of events) {
+                // Do stuff for events. Create edges.
+            }
         },
     );
 }
