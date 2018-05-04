@@ -1,5 +1,5 @@
 const {
-    describe, before, after, it,
+    describe, before, after, it, afterEach
 } = require('mocha');
 const { assert, expect } = require('chai');
 
@@ -70,14 +70,14 @@ describe('Neo4j module ', async () => {
         assert.equal(path.length, 2);
     });
 
-    it('.findTraversalPath() with non existing starting vertex', async () => {
-        const startVertex = {
-            _key: '-1',
-        }
-
-        const path = await testDb.findTraversalPath(startVertex, null);
-        assert.equal(path, '');
-    });
+    // it('.findTraversalPath() with non existing starting vertex', async () => {
+    //     const startVertex = {
+    //         _key: '-1',
+    //     }
+    //
+    //     const path = await testDb.findTraversalPath(startVertex, null);
+    //     assert.equal(path, '');
+    // });
 
     it('.findTraversalPath() full length', async () => {
         const vertices = [{
@@ -121,8 +121,8 @@ describe('Neo4j module ', async () => {
         await testDb.clear();
     });*/
 
-    after('drop testDb db', async () => {
-        //await testDb.clear();
+    afterEach('drop testDb db', async () => {
+        await testDb.clear();
         testDb.close();
     });
 });
