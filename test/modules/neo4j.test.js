@@ -58,21 +58,71 @@ describe('Neo4j module ', async () => {
             console.log('should not happen'); // TODO handle
         });
     });
-    it('find traversal', async () => {
+    it('.findTraversalPath() with regular vertices', async () => {
+        await testDb.clear();
+
         await testDb.addDocument('ot_vertices', vertexOne);
         await testDb.addDocument('ot_vertices', vertexTwo);
         await testDb.addDocument('ot_edges', edgeOne);
 
         const path = await testDb.findTraversalPath(vertexOne, 2);
+        console.log(JSON.stringify(path));
         assert.equal(path.length, 2);
     });
 
-    it('.createEdge(edge) should create Edge', () => {
+    it('.findTraversalPath() with non existing starting vertex', async () => {
+        const startVertex = {
+            _key: '-1',
+        }
 
+        const path = await testDb.findTraversalPath(startVertex, null);
+        assert.equal(path, '');
     });
 
-    after('drop testDb db', async () => {
+    it('.findTraversalPath() full length', async () => {
+        const vertices = [{
+            data: 'A node',
+            _key: '0',
+        },
+        {
+            data: 'B node',
+            _key: '1',
+        },
+        {
+            data: 'C node',
+            _key: '2',
+        }];
+
+        const edges = [{
+            _from: '0',
+            _to: '1',
+        },
+        {
+            _from: '1',
+            _to: '2',
+        },
+        ];
+
+        await testDb.addDocument('ot_vertices', vertices[0]);
+        await testDb.addDocument('ot_vertices', vertices[1]);
+        await testDb.addDocument('ot_vertices', vertices[2]);
+        await testDb.addDocument('ot_edges', edges[0]);
+        await testDb.addDocument('ot_edges', edges[1]);
+
+        const path = await testDb.findTraversalPath({_key: '0'}, 3);
+        console.log(JSON.stringify(path));
+        assert.equal(path.length, 3);
+    });
+
+    it('.createEdge(edge) should create Edge', () => {
+    });
+
+/*    afterEach('clear testDb after each test', async () => {
         await testDb.clear();
+    });*/
+
+    after('drop testDb db', async () => {
+        //await testDb.clear();
         testDb.close();
     });
 });
