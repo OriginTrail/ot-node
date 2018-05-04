@@ -99,7 +99,6 @@ describe('Neo4j module ', async () => {
         await testDb.addDocument('ot_edges', edges[1]);
 
         const path = await testDb.findTraversalPath({ _key: '0' }, 3);
-        console.log(JSON.stringify(path));
         assert.equal(path.length, 3);
     });
 
