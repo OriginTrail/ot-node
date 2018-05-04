@@ -147,7 +147,7 @@ class Neo4jDB {
                 } catch (e) {
                     // skip
                 }
-                newArray.push(this._transformProperty(deserialized));
+                newArray.push(Neo4jDB._transformProperty(deserialized));
             }
             return newArray;
         }
