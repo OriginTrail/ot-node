@@ -23,15 +23,16 @@ class Neo4jDB {
      * Get properties for Neo4J
      * @param obj           Extraction object
      * @param excludeList   List of excluded properties
-     * @returns {string}    Properties string
      * @private
      */
-    static _getPropertiesString(obj, excludeList) {
-        let result = '';
+    static _getParams(obj, excludeList) {
+        const values = {};
+        const queries = [];
         for (const p in obj) {
             if (typeof obj[p] !== 'object') {
                 if (!excludeList || !excludeList.includes(p)) {
-                    result += `${p}: ${JSON.stringify(obj[p])},`;
+                    values[p] = obj[p];
+                    queries.push(`${p}:$${p}`);
                 }
             } else if (Array.isArray(obj[p])) {
                 const array = [];
@@ -43,14 +44,15 @@ class Neo4jDB {
                     }
                 }
                 if (!excludeList || !excludeList.includes(p)) {
-                    result += `${p}: ${JSON.stringify(array)},`;
+                    values[p] = array;
+                    queries.push(`${p}:$${p}`);
                 }
             }
         }
-        if (result.endsWith(',')) {
-            result = result.slice(0, result.length - 1);
-        }
-        return result;
+        return {
+            values,
+            queries,
+        };
     }
 
     /**
@@ -84,11 +86,12 @@ class Neo4jDB {
             throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
         }
         if (typeof value === 'object') {
-            let nonObjectProps = Neo4jDB._getPropertiesString(value);
-            if (nonObjectProps.length > 0) {
-                nonObjectProps = `{${nonObjectProps}}`;
+            const objectProps = Neo4jDB._getParams(value);
+            let params = '';
+            if (objectProps.queries.length > 0) {
+                params = ` {${objectProps.queries.join()}}`;
             }
-            const r = await session.run(`CREATE (a ${nonObjectProps}) RETURN a`);
+            const r = await session.run(`CREATE (a${params}) RETURN a`, objectProps.values);
             const nodeId = r.records[0]._fields[0].identity.toString();
 
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
@@ -113,14 +116,14 @@ class Neo4jDB {
         const to = edge._to.slice(edge._to.indexOf('/') + 1);
         const from = edge._from.slice(edge._from.indexOf('/') + 1);
 
-        let nonObjectProps = `${Neo4jDB._getPropertiesString(edge, ['_to', '_from'])}`;
-        if (nonObjectProps.length > 0) {
-            nonObjectProps = `{${nonObjectProps}, _to: ${JSON.stringify(to)}, _from: ${JSON.stringify(from)}}`;
-        } else {
-            nonObjectProps = `{_to: ${JSON.stringify(to)}, _from: ${JSON.stringify(from)}}`;
-        }
+        const objectProps = Neo4jDB._getParams(edge, ['_to', '_from']);
+        objectProps.queries.push('_to:$_to');
+        objectProps.queries.push('_from:$_from');
+        objectProps.values._to = to;
+        objectProps.values._from = from;
+        const params = ` {${objectProps.queries.join()}}`;
         const session = this.driver.session();
-        const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType} ${nonObjectProps}]->(b) return r`);
+        const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType}${params}]->(b) return r`, objectProps.values);
         session.close();
         return r;
     }
@@ -160,35 +163,29 @@ class Neo4jDB {
      * @returns {Promise}
      * @private
      */
-    static _transformProperties(properties) {
-        return new Promise((resolve, reject) => {
-            try {
-                properties.records.forEach((row, i) => {
-                    row._fields.forEach((val, j) => {
-                        const processProperties = (properties, parent) => {
-                            if (properties) {
-                                const newProperties = {};
-                                for (const key in properties) {
-                                    const property = properties[key];
-                                    newProperties[key] = Neo4jDB._transformProperty(property);
-                                }
-                                parent.properties = newProperties;
-                            }
-                        };
-                        if (Array.isArray(val)) {
-                            for (const item of val) {
-                                processProperties(item.properties, item);
-                            }
-                        } else {
-                            processProperties(val.properties, val);
+    static async _transformProperties(properties) {
+        properties.records.forEach((row) => {
+            row._fields.forEach((val) => {
+                const processProperties = (properties, parent) => {
+                    if (properties) {
+                        const newProperties = {};
+                        for (const key in properties) {
+                            const property = properties[key];
+                            newProperties[key] = Neo4jDB._transformProperty(property);
                         }
-                    });
-                });
-                resolve(properties);
-            } catch (error) {
-                reject(error);
-            }
+                        parent.properties = newProperties;
+                    }
+                };
+                if (Array.isArray(val)) {
+                    for (const item of val) {
+                        processProperties(item.properties, item);
+                    }
+                } else {
+                    processProperties(val.properties, val);
+                }
+            });
         });
+        return properties;
     }
 
     /**
