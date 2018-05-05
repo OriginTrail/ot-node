@@ -5,7 +5,7 @@ const Graph = require('./Graph');
 const Blockchain = require('./BlockChainInstance');
 const bytes = require('utf8-length');
 const BN = require('bn.js');
-
+const deasync = require('deasync-promise');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 
@@ -19,6 +19,7 @@ const tenderDuration = biddingTime + 1000;
 const minNumberOfBids = 1;
 const minStakeAmount = new BN('100');
 const maxTokenAmount = new BN('10000000');
+
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -30,8 +31,19 @@ class DCService {
             console.log('Error: ', e);
         });
 
+        let price;
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+        const availableFunds = deasync(Utilities.getAlphaTracTokenBalance());
+        const potentialPrice = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+
+        if (Number(potentialPrice) > Number(availableFunds)) {
+            // not enought funds in wallet, give all-in for a price
+            price = availableFunds;
+        } else {
+            // sufficient funds, go further
+            price = potentialPrice;
+        }
+
         Models.offers.create({
             id: dataId,
             data_lifespan: totalEscrowTime,
@@ -130,7 +142,7 @@ class DCService {
                                         const eventDcWallet = event.returnValues.DC_wallet;
 
                                         if (Number(eventDataId) === dataId
-                            && eventDcWallet === config.node_wallet) {
+                                            && eventDcWallet === config.node_wallet) {
                                             log.info(`Offer for data ${dataId} successfully finalized`);
                                             DCService.handleFinalizedOffer(dataId);
                                             return true;

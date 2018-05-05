@@ -32,6 +32,29 @@ describe('Utilities module', () => {
         });
     });
 
+    it('getNodeNetworkType()', async () => {
+        await Utilities.getNodeNetworkType().then((result) => {
+            assert.equal(result, 'rinkeby');
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+
+    // way to check is rinkeby with our token healthy
+    it('getInfuraRinkebyApiMethods()', async () => {
+        const response = await Utilities.getInfuraRinkebyApiMethods();
+        assert.equal(response.statusCode, 200);
+        assert.containsAllKeys(response.body, ['get', 'post']);
+    });
+
+    // way to chech is method from rinkeby with our token healthy
+    it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
+        const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
+        assert.equal(responseFromApi.statusCode, 200);
+        const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
+        assert.equal(responseFromApi.body.result, responseFromWeb3);
+    });
+
     it('loadSelectedBlockchainInfo()', async () => {
         const myResult = await Utilities.loadSelectedBlockchainInfo();
         assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
