@@ -225,6 +225,31 @@ class Neo4jDB {
     }
 
     /**
+     * Gets max version where uid is the same but not the _key
+     * @param uid   Vertex uid
+     * @param _key  Vertex _key
+     * @return {Promise<void>}
+     */
+    async getCurrentMaxVersion(uid, _key) {
+        const session = this.driver.session();
+        const result = await session.run('MATCH (n) WHERE n.uid = $uid and n._key <> $_key return MAX(n.version)', { uid, _key });
+        session.close();
+        return result;
+    }
+
+    /**
+     * Gets max vertex_key where uid is the same and has the max version
+     * @param uid   Vertex uid
+     * @return {Promise<void>}
+     */
+    async getVertexKeyWithMaxVersion(uid) {
+        const session = this.driver.session();
+        const result = await session.run('MATCH (n) WHERE n.uid = $uid RETURN n.version AS v ORDER BY v DESC LIMIT 1', { uid });
+        session.close();
+        return result;
+    }
+
+    /**
      * Find set of vertices
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
