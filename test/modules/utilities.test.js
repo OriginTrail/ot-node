@@ -187,6 +187,13 @@ describe('Utilities module', () => {
         assert.deepEqual(edgeOne, copyEdgeOne);
     });
 
+    it('hexToNumber() and numberToHex check', () => {
+        const hexValue = Utilities.numberToHex(500);
+        const intValue = Utilities.hexToNumber(hexValue);
+        assert.equal(hexValue, intValue);
+    });
+
+
     it('executeCallback() callback not defined scenario', async () => {
         // helper function
         function first(timeInterval) {
