@@ -30,9 +30,6 @@ describe('Neo4j module ', async () => {
         assert(testDb.identify(), 'Neo4j');
     });
 
-    it('.createVertex() should create Vertex', () => {
-
-    });
     it('pass null for vertex', async () => {
         await testDb.addDocument('ot_vertices', null).catch((err) => {
             assert.equal(err.message, 'Invalid vertex null');
@@ -59,38 +56,18 @@ describe('Neo4j module ', async () => {
         assert.equal(path.length, 2);
     });
 
-    // it('.findTraversalPath() with non existing starting vertex', async () => {
-    //     const startVertex = {
-    //         _key: '-1',
-    //     }
-    //
-    //     const path = await testDb.findTraversalPath(startVertex, null);
-    //     assert.equal(path, '');
-    // });
+    it('.findTraversalPath() non existing starting vertex', async () => {
+        const startVertex = {
+            _key: '-1',
+        }
 
-    it('.findTraversalPath() full length', async () => {
-        const vertices = [{
-            data: 'A node',
-            _key: '0',
-        },
-        {
-            data: 'B node',
-            _key: '1',
-        },
-        {
-            data: 'C node',
-            _key: '2',
-        }];
+        const path = await testDb.findTraversalPath(startVertex, 1);
+        assert.equal(path, '');
+    });
 
-        const edges = [{
-            _from: '0',
-            _to: '1',
-        },
-        {
-            _from: '1',
-            _to: '2',
-        },
-        ];
+    it('.findTraversalPath() less than max length', async () => {
+        const vertices = [{ data: 'A', _key: '100' }, { data: 'B', _key: '101' }, { data: 'C', _key: '102' }];
+        const edges = [{ edgeType: 'IS', _from: '100', _to: '101' }, { edgeType: 'IS', _from: '101', _to: '102' }];
 
         await testDb.addDocument('ot_vertices', vertices[0]);
         await testDb.addDocument('ot_vertices', vertices[1]);
@@ -98,19 +75,40 @@ describe('Neo4j module ', async () => {
         await testDb.addDocument('ot_edges', edges[0]);
         await testDb.addDocument('ot_edges', edges[1]);
 
-        const path = await testDb.findTraversalPath({ _key: '0' }, 3);
-        assert.equal(path.length, 3);
+        const path = await testDb.findTraversalPath({ _key: '100' }, 2);
+        assert.equal(path.length, 2);
     });
 
-    it('.createEdge(edge) should create Edge', () => {
+    it('.findTraversalPath() with max length', async () => {
+        const vertices = [
+            { data: 'A', _key: '100' },
+            { data: 'B', _key: '101' },
+            { data: 'C', _key: '102' },
+            { data: 'D', _key: '103' }];
+        const edges = [
+            { edgeType: 'IS', _from: '100', _to: '101' },
+            { edgeType: 'IS', _from: '101', _to: '102' },
+            { edgeType: 'IS', _from: '102', _to: '103' },
+            { edgeType: 'IS', _from: '101', _to: '103' }];
+
+        await testDb.addDocument('ot_vertices', vertices[0]);
+        await testDb.addDocument('ot_vertices', vertices[1]);
+        await testDb.addDocument('ot_vertices', vertices[2]);
+        await testDb.addDocument('ot_vertices', vertices[3]);
+        await testDb.addDocument('ot_edges', edges[0]);
+        await testDb.addDocument('ot_edges', edges[1]);
+        await testDb.addDocument('ot_edges', edges[2]);
+        await testDb.addDocument('ot_edges', edges[3]);
+
+        const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
+        assert.equal(path.length, 4);
     });
 
-    /*    afterEach('clear testDb after each test', async () => {
+    afterEach('clear testDb db', async () => {
         await testDb.clear();
-    }); */
+    });
 
-    afterEach('drop testDb db', async () => {
-        await testDb.clear();
+    after('drop testDb db', async () => {
         testDb.close();
     });
 });
