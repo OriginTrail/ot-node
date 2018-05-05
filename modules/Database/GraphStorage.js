@@ -69,7 +69,7 @@ class GraphStorage {
     /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
-     * @returns {Promise<any>}
+     * @return {Promise<void>}
      */
     findTraversalPath(startVertex) {
         return new Promise((resolve, reject) => {
@@ -84,6 +84,46 @@ class GraphStorage {
             }
         });
     }
+  
+    /**
+     * Gets max version where uid is the same but not the _key
+     * @param uid   Vertex uid
+     * @param _key  Vertex _key
+     * @return {Promise<void>}
+     */
+    getCurrentMaxVersion(uid, _key) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getCurrentMaxVersion(uid, _key).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Gets max vertex_key where uid is the same and has the max version
+     * @param uid   Vertex uid
+     * @return {Promise<void>}
+     */
+    getVertexKeyWithMaxVersion(uid) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.getVertexKeyWithMaxVersion(uid).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
 
     /**
      * Add new document into given collection on selected database
