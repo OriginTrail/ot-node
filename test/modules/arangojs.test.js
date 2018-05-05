@@ -53,6 +53,15 @@ describe('Arangojs module ', async () => {
         });
     });
 
+    it('.runQuery() on invalid instance should not give back result', async () => {
+        const now = Date.now();
+        try {
+            await testDb.runQuery('RETURN @value', { value: now });
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+        }
+    });
+
     it('.createCollection() should create Document Collection', async () => {
         // first time creating Document Collection
         await testDb.createCollection(documentCollectionName).then((response) => {
@@ -165,6 +174,57 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
     });
 
+    it('updateDocumentImports() should add/append data', async () => {
+        // this will implicitly call testDb.updateDocument()
+        await testDb.updateDocumentImports(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            edgeOne._key, newImportValue,
+        ).then((response) => {
+            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+        });
+
+        // check value of imports
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            assert.include(response.imports, newImportValue);
+        });
+    });
+
+    it('getDocument() by vertexKey should give back vertex itself', async () => {
+        await testDb.getDocument(documentCollectionName, vertexOne._key)
+            .then((response) => {
+                assert.deepEqual(response._key, vertexOne._key);
+                assert.deepEqual(response.data, vertexOne.data);
+            });
+    });
+
+    it('attempt to getDocument on non existing db should fail', async () => {
+        try {
+            await testDb.getDocument(documentCollectionName, vertexOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
+        try {
+            await testDb.getDocument(edgeCollectionName, edgeOne._key);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+        }
+    });
+
+    it('getDocument() by edgeKey should give back edge itself', async () => {
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._from, edgeOne._from);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._to, edgeOne._to);
+            // eslint-disable-next-line no-underscore-dangle
+            assert.equal(response._key, edgeOne._key);
+        });
+    });
+
     it('getDocument() by vertexKey should give back vertex itself', async () => {
         await testDb.getDocument(documentCollectionName, vertexOne._key).then((response) => {
             assert.deepEqual(response._key, vertexOne._key);
@@ -209,15 +269,11 @@ describe('Arangojs module ', async () => {
             _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
         };
 
-        try {
-            testDb.updateDocument(
-                edgeCollectionName,
-                // eslint-disable-next-line no-underscore-dangle
-                updatetedEdgeOne,
-            );
-        } catch (error) {
-            console.log(error);
-        }
+        await testDb.updateDocument(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            updatetedEdgeOne,
+        );
 
         // check value of new imports
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
@@ -245,6 +301,65 @@ describe('Arangojs module ', async () => {
             assert.deepEqual(response[0].imports, vertexOne.imports);
             assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
         });
+    });
+
+    it('.findVertices() with empty query should fail', async () => {
+        try {
+            await testDb.findVertices();
+        } catch (error) {
+            // Utilities.isEmptyObject() will complain
+            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
+        }
+    });
+
+    it('.findVertices() when still not connected to graph db should fail', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        try {
+            const result = await testDb.findVertices(queryObject);
+        } catch (error) {
+            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+        }
+    });
+
+    it('.findVertices() on top of empty collection should find nothing', async () => {
+        const queryObject = {
+            uid: '123',
+            vertex_type: 'BATCH',
+        };
+        await testDb.findVertices(queryObject).then((response) => {
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        });
+    });
+
+    it('.findTraversalPath() with non valid startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: undefined,
+        };
+        try {
+            const response = await testDb.findTraversalPath(myStartVertex);
+            assert.isEmpty(response);
+            assert.isTrue(typeof (response) === 'object');
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it('.findTraversalPath() with non existing startVertex should fail', async () => {
+        // db alredy connected and ot_vertices exists
+        const myStartVertex = {
+            _id: 0,
+        };
+
+        try {
+            const response = await testDb.findTraversalPath(myStartVertex, 1);
+        } catch (error) {
+            assert.equal(error.code, 404);
+        }
     });
 
     after('drop testDb db', async () => {
