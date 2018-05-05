@@ -63,10 +63,9 @@ class ArangoJS {
             };
 
             this.runQuery(queryString, params).then((result) => {
-                if (result && result.length > 0) {
-                    return result[0];
-                }
-                return null;
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
             });
         });
     }
@@ -88,10 +87,9 @@ class ArangoJS {
             };
 
             this.runQuery(queryString, params).then((result) => {
-                if (result && result.length > 0) {
-                    return result[0];
-                }
-                return null;
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
             });
         });
     }
