@@ -533,6 +533,26 @@ class Utilities {
             });
         });
     }
+
+    /**
+     * Web3 Hex to number
+     * @param hex
+     * @returns {number}
+     */
+    static hexToNumber(hex) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.hexToNumber(hex);
+    }
+
+    /**
+     * Web3 Number to hex
+     * @param num
+     * @returns {string}
+     */
+    static numberToHex(num) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.numberToHex(num);
+    }
 }
 
 module.exports = Utilities;
