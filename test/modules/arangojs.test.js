@@ -26,7 +26,7 @@ let db;
 describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
         systemDb = new Database();
-        systemDb.useBasicAuth('root', '');
+        systemDb.useBasicAuth('root', 'root');
         await systemDb.createDatabase(
             myDatabaseName,
             [{ username: myUserName, passwd: myPassword, active: true }],
