@@ -45,6 +45,56 @@ class ArangoJS {
     }
 
     /**
+     * Gets max version where uid is the same but not the _key
+     * @param uid   Vertex uid
+     * @param _key  Vertex _key
+     * @return {Promise<void>}
+     */
+    getCurrentMaxVersion(uid, _key) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_vertices ' +
+                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key ' +
+                'SORT v.version DESC ' +
+                'LIMIT 1 ' +
+                'RETURN v.version';
+            const params = {
+                uid,
+                _key,
+            };
+
+            this.runQuery(queryString, params).then((result) => {
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
+     * Gets max vertex_key where uid is the same and has the max version
+     * @param uid   Vertex uid
+     * @return {Promise<void>}
+     */
+    getVertexKeyWithMaxVersion(uid) {
+        return new Promise((resolve, reject) => {
+            const queryString = 'FOR v IN ot_vertices ' +
+                'FILTER v.identifiers.uid == @uid ' +
+                'SORT v.version DESC ' +
+                'LIMIT 1 ' +
+                'RETURN v.vertex_key';
+            const params = {
+                uid,
+            };
+
+            this.runQuery(queryString, params).then((result) => {
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Run query on ArangoDB graph database
      * @param {string} - queryString
      * @param {object} - params
