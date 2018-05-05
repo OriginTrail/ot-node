@@ -85,28 +85,30 @@ class OTNode {
         }
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
-        try {
-            const etherBalance = deasync(Utilities.getBalanceInEthers());
-            if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet before running ot-node');
-                process.exit(1);
-            } else {
-                (
-                    log.info(`Initial balance of ETH: ${etherBalance}`)
-                );
-            }
+        if (process.env !== 'test') {
+            try {
+                const etherBalance = deasync(Utilities.getBalanceInEthers());
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
 
-            const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
-            if (atracBalance <= 0) {
-                console.log('Please get some ATRAC in the node wallet before running ot-node');
-                process.exit(1);
-            } else {
-                (
-                    log.info(`Initial balance of ATRAC: ${atracBalance}`)
-                );
+                const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
             }
-        } catch (error) {
-            console.log(error);
         }
 
         // wire instances
