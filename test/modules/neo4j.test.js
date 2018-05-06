@@ -58,7 +58,7 @@ describe('Neo4j module ', async () => {
     it('.findTraversalPath() non existing starting vertex', async () => {
         const startVertex = {
             _key: '-1',
-        }
+        };
 
         const path = await testDb.findTraversalPath(startVertex, 1);
         assert.equal(path, '');
