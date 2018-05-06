@@ -70,7 +70,6 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with regular vertices', async () => {
-        await testDb.addDocument('ot_vertices', vertexOne);
         await testDb.addDocument('ot_vertices', vertexTwo);
         await testDb.addDocument('ot_edges', edgeOne);
 
@@ -106,7 +105,7 @@ describe('Neo4j module ', async () => {
         assert.equal(path.length, 4);
     });
 
-    it('.findTraversalPath() with interconnected vertices', async () => {
+    it('traversal path with interconnected vertices', async () => {
         await testDb.addDocument('ot_edges', edges[3]);
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
@@ -114,19 +113,34 @@ describe('Neo4j module ', async () => {
         console.log(JSON.stringify(path));
     });
 
-/*    it('update document imports', async () => {
-        await testDb.updateDocumentImports('ot_vertices', vertexOne, 101);
-        const result = await testDb.getVerticesByImportId(101);
+    it('getVerticesByImportId', async () => {
+        const response = await testDb.getVerticesByImportId('1520345631');
 
-        assert.deepEqual(vertexOne, result[0]);
-    });*/
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return -1;
+            }
+            if (a._key > b._key) {
+                return 1;
+            }
+            return 0;
+        }
 
-/*    it('getVerticesByImportId', async () => {
-        await testDb.getVerticesByImportId('1520345631').then((result) => {
-            expect(databaseData.vertices).to.deep.equal(result);
-            // assert.deepEqual(DatabaseData.vertices, result);
-        });
-    });*/
+        assert.deepEqual(databaseData.vertices.sort(sortByKey), response.sort(sortByKey));
+    });
+
+    it('update document imports', async () => {
+        await testDb.updateDocumentImports('ot_vertices', vertexOne, 101100);
+        const response = await testDb.getVerticesByImportId(101100);
+
+        assert.deepEqual(response[0].data, vertexOne.data);
+        assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+        assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+        assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+        assert.deepEqual(response[0]._key, vertexOne._key);
+        assert.deepEqual(response[0].imports, [vertexOne.imports[0], 101100]);
+        assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+    });
 
 /*    await afterEach('clear testDb db', async () => {
         await testDb.clear();
