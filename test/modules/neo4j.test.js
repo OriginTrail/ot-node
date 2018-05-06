@@ -70,8 +70,7 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with regular vertices', async () => {
-        //vertexOne alredy added in previous test
-        //await testDb.addDocument('ot_vertices', vertexOne);
+        await testDb.addDocument('ot_vertices', vertexOne);
         await testDb.addDocument('ot_vertices', vertexTwo);
         await testDb.addDocument('ot_edges', edgeOne);
 
@@ -82,7 +81,7 @@ describe('Neo4j module ', async () => {
     it('.findTraversalPath() with non existing starting vertex', async () => {
         const startVertex = {
             _key: '-1',
-        }
+        };
 
         const path = await testDb.findTraversalPath(startVertex, 1);
         assert.equal(path, '');

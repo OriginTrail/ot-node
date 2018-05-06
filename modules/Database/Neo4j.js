@@ -315,12 +315,12 @@ class Neo4jDB {
         let result = await session.run(query);
         session.close();
         result = await Neo4jDB._transformProperties(result);
-        const nodes = [];
+        const nodePromises = [];
         for (const record of result.records) {
-            // eslint-disable-next-line
-            nodes.push(await this._fetchVertex('_key', record._fields[0].properties._key));
+            nodePromises.push(this._fetchVertex('_key', record._fields[0].properties._key));
         }
-        return nodes;
+        result = await Promise.all(nodePromises);
+        return result;
     }
 
     /**

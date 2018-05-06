@@ -84,7 +84,7 @@ class GraphStorage {
             }
         });
     }
-  
+
     /**
      * Gets max version where uid is the same but not the _key
      * @param uid   Vertex uid
