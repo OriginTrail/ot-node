@@ -13,9 +13,8 @@ const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
-
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
+const BN = require('bn.js');
+const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -39,13 +38,17 @@ globalEmitter.on('gs1-import-request', (data) => {
             data_id,
             root_hash,
             total_documents,
+            vertices,
         } = response;
 
-        deasync(Storage.connect());
-        Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
-            .then((data_info) => {
-                DCService.createOffer(data_id, root_hash, total_documents);
-            });
+        Storage.connect().then(() => {
+            Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
+                .then((data_info) => {
+                    DCService.createOffer(data_id, root_hash, total_documents, vertices);
+                });
+        }).catch((err) => {
+            log.warn(err);
+        });
     }).catch((e) => {
         console.log(e);
     });
@@ -102,7 +105,7 @@ globalEmitter.on('replication-request', (request, response) => {
         });
     });
 
-    response.send({ status: 'succes' });
+    response.send({ status: 'success' });
 });
 
 globalEmitter.on('payload-request', (request) => {
@@ -118,7 +121,7 @@ globalEmitter.on('replication-finished', (status) => {
 });
 
 globalEmitter.on('kad-challenge-request', (request, response) => {
-    log.trace(`Challenge arrived: ${request.params.message.payload}`);
+    log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
     GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
@@ -153,7 +156,7 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcWallet,
         totalEscrowTime,
         minStakeAmount,
-        totalDocuments,
+        dataSizeBytes,
     } = message;
 
     DHService.handleOffer(
@@ -161,8 +164,8 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dcId,
         dataId,
         totalEscrowTime,
-        minStakeAmount,
-        totalDocuments, // TODO think about it
+        new BN(minStakeAmount),
+        new BN(dataSizeBytes),
     );
 });
 
@@ -170,39 +173,16 @@ globalEmitter.on('offer-ended', (message) => {
     const { scId } = message;
 
     log.info(`Offer ${scId} has ended.`);
-
-    // TODO: Trigger escrow to end bidding and notify chosen.
-    const bids = SmartContractInstance.sc.choose(scId);
-
-    bids.forEach((bid) => {
-        console.log(bid);
-        node.ot.biddingWon(
-            { dataId: scId },
-            bid.dhId, (error) => {
-                if (error) {
-                    log.warn(error);
-                }
-            },
-        );
-    });
 });
 
+globalEmitter.on('AddedBid', (message) => {
+    // console.log('Added Bid');
+    // const event = JSON.parse(message.data);
+    // console.log(event);
+});
 
 globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
-
-    const { dataId } = message.params.message;
-
-    // Now request data to check validity of offer.
-
-    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
-
-
-    node.ot.replicationRequest({ dataId }, dcId, (err) => {
-        if (err) {
-            log.warn(err);
-        }
-    });
 });
 
 globalEmitter.on('eth-offer-created', (event) => {

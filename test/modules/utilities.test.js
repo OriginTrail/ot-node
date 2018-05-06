@@ -25,10 +25,46 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port'],
+                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
+                    'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake'],
                 'Some config items are missing',
             );
         });
+    });
+
+    it('getNodeNetworkType()', async () => {
+        await Utilities.getNodeNetworkType().then((result) => {
+            assert.equal(result, 'rinkeby');
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+
+    // way to check is rinkeby with our token healthy
+    it('getInfuraRinkebyApiMethods()', async () => {
+        const response = await Utilities.getInfuraRinkebyApiMethods();
+        assert.equal(response.statusCode, 200);
+        assert.containsAllKeys(response.body, ['get', 'post']);
+    });
+
+    // way to chech is method from rinkeby with our token healthy
+    it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
+        const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
+        assert.equal(responseFromApi.statusCode, 200);
+        const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
+        // assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // Not possible to match exactly the block every time as new ones get mined,
+        // so range is used
+        expect(Utilities.hexToNumber(responseFromApi.body.result))
+            .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
+    });
+
+    it('loadSelectedBlockchainInfo()', async () => {
+        const myResult = await Utilities.loadSelectedBlockchainInfo();
+        assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
+            'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
+            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address']);
+        assert.equal(myResult.blockchain_title, 'Ethereum');
     });
 
     it('isEmptyObject check', () => {
@@ -150,6 +186,13 @@ describe('Utilities module', () => {
         const copyEdgeOne = Utilities.copyObject(edgeOne);
         assert.deepEqual(edgeOne, copyEdgeOne);
     });
+
+    it('hexToNumber() and numberToHex check', () => {
+        const hexValue = Utilities.numberToHex(500);
+        const intValue = Utilities.hexToNumber(hexValue);
+        assert.equal(hexValue, intValue);
+    });
+
 
     it('executeCallback() callback not defined scenario', async () => {
         // helper function

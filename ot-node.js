@@ -17,8 +17,6 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
-const MockSmartContract = require('./modules/temp/MockSmartContract');
-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -39,8 +37,23 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
+        try {
+            // check if all dependencies are installed
+            deasync(Utilities.checkInstalledDependencies());
+            log.info('npm modules dependences check done');
+            // make sure arango database exists
+            deasync(Utilities.checkDoesStorageDbExists());
+            log.info('Storage database check done');
+            // Checking root folder stucture
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure check done');
+        } catch (err) {
+            console.log(err);
+        }
+
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
 
         // Loading config data
         try {
@@ -70,12 +83,38 @@ class OTNode {
             console.log(err);
         }
 
+        // check does node_wallet has sufficient Ether and ATRAC tokens
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                const etherBalance = deasync(Utilities.getBalanceInEthers());
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
+
+                const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
         // wire instances
         GSInstance.db = new GraphStorage(selectedDatabase);
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
-        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
@@ -95,6 +134,13 @@ class OTNode {
         }).catch((e) => {
             console.log(e);
         });
+
+        // Starting event listener on Blockchain
+        log.info('Starting blockchain event listener');
+        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        setInterval(() => {
+            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        }, 3000);
     }
 
     /**
@@ -122,7 +168,7 @@ class OTNode {
      */
     exposeAPIRoutes(server) {
         server.post('/import', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -151,7 +197,7 @@ class OTNode {
         });
 
         server.post('/import_gs1', (req, res) => {
-            log.info('Import request received!');
+            log.important('Import request received!');
 
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;

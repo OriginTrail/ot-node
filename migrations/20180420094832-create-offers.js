@@ -20,10 +20,10 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         price_tokens: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         data_size_bytes: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         replication_number: {
             type: Sequelize.INTEGER,
@@ -32,7 +32,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         max_token_amount: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('offers'),

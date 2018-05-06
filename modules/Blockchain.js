@@ -118,17 +118,23 @@ class Blockchain {
     }
 
     /**
-     * Subscribe to a particular event
-     * @param contractName   Ethereum contract instance
-     * @param event          Event name
-     * @param eventOpts      Event options (filter, range, etc.)
-     * @param callback       Callback to be executed on success/error (callback returns stop flag)
-     * @param periodMills    Repeating period for checking past events
-     * @param untilMills     Subscription termination
-     */
-    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills) {
+    * Subscribe to a particular event
+    * @param event
+    * @param dataId
+    * @param endMs
+    */
+    subscribeToEvent(event, dataId, endMs) {
         return this.blockchain
-            .subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills);
+            .subscribeToEvent(event, dataId, endMs);
+    }
+
+    /**
+     * Gets all past events for the contract
+     * @param contractName
+     */
+    getAllPastEvents(contractName) {
+        return this.blockchain
+            .getAllPastEvents(contractName);
     }
 
     /**
@@ -190,6 +196,16 @@ class Blockchain {
      */
     getBid(dcWallet, dataId, bidIndex) {
         return this.blockchain.getBid(dcWallet, dataId, bidIndex);
+    }
+
+    /**
+    * Gets status of the offer
+    * @param dcWallet
+    * @param dataId
+    * @return {Promise<any>}
+    */
+    getOfferStatus(dcWallet, dataId) {
+        return this.blockchain.getOfferStatus(dcWallet, dataId);
     }
 }
 

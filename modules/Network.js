@@ -14,9 +14,6 @@ const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const globalEvents = require('./GlobalEvents');
 
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
-
 const { globalEmitter } = globalEvents;
 let ns = {};
 
@@ -107,10 +104,10 @@ class Network {
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
-        node.ot.hashcash = node.ot.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
-            difficulty: 10,
-        }));
+        // node.ot.hashcash = node.ot.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
+        //     difficulty: 10,
+        // }));
         log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
@@ -288,9 +285,8 @@ class Network {
         // TODO remove temp add bid route
         node.ot.use('add-bid', (request, response, next) => {
             log.info('add-bid');
-            const { offerId, bid } = request.params.message;
+            const { bid } = request.params.message;
             [bid.dhId] = request.contact;
-            SmartContractInstance.sc.addDhBid(offerId, bid);
             response.send({
                 status: 'OK',
             });
@@ -351,6 +347,7 @@ class Network {
              * @param callback
              */
             node.replicationRequest = (message, contactId, callback) => {
+                // contactId = utilities.numberToHex(contactId).substring(2);
                 const contact = node.getContact(contactId);
                 node.send('replication-request', { message }, [contactId, contact], callback);
             };
