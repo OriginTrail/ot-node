@@ -176,9 +176,7 @@ globalEmitter.on('offer-ended', (message) => {
 });
 
 globalEmitter.on('AddedBid', (message) => {
-    // console.log('Added Bid');
-    // const event = JSON.parse(message.data);
-    // console.log(event);
+
 });
 
 globalEmitter.on('kad-bidding-won', (message) => {
