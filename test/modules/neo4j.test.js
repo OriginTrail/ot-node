@@ -7,7 +7,7 @@ const Neo4j = require('../../modules/Database/Neo4j.js');
 const databaseData = require('./test_data/database-data.js');
 
 const myUsername = 'neo4j';
-const myPassword = 'neo4j';
+const myPassword = 'pass';
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';
@@ -75,7 +75,7 @@ describe('Neo4j module ', async () => {
         await testDb.addDocument('ot_edges', edges[0]);
         await testDb.addDocument('ot_edges', edges[1]);
 
-        const path = await testDb.findTraversalPath({ _key: '100' }, 2);
+        const path = await testDb.findTraversalPath({ _key: '100' }, 1);
         assert.equal(path.length, 2);
     });
 
