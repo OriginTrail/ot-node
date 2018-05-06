@@ -40,24 +40,24 @@ describe('Utilities module', () => {
         });
     });
 
-    // // way to check is rinkeby with our token healthy
-    // it('getInfuraRinkebyApiMethods()', async () => {
-    //     const response = await Utilities.getInfuraRinkebyApiMethods();
-    //     assert.equal(response.statusCode, 200);
-    //     assert.containsAllKeys(response.body, ['get', 'post']);
-    // });
-    //
-    // // way to chech is method from rinkeby with our token healthy
-    // it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
-    //     const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
-    //     assert.equal(responseFromApi.statusCode, 200);
-    //     const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
-    //     // assert.equal(responseFromApi.body.result, responseFromWeb3);
-    //     // Not possible to match exactly the block every time as new ones get mined,
-    //     // so range is used
-    //     expect(Utilities.hexToNumber(responseFromApi.body.result))
-    //         .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
-    // });
+    // way to check is rinkeby with our token healthy
+    it('getInfuraRinkebyApiMethods()', async () => {
+        const response = await Utilities.getInfuraRinkebyApiMethods();
+        assert.equal(response.statusCode, 200);
+        assert.containsAllKeys(response.body, ['get', 'post']);
+    });
+
+    // way to chech is method from rinkeby with our token healthy
+    it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
+        const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
+        assert.equal(responseFromApi.statusCode, 200);
+        const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
+        // assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // Not possible to match exactly the block every time as new ones get mined,
+        // so range is used
+        expect(Utilities.hexToNumber(responseFromApi.body.result))
+            .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
+    });
 
     it('loadSelectedBlockchainInfo()', async () => {
         const myResult = await Utilities.loadSelectedBlockchainInfo();
