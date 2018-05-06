@@ -137,26 +137,38 @@
     "type": "function"
   },
   {
-    "anonymous": false,
+    "constant": false,
     "inputs": [
       {
-        "indexed": false,
         "name": "DC_wallet",
         "type": "address"
       },
       {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
+        "name": "data_id",
+        "type": "uint256"
       },
       {
-        "indexed": false,
-        "name": "data_id",
+        "name": "node_id",
+        "type": "uint256"
+      },
+      {
+        "name": "token_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "stake_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "bidIndex",
         "type": "uint256"
       }
     ],
-    "name": "BidTaken",
-    "type": "event"
+    "name": "revealBid",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "anonymous": false,
@@ -213,38 +225,16 @@
     "type": "event"
   },
   {
-    "constant": false,
+    "anonymous": false,
     "inputs": [
       {
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "name": "node_id",
-        "type": "uint256"
-      },
-      {
-        "name": "token_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "bidIndex",
+        "indexed": false,
+        "name": "x",
         "type": "uint256"
       }
     ],
-    "name": "revealBid",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "XwasSet",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -260,7 +250,7 @@
         "type": "uint256"
       }
     ],
-    "name": "OfferCanceled",
+    "name": "ChoosingPhaseStarted",
     "type": "event"
   },
   {
@@ -310,6 +300,45 @@
       },
       {
         "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "data_id",
+        "type": "uint256"
+      }
+    ],
+    "name": "BidTaken",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "DC_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "data_id",
+        "type": "uint256"
+      }
+    ],
+    "name": "RevealPhaseStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "DC_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "name": "DC_node_id",
         "type": "uint256"
       },
@@ -347,11 +376,16 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "x",
+        "name": "DC_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "data_id",
         "type": "uint256"
       }
     ],
-    "name": "XwasSet",
+    "name": "OfferCanceled",
     "type": "event"
   },
   {
@@ -453,8 +487,8 @@
     "name": "getOfferStatus",
     "outputs": [
       {
-        "name": "isOfferFinal",
-        "type": "bool"
+        "name": "offerStatus",
+        "type": "uint8"
       }
     ],
     "payable": false,
@@ -551,12 +585,8 @@
         "type": "uint256"
       },
       {
-        "name": "active",
-        "type": "bool"
-      },
-      {
-        "name": "finalized",
-        "type": "bool"
+        "name": "bidding_phase",
+        "type": "uint8"
       }
     ],
     "payable": false,

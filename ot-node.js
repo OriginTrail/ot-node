@@ -53,6 +53,7 @@ class OTNode {
 
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
 
         // Loading config data
         try {
@@ -133,6 +134,13 @@ class OTNode {
         }).catch((e) => {
             console.log(e);
         });
+
+        // Starting event listener on Blockchain
+        log.info('Starting blockchain event listener');
+        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        setInterval(() => {
+            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        }, 3000);
     }
 
     /**

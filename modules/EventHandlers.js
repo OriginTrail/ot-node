@@ -14,6 +14,7 @@ const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
+const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -104,7 +105,7 @@ globalEmitter.on('replication-request', (request, response) => {
         });
     });
 
-    response.send({ status: 'succes' });
+    response.send({ status: 'success' });
 });
 
 globalEmitter.on('payload-request', (request) => {
@@ -174,6 +175,9 @@ globalEmitter.on('offer-ended', (message) => {
     log.info(`Offer ${scId} has ended.`);
 });
 
+globalEmitter.on('AddedBid', (message) => {
+
+});
 
 globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
