@@ -17,8 +17,6 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
-const MockSmartContract = require('./modules/temp/MockSmartContract');
-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -85,7 +83,7 @@ class OTNode {
         }
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
-        if (process.env !== 'test') {
+        if (process.env.NODE_ENV !== 'test') {
             try {
                 const etherBalance = deasync(Utilities.getBalanceInEthers());
                 if (etherBalance <= 0) {
@@ -116,7 +114,6 @@ class OTNode {
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
-        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {

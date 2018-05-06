@@ -9,7 +9,17 @@ module.exports = {
         port: process.env.DB_PORT,
         max_path_length: 1000,
         database: process.env.DB_DATABASE,
-    }], {}),
+    },
+    {
+        database_system: 'neo4j',
+        username: process.env.NEO_USERNAME,
+        password: process.env.NEO_PASSWORD,
+        host: process.env.NEO_HOST,
+        port: process.env.NEO_PORT,
+        max_path_length: 1000,
+        database: process.env.NEO_DATABASE,
+    },
+    ], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('graph_database', null, {}),
 };
