@@ -42,11 +42,9 @@ describe('Neo4j module ', async () => {
         });
     });
     it('pass regular for vertex', async () => {
-        await testDb.addDocument('ot_vertices', vertexOne).then(() => {
-            testDb.findVertices({ _key: vertexOne._key }).then((result) => {
-                assert.equal(stringify(vertexOne), stringify(result[0]));
-            });
-        });
+        await testDb.addDocument('ot_vertices', vertexOne);
+        const result = await testDb.findVertices({ _key: vertexOne._key });
+        assert.equal(stringify(vertexOne), stringify(result[0]));
     });
     it('.findTraversalPath() with regular vertices', async () => {
         await testDb.addDocument('ot_vertices', vertexOne);

@@ -319,7 +319,8 @@ class Neo4jDB {
         for (const record of result.records) {
             nodePromises.push(this._fetchVertex('_key', record._fields[0].properties._key));
         }
-        return Promise.all(nodePromises);
+        result = await Promise.all(nodePromises);
+        return result;
     }
 
     /**
