@@ -229,6 +229,10 @@ function parseAttributes(attributes, ignorePattern) {
     return output;
 }
 
+function ignorePattern(attribute, ignorePattern) {
+    return attribute.replace(ignorePattern, '');
+}
+
 function parseLocations(vocabularyElementList) {
     /*
         { type: 'urn:ot:mda:location',
@@ -243,7 +247,7 @@ function parseLocations(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const location = {
             type: 'location',
-            id: element.id,
+            id: ignorePattern(element.id, 'urn:ot:mda:location:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: arrayze(element.children),
             // TODO: Add participant ID.
@@ -330,6 +334,46 @@ function parseBatches(vocabularyElementList) {
     return batches;
 }
 
+/**
+ * Create event ID
+ * @param senderId  Sender ID
+ * @param event     Event data
+ * @return {string}
+ */
+function getEventId(senderId, event) {
+    if (arrayze(event.eventTime).length === 0) {
+        throw Error('Missing eventTime element for event!');
+    }
+    const event_time = event.eventTime;
+
+    const event_time_validation = dateTimeValidation(event_time);
+    if (!event_time_validation) {
+        throw Error('Invalid date and time format for event time!');
+    }
+    if (typeof event_time !== 'string') {
+        throw Error('Multiple eventTime elements found!');
+    }
+    if (arrayze(event.eventTimeZoneOffset).length === 0) {
+        throw Error('Missing event_time_zone_offset element for event!');
+    }
+
+    const event_time_zone_offset = event.eventTimeZoneOffset;
+    if (typeof event_time_zone_offset !== 'string') {
+        throw Error('Multiple event_time_zone_offset elements found!');
+    }
+
+    let eventId = `${senderId}:${event_time}Z${event_time_zone_offset}`;
+    if (arrayze(event.baseExtension).length > 0) {
+        const baseExtension_element = event.baseExtension;
+
+        if (arrayze(baseExtension_element.eventID).length === 0) {
+            throw Error('Missing eventID in baseExtension!');
+        }
+        eventId = baseExtension_element.eventID;
+    }
+    return eventId;
+}
+
 async function parseGS1(gs1XmlFile, callback) {
     const { db } = GSInstance;
     const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
@@ -362,16 +406,19 @@ async function parseGS1(gs1XmlFile, callback) {
             let products = [];
             let batches = [];
             const events = [];
+            const eventEdges = [];
+            const locationEdges = [];
             const locationVertices = [];
             const actorsVertices = [];
             const productVertices = [];
             const batchesVertices = [];
             const eventVertices = [];
 
+            const senderId = senderElement['sbdh:Identifier']._;
             const sender = {
                 sender_id: {
                     identifiers: {
-                        sender_id: senderElement['sbdh:Identifier']._,
+                        sender_id: senderId,
                         uid: senderElement['sbdh:Identifier']._, // TODO: Maybe not needed anymore.
                     },
                     data: sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
@@ -438,9 +485,9 @@ async function parseGS1(gs1XmlFile, callback) {
                 }
             }
 
-            if (eventListElement.extensions && eventListElement.extensions.TransformationEvent) {
+            if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
                 for (const transformationEvent of
-                    arrayze(eventListElement.extensions.TransformationEvent)) {
+                    arrayze(eventListElement.extension.TransformationEvent)) {
                     events.push(transformationEvent);
                 }
             }
@@ -462,6 +509,9 @@ async function parseGS1(gs1XmlFile, callback) {
             // _from: location key _to: ObjectClass_location
 
 
+            const locationMappings = {
+            };
+
             for (const location of locations) {
                 const data = {
                     object_class_id: objectClassLocationId,
@@ -469,11 +519,39 @@ async function parseGS1(gs1XmlFile, callback) {
                     vertex_type: 'LOCATION',
                 };
 
+                const locationKey = md5(`business_location_${senderId}_${location.id}_${md5(data)}`);
                 locationVertices.push({
-                    _key: md5(`business_location_${sender.sender_id}_${data}`),
+                    _key: locationKey,
                     _id: location.id,
                     data,
                 });
+                locationMappings[`business_location_${senderId}_${location.id}`] = locationKey;
+
+                const { child_locations } = location;
+                if (child_locations.length > 0) {
+                    for (const childId of child_locations[0].id) {
+                        const child = {
+                            id: childId,
+                            data: {
+                                // TODO add data
+                            },
+                        };
+
+                        locationVertices.push({
+                            _key: md5(`child_business_location_${senderId}_${child.id}_${md5(child.data)}`),
+                            _id: location.id,
+                            data,
+                        });
+                        locationMappings[`business_location_${senderId}_${child.id}`] = `business_location_${senderId}_${child.id}_${child.data}`;
+
+                        locationEdges.push({
+                            _key: md5(`business_location_${senderId}_${location.id}_${child.id}_${child.data}`),
+                            _from: `ot_vertices/${md5(`child_business_location_${senderId}_${child.id}_${md5(child.data)}`)}`,
+                            _to: `ot_vertices/${locationKey}`,
+                            edge_type: 'CHILD_BUSINESS_LOCATION',
+                        });
+                    }
+                }
             }
 
             for (const actor of actors) {
@@ -525,13 +603,13 @@ async function parseGS1(gs1XmlFile, callback) {
                 // TODO: Support all other types.
                 if (event.action && event.action === 'OBSERVE') {
                     return objectEventObservationId;
-                } else  {
-                    return objectEventTransformationId;
                 }
+                return objectEventTransformationId;
             }
 
+            // TODO handle extensions
             for (const event of events) {
-                // Do stuff for events. Create edges.
+                const eventId = getEventId(senderId, event);
                 const data = {
                     object_class_id: getClassId(event),
                     data: event,
@@ -539,10 +617,22 @@ async function parseGS1(gs1XmlFile, callback) {
                 };
 
                 eventVertices.push({
-                    _key: md5(`event_${sender.sender_id}_${data}`),
-                    _id: event.eventTime,
+                    _key: md5(`event_${senderId}_${eventId}_${data}`),
+                    _id: eventId,
                     data,
                 });
+
+                const { bizLocation } = event;
+                if (bizLocation) {
+                    const bizLocationId = ignorePattern(bizLocation.id, 'urn:ot:mda:location:');
+                    const locationKey = locationMappings[`business_location_${senderId}_${bizLocationId}`];
+                    eventEdges.push({
+                        _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
+                        _from: `ot_vertices/${md5(`event_${senderId}_${eventId}_${data}`)}`,
+                        _to: `ot_vertices/${md5(locationKey)}`,
+                        edge_type: 'AT',
+                    });
+                }
             }
 
             await db.createCollection('ot_vertices');
@@ -557,6 +647,10 @@ async function parseGS1(gs1XmlFile, callback) {
 
             await Promise.all(allVertices.map(vertex => db.addDocument('ot_vertices', vertex)));
 
+            const allEdges = locationEdges
+                .concat(eventEdges);
+
+            await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
             console.log('Done parsing and importing.');
         },
     );
