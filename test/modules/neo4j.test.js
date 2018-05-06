@@ -2,6 +2,7 @@ const {
     describe, before, after, it, afterEach,
 } = require('mocha');
 const { assert, expect } = require('chai');
+const stringify = require('json-stable-stringify');
 
 const Neo4j = require('../../modules/Database/Neo4j.js');
 const databaseData = require('./test_data/database-data.js');
@@ -43,7 +44,7 @@ describe('Neo4j module ', async () => {
     it('pass regular for vertex', async () => {
         await testDb.addDocument('ot_vertices', vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
-                assert.deepEqual(vertexOne, result[0]);
+                assert.equal(stringify(vertexOne), stringify(result[0]));
             });
         });
     });
