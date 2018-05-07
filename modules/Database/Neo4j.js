@@ -238,15 +238,18 @@ class Neo4jDB {
     }
 
     /**
-     * Gets max vertex_key where uid is the same and has the max version
+     * Gets max where uid is the same and has the max version
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    async getVertexKeyWithMaxVersion(uid) {
+    async getVertexWithMaxVersion(uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n._key AS v ORDER BY v DESC LIMIT 1', { uid });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n ORDER BY n.version DESC LIMIT 1', { uid });
         session.close();
-        return result.records[0]._fields[0];
+        if (result.records.length > 0) {
+            return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
+        }
+        return null;
     }
 
     /**
@@ -395,7 +398,20 @@ class Neo4jDB {
             return [];
         }
         const session = this.driver.session();
-        return session.run(`MATCH(n) WHERE n._key = '${document._key}' SET n.imports = n.imports + ${importNumber} return n`);
+        const result = await session.run('MATCH (n) WHERE n._key = $_key RETURN n', {
+            _key: document._key,
+        });
+        let { imports } = result.records[0]._fields[0].properties;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        await session.run('MATCH(n) WHERE n._key = $_key SET n.imports = $imports return n', {
+            _key: document._key,
+            imports,
+        });
+        session.close();
     }
 
     /**

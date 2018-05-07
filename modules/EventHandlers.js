@@ -32,25 +32,40 @@ globalEmitter.on('trail', (data) => {
         data.response.send(500); // TODO rethink about status codes
     });
 });
-globalEmitter.on('gs1-import-request', (data) => {
-    importer.importXMLgs1(data.filepath).then((response) => {
-        const {
-            data_id,
-            root_hash,
-            total_documents,
-            vertices,
-        } = response;
+globalEmitter.on('gs1-import-request', async (data) => {
+    const response = await importer.importXMLgs1(data.filepath);
 
-        Storage.connect().then(() => {
-            Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
-                .then((data_info) => {
-                    DCService.createOffer(data_id, root_hash, total_documents, vertices);
-                });
-        }).catch((err) => {
-            log.warn(err);
+    if (response === null) {
+        data.response.send({
+            status: 500,
+            message: 'Failed to parse XML.',
         });
-    }).catch((e) => {
-        console.log(e);
+        return;
+    }
+
+    const {
+        data_id,
+        root_hash,
+        total_documents,
+        vertices,
+    } = response;
+
+    try {
+        await Storage.connect();
+        await Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents]);
+        await DCService.createOffer(data_id, root_hash, total_documents, vertices);
+    } catch (error) {
+        log.error(`Failed to start offer. Error ${error}.`);
+        data.response.send({
+            status: 500,
+            message: 'Failed to parse XML.',
+        });
+        return;
+    }
+
+    data.response.send({
+        status: 200,
+        message: 'Ok.',
     });
 });
 

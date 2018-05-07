@@ -89,23 +89,6 @@ describe('GraphStorage module', () => {
     });
 
 
-    it('attempt to create doc Collection on non existing db should fail', async () => {
-        try {
-            await myInvalidGraphStorage.createCollection(documentCollectionName);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
-    });
-
-    it('attempt to create edge Collection on non existing db should fail', async () => {
-        try {
-            await myInvalidGraphStorage.createEdgeCollection(edgeCollectionName);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
-    });
-
-
     it('attempt to updateDocumentImports on non existing db should fail', async () => {
         try {
             await myInvalidGraphStorage.updateDocumentImports(
@@ -116,35 +99,6 @@ describe('GraphStorage module', () => {
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Cannot read property \'updateDocumentImports\' of undefined') >= 0);
         }
-    });
-
-    it('.createCollection() should create Document Collection', async () => {
-        // first time creating Document Collection
-        await myGraphStorage.createCollection(documentCollectionName).then((response) => {
-            assert.equal(response, 'Collection created');
-        });
-        const myCollection = myGraphStorage.db.db.collection(documentCollectionName);
-        const data = await myCollection.get();
-        assert.equal(data.code, 200);
-        assert.isFalse(data.isSystem);
-        assert.equal(data.name, documentCollectionName);
-        const info = await myGraphStorage.db.db.listCollections();
-        assert.equal(info.length, 1);
-    });
-
-    it('.createEdgeCollection() should create Edge Collection', async () => {
-        // first time creating Edge Collection
-        await myGraphStorage.createEdgeCollection(edgeCollectionName).then((response) => {
-            assert.equal(response, 'Edge collection created');
-        });
-
-        const myCollection = myGraphStorage.db.db.collection(edgeCollectionName);
-        const data = await myCollection.get();
-        assert.equal(data.code, 200);
-        assert.isFalse(data.isSystem);
-        assert.equal(data.name, edgeCollectionName);
-        const info = await myGraphStorage.db.db.listCollections();
-        assert.equal(info.length, 2);
     });
 
     it('.addVertex() should save vertex in Document Collection', () => {
