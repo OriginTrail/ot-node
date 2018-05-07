@@ -17,6 +17,14 @@ module.exports = {
         key: 'dh_max_stake',
         value: '1000',
     },
+    {
+        key: 'remote_control_enabled',
+        value: '1',
+    },
+    {
+        key: 'remote_control_port',
+        value: process.env.NODE_REMOTE_CONTROL_PORT,
+    },
     ], {}),
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
 };

@@ -71,18 +71,19 @@
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
     "restify": "^7.1.0",
+    "restify-cors-middleware": "^1.1.0",
     "sequelize": "^4.37.6",
     "sequelize-cli": "^4.0.0",
+    "socket.io": "^2.1.0",
     "socks": "^2.1.6",
     "solidity-sha3": "^0.4.1",
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.0",
+    "superagent": "^3.8.3",
     "utf8-length": "latest",
     "validator": "^9.4.1",
-    "superagent": "^3.8.3",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19",
-    "utf8-length": "latest"
+    "xml2js": "^0.4.19"
   }
 }
