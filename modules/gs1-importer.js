@@ -5,7 +5,8 @@ const deasync = require('deasync-promise');
 const xsd = require('libxml-xsd');
 
 const ZK = require('./ZK');
-const zk = new ZK;
+
+const zk = new ZK();
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
@@ -190,6 +191,12 @@ function arrayze(value) {
         return [].concat(value);
     }
     return [];
+}
+
+function copyProperties(from, to) {
+    for (const property in from) {
+        to[property] = from[property];
+    }
 }
 
 function parseAttributes(attributes, ignorePattern) {
@@ -402,15 +409,6 @@ async function parseGS1(gs1XmlFile) {
                 vertex_type: 'SENDER',
             };
 
-            const receiver = {
-                identifiers: {
-                    id: receiverElement['sbdh:Identifier']._,
-                    uid: receiverElement['sbdh:Identifier']._,
-                },
-                data: sanitize(receiverElement['sbdh:ContactInformation'], {}, ['sbdh:']),
-                vertex_type: 'RECEIVER',
-            };
-
             // Check for vocabularies.
             const vocabularyElements = arrayze(vocabularyListElement.Vocabulary);
 
@@ -460,14 +458,14 @@ async function parseGS1(gs1XmlFile) {
 
 
             // pre-fetch from DB.
-            const objectClassLocationId = db.getClassId('Location');
-            const objectClassActorId = db.getClassId('Actor');
-            const objectClassProductId = db.getClassId('Product');
-            const objectClassBatchId = db.getClassId('Batch');
-            const objectEventTransportId = db.getClassId('Transport');
-            const objectEventTransformationId = db.getClassId('Transformation');
-            const objectEventObservationId = db.getClassId('Observation');
-            const objectEventOwnershipId = db.getClassId('Ownership');
+            const objectClassLocationId = await db.getClassId('Location');
+            const objectClassActorId = await db.getClassId('Actor');
+            const objectClassProductId = await db.getClassId('Product');
+            const objectClassBatchId = await db.getClassId('Batch');
+            const objectEventTransportId = await db.getClassId('Transport');
+            const objectEventTransformationId = await db.getClassId('Transformation');
+            const objectEventObservationId = await db.getClassId('Observation');
+            const objectEventOwnershipId = await db.getClassId('Ownership');
 
             for (const location of locations) {
                 const identifiers = {
@@ -478,11 +476,14 @@ async function parseGS1(gs1XmlFile) {
                     object_class_id: objectClassLocationId,
                 };
 
+                copyProperties(location.attributes, data);
+
                 const locationKey = md5(`business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 locationVertices.push({
                     _key: locationKey,
                     identifiers,
                     data,
+                    vertex_type: 'OBJECT',
                 });
 
                 const { child_locations } = location;
@@ -493,7 +494,6 @@ async function parseGS1(gs1XmlFile) {
                     };
                     const data = {
                         parent_id: location.id,
-                        // TODO add data
                     };
 
                     const childLocationKey = md5(`child_business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
@@ -514,45 +514,64 @@ async function parseGS1(gs1XmlFile) {
             }
 
             for (const actor of actors) {
-                const data = {
-                    object_class_id: objectClassActorId,
-                    data: actor,
-                    vertex_type: 'ACTOR',
+                const identifiers = {
+                    id: actor.id,
+                    uid: actor.id,
                 };
 
+                const data = {
+                    object_class_id: objectClassActorId,
+                };
+
+                copyProperties(actor.attributes, data);
+
                 actorsVertices.push({
-                    _key: md5(`actor_${senderId}_${data}`),
+                    _key: md5(`actor_${senderId}_${md5(identifiers)}_${md5(data)}`),
                     _id: actor.id,
+                    identifiers,
                     data,
+                    vertex_type: 'ACTOR',
                 });
             }
 
             for (const product of products) {
-                const data = {
-                    object_class_id: objectClassProductId,
-                    data: product,
-                    vertex_type: 'PRODUCT',
+                const identifiers = {
+                    id: product.id,
+                    uid: product.id,
                 };
 
+                const data = {
+                    object_class_id: objectClassProductId,
+                };
+
+                copyProperties(product.attributes, data);
+
                 productVertices.push({
-                    _key: md5(`product_${senderId}_${data}`),
+                    _key: md5(`product_${senderId}_${md5(identifiers)}_${md5(data)}`),
                     _id: product.id,
                     data,
+                    vertex_type: 'PRODUCT',
                 });
             }
 
             for (const batch of batches) {
-                const data = {
-                    object_class_id: objectClassBatchId,
-                    data: batch,
-                    vertex_type: 'BATCH',
+                const identifiers = {
+                    id: batch.id,
+                    uid: batch.id,
                 };
 
-                const key = md5(`batch_${senderId}_${data}`);
+                const data = {
+                    object_class_id: objectClassBatchId,
+                };
+
+                copyProperties(batch.attributes, data);
+
+                const key = md5(`batch_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 batchesVertices.push({
                     _key: key,
                     _id: batch.id,
                     data,
+                    vertex_type: 'BATCH',
                 });
             }
 
@@ -569,7 +588,6 @@ async function parseGS1(gs1XmlFile) {
 
             // TODO handle extensions
             for (const event of events) {
-
                 const eventId = getEventId(senderId, event);
 
                 const { extension } = event;
@@ -590,10 +608,11 @@ async function parseGS1(gs1XmlFile) {
 
                 const data = {
                     object_class_id: getClassId(event),
-                    data: event,
                     vertex_type: 'EVENT',
                     categories: eventCategories,
                 };
+
+                copyProperties(event, data);
 
                 const eventKey = md5(`event_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 eventVertices.push({
@@ -705,8 +724,10 @@ async function parseGS1(gs1XmlFile) {
                 }
 
 
-                let inputQuantities = [{object: 'abcd', quantity: 3, unit: 'kg'},{object: 'efgh', quantity: 13, unit: 'kg'},{object: 'ijkl', quantity: 2, unit: 'kg'}];
-                let outputQuantities = [{object: 'mnop', quantity: 4, unit: 'kg'},{object: 'qrst', quantity: 11, r:16, unit: 'kg'},{object: 'uvwx', quantity: 2, unit: 'kg'}];
+                const inputQuantities = [{ object: 'abcd', quantity: 3, unit: 'kg' }, { object: 'efgh', quantity: 13, unit: 'kg' }, { object: 'ijkl', quantity: 2, unit: 'kg' }];
+                const outputQuantities = [{ object: 'mnop', quantity: 4, unit: 'kg' }, {
+                    object: 'qrst', quantity: 11, r: 16, unit: 'kg',
+                }, { object: 'uvwx', quantity: 2, unit: 'kg' }];
 
                 const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
 
