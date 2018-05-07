@@ -377,22 +377,7 @@ function getEventId(senderId, event) {
     return eventId;
 }
 
-function getEventCategory(event) {
-    switch (event.extension.extension.OTEventClass) {
-    case 'ot:events:Observation':
-        return 'OBSERVATION';
-    case 'ot:events:Transformation':
-        return 'TRANSFORMATION';
-    case 'ot:events:Transport':
-        return 'TRANSPORT';
-    case 'ot:events:Ownership':
-        return 'OWNERSHIP';
-    default:
-        throw Error(`Unknown or unimplemented event class '${event.extension.extension.OTEventClass}'`);
-    }
-}
-
-async function parseGS1(gs1XmlFile, callback) {
+async function parseGS1(gs1XmlFile) {
     const { db } = GSInstance;
     const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
     const xsdFileBuffer = fs.readFileSync('./importers/EPCglobal-epcis-masterdata-1_2.xsd');
@@ -621,7 +606,7 @@ async function parseGS1(gs1XmlFile, callback) {
                 // event.kurac.palac.input
 
                 const eventId = getEventId(senderId, event);
-                const eventCategory = getEventCategory(event);
+                const eventCategories = arrayze(event.extension).map(obj => ignorePattern(obj.OTEventClass, 'ot:event:'));
                 const identifiers = {
                     id: eventId,
                     uid: eventId,
@@ -630,7 +615,7 @@ async function parseGS1(gs1XmlFile, callback) {
                     object_class_id: getClassId(event),
                     data: event,
                     vertex_type: 'EVENT',
-                    category: eventCategory,
+                    categories: eventCategories,
                 };
 
                 const eventKey = md5(`event_${senderId}_${md5(identifiers)}_${md5(data)}`);
@@ -665,8 +650,8 @@ async function parseGS1(gs1XmlFile, callback) {
                 }
 
                 if (event.inputEPCList) {
-                    for (const inputEpc of arrayze(event.inputEPCList)) {
-                        const batchId = ignorePattern(inputEpc.epc, 'urn:epc:id:sgtin:');
+                    for (const inputEpc of arrayze(event.inputEPCList.epc)) {
+                        const batchId = ignorePattern(inputEpc, 'urn:epc:id:sgtin:');
                         const batchKey = batchMappingsKeys[batchId];
 
                         eventEdges.push({
@@ -693,8 +678,8 @@ async function parseGS1(gs1XmlFile, callback) {
                 }
 
                 if (event.outputEPCList) {
-                    for (const outputEpc of arrayze(event.outputEPCList)) {
-                        const batchId = ignorePattern(outputEpc.epc, 'urn:epc:id:sgtin:');
+                    for (const outputEpc of arrayze(event.outputEPCList.epc)) {
+                        const batchId = ignorePattern(outputEpc, 'urn:epc:id:sgtin:');
                         const batchKey = batchMappingsKeys[batchId];
 
                         eventEdges.push({
