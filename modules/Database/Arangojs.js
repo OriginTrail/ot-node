@@ -213,23 +213,27 @@ class ArangoJS {
     }
 
     /**
-     * Gets max vertex_key where uid is the same and has the max version
+     * Gets max where uid is the same and has the max version
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    getVertexKeyWithMaxVersion(uid) {
+    getVertexWithMaxVersion(uid) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices ' +
                 'FILTER v.identifiers.uid == @uid ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
-                'RETURN v.vertex_key';
+                'RETURN v';
             const params = {
                 uid,
             };
 
             this.runQuery(queryString, params).then((result) => {
-                resolve(result);
+                if (result.length > 0) {
+                    resolve(result[0]);
+                    return;
+                }
+                resolve(null);
             }).catch((err) => {
                 reject(err);
             });
