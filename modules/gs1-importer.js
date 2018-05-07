@@ -440,7 +440,6 @@ async function processXML(err, result) {
     const objectClassLocationId = await db.getClassId('Location');
     const objectClassActorId = await db.getClassId('Actor');
     const objectClassProductId = await db.getClassId('Product');
-    const objectClassBatchId = await db.getClassId('Batch');
     const objectEventTransportId = await db.getClassId('Transport');
     const objectEventTransformationId = await db.getClassId('Transformation');
     const objectEventObservationId = await db.getClassId('Observation');
@@ -540,7 +539,6 @@ async function processXML(err, result) {
         };
 
         const data = {
-            object_class_id: objectClassBatchId,
         };
 
         copyProperties(batch.attributes, data);
@@ -839,8 +837,50 @@ async function processXML(err, result) {
     const promises = allVertices.map(vertex => db.addDocument('ot_vertices', vertex));
     await Promise.all(promises);
 
+    const classObjectEdges = [];
+
+    actorsVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex.id}_${objectClassActorId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassActorId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    productVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex.id}_${objectClassProductId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassProductId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    // batchesVertices.forEach((vertex) => {
+    //     classObjectEdges.push({
+    //         _key: md5(`is_${senderId}_${vertex.id}_${objectClassBatchId}`),
+    //         _from: `ot_vertices/${vertex._key}`,
+    //         _to: `ot_vertices/${objectClassBatchId}`,
+    //         edge_type: 'IS',
+    //     });
+    // });
+
+    eventVertices.forEach((vertex) => {
+        vertex.data.categories.forEach(async (category) => {
+            const classKey = await db.getClassId(category);
+            classObjectEdges.push({
+                _key: md5(`is_${senderId}_${vertex.id}_${classKey}`),
+                _from: `ot_vertices/${vertex._key}`,
+                _to: `ot_vertices/${classKey}`,
+                edge_type: 'IS',
+            });
+        });
+    });
+
     const allEdges = locationEdges
-        .concat(eventEdges);
+        .concat(eventEdges)
+        .concat(classObjectEdges);
 
     for (const edge of allEdges) {
         const to = edge._to;
