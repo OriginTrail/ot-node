@@ -596,121 +596,6 @@ async function processXML(err, result) {
             uid: eventId,
         };
 
-        const data = {
-            object_class_id: getClassId(event),
-            vertex_type: 'EVENT',
-            categories: eventCategories,
-        };
-
-        copyProperties(event, data);
-
-        const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
-        eventVertices.push({
-            _key: eventKey,
-            _id: eventId,
-            data,
-        });
-
-        if (extension.extension) {
-            if (extension.extension.sourceList) {
-                const sources = arrayze(extension.extension.sourceList.source._);
-                for (const source of sources) {
-                    eventEdges.push({
-                        _key: md5(`source_${senderId}_${eventId}_${source}`),
-                        _from: `ot_vertices/${eventKey}`,
-                        _to: `${EDGE_KEY_TEMPLATE + source}`,
-                        edge_type: 'SOURCE',
-                    });
-                }
-            }
-
-            if (extension.extension.destinationList) {
-                const destinations = arrayze(extension.extension.destinationList.destination._);
-                for (const destination of destinations) {
-                    eventEdges.push({
-                        _key: md5(`destination_${senderId}_${eventId}_${destination}`),
-                        _from: `ot_vertices/${eventKey}`,
-                        _to: `${EDGE_KEY_TEMPLATE + destination}`,
-                        edge_type: 'DESTINATION',
-                    });
-                }
-            }
-        }
-
-
-        const { bizLocation } = event;
-        if (bizLocation) {
-            const bizLocationId = bizLocation.id;
-            eventEdges.push({
-                _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
-                _from: `ot_vertices/${eventKey}`,
-                _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
-                edge_type: 'AT',
-            });
-        }
-
-        if (event.readPoint) {
-            const locationReadPoint = event.readPoint.id;
-            eventEdges.push({
-                _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
-                _from: `ot_vertices/${eventKey}`,
-                _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
-                edge_type: 'AT',
-            });
-        }
-
-        if (event.inputEPCList) {
-            for (const inputEpc of arrayze(event.inputEPCList.epc)) {
-                const batchId = inputEpc;
-
-                eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
-                    _from: `ot_vertices/${eventKey}`,
-                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
-                    edge_type: 'INPUT_BATCH',
-                });
-            }
-        }
-
-        if (event.childEPCs) {
-            for (const inputEpc of arrayze(event.childEPCs)) {
-                const batchId = inputEpc.epc;
-
-                eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
-                    _from: `ot_vertices/${eventKey}`,
-                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
-                    edge_type: 'CHILD_BATCH',
-                });
-            }
-        }
-
-        if (event.outputEPCList) {
-            for (const outputEpc of arrayze(event.outputEPCList.epc)) {
-                const batchId = outputEpc;
-
-                eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
-                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
-                    _to: `ot_vertices/${eventKey}`,
-                    edge_type: 'OUTPUT_BATCH',
-                });
-            }
-        }
-
-
-        if (event.parentID) {
-            const parentId = event.parentID;
-            // TODO: fetch from db.
-
-            // eventEdges.push({
-            //     _key: md5(`at_${senderId}_${eventId}_${biz_location}`),
-            //     _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
-            //     _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-            //     edge_type: 'PARENT_BATCH',
-            // });
-        }
-
         let inputQuantities = [];
         const outputQuantities = [];
         if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')
@@ -835,6 +720,121 @@ async function processXML(err, result) {
             }
         }
         event.quantities = quantities;
+
+        const data = {
+            object_class_id: getClassId(event),
+            vertex_type: 'EVENT',
+            categories: eventCategories,
+        };
+
+        copyProperties(event, data);
+
+        const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+        eventVertices.push({
+            _key: eventKey,
+            data,
+            identifiers,
+        });
+
+        if (extension.extension) {
+            if (extension.extension.sourceList) {
+                const sources = arrayze(extension.extension.sourceList.source._);
+                for (const source of sources) {
+                    eventEdges.push({
+                        _key: md5(`source_${senderId}_${eventId}_${source}`),
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + source}`,
+                        edge_type: 'SOURCE',
+                    });
+                }
+            }
+
+            if (extension.extension.destinationList) {
+                const destinations = arrayze(extension.extension.destinationList.destination._);
+                for (const destination of destinations) {
+                    eventEdges.push({
+                        _key: md5(`destination_${senderId}_${eventId}_${destination}`),
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + destination}`,
+                        edge_type: 'DESTINATION',
+                    });
+                }
+            }
+        }
+
+
+        const { bizLocation } = event;
+        if (bizLocation) {
+            const bizLocationId = bizLocation.id;
+            eventEdges.push({
+                _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
+                _from: `ot_vertices/${eventKey}`,
+                _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
+                edge_type: 'AT',
+            });
+        }
+
+        if (event.readPoint) {
+            const locationReadPoint = event.readPoint.id;
+            eventEdges.push({
+                _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
+                _from: `ot_vertices/${eventKey}`,
+                _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
+                edge_type: 'AT',
+            });
+        }
+
+        if (event.inputEPCList) {
+            for (const inputEpc of arrayze(event.inputEPCList.epc)) {
+                const batchId = inputEpc;
+
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'INPUT_BATCH',
+                });
+            }
+        }
+
+        if (event.childEPCs) {
+            for (const inputEpc of arrayze(event.childEPCs)) {
+                const batchId = inputEpc.epc;
+
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'CHILD_BATCH',
+                });
+            }
+        }
+
+        if (event.outputEPCList) {
+            for (const outputEpc of arrayze(event.outputEPCList.epc)) {
+                const batchId = outputEpc;
+
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'OUTPUT_BATCH',
+                });
+            }
+        }
+
+
+        if (event.parentID) {
+            const parentId = event.parentID;
+            // TODO: fetch from db.
+
+            // eventEdges.push({
+            //     _key: md5(`at_${senderId}_${eventId}_${biz_location}`),
+            //     _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
+            //     _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
+            //     edge_type: 'PARENT_BATCH',
+            // });
+        }
     }
 
     const allVertices =
