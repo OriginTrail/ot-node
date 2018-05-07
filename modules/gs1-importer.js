@@ -830,7 +830,7 @@ async function parseGS1(gs1XmlFile) {
                     }
                 }
                 const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-                for (const ®quantity of quantities.inputs.concat(quantities.outputs)) {
+                for (const quantity of quantities.inputs.concat(quantities.outputs)) {
                     if (quantity.added) {
                         delete quantity.added;
                         let batchFound = false;
