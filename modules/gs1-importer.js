@@ -758,7 +758,11 @@ async function parseGS1(gs1XmlFile) {
             }
 
             await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
+
             console.log('Done parsing and importing.');
+
+            const import_id = Date.now();
+            return { vertices: allVertices, edges: allEdges, import_id };
         },
     );
 }
