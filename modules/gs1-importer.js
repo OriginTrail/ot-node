@@ -1,15 +1,12 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
-const deasync = require('deasync-promise');
 const xsd = require('libxml-xsd');
 
 const ZK = require('./ZK');
 
 const zk = new ZK();
 const GSInstance = require('./GraphStorageInstance');
-const utilities = require('./Utilities');
-const async = require('async');
 const validator = require('validator');
 
 function sanitize(old_obj, new_obj, patterns) {
@@ -371,6 +368,7 @@ async function processXML(err, result) {
     const locationVertices = [];
     const actorsVertices = [];
     const productVertices = [];
+    const batchEdges = [];
     const batchesVertices = [];
     const eventVertices = [];
 
@@ -552,6 +550,14 @@ async function processXML(err, result) {
             },
             data,
             vertex_type: 'BATCH',
+        });
+
+        const productId = ignorePattern(batch.attributes.productid, 'urn:ot:mda:product:id:');
+        batchEdges.push({
+            _key: md5(`child business_location_${senderId}_${batch.id}_${productId}`),
+            _from: `ot_vertices/${key}`,
+            _to: `${EDGE_KEY_TEMPLATE + productId}`,
+            edge_type: 'IS',
         });
     }
 
