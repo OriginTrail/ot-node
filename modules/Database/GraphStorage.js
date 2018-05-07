@@ -176,44 +176,6 @@ class GraphStorage {
     }
 
     /**
-     * Create document collection, if collection does not exist
-     * @param collectionName
-     * @return {Promise}
-     */
-    createCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.createCollection(collectionName).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
-     * Creates edge collection, if collection does not exist
-     * @param collectionName
-     * @return {Promise}
-     */
-    createEdgeCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.createEdgeCollection(collectionName).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Get list of vertices by import ID
      * @param importId   Import ID
      * @return {Promise}
