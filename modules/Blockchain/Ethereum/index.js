@@ -3,6 +3,8 @@ const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const globalEvents = require('../../GlobalEvents');
+const SystemStorage = require('../../Database/SystemStorage');
+const Storage = require('../../Storage');
 
 const { globalEmitter } = globalEvents;
 
@@ -251,34 +253,80 @@ class Ethereum {
     }
 
     /**
-     * Subscribe to a particular event
-     * @param contractName   Ethereum contract instance
-     * @param event          Event name
-     * @param eventOpts      Event options (filter, range, etc.)
-     * @param callback       Callback to be executed on success/error (callback returns stop flag)
-     * @param periodMills    Repeating period for checking past events
-     * @param untilMills     Subscription termination
+     * Gets all past events for the contract
+     * @param contractName
      */
-    subscribeToEvent(contractName, event, eventOpts, callback, periodMills, untilMills) {
-        const looper = setInterval(() => {
-            if (untilMills < Date.now()) {
-                log.trace('Looper for event is going to be unsubscribed');
-                clearTimeout(looper);
-                return;
-            }
-            this.contractsByName[contractName].getPastEvents(event, eventOpts).then((events) => {
-                const stop = callback(events);
-                if (stop) {
-                    clearTimeout(looper);
-                }
+    getAllPastEvents(contractName) {
+        Utilities.getBlockNumberFromWeb3().then((currentBlockHex) => {
+            const currentBlock = Utilities.hexToNumber(currentBlockHex);
+            this.contractsByName[contractName].getPastEvents('allEvents', {
+                fromBlock: currentBlock - 10,
+                toBlock: 'latest',
+            }).then((events) => {
+                events.forEach((event) => {
+                    // TODO: make filters - we don't need to listen all events
+                    /* eslint-disable-next-line */
+                    if (event.event === 'OfferCreated' || 1 === 1) {
+                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt) \n' +
+                          'SELECT ?, ?, ?, ?, ?, ? \n' +
+                          'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
+                            replacements: [event.event,
+                                JSON.stringify(event.returnValues),
+                                event.returnValues.data_id,
+                                event.blockNumber,
+                                Date.now(),
+                                Date.now(),
+                                event.event,
+                                JSON.stringify(event.returnValues)],
+                        }).catch((err) => {
+                            console.log(err);
+                        });
+                    }
+                });
+
+                // Delete old events
+                Storage.db.query('DELETE FROM events WHERE block < ?', {
+                    replacements: [currentBlock - 10],
+                }).catch((err) => {
+                    console.log(err);
+                });
             }).catch((err) => {
-                log.error(`Failed to get past events for ${event}`);
-                const stop = callback(null, err);
-                if (stop) {
-                    clearTimeout(looper);
-                }
+                log.error('Failed to get past events');
+                console.log(err);
             });
-        }, periodMills);
+        });
+    }
+
+    /**
+    * Subscribes to blockchain events
+    * @param event
+    * @param dataId
+    * @param params
+    * @param endMs
+    */
+    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000) {
+        return new Promise((resolve, reject) => {
+            const token = setInterval(() => {
+                Storage.models.events.findOne({
+                    where: {
+                        event,
+                        dataId,
+                        finished: null,
+                    },
+                }).then((eventData) => {
+                    if (eventData) {
+                        globalEmitter.emit(event, eventData.dataValues);
+                        eventData.finished = true;
+                        eventData.save();
+                        clearInterval(token);
+                        resolve(JSON.parse(eventData.dataValues.data));
+                    }
+                });
+            }, 2000);
+            setTimeout(() => {
+                clearInterval(token);
+            }, endMs);
+        });
     }
 
     /**
@@ -388,6 +436,25 @@ class Ethereum {
             this.biddingContractAbi, 'getBid',
             [dcWallet, dataId, bidIndex], options,
         );
+    }
+
+    /**
+    * Gets status of the offer
+    * @param dcWallet
+    * @param dataId
+    * @return {Promise<any>}
+    */
+    getOfferStatus(dcWallet, dataId) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Asking for ${dataId} offer status`);
+            this.biddingContract.methods.getOfferStatus(dcWallet, dataId).call({
+                from: dcWallet,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
     }
 
     /**

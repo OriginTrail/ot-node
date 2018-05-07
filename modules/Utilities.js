@@ -262,10 +262,10 @@ class Utilities {
     }
 
     /**
-    * Generate Self Signed SSL for Kademlia
-    * @return {Promise<any>}
-    * @private
-    */
+     * Generate Self Signed SSL for Kademlia
+     * @return {Promise<any>}
+     * @private
+     */
     static generateSelfSignedCertificate() {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
@@ -283,9 +283,9 @@ class Utilities {
     }
 
     /**
-    * Generates private extended key for identity
-    * @param kadence
-    */
+     * Generates private extended key for identity
+     * @param kadence
+     */
     static createPrivateExtendedKey(kadence) {
         if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
             fs.writeFileSync(

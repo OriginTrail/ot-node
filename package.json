@@ -79,9 +79,10 @@
     "sqlite3": "^4.0.0",
     "utf8-length": "latest",
     "validator": "^9.4.1",
-    "superagent": "^3.8.2",
+    "superagent": "^3.8.3",
     "web3": "^1.0.0-beta.33",
     "winston": "^2.4.1",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "utf8-length": "latest"
   }
 }
