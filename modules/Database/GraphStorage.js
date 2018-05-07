@@ -7,7 +7,7 @@ const log = Utilities.getLogger();
 class GraphStorage {
     constructor(selectedDatabase) {
         this.selectedDatabase = selectedDatabase;
-        this._allowedClasses = ['Location', 'Actor', 'Product', 'Batch', 'Transport',
+        this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
     }
 

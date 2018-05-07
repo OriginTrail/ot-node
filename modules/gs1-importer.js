@@ -431,14 +431,10 @@ async function processXML(err, result) {
         }
     }
 
-    // Storniraj master data.
-
-
     // pre-fetch from DB.
     const objectClassLocationId = await db.getClassId('Location');
     const objectClassActorId = await db.getClassId('Actor');
     const objectClassProductId = await db.getClassId('Product');
-    const objectClassBatchId = await db.getClassId('Batch');
     const objectEventTransportId = await db.getClassId('Transport');
     const objectEventTransformationId = await db.getClassId('Transformation');
     const objectEventObservationId = await db.getClassId('Observation');
@@ -532,13 +528,15 @@ async function processXML(err, result) {
     }
 
     for (const batch of batches) {
+        const productId = batch.attributes.productid;
+
         const identifiers = {
             id: batch.id,
             uid: batch.id,
         };
 
         const data = {
-            object_class_id: objectClassBatchId,
+            parent_id: productId,
         };
 
         copyProperties(batch.attributes, data);
@@ -554,7 +552,6 @@ async function processXML(err, result) {
             vertex_type: 'BATCH',
         });
 
-        const productId = ignorePattern(batch.attributes.productid, 'urn:ot:mda:product:id:');
         batchEdges.push({
             _key: md5(`child business_location_${senderId}_${batch.id}_${productId}`),
             _from: `ot_vertices/${key}`,
@@ -845,8 +842,41 @@ async function processXML(err, result) {
     const promises = allVertices.map(vertex => db.addDocument('ot_vertices', vertex));
     await Promise.all(promises);
 
+    const classObjectEdges = [];
+
+    actorsVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex.id}_${objectClassActorId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassActorId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    productVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex.id}_${objectClassProductId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassProductId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    eventVertices.forEach((vertex) => {
+        vertex.data.categories.forEach(async (category) => {
+            const classKey = await db.getClassId(category);
+            classObjectEdges.push({
+                _key: md5(`is_${senderId}_${vertex.id}_${classKey}`),
+                _from: `ot_vertices/${vertex._key}`,
+                _to: `ot_vertices/${classKey}`,
+                edge_type: 'IS',
+            });
+        });
+    });
+
     const allEdges = locationEdges
-        .concat(eventEdges);
+        .concat(eventEdges)
+        .concat(classObjectEdges);
 
     for (const edge of allEdges) {
         const to = edge._to;
