@@ -12,14 +12,6 @@ const utilities = require('./Utilities');
 const async = require('async');
 const validator = require('validator');
 
-// Update import data
-function updateImportNumber(collection, document, importId) {
-    const { db } = GSInstance;
-    return db.updateDocumentImports(collection, document, importId);
-}
-
-// sanitize
-
 function sanitize(old_obj, new_obj, patterns) {
     if (typeof old_obj !== 'object') { return old_obj; }
 
@@ -868,10 +860,10 @@ async function processXML(err, result) {
 
     await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
 
-    console.log('Done parsing and importing.');
+    await Promise.all(allVertices.map(vertex => db.updateDocumentImports('ot_vertices', vertex, importId)));
 
-    const import_id = Date.now();
-    return { vertices: allVertices, edges: allEdges, import_id };
+    console.log('Done parsing and importing.');
+    return { vertices: allVertices, edges: allEdges, import_id: importId };
 }
 
 async function parseGS1(gs1XmlFile) {
