@@ -637,7 +637,7 @@ async function parseGS1(gs1XmlFile) {
                 });
 
                 if (extension.extension) {
-                    const sources = arrayze(extension.extension.sourceList.source._);
+                    const sources = arrayze(extension.extension.sourceList.source._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
                     for (const source of sources) {
                         const locationKey = null; // TODO fetch from db
                         eventEdges.push({
@@ -648,8 +648,7 @@ async function parseGS1(gs1XmlFile) {
                         });
                     }
 
-
-                    const destinations = arrayze(extension.extension.destinationList.destination._);
+                    const destinations = arrayze(extension.extension.destinationList.destination._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
                     for (const destination of destinations) {
                         const locationKey = null; // TODO fetch from db
                         eventEdges.push({
