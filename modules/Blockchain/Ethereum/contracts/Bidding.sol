@@ -61,6 +61,7 @@ contract Bidding {
 
 	/*    ----------------------------- BIDDING -----------------------------     */
 
+	enum BiddingPhase {initialised, bidding, revealing, choosing, completed, cancelled}
 
 	struct OfferDefinition{
 		//Parameters of one escrow
@@ -68,7 +69,7 @@ contract Bidding {
 		uint max_token_amount;
 		uint min_stake_amount;
 
-		//Parameters for the bidding 
+		//Parameters for the bidding
 		uint reveal_start_time;
 		uint choose_start_time;
 		uint min_number_of_bids;
@@ -83,8 +84,7 @@ contract Bidding {
 		uint256 number_of_bids_revealed;
 		uint total_bid_chance;
 		uint random_number_seed;
-		bool active;
-		bool finalized;
+		BiddingPhase bidding_phase;
 	}
 
 	struct BidDefinition{
@@ -103,10 +103,10 @@ contract Bidding {
 
 	uint256 x;
 
-	event OfferCreated(address DC_wallet,uint DC_node_id, uint data_id, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint data_size);
+	event OfferCreated(address DC_wallet, uint DC_node_id, uint data_id, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint data_size);
 	event OfferCanceled(address DC_wallet, uint data_id);
-	// event RevealPhaseStarted(address DC_wallet, uint data_id);
-	// event ChoosingPhaseStarted(address DC_wallet, uint data_id);
+	event RevealPhaseStarted(address DC_wallet, uint data_id);
+	event ChoosingPhaseStarted(address DC_wallet, uint data_id);
 	event AddedBid(address DC_wallet,uint data_id, uint bidIndex, address DH_wallet, uint node_id, bytes32 bid_hash);
 	event BidTaken(address DC_wallet, address DH_wallet, uint data_id);
 	event RevealedBid(address DC_wallet, address DH_wallet,  uint node_id,uint data_id,  uint token_amount, uint stake_amount);
@@ -127,7 +127,6 @@ contract Bidding {
 
 		require(max_token_amount > 0 && total_escrow_time > 0 && min_number_of_bids > 0 && bidding_phase_time > 0 && replication_factor > 0);
 		require(replication_factor <= min_number_of_bids);
-		require(offer[msg.sender][data_id].active == false);
 
 		// require(token.allowance(msg.sender,this) >= SafeMath.mul(tokens_per_DH,replication_factor));
 		// token.transferFrom(msg.sender,this,SafeMath.mul(tokens_per_DH,replication_factor));
@@ -145,8 +144,7 @@ contract Bidding {
 
 		offer[msg.sender][data_id].number_of_bids = 0;
 		offer[msg.sender][data_id].number_of_bids_revealed = 0;
-		offer[msg.sender][data_id].active = true;
-		offer[msg.sender][data_id].finalized = false;
+		offer[msg.sender][data_id].bidding_phase = BiddingPhase.bidding;
 		OfferCreated(msg.sender, DC_node_id, data_id, total_escrow_time,max_token_amount, min_stake_amount, data_size);
 	}
 
@@ -154,22 +152,22 @@ contract Bidding {
 	//Da li vraca pare? Kada sme da uradi cancel?
 	function cancelOffer(uint data_id)
 	public{
-		offer[msg.sender][data_id].active = false;
-
+		offer[msg.sender][data_id].bidding_phase = BiddingPhase.cancelled;
 		OfferCanceled(msg.sender, data_id);
 	}
 
 	function isBidChosen(address DC_wallet, uint data_id, uint bidIndex) public constant returns (bool _isBidChosen){
 		return bid[DC_wallet][data_id][bidIndex].chosen;
 	}
-	function getOfferStatus(address DC_wallet, uint data_id) public constant returns (bool isOfferFinal){
-		return offer[DC_wallet][data_id].finalized;
+	function getOfferStatus(address DC_wallet, uint data_id) public constant returns (BiddingPhase offerStatus){
+		return offer[DC_wallet][data_id].bidding_phase;
 	}
 
 	function addBid(address DC_wallet, uint data_id, uint node_id, bytes32 bid_hash)
 	public returns (uint bidIndex){
-		require(offer[DC_wallet][data_id].active);
-		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
+		// require(offer[DC_wallet][data_id].active);
+		require(offer[DC_wallet][data_id].bidding_phase == BiddingPhase.bidding);
+//		require(offer[DC_wallet][data_id].reveal_start_time > block.timestamp);
 
 		bidIndex = offer[DC_wallet][data_id].number_of_bids;
 		offer[DC_wallet][data_id].number_of_bids = offer[DC_wallet][data_id].number_of_bids.add(1);
@@ -179,15 +177,19 @@ contract Bidding {
 
 		// bid[DC_wallet][data_id][bidIndex].bid_hash = keccak256(msg.sender, node_id, token_amount, stake_amount);
 		AddedBid(DC_wallet,data_id, bidIndex, msg.sender, node_id, bid_hash );
+
+		if(offer[DC_wallet][data_id].number_of_bids >= offer[DC_wallet][data_id].replication_factor){
+			offer[DC_wallet][data_id].bidding_phase = BiddingPhase.revealing;
+			RevealPhaseStarted(DC_wallet,data_id);
+		}
 		return bidIndex;
 	}
 
 	function revealBid(address DC_wallet, uint data_id, uint node_id, uint token_amount, uint stake_amount, uint bidIndex)
 	public {
 
-		require(offer[DC_wallet][data_id].active);
-		require(offer[DC_wallet][data_id].reveal_start_time <= block.timestamp);
-		require(offer[DC_wallet][data_id].choose_start_time > block.timestamp);
+		require(offer[DC_wallet][data_id].bidding_phase == BiddingPhase.revealing);
+//		require(offer[DC_wallet][data_id].choose_start_time > block.timestamp);
 		require(offer[DC_wallet][data_id].max_token_amount >= token_amount);
 
 		require(bid[DC_wallet][data_id][bidIndex].bid_hash == keccak256(msg.sender, node_id, token_amount, stake_amount));
@@ -197,7 +199,6 @@ contract Bidding {
 		bid[DC_wallet][data_id][bidIndex].token_amount = token_amount;
 		bid[DC_wallet][data_id][bidIndex].stake_amount = stake_amount;
 		bid[DC_wallet][data_id][bidIndex].chance = TOTAL_NUM_TOKENS / token_amount;
-		bid[DC_wallet][data_id][bidIndex].active = true;
 
 		OfferDefinition storage this_offer = offer[DC_wallet][data_id];
 
@@ -206,6 +207,11 @@ contract Bidding {
 		this_offer.random_number_seed = this_offer.random_number_seed + block.number;//FIX
 
 		RevealedBid(DC_wallet,msg.sender, node_id,data_id, token_amount, stake_amount);
+
+		if(this_offer.number_of_bids_revealed >= this_offer.number_of_bids){
+			this_offer.bidding_phase = BiddingPhase.choosing;
+			ChoosingPhaseStarted(DC_wallet,data_id);
+		}
 
 	}
 
@@ -226,7 +232,9 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[msg.sender][data_id];
 
 		require(this_offer.min_number_of_bids <= this_offer.number_of_bids_revealed);
-		require(this_offer.choose_start_time <= block.timestamp);
+//		require(this_offer.choose_start_time <= block.timestamp);//
+
+		require(this_offer.bidding_phase == BiddingPhase.choosing);
 
 		uint N = this_offer.replication_factor;
 		chosen_data_holders = new uint256[](N);
@@ -273,7 +281,7 @@ contract Bidding {
 
 
 
-		offer[msg.sender][data_id].finalized = true;
+		offer[msg.sender][data_id].bidding_phase = BiddingPhase.completed;
 		OfferFinalized(msg.sender,data_id);
 
 	}

@@ -14,9 +14,7 @@ const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
-
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
+const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -107,7 +105,7 @@ globalEmitter.on('replication-request', (request, response) => {
         });
     });
 
-    response.send({ status: 'succes' });
+    response.send({ status: 'success' });
 });
 
 globalEmitter.on('payload-request', (request) => {
@@ -175,39 +173,14 @@ globalEmitter.on('offer-ended', (message) => {
     const { scId } = message;
 
     log.info(`Offer ${scId} has ended.`);
-
-    // TODO: Trigger escrow to end bidding and notify chosen.
-    const bids = SmartContractInstance.sc.choose(scId);
-
-    bids.forEach((bid) => {
-        console.log(bid);
-        node.ot.biddingWon(
-            { dataId: scId },
-            bid.dhId, (error) => {
-                if (error) {
-                    log.warn(error);
-                }
-            },
-        );
-    });
 });
 
+globalEmitter.on('AddedBid', (message) => {
+
+});
 
 globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
-
-    const { dataId } = message.params.message;
-
-    // Now request data to check validity of offer.
-
-    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
-
-
-    node.ot.replicationRequest({ dataId }, dcId, (err) => {
-        if (err) {
-            log.warn(err);
-        }
-    });
 });
 
 globalEmitter.on('eth-offer-created', (event) => {

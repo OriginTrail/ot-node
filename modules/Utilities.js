@@ -237,10 +237,10 @@ class Utilities {
     }
 
     /**
-    * Generate Self Signed SSL for Kademlia
-    * @return {Promise<any>}
-    * @private
-    */
+     * Generate Self Signed SSL for Kademlia
+     * @return {Promise<any>}
+     * @private
+     */
     static generateSelfSignedCertificate() {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
@@ -258,9 +258,9 @@ class Utilities {
     }
 
     /**
-    * Generates private extended key for identity
-    * @param kadence
-    */
+     * Generates private extended key for identity
+     * @param kadence
+     */
     static createPrivateExtendedKey(kadence) {
         if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
             fs.writeFileSync(
@@ -532,6 +532,26 @@ class Utilities {
                 reject(error);
             });
         });
+    }
+
+    /**
+     * Web3 Hex to number
+     * @param hex
+     * @returns {number}
+     */
+    static hexToNumber(hex) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.hexToNumber(hex);
+    }
+
+    /**
+     * Web3 Number to hex
+     * @param num
+     * @returns {string}
+     */
+    static numberToHex(num) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.numberToHex(num);
     }
 }
 

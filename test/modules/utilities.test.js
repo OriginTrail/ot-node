@@ -52,7 +52,11 @@ describe('Utilities module', () => {
         const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
         assert.equal(responseFromApi.statusCode, 200);
         const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
-        assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // Not possible to match exactly the block every time as new ones get mined,
+        // so range is used
+        expect(Utilities.hexToNumber(responseFromApi.body.result))
+            .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
     });
 
     it('loadSelectedBlockchainInfo()', async () => {
@@ -182,6 +186,13 @@ describe('Utilities module', () => {
         const copyEdgeOne = Utilities.copyObject(edgeOne);
         assert.deepEqual(edgeOne, copyEdgeOne);
     });
+
+    it('hexToNumber() and numberToHex check', () => {
+        const hexValue = Utilities.numberToHex(500);
+        const intValue = Utilities.hexToNumber(hexValue);
+        assert.equal(hexValue, intValue);
+    });
+
 
     it('executeCallback() callback not defined scenario', async () => {
         // helper function

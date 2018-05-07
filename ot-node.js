@@ -17,8 +17,6 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
-const MockSmartContract = require('./modules/temp/MockSmartContract');
-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -55,6 +53,7 @@ class OTNode {
 
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
 
         // Loading config data
         try {
@@ -85,28 +84,30 @@ class OTNode {
         }
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
-        try {
-            const etherBalance = deasync(Utilities.getBalanceInEthers());
-            if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet before running ot-node');
-                process.exit(1);
-            } else {
-                (
-                    log.info(`Initial balance of ETH: ${etherBalance}`)
-                );
-            }
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                const etherBalance = deasync(Utilities.getBalanceInEthers());
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
 
-            const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
-            if (atracBalance <= 0) {
-                console.log('Please get some ATRAC in the node wallet before running ot-node');
-                process.exit(1);
-            } else {
-                (
-                    log.info(`Initial balance of ATRAC: ${atracBalance}`)
-                );
+                const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
             }
-        } catch (error) {
-            console.log(error);
         }
 
         // wire instances
@@ -114,7 +115,6 @@ class OTNode {
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
-        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
@@ -134,6 +134,13 @@ class OTNode {
         }).catch((e) => {
             console.log(e);
         });
+
+        // Starting event listener on Blockchain
+        log.info('Starting blockchain event listener');
+        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        setInterval(() => {
+            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        }, 3000);
     }
 
     /**
