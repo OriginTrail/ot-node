@@ -41,7 +41,7 @@
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:actor:id:AirplaneAB123">																
 								<attribute id="urn:ot:actor:person:id:name">Boing AB-123</attribute>				
-								<attribute id="urn:ot:actor:category">Machine</attribute>				
+								<attribute id="urn:ot:actor:category">Machine</attribute>
 						    </VocabularyElement>													
 						</VocabularyElementList>				
 					</Vocabulary>				
@@ -82,6 +82,7 @@
 	<EPCISBody>
 		<EventList>	
 			<ObjectEvent>
+				<!-- Transfer and Ownership -->
 				<eventTime>2015-04-16T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
 				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
 				<epcList>
@@ -105,12 +106,20 @@
 						</quantityElement>			 	
 					</quantityList>
 					<extension>
-						<OTEventClass>Transport</OTEventClass>
+						<OTEventClass>ot:events:Transport</OTEventClass>
+						<OTEventClass>ot:events:Ownership</OTEventClass>
 						<OTEventType>Shipment</OTEventType>
+						<sourceList>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+						</sourceList>
+						<destinationList>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+						</destinationList>
 					</extension>
 				</extension>
 			</ObjectEvent>	
 		  <ObjectEvent>
+		  	 <!-- Transport -->
 			 <eventTime>2015-04-17T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
 			 <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
 			 <epcList>
@@ -134,13 +143,86 @@
 					 </quantityElement>			 	
 			 	</quantityList>
 				<extension>
-					<OTEventClass>OwnershipTransfer</OTEventClass>
+					<OTEventClass>Transport</OTEventClass>
 				 	<OTEventType>Receipt</OTEventType>
-				 	<Direction>Output</Direction>
-				 	<ActorNodeId>0x123456789234567</ActorNodeId>
+					<sourceList>
+						<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+					</sourceList>
+					<destinationList>
+						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+					</destinationList>
 				</extension>
 			 </extension>
-		 </ObjectEvent>			
+		 </ObjectEvent>
+			<ObjectEvent>
+				<!-- Transport -->
+				<eventTime>2015-04-17T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+				<epcList>
+					<epc>urn:ot:mda:product:id:#1A</epc>
+				</epcList>
+				<action>OBSERVE</action> <!-- Mandatory-->
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+				<readPoint> <!-- Optional -->
+					<id>urn:epc:id:sgln:6104898.55555.1</id>
+				</readPoint>
+				<bizLocation> <!-- Optional -->
+					<id>urn:ot:mda:location:Storage.F13</id>
+				</bizLocation>
+				<extension>
+					<quantityList> <!-- Optional -->
+						<quantityElement>			 
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+							<quantity>1.0</quantity>
+							<uom>PCS</uom>
+						</quantityElement>			 	
+					</quantityList>
+					<extension>
+						<OTEventClass>ot:events:Ownership</OTEventClass>
+						<OTEventType>Receipt</OTEventType>
+						<sourceList>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+						</sourceList>
+						<destinationList>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+						</destinationList>
+					</extension>
+				</extension>
+			</ObjectEvent>
+			<ObjectEvent>
+				<!-- Observation -->
+				<eventTime>2015-04-16T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+				<epcList>
+					<epc>urn:ot:mda:product:id:#1A</epc>
+				</epcList>
+				<action>OBSERVE</action> <!-- Mandatory-->
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+				<readPoint> <!-- Optional -->
+					<id>urn:epc:id:sgln:6104898.16234.3</id>
+				</readPoint>
+				<bizLocation> <!-- Optional -->
+					<id>urn:ot:mda:location:Storage.F13</id>
+				</bizLocation>
+				<extension>
+					<quantityList> <!-- Optional -->
+						<quantityElement>			 
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+							<quantity>1.0</quantity>
+							<uom>PCS</uom>							
+						</quantityElement>			 	
+					</quantityList>
+					<extension>
+						<OTEventClass>ot:events:Observation</OTEventClass>
+						<OTEventType>Measurment</OTEventType>
+						<!-- Custom Non-GS1 types -->
+						<Temperature> 12</Temperature>
+						<Humidity> 12</Humidity>
+					</extension>
+				</extension>
+			</ObjectEvent>				
 		</EventList>
 	 </EPCISBody>
 </epcis:EPCISDocument>

@@ -133,7 +133,7 @@
 					 <transformationID>BOM12345PO987</transformationID> <!-- Mandatory-->
 					 <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep> <!-- Optional -->						 				 
 					 <extension>
-						<OTEventClass>Transformation</OTEventClass>
+						<OTEventClass>ot:event:Transformation</OTEventClass>
 					 	<OTEventType>Packaging</OTEventType>
 					 </extension>
 				 </TransformationEvent>
