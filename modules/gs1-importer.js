@@ -299,7 +299,7 @@ function parseBatches(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const batch = {
             type: 'batch',
-            id: ignorePattern(element.id, 'urn:ot:mda:batch:'),
+            id: ignorePattern(ignorePattern(element.id, 'urn:ot:mda:batch:'), 'urn:epc:id:sgtin:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
         };
 
@@ -570,7 +570,10 @@ async function parseGS1(gs1XmlFile) {
                 const key = md5(`batch_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 batchesVertices.push({
                     _key: key,
-                    _id: batch.id,
+                    identifiers: {
+                        id: batch.id,
+                        uid: batch.id,
+                    },
                     data,
                     vertex_type: 'BATCH',
                 });
@@ -724,7 +727,8 @@ async function parseGS1(gs1XmlFile) {
 
                 let inputQuantities = [];
                 const outputQuantities = [];
-                if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')) {
+                if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')
+                    || eventCategories.includes('Observation')) {
                     const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
                     const { quantityList } = extension;
@@ -830,14 +834,18 @@ async function parseGS1(gs1XmlFile) {
                 for (const quantity of quantities.inputs.concat(quantities.outputs)) {
                     if (quantity.added) {
                         delete quantity.added;
-                        const batch = batchesVertices.filter((elem) => {
-                            return elem.identifiers.uid === quantity.object;
-                        });
-                        if (!batch) {
+                        let batchFound = false;
+                        for (const batch of batchesVertices) {
+                            if (batch.identifiers.uid === quantity.object) {
+                                batchFound = true;
+                                batch.data.quantities = quantity;
+                                batch._key = md5(`batch_${senderId}_${batch.data}`);
+                                break;
+                            }
+                        }
+                        if (!batchFound) {
                             throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
                         }
-                        batch.data.quantities = quantity;
-                        batch._key = md5(`batch_${senderId}_${batch.data}`); // TODO check _key
                     }
                 }
                 event.quantities = quantities;
@@ -861,11 +869,13 @@ async function parseGS1(gs1XmlFile) {
 
                 if (to.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
-                    edge._to = await db.getVertexKeyWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+                    const vertex = await db.getVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._to = vertex._key;
                 }
                 if (from.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
-                    edge._from = await db.getVertexKeyWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+                    const vertex = await db.getVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._from = vertex._key;
                 }
             }
 
