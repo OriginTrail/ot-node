@@ -230,11 +230,11 @@ class Neo4jDB {
      * @param _key  Vertex _key
      * @return {Promise<void>}
      */
-    async getCurrentMaxVersion(uid, _key) {
+    async getCurrentMaxVersion(uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n) WHERE n.uid = $uid and n._key <> $_key return MAX(n.version)', { uid, _key });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid return MAX(n.version)', { uid });
         session.close();
-        return result;
+        return result.records[0]._fields[0];
     }
 
     /**
@@ -244,10 +244,10 @@ class Neo4jDB {
      */
     async getVertexWithMaxVersion(uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n) WHERE n.uid = $uid RETURN n AS v ORDER BY v DESC LIMIT 1', { uid });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n ORDER BY n.version DESC LIMIT 1', { uid });
         session.close();
-        if (result.length > 0) {
-            return result[0];
+        if (result.records.length > 0) {
+            return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
         }
         return null;
     }
