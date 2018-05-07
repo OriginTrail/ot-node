@@ -13,8 +13,6 @@ const async = require('async');
 const validator = require('validator');
 
 // Update import data
-
-
 function updateImportNumber(collection, document, importId) {
     const { db } = GSInstance;
     return db.updateDocumentImports(collection, document, importId);
@@ -184,8 +182,6 @@ function ethWalletValidation(wallet) {
     return false;
 }
 
-// ////////////////////////////////////
-
 function arrayze(value) {
     if (value) {
         return [].concat(value);
@@ -233,7 +229,6 @@ function parseLocations(vocabularyElementList) {
             id: ignorePattern(element.id, 'urn:ot:mda:location:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
-            // TODO: Add participant ID.
         };
 
         locations.push(location);
@@ -258,7 +253,6 @@ function parseActors(vocabularyElementList) {
             type: 'actor',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
-            // TODO: Add participant ID.
         };
 
         actors.push(actor);
@@ -283,7 +277,6 @@ function parseProducts(vocabularyElementList) {
             type: 'product',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
-            // TODO: Add participant ID.
         };
 
         products.push(product);
@@ -308,7 +301,6 @@ function parseBatches(vocabularyElementList) {
             type: 'batch',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
-            // TODO: Add participant ID.
         };
 
         batches.push(batch);
@@ -357,6 +349,12 @@ function getEventId(senderId, event) {
     return eventId;
 }
 
+function validateSender(sender) {
+    if (sender.EmailAddress) {
+        emailValidation(sender.EmailAddress);
+    }
+}
+
 async function parseGS1(gs1XmlFile) {
     const { db } = GSInstance;
     const importId = Date.now();
@@ -379,7 +377,6 @@ async function parseGS1(gs1XmlFile) {
             // Header stuff.
             const standardBusinessDocumentHeaderElement = epcisDocumentElement.EPCISHeader['sbdh:StandardBusinessDocumentHeader'];
             const senderElement = standardBusinessDocumentHeaderElement['sbdh:Sender'];
-            const receiverElement = standardBusinessDocumentHeaderElement['sbdh:Receiver']; // TODO: may not exist.
             const vocabularyListElement =
                 epcisDocumentElement.EPCISHeader.extension.EPCISMasterData.VocabularyList;
             const eventListElement = epcisDocumentElement.EPCISBody.EventList;
@@ -409,6 +406,8 @@ async function parseGS1(gs1XmlFile) {
                 data: sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
                 vertex_type: 'SENDER',
             };
+
+            validateSender(sender.data);
 
             // Check for vocabularies.
             const vocabularyElements = arrayze(vocabularyListElement.Vocabulary);
