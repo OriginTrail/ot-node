@@ -5,7 +5,8 @@ const deasync = require('deasync-promise');
 const xsd = require('libxml-xsd');
 
 const ZK = require('./ZK');
-const zk = new ZK;
+
+const zk = new ZK();
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
@@ -352,6 +353,7 @@ function getEventId(senderId, event) {
 
 async function parseGS1(gs1XmlFile) {
     const { db } = GSInstance;
+    const importId = Date.now();
     const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
     const xsdFileBuffer = fs.readFileSync('./importers/EPCglobal-epcis-masterdata-1_2.xsd');
     const schema = xsd.parse(xsdFileBuffer.toString());
@@ -569,7 +571,6 @@ async function parseGS1(gs1XmlFile) {
 
             // TODO handle extensions
             for (const event of events) {
-
                 const eventId = getEventId(senderId, event);
 
                 const { extension } = event;
@@ -606,11 +607,10 @@ async function parseGS1(gs1XmlFile) {
                     if (extension.extension.sourceList) {
                         const sources = arrayze(extension.extension.sourceList.source._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
                         for (const source of sources) {
-                            const locationKey = null; // TODO fetch from db
                             eventEdges.push({
                                 _key: md5(`source_${senderId}_${eventId}_${source}`),
                                 _from: `ot_vertices/${eventKey}`,
-                                _to: `ot_vertices/${locationKey}`,
+                                _to: `${EDGE_KEY_TEMPLATE + source}`,
                                 edge_type: 'SOURCE',
                             });
                         }
@@ -619,11 +619,10 @@ async function parseGS1(gs1XmlFile) {
                     if (extension.extension.destinationList) {
                         const destinations = arrayze(extension.extension.destinationList.destination._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
                         for (const destination of destinations) {
-                            const locationKey = null; // TODO fetch from db
                             eventEdges.push({
                                 _key: md5(`destination_${senderId}_${eventId}_${destination}`),
                                 _from: `ot_vertices/${eventKey}`,
-                                _to: `ot_vertices/${locationKey}`,
+                                _to: `${EDGE_KEY_TEMPLATE + destination}`,
                                 edge_type: 'DESTINATION',
                             });
                         }
@@ -704,9 +703,10 @@ async function parseGS1(gs1XmlFile) {
                     // });
                 }
 
-
-                let inputQuantities = [{object: 'abcd', quantity: 3, unit: 'kg'},{object: 'efgh', quantity: 13, unit: 'kg'},{object: 'ijkl', quantity: 2, unit: 'kg'}];
-                let outputQuantities = [{object: 'mnop', quantity: 4, unit: 'kg'},{object: 'qrst', quantity: 11, r:16, unit: 'kg'},{object: 'uvwx', quantity: 2, unit: 'kg'}];
+                const inputQuantities = [{ object: 'abcd', quantity: 3, unit: 'kg' }, { object: 'efgh', quantity: 13, unit: 'kg' }, { object: 'ijkl', quantity: 2, unit: 'kg' }];
+                const outputQuantities = [{ object: 'mnop', quantity: 4, unit: 'kg' }, {
+                    object: 'qrst', quantity: 11, r: 16, unit: 'kg',
+                }, { object: 'uvwx', quantity: 2, unit: 'kg' }];
 
                 const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
 
