@@ -245,11 +245,14 @@ function parseLocations(vocabularyElementList) {
     const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
+        let childLocations = arrayze(element.children ? element.children.id : []);
+        childLocations = childLocations.map(elem => ignorePattern(elem, 'urn:epc:id:sgln:'));
+
         const location = {
             type: 'location',
             id: ignorePattern(element.id, 'urn:ot:mda:location:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
-            child_locations: arrayze(element.children),
+            child_locations: childLocations,
             // TODO: Add participant ID.
         };
 
@@ -374,6 +377,21 @@ function getEventId(senderId, event) {
     return eventId;
 }
 
+function getEventCategory(event) {
+    switch (event.extension.extension.OTEventClass) {
+    case 'ot:events:Observation':
+        return 'OBSERVATION';
+    case 'ot:events:Transformation':
+        return 'TRANSFORMATION';
+    case 'ot:events:Transport':
+        return 'TRANSPORT';
+    case 'ot:events:Ownership':
+        return 'OWNERSHIP';
+    default:
+        throw Error(`Unknown or unimplemented event class '${event.extension.extension.OTEventClass}'`);
+    }
+}
+
 async function parseGS1(gs1XmlFile, callback) {
     const { db } = GSInstance;
     const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
@@ -416,25 +434,21 @@ async function parseGS1(gs1XmlFile, callback) {
 
             const senderId = senderElement['sbdh:Identifier']._;
             const sender = {
-                sender_id: {
-                    identifiers: {
-                        sender_id: senderId,
-                        uid: senderElement['sbdh:Identifier']._, // TODO: Maybe not needed anymore.
-                    },
-                    data: sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
-                    vertex_type: 'SENDER',
+                identifiers: {
+                    id: senderId,
+                    uid: senderElement['sbdh:Identifier']._,
                 },
+                data: sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
+                vertex_type: 'SENDER',
             };
 
             const receiver = {
-                receiver_id: {
-                    identifiers: {
-                        receiver_id: receiverElement['sbdh:Identifier']._,
-                        uid: receiverElement['sbdh:Identifier']._, // TODO: Maybe not needed anymore.
-                    },
-                    data: sanitize(receiverElement['sbdh:ContactInformation'], {}, ['sbdh:']),
-                    vertex_type: 'RECEIVER',
+                identifiers: {
+                    id: receiverElement['sbdh:Identifier']._,
+                    uid: receiverElement['sbdh:Identifier']._,
                 },
+                data: sanitize(receiverElement['sbdh:ContactInformation'], {}, ['sbdh:']),
+                vertex_type: 'RECEIVER',
             };
 
             // Check for vocabularies.
@@ -462,18 +476,8 @@ async function parseGS1(gs1XmlFile, callback) {
                 }
             }
 
-            /*
-              "EPCISBody": {
-                "EventList": {
-                  "extension": {
-                    "TransformationEvent": {
-             */
-
             // Check for events.
             // Types: Transport, Transformation, Observation and Ownership.
-            // Observation su svi ObjectEvent
-            // Transformation su AggregationEvent i extension/TransformationEcent
-            // Trenutno nema Transport
 
             for (const objectEvent of arrayze(eventListElement.ObjectEvent)) {
                 events.push(objectEvent);
@@ -505,52 +509,52 @@ async function parseGS1(gs1XmlFile, callback) {
             const objectEventObservationId = 'dafdsafas';
             const objectEventOwnershipId = 'dafdsafas';
 
-
-            // _from: location key _to: ObjectClass_location
-
-
             const locationMappings = {
             };
 
             for (const location of locations) {
+                const identifiers = {
+                    id: location.id,
+                    uid: location.id,
+                };
                 const data = {
                     object_class_id: objectClassLocationId,
-                    data: location,
-                    vertex_type: 'LOCATION',
                 };
 
-                const locationKey = md5(`business_location_${senderId}_${location.id}_${md5(data)}`);
+                const locationKey = md5(`business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 locationVertices.push({
                     _key: locationKey,
-                    _id: location.id,
+                    identifiers,
                     data,
                 });
-                locationMappings[`business_location_${senderId}_${location.id}`] = locationKey;
+                locationMappings[location.id] = locationKey;
 
                 const { child_locations } = location;
-                if (child_locations.length > 0) {
-                    for (const childId of child_locations[0].id) {
-                        const child = {
-                            id: childId,
-                            data: {
-                                // TODO add data
-                            },
-                        };
+                for (const childId of child_locations) {
+                    const identifiers = {
+                        id: childId,
+                        uid: childId,
+                    };
+                    const data = {
+                        parent_id: location.id,
+                        // TODO add data
+                    };
 
-                        locationVertices.push({
-                            _key: md5(`child_business_location_${senderId}_${child.id}_${md5(child.data)}`),
-                            _id: location.id,
-                            data,
-                        });
-                        locationMappings[`business_location_${senderId}_${child.id}`] = `business_location_${senderId}_${child.id}_${child.data}`;
+                    const childLocationKey = md5(`child_business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
+                    locationVertices.push({
+                        _key: childLocationKey,
+                        identifiers,
+                        data,
+                        vertex_type: 'CHILD_BUSINESS_LOCATION',
+                    });
+                    locationMappings[childId] = childLocationKey;
 
-                        locationEdges.push({
-                            _key: md5(`business_location_${senderId}_${location.id}_${child.id}_${child.data}`),
-                            _from: `ot_vertices/${md5(`child_business_location_${senderId}_${child.id}_${md5(child.data)}`)}`,
-                            _to: `ot_vertices/${locationKey}`,
-                            edge_type: 'CHILD_BUSINESS_LOCATION',
-                        });
-                    }
+                    locationEdges.push({
+                        _key: md5(`child business_location_${senderId}_${location.id}_${md5(identifiers)}_${md5(data)}`),
+                        _from: `ot_vertices/${childLocationKey}`,
+                        _to: `ot_vertices/${locationKey}`,
+                        edge_type: 'CHILD_BUSINESS_LOCATION',
+                    });
                 }
             }
 
@@ -562,7 +566,7 @@ async function parseGS1(gs1XmlFile, callback) {
                 };
 
                 actorsVertices.push({
-                    _key: md5(`actor_${sender.sender_id}_${data}`),
+                    _key: md5(`actor_${senderId}_${data}`),
                     _id: actor.id,
                     data,
                 });
@@ -576,12 +580,13 @@ async function parseGS1(gs1XmlFile, callback) {
                 };
 
                 productVertices.push({
-                    _key: md5(`product_${sender.sender_id}_${data}`),
+                    _key: md5(`product_${senderId}_${data}`),
                     _id: product.id,
                     data,
                 });
             }
 
+            const batchMappingsKeys = {};
             for (const batch of batches) {
                 const data = {
                     object_class_id: objectClassBatchId,
@@ -589,11 +594,14 @@ async function parseGS1(gs1XmlFile, callback) {
                     vertex_type: 'BATCH',
                 };
 
+                const key = md5(`batch_${senderId}_${data}`);
                 batchesVertices.push({
-                    _key: md5(`bath_${sender.sender_id}_${data}`),
+                    _key: key,
                     _id: batch.id,
                     data,
                 });
+
+                batchMappingsKeys[batch.id] = key;
             }
 
             // Store vertices in db. Update versions
@@ -609,15 +617,26 @@ async function parseGS1(gs1XmlFile, callback) {
 
             // TODO handle extensions
             for (const event of events) {
+                // TODO [alex]: Here be the zero knowledge dragon.
+                // event.kurac.palac.input
+
                 const eventId = getEventId(senderId, event);
+                const eventCategory = getEventCategory(event);
+                const identifiers = {
+                    id: eventId,
+                    uid: eventId,
+                };
                 const data = {
                     object_class_id: getClassId(event),
                     data: event,
                     vertex_type: 'EVENT',
+                    category: eventCategory,
                 };
 
+                const eventKey = md5(`event_${senderId}_${md5(identifiers)}_${md5(data)}`);
+
                 eventVertices.push({
-                    _key: md5(`event_${senderId}_${eventId}_${data}`),
+                    _key: eventKey,
                     _id: eventId,
                     data,
                 });
@@ -625,13 +644,79 @@ async function parseGS1(gs1XmlFile, callback) {
                 const { bizLocation } = event;
                 if (bizLocation) {
                     const bizLocationId = ignorePattern(bizLocation.id, 'urn:ot:mda:location:');
-                    const locationKey = locationMappings[`business_location_${senderId}_${bizLocationId}`];
+                    const locationKey = locationMappings[bizLocationId];
                     eventEdges.push({
                         _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
-                        _from: `ot_vertices/${md5(`event_${senderId}_${eventId}_${data}`)}`,
-                        _to: `ot_vertices/${md5(locationKey)}`,
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `ot_vertices/${locationKey}`,
                         edge_type: 'AT',
                     });
+                }
+
+                if (event.readPoint) {
+                    const locationReadPoint = ignorePattern(event.readPoint.id, 'urn:ot:mda:location:');
+                    const locationKey = locationMappings[locationReadPoint];
+                    eventEdges.push({
+                        _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `ot_vertices/${locationKey}`,
+                        edge_type: 'AT',
+                    });
+                }
+
+                if (event.inputEPCList) {
+                    for (const inputEpc of arrayze(event.inputEPCList)) {
+                        const batchId = ignorePattern(inputEpc.epc, 'urn:epc:id:sgtin:');
+                        const batchKey = batchMappingsKeys[batchId];
+
+                        eventEdges.push({
+                            _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                            _from: `ot_vertices/${eventKey}`,
+                            _to: `ot_vertices/${batchKey}`,
+                            edge_type: 'INPUT_BATCH',
+                        });
+                    }
+                }
+
+                if (event.childEPCs) {
+                    for (const inputEpc of arrayze(event.childEPCs)) {
+                        const batchId = ignorePattern(inputEpc.epc, 'urn:epc:id:sgtin:');
+                        const batchKey = batchMappingsKeys[batchId];
+
+                        eventEdges.push({
+                            _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                            _from: `ot_vertices/${eventKey}`,
+                            _to: `ot_vertices/${batchKey}`,
+                            edge_type: 'CHILD_BATCH',
+                        });
+                    }
+                }
+
+                if (event.outputEPCList) {
+                    for (const outputEpc of arrayze(event.outputEPCList)) {
+                        const batchId = ignorePattern(outputEpc.epc, 'urn:epc:id:sgtin:');
+                        const batchKey = batchMappingsKeys[batchId];
+
+                        eventEdges.push({
+                            _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                            _from: `ot_vertices/${batchKey}`,
+                            _to: `ot_vertices/${eventKey}`,
+                            edge_type: 'OUTPUT_BATCH',
+                        });
+                    }
+                }
+
+
+                if (event.parentID) {
+                    const parentId = ignorePattern(event.parentID, 'urn:epc:id:sgtin:');
+                    // TODO: fetch from db.
+
+                    // eventEdges.push({
+                    //     _key: md5(`at_${senderId}_${eventId}_${biz_location}`),
+                    //     _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
+                    //     _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
+                    //     edge_type: 'PARENT_BATCH',
+                    // });
                 }
             }
 
