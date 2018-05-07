@@ -4,6 +4,8 @@ const md5 = require('md5');
 const deasync = require('deasync-promise');
 const xsd = require('libxml-xsd');
 
+const ZK = require('./ZK');
+const zk = new ZK;
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
@@ -567,8 +569,6 @@ async function parseGS1(gs1XmlFile) {
 
             // TODO handle extensions
             for (const event of events) {
-                // TODO [alex]: Here be the zero knowledge dragon.
-                // event.kurac.palac.input
 
                 const eventId = getEventId(senderId, event);
 
@@ -587,6 +587,7 @@ async function parseGS1(gs1XmlFile) {
                     id: eventId,
                     uid: eventId,
                 };
+
                 const data = {
                     object_class_id: getClassId(event),
                     data: event,
@@ -702,7 +703,16 @@ async function parseGS1(gs1XmlFile) {
                     //     edge_type: 'PARENT_BATCH',
                     // });
                 }
+
+
+                let inputQuantities = [{object: 'abcd', quantity: 3, unit: 'kg'},{object: 'efgh', quantity: 13, unit: 'kg'},{object: 'ijkl', quantity: 2, unit: 'kg'}];
+                let outputQuantities = [{object: 'mnop', quantity: 4, unit: 'kg'},{object: 'qrst', quantity: 11, r:16, unit: 'kg'},{object: 'uvwx', quantity: 2, unit: 'kg'}];
+
+                const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+
+                event.quantities = quantities;
             }
+
 
             await db.createCollection('ot_vertices');
             await db.createEdgeCollection('ot_edges');
