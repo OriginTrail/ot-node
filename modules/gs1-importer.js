@@ -478,7 +478,7 @@ async function parseGS1(gs1XmlFile) {
 
                 copyProperties(location.attributes, data);
 
-                const locationKey = md5(`business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
+                const locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
                 locationVertices.push({
                     _key: locationKey,
                     identifiers,
@@ -496,7 +496,7 @@ async function parseGS1(gs1XmlFile) {
                         parent_id: location.id,
                     };
 
-                    const childLocationKey = md5(`child_business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
+                    const childLocationKey = md5(`child_business_location_${senderId}_${md5(JSON.stringify(identifiers))}_${md5(JSON.stringify(data))}`);
                     locationVertices.push({
                         _key: childLocationKey,
                         identifiers,
@@ -505,7 +505,7 @@ async function parseGS1(gs1XmlFile) {
                     });
 
                     locationEdges.push({
-                        _key: md5(`child business_location_${senderId}_${location.id}_${md5(identifiers)}_${md5(data)}`),
+                        _key: md5(`child business_location_${senderId}_${location.id}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                         _from: `ot_vertices/${childLocationKey}`,
                         _to: `ot_vertices/${locationKey}`,
                         edge_type: 'CHILD_BUSINESS_LOCATION',
@@ -526,7 +526,7 @@ async function parseGS1(gs1XmlFile) {
                 copyProperties(actor.attributes, data);
 
                 actorsVertices.push({
-                    _key: md5(`actor_${senderId}_${md5(identifiers)}_${md5(data)}`),
+                    _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                     _id: actor.id,
                     identifiers,
                     data,
@@ -547,7 +547,7 @@ async function parseGS1(gs1XmlFile) {
                 copyProperties(product.attributes, data);
 
                 productVertices.push({
-                    _key: md5(`product_${senderId}_${md5(identifiers)}_${md5(data)}`),
+                    _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                     _id: product.id,
                     data,
                     vertex_type: 'PRODUCT',
@@ -566,7 +566,7 @@ async function parseGS1(gs1XmlFile) {
 
                 copyProperties(batch.attributes, data);
 
-                const key = md5(`batch_${senderId}_${md5(identifiers)}_${md5(data)}`);
+                const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
                 batchesVertices.push({
                     _key: key,
                     identifiers: {
@@ -617,7 +617,7 @@ async function parseGS1(gs1XmlFile) {
 
                 copyProperties(event, data);
 
-                const eventKey = md5(`event_${senderId}_${md5(identifiers)}_${md5(data)}`);
+                const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
                 eventVertices.push({
                     _key: eventKey,
                     _id: eventId,
@@ -857,7 +857,8 @@ async function parseGS1(gs1XmlFile) {
                     .concat(batchesVertices)
                     .concat(eventVertices);
 
-            await Promise.all(allVertices.map(vertex => db.addDocument('ot_vertices', vertex)));
+            const promises = allVertices.map(vertex => db.addDocument('ot_vertices', vertex));
+            await Promise.all(promises);
 
             const allEdges = locationEdges
                 .concat(eventEdges);
@@ -869,12 +870,12 @@ async function parseGS1(gs1XmlFile) {
                 if (to.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
                     const vertex = await db.getVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
-                    edge._to = vertex._key;
+                    edge._to = `ot_vertices/${vertex._key}`;
                 }
                 if (from.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
                     const vertex = await db.getVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
-                    edge._from = vertex._key;
+                    edge._from = `ot_vertices/${vertex._key}`;
                 }
             }
 

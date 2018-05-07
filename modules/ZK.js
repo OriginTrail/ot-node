@@ -151,7 +151,11 @@ class ZK {
         };
 
         // return res;
-        console.log(res);
+        if (res) {
+            console.log('ZK proof successfully created and validated for event: ', eventId);
+        } else {
+            console.log('ZK proof failed for event: ', eventId);
+        }
         return zkObject;
     }
 

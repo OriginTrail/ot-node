@@ -133,10 +133,10 @@
 						<OTEventClass>ot:events:Ownership</OTEventClass>
 						<OTEventType>Shipment</OTEventType>
 						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234.1</source>
 						</sourceList>
 						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555.1</destination>
 						</destinationList>
 					</extension>
 				</extension>
@@ -169,10 +169,10 @@
 					<OTEventClass>Transport</OTEventClass>
 				 	<OTEventType>Receipt</OTEventType>
 					<sourceList>
-						<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+						<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234.1</source>
 					</sourceList>
 					<destinationList>
-						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+						<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555.1</destination>
 					</destinationList>
 				</extension>
 			 </extension>
@@ -205,10 +205,10 @@
 						<OTEventClass>ot:events:Ownership</OTEventClass>
 						<OTEventType>Receipt</OTEventType>
 						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234</source>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.16234.1</source>
 						</sourceList>
 						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555</destination>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:6104898.55555.1</destination>
 						</destinationList>
 					</extension>
 				</extension>
