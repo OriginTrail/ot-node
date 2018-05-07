@@ -189,7 +189,7 @@ class Utilities {
     static checkDoesStorageDbExists() {
         return new Promise((resolve, reject) => {
             switch (config.database.database_system) {
-            case 'arango_db':
+            case 'arango_db': {
                 const systemDb = new Database();
                 systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
                 systemDb.listDatabases().then((result) => {
@@ -217,10 +217,11 @@ class Utilities {
                 }).catch((error) => {
                     reject(error);
                 });
+            }
                 break;
             case 'neo4j':
                 try {
-                    // TODO da proradi - prodje ili ne uspe
+                    // TODO
                     const host = process.env.NEO_HOST;
                     const port = process.env.NEO_PORT;
                     const user = process.env.NEO_USERNAME;
