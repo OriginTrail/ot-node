@@ -32,13 +32,13 @@ class ZK {
             pr = (new BN(pr.toString('hex'))).add(thousand);
 
             isPrime = this.n.gcd(pr).eq(this.one) && !pr.gte(this.n);
-        } while (isPrime != true);
+        } while (isPrime !== true);
 
         return pr;
     }
 
     P(importId, eventId, inputQuantities, outputQuantities) {
-        const e = new BN(parseInt(sha3(importId, eventId).substring('0', '10')));
+        const e = new BN(parseInt(sha3(importId, eventId).substring('0', '10'), 10));
 
         let r = new BN(this.generatePrime()).mod(this.n);
 
@@ -55,15 +55,14 @@ class ZK {
         for (const i in inputQuantities) {
             const rawQuantity = inputQuantities[i].quantity;
             const quantity = new BN(rawQuantity);
-            const unit = inputQuantities[i].unit;
+            const { unit } = inputQuantities[i];
 
-            var randomness;
-            if (inputQuantities[i].r != undefined) {
+            let randomness;
+            if (inputQuantities[i].r !== undefined) {
                 randomness = new BN(inputQuantities[i].r).mod(this.n).toRed(this.redSquare);
             } else {
                 randomness = new BN(this.generatePrime()).mod(this.n).toRed(this.redSquare);
             }
-            // let negRandomness = new BN(Math.floor(Math.random()*1000000000)).mod(this.n).toRed(this.redSquare)
 
             const encryptedInput = this.encrypt(quantity, randomness);
             // let encryptedNegInput = this.encrypt(this.n.sub(quantity), negRandomness);
@@ -78,12 +77,10 @@ class ZK {
                 added: inputQuantities[i].added,
                 public: {
                     enc: encryptedInput,
-                    //	encNeg: encryptedNegInput,
                     unit,
                 },
                 private: {
                     r: randomness,
-                    //	rp : negRandomness,
                     quantity: rawQuantity,
                     unit,
                 },
@@ -95,16 +92,15 @@ class ZK {
             const quantity = new BN(rawQuantity);
             const { unit } = outputQuantities[i];
 
-            var randomness;
-            if (outputQuantities[i].r != undefined) {
+            let randomness;
+            if (outputQuantities[i].r !== undefined) {
                 randomness = new BN(outputQuantities[i].r).mod(this.n).toRed(this.redSquare);
             } else {
                 randomness = new BN(this.generatePrime()).mod(this.n).toRed(this.redSquare);
             }
-            // let negRandomness = new BN(Math.floor(Math.random()*1000000000)).mod(this.n).toRed(this.redSquare)
 
             const encryptedOutput = this.encrypt(quantity, randomness);
-            const encryptedNegOutput = encryptedOutput.redInvm(); // this.encrypt(this.n.sub(quantity), negRandomness);
+            const encryptedNegOutput = encryptedOutput.redInvm();
 
             // rs.push(randomness.toNumber())
 
@@ -160,18 +156,9 @@ class ZK {
     }
 
     V(e, a, Z, zp) {
-        return this.encrypt(this.zero, zp.fromRed().toRed(this.redSquare)).eq(a.redMul(Z.redPow(e)));
+        return this.encrypt(this.zero, zp.fromRed().toRed(this.redSquare))
+            .eq(a.redMul(Z.redPow(e)));
     }
 }
 
-//
-// inputQuantities = [{object: 'abcd', quantity: 3, unit: 'kg'},{object: 'efgh', quantity: 13, unit: 'kg'},{object: 'ijkl', quantity: 2, unit: 'kg'}];
-// outputQuantities = [{object: 'mnop', quantity: 4, unit: 'kg'},{object: 'qrst', quantity: 11, r:16, unit: 'kg'},{object: 'uvwx', quantity: 2, unit: 'kg'}];
-
 module.exports = ZK;
-/*
-while(zk.P(12322, 'E-123', inputQuantities, outputQuantities) == true) {
-
-} */
-
-// console.log((zk.P(12322, 'E-123', inputQuantities, outputQuantities)))
