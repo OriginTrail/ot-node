@@ -9,9 +9,12 @@ const deasync = require('deasync-promise');
 const globalEvents = require('./modules/GlobalEvents');
 const MerkleTree = require('./modules/Merkle');
 const restify = require('restify');
+const fs = require('fs');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+const RemoteControl = require('./modules/RemoteControl');
+const corsMiddleware = require('restify-cors-middleware');
 
 const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
@@ -135,6 +138,11 @@ class OTNode {
             console.log(e);
         });
 
+        if (parseInt(config.remote_control_enabled, 10)) {
+            log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
+            deasync(RemoteControl.connect());
+        }
+
         // Starting event listener on Blockchain
         log.info('Starting blockchain event listener');
         // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
@@ -155,6 +163,15 @@ class OTNode {
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
+        const cors = corsMiddleware({
+            preflightMaxAge: 5, // Optional
+            origins: ['*'],
+            allowHeaders: ['API-Token'],
+            exposeHeaders: ['API-Token-Expiry'],
+        });
+
+        server.pre(cors.preflight);
+        server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify('%s exposed at %s', server.name, server.url);
@@ -182,10 +199,30 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
@@ -211,10 +248,30 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
