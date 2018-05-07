@@ -9,16 +9,17 @@ const deasync = require('deasync-promise');
 const globalEvents = require('./modules/GlobalEvents');
 const MerkleTree = require('./modules/Merkle');
 const restify = require('restify');
+const fs = require('fs');
 var models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+const RemoteControl = require('./modules/RemoteControl');
+const corsMiddleware = require('restify-cors-middleware');
 
 const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
-const MockSmartContract = require('./modules/temp/MockSmartContract');
-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
 require('./modules/EventHandlers');
 
 var pjson = require('./package.json');
@@ -39,8 +40,21 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     bootstrap() {
+        try {
+            // check if all dependencies are installed
+            deasync(Utilities.checkInstalledDependencies());
+            log.info('npm modules dependences check done');
+
+            // Checking root folder stucture
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure check done');
+        } catch (err) {
+            console.log(err);
+        }
+
         // sync models
         Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
 
         // Loading config data
         try {
@@ -60,8 +74,16 @@ class OTNode {
             console.log(err);
         }
 
+        // Checking if selected graph database exists
+        try {
+            deasync(Utilities.checkDoesStorageDbExists());
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+        }
+
         let selectedBlockchain;
-        // Loading selected graph database data
+        // Loading selected blockchain network
         try {
             selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
@@ -70,12 +92,38 @@ class OTNode {
             console.log(err);
         }
 
+        // check does node_wallet has sufficient Ether and ATRAC tokens
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                const etherBalance = deasync(Utilities.getBalanceInEthers());
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
+
+                const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
         // wire instances
         GSInstance.db = new GraphStorage(selectedDatabase);
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
-        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
@@ -95,6 +143,18 @@ class OTNode {
         }).catch((e) => {
             console.log(e);
         });
+
+        if (parseInt(config.remote_control_enabled, 10)) {
+            log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
+            deasync(RemoteControl.connect());
+        }
+
+        // Starting event listener on Blockchain
+        log.info('Starting blockchain event listener');
+        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        setInterval(() => {
+            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        }, 3000);
     }
 
     /**
@@ -109,6 +169,15 @@ class OTNode {
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
+        const cors = corsMiddleware({
+            preflightMaxAge: 5, // Optional
+            origins: ['*'],
+            allowHeaders: ['API-Token'],
+            exposeHeaders: ['API-Token-Expiry'],
+        });
+
+        server.pre(cors.preflight);
+        server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify('%s exposed at %s', server.name, server.url);
@@ -136,10 +205,30 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
@@ -165,15 +254,36 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
                     filepath: input_file,
                     contact: req.contact,
+                    response: res,
                 };
 
                 globalEmitter.emit('gs1-import-request', queryObject);

@@ -32,6 +32,33 @@ describe('Utilities module', () => {
         });
     });
 
+    it('getNodeNetworkType()', async () => {
+        await Utilities.getNodeNetworkType().then((result) => {
+            assert.equal(result, 'rinkeby');
+        }).catch((error) => {
+            console.log(error);
+        });
+    });
+
+    // way to check is rinkeby with our token healthy
+    it('getInfuraRinkebyApiMethods()', async () => {
+        const response = await Utilities.getInfuraRinkebyApiMethods();
+        assert.equal(response.statusCode, 200);
+        assert.containsAllKeys(response.body, ['get', 'post']);
+    });
+
+    // way to chech is method from rinkeby with our token healthy
+    it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
+        const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
+        assert.equal(responseFromApi.statusCode, 200);
+        const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
+        // assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // Not possible to match exactly the block every time as new ones get mined,
+        // so range is used
+        expect(Utilities.hexToNumber(responseFromApi.body.result))
+            .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
+    });
+
     it('loadSelectedBlockchainInfo()', async () => {
         const myResult = await Utilities.loadSelectedBlockchainInfo();
         assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
@@ -159,6 +186,13 @@ describe('Utilities module', () => {
         const copyEdgeOne = Utilities.copyObject(edgeOne);
         assert.deepEqual(edgeOne, copyEdgeOne);
     });
+
+    it('hexToNumber() and numberToHex check', () => {
+        const hexValue = Utilities.numberToHex(500);
+        const intValue = Utilities.hexToNumber(hexValue);
+        assert.equal(hexValue, intValue);
+    });
+
 
     it('executeCallback() callback not defined scenario', async () => {
         // helper function

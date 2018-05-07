@@ -11,8 +11,8 @@ GS1 retains the right to make changes to this document at any time, without noti
       <epcglobal:specification>EPC INFORMATION SERVICE (EPCIS) Version 1.2</epcglobal:specification>
     </xsd:documentation>
   </xsd:annotation>
-  <xsd:import namespace="urn:epcglobal:xsd:1" schemaLocation="./EPCglobal.xsd"/>
-  <xsd:import namespace="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaLocation="./StandardBusinessDocumentHeader.xsd"/>
+  <xsd:import namespace="urn:epcglobal:xsd:1" schemaLocation="./importers/EPCglobal.xsd"/>
+  <xsd:import namespace="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaLocation="./importers/StandardBusinessDocumentHeader.xsd"/>
   <!-- EPCIS CORE ELEMENTS -->
   <xsd:element name="EPCISDocument" type="epcis:EPCISDocumentType"/>
   <xsd:complexType name="EPCISDocumentType">
@@ -175,7 +175,7 @@ GS1 retains the right to make changes to this document at any time, without noti
       <xsd:element name="QuantityEvent" type="epcis:QuantityEventType" minOccurs="0" maxOccurs="unbounded"/>
       <xsd:element name="TransactionEvent" type="epcis:TransactionEventType" minOccurs="0" maxOccurs="unbounded"/>
       <xsd:element name="extension" type="epcis:EPCISEventListExtensionType"/>
-      <xsd:any namespace="##other" processContents="lax"/>
+      <!--<xsd:any namespace="##other" processContents="lax"/>-->
     </xsd:choice>
     <!-- Note: the use of "unbounded" in both the xsd:choice element
                     and the enclosed xsd:element elements is, strictly speaking,

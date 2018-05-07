@@ -8,6 +8,12 @@ const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
 const randomString = require('randomstring');
+const Web3 = require('web3');
+const request = require('superagent');
+const { Database } = require('arangojs');
+const neo4j = require('neo4j-driver').v1;
+
+require('dotenv').config();
 
 
 class Utilities {
@@ -66,6 +72,33 @@ class Utilities {
                 .catch((err) => {
                     reject(err);
                 });
+        });
+    }
+
+    /**
+     * Check if all dependencies from package.json are installed
+     * @returns {Promise<any>} containing error array:
+     *   error: []            // when everything is OK, error array is empty
+     *   error: array,        // if not OK, array of logged errors is returned
+     */
+    static checkInstalledDependencies() {
+        return new Promise((resolve, reject) => {
+            // eslint-disable-next-line global-require
+            require('check-dependencies')({
+                packageManager: 'npm',
+                // eslint-disable-next-line no-template-curly-in-string
+                packageDir: '${__dirname}/../',
+                install: false,
+                scopeList: ['dependencies', 'devDependencies'],
+                verbose: false,
+            }).then((output) => {
+                if (!output.depsWereOk) {
+                    reject(output.error);
+                }
+                resolve(output.error);
+            }).catch((error) => {
+                reject(error);
+            });
         });
     }
 
@@ -150,6 +183,67 @@ class Utilities {
     }
 
     /**
+     * Check if origintrail database exists, in case of arangoDB create one
+     * @returns {Promise<any>}
+     */
+    static checkDoesStorageDbExists() {
+        return new Promise((resolve, reject) => {
+            switch (config.database.database_system) {
+            case 'arango_db': {
+                const systemDb = new Database();
+                systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+                systemDb.listDatabases().then((result) => {
+                    let databaseAlreadyExists = false;
+                    for (let i = 0; i < result.length; i += 1) {
+                        if (result[i].toString() === process.env.DB_DATABASE) {
+                            databaseAlreadyExists = true;
+                        }
+                    }
+                    if (!databaseAlreadyExists) {
+                        systemDb.createDatabase(
+                            process.env.DB_DATABASE,
+                            [{
+                                username: process.env.DB_USERNAME,
+                                passwd: process.env.DB_PASSWORD,
+                                active: true,
+                            }],
+                        ).then((result) => {
+                            resolve();
+                        }).catch((error) => {
+                            reject(error);
+                        });
+                    }
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+            }
+                break;
+            case 'neo4j':
+                try {
+                    // TODO
+                    const host = process.env.NEO_HOST;
+                    const port = process.env.NEO_PORT;
+                    const user = process.env.NEO_USERNAME;
+                    const pass = process.env.NEO_PASSWORD;
+                    const driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(user, 'nijePASS'));
+                    const session = driver.session();
+                    const a = session.run('match (n) return n');
+                    session.close();
+                    driver.close();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+                break;
+            default:
+                this.getLogger.error(config.database.database_system);
+                reject(Error('Database doesn\'t exists'));
+            }
+        });
+    }
+
+    /**
      * Get information of selected graph storage database
      * @returns {Promise<any>}
      */
@@ -169,10 +263,10 @@ class Utilities {
     }
 
     /**
-    * Generate Self Signed SSL for Kademlia
-    * @return {Promise<any>}
-    * @private
-    */
+     * Generate Self Signed SSL for Kademlia
+     * @return {Promise<any>}
+     * @private
+     */
     static generateSelfSignedCertificate() {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
@@ -190,9 +284,9 @@ class Utilities {
     }
 
     /**
-    * Generates private extended key for identity
-    * @param kadence
-    */
+     * Generates private extended key for identity
+     * @param kadence
+     */
     static createPrivateExtendedKey(kadence) {
         if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
             fs.writeFileSync(
@@ -267,6 +361,53 @@ class Utilities {
     }
 
     /**
+     * Get NODE_WALLETs balance in Ether
+     * @return {Promise<any>}
+     */
+    static getBalanceInEthers() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.getBalance(config.wallet_address).then((result) => {
+                    const balance = web3.utils.fromWei(result, 'ether');
+                    resolve(balance);
+                }).catch((error) => {
+                    reject(error);
+                });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Get NODE_WALLETs ATRAC token balance in Ether
+     * @return {Promise<any>}
+     */
+    static getAlphaTracTokenBalance() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                const wallet_address_minus0x = (config.wallet_address).substring(2);
+                // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
+                var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
+                web3.eth.call({
+                    to: config.token_contract_address,
+                    data: contractData,
+                }).then((result) => {
+                    const tokensInWei = web3.utils.toBN(result).toString();
+                    const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
+                    resolve(tokensInEther);
+                }).catch((error) => {
+                    reject(error);
+                });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
      * Makes a copy of object
      *
      * @param object Obj
@@ -320,6 +461,123 @@ class Utilities {
         }
 
         return sortedObj;
+    }
+
+    /**
+     * Checks for expected ot-node directory structure
+     * @returns {void}
+     */
+    static checkOtNodeDirStructure() {
+        const log = this.getLogger();
+        try {
+            if (!fs.existsSync(`${__dirname}/../keys`)) {
+                fs.mkdirSync(`${__dirname}/../keys`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named keys');
+        }
+
+        try {
+            if (!fs.existsSync(`${__dirname}/../data`)) {
+                fs.mkdirSync(`${__dirname}/../data`);
+            }
+        } catch (error) {
+            log.warn('Failed to create folder named data');
+        }
+    }
+
+    /**
+     * Check on which network blockchain is running on
+     * @returns {Promise<any>}
+     */
+    static getNodeNetworkType() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.net.getNetworkType()
+                    .then((result) => {
+                        resolve(result);
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api methods endpoint
+     * @returns {Promise<any>}
+     */
+    static getInfuraRinkebyApiMethods() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/methods')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Pings infura rinkeby api eth_blockNumber method endpoint
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberInfuraRinkebyApiMethod() {
+        return new Promise((resolve, reject) => {
+            request
+                .get('https://api.infura.io/v1/jsonrpc/rinkeby/eth_blockNumber')
+                .query('?token=1WRiEqAQ9l4SW6fGdiDt')
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    /**
+     * Gets block number from web3
+     * @returns {Promise<any>}
+     */
+    static getBlockNumberFromWeb3() {
+        return new Promise((resolve, reject) => {
+            this.loadSelectedBlockchainInfo().then((config) => {
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+                web3.eth.getBlockNumber()
+                    .then((result) => {
+                        resolve(web3.utils.numberToHex(result));
+                    }).catch((error) => {
+                        reject(error);
+                    });
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+
+    /**
+     * Web3 Hex to number
+     * @param hex
+     * @returns {number}
+     */
+    static hexToNumber(hex) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.hexToNumber(hex);
+    }
+
+    /**
+     * Web3 Number to hex
+     * @param num
+     * @returns {string}
+     */
+    static numberToHex(num) {
+        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
+        return web3.utils.numberToHex(num);
     }
 }
 

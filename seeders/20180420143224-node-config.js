@@ -3,7 +3,7 @@ require('dotenv').config();
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'dh_min_price',
-        value: '100',
+        value: '10',
     },
     {
         key: 'dh_max_price',
@@ -15,7 +15,15 @@ module.exports = {
     },
     {
         key: 'dh_max_stake',
-        value: '10000',
+        value: '1000',
+    },
+    {
+        key: 'remote_control_enabled',
+        value: '1',
+    },
+    {
+        key: 'remote_control_port',
+        value: process.env.NODE_REMOTE_CONTROL_PORT,
     },
     ], {}),
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
