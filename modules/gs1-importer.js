@@ -353,6 +353,7 @@ function getEventId(senderId, event) {
 
 async function parseGS1(gs1XmlFile) {
     const { db } = GSInstance;
+    const GLOBAL_R = 131317;
     const importId = Date.now();
     const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
     const xsdFileBuffer = fs.readFileSync('./importers/EPCglobal-epcis-masterdata-1_2.xsd');
@@ -703,13 +704,124 @@ async function parseGS1(gs1XmlFile) {
                     // });
                 }
 
-                const inputQuantities = [{ object: 'abcd', quantity: 3, unit: 'kg' }, { object: 'efgh', quantity: 13, unit: 'kg' }, { object: 'ijkl', quantity: 2, unit: 'kg' }];
-                const outputQuantities = [{ object: 'mnop', quantity: 4, unit: 'kg' }, {
-                    object: 'qrst', quantity: 11, r: 16, unit: 'kg',
-                }, { object: 'uvwx', quantity: 2, unit: 'kg' }];
+                let inputQuantities = [];
+                const outputQuantities = [];
+                if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')) {
+                    const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
+                    const { quantityList } = extension;
+                    if (bizStep === 'shipping') {
+                        const tmpOutputQuantities = arrayze(quantityList.quantityElement)
+                            .map(elem => ({
+                                object: ignorePattern(elem.epcClass, 'urn:epc:id:sgtin:'),
+                                quantity: parseInt(elem.quantity, 10),
+                            }));
+                        for (const outputQ of tmpOutputQuantities) {
+                            // eslint-disable-next-line
+                            const vertex = await db.getVertexWithMaxVersion(outputQ.object);
+                            if (vertex) {
+                                const quantities = vertex.data.quantities.private;
+                                const quantity = {
+                                    object: outputQ.object,
+                                    quantity: parseInt(quantities.quantity, 10),
+                                    r: quantities.r,
+                                };
+                                inputQuantities.push(quantity);
+                                outputQuantities.push(quantity);
+                            } else {
+                                inputQuantities.push({
+                                    added: true,
+                                    object: outputQ.object,
+                                    quantity: parseInt(outputQ.quantity, 10),
+                                });
+                                outputQuantities.push({
+                                    added: true,
+                                    object: outputQ.object,
+                                    quantity: parseInt(outputQ.quantity, 10),
+                                    r: GLOBAL_R,
+                                });
+                            }
+                        }
+                    } else {
+                        inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
+                            object: ignorePattern(elem.epcClass, 'urn:epc:id:sgtin:'),
+                            quantity: parseInt(elem.quantity, 10),
+                            r: GLOBAL_R,
+                        }));
+                        for (const inputQ of inputQuantities) {
+                            // eslint-disable-next-line
+                            const vertex = await db.getVertexWithMaxVersion(inputQ.object);
+                            if (vertex) {
+                                const quantities = vertex.data.quantities.private;
+                                outputQuantities.push({
+                                    object: inputQ.object,
+                                    quantity: parseInt(quantities.quantity, 10),
+                                    r: quantities.r,
+                                });
+                            } else {
+                                outputQuantities.push({
+                                    added: true,
+                                    object: inputQ.object,
+                                    quantity: parseInt(inputQ.quantity, 10),
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    const { inputQuantityList, outputQuantityList } = event;
+                    for (const inputQuantity of inputQuantityList) {
+                        // eslint-disable-next-line
+                        const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
+                        if (vertex) {
+                            const quantities = vertex.data.quantities.private;
+                            const quantity = {
+                                object: inputQuantity.object,
+                                quantity: parseInt(quantities.quantity, 10),
+                                r: quantities.r,
+                            };
+                            inputQuantities.push(quantity);
+                        } else {
+                            inputQuantities.push({
+                                added: true,
+                                object: inputQuantity.object,
+                                quantity: parseInt(inputQuantity.quantity, 10),
+                            });
+                        }
+                    }
+                    for (const outputQuantity of outputQuantityList) {
+                        // eslint-disable-next-line
+                        const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
+                        if (vertex) {
+                            const quantities = vertex.data.quantities.private;
+                            const quantity = {
+                                object: outputQuantity.object,
+                                quantity: parseInt(quantities.quantity, 10),
+                                r: quantities.r,
+                            };
+                            outputQuantities.push(quantity);
+                        } else {
+                            outputQuantities.push({
+                                added: true,
+                                object: outputQuantity.object,
+                                quantity: parseInt(outputQuantity.quantity, 10),
+                            });
+                        }
+                    }
+                }
                 const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-
+                for (const quantity of quantities.inputs.concat(quantities.outputs)) {
+                    if (quantity.added) {
+                        delete quantity.added;
+                        const batch = batchesVertices.filter((elem) => {
+                            return elem.identifiers.uid === quantity.object;
+                        });
+                        if (!batch) {
+                            throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
+                        }
+                        batch.data.quantities = quantity;
+                        batch._key = md5(`batch_${senderId}_${batch.data}`); // TODO check _key
+                    }
+                }
                 event.quantities = quantities;
             }
 

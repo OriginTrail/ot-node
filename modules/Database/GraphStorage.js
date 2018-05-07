@@ -114,12 +114,12 @@ class GraphStorage {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    getVertexKeyWithMaxVersion(uid) {
+    getVertexWithMaxVersion(uid) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.getVertexKeyWithMaxVersion(uid).then((result) => {
+                this.db.getVertexWithMaxVersion(uid).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
