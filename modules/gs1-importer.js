@@ -485,14 +485,14 @@ async function parseGS1(gs1XmlFile) {
 
 
             // pre-fetch from DB.
-            const objectClassLocationId = 'dafdsafas';
-            const objectClassActorId = 'dafdsafas';
-            const objectClassProductId = 'dafdsafas';
-            const objectClassBatchId = 'dafdsafas';
-            const objectEventTransportId = 'dafdsafas';
-            const objectEventTransformationId = 'dafdsafas';
-            const objectEventObservationId = 'dafdsafas';
-            const objectEventOwnershipId = 'dafdsafas';
+            const objectClassLocationId = db.getClassId('Location');
+            const objectClassActorId = db.getClassId('Actor');
+            const objectClassProductId = db.getClassId('Product');
+            const objectClassBatchId = db.getClassId('Batch');
+            const objectEventTransportId = db.getClassId('Transport');
+            const objectEventTransformationId = db.getClassId('Transformation');
+            const objectEventObservationId = db.getClassId('Observation');
+            const objectEventOwnershipId = db.getClassId('Ownership');
 
             const locationMappings = {
             };
@@ -739,9 +739,6 @@ async function parseGS1(gs1XmlFile) {
                     // });
                 }
             }
-
-            await db.createCollection('ot_vertices');
-            await db.createEdgeCollection('ot_edges');
 
             const allVertices =
                 locationVertices
