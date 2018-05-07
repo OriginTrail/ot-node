@@ -431,9 +431,6 @@ async function processXML(err, result) {
         }
     }
 
-    // Storniraj master data.
-
-
     // pre-fetch from DB.
     const objectClassLocationId = await db.getClassId('Location');
     const objectClassActorId = await db.getClassId('Actor');
@@ -531,12 +528,15 @@ async function processXML(err, result) {
     }
 
     for (const batch of batches) {
+        const productId = batch.attributes.productid;
+
         const identifiers = {
             id: batch.id,
             uid: batch.id,
         };
 
         const data = {
+            parent_id: productId,
         };
 
         copyProperties(batch.attributes, data);
@@ -552,7 +552,6 @@ async function processXML(err, result) {
             vertex_type: 'BATCH',
         });
 
-        const productId = ignorePattern(batch.attributes.productid, 'urn:ot:mda:product:id:');
         batchEdges.push({
             _key: md5(`child business_location_${senderId}_${batch.id}_${productId}`),
             _from: `ot_vertices/${key}`,
@@ -862,15 +861,6 @@ async function processXML(err, result) {
             edge_type: 'IS',
         });
     });
-
-    // batchesVertices.forEach((vertex) => {
-    //     classObjectEdges.push({
-    //         _key: md5(`is_${senderId}_${vertex.id}_${objectClassBatchId}`),
-    //         _from: `ot_vertices/${vertex._key}`,
-    //         _to: `ot_vertices/${objectClassBatchId}`,
-    //         edge_type: 'IS',
-    //     });
-    // });
 
     eventVertices.forEach((vertex) => {
         vertex.data.categories.forEach(async (category) => {
