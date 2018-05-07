@@ -606,7 +606,16 @@ async function parseGS1(gs1XmlFile) {
                 // event.kurac.palac.input
 
                 const eventId = getEventId(senderId, event);
-                const eventCategories = arrayze(event.extension).map(obj => ignorePattern(obj.OTEventClass, 'ot:event:'));
+
+                const { extension } = event;
+                let ignore = 'ot:event:';
+                let eventClass = extension.OTEventClass;
+                if (!eventClass) {
+                    ignore = 'ot:events:';
+                    eventClass = extension.extension.OTEventClass;
+                }
+                const eventCategories = arrayze(eventClass).map(obj => ignorePattern(obj, ignore));
+
                 const identifiers = {
                     id: eventId,
                     uid: eventId,
