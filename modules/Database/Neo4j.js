@@ -398,7 +398,20 @@ class Neo4jDB {
             return [];
         }
         const session = this.driver.session();
-        return session.run(`MATCH(n) WHERE n._key = '${document._key}' SET n.imports = n.imports + ${importNumber} return n`);
+        const result = await session.run('MATCH (n) WHERE n._key = $_key RETURN n', {
+            _key: document._key,
+        });
+        let { imports } = result.records[0]._fields[0].properties;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        await session.run('MATCH(n) WHERE n._key = $_key SET n.imports = $imports return n', {
+            _key: document._key,
+            imports,
+        });
+        session.close();
     }
 
     /**
