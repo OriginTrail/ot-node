@@ -41,9 +41,7 @@ class OTNode {
             // check if all dependencies are installed
             deasync(Utilities.checkInstalledDependencies());
             log.info('npm modules dependences check done');
-            // make sure arango database exists
-            deasync(Utilities.checkDoesStorageDbExists());
-            log.info('Storage database check done');
+
             // Checking root folder stucture
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
@@ -73,8 +71,16 @@ class OTNode {
             console.log(err);
         }
 
+        // Checking if selected graph database exists
+        try {
+            deasync(Utilities.checkDoesStorageDbExists());
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+        }
+
         let selectedBlockchain;
-        // Loading selected graph database data
+        // Loading selected blockchain network
         try {
             selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
