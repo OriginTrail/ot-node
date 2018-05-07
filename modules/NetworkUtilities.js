@@ -13,6 +13,7 @@ const node = require('./Node');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
+const Control  = require('./Control');
 
 class NetworkUtilities {
     constructor() {
@@ -161,15 +162,15 @@ class NetworkUtilities {
             'ControlSock and ControlPort cannot both be enabled',
         );
 
-        const controller = new boscar.Server(new kadence.Control(node.ot));
+        const controller = new boscar.Server(new Control(node.ot));
 
         if (parseInt(config.control_port_enabled, 10)) {
-            log.info(`Binding controller to port ${config.control_port}`);
+            log.notify(`Binding controller to port ${config.control_port}`);
             controller.listen(parseInt(config.control_port, 10), '0.0.0.0');
         }
 
         if (parseInt(config.control_sock_enabled, 10)) {
-            log.info(`Binding controller to path ${config.control_sock}`);
+            log.notify(`Binding controller to path ${config.control_sock}`);
             controller.listen(config.control_sock);
         }
     }
