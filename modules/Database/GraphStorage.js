@@ -257,8 +257,8 @@ class GraphStorage {
      * @returns {Promise<string | undefined>}
      */
     async getClassId(className) {
-        const id =
-            this._allowedClasses.find(element => element.toLocaleLowerCase() === className.toLocaleLowerCase());
+        const id = this._allowedClasses.find(element => element.toLocaleLowerCase() ===
+            className.toLocaleLowerCase());
         return id;
     }
 
