@@ -221,12 +221,11 @@ function parseLocations(vocabularyElementList) {
     const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
-        let childLocations = arrayze(element.children ? element.children.id : []);
-        childLocations = childLocations.map(elem => ignorePattern(elem, 'urn:epc:id:sgln:'));
+        const childLocations = arrayze(element.children ? element.children.id : []);
 
         const location = {
             type: 'location',
-            id: ignorePattern(element.id, 'urn:ot:mda:location:'),
+            id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
         };
@@ -251,7 +250,7 @@ function parseActors(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const actor = {
             type: 'actor',
-            id: ignorePattern(element.id, 'urn:ot:mda:actor:'),
+            id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
         };
 
@@ -275,7 +274,7 @@ function parseProducts(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const product = {
             type: 'product',
-            id: ignorePattern(element.id, 'urn:ot:mda:product:'),
+            id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
         };
 
@@ -299,7 +298,7 @@ function parseBatches(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const batch = {
             type: 'batch',
-            id: ignorePattern(ignorePattern(element.id, 'urn:ot:mda:batch:'), 'urn:epc:id:sgtin:'),
+            id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
         };
 
@@ -627,7 +626,7 @@ async function parseGS1(gs1XmlFile) {
 
                 if (extension.extension) {
                     if (extension.extension.sourceList) {
-                        const sources = arrayze(extension.extension.sourceList.source._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
+                        const sources = arrayze(extension.extension.sourceList.source._);
                         for (const source of sources) {
                             eventEdges.push({
                                 _key: md5(`source_${senderId}_${eventId}_${source}`),
@@ -639,7 +638,7 @@ async function parseGS1(gs1XmlFile) {
                     }
 
                     if (extension.extension.destinationList) {
-                        const destinations = arrayze(extension.extension.destinationList.destination._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
+                        const destinations = arrayze(extension.extension.destinationList.destination._);
                         for (const destination of destinations) {
                             eventEdges.push({
                                 _key: md5(`destination_${senderId}_${eventId}_${destination}`),
@@ -654,7 +653,7 @@ async function parseGS1(gs1XmlFile) {
 
                 const { bizLocation } = event;
                 if (bizLocation) {
-                    const bizLocationId = ignorePattern(bizLocation.id, 'urn:ot:mda:location:');
+                    const bizLocationId = bizLocation.id;
                     eventEdges.push({
                         _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
                         _from: `ot_vertices/${eventKey}`,
@@ -664,7 +663,7 @@ async function parseGS1(gs1XmlFile) {
                 }
 
                 if (event.readPoint) {
-                    const locationReadPoint = ignorePattern(event.readPoint.id, 'urn:ot:mda:location:');
+                    const locationReadPoint = event.readPoint.id;
                     eventEdges.push({
                         _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
                         _from: `ot_vertices/${eventKey}`,
@@ -675,7 +674,7 @@ async function parseGS1(gs1XmlFile) {
 
                 if (event.inputEPCList) {
                     for (const inputEpc of arrayze(event.inputEPCList.epc)) {
-                        const batchId = ignorePattern(inputEpc, 'urn:epc:id:sgtin:');
+                        const batchId = inputEpc;
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
@@ -688,7 +687,7 @@ async function parseGS1(gs1XmlFile) {
 
                 if (event.childEPCs) {
                     for (const inputEpc of arrayze(event.childEPCs)) {
-                        const batchId = ignorePattern(inputEpc.epc, 'urn:epc:id:sgtin:');
+                        const batchId = inputEpc.epc;
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
@@ -701,7 +700,7 @@ async function parseGS1(gs1XmlFile) {
 
                 if (event.outputEPCList) {
                     for (const outputEpc of arrayze(event.outputEPCList.epc)) {
-                        const batchId = ignorePattern(outputEpc, 'urn:epc:id:sgtin:');
+                        const batchId = outputEpc;
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
@@ -714,7 +713,7 @@ async function parseGS1(gs1XmlFile) {
 
 
                 if (event.parentID) {
-                    const parentId = ignorePattern(event.parentID, 'urn:epc:id:sgtin:');
+                    const parentId = event.parentID;
                     // TODO: fetch from db.
 
                     // eventEdges.push({
@@ -735,7 +734,7 @@ async function parseGS1(gs1XmlFile) {
                     if (bizStep === 'shipping') {
                         const tmpOutputQuantities = arrayze(quantityList.quantityElement)
                             .map(elem => ({
-                                object: ignorePattern(elem.epcClass, 'urn:epc:id:sgtin:'),
+                                object: elem.epcClass,
                                 quantity: parseInt(elem.quantity, 10),
                             }));
                         for (const outputQ of tmpOutputQuantities) {
@@ -766,7 +765,7 @@ async function parseGS1(gs1XmlFile) {
                         }
                     } else {
                         inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
-                            object: ignorePattern(elem.epcClass, 'urn:epc:id:sgtin:'),
+                            object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
                             r: GLOBAL_R,
                         }));
@@ -831,7 +830,7 @@ async function parseGS1(gs1XmlFile) {
                     }
                 }
                 const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-                for (const quantity of quantities.inputs.concat(quantities.outputs)) {
+                for (const ®quantity of quantities.inputs.concat(quantities.outputs)) {
                     if (quantity.added) {
                         delete quantity.added;
                         let batchFound = false;
