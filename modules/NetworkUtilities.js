@@ -13,7 +13,7 @@ const node = require('./Node');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
-const Control  = require('./Control');
+const Control = require('./Control');
 
 class NetworkUtilities {
     constructor() {
