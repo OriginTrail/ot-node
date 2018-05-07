@@ -860,7 +860,7 @@ async function processXML(err, result) {
 
     await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
 
-    await Promise.all(allVertices.map(vertex => db.updateDocumentImports('ot_vertices', vertex, importId)));
+    await Promise.all(allVertices.map(vertex => db.updateDocumentImports('ot_vertices', vertex._key, importId)));
 
     console.log('Done parsing and importing.');
     return { vertices: allVertices, edges: allEdges, import_id: importId };
