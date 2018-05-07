@@ -4,6 +4,8 @@ const md5 = require('md5');
 const deasync = require('deasync-promise');
 const xsd = require('libxml-xsd');
 
+const ZK = require('./ZK');
+const zk = new ZK;
 const GSInstance = require('./GraphStorageInstance');
 const utilities = require('./Utilities');
 const async = require('async');
@@ -15,34 +17,6 @@ const validator = require('validator');
 function updateImportNumber(collection, document, importId) {
     const { db } = GSInstance;
     return db.updateDocumentImports(collection, document, importId);
-}
-
-/**
- * Find values helper
- * @param obj
- * @param key
- * @param list
- * @return {*}
- */
-function findValuesHelper(obj, key, list) {
-    if (!obj) return list;
-    if (obj instanceof Array) {
-        for (var i in obj) {
-            list = list.concat(findValuesHelper(obj[i], key, []));
-        }
-        return list;
-    }
-    if (obj[key]) list.push(obj[key]);
-
-    if ((typeof obj === 'object') && (obj !== null)) {
-        var children = Object.keys(obj);
-        if (children.length > 0) {
-            for (i = 0; i < children.length; i += 1) {
-                list = list.concat(findValuesHelper(obj[children[i]], key, []));
-            }
-        }
-    }
-    return list;
 }
 
 // sanitize
@@ -238,7 +212,6 @@ function parseLocations(vocabularyElementList) {
         { type: 'urn:ot:mda:location',
             VocabularyElementList: { VocabularyElement: [Object] } } ]
      */
-
     const locations = [];
 
     // May be an array in VocabularyElement.
@@ -417,6 +390,8 @@ async function parseGS1(gs1XmlFile) {
             const batchesVertices = [];
             const eventVertices = [];
 
+            const EDGE_KEY_TEMPLATE = 'ot_vertices/OT_KEY_';
+
             const senderId = senderElement['sbdh:Identifier']._;
             const sender = {
                 identifiers: {
@@ -494,9 +469,6 @@ async function parseGS1(gs1XmlFile) {
             const objectEventObservationId = db.getClassId('Observation');
             const objectEventOwnershipId = db.getClassId('Ownership');
 
-            const locationMappings = {
-            };
-
             for (const location of locations) {
                 const identifiers = {
                     id: location.id,
@@ -512,7 +484,6 @@ async function parseGS1(gs1XmlFile) {
                     identifiers,
                     data,
                 });
-                locationMappings[location.id] = locationKey;
 
                 const { child_locations } = location;
                 for (const childId of child_locations) {
@@ -532,7 +503,6 @@ async function parseGS1(gs1XmlFile) {
                         data,
                         vertex_type: 'CHILD_BUSINESS_LOCATION',
                     });
-                    locationMappings[childId] = childLocationKey;
 
                     locationEdges.push({
                         _key: md5(`child business_location_${senderId}_${location.id}_${md5(identifiers)}_${md5(data)}`),
@@ -571,7 +541,6 @@ async function parseGS1(gs1XmlFile) {
                 });
             }
 
-            const batchMappingsKeys = {};
             for (const batch of batches) {
                 const data = {
                     object_class_id: objectClassBatchId,
@@ -585,8 +554,6 @@ async function parseGS1(gs1XmlFile) {
                     _id: batch.id,
                     data,
                 });
-
-                batchMappingsKeys[batch.id] = key;
             }
 
             // Store vertices in db. Update versions
@@ -602,8 +569,6 @@ async function parseGS1(gs1XmlFile) {
 
             // TODO handle extensions
             for (const event of events) {
-                // TODO [alex]: Here be the zero knowledge dragon.
-                // event.kurac.palac.input
 
                 const eventId = getEventId(senderId, event);
 
@@ -622,6 +587,7 @@ async function parseGS1(gs1XmlFile) {
                     id: eventId,
                     uid: eventId,
                 };
+
                 const data = {
                     object_class_id: getClassId(event),
                     data: event,
@@ -664,22 +630,20 @@ async function parseGS1(gs1XmlFile) {
                 const { bizLocation } = event;
                 if (bizLocation) {
                     const bizLocationId = ignorePattern(bizLocation.id, 'urn:ot:mda:location:');
-                    const locationKey = locationMappings[bizLocationId];
                     eventEdges.push({
                         _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
                         _from: `ot_vertices/${eventKey}`,
-                        _to: `ot_vertices/${locationKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
                         edge_type: 'AT',
                     });
                 }
 
                 if (event.readPoint) {
                     const locationReadPoint = ignorePattern(event.readPoint.id, 'urn:ot:mda:location:');
-                    const locationKey = locationMappings[locationReadPoint];
                     eventEdges.push({
                         _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
                         _from: `ot_vertices/${eventKey}`,
-                        _to: `ot_vertices/${locationKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
                         edge_type: 'AT',
                     });
                 }
@@ -687,12 +651,11 @@ async function parseGS1(gs1XmlFile) {
                 if (event.inputEPCList) {
                     for (const inputEpc of arrayze(event.inputEPCList.epc)) {
                         const batchId = ignorePattern(inputEpc, 'urn:epc:id:sgtin:');
-                        const batchKey = batchMappingsKeys[batchId];
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
                             _from: `ot_vertices/${eventKey}`,
-                            _to: `ot_vertices/${batchKey}`,
+                            _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                             edge_type: 'INPUT_BATCH',
                         });
                     }
@@ -701,12 +664,11 @@ async function parseGS1(gs1XmlFile) {
                 if (event.childEPCs) {
                     for (const inputEpc of arrayze(event.childEPCs)) {
                         const batchId = ignorePattern(inputEpc.epc, 'urn:epc:id:sgtin:');
-                        const batchKey = batchMappingsKeys[batchId];
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
                             _from: `ot_vertices/${eventKey}`,
-                            _to: `ot_vertices/${batchKey}`,
+                            _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                             edge_type: 'CHILD_BATCH',
                         });
                     }
@@ -715,11 +677,10 @@ async function parseGS1(gs1XmlFile) {
                 if (event.outputEPCList) {
                     for (const outputEpc of arrayze(event.outputEPCList.epc)) {
                         const batchId = ignorePattern(outputEpc, 'urn:epc:id:sgtin:');
-                        const batchKey = batchMappingsKeys[batchId];
 
                         eventEdges.push({
                             _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
-                            _from: `ot_vertices/${batchKey}`,
+                            _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                             _to: `ot_vertices/${eventKey}`,
                             edge_type: 'OUTPUT_BATCH',
                         });
@@ -738,6 +699,14 @@ async function parseGS1(gs1XmlFile) {
                     //     edge_type: 'PARENT_BATCH',
                     // });
                 }
+
+
+                let inputQuantities = [{object: 'abcd', quantity: 3, unit: 'kg'},{object: 'efgh', quantity: 13, unit: 'kg'},{object: 'ijkl', quantity: 2, unit: 'kg'}];
+                let outputQuantities = [{object: 'mnop', quantity: 4, unit: 'kg'},{object: 'qrst', quantity: 11, r:16, unit: 'kg'},{object: 'uvwx', quantity: 2, unit: 'kg'}];
+
+                const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+
+                event.quantities = quantities;
             }
 
             const allVertices =
@@ -751,6 +720,20 @@ async function parseGS1(gs1XmlFile) {
 
             const allEdges = locationEdges
                 .concat(eventEdges);
+
+            for (const edge of allEdges) {
+                const to = edge._to;
+                const from = edge._from;
+
+                if (to.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    edge._to = await db.getVertexKeyWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+                }
+                if (from.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    edge._from = await db.getVertexKeyWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+                }
+            }
 
             await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
             console.log('Done parsing and importing.');
