@@ -4,7 +4,7 @@ const {
 const { assert, expect } = require('chai');
 
 const Neo4j = require('../../modules/Database/Neo4j.js');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/neo4j-data.js');
 
 const vertices = [
     { data: 'A', _key: '100' },
@@ -25,6 +25,8 @@ const port = '7687';
 
 const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
+const vertexOneV2 = databaseData.vertices[2];
+const vertexOneV3 = databaseData.vertices[3];
 
 const edgeOne = databaseData.edges[0];
 
@@ -113,6 +115,25 @@ describe('Neo4j module ', async () => {
         console.log(JSON.stringify(path));
     });
 
+    it('getCurrentMaxVersion single version vertex', async () => {
+        // vertexTwo has one version
+        const response = await testDb.getCurrentMaxVersion(vertexTwo.identifiers.uid);
+        assert.equal(response, 1);
+    });
+
+    it('getCurrentMaxVersion vertex has multiple versions', async () => {
+        // vertexOne has three versions
+        await testDb.addDocument('ot_vertices', vertexOneV2);
+        await testDb.addDocument('ot_vertices', vertexOneV3);
+        const response = await testDb.getCurrentMaxVersion(vertexOne.identifiers.uid);
+        assert.equal(response, 3);
+    });
+
+    it('getVertexKeyWithMaxVersion', async () => {
+        const response = await testDb.getVertexKeyWithMaxVersion(vertexOne.identifiers.uid);
+        console.log(response);
+    });
+
     it('getVerticesByImportId', async () => {
         const response = await testDb.getVerticesByImportId('1520345631');
 
@@ -141,10 +162,6 @@ describe('Neo4j module ', async () => {
         assert.deepEqual(response[0].imports, [vertexOne.imports[0], 101100]);
         assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
     });
-
-/*    await afterEach('clear testDb db', async () => {
-        await testDb.clear();
-    });*/
 
     after('drop testDb db', async () => {
         await testDb.clear();

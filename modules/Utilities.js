@@ -11,6 +11,7 @@ const randomString = require('randomstring');
 const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
+const neo4j = require('neo4j-driver').v1;
 
 require('dotenv').config();
 
@@ -182,38 +183,62 @@ class Utilities {
     }
 
     /**
-     * Check does origintrail database exists, otherwise create one
+     * Check if origintrail database exists, in case of arangoDB create one
      * @returns {Promise<any>}
      */
     static checkDoesStorageDbExists() {
         return new Promise((resolve, reject) => {
-            const systemDb = new Database();
-            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
-            systemDb.listDatabases().then((result) => {
-                let databaseAlreadyExists = false;
-                for (let i = 0; i < result.length; i += 1) {
-                    if (result[i].toString() === process.env.DB_DATABASE) {
-                        databaseAlreadyExists = true;
+            switch (config.database.database_system) {
+            case 'arango_db':
+                const systemDb = new Database();
+                systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+                systemDb.listDatabases().then((result) => {
+                    let databaseAlreadyExists = false;
+                    for (let i = 0; i < result.length; i += 1) {
+                        if (result[i].toString() === process.env.DB_DATABASE) {
+                            databaseAlreadyExists = true;
+                        }
                     }
+                    if (!databaseAlreadyExists) {
+                        systemDb.createDatabase(
+                            process.env.DB_DATABASE,
+                            [{
+                                username: process.env.DB_USERNAME,
+                                passwd: process.env.DB_PASSWORD,
+                                active: true,
+                            }],
+                        ).then((result) => {
+                            resolve();
+                        }).catch((error) => {
+                            reject(error);
+                        });
+                    }
+                    resolve();
+                }).catch((error) => {
+                    reject(error);
+                });
+                break;
+            case 'neo4j':
+                try {
+                    // TODO da proradi - prodje ili ne uspe
+                    const host = process.env.NEO_HOST;
+                    const port = process.env.NEO_PORT;
+                    const user = process.env.NEO_USERNAME;
+                    const pass = process.env.NEO_PASSWORD;
+                    const driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(user, 'nijePASS'));
+                    const session = driver.session();
+                    const a = session.run('match (n) return n');
+                    session.close();
+                    driver.close();
+                    resolve();
+                } catch (error) {
+                    reject(error);
                 }
-                if (!databaseAlreadyExists) {
-                    systemDb.createDatabase(
-                        process.env.DB_DATABASE,
-                        [{
-                            username: process.env.DB_USERNAME,
-                            passwd: process.env.DB_PASSWORD,
-                            active: true,
-                        }],
-                    ).then((result) => {
-                        resolve();
-                    }).catch((error) => {
-                        reject(error);
-                    });
-                }
-                resolve();
-            }).catch((error) => {
-                reject(error);
-            });
+                break;
+            default:
+                this.getLogger.error(config.database.database_system);
+                reject(Error('Database doesn\'t exists'));
+            }
         });
     }
 
