@@ -13,8 +13,6 @@ const async = require('async');
 const validator = require('validator');
 
 // Update import data
-
-
 function updateImportNumber(collection, document, importId) {
     const { db } = GSInstance;
     return db.updateDocumentImports(collection, document, importId);
@@ -184,13 +182,17 @@ function ethWalletValidation(wallet) {
     return false;
 }
 
-// ////////////////////////////////////
-
 function arrayze(value) {
     if (value) {
         return [].concat(value);
     }
     return [];
+}
+
+function copyProperties(from, to) {
+    for (const property in from) {
+        to[property] = from[property];
+    }
 }
 
 function parseAttributes(attributes, ignorePattern) {
@@ -227,7 +229,6 @@ function parseLocations(vocabularyElementList) {
             id: ignorePattern(element.id, 'urn:ot:mda:location:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
-            // TODO: Add participant ID.
         };
 
         locations.push(location);
@@ -252,7 +253,6 @@ function parseActors(vocabularyElementList) {
             type: 'actor',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
-            // TODO: Add participant ID.
         };
 
         actors.push(actor);
@@ -277,7 +277,6 @@ function parseProducts(vocabularyElementList) {
             type: 'product',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
-            // TODO: Add participant ID.
         };
 
         products.push(product);
@@ -302,7 +301,6 @@ function parseBatches(vocabularyElementList) {
             type: 'batch',
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
-            // TODO: Add participant ID.
         };
 
         batches.push(batch);
@@ -351,6 +349,12 @@ function getEventId(senderId, event) {
     return eventId;
 }
 
+function validateSender(sender) {
+    if (sender.EmailAddress) {
+        emailValidation(sender.EmailAddress);
+    }
+}
+
 async function parseGS1(gs1XmlFile) {
     const { db } = GSInstance;
     const GLOBAL_R = 131317;
@@ -374,7 +378,6 @@ async function parseGS1(gs1XmlFile) {
             // Header stuff.
             const standardBusinessDocumentHeaderElement = epcisDocumentElement.EPCISHeader['sbdh:StandardBusinessDocumentHeader'];
             const senderElement = standardBusinessDocumentHeaderElement['sbdh:Sender'];
-            const receiverElement = standardBusinessDocumentHeaderElement['sbdh:Receiver']; // TODO: may not exist.
             const vocabularyListElement =
                 epcisDocumentElement.EPCISHeader.extension.EPCISMasterData.VocabularyList;
             const eventListElement = epcisDocumentElement.EPCISBody.EventList;
@@ -405,14 +408,7 @@ async function parseGS1(gs1XmlFile) {
                 vertex_type: 'SENDER',
             };
 
-            const receiver = {
-                identifiers: {
-                    id: receiverElement['sbdh:Identifier']._,
-                    uid: receiverElement['sbdh:Identifier']._,
-                },
-                data: sanitize(receiverElement['sbdh:ContactInformation'], {}, ['sbdh:']),
-                vertex_type: 'RECEIVER',
-            };
+            validateSender(sender.data);
 
             // Check for vocabularies.
             const vocabularyElements = arrayze(vocabularyListElement.Vocabulary);
@@ -463,14 +459,14 @@ async function parseGS1(gs1XmlFile) {
 
 
             // pre-fetch from DB.
-            const objectClassLocationId = db.getClassId('Location');
-            const objectClassActorId = db.getClassId('Actor');
-            const objectClassProductId = db.getClassId('Product');
-            const objectClassBatchId = db.getClassId('Batch');
-            const objectEventTransportId = db.getClassId('Transport');
-            const objectEventTransformationId = db.getClassId('Transformation');
-            const objectEventObservationId = db.getClassId('Observation');
-            const objectEventOwnershipId = db.getClassId('Ownership');
+            const objectClassLocationId = await db.getClassId('Location');
+            const objectClassActorId = await db.getClassId('Actor');
+            const objectClassProductId = await db.getClassId('Product');
+            const objectClassBatchId = await db.getClassId('Batch');
+            const objectEventTransportId = await db.getClassId('Transport');
+            const objectEventTransformationId = await db.getClassId('Transformation');
+            const objectEventObservationId = await db.getClassId('Observation');
+            const objectEventOwnershipId = await db.getClassId('Ownership');
 
             for (const location of locations) {
                 const identifiers = {
@@ -481,11 +477,14 @@ async function parseGS1(gs1XmlFile) {
                     object_class_id: objectClassLocationId,
                 };
 
+                copyProperties(location.attributes, data);
+
                 const locationKey = md5(`business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 locationVertices.push({
                     _key: locationKey,
                     identifiers,
                     data,
+                    vertex_type: 'OBJECT',
                 });
 
                 const { child_locations } = location;
@@ -496,7 +495,6 @@ async function parseGS1(gs1XmlFile) {
                     };
                     const data = {
                         parent_id: location.id,
-                        // TODO add data
                     };
 
                     const childLocationKey = md5(`child_business_location_${senderId}_${md5(identifiers)}_${md5(data)}`);
@@ -517,45 +515,64 @@ async function parseGS1(gs1XmlFile) {
             }
 
             for (const actor of actors) {
-                const data = {
-                    object_class_id: objectClassActorId,
-                    data: actor,
-                    vertex_type: 'ACTOR',
+                const identifiers = {
+                    id: actor.id,
+                    uid: actor.id,
                 };
 
+                const data = {
+                    object_class_id: objectClassActorId,
+                };
+
+                copyProperties(actor.attributes, data);
+
                 actorsVertices.push({
-                    _key: md5(`actor_${senderId}_${data}`),
+                    _key: md5(`actor_${senderId}_${md5(identifiers)}_${md5(data)}`),
                     _id: actor.id,
+                    identifiers,
                     data,
+                    vertex_type: 'ACTOR',
                 });
             }
 
             for (const product of products) {
-                const data = {
-                    object_class_id: objectClassProductId,
-                    data: product,
-                    vertex_type: 'PRODUCT',
+                const identifiers = {
+                    id: product.id,
+                    uid: product.id,
                 };
 
+                const data = {
+                    object_class_id: objectClassProductId,
+                };
+
+                copyProperties(product.attributes, data);
+
                 productVertices.push({
-                    _key: md5(`product_${senderId}_${data}`),
+                    _key: md5(`product_${senderId}_${md5(identifiers)}_${md5(data)}`),
                     _id: product.id,
                     data,
+                    vertex_type: 'PRODUCT',
                 });
             }
 
             for (const batch of batches) {
-                const data = {
-                    object_class_id: objectClassBatchId,
-                    data: batch,
-                    vertex_type: 'BATCH',
+                const identifiers = {
+                    id: batch.id,
+                    uid: batch.id,
                 };
 
-                const key = md5(`batch_${senderId}_${data}`);
+                const data = {
+                    object_class_id: objectClassBatchId,
+                };
+
+                copyProperties(batch.attributes, data);
+
+                const key = md5(`batch_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 batchesVertices.push({
                     _key: key,
                     _id: batch.id,
                     data,
+                    vertex_type: 'BATCH',
                 });
             }
 
@@ -592,10 +609,11 @@ async function parseGS1(gs1XmlFile) {
 
                 const data = {
                     object_class_id: getClassId(event),
-                    data: event,
                     vertex_type: 'EVENT',
                     categories: eventCategories,
                 };
+
+                copyProperties(event, data);
 
                 const eventKey = md5(`event_${senderId}_${md5(identifiers)}_${md5(data)}`);
                 eventVertices.push({
@@ -852,7 +870,11 @@ async function parseGS1(gs1XmlFile) {
             }
 
             await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
+
             console.log('Done parsing and importing.');
+
+            const import_id = Date.now();
+            return { vertices: allVertices, edges: allEdges, import_id };
         },
     );
 }
