@@ -251,7 +251,7 @@ function parseActors(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const actor = {
             type: 'actor',
-            id: element.id,
+            id: ignorePattern(element.id, 'urn:ot:mda:actor:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
         };
 
@@ -275,7 +275,7 @@ function parseProducts(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const product = {
             type: 'product',
-            id: element.id,
+            id: ignorePattern(element.id, 'urn:ot:mda:product:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
         };
 
@@ -299,7 +299,7 @@ function parseBatches(vocabularyElementList) {
     for (const element of vocabularyElementElements) {
         const batch = {
             type: 'batch',
-            id: element.id,
+            id: ignorePattern(element.id, 'urn:ot:mda:batch:'),
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
         };
 
