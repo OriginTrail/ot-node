@@ -7,6 +7,8 @@ const log = Utilities.getLogger();
 class GraphStorage {
     constructor(selectedDatabase) {
         this.selectedDatabase = selectedDatabase;
+        this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
+            'Transformation', 'Observation', 'Ownership'];
     }
 
     /**
@@ -14,7 +16,7 @@ class GraphStorage {
      * @returns {Promise<any>}
      */
     connect() {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (!this.selectedDatabase) {
                 reject(Error('Unable to connect to graph database'));
             } else {
@@ -27,6 +29,7 @@ class GraphStorage {
                         this.selectedDatabase.host,
                         this.selectedDatabase.port,
                     );
+                    await this.__initDatabase__();
                     resolve(this.db);
                     break;
                 case 'neo4j':
@@ -37,6 +40,7 @@ class GraphStorage {
                         this.selectedDatabase.host,
                         this.selectedDatabase.port,
                     );
+                    await this.__initDatabase__();
                     resolve(this.db);
                     break;
                 default:
@@ -110,12 +114,12 @@ class GraphStorage {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    getVertexKeyWithMaxVersion(uid) {
+    getVertexWithMaxVersion(uid) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.getVertexKeyWithMaxVersion(uid).then((result) => {
+                this.db.getVertexWithMaxVersion(uid).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -172,44 +176,6 @@ class GraphStorage {
     }
 
     /**
-     * Create document collection, if collection does not exist
-     * @param collectionName
-     * @return {Promise}
-     */
-    createCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.createCollection(collectionName).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
-     * Creates edge collection, if collection does not exist
-     * @param collectionName
-     * @return {Promise}
-     */
-    createEdgeCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.createEdgeCollection(collectionName).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Get list of vertices by import ID
      * @param importId   Import ID
      * @return {Promise}
@@ -245,6 +211,32 @@ class GraphStorage {
                 });
             }
         });
+    }
+
+    /**
+     *
+     * @param className
+     * @returns {Promise<string | undefined>}
+     */
+    async getClassId(className) {
+        const id = this._allowedClasses.find(element => element.toLocaleLowerCase() ===
+            className.toLocaleLowerCase());
+        return id;
+    }
+
+    /**
+     * Initializes database with predefined collections and vertices.
+     * @returns {Promise<void>}
+     * @private
+     */
+    async __initDatabase__() {
+        await this.db.createCollection('ot_vertices');
+        await this.db.createEdgeCollection('ot_edges');
+
+        await Promise.all(this._allowedClasses.map(className => this.db.addDocument('ot_vertices', {
+            _key: className,
+            vertex_type: 'CLASS',
+        })));
     }
 }
 

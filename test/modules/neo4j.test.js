@@ -129,9 +129,10 @@ describe('Neo4j module ', async () => {
         assert.equal(response, 3);
     });
 
-    it('getVertexKeyWithMaxVersion', async () => {
-        const response = await testDb.getVertexKeyWithMaxVersion(vertexOne.identifiers.uid);
+    it('getVertexWithMaxVersion', async () => {
+        const response = await testDb.getVertexWithMaxVersion(vertexOne.identifiers.uid);
         console.log(response);
+        assert.deepEqual(response, vertexOneV3);
     });
 
     it('getVerticesByImportId', async () => {
