@@ -603,26 +603,30 @@ async function parseGS1(gs1XmlFile) {
                 });
 
                 if (extension.extension) {
-                    const sources = arrayze(extension.extension.sourceList.source._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
-                    for (const source of sources) {
-                        const locationKey = null; // TODO fetch from db
-                        eventEdges.push({
-                            _key: md5(`source_${senderId}_${eventId}_${source}`),
-                            _from: `ot_vertices/${eventKey}`,
-                            _to: `ot_vertices/${locationKey}`,
-                            edge_type: 'SOURCE',
-                        });
+                    if (extension.extension.sourceList) {
+                        const sources = arrayze(extension.extension.sourceList.source._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
+                        for (const source of sources) {
+                            const locationKey = null; // TODO fetch from db
+                            eventEdges.push({
+                                _key: md5(`source_${senderId}_${eventId}_${source}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${locationKey}`,
+                                edge_type: 'SOURCE',
+                            });
+                        }
                     }
 
-                    const destinations = arrayze(extension.extension.destinationList.destination._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
-                    for (const destination of destinations) {
-                        const locationKey = null; // TODO fetch from db
-                        eventEdges.push({
-                            _key: md5(`destination_${senderId}_${eventId}_${destination}`),
-                            _from: `ot_vertices/${eventKey}`,
-                            _to: `ot_vertices/${locationKey}`,
-                            edge_type: 'DESTINATION',
-                        });
+                    if (extension.extension.destinationList) {
+                        const destinations = arrayze(extension.extension.destinationList.destination._).map(s => ignorePattern(s, 'urn:ot:mda:location:'));
+                        for (const destination of destinations) {
+                            const locationKey = null; // TODO fetch from db
+                            eventEdges.push({
+                                _key: md5(`destination_${senderId}_${eventId}_${destination}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${locationKey}`,
+                                edge_type: 'DESTINATION',
+                            });
+                        }
                     }
                 }
 
