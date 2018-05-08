@@ -152,7 +152,7 @@ describe('Neo4j module ', async () => {
     });
 
     it('update document imports', async () => {
-        await testDb.updateDocumentImports('ot_vertices', vertexOne, 101100);
+        await testDb.updateDocumentImports('ot_vertices', vertexOne._key, 101100);
         const response = await testDb.getVerticesByImportId(101100);
 
         assert.deepEqual(response[0].data, vertexOne.data);

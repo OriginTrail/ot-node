@@ -2,6 +2,7 @@ const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 
 const log = Utilities.getLogger();
+const BN = require('bn.js');
 
 /**
  * Neo4j storage adapter
@@ -29,23 +30,37 @@ class Neo4jDB {
         const values = {};
         const queries = [];
         for (const p in obj) {
+            if (obj[p] == null) {
+                // eslint-disable-next-line
+                continue;
+            }
+            let value = obj[p];
+            if (obj[p] instanceof BN) {
+                value = obj[p].toString();
+            }
+            let normParamKey = p;
+            if (p.includes(':')) {
+                normParamKey = `\`${p}\``;
+            }
             if (typeof obj[p] !== 'object') {
                 if (!excludeList || !excludeList.includes(p)) {
-                    values[p] = obj[p];
-                    queries.push(`${p}:$${p}`);
+                    values[normParamKey] = value;
+                    queries.push(`${normParamKey}:$${normParamKey}`);
                 }
             } else if (Array.isArray(obj[p])) {
                 const array = [];
                 for (const item of obj[p]) {
                     if (typeof item === 'object' || Array.isArray(item)) {
                         array.push(JSON.stringify(item));
+                    } else if (item instanceof BN) {
+                        array.push(item.toString());
                     } else {
                         array.push(item);
                     }
                 }
                 if (!excludeList || !excludeList.includes(p)) {
-                    values[p] = array;
-                    queries.push(`${p}:$${p}`);
+                    values[normParamKey] = array;
+                    queries.push(`${normParamKey}:$${normParamKey}`);
                 }
             }
         }
@@ -64,7 +79,7 @@ class Neo4jDB {
     static _getNestedObjects(obj) {
         const result = [];
         for (const p in obj) {
-            if (typeof obj[p] === 'object' && !Array.isArray(obj[p])) {
+            if (typeof obj[p] === 'object' && !Array.isArray(obj[p]) && !(obj[p] instanceof BN)) {
                 result.push({
                     edge: p,
                     subvalue: obj[p],
@@ -85,13 +100,23 @@ class Neo4jDB {
         if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
             throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
         }
+        if (value instanceof BN) {
+            value = value.toString();
+        }
         if (typeof value === 'object') {
             const objectProps = Neo4jDB._getParams(value);
-            let params = '';
-            if (objectProps.queries.length > 0) {
-                params = ` {${objectProps.queries.join()}}`;
+            let paramString = '';
+            for (const v in objectProps.values) {
+                const value = JSON.stringify(objectProps.values[v]);
+                paramString = `${paramString} ${v}: ${value},`;
             }
-            const r = await session.run(`CREATE (a${params}) RETURN a`, objectProps.values);
+            if (paramString.endsWith(',')) {
+                paramString = paramString.slice(0, paramString.length - 1);
+            }
+            if (paramString.length > 0) {
+                paramString = `{${paramString}}`;
+            }
+            const r = await session.run(`CREATE (a ${paramString}) RETURN a`);
             const nodeId = r.records[0]._fields[0].identity.toString();
 
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
@@ -117,13 +142,23 @@ class Neo4jDB {
         const from = edge._from.slice(edge._from.indexOf('/') + 1);
 
         const objectProps = Neo4jDB._getParams(edge, ['_to', '_from']);
-        objectProps.queries.push('_to:$_to');
-        objectProps.queries.push('_from:$_from');
         objectProps.values._to = to;
         objectProps.values._from = from;
-        const params = ` {${objectProps.queries.join()}}`;
+
+        let paramString = '';
+        for (const v in objectProps.values) {
+            const value = JSON.stringify(objectProps.values[v]);
+            paramString = `${paramString} ${v}: ${value},`;
+        }
+        if (paramString.endsWith(',')) {
+            paramString = paramString.slice(0, paramString.length - 1);
+        }
+        if (paramString.length > 0) {
+            paramString = `{${paramString}}`;
+        }
         const session = this.driver.session();
-        const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType}${params}]->(b) return r`, objectProps.values);
+        console.log(paramString);
+        const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType} ${paramString}]->(b) return r`);
         session.close();
         return r;
     }
@@ -169,8 +204,11 @@ class Neo4jDB {
                 const processProperties = (properties, parent) => {
                     if (properties) {
                         const newProperties = {};
-                        for (const key in properties) {
+                        for (let key in properties) {
                             const property = properties[key];
+                            if (key.includes(':')) {
+                                key = key.replace(/_O_SN_/g, ':');
+                            }
                             newProperties[key] = Neo4jDB._transformProperty(property);
                         }
                         parent.properties = newProperties;
@@ -390,16 +428,16 @@ class Neo4jDB {
     /**
      * Updates document with the import ID
      * @param collectionName
-     * @param document
+     * @param key
      * @param importNumber
      */
-    async updateDocumentImports(collectionName, document, importNumber) {
+    async updateDocumentImports(collectionName, key, importNumber) {
         if (collectionName === 'ot_edges') {
             return [];
         }
         const session = this.driver.session();
         const result = await session.run('MATCH (n) WHERE n._key = $_key RETURN n', {
-            _key: document._key,
+            _key: key,
         });
         let { imports } = result.records[0]._fields[0].properties;
         if (imports) {
@@ -408,7 +446,7 @@ class Neo4jDB {
             imports = [importNumber];
         }
         await session.run('MATCH(n) WHERE n._key = $_key SET n.imports = $imports return n', {
-            _key: document._key,
+            _key: key,
             imports,
         });
         session.close();
