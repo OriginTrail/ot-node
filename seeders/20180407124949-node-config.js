@@ -22,7 +22,7 @@ module.exports = {
     },
     {
         key: 'selected_graph_database',
-        value: '1',
+        value: process.env.GRAPH_DATABASE,
     },
     {
         key: 'selected_blockchain',
