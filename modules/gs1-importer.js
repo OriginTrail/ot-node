@@ -142,6 +142,177 @@ function parseBatches(vocabularyElementList) {
 }
 
 /**
+ * Zero knowledge processing
+ * @param senderId
+ * @param event
+ * @param eventId
+ * @param categories
+ * @param importId
+ * @param globalR
+ * @param batchVertices
+ * @return {Promise<void>}
+ */
+async function zeroKnowledge(
+    senderId, event, eventId, categories,
+    importId, globalR, batchVertices, db
+) {
+    let inputQuantities = [];
+    let outputQuantities = [];
+    const { extension } = event;
+    if (categories.includes('Ownership') || categories.includes('Transport') ||
+        categories.includes('Observation')) {
+        const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+
+        const { quantityList } = extension;
+        if (bizStep === 'shipping') {
+            // sending input
+            if (categories.includes('Ownership')) {
+                outputQuantities = arrayze(quantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                    }));
+            } else {
+                outputQuantities = arrayze(quantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
+                    }));
+            }
+
+            for (const outputQ of outputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(outputQ.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: outputQ.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    inputQuantities.push(quantity);
+                } else {
+                    inputQuantities.push({
+                        added: true,
+                        object: outputQ.object,
+                        quantity: parseInt(outputQ.quantity, 10),
+                    });
+                }
+            }
+        } else {
+            // receiving output
+            if (categories.includes('Ownership')) {
+                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                    r: globalR,
+                }));
+            } else {
+                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                }));
+            }
+
+            for (const inputQ of inputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(inputQ.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    outputQuantities.push({
+                        object: inputQ.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    });
+                } else {
+                    outputQuantities.push({
+                        added: true,
+                        object: inputQ.object,
+                        quantity: parseInt(inputQ.quantity, 10),
+                    });
+                }
+            }
+        }
+    } else {
+        // Transformation
+        const { inputQuantityList, outputQuantityList } = event;
+        if (inputQuantityList) {
+            const tmpInputQuantities = arrayze(inputQuantityList.quantityElement).map(elem => ({
+                object: elem.epcClass,
+                quantity: parseInt(elem.quantity, 10),
+                r: globalR,
+            }));
+            for (const inputQuantity of tmpInputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: inputQuantity.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    inputQuantities.push(quantity);
+                } else {
+                    inputQuantities.push({
+                        added: true,
+                        object: inputQuantity.object,
+                        quantity: parseInt(inputQuantity.quantity, 10),
+                    });
+                }
+            }
+        }
+        if (outputQuantityList) {
+            const tmpOutputQuantities = arrayze(outputQuantityList.quantityElement)
+                .map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                    r: globalR,
+                }));
+            for (const outputQuantity of tmpOutputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: outputQuantity.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    outputQuantities.push(quantity);
+                } else {
+                    outputQuantities.push({
+                        added: true,
+                        object: outputQuantity.object,
+                        quantity: parseInt(outputQuantity.quantity, 10),
+                    });
+                }
+            }
+        }
+    }
+    const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+    for (const quantity of quantities.inputs.concat(quantities.outputs)) {
+        if (quantity.added) {
+            delete quantity.added;
+            let batchFound = false;
+            for (const batch of batchVertices) {
+                if (batch.identifiers.uid === quantity.object) {
+                    batchFound = true;
+                    batch.data.quantities = quantity;
+                    batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
+                    break;
+                }
+            }
+            if (!batchFound) {
+                throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
+            }
+        }
+    }
+    event.quantities = quantities;
+}
+
+/**
  * Create event ID
  * @param senderId  Sender ID
  * @param event     Event data
@@ -410,13 +581,6 @@ async function processXML(err, result) {
             data,
             vertex_type: 'BATCH',
         });
-
-        batchEdges.push({
-            _key: md5(`batch_product_${senderId}_${key}_${productId}`),
-            _from: `ot_vertices/${key}`,
-            _to: `${EDGE_KEY_TEMPLATE + productId}`,
-            edge_type: 'IS',
-        });
     }
 
     // Store vertices in db. Update versions
@@ -445,150 +609,15 @@ async function processXML(err, result) {
             eventCategories = arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:event:'));
         }
 
+        // eslint-disable-next-line
+        await zeroKnowledge(senderId, event, eventId, eventCategories,
+            importId, GLOBAL_R, batchesVertices, db,
+        );
+
         const identifiers = {
             id: eventId,
             uid: eventId,
         };
-
-        let inputQuantities = [];
-        const outputQuantities = [];
-        if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')
-            || eventCategories.includes('Observation')) {
-            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
-
-            const { quantityList } = extension;
-            if (bizStep === 'shipping') {
-                const tmpOutputQuantities = arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
-                for (const outputQ of tmpOutputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(outputQ.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                        outputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                        });
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                            r: GLOBAL_R,
-                        });
-                    }
-                }
-            } else {
-                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: GLOBAL_R,
-                }));
-                for (const inputQ of inputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(inputQ.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        outputQuantities.push({
-                            object: inputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        });
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: inputQ.object,
-                            quantity: parseInt(inputQ.quantity, 10),
-                        });
-                    }
-                }
-            }
-        } else {
-            const { inputQuantityList, outputQuantityList } = event;
-            if (inputQuantityList) {
-                const tmpInputQuantities = arrayze(inputQuantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: GLOBAL_R,
-                }));
-                for (const inputQuantity of tmpInputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: inputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: inputQuantity.object,
-                            quantity: parseInt(inputQuantity.quantity, 10),
-                        });
-                    }
-                }
-            }
-            if (outputQuantityList) {
-                const tmpOutputQuantities = arrayze(outputQuantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: GLOBAL_R,
-                    }));
-                for (const outputQuantity of tmpOutputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        outputQuantities.push(quantity);
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQuantity.object,
-                            quantity: parseInt(outputQuantity.quantity, 10),
-                        });
-                    }
-                }
-            }
-        }
-        const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-        for (const quantity of quantities.inputs.concat(quantities.outputs)) {
-            if (quantity.added) {
-                delete quantity.added;
-                let batchFound = false;
-                for (const batch of batchesVertices) {
-                    if (batch.identifiers.uid === quantity.object) {
-                        batchFound = true;
-                        batch.data.quantities = quantity;
-                        batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
-                        break;
-                    }
-                }
-                if (!batchFound) {
-                    throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
-                }
-            }
-        }
-        event.quantities = quantities;
 
         const data = {
             object_class_id: getClassId(event),
@@ -664,6 +693,19 @@ async function processXML(err, result) {
             }
         }
 
+        if (event.epcList) {
+            for (const inputEpc of arrayze(event.epcList.epc)) {
+                const batchId = inputEpc;
+
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'EVENT_BATCH',
+                });
+            }
+        }
+
         if (event.childEPCs) {
             for (const inputEpc of arrayze(event.childEPCs)) {
                 const batchId = inputEpc.epc;
@@ -690,16 +732,15 @@ async function processXML(err, result) {
             }
         }
 
-        if (event.parentID) {
-            const parentId = event.parentID;
-            // TODO: fetch from db.
+        for (const batch of batchesVertices) {
+            const productId = batch.data.parent_id;
 
-            // eventEdges.push({
-            //     _key: md5(`at_${senderId}_${eventId}_${biz_location}`),
-            //     _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
-            //     _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-            //     edge_type: 'PARENT_BATCH',
-            // });
+            batchEdges.push({
+                _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
+                _from: `ot_vertices/${batch._key}`,
+                _to: `${EDGE_KEY_TEMPLATE + productId}`,
+                edge_type: 'IS',
+            });
         }
     }
 
@@ -806,7 +847,7 @@ async function parseGS1(gs1XmlFile) {
         throw Error(`Failed to validate schema. ${validationResult}`);
     }
 
-    return new Promise((resolve) =>
+    return new Promise(resolve =>
         parseString(
             gs1XmlFileBuffer,
             { explicitArray: false, mergeAttrs: true },
