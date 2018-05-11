@@ -169,13 +169,25 @@ contract Bidding {
 		OfferCanceled(msg.sender, DC_node_id, data_id);
 	}
 
-	function addBid(address DC_wallet, uint data_id, uint node_id, bytes32 bid_hash)
+	function addBid(address DC_wallet, uint data_id, uint DH_node_id)
 	public returns (uint bidIndex){
 		require(offer[DC_wallet][data_id].active);
 
 		OfferDefinition this_offer = offer[DC_wallet][data_id];
+		DHProfileDefinition this_DH = DH_profile[msg.sender][DH_node_id];
 
-		require(this_offer.)
+		//Check if the the DH meets the filters DC set for the offer
+		uint scope = this_offer.data_size * this_offer.total_escrow_time;
+		require(this_offer.total_escrow_time <= DH_profile.max_escrow_time);
+		require(this_offer.max_token_amount  >= DH_profile.token_amount * scope);
+		require(this_offer.min_stake_amount  <= DH_profile.stake_amount * scope);
+		require(this_offer.min_reputation 	 <= DH_profile.reputation);
+		require(this_offer.data_size		 <= DH_profile.size_available);
+
+		//Insert the bid into the list
+		BidListElem new_list_elem = BidListElem(msg.sender, DH_node_id, 0, false, false);
+		bid[DC_wallet][data_id].list.push(new_list_elem);
+		BidListElem current = bid[DC_wallet][data_id].list[bid[DC_wallet][data_id].first];
 
 
 		bidIndex = offer[DC_wallet][data_id].number_of_bids;	
