@@ -101,7 +101,7 @@ globalEmitter.on('replication-request', (request, response) => {
         Graph.encryptVertices(
             wallet,
             request.contact[0],
-            vertices,
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
             Storage,
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');

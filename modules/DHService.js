@@ -143,32 +143,34 @@ class DHService {
     }
 
     static handleImport(data) {
-        Models.bids.findOne({ where: { data_id: data.data_id } }).then((bidModel) => {
+        Models.bids.findOne({ where: { data_id: data.data_id } }).then(async (bidModel) => {
             // TODO: Check data before signing escrow.
             const bid = bidModel.get({ plain: true });
-            importer.importJSON(data)
-                .then(() => {
-                    log.trace('[DH] Replication finished');
-                    Blockchain.bc.increaseApproval(bid.stake).then(() => {
-                        Blockchain.bc.verifyEscrow(
-                            bid.dc_wallet,
-                            data.data_id,
-                            bid.price,
-                            bid.stake,
-                            bid.total_escrow_time,
-                        ).then(() => {
-                            // TODO No need to notify DC. DC should catch event from verifyEscrow().
-                            log.important('Finished negotiation. Job starting. Waiting for challenges.');
-                            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
-                        }).catch((error) => {
-                            log.error(`Failed to verify escrow. ${error}`);
-                        });
-                    }).catch((e) => {
-                        log.error(`Failed to increase approval. ${e}`);
-                    });
+
+            try {
+                await importer.importJSON(data);
+            } catch (err) {
+                log.warn(`Failed to import JSON successfully. ${err}.`);
+                return;
+            }
+            log.trace('[DH] Replication finished');
+            Blockchain.bc.increaseApproval(bid.stake).then(() => {
+                Blockchain.bc.verifyEscrow(
+                    bid.dc_wallet,
+                    data.data_id,
+                    bid.price,
+                    bid.stake,
+                    bid.total_escrow_time,
+                ).then(() => {
+                    // TODO No need to notify DC. DC should catch event from verifyEscrow().
+                    log.important('Finished negotiation. Job starting. Waiting for challenges.');
+                    node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
                 }).catch((error) => {
-                    log.error(`Failed to import data. ${error}`);
+                    log.error(`Failed to verify escrow. ${error}`);
                 });
+            }).catch((e) => {
+                log.error(`Failed to increase approval. ${e}`);
+            });
         }).catch((error) => {
             log.error(`Couldn't find bid with data ID ${data.data_id}. ${error}.`);
         });

@@ -582,7 +582,6 @@ async function processXML(err, result) {
 
         const data = {
             object_class_id: getClassId(event),
-            vertex_type: 'EVENT',
             categories: eventCategories,
         };
 
@@ -593,6 +592,7 @@ async function processXML(err, result) {
             _key: eventKey,
             data,
             identifiers,
+            vertex_type: 'EVENT',
         });
 
         if (extension.extension) {
