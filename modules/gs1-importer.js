@@ -154,7 +154,7 @@ function parseBatches(vocabularyElementList) {
  */
 async function zeroKnowledge(
     senderId, event, eventId, categories,
-    importId, globalR, batchVertices, db
+    importId, globalR, batchVertices, db,
 ) {
     let inputQuantities = [];
     let outputQuantities = [];
