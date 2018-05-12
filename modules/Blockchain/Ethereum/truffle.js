@@ -18,6 +18,13 @@ module.exports = {
             network_id: '5777',
         },
 
+        mock: {
+            host: 'localhost',
+            port: 7545,
+            gas: 4000000,
+            network_id: '5777',
+        },
+
         rinkeby: {
             provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/<INSERT INFURA ACCESS KEY HERE>'),
             network_id: 3,
