@@ -223,7 +223,8 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async runQuery(queryString, params) {
-        return this.db.query(queryString, params).all();
+        const result = await this.db.query(queryString, params);
+        return result.all();
     }
 
     /**
@@ -301,7 +302,8 @@ class ArangoJS {
     async createCollection(collectionName) {
         const collection = this.db.collection(collectionName);
         try {
-            return collection.create();
+            await collection.create();
+            return 'Collection created';
         } catch (err) {
             const errorCode = err.response.body.code;
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
@@ -315,6 +317,7 @@ class ArangoJS {
         const collection = this.db.edgeCollection(collectionName);
         try {
             await collection.create();
+            return 'Edge collection created';
         } catch (err) {
             const errorCode = err.response.body.code;
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
