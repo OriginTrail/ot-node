@@ -22,6 +22,20 @@ class ArangoJS {
     }
 
     /**
+     * Initialize database
+     * @return {Promise<void>}
+     */
+    async initialize(allowedClasses) {
+        await this.createCollection('ot_vertices');
+        await this.createEdgeCollection('ot_edges');
+
+        await Promise.all(allowedClasses.map(className => this.addVertex({
+            _key: className,
+            vertex_type: 'CLASS',
+        })));
+    }
+
+    /**
      * Find set of vertices
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
@@ -164,7 +178,7 @@ class ArangoJS {
     }
 
 
-    updateDocumentImports(collectionName, document, importNumber) {
+    updateImports(collectionName, document, importNumber) {
         return new Promise((resolve, reject) => {
             this.getDocument(collectionName, document).then((document) => {
                 var new_imports = [];
@@ -192,7 +206,7 @@ class ArangoJS {
      * @param _key  Vertex _key
      * @return {Promise<void>}
      */
-    getCurrentMaxVersion(uid, _key) {
+    findMaxVersion(uid, _key) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices ' +
                 'FILTER v.identifiers.uid == @uid AND AND v._key != @_key ' +
@@ -217,7 +231,7 @@ class ArangoJS {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    getVertexWithMaxVersion(uid) {
+    findVertexWithMaxVersion(uid) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices ' +
                 'FILTER v.identifiers.uid == @uid ' +
@@ -257,28 +271,21 @@ class ArangoJS {
     }
 
     /**
-     * Inserts document into ArangoDB graph database for given collection name
-     * @param {string} - collectionName
-     * @param {object} - document
+     * Inserts vertex into ArangoDB graph database
+     * @param {vertex} - document
      * @returns {Promise<any>}
      */
-    addDocument(collectionName, document) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collectionName);
-            collection.save(document).then(
-                meta => resolve(meta),
-                (err) => {
-                    const errorCode = err.response.body.code;
-                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                        resolve('Double insert');
-                    } else {
-                        reject(err);
-                    }
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
+    addVertex(vertex) {
+        return this.addDocument('ot_vertices', vertex);
+    }
+
+    /**
+     * Inserts edge into ArangoDB graph database
+     * @param {vertex} - document
+     * @returns {Promise<any>}
+     */
+    addEdge(edge) {
+        return this.addDocument('ot_edges', edge);
     }
 
     /**
@@ -380,7 +387,7 @@ class ArangoJS {
         });
     }
 
-    getVerticesByImportId(data_id) {
+    findVerticesByImportId(data_id) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
@@ -398,7 +405,7 @@ class ArangoJS {
         });
     }
 
-    getEdgesByImportId(data_id) {
+    findEdgesByImportId(data_id) {
         return new Promise((resolve, reject) => {
             const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 

@@ -183,7 +183,7 @@ async function zeroKnowledge(
 
             for (const outputQ of outputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.getVertexWithMaxVersion(outputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(outputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -217,7 +217,7 @@ async function zeroKnowledge(
 
             for (const inputQ of inputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.getVertexWithMaxVersion(inputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(inputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     outputQuantities.push({
@@ -245,7 +245,7 @@ async function zeroKnowledge(
             }));
             for (const inputQuantity of tmpInputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(inputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -272,7 +272,7 @@ async function zeroKnowledge(
                 }));
             for (const outputQuantity of tmpOutputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(outputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -752,7 +752,7 @@ async function processXML(err, result) {
             .concat(batchesVertices)
             .concat(eventVertices);
 
-    const promises = allVertices.map(vertex => db.addDocument('ot_vertices', vertex));
+    const promises = allVertices.map(vertex => db.addVertex(vertex));
     await Promise.all(promises);
 
     const classObjectEdges = [];
@@ -820,19 +820,19 @@ async function processXML(err, result) {
 
         if (to.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.getVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
             edge._to = `ot_vertices/${vertex._key}`;
         }
         if (from.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.getVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
             edge._from = `ot_vertices/${vertex._key}`;
         }
     }
 
-    await Promise.all(allEdges.map(edge => db.addDocument('ot_edges', edge)));
+    await Promise.all(allEdges.map(edge => db.addEdge(edge)));
 
-    await Promise.all(allVertices.map(vertex => db.updateDocumentImports('ot_vertices', vertex._key, importId)));
+    await Promise.all(allVertices.map(vertex => db.updateImports('ot_vertices', vertex._key, importId)));
 
     console.log('Done parsing and importing.');
     return { vertices: allVertices, edges: allEdges, import_id: importId };

@@ -21,6 +21,18 @@ class Neo4jDB {
     }
 
     /**
+     * Initialize database
+     * @return {Promise<void>}
+     */
+    async initialize(allowedClasses) {
+        // TODO check for existing classes
+        await Promise.all(allowedClasses.map(className => this.addVertex({
+            _key: className,
+            vertex_type: 'CLASS',
+        })));
+    }
+
+    /**
      * Get properties for Neo4J
      * @param obj           Extraction object
      * @param excludeList   List of excluded properties
@@ -93,9 +105,8 @@ class Neo4jDB {
      * Create vertex
      * @param value         Vertex document
      * @returns {Promise}
-     * @private
      */
-    async _createVertex(value) {
+    async addVertex(value) {
         const session = this.driver.session();
         if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
             throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
@@ -122,7 +133,7 @@ class Neo4jDB {
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
                 const { edge, subvalue } = objectProp;
                 // eslint-disable-next-line
-                const subnodeId = await this._createVertex(subvalue);
+                const subnodeId = await this.addVertex(subvalue);
                 // eslint-disable-next-line
                 await session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`);
             }
@@ -134,9 +145,8 @@ class Neo4jDB {
      * Create edge
      * @param edge  Edge document
      * @returns {Promise}
-     * @private
      */
-    async _createEdge(edge) {
+    async addEdge(edge) {
         const edgeType = edge.edge_type;
         const to = edge._to.slice(edge._to.indexOf('/') + 1);
         const from = edge._from.slice(edge._from.indexOf('/') + 1);
@@ -265,10 +275,9 @@ class Neo4jDB {
     /**
      * Gets max version where uid is the same but not the _key
      * @param uid   Vertex uid
-     * @param _key  Vertex _key
      * @return {Promise<void>}
      */
-    async getCurrentMaxVersion(uid) {
+    async findMaxVersion(uid) {
         const session = this.driver.session();
         const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid return MAX(n.version)', { uid });
         session.close();
@@ -280,7 +289,7 @@ class Neo4jDB {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    async getVertexWithMaxVersion(uid) {
+    async findVertexWithMaxVersion(uid) {
         const session = this.driver.session();
         const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n ORDER BY n.version DESC LIMIT 1', { uid });
         session.close();
@@ -431,7 +440,7 @@ class Neo4jDB {
      * @param key
      * @param importNumber
      */
-    async updateDocumentImports(collectionName, key, importNumber) {
+    async updateImports(collectionName, key, importNumber) {
         if (collectionName === 'ot_edges') {
             return [];
         }
@@ -457,7 +466,7 @@ class Neo4jDB {
      * @param importId  Import ID
      * @return {Promise}
      */
-    async getVerticesByImportId(importId) {
+    async findVerticesByImportId(importId) {
         const session = this.driver.session();
         const result = await session.run(`match (n) where ${importId} in n.imports return n`);
 
@@ -470,17 +479,19 @@ class Neo4jDB {
     }
 
     /**
-     * Add new document into given collection
-     * @param {string} - collectionName
-     * @param {object} - document
-     * @returns {Promise<any>}
+     * Gets edges by the import ID
+     * @param importId  Import ID
+     * @return {Promise}
      */
-    async addDocument(collectionName, document) {
-        if (collectionName === 'ot_vertices') {
-            await this._createVertex(document);
-        } else {
-            await this._createEdge(document);
+    async findEdgesByImportId(importId) {
+        const session = this.driver.session();
+        const result = await Neo4jDB._transformProperties(await session.run(`match (n)-[r]-(m) where ${importId} in r.imports return distinct r`));
+
+        const nodes = [];
+        for (const record of result.records) {
+            nodes.push(record._fields[0].properties);
         }
+        return nodes;
     }
 
     /**
@@ -498,26 +509,6 @@ class Neo4jDB {
         log.debug('Clear the database.');
         const session = this.driver.session();
         await session.run('match (n) detach delete n');
-    }
-
-    /**
-     * This method is not applicable in Neo4jDB
-     * @deprecated
-     */
-    createCollection() {
-        return new Promise((resolve) => {
-            resolve();
-        });
-    }
-
-    /**
-     * This method is not applicable in Neo4jDB
-     * @deprecated
-     */
-    createEdgeCollection() {
-        return new Promise((resolve) => {
-            resolve();
-        });
     }
 
     /**
