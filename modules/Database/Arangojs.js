@@ -289,6 +289,31 @@ class ArangoJS {
     }
 
     /**
+     * Inserts document into ArangoDB graph database for given collection name
+     * @param {string} - collectionName
+     * @param {object} - document
+     * @returns {Promise<any>}
+     */
+    addDocument(collectionName, document) {
+        return new Promise((resolve, reject) => {
+            const collection = this.db.collection(collectionName);
+            collection.save(document).then(
+                meta => resolve(meta),
+                (err) => {
+                    const errorCode = err.response.body.code;
+                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                        resolve('Double insert');
+                    } else {
+                        reject(err);
+                    }
+                },
+            ).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Update document in ArangoDB graph database
      * @param {string} - collectionName
      * @param {object} - document
