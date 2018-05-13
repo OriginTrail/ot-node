@@ -25,11 +25,19 @@ class Neo4jDB {
      * @return {Promise<void>}
      */
     async initialize(allowedClasses) {
-        // TODO check for existing classes
-        await Promise.all(allowedClasses.map(className => this.addVertex({
-            _key: className,
-            vertex_type: 'CLASS',
-        })));
+        const session = this.driver.session();
+        for (const className of allowedClasses) {
+            // eslint-disable-next-line
+            const previous = await session.run(`MATCH (n) where n._key = '${className}' return n`);
+            if (previous.records.length === 0) {
+                // eslint-disable-next-line
+                await this.addVertex({
+                    _key: className,
+                    vertex_type: 'CLASS',
+                });
+            }
+        }
+        session.close();
     }
 
     /**
