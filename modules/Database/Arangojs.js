@@ -40,40 +40,33 @@ class ArangoJS {
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
      */
-    findVertices(queryObject) {
-        const that = this;
-        return new Promise((resolve, reject) => {
-            let queryString = 'FOR v IN ot_vertices ';
-            const params = {};
-            if (Utilities.isEmptyObject(queryObject) === false) {
-                queryString += 'FILTER ';
+    async findVertices(queryObject) {
+        let queryString = 'FOR v IN ot_vertices ';
+        const params = {};
+        if (Utilities.isEmptyObject(queryObject) === false) {
+            queryString += 'FILTER ';
 
-                let count = 1;
-                const filters = [];
-                for (const key in queryObject) {
-                    if (key.match(/^[\w\d]+$/g) !== null) {
-                        let searchKey;
-                        if (key !== 'vertex_type' && key !== '_key') {
-                            searchKey = `identifiers.${key}`;
-                        } else {
-                            searchKey = key;
-                        }
-                        const param = `param${count}`;
-                        filters.push(`v.${searchKey} == @param${count}`);
-
-                        count += 1;
-                        params[param] = queryObject[key];
+            let count = 1;
+            const filters = [];
+            for (const key in queryObject) {
+                if (key.match(/^[\w\d]+$/g) !== null) {
+                    let searchKey;
+                    if (key !== 'vertex_type' && key !== '_key') {
+                        searchKey = `identifiers.${key}`;
+                    } else {
+                        searchKey = key;
                     }
+                    const param = `param${count}`;
+                    filters.push(`v.${searchKey} == @param${count}`);
+
+                    count += 1;
+                    params[param] = queryObject[key];
                 }
-                queryString += filters.join(' AND ');
             }
-            queryString += ' RETURN v';
-            that.runQuery(queryString, params).then((result) => {
-                resolve(result);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+            queryString += filters.join(' AND ');
+        }
+        queryString += ' RETURN v';
+        return this.runQuery(queryString, params);
     }
 
     /**
@@ -82,27 +75,19 @@ class ArangoJS {
      * @param depth             Explicit traversal depth
      * @returns {Promise<any>}
      */
-    findTraversalPath(startVertex, depth) {
-        const that = this;
-        return new Promise((resolve, reject) => {
-            if (startVertex === undefined || startVertex._id === undefined) {
-                resolve([]);
-                return;
-            }
-            if (depth == null) {
-                depth = that.getDatabaseInfo().max_path_length;
-            }
-            const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
+    async findTraversalPath(startVertex, depth) {
+        if (startVertex === undefined || startVertex._id === undefined) {
+            return [];
+        }
+        if (depth == null) {
+            depth = this.getDatabaseInfo().max_path_length;
+        }
+        const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
             OUTBOUND '${startVertex._id}'
             GRAPH 'origintrail_graph'
             RETURN path`;
 
-            that.runQuery(queryString).then((result) => {
-                resolve(ArangoJS.convertToVirtualGraph(result));
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        return ArangoJS.convertToVirtualGraph(await this.runQuery(queryString));
     }
 
     /**
@@ -177,27 +162,17 @@ class ArangoJS {
         };
     }
 
+    async updateImports(collectionName, document, importNumber) {
+        const result = await this.getDocument(collectionName, document);
+        let new_imports = [];
+        if (result.imports !== undefined) {
+            new_imports = result.imports;
+        }
 
-    updateImports(collectionName, document, importNumber) {
-        return new Promise((resolve, reject) => {
-            this.getDocument(collectionName, document).then((document) => {
-                var new_imports = [];
-                if (document.imports !== undefined) {
-                    new_imports = document.imports;
-                }
+        new_imports.push(importNumber);
 
-                new_imports.push(importNumber);
-
-                document.imports = new_imports;
-                this.updateDocument(collectionName, document).then((meta) => {
-                    resolve(meta);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        result.imports = new_imports;
+        return this.updateDocument(collectionName, result);
     }
 
     /**
@@ -206,24 +181,17 @@ class ArangoJS {
      * @param _key  Vertex _key
      * @return {Promise<void>}
      */
-    findMaxVersion(uid, _key) {
-        return new Promise((resolve, reject) => {
-            const queryString = 'FOR v IN ot_vertices ' +
+    async findMaxVersion(uid, _key) {
+        const queryString = 'FOR v IN ot_vertices ' +
                 'FILTER v.identifiers.uid == @uid AND AND v._key != @_key ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v.version';
-            const params = {
-                uid,
-                _key,
-            };
-
-            this.runQuery(queryString, params).then((result) => {
-                resolve(result);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        const params = {
+            uid,
+            _key,
+        };
+        return this.runQuery(queryString, params);
     }
 
     /**
@@ -231,27 +199,21 @@ class ArangoJS {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    findVertexWithMaxVersion(uid) {
-        return new Promise((resolve, reject) => {
-            const queryString = 'FOR v IN ot_vertices ' +
+    async findVertexWithMaxVersion(uid) {
+        const queryString = 'FOR v IN ot_vertices ' +
                 'FILTER v.identifiers.uid == @uid ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v';
-            const params = {
-                uid,
-            };
+        const params = {
+            uid,
+        };
 
-            this.runQuery(queryString, params).then((result) => {
-                if (result.length > 0) {
-                    resolve(result[0]);
-                    return;
-                }
-                resolve(null);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        const result = this.runQuery(queryString, params);
+        if (result.length > 0) {
+            return result[0];
+        }
+        return null;
     }
 
     /**
@@ -260,14 +222,8 @@ class ArangoJS {
      * @param {object} - params
      * @returns {Promise<any>}
      */
-    runQuery(queryString, params) {
-        return new Promise((resolve, reject) => {
-            this.db.query(queryString, params).then((cursor) => {
-                resolve(cursor.all());
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+    async runQuery(queryString, params) {
+        return this.db.query(queryString, params).all();
     }
 
     /**
@@ -275,7 +231,7 @@ class ArangoJS {
      * @param {vertex} - document
      * @returns {Promise<any>}
      */
-    addVertex(vertex) {
+    async addVertex(vertex) {
         return this.addDocument('ot_vertices', vertex);
     }
 
@@ -284,7 +240,7 @@ class ArangoJS {
      * @param {vertex} - document
      * @returns {Promise<any>}
      */
-    addEdge(edge) {
+    async addEdge(edge) {
         return this.addDocument('ot_edges', edge);
     }
 
@@ -294,23 +250,17 @@ class ArangoJS {
      * @param {object} - document
      * @returns {Promise<any>}
      */
-    addDocument(collectionName, document) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collectionName);
-            collection.save(document).then(
-                meta => resolve(meta),
-                (err) => {
-                    const errorCode = err.response.body.code;
-                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                        resolve('Double insert');
-                    } else {
-                        reject(err);
-                    }
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
+    async addDocument(collectionName, document) {
+        const collection = this.db.collection(collectionName);
+        try {
+            return collection.save(document);
+        } catch (err) {
+            const errorCode = err.response.body.code;
+            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                return 'Double insert';
+            }
+            throw err;
+        }
     }
 
     /**
@@ -319,20 +269,9 @@ class ArangoJS {
      * @param {object} - document
      * @returns {Promise<any>}
      */
-    updateDocument(collectionName, document) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collectionName);
-            collection.update(document._key, document).then(
-                (meta) => {
-                    resolve(meta);
-                },
-                (err) => {
-                    reject(err);
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
+    async updateDocument(collectionName, document) {
+        const collection = this.db.collection(collectionName);
+        return collection.update(document._key, document);
     }
 
     /**
@@ -341,20 +280,9 @@ class ArangoJS {
      * @param {object} - document
      * @returns {Promise<any>}
      */
-    getDocument(collectionName, documentKey) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collectionName);
-            collection.document(documentKey).then(
-                (res) => {
-                    resolve(res);
-                },
-                (err) => {
-                    reject(err);
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
+    async getDocument(collectionName, documentKey) {
+        const collection = this.db.collection(collectionName);
+        return collection.document(documentKey);
     }
 
 
@@ -370,82 +298,52 @@ class ArangoJS {
      * Create document collection, if collection does not exist
      * @param collectionName
      */
-    createCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.collection(collectionName);
-            collection.create().then(
-                () => {
-                    resolve('Collection created');
-                },
-                (err) => {
-                    const errorCode = err.response.body.code;
-                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                        resolve('Double insert');
-                    } else {
-                        reject(err);
-                    }
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
-    }
-
-    createEdgeCollection(collectionName) {
-        return new Promise((resolve, reject) => {
-            const collection = this.db.edgeCollection(collectionName);
-            collection.create().then(
-                () => {
-                    resolve('Edge collection created');
-                },
-                (err) => {
-                    const errorCode = err.response.body.code;
-                    if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                        resolve('Double insert');
-                    } else {
-                        reject(err);
-                    }
-                },
-            ).catch((err) => {
-                reject(err);
-            });
-        });
-    }
-
-    findVerticesByImportId(data_id) {
-        return new Promise((resolve, reject) => {
-            const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-            if (typeof data_id !== 'number') {
-                data_id = parseInt(data_id, 10);
+    async createCollection(collectionName) {
+        const collection = this.db.collection(collectionName);
+        try {
+            return collection.create();
+        } catch (err) {
+            const errorCode = err.response.body.code;
+            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                return 'Double insert';
             }
-
-            const params = { importId: data_id };
-
-            this.runQuery(queryString, params).then((response) => {
-                resolve(response);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+            throw err;
+        }
     }
 
-    findEdgesByImportId(data_id) {
-        return new Promise((resolve, reject) => {
-            const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-            if (typeof data_id !== 'number') {
-                data_id = parseInt(data_id, 10);
+    async createEdgeCollection(collectionName) {
+        const collection = this.db.edgeCollection(collectionName);
+        try {
+            await collection.create();
+        } catch (err) {
+            const errorCode = err.response.body.code;
+            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
+                return 'Double insert';
             }
+            throw err;
+        }
+    }
 
-            const params = { importId: data_id };
+    async findVerticesByImportId(data_id) {
+        const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
-            this.runQuery(queryString, params).then((response) => {
-                resolve(response);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+        if (typeof data_id !== 'number') {
+            data_id = parseInt(data_id, 10);
+        }
+
+        const params = { importId: data_id };
+        return this.runQuery(queryString, params);
+    }
+
+    async findEdgesByImportId(data_id) {
+        const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+
+        if (typeof data_id !== 'number') {
+            data_id = parseInt(data_id, 10);
+        }
+
+        const params = { importId: data_id };
+        return this.runQuery(queryString, params);
     }
 }
 
