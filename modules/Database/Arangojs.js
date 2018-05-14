@@ -167,6 +167,10 @@ class ArangoJS {
         let new_imports = [];
         if (result.imports !== undefined) {
             new_imports = result.imports;
+
+            if (new_imports.includes(importNumber)) {
+                return result;
+            }
         }
 
         new_imports.push(importNumber);
