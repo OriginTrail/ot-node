@@ -750,7 +750,11 @@ async function processXML(err, result) {
             .concat(actorsVertices)
             .concat(productVertices)
             .concat(batchesVertices)
-            .concat(eventVertices);
+            .concat(eventVertices)
+            .map((vertex) => {
+                vertex.sender_id = senderId;
+                return vertex;
+            });
 
     const promises = allVertices.map(vertex => db.addVertex(vertex));
     await Promise.all(promises);
@@ -812,7 +816,11 @@ async function processXML(err, result) {
     const allEdges = locationEdges
         .concat(eventEdges)
         .concat(batchEdges)
-        .concat(classObjectEdges);
+        .concat(classObjectEdges)
+        .map((edge) => {
+            edge.sender_id = senderId;
+            return edge;
+        });
 
     for (const edge of allEdges) {
         const to = edge._to;
