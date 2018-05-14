@@ -523,6 +523,19 @@ class Utilities {
         });
     }
 
+    static checkIfArangoIsRunning() {
+        return new Promise((resolve, reject) => {
+            request
+                .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
+                .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
+                .then((res) => {
+                    resolve(res.body);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
     /**
      * Pings infura rinkeby api eth_blockNumber method endpoint
      * @returns {Promise<any>}
