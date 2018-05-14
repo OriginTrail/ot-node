@@ -80,6 +80,7 @@
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.0",
     "superagent": "^3.8.3",
+    "truffle-hdwallet-provider": "0.0.5",
     "utf8-length": "latest",
     "validator": "^9.4.1",
     "web3": "^1.0.0-beta.33",
