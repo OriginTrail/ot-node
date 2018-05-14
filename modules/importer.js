@@ -18,45 +18,23 @@ const log = utilities.getLogger();
 module.exports = () => {
     const importer = {
 
-        importJSON(json_document, callback) {
-            return new Promise((resolve, reject) => {
-                log.info('Entering importJSON');
-                const graph = json_document;
+        async importJSON(json_document) {
+            log.info('Entering importJSON');
+            const { vertices, edges, data_id } = json_document;
 
-                GSdb.db.createCollection('ot_vertices')
-                    .then(() => GSdb.db.createEdgeCollection('ot_edges'))
-                    .then(() => {
-                        // eslint-disable-next-line  prefer-destructuring
-                        const vertices = graph.vertices;
-                        // eslint-disable-next-line  prefer-destructuring
-                        const edges = graph.edges;
-                        const { data_id } = graph.data_id;
-                        log.trace('Vertex importing');
-                        async.each(
-                            vertices, (vertex, next) => {
-                                GSdb.db.addDocument('ot_vertices', vertex)
-                                    .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
-                                    .then(() => {
-                                        next();
-                                    });
-                            }
-                            , () => {
-                                async.each(edges, (edge, next) => {
-                                    GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
-                                        GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
-                                            next();
-                                        }).catch((err) => {
-                                            reject(err);
-                                        });
-                                    });
-                                }, () => {
-                                    log.info('JSON import complete');
-                                    resolve('success');
-                                });
-                            },
-                        );
-                    });
-            });
+            if (typeof data_id !== 'number') {
+                throw Error(`Invalid data ID. ${data_id}.`);
+            }
+
+            log.trace('Vertex importing');
+
+            // TODO: Use transaction here.
+            await Promise.all(vertices.map(vertex => GSdb.db.addDocument('ot_vertices', vertex))
+                .concat(edges.map(edge => GSdb.db.addDocument('ot_edges', edge))));
+            await Promise.all(vertices.map(vertex => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
+                .concat(edges.map(edge => GSdb.db.updateDocumentImports('ot_edges', edge, data_id))));
+
+            log.info('JSON import complete');
         },
 
         // eslint-disable-next-line no-shadow

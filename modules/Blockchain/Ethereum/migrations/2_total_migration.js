@@ -3,7 +3,8 @@ var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var OTFingerprintStore = artifacts.require('OTFingerprintStore'); // eslint-disable-line no-undef
 var Bidding = artifacts.require('Bidding'); // eslint-disable-line no-undef
-
+var MockEscrowHolder = artifacts.require('MockEscrowHolder'); // eslint-disable-line no-undef
+var MockBidding = artifacts.require('MockBidding'); // eslint-disable-line no-undef
 
 const giveMeTracToken = function giveMeTracToken() {
     const token = TracToken.deployed();
@@ -24,6 +25,17 @@ const giveMeFingerprint = function giveMeFingerprint() {
     const fingerprint = OTFingerprintStore.deployed();
     return fingerprint;
 };
+
+const giveMeMockBidding = function giveMeMockBidding() {
+    const mockBidding = MockBidding.deployed();
+    return mockBidding;
+};
+
+const giveMeMockEscrowHolder = function giveMeMockEscrowHolder() {
+    const mockEscrow = MockEscrowHolder.deployed();
+    return mockEscrow;
+};
+
 var token;
 var escrow;
 var bidding;
@@ -97,6 +109,48 @@ module.exports = (deployer, network, accounts) => {
                                 console.log('\t Token contract address: \t' + tokenAddress + ' (not changed)'); // eslint-disable-line prefer-template
                                 console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line prefer-template
                                 console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line prefer-template
+                            });
+                    });
+            });
+        break;
+    case 'mock':
+        DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
+        DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
+        deployer.deploy(TestingUtilities);
+        deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
+            .then(() => giveMeTracToken())
+            .then((result) => {
+                token = result;
+                deployer.deploy(MockEscrowHolder, result.address)
+                    .then(() => giveMeMockEscrowHolder())
+                    .then((result) => {
+                        escrow = result;
+                        deployer.deploy(MockBidding, token.address, result.address)
+                            .then(() => giveMeMockBidding())
+                            .then((result) => {
+                                bidding = result;
+                                deployer.deploy(OTFingerprintStore)
+                                    .then(() => giveMeFingerprint())
+                                    .then((result) => {
+                                        fingerprint = result;
+                                        escrow.transferOwnership(bidding.address)
+                                            .then(() => {
+                                                token.mint(DC_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                    .then(() => {
+                                                        token.mint(DH_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                            .then(() => {
+                                                                token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                                    .then(() => {
+                                                                        console.log('\n\n \t Contract adressess on ganache:');
+                                                                        console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+                                                                    });
+                                                            });
+                                                    });
+                                            });
+                                    });
                             });
                     });
             });

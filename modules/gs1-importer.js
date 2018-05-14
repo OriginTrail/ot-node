@@ -13,25 +13,19 @@ function sanitize(old_obj, new_obj, patterns) {
     if (typeof old_obj !== 'object') { return old_obj; }
 
     for (const key in old_obj) {
-        var new_key = key;
-
+        let new_key = key;
         for (const i in patterns) {
             new_key = new_key.replace(patterns[i], '');
         }
         new_obj[new_key] = sanitize(old_obj[key], {}, patterns);
     }
-
     return new_obj;
 }
 
 // validate
 function emailValidation(email) {
     const result = validator.isEmail(email);
-
-    if (result) {
-        return true;
-    }
-    return false;
+    return !!result;
 }
 
 function dateTimeValidation(date) {
@@ -81,6 +75,7 @@ function parseLocations(vocabularyElementList) {
             id: element.id,
             attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
+            extension: element.extension,
         };
 
         locations.push(location);
@@ -144,6 +139,177 @@ function parseBatches(vocabularyElementList) {
     }
 
     return batches;
+}
+
+/**
+ * Zero knowledge processing
+ * @param senderId
+ * @param event
+ * @param eventId
+ * @param categories
+ * @param importId
+ * @param globalR
+ * @param batchVertices
+ * @return {Promise<void>}
+ */
+async function zeroKnowledge(
+    senderId, event, eventId, categories,
+    importId, globalR, batchVertices, db,
+) {
+    let inputQuantities = [];
+    let outputQuantities = [];
+    const { extension } = event;
+    if (categories.includes('Ownership') || categories.includes('Transport') ||
+        categories.includes('Observation')) {
+        const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+
+        const { quantityList } = extension;
+        if (bizStep === 'shipping') {
+            // sending input
+            if (categories.includes('Ownership')) {
+                outputQuantities = arrayze(quantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                    }));
+            } else {
+                outputQuantities = arrayze(quantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
+                    }));
+            }
+
+            for (const outputQ of outputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(outputQ.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: outputQ.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    inputQuantities.push(quantity);
+                } else {
+                    inputQuantities.push({
+                        added: true,
+                        object: outputQ.object,
+                        quantity: parseInt(outputQ.quantity, 10),
+                    });
+                }
+            }
+        } else {
+            // receiving output
+            if (categories.includes('Ownership')) {
+                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                    r: globalR,
+                }));
+            } else {
+                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                }));
+            }
+
+            for (const inputQ of inputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(inputQ.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    outputQuantities.push({
+                        object: inputQ.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    });
+                } else {
+                    outputQuantities.push({
+                        added: true,
+                        object: inputQ.object,
+                        quantity: parseInt(inputQ.quantity, 10),
+                    });
+                }
+            }
+        }
+    } else {
+        // Transformation
+        const { inputQuantityList, outputQuantityList } = event;
+        if (inputQuantityList) {
+            const tmpInputQuantities = arrayze(inputQuantityList.quantityElement).map(elem => ({
+                object: elem.epcClass,
+                quantity: parseInt(elem.quantity, 10),
+                r: globalR,
+            }));
+            for (const inputQuantity of tmpInputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: inputQuantity.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    inputQuantities.push(quantity);
+                } else {
+                    inputQuantities.push({
+                        added: true,
+                        object: inputQuantity.object,
+                        quantity: parseInt(inputQuantity.quantity, 10),
+                    });
+                }
+            }
+        }
+        if (outputQuantityList) {
+            const tmpOutputQuantities = arrayze(outputQuantityList.quantityElement)
+                .map(elem => ({
+                    object: elem.epcClass,
+                    quantity: parseInt(elem.quantity, 10),
+                    r: globalR,
+                }));
+            for (const outputQuantity of tmpOutputQuantities) {
+                // eslint-disable-next-line
+                const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
+                if (vertex) {
+                    const quantities = vertex.data.quantities.private;
+                    const quantity = {
+                        object: outputQuantity.object,
+                        quantity: parseInt(quantities.quantity, 10),
+                        r: quantities.r,
+                    };
+                    outputQuantities.push(quantity);
+                } else {
+                    outputQuantities.push({
+                        added: true,
+                        object: outputQuantity.object,
+                        quantity: parseInt(outputQuantity.quantity, 10),
+                    });
+                }
+            }
+        }
+    }
+    const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+    for (const quantity of quantities.inputs.concat(quantities.outputs)) {
+        if (quantity.added) {
+            delete quantity.added;
+            let batchFound = false;
+            for (const batch of batchVertices) {
+                if (batch.identifiers.uid === quantity.object) {
+                    batchFound = true;
+                    batch.data.quantities = quantity;
+                    batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
+                    break;
+                }
+            }
+            if (!batchFound) {
+                throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
+            }
+        }
+    }
+    event.quantities = quantities;
 }
 
 /**
@@ -308,6 +474,20 @@ async function processXML(err, result) {
             vertex_type: 'OBJECT',
         });
 
+        if (location.extension) {
+            const attrs = parseAttributes(arrayze(location.extension.attribute), 'urn:ot:location:');
+            for (const attr of arrayze(attrs)) {
+                if (attr.participantId) {
+                    locationEdges.push({
+                        _key: md5(`owned_by_${senderId}_${locationKey}_${attr.participantId}`),
+                        _from: `ot_vertices/${locationKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
+                        edge_type: 'OWNED_BY',
+                    });
+                }
+            }
+        }
+
         const { child_locations } = location;
         for (const childId of child_locations) {
             const identifiers = {
@@ -327,7 +507,7 @@ async function processXML(err, result) {
             });
 
             locationEdges.push({
-                _key: md5(`child business_location_${senderId}_${location.id}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+                _key: md5(`child_business_location_${senderId}_${location.id}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                 _from: `ot_vertices/${childLocationKey}`,
                 _to: `ot_vertices/${locationKey}`,
                 edge_type: 'CHILD_BUSINESS_LOCATION',
@@ -372,6 +552,7 @@ async function processXML(err, result) {
             _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
             _id: product.id,
             data,
+            identifiers,
             vertex_type: 'PRODUCT',
         });
     }
@@ -399,13 +580,6 @@ async function processXML(err, result) {
             },
             data,
             vertex_type: 'BATCH',
-        });
-
-        batchEdges.push({
-            _key: md5(`child business_location_${senderId}_${batch.id}_${productId}`),
-            _from: `ot_vertices/${key}`,
-            _to: `${EDGE_KEY_TEMPLATE + productId}`,
-            edge_type: 'IS',
         });
     }
 
@@ -435,164 +609,29 @@ async function processXML(err, result) {
             eventCategories = arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:event:'));
         }
 
+        // eslint-disable-next-line
+        await zeroKnowledge(senderId, event, eventId, eventCategories,
+            importId, GLOBAL_R, batchesVertices, db,
+        );
+
         const identifiers = {
             id: eventId,
             uid: eventId,
         };
 
-        let inputQuantities = [];
-        const outputQuantities = [];
-        if (eventCategories.includes('Ownership') || eventCategories.includes('Transport')
-            || eventCategories.includes('Observation')) {
-            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
-
-            const { quantityList } = extension;
-            if (bizStep === 'shipping') {
-                const tmpOutputQuantities = arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
-                for (const outputQ of tmpOutputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(outputQ.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                        outputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                        });
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                            r: GLOBAL_R,
-                        });
-                    }
-                }
-            } else {
-                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: GLOBAL_R,
-                }));
-                for (const inputQ of inputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(inputQ.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        outputQuantities.push({
-                            object: inputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        });
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: inputQ.object,
-                            quantity: parseInt(inputQ.quantity, 10),
-                        });
-                    }
-                }
-            }
-        } else {
-            const { inputQuantityList, outputQuantityList } = event;
-            if (inputQuantityList) {
-                const tmpInputQuantities = arrayze(inputQuantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: GLOBAL_R,
-                }));
-                for (const inputQuantity of tmpInputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(inputQuantity.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: inputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: inputQuantity.object,
-                            quantity: parseInt(inputQuantity.quantity, 10),
-                        });
-                    }
-                }
-            }
-            if (outputQuantityList) {
-                const tmpOutputQuantities = arrayze(outputQuantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: GLOBAL_R,
-                    }));
-                for (const outputQuantity of tmpOutputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await db.getVertexWithMaxVersion(outputQuantity.object);
-                    if (vertex) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        outputQuantities.push(quantity);
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQuantity.object,
-                            quantity: parseInt(outputQuantity.quantity, 10),
-                        });
-                    }
-                }
-            }
-        }
-        const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-        for (const quantity of quantities.inputs.concat(quantities.outputs)) {
-            if (quantity.added) {
-                delete quantity.added;
-                let batchFound = false;
-                for (const batch of batchesVertices) {
-                    if (batch.identifiers.uid === quantity.object) {
-                        batchFound = true;
-                        batch.data.quantities = quantity;
-                        batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
-                        break;
-                    }
-                }
-                if (!batchFound) {
-                    throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
-                }
-            }
-        }
-        event.quantities = quantities;
-
         const data = {
             object_class_id: getClassId(event),
-            vertex_type: 'EVENT',
             categories: eventCategories,
         };
-
         copyProperties(event, data);
+        event.vertex_type = 'EVENT';
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         eventVertices.push({
             _key: eventKey,
             data,
             identifiers,
+            vertex_type: 'EVENT',
         });
 
         if (extension.extension) {
@@ -600,7 +639,7 @@ async function processXML(err, result) {
                 const sources = arrayze(extension.extension.sourceList.source._);
                 for (const source of sources) {
                     eventEdges.push({
-                        _key: md5(`source_${senderId}_${eventId}_${source}`),
+                        _key: md5(`source_${senderId}_${eventKey}_${source}`),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + source}`,
                         edge_type: 'SOURCE',
@@ -612,7 +651,7 @@ async function processXML(err, result) {
                 const destinations = arrayze(extension.extension.destinationList.destination._);
                 for (const destination of destinations) {
                     eventEdges.push({
-                        _key: md5(`destination_${senderId}_${eventId}_${destination}`),
+                        _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + destination}`,
                         edge_type: 'DESTINATION',
@@ -621,12 +660,11 @@ async function processXML(err, result) {
             }
         }
 
-
         const { bizLocation } = event;
         if (bizLocation) {
             const bizLocationId = bizLocation.id;
             eventEdges.push({
-                _key: md5(`at_${senderId}_${eventId}_${bizLocationId}`),
+                _key: md5(`at_${senderId}_${eventKey}_${bizLocationId}`),
                 _from: `ot_vertices/${eventKey}`,
                 _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
                 edge_type: 'AT',
@@ -636,10 +674,10 @@ async function processXML(err, result) {
         if (event.readPoint) {
             const locationReadPoint = event.readPoint.id;
             eventEdges.push({
-                _key: md5(`read_point_${senderId}_${eventId}_${locationReadPoint}`),
+                _key: md5(`read_point_${senderId}_${eventKey}_${locationReadPoint}`),
                 _from: `ot_vertices/${eventKey}`,
                 _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
-                edge_type: 'AT',
+                edge_type: 'READ_POINT',
             });
         }
 
@@ -648,10 +686,23 @@ async function processXML(err, result) {
                 const batchId = inputEpc;
 
                 eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'INPUT_BATCH',
+                });
+            }
+        }
+
+        if (event.epcList) {
+            for (const inputEpc of arrayze(event.epcList.epc)) {
+                const batchId = inputEpc;
+
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'EVENT_BATCH',
                 });
             }
         }
@@ -661,7 +712,7 @@ async function processXML(err, result) {
                 const batchId = inputEpc.epc;
 
                 eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'CHILD_BATCH',
@@ -674,25 +725,23 @@ async function processXML(err, result) {
                 const batchId = outputEpc;
 
                 eventEdges.push({
-                    _key: md5(`event_batch_${senderId}_${eventId}_${batchId}`),
-                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
-                    _to: `ot_vertices/${eventKey}`,
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'OUTPUT_BATCH',
                 });
             }
         }
 
+        for (const batch of batchesVertices) {
+            const productId = batch.data.parent_id;
 
-        if (event.parentID) {
-            const parentId = event.parentID;
-            // TODO: fetch from db.
-
-            // eventEdges.push({
-            //     _key: md5(`at_${senderId}_${eventId}_${biz_location}`),
-            //     _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
-            //     _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-            //     edge_type: 'PARENT_BATCH',
-            // });
+            batchEdges.push({
+                _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
+                _from: `ot_vertices/${batch._key}`,
+                _to: `${EDGE_KEY_TEMPLATE + productId}`,
+                edge_type: 'IS',
+            });
         }
     }
 
@@ -708,9 +757,31 @@ async function processXML(err, result) {
 
     const classObjectEdges = [];
 
+    eventVertices.forEach((vertex) => {
+        for (const category of vertex.data.categories) {
+            eventVertices.forEach((vertex) => {
+                classObjectEdges.push({
+                    _key: md5(`is_${senderId}_${vertex.id}_${category}`),
+                    _from: `ot_vertices/${vertex._key}`,
+                    _to: `ot_vertices/${category}`,
+                    edge_type: 'IS',
+                });
+            });
+        }
+    });
+
+    locationVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassLocationId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassLocationId}`,
+            edge_type: 'IS',
+        });
+    });
+
     actorsVertices.forEach((vertex) => {
         classObjectEdges.push({
-            _key: md5(`is_${senderId}_${vertex.id}_${objectClassActorId}`),
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassActorId}`),
             _from: `ot_vertices/${vertex._key}`,
             _to: `ot_vertices/${objectClassActorId}`,
             edge_type: 'IS',
@@ -719,7 +790,7 @@ async function processXML(err, result) {
 
     productVertices.forEach((vertex) => {
         classObjectEdges.push({
-            _key: md5(`is_${senderId}_${vertex.id}_${objectClassProductId}`),
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassProductId}`),
             _from: `ot_vertices/${vertex._key}`,
             _to: `ot_vertices/${objectClassProductId}`,
             edge_type: 'IS',
@@ -730,7 +801,7 @@ async function processXML(err, result) {
         vertex.data.categories.forEach(async (category) => {
             const classKey = await db.getClassId(category);
             classObjectEdges.push({
-                _key: md5(`is_${senderId}_${vertex.id}_${classKey}`),
+                _key: md5(`is_${senderId}_${vertex._key}_${classKey}`),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${classKey}`,
                 edge_type: 'IS',
@@ -740,6 +811,7 @@ async function processXML(err, result) {
 
     const allEdges = locationEdges
         .concat(eventEdges)
+        .concat(batchEdges)
         .concat(classObjectEdges);
 
     for (const edge of allEdges) {
@@ -776,7 +848,7 @@ async function parseGS1(gs1XmlFile) {
         throw Error(`Failed to validate schema. ${validationResult}`);
     }
 
-    const result = await new Promise((resolve, reject) =>
+    return new Promise(resolve =>
         parseString(
             gs1XmlFileBuffer,
             { explicitArray: false, mergeAttrs: true },
@@ -785,8 +857,6 @@ async function parseGS1(gs1XmlFile) {
                 resolve(processXML(err, json));
             },
         ));
-
-    return result;
 }
 
 

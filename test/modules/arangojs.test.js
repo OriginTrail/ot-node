@@ -27,6 +27,13 @@ describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
+
+        // Drop test database if exist.
+        const listOfDatabases = await systemDb.listDatabases();
+        if (listOfDatabases.includes(myDatabaseName)) {
+            await systemDb.dropDatabase(myDatabaseName);
+        }
+
         await systemDb.createDatabase(
             myDatabaseName,
             [{ username: myUserName, passwd: myPassword, active: true }],
@@ -175,18 +182,33 @@ describe('Arangojs module ', async () => {
     });
 
     it('updateDocumentImports() should add/append data', async () => {
-        // this will implicitly call testDb.updateDocument()
+        // this will not implicitly call the testDb.updateDocument() since
+        // import number was already stored.
         await testDb.updateDocumentImports(
             edgeCollectionName,
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
+        ).then((response) => {
+            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        });
+
+        // check value of imports
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            assert.include(response.imports, newImportValue);
+        });
+
+        // this will implicitly call testDb.updateDocument()
+        await testDb.updateDocumentImports(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            edgeOne._key, newImportValue + 1,
         ).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
         });
 
         // check value of imports
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
-            assert.include(response.imports, newImportValue);
+            assert.include(response.imports, newImportValue + 1);
         });
     });
 
@@ -250,7 +272,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
 
         // check value of imports
