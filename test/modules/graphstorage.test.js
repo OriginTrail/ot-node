@@ -72,23 +72,6 @@ describe('GraphStorage module', () => {
         assert.equal(result, selectedDatabase);
     });
 
-    it('attempt to save vertex in non existing Document Collection should fail', async () => {
-        try {
-            await myGraphStorage.addVertex(vertexOne);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
-        }
-    });
-
-    it('attempt to save edge in non existing Edge Collection should fail', async () => {
-        try {
-            await myGraphStorage.addEdge(edgeOne);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
-        }
-    });
-
-
     it('attempt to updateImports on non existing db should fail', async () => {
         try {
             await myInvalidGraphStorage.updateImports(
