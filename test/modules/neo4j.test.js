@@ -42,19 +42,19 @@ describe('Neo4j module ', async () => {
     });
 
     it('pass null for vertex', async () => {
-        await testDb.addDocument('ot_vertices', null).catch((err) => {
+        await testDb.addVertex(null).catch((err) => {
             assert.equal(err.message, 'Invalid vertex null');
         });
     });
 
     it('pass empty for vertex', async () => {
-        await testDb.addDocument('ot_vertices', {}).catch((err) => {
+        await testDb.addVertex({}).catch((err) => {
             assert.equal(err.message, 'Invalid vertex {}');
         });
     });
 
     it('pass regular for vertex', async () => {
-        await testDb.addDocument('ot_vertices', vertexOne).then(() => {
+        await testDb.addVertex(vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
                 assert.deepEqual(vertexOne, result[0]);
             });
@@ -72,8 +72,8 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with regular vertices', async () => {
-        await testDb.addDocument('ot_vertices', vertexTwo);
-        await testDb.addDocument('ot_edges', edgeOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
 
         const path = await testDb.findTraversalPath(vertexOne, 1);
         assert.equal(path.length, 2);
@@ -89,13 +89,13 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with depth less than max length', async () => {
-        await testDb.addDocument('ot_vertices', vertices[0]);
-        await testDb.addDocument('ot_vertices', vertices[1]);
-        await testDb.addDocument('ot_vertices', vertices[2]);
-        await testDb.addDocument('ot_vertices', vertices[3]);
-        await testDb.addDocument('ot_edges', edges[0]);
-        await testDb.addDocument('ot_edges', edges[1]);
-        await testDb.addDocument('ot_edges', edges[2]);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 2);
         console.log(path);
@@ -108,35 +108,35 @@ describe('Neo4j module ', async () => {
     });
 
     it('traversal path with interconnected vertices', async () => {
-        await testDb.addDocument('ot_edges', edges[3]);
+        await testDb.addEdge(edges[3]);
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
 
         console.log(JSON.stringify(path));
     });
 
-    it('getCurrentMaxVersion single version vertex', async () => {
+    it('findMaxVersion single version vertex', async () => {
         // vertexTwo has one version
-        const response = await testDb.getCurrentMaxVersion(vertexTwo.identifiers.uid);
+        const response = await testDb.findMaxVersion(vertexTwo.identifiers.uid);
         assert.equal(response, 1);
     });
 
-    it('getCurrentMaxVersion vertex has multiple versions', async () => {
+    it('findMaxVersion vertex has multiple versions', async () => {
         // vertexOne has three versions
-        await testDb.addDocument('ot_vertices', vertexOneV2);
-        await testDb.addDocument('ot_vertices', vertexOneV3);
-        const response = await testDb.getCurrentMaxVersion(vertexOne.identifiers.uid);
+        await testDb.addVertex(vertexOneV2);
+        await testDb.addVertex(vertexOneV3);
+        const response = await testDb.findMaxVersion(vertexOne.identifiers.uid);
         assert.equal(response, 3);
     });
 
-    it('getVertexWithMaxVersion', async () => {
-        const response = await testDb.getVertexWithMaxVersion(vertexOne.identifiers.uid);
+    it('findVertexWithMaxVersion', async () => {
+        const response = await testDb.findVertexWithMaxVersion(vertexOne.identifiers.uid);
         console.log(response);
         assert.deepEqual(response, vertexOneV3);
     });
 
-    it('getVerticesByImportId', async () => {
-        const response = await testDb.getVerticesByImportId('1520345631');
+    it('findVerticesByImportId', async () => {
+        const response = await testDb.findVerticesByImportId('1520345631');
 
         function sortByKey(a, b) {
             if (a._key < b._key) {
@@ -152,8 +152,8 @@ describe('Neo4j module ', async () => {
     });
 
     it('update document imports', async () => {
-        await testDb.updateDocumentImports('ot_vertices', vertexOne._key, 101100);
-        const response = await testDb.getVerticesByImportId(101100);
+        await testDb.updateImports('ot_vertices', vertexOne._key, 101100);
+        const response = await testDb.findVerticesByImportId(101100);
 
         assert.deepEqual(response[0].data, vertexOne.data);
         assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);

@@ -29,10 +29,10 @@ module.exports = () => {
             log.trace('Vertex importing');
 
             // TODO: Use transaction here.
-            await Promise.all(vertices.map(vertex => GSdb.db.addDocument('ot_vertices', vertex))
-                .concat(edges.map(edge => GSdb.db.addDocument('ot_edges', edge))));
-            await Promise.all(vertices.map(vertex => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
-                .concat(edges.map(edge => GSdb.db.updateDocumentImports('ot_edges', edge, data_id))));
+            await Promise.all(vertices.map(vertex => GSdb.db.addVertex(vertex))
+                .concat(edges.map(edge => GSdb.db.addEdge(edge))));
+            await Promise.all(vertices.map(vertex => GSdb.db.updateImports('ot_vertices', vertex, data_id))
+                .concat(edges.map(edge => GSdb.db.updateImports('ot_edges', edge, data_id))));
 
             log.info('JSON import complete');
         },
