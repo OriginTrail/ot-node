@@ -213,7 +213,7 @@ class ArangoJS {
             uid,
         };
 
-        const result = this.runQuery(queryString, params);
+        const result = await this.runQuery(queryString, params);
         if (result.length > 0) {
             return result[0];
         }
