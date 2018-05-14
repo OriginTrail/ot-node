@@ -50,6 +50,15 @@ class OTNode {
             process.exit(1);
         }
 
+        // check if ArangoDB service is running at all
+        try {
+            const responseFromArango = await Utilities.checkIfArangoIsRunning();
+            log.info(`Arango server version ${responseFromArango.version} is up and running`);
+        } catch (err) {
+            log.error('Please make sure Arango server is runing before starting ot-node');
+            process.exit(1);
+        }
+
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
