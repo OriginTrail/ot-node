@@ -231,6 +231,27 @@ class GraphStorage {
     }
 
     /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param id        Event ID
+     * @param bizStep   BizStep value
+     * @return {Promise}
+     */
+    findEvent(id, bizStep) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findEvent(id, bizStep).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
      *
      * @param className
      * @returns {Promise<string | undefined>}

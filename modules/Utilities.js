@@ -2,8 +2,7 @@ const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
 const ipaddr = require('ipaddr.js');
-var winston = require('winston');
-const deasync = require('deasync-promise');
+const winston = require('winston');
 const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
@@ -12,6 +11,7 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
+const levenshtein = require('js-levenshtein');
 
 require('dotenv').config();
 
@@ -578,6 +578,104 @@ class Utilities {
     static numberToHex(num) {
         const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
         return web3.utils.numberToHex(num);
+    }
+
+    /**
+     * Merge array of objects
+     * @param objects   Objects to be merges
+     */
+    static mergeObjects(objects) {
+        const out = {};
+
+        for (let i = 0; i < objects.length; i += 1) {
+            for (const p in objects[i]) {
+                out[p] = objects[i][p];
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Flattens object
+     * @param obj
+     * @param name
+     * @param stem
+     */
+    static flattenObject(obj, name, stem) {
+        if (obj == null) {
+            return obj;
+        }
+        let out = {};
+        const newStem = (typeof stem !== 'undefined' && stem !== '') ? `${stem}_${name}` : name;
+
+        if (typeof obj !== 'object') {
+            out[newStem] = obj;
+            return out;
+        }
+
+        for (const p in obj) {
+            const prop = Utilities.flattenObject(obj[p], p, newStem);
+            out = Utilities.mergeObjects([out, prop]);
+        }
+        return out;
+    }
+
+    /**
+     * Finds the distance between two objects
+     * Note: flatten-sort-compare by keys
+     * @param obj1
+     * @param obj2
+     */
+    static objectDistance(obj1, obj2) {
+        const normalizedObj1 = Utilities.sortObject(Utilities.flattenObject(obj1));
+        const normalizedObj2 = Utilities.sortObject(Utilities.flattenObject(obj2));
+
+        const keys = Utilities.unionArrays(
+            Object.keys(normalizedObj1),
+            Object.keys(normalizedObj2),
+        );
+
+        let sum = 0;
+        for (const key of keys) {
+            const value1 = normalizedObj1[key];
+            const value2 = normalizedObj2[key];
+
+            if (value1 == null || value2 == null) {
+                // eslint-disable-next-line
+                continue;
+            }
+
+            if (value1 === value2) {
+                sum += 1;
+            } else {
+                sum += levenshtein(`${value1}`, `${value2}`);
+            }
+        }
+
+        const minKeysLength = Math.min(
+            Object.keys(normalizedObj1).length,
+            Object.keys(normalizedObj2).length,
+        );
+        return (sum / minKeysLength) * 100;
+    }
+
+    /**
+     * Unify two arrays
+     * @param x
+     * @param y
+     * @return {Array}
+     */
+    static unionArrays(x, y) {
+        const obj = {};
+        for (let i = x.length - 1; i >= 0; i -= 1) { obj[x[i]] = x[i]; }
+        for (let i = y.length - 1; i >= 0; i -= 1) { obj[y[i]] = y[i]; }
+        const res = [];
+        for (const k in obj) {
+            if (obj[k] !== null) {
+                res.push(obj[k]);
+            }
+        }
+        return res;
     }
 }
 

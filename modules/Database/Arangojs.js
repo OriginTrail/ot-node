@@ -352,6 +352,24 @@ class ArangoJS {
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
     }
+
+    /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param id        Event ID
+     * @param bizStep   BizStep value
+     * @return {Promise}
+     */
+    async findEvent(id, bizStep) {
+        const queryString = 'FOR v IN ot_vertices ' +
+            'FILTER v.identifiers.uid == @id ' +
+            'RETURN v';
+        const params = {
+            id,
+        };
+        const result = await this.runQuery(queryString, params);
+        return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
+    }
 }
 
 module.exports = ArangoJS;

@@ -209,6 +209,87 @@ describe('Utilities module', () => {
         }
     });
 
+    it('flattenObject() regular', async () => {
+        const regularObj = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors: ['red', 'orange'],
+            isWearing: {
+                shirt: {
+                    color: 'white',
+                },
+                shorts: {
+                    color: 'blue',
+                },
+            },
+        };
+        const expectedFlattened = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors_0: 'red',
+            favoriteColors_1: 'orange',
+            isWearing_shirt_color: 'white',
+            isWearing_shorts_color: 'blue',
+        };
+
+        const flattened = Utilities.flattenObject(regularObj);
+        assert.deepEqual(flattened, expectedFlattened);
+    });
+
+    it('flattenObject() null', async () => {
+        const flattened = Utilities.flattenObject(null);
+        assert.deepEqual(flattened, null);
+    });
+
+    it('flattenObject() empty', async () => {
+        const flattened = Utilities.flattenObject({});
+        assert.deepEqual(flattened, {});
+    });
+
+    it('objectDistance() test 1', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            a: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
+    });
+
+    it('objectDistance() test 2', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            b: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 0);
+    });
+
+    it('objectDistance() test 3', async () => {
+        const obj1 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+        const obj2 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
+    });
+
     after('cleanup', () => {
         const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
         const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;

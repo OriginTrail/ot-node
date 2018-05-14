@@ -503,6 +503,17 @@ class Neo4jDB {
     }
 
     /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param id        Event ID
+     * @param bizStep   BizStep value
+     * @return {Promise}
+     */
+    async findEvent(id, bizStep) {
+        // TODO implement
+    }
+
+    /**
      * Shut down the driver
      */
     close() {
