@@ -410,20 +410,16 @@ class Neo4jDB {
             if (!first) {
                 // eslint-disable-next-line
                 first = await this._fetchVertex('_key', leftNode.properties._key);
-                first.key = first._key;
-                delete first._key;
-                vertices[first.key] = first;
-                vertices[first.key].edges = [];
+                vertices[first._key] = first;
+                vertices[first._key].edges = [];
             }
 
             let second = vertices[rightNode.properties._key];
             if (!second) {
                 // eslint-disable-next-line
                 second = await this._fetchVertex('_key', rightNode.properties._key);
-                second.key = second._key;
-                delete second._key;
-                vertices[second.key] = second;
-                vertices[second.key].edges = [];
+                vertices[second._key] = second;
+                vertices[second._key].edges = [];
             }
 
             const fromNode = vertices[relation.properties._from];

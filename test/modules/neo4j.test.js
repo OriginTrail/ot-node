@@ -113,6 +113,7 @@ describe('Neo4j module ', async () => {
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
 
         console.log(JSON.stringify(path));
+        // TODO assert.deepEqual
     });
 
     it('findMaxVersion single version vertex', async () => {
