@@ -12,6 +12,7 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
+const assert = require('assert');
 
 require('dotenv').config();
 
@@ -517,6 +518,24 @@ class Utilities {
                 .query('?token=1WRiEqAQ9l4SW6fGdiDt')
                 .then((res) => {
                     resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    static getArangoDbVersion() {
+        return new Promise((resolve, reject) => {
+            request
+                .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
+                .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
+                .then((res) => {
+                    if (res.status === 200) {
+                        resolve(res.body);
+                    } else {
+                        // eslint-disable-next-line prefer-promise-reject-errors
+                        reject('Failed to contact DB');
+                    }
                 }).catch((err) => {
                     reject(err);
                 });
