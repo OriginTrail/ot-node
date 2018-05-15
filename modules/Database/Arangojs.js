@@ -258,7 +258,7 @@ class ArangoJS {
     async addDocument(collectionName, document) {
         const collection = this.db.collection(collectionName);
         try {
-            return collection.save(document);
+            return await collection.save(document);
         } catch (err) {
             const errorCode = err.response.body.code;
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
