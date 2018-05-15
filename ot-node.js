@@ -52,7 +52,7 @@ class OTNode {
 
         // check if ArangoDB service is running at all
         try {
-            const responseFromArango = await Utilities.checkIfArangoIsRunning();
+            const responseFromArango = await Utilities.getArangoDbVersion();
             log.info(`Arango server version ${responseFromArango.version} is up and running`);
         } catch (err) {
             log.error('Please make sure Arango server is runing before starting ot-node');
