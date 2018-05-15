@@ -645,10 +645,14 @@ class Utilities {
                 continue;
             }
 
-            if (value1 === value2) {
+            const valStr1 = `${value1}`;
+            const valStr2 = `${value2}`;
+
+            if (valStr1 === valStr2) {
                 sum += 1;
             } else {
-                sum += levenshtein(`${value1}`, `${value2}`);
+                const maxLength = Math.max(valStr1.length, valStr2.length);
+                sum += (maxLength - levenshtein(`${value1}`, `${value2}`)) / maxLength;
             }
         }
 
@@ -656,7 +660,7 @@ class Utilities {
             Object.keys(normalizedObj1).length,
             Object.keys(normalizedObj2).length,
         );
-        return (sum / minKeysLength) * 100;
+        return (sum * 100) / minKeysLength;
     }
 
     /**
