@@ -186,7 +186,7 @@ class ArangoJS {
      */
     async findMaxVersion(senderId, uid, _key) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId' +
+                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v.version';
@@ -206,7 +206,7 @@ class ArangoJS {
      */
     async findVertexWithMaxVersion(senderId, uid) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId' +
+                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v';
