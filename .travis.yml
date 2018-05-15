@@ -3,6 +3,7 @@ node_js:
   - "9"
 env:
   - NODE_ENV=test
+sudo: enabled
 before_script:
   - cp .env.example .env
   - touch modules/Database/system.db
@@ -16,6 +17,8 @@ before_script:
   - chmod +x setup_neo4j.sh
   - ./setup_neo4j.sh
   - service neo4j start
+  - npm install -g ganache-cli
+  - npm install -g truffle
 script:
   - npm run lint
   - npm test
@@ -24,7 +27,12 @@ script:
   - jobs
   - kill %1
   - node isStartHealthy.js
+  - ganache-cli -i 5777 -p 7545 &>ganache.log &
+  - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
+  - cd ../../../
 after_script:
   - cat start.log
   - rm -f start.log
+  - cat ganache.log
+  - rm -f ganache.log
   - kill -9 $(pgrep arangod)
