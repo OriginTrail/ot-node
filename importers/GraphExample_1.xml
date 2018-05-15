@@ -6,7 +6,7 @@
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender><!-- Mandatory -->
 				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-				<sbdh:Identifier Authority="OriginTrail">SENDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:actor:id:Company#1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				

@@ -471,13 +471,15 @@ async function processXML(err, result) {
             _key: locationKey,
             identifiers,
             data,
-            vertex_type: 'OBJECT',
+            vertex_type: 'LOCATION',
         });
 
         if (location.extension) {
             const attrs = parseAttributes(arrayze(location.extension.attribute), 'urn:ot:location:');
             for (const attr of arrayze(attrs)) {
                 if (attr.participantId) {
+                    location.participant_id = attr.participantId;
+
                     locationEdges.push({
                         _key: md5(`owned_by_${senderId}_${locationKey}_${attr.participantId}`),
                         _from: `ot_vertices/${locationKey}`,
@@ -628,11 +630,13 @@ async function processXML(err, result) {
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         if (extension.extension) {
-            const documentId = extension.extension.document_id;
+            const { documentId } = extension.extension;
             if (documentId) {
                 identifiers.document_id = documentId;
-                delete extension.extension.document_id;
             }
+
+            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const isSender = bizStep === 'shipping';
 
             if (extension.extension.sourceList) {
                 const sources = arrayze(extension.extension.sourceList.source._);
@@ -643,6 +647,31 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + source}`,
                         edge_type: 'SOURCE',
                     });
+
+                    if (!isSender) {
+                        // receiving
+                        const filtered = locations.filter(location => location.id === source);
+                        for (const location of filtered) {
+                            event.partner_id = location.participant_id;
+                        }
+
+                        // eslint-disable-next-line
+                        const shippingEventVertex = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
+                        if (shippingEventVertex.length > 0) {
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${shippingEventVertex[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                            });
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                            });
+                        }
+                    }
                 }
             }
 
@@ -655,6 +684,31 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + destination}`,
                         edge_type: 'DESTINATION',
                     });
+
+                    if (isSender) {
+                        // shipping
+                        const filtered = locations.filter(location => location.id === destination);
+                        for (const location of filtered) {
+                            event.partner_id = location.participant_id;
+                        }
+
+                        // eslint-disable-next-line
+                        const receivingEventVertices = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
+                        if (receivingEventVertices.length > 0) {
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${receivingEventVertices[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                            });
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -663,6 +717,7 @@ async function processXML(err, result) {
             _key: eventKey,
             data,
             identifiers,
+            partner_id: event.partner_id,
             vertex_type: 'EVENT',
         });
 

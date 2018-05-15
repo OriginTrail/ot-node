@@ -505,11 +505,13 @@ class Neo4jDB {
     /**
      * Find event based on ID and bizStep
      * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
-     * @param id        Event ID
+     * @param senderId   Sender ID
+     * @param partnerId  Partner ID
+     * @param documentId Document ID
      * @param bizStep   BizStep value
      * @return {Promise}
      */
-    async findEvent(id, bizStep) {
+    async findEvent(senderId, partnerId, documentId, bizStep) {
         // TODO implement
     }
 

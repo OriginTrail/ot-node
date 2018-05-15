@@ -356,16 +356,20 @@ class ArangoJS {
     /**
      * Find event based on ID and bizStep
      * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
-     * @param id        Event ID
-     * @param bizStep   BizStep value
+     * @param senderId      Sender ID
+     * @param partnerId     Partner ID
+     * @param documentId    Document ID
+     * @param bizStep       BizStep value
      * @return {Promise}
      */
-    async findEvent(id, bizStep) {
+    async findEvent(senderId, partnerId, documentId, bizStep) {
         const queryString = 'FOR v IN ot_vertices ' +
-            'FILTER v.identifiers.uid == @id ' +
+            'FILTER v.identifiers.document_id == @documentId AND v.partner_id == @senderId AND v.sender_id == @partnerId ' +
             'RETURN v';
         const params = {
-            id,
+            partnerId,
+            documentId,
+            senderId,
         };
         const result = await this.runQuery(queryString, params);
         return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
