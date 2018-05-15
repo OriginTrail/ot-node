@@ -115,9 +115,10 @@
 							<epcClass>urn:epc:id:sgtin:Batch#1</epcClass>
 							<quantity>3</quantity>
 							<uom>KG</uom>
-						</quantityElement>			 	
+						</quantityElement>
 					</quantityList>
 					<extension>
+						<documentId>1</documentId>
 						<OTEventClass>ot:events:Transport</OTEventClass>
 						<OTEventType>Purchase</OTEventType>
 						<sourceList>

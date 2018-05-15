@@ -135,6 +135,7 @@
 						<id>urn:epc:id:sgln:Building#1</id>
 					 </bizLocation>			 				 
 					 <extension>
+						<documentId>2</documentId>
 						<OTEventClass>ot:event:Transformation</OTEventClass>
 					 	<OTEventType>Packaging</OTEventType>
 					 </extension>

@@ -627,14 +627,13 @@ async function processXML(err, result) {
         event.vertex_type = 'EVENT';
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
-        eventVertices.push({
-            _key: eventKey,
-            data,
-            identifiers,
-            vertex_type: 'EVENT',
-        });
-
         if (extension.extension) {
+            const documentId = extension.extension.document_id;
+            if (documentId) {
+                identifiers.document_id = documentId;
+                delete extension.extension.document_id;
+            }
+
             if (extension.extension.sourceList) {
                 const sources = arrayze(extension.extension.sourceList.source._);
                 for (const source of sources) {
@@ -659,6 +658,13 @@ async function processXML(err, result) {
                 }
             }
         }
+
+        eventVertices.push({
+            _key: eventKey,
+            data,
+            identifiers,
+            vertex_type: 'EVENT',
+        });
 
         const { bizLocation } = event;
         if (bizLocation) {
