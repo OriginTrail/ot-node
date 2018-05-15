@@ -1,8 +1,9 @@
 const { assert, expect } = require('chai');
 
-var TestUtils = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
-var EscrowHolder = artifacts.require('EscrowHolder'); // eslint-disable-line no-undef
+var TestUtils = artifacts.require('./TestingUtilities.sol'); // eslint-disable-line no-undef
+var TracToken = artifacts.require('./TracToken.sol'); // eslint-disable-line no-undef
+var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-line no-undef
+var Bidding = artifacts.require('./Bidding.sol'); // eslint-disable-line no-undef
 
 var Web3 = require('web3');
 
@@ -13,9 +14,10 @@ var DC_wallet;
 var DH_wallet;
 const data_id = 20;
 var escrow_address;
+var bidding_address;
 
 // eslint-disable-next-line no-undef
-contract('Escrow testing', async (accounts) => {
+contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should get TracToken contract', async () => {
         await TracToken.deployed();
@@ -24,6 +26,11 @@ contract('Escrow testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should get Escrow contract', async () => {
         await EscrowHolder.deployed();
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should get Bidding contract', async () => {
+        await Bidding.deployed();
     });
 
     // eslint-disable-next-line no-undef
@@ -39,16 +46,26 @@ contract('Escrow testing', async (accounts) => {
         console.log(`\t Escrow address: ${escrow_address}`);
     });
 
+    // eslint-disable-next-line no-undef
+    it('Should get the bidding_address', async () => {
+        await Bidding.deployed().then((res) => {
+            bidding_address = res.address;
+        }).catch(err => console.log(err));
+        console.log(`\t Bidding address: ${bidding_address}`);
+    });
+
     DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
     DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
 
     // eslint-disable-next-line no-undef
-    it('Should mint 2 G tokens ', async () => {
+    it('Should mint 25*10^25 tokens to DC and 5e25 to 5 DH nodes (accounts 0 and 1,2,3,4,5)', async () => {
         const trace = await TracToken.deployed();
-        const amount = '2000000000';
-        await trace.mint(DC_wallet, '1000000000', { from: accounts[0] });
-        await trace.mint(DH_wallet, '1000000000', { from: accounts[0] });
-
+        const amount = 5e25;
+        await trace.mint(DC_wallet, 5 * amount, { from: accounts[0] });
+        for (var i = 5; i >= 1; i -= 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await trace.mint(accounts[i], amount, { from: accounts[0] });
+        }
         await trace.endMinting({ from: accounts[0] });
 
         let response = await trace.balanceOf.call(DC_wallet);
@@ -58,21 +75,21 @@ contract('Escrow testing', async (accounts) => {
         const balance_DH = response.toNumber();
         console.log(`\t balance_DH: ${balance_DH}`);
 
-        assert.equal(balance_DC, 1000000000, 'DC balance not 1 billion');
-        assert.equal(balance_DH, 1000000000, 'DH balance not 1 billion');
+        assert.equal(balance_DC, 5 * amount, 'DC balance not 25e25');
+        assert.equal(balance_DH, amount, 'DH balance not 5e25');
     });
 
     // eslint-disable-next-line no-undef
-    it('Should increase allowance for DC to 1000000000', async () => {
+    it('Should increase allowance for DC to 100 000 TRAC', async () => {
         const instance = await EscrowHolder.deployed();
         const trace = await TracToken.deployed();
 
-        let response = await trace.allowance.call(DC_wallet, instance.address);
+        let response = await trace.allowance.call(DC_wallet, escrow_address);
         let allowance_DC = response.toNumber();
         console.log(`\t allowance_DC: ${allowance_DC}`);
 
 
-        await trace.increaseApproval(instance.address, 100000000, { from: DC_wallet });
+        await trace.increaseApproval(escrow_address, 1e23, { from: DC_wallet });
 
         response = await trace.allowance.call(DC_wallet, instance.address);
         allowance_DC = response.toNumber();

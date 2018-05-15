@@ -5,12 +5,12 @@ var OTFingerprintStore = artifacts.require('OTFingerprintStore'); // eslint-disa
 var Bidding = artifacts.require('Bidding'); // eslint-disable-line no-undef
 
 
-const giveMeTracToken = function giveMeTracToken() {
+const giveMeTracToken = async function giveMeTracToken() {
     const token = TracToken.deployed();
     return token;
 };
 
-const giveMeEscrowHolder = function giveMeEscrowHolder() {
+const giveMeEscrowHolder = async function giveMeEscrowHolder() {
     const escrow = EscrowHolder.deployed();
     return escrow;
 };
@@ -42,17 +42,17 @@ module.exports = (deployer, network, accounts) => {
         deployer.deploy(TestingUtilities);
         deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
             .then(() => giveMeTracToken())
-            .then((result) => {
+            .then(async (result) => {
                 token = result;
-                deployer.deploy(EscrowHolder, result.address)
+                await deployer.deploy(EscrowHolder, token.address)
                     .then(() => giveMeEscrowHolder())
                     .then((result) => {
                         escrow = result;
-                        deployer.deploy(Bidding, token.address, result.address)
+                        deployer.deploy(Bidding, token.address, escrow.address)
                             .then(() => giveMeBidding())
-                            .then((result) => {
+                            .then(async (result) => {
                                 bidding = result;
-                                deployer.deploy(OTFingerprintStore)
+                                await deployer.deploy(OTFingerprintStore)
                                     .then(() => giveMeFingerprint())
                                     .then((result) => {
                                         fingerprint = result;
