@@ -52,9 +52,10 @@ describe('GS1 Importer tests', () => {
         ];
 
         inputXmlFiles.forEach((test) => {
-            it(`should correctly parse and import ${path.basename(test.args[0])} file`, async () => {
-                return gs1.parseGS1(test.args[0]);
-            });
+            it(
+                `should correctly parse and import ${path.basename(test.args[0])} file`,
+                async () => gs1.parseGS1(test.args[0]),
+            );
         });
     });
 
