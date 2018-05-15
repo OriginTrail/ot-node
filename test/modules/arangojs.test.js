@@ -383,6 +383,94 @@ describe('Arangojs module ', async () => {
         }
     });
 
+    describe('Vertex versioning', () => {
+        it('should add version to identified vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey',
+                identifiers: {
+                    id: 'dummyId',
+                    uid: 'dummyUid',
+                },
+                sender_id: 'dummySenderId',
+            };
+            const response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+        });
+        it('should increase version to already versioned vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey2',
+                identifiers: {
+                    id: 'dummyId2',
+                    uid: 'dummyUid2',
+                },
+                sender_id: 'dummySenderId2',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+
+            // Change key
+            dummyVertex._key = 'dummyChangedKey';
+
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 2);
+        });
+
+        it('should leave version as is to already versioned vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey3',
+                identifiers: {
+                    id: 'dummyId3',
+                    uid: 'dummyUid3',
+                },
+                sender_id: 'dummySenderId3',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+        });
+
+        it('should ignore version for vertices without sender ID and UID', async () => {
+            let dummyVertex = {
+                _key: 'dummyKey4',
+                identifiers: {
+                    id: 'dummyId4',
+                },
+                sender_id: 'dummySenderId4',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+
+            dummyVertex = {
+                _key: 'dummyKey5',
+                identifiers: {
+                    id: 'dummyId5',
+                    uid: 'dummyUid5',
+                },
+            };
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+
+            dummyVertex = {
+                _key: 'dummyKey6',
+                identifiers: {
+                    id: 'dummyId6',
+                },
+            };
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+        });
+    });
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
