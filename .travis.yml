@@ -29,10 +29,14 @@ script:
   - node isStartHealthy.js
   - ganache-cli -i 5777 -p 7545 &>ganache.log &
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
+  - truffle test --network ganache
   - cd ../../../
+  - jobs
+  - kill %1
 after_script:
   - cat start.log
   - rm -f start.log
   - cat ganache.log
   - rm -f ganache.log
   - kill -9 $(pgrep arangod)
+  - service neo4j stop
