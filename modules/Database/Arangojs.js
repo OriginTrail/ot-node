@@ -79,15 +79,13 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._id === undefined) {
             return [];
         }
-        if (depth == null) {
-            depth = this.getDatabaseInfo().max_path_length;
-        }
-        const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
+        const queryString = `FOR vertex, edge, path IN 1 .. ${depth}
             OUTBOUND '${startVertex._id}'
             GRAPH 'origintrail_graph'
             RETURN path`;
 
-        return ArangoJS.convertToVirtualGraph(await this.runQuery(queryString));
+        const result = await this.runQuery(queryString);
+        return ArangoJS.convertToVirtualGraph(result);
     }
 
     /**
@@ -200,17 +198,19 @@ class ArangoJS {
 
     /**
      * Gets max where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
-    async findVertexWithMaxVersion(uid) {
+    async findVertexWithMaxVersion(senderId, uid) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid ' +
+                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v';
         const params = {
             uid,
+            senderId,
         };
 
         const result = await this.runQuery(queryString, params);

@@ -183,7 +183,7 @@ async function zeroKnowledge(
 
             for (const outputQ of outputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(outputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -217,7 +217,7 @@ async function zeroKnowledge(
 
             for (const inputQ of inputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(inputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     outputQuantities.push({
@@ -245,7 +245,7 @@ async function zeroKnowledge(
             }));
             for (const inputQuantity of tmpInputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(inputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -272,7 +272,7 @@ async function zeroKnowledge(
                 }));
             for (const outputQuantity of tmpOutputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(outputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -663,12 +663,14 @@ async function processXML(err, result) {
                                 _from: `ot_vertices/${shippingEventVertex[0]._key}`,
                                 _to: `ot_vertices/${eventKey}`,
                                 edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
                             });
                             eventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
                                 _from: `ot_vertices/${eventKey}`,
                                 _to: `ot_vertices/${shippingEventVertex[0]._key}`,
                                 edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
                             });
                         }
                     }
@@ -700,12 +702,14 @@ async function processXML(err, result) {
                                 _from: `ot_vertices/${receivingEventVertices[0]._key}`,
                                 _to: `ot_vertices/${eventKey}`,
                                 edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
                             });
                             eventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
                                 _from: `ot_vertices/${eventKey}`,
                                 _to: `ot_vertices/${receivingEventVertices[0]._key}`,
                                 edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
                             });
                         }
                     }
@@ -889,12 +893,12 @@ async function processXML(err, result) {
 
         if (to.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.findVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
             edge._to = `ot_vertices/${vertex._key}`;
         }
         if (from.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.findVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
             edge._from = `ot_vertices/${vertex._key}`;
         }
     }

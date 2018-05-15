@@ -2,6 +2,7 @@ const fs = require('fs');
 
 const Graph = require('./Graph');
 const GraphInstance = require('./GraphInstance');
+const GraphStorageInstance = require('./GraphStorageInstance');
 const Utilities = require('./Utilities');
 
 /**
@@ -82,70 +83,80 @@ class Product {
                 delete queryObject.restricted;
             }
 
-            GraphInstance.g.findVertices(queryObject).then((vertices) => {
+            GraphStorageInstance.db.findVertices(queryObject).then((vertices) => {
                 if (vertices.length === 0) {
                     resolve([]);
                     return;
                 }
 
                 const start_vertex = vertices[0];
-                GraphInstance.g.findTraversalPath(start_vertex).then((virtualGraph) => {
-                    const returnBFS = Utilities.copyObject(virtualGraph);
-                    const BFSt = Graph.bfs(
-                        Utilities.copyObject(returnBFS.data),
-                        start_vertex.identifiers.uid,
-                        true,
-                    );
+                const depth = GraphStorageInstance.db.getDatabaseInfo().max_path_length;
+                GraphStorageInstance.db.findTraversalPath(start_vertex, depth)
+                    .then((virtualGraph) => {
+                        const returnBFS = Utilities.copyObject(virtualGraph);
+                        this.consensusCheck(returnBFS);
 
+                        const BFSt = Graph.bfs(
+                            Utilities.copyObject(returnBFS.data),
+                            start_vertex.identifiers.uid,
+                            true,
+                        );
 
-                    for (const i in BFSt) {
-                        if (BFSt[i].outbound !== undefined) {
-                            delete BFSt[i].outbound;
+                        for (const i in BFSt) {
+                            if (BFSt[i].outbound !== undefined) {
+                                delete BFSt[i].outbound;
+                            }
                         }
-                    }
 
-                    // Sorting keys in object for uniform response
-                    // eslint-disable-next-line no-redeclare
-                    for (const i in BFSt) {
-                        BFSt[i] = Utilities.sortObject(BFSt[i]);
-                    }
+                        // Sorting keys in object for uniform response
+                        // eslint-disable-next-line no-redeclare
+                        for (const i in BFSt) {
+                            BFSt[i] = Utilities.sortObject(BFSt[i]);
+                        }
 
-                    const BFS = Graph.bfs(
-                        Utilities.copyObject(virtualGraph.data),
-                        start_vertex.identifiers.uid,
-                        restricted,
-                    );
+                        const BFS = Graph.bfs(
+                            Utilities.copyObject(virtualGraph.data),
+                            start_vertex.identifiers.uid,
+                            restricted,
+                        );
 
-                    const fetchedJourney = _getProductJourney(
-                        Utilities.copyObject(virtualGraph.data),
-                        Utilities.copyObject(BFS),
-                    );
+                        const fetchedJourney = _getProductJourney(
+                            Utilities.copyObject(virtualGraph.data),
+                            Utilities.copyObject(BFS),
+                        );
 
 
-                    const responseObject = {
-                        graph: virtualGraph.data,
-                        traversal: BFSt,
-                        journey: fetchedJourney,
-                        sha3: Utilities.sha3(JSON.stringify(BFSt)),
-                    };
-                    resolve(responseObject);
-                }).catch((err) => {
-                    reject(err);
-                });
+                        const responseObject = {
+                            graph: virtualGraph.data,
+                            traversal: BFSt,
+                            journey: fetchedJourney,
+                            sha3: Utilities.sha3(JSON.stringify(BFSt)),
+                        };
+                        resolve(responseObject);
+                    }).catch((err) => {
+                        reject(err);
+                    });
             });
         });
     }
 
     /**
+     * Go through the virtual graph and calculate consensus check
+     * @param virtualGraph
+     */
+    consensusCheck(virtualGraph) {
+        console.log(virtualGraph);
+    }
+
+    /**
      * Gets trail based on product UID
-     * @param batchUID
+     * @param uid
      * @returns {Promise}
      */
-    getTrailByUID(batchUID) {
+    getTrailByUID(uid) {
         return new Promise((resolve, reject) => {
             const queryObject = {
-                uid: batchUID,
-                vertex_type: 'BATCH',
+                uid,
             };
             this.getTrail(queryObject).then((res) => {
                 resolve(res);
@@ -162,7 +173,7 @@ class Product {
      */
     getTrailByQuery(queryObject) {
         return new Promise((resolve, reject) => {
-            queryObject.vertex_type = 'BATCH';
+            queryObject.uid = 'urn:epc:id:sgtin:Batch#1'; // TODO remove
 
             this.getTrail(queryObject).then((res) => {
                 resolve(res);

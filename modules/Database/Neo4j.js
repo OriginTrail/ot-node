@@ -294,12 +294,13 @@ class Neo4jDB {
 
     /**
      * Gets max where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
-    async findVertexWithMaxVersion(uid) {
+    async findVertexWithMaxVersion(senderId, uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n ORDER BY n.version DESC LIMIT 1', { uid });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.senderId = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId });
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
@@ -390,10 +391,6 @@ class Neo4jDB {
     async findTraversalPath(startVertex, depth) {
         const key = '_key';
         const value = startVertex._key;
-        if (depth == null) {
-            depth = this.getDatabaseInfo().max_path_length;
-        }
-
         const session = this.driver.session();
         const result = await session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`);
         session.close();

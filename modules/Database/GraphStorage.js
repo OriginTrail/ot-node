@@ -75,12 +75,12 @@ class GraphStorage {
      * @param startVertex       Starting vertex
      * @return {Promise<void>}
      */
-    findTraversalPath(startVertex) {
+    findTraversalPath(startVertex, depth) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findTraversalPath(startVertex).then((result) => {
+                this.db.findTraversalPath(startVertex, depth).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -114,12 +114,12 @@ class GraphStorage {
      * @param uid   Vertex uid
      * @return {Promise<void>}
      */
-    findVertexWithMaxVersion(uid) {
+    findVertexWithMaxVersion(senderId, uid) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVertexWithMaxVersion(uid).then((result) => {
+                this.db.findVertexWithMaxVersion(senderId, uid).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

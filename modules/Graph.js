@@ -47,7 +47,7 @@ class Graph {
                     const edge = currentVertex.outbound[edgeId];
                     const toVertexId = edge.to;
 
-                    if (edge.edge_type !== 'TRANSACTION_CONNECTION') {
+                    if (edge.edge_type !== 'EVENT_CONNECTION') {
                         traversalPath.push(edge);
                     }
 
@@ -63,12 +63,12 @@ class Graph {
                     }
 
                     // don't follow the output flow
-                    if (edge.edge_type === 'TRANSACTION_CONNECTION' && edge.TransactionFlow === 'Output') {
+                    if (edge.edge_type === 'EVENT_CONNECTION' && edge.TransactionFlow === 'OUTPUT') {
                         // eslint-disable-next-line no-continue
                         continue; // don't follow output edges
                     }
 
-                    if (restrictToBatch === false || (toVertex.vertex_type !== 'BATCH' && edge.edge_type !== 'TRANSACTION_CONNECTION')) {
+                    if (restrictToBatch === false || (toVertex.vertex_type !== 'BATCH' && edge.edge_type !== 'EVENT_CONNECTION')) {
                         visitedIds[toVertexId] = true;
                         queueToExplore.push(toVertexId);
                     }
