@@ -12,6 +12,7 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
+const assert = require('assert');
 
 require('dotenv').config();
 
@@ -529,6 +530,7 @@ class Utilities {
                 .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
                 .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
                 .then((res) => {
+                    assert.strictEqual(res.status, 200);
                     resolve(res.body);
                 }).catch((err) => {
                     reject(err);
