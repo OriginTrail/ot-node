@@ -171,13 +171,13 @@ async function zeroKnowledge(
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
                     }));
             } else {
                 outputQuantities = arrayze(quantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
                     }));
             }
 

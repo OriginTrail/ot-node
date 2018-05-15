@@ -152,7 +152,7 @@ class Product {
                 for (const neighbourEdge of vertex.outbound) {
                     if (neighbourEdge.edge_type === 'EVENT_CONNECTION') {
                         const neighbour = graph[neighbourEdge.to];
-                        const distance = Utilities.objectDistance(vertex.data, neighbour.data);
+                        const distance = Utilities.objectDistance(vertex.data, neighbour.data, ['quantities', 'bizStep']);
                         if (!vertex.consensus) {
                             vertex.consensus = distance;
                         }

@@ -124,6 +124,7 @@
                     <extension>
                         <documentId>1</documentId>
                         <OTEventClass>ot:events:Transport</OTEventClass>
+                        <OTEventClass>ot:events:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1</source>

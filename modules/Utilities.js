@@ -625,10 +625,19 @@ class Utilities {
      * Note: flatten-sort-compare by keys
      * @param obj1
      * @param obj2
+     * @param excludedKeys
      */
-    static objectDistance(obj1, obj2) {
-        const normalizedObj1 = Utilities.sortObject(Utilities.flattenObject(obj1));
-        const normalizedObj2 = Utilities.sortObject(Utilities.flattenObject(obj2));
+    static objectDistance(obj1, obj2, excludedKeys) {
+        const copyObj1 = Utilities.copyObject(obj1);
+        const copyObj2 = Utilities.copyObject(obj2);
+
+        for (const key of excludedKeys) {
+            delete copyObj1[key];
+            delete copyObj2[key];
+        }
+
+        const normalizedObj1 = Utilities.sortObject(Utilities.flattenObject(copyObj1));
+        const normalizedObj2 = Utilities.sortObject(Utilities.flattenObject(copyObj2));
 
         const keys = Utilities.unionArrays(
             Object.keys(normalizedObj1),
