@@ -56,14 +56,14 @@
 
                     <Vocabulary type="urn:ot:mda:location">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:epc:id:sgln:Building_1b">
+                            <VocabularyElement id="urn:epc:id:sgln:Building_1">
                                 <attribute id="urn:ot:mda:location:category">Building _1b</attribute>
                                 <attribute id="urn:ot:mda:location:description">Description of building _1b</attribute>
                                 <extension>
                                     <attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company_1</attribute>
                                 </extension>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:epc:id:sgln:Building_2b">
+                            <VocabularyElement id="urn:epc:id:sgln:Building_2">
                                 <attribute id="urn:ot:mda:location:category">Building _2b</attribute>
                                 <attribute id="urn:ot:mda:location:description">Description of building _2b</attribute>
                                 <extension>
@@ -108,10 +108,10 @@
                 <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep> <!-- Optional -->
                 <disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
                 <readPoint> <!-- Optional -->
-                    <id>urn:epc:id:sgln:Building_1b</id>
+                    <id>urn:epc:id:sgln:Building_1</id>
                 </readPoint>
                 <bizLocation> <!-- Optional -->
-                    <id>urn:epc:id:sgln:Building_1b</id>
+                    <id>urn:epc:id:sgln:Building_1</id>
                 </bizLocation>
                 <extension>
                     <quantityList> <!-- Optional -->
@@ -126,10 +126,10 @@
                         <OTEventClass>ot:events:Transport</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
-                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1b</source>
+                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1</source>
                         </sourceList>
                         <destinationList>
-                            <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_2b</destination>
+                            <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_2</destination>
                         </destinationList>
                     </extension>
                 </extension>

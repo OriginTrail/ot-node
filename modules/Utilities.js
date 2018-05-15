@@ -656,7 +656,7 @@ class Utilities {
             Object.keys(normalizedObj1).length,
             Object.keys(normalizedObj2).length,
         );
-        return (sum / minKeysLength) * 100;
+        return (minKeysLength * 100) / sum;
     }
 
     /**

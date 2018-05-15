@@ -93,8 +93,8 @@ class Product {
                 const depth = GraphStorageInstance.db.getDatabaseInfo().max_path_length;
                 GraphStorageInstance.db.findTraversalPath(start_vertex, depth)
                     .then((virtualGraph) => {
+                        virtualGraph = this.consensusCheck(virtualGraph);
                         const returnBFS = Utilities.copyObject(virtualGraph);
-                        this.consensusCheck(returnBFS);
 
                         const BFSt = Graph.bfs(
                             Utilities.copyObject(returnBFS.data),
@@ -145,7 +145,22 @@ class Product {
      * @param virtualGraph
      */
     consensusCheck(virtualGraph) {
-        console.log(virtualGraph);
+        const graph = virtualGraph.data;
+        for (const key in graph) {
+            const vertex = graph[key];
+            if (vertex.vertex_type === 'EVENT') {
+                for (const neighbourEdge of vertex.outbound) {
+                    if (neighbourEdge.edge_type === 'EVENT_CONNECTION') {
+                        const neighbour = graph[neighbourEdge.to];
+                        const distance = Utilities.objectDistance(vertex.data, neighbour.data);
+                        if (!vertex.consensus) {
+                            vertex.consensus = distance;
+                        }
+                    }
+                }
+            }
+        }
+        return virtualGraph;
     }
 
     /**
@@ -173,8 +188,6 @@ class Product {
      */
     getTrailByQuery(queryObject) {
         return new Promise((resolve, reject) => {
-            queryObject.uid = 'urn:epc:id:sgtin:Batch#1'; // TODO remove
-
             this.getTrail(queryObject).then((res) => {
                 resolve(res);
             }).catch((err) => {
