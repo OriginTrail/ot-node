@@ -524,14 +524,18 @@ class Utilities {
         });
     }
 
-    static checkIfArangoIsRunning() {
+    static getArangoDbVersion() {
         return new Promise((resolve, reject) => {
             request
                 .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
                 .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
                 .then((res) => {
-                    assert.strictEqual(res.status, 200);
-                    resolve(res.body);
+                    if (res.status === 200) {
+                        resolve(res.body);
+                    } else {
+                        // eslint-disable-next-line prefer-promise-reject-errors
+                        reject('Failed to contact DB');
+                    }
                 }).catch((err) => {
                     reject(err);
                 });
