@@ -29,7 +29,7 @@ script:
   - node isStartHealthy.js
   - ganache-cli -i 5777 -p 7545 &>ganache.log &
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
-  - truffle test --network ganache
+  # - truffle test --network ganache
   - cd ../../../
   - jobs
   - kill %1
