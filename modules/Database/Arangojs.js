@@ -260,7 +260,26 @@ class ArangoJS {
     async addDocument(collectionName, document) {
         const collection = this.db.collection(collectionName);
         try {
-            return await collection.save(document);
+            if (document.sender_id && document.identifiers && document.identifiers.uid) {
+                const maxVersionDoc =
+                    await this.findVertexWithMaxVersion(
+                        document.sender_id,
+                        document.identifiers.uid,
+                    );
+
+                if (maxVersionDoc) {
+                    if (maxVersionDoc._key === document._key) {
+                        return maxVersionDoc;
+                    }
+
+                    document.version = maxVersionDoc.version + 1;
+                    return collection.save(document);
+                }
+
+                document.version = 1;
+                return collection.save(document);
+            }
+            return collection.save(document);
         } catch (err) {
             const errorCode = err.response.body.code;
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
