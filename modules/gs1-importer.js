@@ -795,6 +795,12 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'OUTPUT_BATCH',
                 });
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'OUTPUT_BATCH',
+                });
             }
         }
 
