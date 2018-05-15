@@ -57,6 +57,13 @@ describe('GS1 Importer tests', () => {
                 async () => gs1.parseGS1(test.args[0]),
             );
         });
+
+        inputXmlFiles.forEach((test) => {
+            it(
+                `should correctly parse and import ${path.basename(test.args[0])} file 2nd time`,
+                async () => gs1.parseGS1(test.args[0]),
+            );
+        });
     });
 
     after('Drop DB', async () => {
