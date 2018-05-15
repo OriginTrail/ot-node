@@ -58,25 +58,20 @@ contract('Bidding testing', async (accounts) => {
     DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
 
     // eslint-disable-next-line no-undef
-    it('Should mint 25*10^25 tokens to DC and 5e25 to 5 DH nodes (accounts 0 and 1,2,3,4,5)', async () => {
+    it('Should mint 5e25 (accounts 0 and 1,2,3,4,5)', async () => {
         const trace = await TracToken.deployed();
         const amount = 5e25;
-        await trace.mint(DC_wallet, 5 * amount, { from: accounts[0] });
-        for (var i = 5; i >= 1; i -= 1) {
+        for (var i = 10; i >= 0; i -= 1) {
             // eslint-disable-next-line no-await-in-loop
             await trace.mint(accounts[i], amount, { from: accounts[0] });
         }
         await trace.endMinting({ from: accounts[0] });
 
-        let response = await trace.balanceOf.call(DC_wallet);
-        const balance_DC = response.toNumber();
-        console.log(`\t balance_DC: ${balance_DC}`);
-        response = await trace.balanceOf.call(DH_wallet);
-        const balance_DH = response.toNumber();
-        console.log(`\t balance_DH: ${balance_DH}`);
+        const response = await trace.balanceOf.call(accounts[0]);
+        const actual_balance = response.toNumber();
+        console.log(`\t balance: ${actual_balance}`);
 
-        assert.equal(balance_DC, 5 * amount, 'DC balance not 25e25');
-        assert.equal(balance_DH, amount, 'DH balance not 5e25');
+        assert.equal(actual_balance, amount, 'balance not 5e25');
     });
 
     // eslint-disable-next-line no-undef

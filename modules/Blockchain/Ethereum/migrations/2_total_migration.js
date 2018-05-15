@@ -39,7 +39,6 @@ module.exports = (deployer, network, accounts) => {
     case 'ganache':
         DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
         DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
-        deployer.deploy(TestingUtilities);
         deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
             .then(() => giveMeTracToken())
             .then(async (result) => {
@@ -73,6 +72,32 @@ module.exports = (deployer, network, accounts) => {
                                                             });
                                                     });
                                             });
+                                    });
+                            });
+                    });
+            });
+        break;
+
+    case 'test':
+        deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
+            .then(() => giveMeTracToken())
+            .then(async (result) => {
+                token = result;
+                await deployer.deploy(EscrowHolder, token.address)
+                    .then(() => giveMeEscrowHolder())
+                    .then((result) => {
+                        escrow = result;
+                        deployer.deploy(Bidding, token.address, escrow.address)
+                            .then(() => giveMeBidding())
+                            .then(async (result) => {
+                                bidding = result;
+                                await escrow.setBidding(bidding.address)
+                                    .then(async () => {
+                                        await escrow.transferOwnership(bidding.address);
+                                        console.log('\n\n \t Contract adressess on ganache (for testing):');
+                                        console.log(`\t Token contract address: \t + ${token.address}`);
+                                        console.log(`\t Escrow contract address: \t + ${escrow.address}`);
+                                        console.log(`\t Bidding contract address: \t' + ${bidding.address}`);
                                     });
                             });
                     });
