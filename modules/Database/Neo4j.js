@@ -282,12 +282,17 @@ class Neo4jDB {
 
     /**
      * Gets max version where uid is the same but not the _key
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @param key       Key
      * @return {Promise<void>}
      */
-    async findMaxVersion(uid) {
+    async findMaxVersion(senderId, uid, key) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid return MAX(n.version)', { uid });
+        const result = await session.run(
+            'MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n._key <> $key AND n.sender_id = $senderId return MAX(n.version)',
+            { uid, senderId, key },
+        );
         session.close();
         return result.records[0]._fields[0];
     }

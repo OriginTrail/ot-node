@@ -72,6 +72,7 @@ class GraphStorage {
 
     /**
      * Finds traversal path starting from particular vertex
+     * @param depth             Traversal depth
      * @param startVertex       Starting vertex
      * @return {Promise<void>}
      */
@@ -91,16 +92,17 @@ class GraphStorage {
 
     /**
      * Gets max version where uid is the same but not the _key
-     * @param uid   Vertex uid
-     * @param _key  Vertex _key
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @param _key      Vertex _key
      * @return {Promise<void>}
      */
-    findMaxVersion(uid, _key) {
+    findMaxVersion(senderId, uid, _key) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findMaxVersion(uid, _key).then((result) => {
+                this.db.findMaxVersion(senderId, uid, _key).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -111,7 +113,8 @@ class GraphStorage {
 
     /**
      * Gets max vertex_key where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
     findVertexWithMaxVersion(senderId, uid) {
@@ -130,7 +133,7 @@ class GraphStorage {
 
     /**
      * Add vertex
-     * @param {vertex} - document
+     * @param vertex Vertex data
      * @returns {Promise<any>}
      */
     addVertex(vertex) {
@@ -149,7 +152,7 @@ class GraphStorage {
 
     /**
      * Add edge
-     * @param {vertex} - document
+     * @param edge Edge data
      * @returns {Promise<any>}
      */
     addEdge(edge) {
