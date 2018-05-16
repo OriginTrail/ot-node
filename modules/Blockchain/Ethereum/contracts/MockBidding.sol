@@ -63,6 +63,8 @@ contract MockBidding {
 		uint max_token_amount;
 		uint min_stake_amount; 
 		uint min_reputation;
+		
+		uint data_size;
 
 		//Parameters for the bidding 
 		bytes32 data_hash;
@@ -87,7 +89,6 @@ contract MockBidding {
 		uint max_escrow_time;
 		uint size_available;
 
-		uint reputation;
 	}
 
 	struct BidListElem{
@@ -97,7 +98,7 @@ contract MockBidding {
 		bool chosen;
 	}
 
-	mapping(bytes32 => mapping(uint => BidDefinition)) public bid; // bid[offer_hash][bid_index]
+	mapping(bytes32 => mapping(uint => BidListElem)) public bid; // bid[offer_hash][bid_index]
 	mapping(bytes32 => OfferDefinition) public offer; //offer[offer_hash] offer_hash = keccak256(DC_wallet, DC_node_id, nonce)
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
@@ -169,7 +170,7 @@ contract MockBidding {
 	function getBidIndex(bytes32 offer_hash, uint DH_node_id) public view returns (uint) {
 		OfferDefinition storage this_offer = offer[offer_hash];
 		uint256 i = 0;
-		while(i < this_offer.number_of_bids && (bid[DC_wallet][data_id][i].DH_wallet != msg.sender || bid[DC_wallet][data_id][i].DH_node_id != DH_node_id)) i = i + 1;
+		while(i < this_offer.number_of_bids && (bid[offer_hash][i].DH_wallet != msg.sender || bid[offer_hash][i].DH_node_id != DH_node_id)) i = i + 1;
 		if( i >= this_offer.number_of_bids) return uint(-1);
 		else return i;
 	}	
@@ -186,7 +187,7 @@ contract MockBidding {
 
 			//Inicijalizacija escrow-a
 			BidListElem storage this_bid = bid[offer_hash][i];
-			DHProfileDefinition storage chosenDH = profile[this_bid.DH_wallet][this_bid.DH_node_id];
+			ProfileDefinition storage chosenDH = profile[this_bid.DH_wallet];
 
 			uint scope = this_offer.total_escrow_time * this_offer.data_size;
 			uint stake_amount = chosenDH.stake_amount * scope;
@@ -194,14 +195,14 @@ contract MockBidding {
 			
 			escrow.initiateEscrow(msg.sender, this_bid.DH_wallet, uint(offer_hash), token_amount, stake_amount, this_offer.total_escrow_time);
 			this_bid.chosen = true;
-			emit BidTaken(msg.sender, bid[offer_hash][i].DH_wallet,data_id);
+			emit BidTaken(offer_hash, bid[offer_hash][i].DH_wallet);
 
 			i = i + 1;
 		}
 		this_offer.finalized = true;
 		OfferFinalized(offer_hash);
 	}
-	function isBidChosen(address DC_wallet, uint data_id, uint bid_index) public view returns(bool){
+	function isBidChosen(bytes32 offer_hash, uint bid_index) public view returns(bool){
 		return bid[offer_hash][bid_index].chosen;
 	}
 
@@ -236,8 +237,16 @@ contract MockBidding {
 		token.transfer(msg.sender, amount_to_transfer);
 		profile[msg.sender].balance = profile[msg.sender].balance - amount;
 	}
-	function getProfile(address wallet)
-	public view returns (ProfileDefinition){
-		return profile[wallet];
+	function getPrice(address wallet)
+	public view returns (uint){
+		return profile[wallet].token_amount;
+	}
+	function getStake(address wallet)
+	public view returns (uint){
+		return profile[wallet].stake_amount;
+	}
+	function getBalance(address wallet)
+	public view returns (uint){
+		return profile[wallet].balance;
 	}
 }
