@@ -163,6 +163,21 @@ class ZK {
         return this.encrypt(this.zero, zp.fromRed().toRed(this.redSquare))
             .eq(a.redMul(Z.redPow(e)));
     }
+
+    calculateZero(inputs, outputs) {
+        let calculated = this.one;
+        calculated.toRed(this.redSquare);
+
+        for (const inputValue of inputs) {
+            calculated = calculated.redMul((new BN(inputValue)).toRed(this.redSquare));
+        }
+
+        for (const outputValue of inputs) {
+            calculated = calculated.redMul((new BN(outputValue)).toRed(this.redSquare).redInvm());
+        }
+
+        return calculated;
+    }
 }
 
 module.exports = ZK;
