@@ -125,10 +125,9 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.addDocument() should save vertex in Document Collection', () => {
-        testDb.addVertex(vertexOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
+    it('.addDocument() should save vertex in Document Collection', async () => {
+        const response = await testDb.addVertex(vertexOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
     });
 
     it('now lets check that we\'ve really saved vertex data', async () => {
@@ -146,10 +145,9 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
-    it('trying to add same document again should resut in double insert', () => {
-        testDb.addVertex(vertexOne).then((response) => {
-            assert.equal(response, 'Double insert');
-        });
+    it('trying to add same document again should resut in double insert', async () => {
+        const response = await testDb.addVertex(vertexOne);
+        assert.equal(response._key, vertexOne._key);
     });
 
     it('trying to add null document', async () => {
@@ -160,10 +158,9 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.addDocument() should save edge in Edge Document Collection', () => {
-        testDb.addEdge(edgeOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
+    it('.addDocument() should save edge in Edge Document Collection', async () => {
+        const response = await testDb.addEdge(edgeOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
     });
 
     it('now lets check that we\'ve saved edge correctly', async () => {
