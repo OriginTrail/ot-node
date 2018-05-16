@@ -552,7 +552,7 @@ class Neo4jDB {
      */
     async findEvent(senderId, partnerId, documentId, bizStep) {
         const session = this.driver.session();
-        let result = await session.run('MATCH (n) WHERE n.document_id = $documentId AND $senderId in n.partner_id AND n.sender_id = $partnerId RETURN n', { documentId, senderId, partnerId });
+        let result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.document_id = $documentId AND $senderId in n.partner_id AND n.sender_id = $partnerId RETURN n', { documentId, senderId, partnerId });
         session.close();
         result = await Neo4jDB._transformProperties(result);
         const nodePromises = [];

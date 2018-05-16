@@ -380,6 +380,18 @@ describe('Arangojs module ', async () => {
         }
     });
 
+    it('findEvent', async () => {
+        const response = await testDb.findEvent('senderID', 'a', '1000', 'bizTest');
+        assert.deepEqual(response[0].data, vertexOne.data);
+        assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+        assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+        assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+        assert.deepEqual(response[0].imports, vertexOne.imports);
+        assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        assert.deepEqual(response[0].sender_id, vertexOne.sender_id);
+        assert.deepEqual(response[0].partner_id, vertexOne.partner_id);
+    });
+
     describe('Vertex versioning', () => {
         it('should add version to identified vertex', async () => {
             const dummyVertex = {

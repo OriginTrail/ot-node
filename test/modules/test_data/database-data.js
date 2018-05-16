@@ -16,11 +16,13 @@ databaseData.vertices = [{
             },
             Zip: '20000',
         },
+        bizStep: 'bizTest',
     },
     vertex_type: 'BUSINESS_LOCATION',
     identifiers: {
         BusinessLocationId: 'FARM_1',
         uid: 'ot:WALLET_ID:otblid:FARM_1',
+        document_id: '1000',
     },
     vertex_key: '2e0b1ba163be76138d51a0b8258e97d7',
     _key: '2e0b1ba163be76138d51a0b8258e97d7',
@@ -29,6 +31,9 @@ databaseData.vertices = [{
     ],
     data_provider: 'WALLET_ID',
     sender_id: 'a',
+    partner_id: [
+        'senderID',
+    ],
 },
 
 {

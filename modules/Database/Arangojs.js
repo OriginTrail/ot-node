@@ -386,7 +386,7 @@ class ArangoJS {
      */
     async findEvent(senderId, partnerId, documentId, bizStep) {
         const queryString = 'FOR v IN ot_vertices ' +
-            'FILTER v.identifiers.document_id == @documentId AND v.partner_id == @senderId AND v.sender_id == @partnerId ' +
+            'FILTER v.identifiers.document_id == @documentId AND @senderId in v.partner_id AND v.sender_id == @partnerId ' +
             'RETURN v';
         const params = {
             partnerId,
