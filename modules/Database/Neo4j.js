@@ -551,7 +551,16 @@ class Neo4jDB {
      * @return {Promise}
      */
     async findEvent(senderId, partnerId, documentId, bizStep) {
-        // TODO implement
+        const session = this.driver.session();
+        let result = await session.run('MATCH (n) WHERE n.document_id = $documentId AND $senderId in n.partner_id AND n.sender_id = $partnerId RETURN n', { documentId, senderId, partnerId });
+        session.close();
+        result = await Neo4jDB._transformProperties(result);
+        const nodePromises = [];
+        for (const record of result.records) {
+            nodePromises.push(this._fetchVertex('_key', record._fields[0].properties._key));
+        }
+        result = await Promise.all(nodePromises);
+        return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
     }
 
     /**

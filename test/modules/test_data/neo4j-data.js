@@ -16,6 +16,7 @@ databaseData.vertices = [{
             },
             Zip: '20000',
         },
+        bizStep: 'bizTest',
     },
     vertex_type: 'BUSINESS_LOCATION',
     identifiers: {
@@ -29,7 +30,11 @@ databaseData.vertices = [{
     ],
     data_provider: 'WALLET_ID',
     version: 1,
-    sender_id: 'a',
+    sender_id: 'myID',
+    document_id: '1000',
+    partner_id: [
+        'senderID',
+    ],
 },
 
 {

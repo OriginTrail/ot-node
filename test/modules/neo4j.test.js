@@ -16,13 +16,13 @@ const edges = [
         edgeType: 'IS', _from: '100', _to: '101', sender_id: 'a',
     },
     {
-        edgeType: 'IS', _from: '101', _to: '102', sender_id: 'a',
+        edgeType: 'IS', _from: '101', _to: '102', sender_id: 'b',
     },
     {
-        edgeType: 'IS', _from: '102', _to: '103', sender_id: 'a',
+        edgeType: 'IS', _from: '102', _to: '103', sender_id: 'c',
     },
     {
-        edgeType: 'IS', _from: '101', _to: '103', sender_id: 'a',
+        edgeType: 'IS', _from: '101', _to: '103', sender_id: 'b',
     }];
 
 const myUsername = 'neo4j';
@@ -145,6 +145,12 @@ describe('Neo4j module ', async () => {
         }
 
         assert.deepEqual(databaseData.vertices.sort(sortByKey), response.sort(sortByKey));
+    });
+
+
+    it('findEvent', async () => {
+        const response = await testDb.findEvent('senderID', 'myID', '1000', 'bizTest');
+        assert.deepEqual(response[0], vertexOne);
     });
 
     it('update document imports', async () => {
