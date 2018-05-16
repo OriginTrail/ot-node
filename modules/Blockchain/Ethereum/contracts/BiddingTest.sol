@@ -123,7 +123,7 @@ contract BiddingTest {
 
 	event OfferCreated(bytes32 offer_hash, bytes32 DC_node_id, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint min_reputation, uint data_size, bytes32 data_hash);
 	event OfferCanceled(bytes32 offer_hash);
-	event AddedBid(bytes32 offer_hash, uint bid_index, address DH_wallet, bytes32 DH_node_id);
+	event AddedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint bid_index);
 	event AddedPredeterminedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint bid_index, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint data_size);
 	event FinalizeOfferReady(bytes32 offer_hash);
 	event BidTaken(bytes32 offer_hash, address DH_wallet);
@@ -132,7 +132,7 @@ contract BiddingTest {
 	/*    ----------------------------- OFFERS -----------------------------     */
 
 	function createOffer(
-		bytes32 offer_hash,
+		uint data_id,
 		bytes32 DC_node_id,
 
 		uint total_escrow_time, 
@@ -146,6 +146,8 @@ contract BiddingTest {
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
 	public returns (bool offerCreated){
+
+		bytes32 offer_hash = keccak256(msg.sender, DC_node_id, data_id);
 
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
