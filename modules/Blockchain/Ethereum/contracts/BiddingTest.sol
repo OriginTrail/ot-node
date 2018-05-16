@@ -55,7 +55,7 @@ contract BiddingTest {
 		_;
 	}
 	
-	function Bidding(address tokenAddress, address escrowAddress)
+	function BiddingTest(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
@@ -305,12 +305,14 @@ contract BiddingTest {
 			BidDefinition storage chosen_bid = bid[offer_hash][i];
 			ProfileDefinition storage chosen_DH = profile[chosen_bid.DH_wallet];				
 
-			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && chosen_bid.active){
+			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && chosen_bid.active && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
 				//Initiating new escrow
 				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
 				
 				token_amount_sent = token_amount_sent.add(chosen_bid.token_amount);
 				
+				chosen_DH.size_available = chosen_DH.size_available.sub(this_offer.data_size);
+
 				chosen_bid.chosen = true;
 				chosen_data_holders[current_index] = i;
 				current_index = current_index + 1;
@@ -331,7 +333,7 @@ contract BiddingTest {
 			chosen_bid = bid[offer_hash][bid_index];
 			chosen_DH = profile[chosen_bid.DH_wallet];
 
-			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount){
+			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
 				//Initiating new escrow
 				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
 
@@ -342,6 +344,9 @@ contract BiddingTest {
 				current_index = current_index + 1;
 
 				emit BidTaken(offer_hash, chosen_bid.DH_wallet);
+			}
+			else{
+				chosen_bid.active = false;
 			}
 		}
 
@@ -376,19 +381,19 @@ contract BiddingTest {
 		emit ProfileCreated(msg.sender, node_id);
 	}
 
-	function setPrice(bytes32 node_id, uint new_price) public {
+	function setPrice(uint new_price) public {
 		profile[msg.sender].token_amount = new_price;
 	}
 
-	function setStake(bytes32 node_id, uint new_stake) public {
+	function setStake(uint new_stake) public {
 		profile[msg.sender].stake_amount = new_stake;
 	}
 
-	function setMaxTime(bytes32 node_id, uint new_max_time) public {
+	function setMaxTime(uint new_max_time) public {
 		profile[msg.sender].max_escrow_time = new_max_time;
 	}
 
-	function setFreeSpace(bytes32 node_id, uint new_space) public {
+	function setFreeSpace(uint new_space) public {
 		profile[msg.sender].size_available = new_space;
 	}
 
