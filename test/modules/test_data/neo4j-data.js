@@ -29,6 +29,7 @@ databaseData.vertices = [{
     ],
     data_provider: 'WALLET_ID',
     version: 1,
+    sender_id: 'a',
 },
 
 {
@@ -56,6 +57,7 @@ databaseData.vertices = [{
     _key: 'cd923bec4266a7f63b68722da254f205',
     imports: [1520345631],
     version: 1,
+    sender_id: 'a',
 },
 
 {
@@ -87,6 +89,7 @@ databaseData.vertices = [{
     ],
     data_provider: 'WALLET_ID',
     version: 2,
+    sender_id: 'a',
 },
 
 {
@@ -118,6 +121,7 @@ databaseData.vertices = [{
     ],
     data_provider: 'WALLET_ID',
     version: 3,
+    sender_id: 'a',
 },
 ];
 
@@ -129,6 +133,7 @@ databaseData.edges = [
         imports: [1520345631],
         _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
         _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+        sender_id: 'a',
     },
 ];
 

@@ -28,6 +28,7 @@ databaseData.vertices = [{
         1520345631,
     ],
     data_provider: 'WALLET_ID',
+    sender_id: 'a',
 },
 
 {
@@ -54,6 +55,7 @@ databaseData.vertices = [{
     vertex_key: 'cd923bec4266a7f63b68722da254f205',
     _key: 'cd923bec4266a7f63b68722da254f205',
     imports: [1520345631],
+    sender_id: 'a',
 },
 ];
 
@@ -65,6 +67,7 @@ databaseData.edges = [
         imports: [1520345631],
         _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
         _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+        sender_id: 'a',
     },
 ];
 
