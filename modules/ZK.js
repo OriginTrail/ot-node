@@ -38,7 +38,7 @@ class ZK {
     }
 
     P(importId, eventId, inputQuantities, outputQuantities) {
-        const e = new BN(parseInt(sha3(importId, eventId).substring(0, 10), 16));
+        const e = new BN(sha3(importId, eventId).substring(0, 10), 16);
 
         let r = new BN(this.generatePrime()).mod(this.n);
 
