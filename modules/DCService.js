@@ -10,38 +10,38 @@ const Models = require('../models');
 
 const log = Utilities.getLogger();
 
-// TODO
 const totalEscrowTime = 10 * 60 * 1000;
-const replicationFactor = 1;
-const biddingTime = 2 * 60 * 1000;
-const tenderDuration = biddingTime + 1000;
-const minNumberOfBids = 1;
 const minStakeAmount = new BN('100');
 const maxTokenAmount = new BN('1000');
+const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
 class DCService {
     static createOffer(dataId, rootHash, totalDocuments, vertices) {
-        Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
-            log.info('Fingerprint written on blockchain');
-        }).catch((e) => {
-            console.log('Error: ', e);
-        });
+        // Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
+        //     log.info('Fingerprint written on blockchain');
+        // }).catch((e) => {
+        //     console.log('Error: ', e);
+        // });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
+        const dhWallets = [];
+        const dhIds = [];
+
+        // TODO doktor: Go through vertices here to get wallets and IDs.
+
         Models.offers.create({
             id: dataId,
-            data_lifespan: totalEscrowTime,
-            start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
-            tender_duration: tenderDuration,
-            min_number_applicants: minNumberOfBids,
-            price_tokens: price,
-            data_size_bytes: importSizeInBytes.toString(),
-            replication_number: replicationFactor,
-            root_hash: rootHash,
+            total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
+            min_stake_amount: minStakeAmount.toString(),
+            min_reputation: minReputation,
+            data_hash: rootHash,
+            data_size_bytes: importSizeInBytes.toString(),
+            dh_wallets: JSON.stringify(dhWallets),
+            dh_ids: JSON.stringify(dhIds),
+            start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
         }).then((offer) => {
             Blockchain.bc.createOffer(
                 dataId,
@@ -49,25 +49,13 @@ class DCService {
                 totalEscrowTime,
                 maxTokenAmount,
                 minStakeAmount,
-                biddingTime,
-                minNumberOfBids,
+                minReputation,
+                rootHash,
                 importSizeInBytes,
-                replicationFactor,
-            ).then((startTime) => {
-                log.info('Offer written to blockchain. Broadcast event.');
-                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
-                    dataId,
-                    dcId: config.identity,
-                    dcWallet: config.node_wallet,
-                    totalEscrowTime,
-                    maxTokenAmount: maxTokenAmount.toString(),
-                    minStakeAmount: minStakeAmount.toString(),
-                    biddingTime,
-                    minNumberOfBids,
-                    importSizeInBytes: importSizeInBytes.toString(),
-                    replicationFactor,
-                });
-                log.trace('Started bidding phase');
+                dhWallets,
+                dhIds,
+            ).then(() => {
+                log.info('Offer written to blockchain. Started bidding phase.');
                 Blockchain.bc.subscribeToEvent('ChoosingPhaseStarted', dataId)
                     .then((event) => {
                         log.trace('Started choosing phase.');
