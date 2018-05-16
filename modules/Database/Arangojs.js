@@ -36,7 +36,7 @@ class ArangoJS {
     }
 
     /**
-     * Find set of vertices
+     * Find set of vertices with _key, vertex_type and identifiers values
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
      */
@@ -76,18 +76,20 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async findTraversalPath(startVertex, depth) {
-        if (startVertex === undefined || startVertex._id === undefined) {
+        if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
         if (depth == null) {
             depth = this.getDatabaseInfo().max_path_length;
         }
-        const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
-            OUTBOUND '${startVertex._id}'
-            GRAPH '${this.db.name}'
+        const queryString = `FOR vertex, edge, path
+            IN 1 .. ${depth}
+            OUTBOUND 'ot_vertices/${startVertex._key}'
+            ot_edges
             RETURN path`;
 
-        return ArangoJS.convertToVirtualGraph(await this.runQuery(queryString));
+        const rawGraph = await this.runQuery(queryString);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
     /**
@@ -152,9 +154,11 @@ class ArangoJS {
         for (const edgeId in resultEdges) {
             resultList[resultEdges[edgeId]._from].outbound.push(resultEdges[edgeId]);
         }
-        return {
-            data: resultList,
-        };
+        const result = [];
+        for (const vertex in resultList) {
+            result.push(resultList[vertex]);
+        }
+        return result;
     }
 
     async updateImports(collectionName, document, importNumber) {
@@ -180,15 +184,14 @@ class ArangoJS {
      * @param _key  Vertex _key
      * @return {Promise<void>}
      */
-    async findMaxVersion(uid, _key) {
+    async findMaxVersion(uid) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key ' +
+                'FILTER v.identifiers.uid == @uid' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v.version';
         const params = {
             uid,
-            _key,
         };
         return this.runQuery(queryString, params);
     }

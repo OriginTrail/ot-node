@@ -383,6 +383,18 @@ describe('Arangojs module ', async () => {
         }
     });
 
+    it('.findTraversalPath() with regular startVertex', async () => {
+        const myStartVertex = {
+            _key: `${vertexOne._key}`,
+        };
+
+        testDb.findVertices(myStartVertex).then((res) => {
+            testDb.findTraversalPath(res[0], 2).then((res) => {
+                console.log(JSON.stringify(res));
+            });
+        });
+    })
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
