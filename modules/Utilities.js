@@ -12,6 +12,7 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
+const BN = require('bn.js');
 
 require('dotenv').config();
 
@@ -596,6 +597,19 @@ class Utilities {
     static numberToHex(num) {
         const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
         return web3.utils.numberToHex(num);
+    }
+
+    /**
+    * Calculates import distance from my node
+    * @param importId
+    */
+    static getImportDistance(price, importId, stakeAmount) {
+        const wallet = new BN(config.wallet);
+        const nodeId = new BN(`0x${config.node_kademlia_id}`);
+        const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
+        const myBid = hashWallerNodeId.add(price);
+        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        return Math.abs(myBid.sub(offer));
     }
 }
 
