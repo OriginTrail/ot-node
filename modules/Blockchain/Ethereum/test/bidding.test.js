@@ -1,6 +1,6 @@
 const { assert, expect } = require('chai');
 
-var TestUtils = artifacts.require('./TestingUtilities.sol'); // eslint-disable-line no-undef
+var TestingUtilities = artifacts.require('./TestingUtilities.sol'); // eslint-disable-line no-undef
 var TracToken = artifacts.require('./TracToken.sol'); // eslint-disable-line no-undef
 var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-line no-undef
 var Bidding = artifacts.require('./Bidding.sol'); // eslint-disable-line no-undef
@@ -11,7 +11,7 @@ var Web3 = require('web3');
 const escrowDuration = 20;
 const one_ether = '1000000000000000000';
 var DC_wallet;
-var DH_wallet;
+var node_id = [];
 const data_id = 20;
 var escrow_address;
 var bidding_address;
@@ -25,21 +25,6 @@ contract('Bidding testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should get Escrow contract', async () => {
-        await EscrowHolder.deployed();
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should get Bidding contract', async () => {
-        await Bidding.deployed();
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should wait for the escrow to be deployed', async () => {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should get the escrow_address', async () => {
         await EscrowHolder.deployed().then((res) => {
             escrow_address = res.address;
         }).catch(err => console.log(err));
@@ -47,25 +32,31 @@ contract('Bidding testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get the bidding_address', async () => {
+    it('Should get Bidding contract', async () => {
         await Bidding.deployed().then((res) => {
             bidding_address = res.address;
         }).catch(err => console.log(err));
         console.log(`\t Bidding address: ${bidding_address}`);
     });
 
+    // eslint-disable-next-line no-undef
+    it('Should get TestingUtilities contract', async () => {
+        await TestingUtilities.deployed().then((res) => {
+            console.log(`\t Bidding address: ${res.address}`);
+        }).catch(err => console.log(err));
+    });
+
     DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
-    DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
 
     // eslint-disable-next-line no-undef
-    it('Should mint 5e25 (accounts 0 and 1,2,3,4,5)', async () => {
+    it('Should mint 5e25 (accounts 0 - 9)', async () => {
         const trace = await TracToken.deployed();
         const amount = 5e25;
-        for (var i = 10; i >= 0; i -= 1) {
+        for (var i = 9; i >= 0; i -= 1) {
             // eslint-disable-next-line no-await-in-loop
-            await trace.mint(accounts[i], amount, { from: accounts[0] });
+            await trace.mint(accounts[i], amount);
         }
-        await trace.endMinting({ from: accounts[0] });
+        await trace.endMinting();
 
         const response = await trace.balanceOf.call(accounts[0]);
         const actual_balance = response.toNumber();
@@ -75,19 +66,28 @@ contract('Bidding testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should increase allowance for DC to 100 000 TRAC', async () => {
-        const instance = await EscrowHolder.deployed();
+    it('Should make node_id for every profile (as keccak256(wallet_address))', async () => {
+        const testUtils = await TestingUtilities.deployed();
+        for (var i = 0; i < 10; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            const response = await testUtils.keccakSender({ from: accounts[i] });
+            node_id.push(response);
+            console.log(`node_id ${i} : ${node_id[i]}`);
+        }
+    });
+    /*
+    // eslint-disable-next-line no-undef
+    it('Should ceate 10 bidding profiles', async () => {
+        const escrow = await EscrowHolder.deployed();
+        const bidding = await Bidding.deployed();
         const trace = await TracToken.deployed();
+        for (var i = node_id.length - 1; i >= 0; i -= 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await trace.increaseApproval(bidding_address, 1e23, { from: node_id[i] });
+        }
 
-        let response = await trace.allowance.call(DC_wallet, escrow_address);
-        let allowance_DC = response.toNumber();
-        console.log(`\t allowance_DC: ${allowance_DC}`);
-
-
-        await trace.increaseApproval(escrow_address, 1e23, { from: DC_wallet });
-
-        response = await trace.allowance.call(DC_wallet, instance.address);
-        allowance_DC = response.toNumber();
+        const response = await trace.allowance.call(DC_wallet, bidding.address);
+        const allowance_DC = response.toNumber();
         console.log(`\t allowance_DC: ${allowance_DC}`);
 
         assert.equal(allowance_DC, 100000000, 'The proper amount was not allowed');
@@ -246,4 +246,5 @@ contract('Bidding testing', async (accounts) => {
         console.log(`\t Status: ${status}`);
         assert.equal(status, 'verified', "Escrow wasn't verified");
     });
+    */
 });
