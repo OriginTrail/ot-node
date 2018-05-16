@@ -110,6 +110,50 @@ class Ethereum {
     }
 
     /**
+     * Gets profile by wallet
+     * @param wallet
+     */
+    getProfile(wallet) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Get profile by wallet ${wallet}`);
+            this.biddingContract.methods.profile(wallet).call({
+                from: wallet,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates node profile on the Bidding contract
+     * @param nodeId        Kademlia node ID
+     * @param price         Price (byte per min)
+     * @param stakeFactor   Stake factor
+     * @param maxTimeMins   Max time in minutes
+     * @param maxSizeBytes  Max size in bytes
+     * @return {Promise<any>}
+     */
+    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.warn('Create profile');
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'createProfile',
+            [this._normalizeNodeId(nodeId),
+                price,
+                stakeFactor,
+                maxTimeMins,
+                maxSizeBytes], options,
+        );
+    }
+
+    /**
      * Increase token approval for escrow contract on Ethereum blockchain
      * @param {number} tokenAmountIncrease
      * @returns {Promise}

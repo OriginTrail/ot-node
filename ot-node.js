@@ -139,7 +139,11 @@ class OTNode {
         // Starting the kademlia
         const network = new Network();
         network.start().then((res) => {
-            // console.log(res);
+            BCInstance.bc.getProfile(config.wallet_address).then((res) => {
+                console.log(res);
+            }).catch((err) => {
+                console.log(err);
+            });
         }).catch((e) => {
             console.log(e);
         });
@@ -151,7 +155,6 @@ class OTNode {
 
         // Starting event listener on Blockchain
         log.info('Starting blockchain event listener');
-        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         setInterval(() => {
             BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         }, 3000);

@@ -26,6 +26,27 @@ class Blockchain {
     }
 
     /**
+     * Gets profile by wallet
+     * @param wallet
+     */
+    getProfile(wallet) {
+        return this.blockchain.getProfile(wallet);
+    }
+
+    /**
+     * Creates node profile on the Bidding contract
+     * @param nodeId        Kademlia node ID
+     * @param price         Price (byte per min)
+     * @param stakeFactor   Stake factor
+     * @param maxTimeMins   Max time in minutes
+     * @param maxSizeBytes  Max size in bytes
+     * @return {Promise<any>}
+     */
+    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
+        return this.blockchain.createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes);
+    }
+
+    /**
      * Increase token approval for escrow contract
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
