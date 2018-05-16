@@ -627,7 +627,7 @@ class Utilities {
      * @param obj2
      * @param excludedKeys
      */
-    static objectDistance(obj1, obj2, excludedKeys) {
+    static objectDistance(obj1, obj2, excludedKeys = []) {
         const copyObj1 = Utilities.copyObject(obj1);
         const copyObj2 = Utilities.copyObject(obj2);
 
