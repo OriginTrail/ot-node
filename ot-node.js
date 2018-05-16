@@ -139,11 +139,7 @@ class OTNode {
         // Starting the kademlia
         const network = new Network();
         network.start().then((res) => {
-            BCInstance.bc.getProfile(config.wallet_address).then((res) => {
-                console.log(res);
-            }).catch((err) => {
-                console.log(err);
-            });
+            this.createProfile();
         }).catch((e) => {
             console.log(e);
         });
@@ -158,6 +154,34 @@ class OTNode {
         setInterval(() => {
             BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         }, 3000);
+    }
+
+    /**
+     * Creates profile on the contract
+     */
+    createProfile() {
+        BCInstance.bc.getProfile(config.wallet_address).then((res) => {
+            // TODO check whether profile exists or not
+            BCInstance.bc.createProfile(
+                config.identity,
+                config.dh_price,
+                config.dh_stake_factor,
+                config.dh_max_time_mins,
+                config.dh_max_data_size_bytes,
+            ).then((res) => {
+                Blockchain.bc.subscribeToEvent('ProfileCreated')
+                    .then((event) => {
+                        // TODO filter event
+                        log.info(`Profile created for node: ${config.identity}`);
+                    }).catch((err) => {
+                        console.log(err);
+                    });
+            }).catch((err) => {
+                console.log(err);
+            });
+        }).catch((err) => {
+            console.log(err);
+        });
     }
 
     /**

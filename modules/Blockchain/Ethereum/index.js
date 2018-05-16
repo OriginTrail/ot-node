@@ -142,13 +142,11 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Create profile');
+        log.trace(`Create profile for node ${nodeId}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
-            [this._normalizeNodeId(nodeId),
-                price,
-                stakeFactor,
-                maxTimeMins,
+            [this._normalizeNodeId(nodeId), price,
+                stakeFactor, maxTimeMins,
                 maxSizeBytes], options,
         );
     }
