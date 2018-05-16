@@ -342,7 +342,7 @@ class Neo4jDB {
      */
     async findVertexWithMaxVersion(senderId, uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.senderId = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.sender_id = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId });
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);

@@ -124,6 +124,9 @@ describe('Neo4j module ', async () => {
     });
 
     it('findVertexWithMaxVersion', async () => {
+        await testDb.addVertex(vertexOneV2);
+        await testDb.addVertex(vertexOneV3);
+
         const response = await testDb.findVertexWithMaxVersion('a', vertexOne.identifiers.uid);
         assert.deepEqual(response, vertexOneV3);
     });
