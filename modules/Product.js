@@ -4,6 +4,8 @@ const Graph = require('./Graph');
 const GraphInstance = require('./GraphInstance');
 const GraphStorageInstance = require('./GraphStorageInstance');
 const Utilities = require('./Utilities');
+const ZK = require('./ZK');
+const BN = require('bn.js');
 
 /**
  * Creates product journey
@@ -94,6 +96,7 @@ class Product {
                 GraphStorageInstance.db.findTraversalPath(start_vertex, depth)
                     .then((virtualGraph) => {
                         virtualGraph = this.consensusCheck(virtualGraph);
+                        virtualGraph = this.zeroKnowledge(virtualGraph);
                         const returnBFS = Utilities.copyObject(virtualGraph);
 
                         const BFSt = Graph.bfs(
@@ -161,6 +164,78 @@ class Product {
             }
         }
         return virtualGraph;
+    }
+
+    /**
+     * Go through the virtual graph and check zero knowledge proof
+     * @param virtualGraph
+     */
+    zeroKnowledge(virtualGraph) {
+        const graph = virtualGraph.data;
+        const zk = new ZK();
+
+        for (const key in graph) {
+            const vertex = graph[key];
+            if (vertex.vertex_type === 'EVENT') {
+                for (const neighbourEdge of vertex.outbound) {
+                    if (neighbourEdge.edge_type === 'EVENT_CONNECTION') {
+                        const neighbour = graph[neighbourEdge.to];
+                        const { bizStep } = vertex.data;
+                        if (bizStep.endsWith('shipping')) {
+                            vertex.zk_status = this._calculateZeroKnowledge(
+                                zk,
+                                vertex.data.quantities.outputs,
+                                neighbour.data.quantities.inputs,
+                                vertex.data.quantities.inputs,
+                                vertex.data.quantities.e,
+                                vertex.data.quantities.a,
+                                vertex.data.quantities.zp,
+                                false,
+                            );
+                        } else if (bizStep.endsWith('receiving')) {
+                            vertex.zk_status = this._calculateZeroKnowledge(
+                                zk,
+                                vertex.data.quantities.inputs,
+                                neighbour.data.quantities.outputs,
+                                vertex.data.quantities.outputs,
+                                vertex.data.quantities.e,
+                                vertex.data.quantities.a,
+                                vertex.data.quantities.zp,
+                                true,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        return virtualGraph;
+    }
+
+    /**
+     * Calculate ZK proof
+     */
+    _calculateZeroKnowledge(zk, lQuantities, rQuantities, quantities, e, a, zp, isInput) {
+        const lQuantitiesMapped = lQuantities.map(o => o.public.enc).sort();
+        const nQuantitiesMapped = rQuantities.map(o => o.public.enc).sort();
+
+        if (JSON.stringify(lQuantitiesMapped) !== JSON.stringify(nQuantitiesMapped)) {
+            return 'FAILED';
+        }
+        const quantitiesMapped = quantities.map(o => o.public.enc);
+        let z = null;
+        if (isInput) {
+            z = zk.calculateZero(lQuantitiesMapped, quantitiesMapped);
+        } else {
+            z = zk.calculateZero(quantitiesMapped, lQuantitiesMapped);
+        }
+        const valid = zk.V(
+            e, a, z,
+            zp,
+        );
+        if (!valid) {
+            return 'FAILED';
+        }
+        return 'PASSED';
     }
 
     /**
