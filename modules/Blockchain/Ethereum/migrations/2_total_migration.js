@@ -23,17 +23,17 @@ const giveMeMockEscrowHolder = async function giveMeMockEscrowHolder() {
     return escrow;
 };
 
-const giveMeBidding = function giveMeBidding() {
+const giveMeBidding = async function giveMeBidding() {
     const bidding = Bidding.deployed();
     return bidding;
 };
 
-const giveMeMockBidding = function giveMeMockBidding() {
+const giveMeMockBidding = async function giveMeMockBidding() {
     const bidding = MockBidding.deployed();
     return bidding;
 };
 
-const giveMeBiddingTest = function giveMeBiddingTest() {
+const giveMeBiddingTest = async function giveMeBiddingTest() {
     const bidding = BiddingTest.deployed();
     return bidding;
 };
@@ -63,10 +63,10 @@ module.exports = (deployer, network, accounts) => {
                 token = result;
                 await deployer.deploy(EscrowHolder, token.address)
                     .then(() => giveMeEscrowHolder())
-                    .then((result) => {
+                    .then(async (result) => {
                         escrow = result;
-                        deployer.deploy(Bidding, token.address, escrow.address)
-                            .then(() => giveMeBidding())
+                        await deployer.deploy(BiddingTest, token.address, escrow.address)
+                            .then(() => giveMeBiddingTest())
                             .then(async (result) => {
                                 bidding = result;
                                 await deployer.deploy(OTFingerprintStore)
@@ -103,11 +103,11 @@ module.exports = (deployer, network, accounts) => {
                 token = result;
                 await deployer.deploy(EscrowHolder, token.address)
                     .then(() => giveMeEscrowHolder())
-                    .then((result) => {
+                    .then(async (result) => {
                         escrow = result;
                         // eslint-disable-next-line max-len
-                        deployer.deploy(BiddingTest, token.address, escrow.address, { gas: 9000000 })
-                            .then(() => giveMeBiddingTest())
+                        await deployer.deploy(Bidding, token.address, escrow.address)
+                            .then(() => giveMeBidding())
                             .then(async (result) => {
                                 bidding = result;
                                 await escrow.setBidding(bidding.address)
@@ -175,7 +175,7 @@ module.exports = (deployer, network, accounts) => {
                                                             .then(() => {
                                                                 token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
                                                                     .then(() => {
-                                                                        console.log('\n\n \t Contract adressess on ganache:');
+                                                                        console.log('\n\n \t Contract adressess on ganache (mock versions):');
                                                                         console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
                                                                         console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
                                                                         console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
