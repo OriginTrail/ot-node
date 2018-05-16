@@ -195,15 +195,16 @@ class Ethereum {
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @param dataId Data ID of the bid
+     * @param dataId Data ID of the offer.
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
-     * @param biddingTime Total time of the bid in milliseconds
-     * @param minNumberOfBids Number of bid required for offer to be successful
+     * @param minReputation Minimum required reputation
+     * @param dataHash Hash of the data put to the offer
      * @param dataSize Size of the data for storing in bytes
-     * @param ReplicationFactor Number of replications
+     * @param predeterminedDhWallets Array of predetermined DH wallets to be used in offer
+     * @param predeterminedDhNodeIds Array of predetermined node IDs to be used in offer
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
@@ -211,9 +212,11 @@ class Ethereum {
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
-        biddingTime,
-        minNumberOfBids,
-        dataSize, ReplicationFactor,
+        minReputation,
+        dataHash,
+        dataSize,
+        predeterminedDhWallets,
+        predeterminedDhNodeIds,
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -221,16 +224,22 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - createOffer');
+        log.warn('Calling - createOffer() on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
-            [dataId, this._normalizeNodeId(nodeId),
+            [
+                dataId,
+                this._normalizeNodeId(nodeId),
                 Math.round(totalEscrowTime / 1000),
                 maxTokenAmount,
                 MinStakeAmount,
-                Math.round(biddingTime / 1000),
-                minNumberOfBids,
-                dataSize, ReplicationFactor], options,
+                minReputation,
+                dataHash,
+                dataSize,
+                predeterminedDhWallets,
+                predeterminedDhNodeIds.map(id => this._normalizeNodeId(id)),
+            ],
+            options,
         );
     }
 

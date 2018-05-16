@@ -83,10 +83,11 @@ class Blockchain {
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
-     * @param biddingTime Total time of the bid in milliseconds
-     * @param minNumberOfBids Number of bid required for offer to be successful
+     * @param minReputation Minimum required reputation
+     * @param dataHash Hash of the data put to the offer
      * @param dataSize Size of the data for storing in bytes
-     * @param ReplicationFactor Number of replications
+     * @param predeterminedDhWallets Array of predetermined DH wallets to be used in offer
+     * @param predeterminedDhNodeIds Array of predetermined node IDs to be used in offer
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
@@ -94,18 +95,22 @@ class Blockchain {
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
-        biddingTime,
-        minNumberOfBids,
-        dataSize, ReplicationFactor,
+        minReputation,
+        dataHash,
+        dataSize,
+        predeterminedDhWallets,
+        predeterminedDhNodeIds,
     ) {
         return this.blockchain.createOffer(
             dataId, nodeId,
             totalEscrowTime,
             maxTokenAmount,
             MinStakeAmount,
-            biddingTime,
-            minNumberOfBids,
-            dataSize, ReplicationFactor,
+            minReputation,
+            dataHash,
+            dataSize,
+            predeterminedDhWallets,
+            predeterminedDhNodeIds,
         );
     }
 
