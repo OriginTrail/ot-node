@@ -258,34 +258,35 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async addDocument(collectionName, document) {
+        if (document === undefined || document === null) { throw Error('ArangoError: invalid document type'); }
+        if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
+
         const collection = this.db.collection(collectionName);
-        try {
-            if (document.sender_id && document.identifiers && document.identifiers.uid) {
-                const maxVersionDoc =
-                    await this.findVertexWithMaxVersion(
-                        document.sender_id,
-                        document.identifiers.uid,
-                    );
+        if (document.sender_id && document.identifiers && document.identifiers.uid) {
+            const maxVersionDoc =
+                await this.findVertexWithMaxVersion(
+                    document.sender_id,
+                    document.identifiers.uid,
+                );
 
-                if (maxVersionDoc) {
-                    if (maxVersionDoc._key === document._key) {
-                        return maxVersionDoc;
-                    }
-
-                    document.version = maxVersionDoc.version + 1;
-                    return collection.save(document);
+            if (maxVersionDoc) {
+                if (maxVersionDoc._key === document._key) {
+                    return maxVersionDoc;
                 }
 
-                document.version = 1;
+                document.version = maxVersionDoc.version + 1;
                 return collection.save(document);
             }
+
+            document.version = 1;
             return collection.save(document);
-        } catch (err) {
-            const errorCode = err.response.body.code;
-            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                return 'Double insert';
-            }
-            throw err;
+        }
+        try {
+            // First check if already exist.
+            const dbVertex = await this.getDocument(collectionName, document);
+            return dbVertex;
+        } catch (ignore) {
+            return collection.save(document);
         }
     }
 
