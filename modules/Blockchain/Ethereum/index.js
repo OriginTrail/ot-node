@@ -260,7 +260,7 @@ class Ethereum {
         Utilities.getBlockNumberFromWeb3().then((currentBlockHex) => {
             const currentBlock = Utilities.hexToNumber(currentBlockHex);
             this.contractsByName[contractName].getPastEvents('allEvents', {
-                fromBlock: currentBlock - 10,
+                fromBlock: Math.min(currentBlock, 10),
                 toBlock: 'latest',
             }).then((events) => {
                 events.forEach((event) => {
@@ -294,6 +294,9 @@ class Ethereum {
                 log.error('Failed to get past events');
                 console.log(err);
             });
+        }).catch((err) => {
+            log.error('Failed to get block number from the blockchain');
+            console.log(err);
         });
     }
 
