@@ -115,6 +115,43 @@ class Neo4jDB {
      * @returns {Promise}
      */
     async addVertex(value) {
+        if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
+            throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
+        }
+
+        if (value.sender_id && value.identifiers && value.identifiers.uid) {
+            const maxVersionDoc =
+                await this.findVertexWithMaxVersion(
+                    value.sender_id,
+                    value.identifiers.uid,
+                );
+
+            if (maxVersionDoc) {
+                if (maxVersionDoc._key === value._key) {
+                    return maxVersionDoc;
+                }
+
+                value.version = maxVersionDoc.version + 1;
+                return this._addVertex(value);
+            }
+
+            value.version = 1;
+            return this._addVertex(value);
+        }
+        // First check if already exist.
+        const dbVertex = await this._fetchVertex('_key', value._key);
+
+        if (dbVertex === {}) {
+            return dbVertex;
+        }
+        return this._addVertex(value);
+    }
+    /**
+     * Create vertex
+     * @param value         Vertex document
+     * @returns {Promise}
+     */
+    async _addVertex(value) {
         const session = this.driver.session();
         if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
             throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
@@ -141,7 +178,7 @@ class Neo4jDB {
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
                 const { edge, subvalue } = objectProp;
                 // eslint-disable-next-line
-                const subnodeId = await this.addVertex(subvalue);
+                const subnodeId = await this._addVertex(subvalue);
                 // eslint-disable-next-line
                 await session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`);
             }
