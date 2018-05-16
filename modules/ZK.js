@@ -160,6 +160,19 @@ class ZK {
     }
 
     V(e, a, Z, zp) {
+
+        if (typeof e === 'string') {
+            e = BN(e);
+        }
+
+        if (typeof a === 'string') {
+            a = (new BN(a)).toRed(this.redSquare);
+        }
+
+        if (typeof zp === 'string') {
+            zp = (new BN(zp)).toRed(this.redSquare);
+        }
+
         return this.encrypt(this.zero, zp.fromRed().toRed(this.redSquare))
             .eq(a.redMul(Z.redPow(e)));
     }
