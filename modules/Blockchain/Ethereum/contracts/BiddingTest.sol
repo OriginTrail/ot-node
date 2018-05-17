@@ -154,8 +154,8 @@ contract BiddingTest {
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
 
-		//require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
-		//profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size));
+		require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
+		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size).mul(predetermined_DH_wallet.length.mul(2).add(1)));
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		offer[offer_hash].DC_wallet = msg.sender;
@@ -288,7 +288,7 @@ contract BiddingTest {
 		uint256 current_index = 0;
 
 		uint256 token_amount_sent = 0;
-		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
+		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size).mul(this_offer.replication_factor.mul(2).add(1));
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
@@ -301,7 +301,7 @@ contract BiddingTest {
 				
 				token_amount_sent = token_amount_sent.add(chosen_bid.token_amount);
 				
-				chosen_DH.size_available = chosen_DH.size_available.sub(this_offer.data_size);
+				//chosen_DH.size_available = chosen_DH.size_available.sub(this_offer.data_size);
 
 				chosen_bid.chosen = true;
 				chosen_data_holders[current_index] = i;
@@ -394,7 +394,7 @@ contract BiddingTest {
 		uint amount_to_transfer = amount;
 		amount = 0;
 		if(amount_to_transfer > 0) token.transferFrom(msg.sender, this, amount_to_transfer);
-		profile[msg.sender].balance = profile[msg.sender].balance.add(amount);
+		profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 	}
 
