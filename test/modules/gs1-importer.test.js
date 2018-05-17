@@ -46,14 +46,21 @@ describe('GS1 Importer tests', () => {
     describe('Parse XML', () => {
         const inputXmlFiles = [
             { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
-            { args: [path.join(__dirname, '../../importers/Transport Ownership Observation.xml')] },
             { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
             { args: [path.join(__dirname, '../../importers/GraphExample_2.xml')] },
+            { args: [path.join(__dirname, '../../importers/GraphExample_3.xml')] },
         ];
 
         inputXmlFiles.forEach((test) => {
             it(
                 `should correctly parse and import ${path.basename(test.args[0])} file`,
+                async () => gs1.parseGS1(test.args[0]),
+            );
+        });
+
+        inputXmlFiles.forEach((test) => {
+            it(
+                `should correctly parse and import ${path.basename(test.args[0])} file 2nd time`,
                 async () => gs1.parseGS1(test.args[0]),
             );
         });

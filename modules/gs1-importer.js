@@ -171,19 +171,19 @@ async function zeroKnowledge(
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
                     }));
             } else {
                 outputQuantities = arrayze(quantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
                     }));
             }
 
             for (const outputQ of outputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(outputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -217,7 +217,7 @@ async function zeroKnowledge(
 
             for (const inputQ of inputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(inputQ.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     outputQuantities.push({
@@ -245,7 +245,7 @@ async function zeroKnowledge(
             }));
             for (const inputQuantity of tmpInputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(inputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -272,7 +272,7 @@ async function zeroKnowledge(
                 }));
             for (const outputQuantity of tmpOutputQuantities) {
                 // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(outputQuantity.object);
+                const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
                 if (vertex) {
                     const quantities = vertex.data.quantities.private;
                     const quantity = {
@@ -471,13 +471,15 @@ async function processXML(err, result) {
             _key: locationKey,
             identifiers,
             data,
-            vertex_type: 'OBJECT',
+            vertex_type: 'LOCATION',
         });
 
         if (location.extension) {
             const attrs = parseAttributes(arrayze(location.extension.attribute), 'urn:ot:location:');
             for (const attr of arrayze(attrs)) {
                 if (attr.participantId) {
+                    location.participant_id = attr.participantId;
+
                     locationEdges.push({
                         _key: md5(`owned_by_${senderId}_${locationKey}_${attr.participantId}`),
                         _from: `ot_vertices/${locationKey}`,
@@ -627,14 +629,15 @@ async function processXML(err, result) {
         event.vertex_type = 'EVENT';
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
-        eventVertices.push({
-            _key: eventKey,
-            data,
-            identifiers,
-            vertex_type: 'EVENT',
-        });
-
         if (extension.extension) {
+            const { documentId } = extension.extension;
+            if (documentId) {
+                identifiers.document_id = documentId;
+            }
+
+            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const isSender = bizStep === 'shipping';
+
             if (extension.extension.sourceList) {
                 const sources = arrayze(extension.extension.sourceList.source._);
                 for (const source of sources) {
@@ -644,6 +647,33 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + source}`,
                         edge_type: 'SOURCE',
                     });
+
+                    if (!isSender) {
+                        // receiving
+                        const filtered = locations.filter(location => location.id === source);
+                        for (const location of filtered) {
+                            event.partner_id = location.participant_id;
+                        }
+
+                        // eslint-disable-next-line
+                        const shippingEventVertex = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
+                        if (shippingEventVertex.length > 0) {
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${shippingEventVertex[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                        }
+                    }
                 }
             }
 
@@ -656,9 +686,44 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + destination}`,
                         edge_type: 'DESTINATION',
                     });
+
+                    if (isSender) {
+                        // shipping
+                        const filtered = locations.filter(location => location.id === destination);
+                        for (const location of filtered) {
+                            event.partner_id = location.participant_id;
+                        }
+
+                        // eslint-disable-next-line
+                        const receivingEventVertices = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
+                        if (receivingEventVertices.length > 0) {
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${receivingEventVertices[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                            eventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                        }
+                    }
                 }
             }
         }
+
+        eventVertices.push({
+            _key: eventKey,
+            data,
+            identifiers,
+            partner_id: event.partner_id,
+            vertex_type: 'EVENT',
+        });
 
         const { bizLocation } = event;
         if (bizLocation) {
@@ -704,6 +769,12 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'EVENT_BATCH',
                 });
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'EVENT_BATCH',
+                });
             }
         }
 
@@ -730,6 +801,12 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'OUTPUT_BATCH',
                 });
+                eventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'OUTPUT_BATCH',
+                });
             }
         }
 
@@ -750,7 +827,11 @@ async function processXML(err, result) {
             .concat(actorsVertices)
             .concat(productVertices)
             .concat(batchesVertices)
-            .concat(eventVertices);
+            .concat(eventVertices)
+            .map((vertex) => {
+                vertex.sender_id = senderId;
+                return vertex;
+            });
 
     const promises = allVertices.map(vertex => db.addVertex(vertex));
     await Promise.all(promises);
@@ -812,7 +893,11 @@ async function processXML(err, result) {
     const allEdges = locationEdges
         .concat(eventEdges)
         .concat(batchEdges)
-        .concat(classObjectEdges);
+        .concat(classObjectEdges)
+        .map((edge) => {
+            edge.sender_id = senderId;
+            return edge;
+        });
 
     for (const edge of allEdges) {
         const to = edge._to;
@@ -820,12 +905,12 @@ async function processXML(err, result) {
 
         if (to.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.findVertexWithMaxVersion(to.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
             edge._to = `ot_vertices/${vertex._key}`;
         }
         if (from.startsWith(EDGE_KEY_TEMPLATE)) {
             // eslint-disable-next-line
-            const vertex = await db.findVertexWithMaxVersion(from.substring(EDGE_KEY_TEMPLATE.length));
+            const vertex = await db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
             edge._from = `ot_vertices/${vertex._key}`;
         }
     }

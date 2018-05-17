@@ -39,8 +39,8 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:mda:actor">				
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:actor:id:Company#1">
-								<attribute id="urn:ot:actor:person:id:name">Company #1</attribute>				
+							<VocabularyElement id="urn:ot:actor:id:Company_1">
+								<attribute id="urn:ot:actor:person:id:name">Company _1</attribute>				
 								<attribute id="urn:ot:actor:category">Company</attribute>
 						    </VocabularyElement>																		
 						</VocabularyElementList>			
@@ -48,11 +48,11 @@
 
 					<Vocabulary type="urn:ot:mda:location">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:epc:id:sgln:Building#1">								
-								<attribute id="urn:ot:mda:location:category">Building #1</attribute>
-								<attribute id="urn:ot:mda:location:description">Description of building #1</attribute>	
+							<VocabularyElement id="urn:epc:id:sgln:Building_1">								
+								<attribute id="urn:ot:mda:location:category">Building _1</attribute>
+								<attribute id="urn:ot:mda:location:description">Description of building _1</attribute>	
 								<extension>
-									<attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company#1</attribute>
+									<attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company_1</attribute>
 								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>
@@ -60,12 +60,12 @@
 
 					<Vocabulary type="urn:ot:mda:product">	
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:mda:product:id:Product#1">
-								<attribute id="urn:ot:mda:product:category">Product #1 Box</attribute>					
+							<VocabularyElement id="urn:ot:mda:product:id:Product_1">
+								<attribute id="urn:ot:mda:product:category">Product _1 Box</attribute>					
 								<attribute id="urn:ot:mda:product:description">Box</attribute>							
 							</VocabularyElement>
-							<VocabularyElement id="urn:ot:mda:product:id:Product#2">
-								<attribute id="urn:ot:mda:product:category">Product #2 Pallet</attribute>					
+							<VocabularyElement id="urn:ot:mda:product:id:Product_2">
+								<attribute id="urn:ot:mda:product:category">Product _2 Pallet</attribute>					
 								<attribute id="urn:ot:mda:product:description">Pallet</attribute>							
 							</VocabularyElement>						
 						</VocabularyElementList>
@@ -73,18 +73,18 @@
 
 					<Vocabulary type="urn:ot:mda:batch">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:epc:id:sgtin:Batch#1">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product#1</attribute>
+							<VocabularyElement id="urn:epc:id:sgtin:Batch_1">
+								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product_1</attribute>
 								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
 								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
 							</VocabularyElement>
-							<VocabularyElement id="urn:epc:id:sgtin:Batch#2">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product#1</attribute>
+							<VocabularyElement id="urn:epc:id:sgtin:Batch_2">
+								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product_1</attribute>
 								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
 								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
 							</VocabularyElement>
-							<VocabularyElement id="urn:epc:id:sgtin:Pallet#3">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product#2</attribute>
+							<VocabularyElement id="urn:epc:id:sgtin:Pallet_3">
+								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product_2</attribute>
 								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
 								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
 							</VocabularyElement>
@@ -101,40 +101,41 @@
 					 <eventTime>2015-03-15T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
 					 <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
 					 <inputEPCList>
-					 	<epc>urn:epc:id:sgtin:Batch#1</epc>
-					 	<epc>urn:epc:id:sgtin:Batch#2</epc>
+					 	<epc>urn:epc:id:sgtin:Batch_1</epc>
+					 	<epc>urn:epc:id:sgtin:Batch_2</epc>
 					 </inputEPCList>
 					 <inputQuantityList>
 						 <quantityElement>
-						 	<epcClass>urn:epc:id:sgtin:Batch#1</epcClass>
+						 	<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
 							 <quantity>2</quantity>
 							 <uom>KG</uom>
 						 </quantityElement>
 					 	<quantityElement>
-					 		<epcClass>urn:epc:id:sgtin:Batch#2</epcClass>
+					 		<epcClass>urn:epc:id:sgtin:Batch_2</epcClass>
 					 		<quantity>2</quantity>
 					 		<uom>KG</uom>
 					 	</quantityElement>
 					 </inputQuantityList>
 					 <outputEPCList>
-					 	<epc>urn:epc:id:sgtin:Pallet#3</epc>
+					 	<epc>urn:epc:id:sgtin:Pallet_3</epc>
 					 </outputEPCList>
 					 <outputQuantityList>
 						 <quantityElement>
-						 	<epcClass>urn:epc:id:sgtin:Pallet#3</epcClass>
+						 	<epcClass>urn:epc:id:sgtin:Pallet_3</epcClass>
 							 <quantity>4</quantity>
 							 <uom>KG</uom>
 						 </quantityElement>
 					 </outputQuantityList>					 
-					 <transformationID>Transformation#1</transformationID> <!-- Mandatory-->
+					 <transformationID>Transformation_1</transformationID> <!-- Mandatory-->
 					 <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep> <!-- Optional -->		
 					 <readPoint> <!-- Optional -->
-						<id>urn:epc:id:sgln:Building#1</id>
+						<id>urn:epc:id:sgln:Building_1</id>
 					 </readPoint>
 					 <bizLocation> <!-- Optional -->
-						<id>urn:epc:id:sgln:Building#1</id>
+						<id>urn:epc:id:sgln:Building_1</id>
 					 </bizLocation>			 				 
 					 <extension>
+						<documentId>2</documentId>
 						<OTEventClass>ot:event:Transformation</OTEventClass>
 					 	<OTEventType>Packaging</OTEventType>
 					 </extension>

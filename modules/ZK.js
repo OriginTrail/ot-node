@@ -38,7 +38,7 @@ class ZK {
     }
 
     P(importId, eventId, inputQuantities, outputQuantities) {
-        const e = new BN(parseInt(sha3(importId, eventId).substring('0', '10'), 10));
+        const e = new BN(sha3(importId, eventId).substring(0, 10), 16);
 
         let r = new BN(this.generatePrime()).mod(this.n);
 
@@ -160,8 +160,40 @@ class ZK {
     }
 
     V(e, a, Z, zp) {
+        if (typeof e === 'string') {
+            e = new BN(e, 16);
+        }
+
+        if (typeof a === 'string') {
+            a = (new BN(a, 16)).toRed(this.redSquare);
+        }
+
+        if (typeof zp === 'string') {
+            zp = (new BN(zp, 16)).toRed(this.redSquare);
+        }
+
+        if (typeof Z === 'string') {
+            Z = (new BN(Z, 16)).toRed(this.redSquare);
+        }
+
         return this.encrypt(this.zero, zp.fromRed().toRed(this.redSquare))
             .eq(a.redMul(Z.redPow(e)));
+    }
+
+    calculateZero(inputs, outputs) {
+        let calculated = this.one;
+        calculated = calculated.toRed(this.redSquare);
+
+        for (const inputValue of inputs) {
+            calculated = calculated.redMul((new BN(inputValue, 16))
+                .toRed(this.redSquare));
+        }
+
+        for (const outputValue of outputs) {
+            calculated = calculated.redMul((new BN(outputValue, 16))
+                .toRed(this.redSquare).redInvm());
+        }
+        return calculated.toString('hex');
     }
 }
 
