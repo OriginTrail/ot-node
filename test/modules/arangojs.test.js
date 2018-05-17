@@ -145,7 +145,7 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
-    it('trying to add same document again should resut in double insert', async () => {
+    it('trying to add same document again should result in the same vertex', async () => {
         const response = await testDb.addVertex(vertexOne);
         assert.equal(response._key, vertexOne._key);
     });
