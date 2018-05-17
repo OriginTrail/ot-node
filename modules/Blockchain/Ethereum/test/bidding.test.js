@@ -3,7 +3,7 @@ const { assert, expect } = require('chai');
 var TestingUtilities = artifacts.require('./TestingUtilities.sol'); // eslint-disable-line no-undef
 var TracToken = artifacts.require('./TracToken.sol'); // eslint-disable-line no-undef
 var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-line no-undef
-var Bidding = artifacts.require('./Bidding.sol'); // eslint-disable-line no-undef
+var Bidding = artifacts.require('./BiddingTest.sol'); // eslint-disable-line no-undef
 
 var Web3 = require('web3');
 
@@ -75,7 +75,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`node_id ${i} : ${node_id[i]}`);
         }
     });
-    /*
+    
     // eslint-disable-next-line no-undef
     it('Should ceate 10 bidding profiles', async () => {
         const escrow = await EscrowHolder.deployed();

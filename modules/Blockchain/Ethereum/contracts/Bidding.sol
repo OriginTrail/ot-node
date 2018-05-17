@@ -41,7 +41,7 @@ contract ERC20 is ERC20Basic {
 }
 
 contract EscrowHolder {
-	function initiateEscrow(address DC_wallet, address DH_wallet, uint256 data_id, uint256 token_amount,uint256 stake_amount, uint256 total_time) public;
+	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount,uint stake_amount, uint total_time) public;
 }
 
 contract Bidding {
@@ -70,60 +70,61 @@ contract Bidding {
 		address DC_wallet;
 
 		//Parameters for DH filtering
-		uint256 max_token_amount;
-		uint256 min_stake_amount; 
-		uint256 min_reputation;
+		uint max_token_amount;
+		uint min_stake_amount; 
+		uint min_reputation;
 
 		//Data holding parameters
-		uint256 total_escrow_time;
-		uint256 data_size;
+		uint total_escrow_time;
+		uint data_size;
 
 		//Parameters for the bidding ranking
 		bytes32 data_hash;
-		uint256 first_bid_index;
+		uint first_bid_index;
 
-		uint256 number_of_bids;
-		uint256 replication_factor;
+		uint replication_factor;
 
 		bool active;
 		bool finalized;
+
+		BidDefinition[] bid;
 	}
 
 	struct ProfileDefinition{
 		//Offer Parameters
-		uint256 token_amount; //Per byte per minute
-		uint256 stake_amount; //Per byte per minute
+		uint token_amount; //Per byte per minute
+		uint stake_amount; //Per byte per minute
 
-		uint256 balance;
-		uint256 reputation;
+		uint balance;
+		uint reputation;
 
-		uint256 max_escrow_time;
-		uint256 size_available;
+		uint max_escrow_time;
+		uint size_available;
 	}
 
 	struct BidDefinition{
 		address DH_wallet;
 		bytes32 DH_node_id;
 
-		uint256 token_amount;
-		uint256 stake_amount;
+		uint token_amount;
+		uint stake_amount;
 
 		uint256 distance;
 
-		uint256 next_bid;
+		uint next_bid;
 
 		bool active;
 		bool chosen;
 	}
 
-	mapping(bytes32 => mapping(uint256 => BidDefinition)) public bid; // bid[offer_hash][bid_index]
+	//mapping(bytes32 => mapping(uint => BidDefinition)) public bid; // offer[offer_hash].bid[bid_index]
 	mapping(bytes32 => OfferDefinition) public offer; //offer[offer_hash] offer_hash = keccak256(DC_wallet, DC_node_id, nonce)
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
-	event OfferCreated(bytes32 offer_hash, bytes32 DC_node_id, uint256 total_escrow_time, uint256 max_token_amount, uint256 min_stake_amount, uint256 min_reputation, uint256 data_size, bytes32 data_hash);
+	event OfferCreated(bytes32 offer_hash, bytes32 DC_node_id, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint min_reputation, uint data_size, bytes32 data_hash);
 	event OfferCanceled(bytes32 offer_hash);
-	event AddedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint256 bid_index);
-	event AddedPredeterminedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint256 bid_index, uint256 total_escrow_time, uint256 max_token_amount, uint256 min_stake_amount, uint256 data_size);
+	event AddedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint bid_index);
+	event AddedPredeterminedBid(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id, uint bid_index, uint total_escrow_time, uint max_token_amount, uint min_stake_amount, uint data_size);
 	event FinalizeOfferReady(bytes32 offer_hash);
 	event BidTaken(bytes32 offer_hash, address DH_wallet);
 	event OfferFinalized(bytes32 offer_hash);
@@ -131,16 +132,16 @@ contract Bidding {
 	/*    ----------------------------- OFFERS -----------------------------     */
 
 	function createOffer(
-		uint256 data_id,
+		uint data_id,
 		bytes32 DC_node_id,
 
-		uint256 total_escrow_time, 
-		uint256 max_token_amount,
-		uint256 min_stake_amount,
-		uint256 min_reputation,
+		uint total_escrow_time, 
+		uint max_token_amount,
+		uint min_stake_amount,
+		uint min_reputation,
 
 		bytes32 data_hash,
-		uint256 data_size,
+		uint data_size,
 
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
@@ -165,21 +166,18 @@ contract Bidding {
 		offer[offer_hash].data_hash = data_hash;
 		offer[offer_hash].data_size = data_size;
 
-		offer[offer_hash].number_of_bids = predetermined_DH_wallet.length;
 		offer[offer_hash].replication_factor = predetermined_DH_wallet.length;
 
 		offer[offer_hash].active = true;
 		offer[offer_hash].finalized = false;
 
-		offer[offer_hash].first_bid_index = uint256(-1);
+		offer[offer_hash].first_bid_index = uint(-1);
 
 		//Writing the predetermined DC into the bid list
-		uint256 i = 0;
-		while( i < predetermined_DH_wallet.length) {
-			bid[offer_hash][i].DH_wallet = predetermined_DH_wallet[i];
-			bid[offer_hash][i].DH_node_id = predetermined_DH_node_id[i];
-			emit AddedPredeterminedBid(offer_hash, predetermined_DH_wallet[i], predetermined_DH_node_id[i], i, total_escrow_time, max_token_amount, min_stake_amount, data_size);
-			i = i + 1;
+		while(offer[offer_hash].bid.length < predetermined_DH_wallet.length) {
+			BidDefinition memory bid_def = BidDefinition(predetermined_DH_wallet[offer[offer_hash].bid.length], predetermined_DH_node_id[offer[offer_hash].bid.length], 0, 0, 0, 0, false, false);
+			offer[offer_hash].bid.push(bid_def);
+			emit AddedPredeterminedBid(offer_hash, bid_def.DH_wallet, bid_def.DH_node_id, offer[offer_hash].bid.length - 1, total_escrow_time, max_token_amount, min_stake_amount, data_size);
 		}
 
 		emit OfferCreated(offer_hash, DC_node_id, total_escrow_time, max_token_amount, min_stake_amount, min_reputation, data_size, data_hash);
@@ -192,24 +190,24 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && this_offer.DC_wallet == msg.sender);
 		this_offer.active = false;
-		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
+		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
 	}
 
-	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint256 bid_index) 
+	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index) 
 	public{
 		require(offer[offer_hash].active && !offer[offer_hash].finalized);
 		
 		OfferDefinition storage this_offer = offer[offer_hash];
 		ProfileDefinition storage this_DH = profile[msg.sender];
-		BidDefinition storage this_bid = bid[offer_hash][bid_index];
+		BidDefinition storage this_bid = offer[offer_hash].bid[bid_index];
 
 		require(this_bid.DH_wallet == msg.sender && this_bid.DH_node_id == DH_node_id);
 
 		//Check if the the DH meets the filters DC set for the offer
-		uint256 scope = this_offer.data_size * this_offer.total_escrow_time;
+		uint scope = this_offer.data_size * this_offer.total_escrow_time;
 		require(this_offer.total_escrow_time <= this_DH.max_escrow_time);
 		require(this_offer.max_token_amount  >= this_DH.token_amount * scope);
 		require((this_offer.min_stake_amount  <= this_DH.stake_amount * scope) && (this_DH.stake_amount * scope <= profile[msg.sender].balance));
@@ -222,14 +220,14 @@ contract Bidding {
 	}
 
 	function addBid(bytes32 offer_hash, bytes32 DH_node_id)
-	public returns (uint256 this_bid_index){
+	public returns (uint this_bid_index){
 		require(offer[offer_hash].active && !offer[offer_hash].finalized);
 
 		OfferDefinition storage this_offer = offer[offer_hash];
 		ProfileDefinition storage this_DH = profile[msg.sender];
 
 		//Check if the the DH meets the filters DC set for the offer
-		uint256 scope = this_offer.data_size * this_offer.total_escrow_time;
+		uint scope = this_offer.data_size * this_offer.total_escrow_time;
 		require(this_offer.total_escrow_time <= this_DH.max_escrow_time);
 		require(this_offer.max_token_amount  >= this_DH.token_amount * scope);
 		require((this_offer.min_stake_amount  <= this_DH.stake_amount * scope) && (this_DH.stake_amount * scope <= profile[msg.sender].balance));
@@ -237,58 +235,51 @@ contract Bidding {
 		require(this_offer.data_size		 <= this_DH.size_available);
 
 		//Create new bid in the list
-		this_bid_index = this_offer.number_of_bids;
-		BidDefinition storage this_bid = bid[offer_hash][this_offer.number_of_bids];
-		this_offer.number_of_bids = this_offer.number_of_bids.add(1);
-		
-		this_bid.DH_wallet = msg.sender;
-		this_bid.DH_node_id = DH_node_id;
+		this_bid_index = this_offer.bid.length;
+		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount * scope, this_DH.stake_amount * scope, 0, 0, true, false);
 
-		this_bid.token_amount = this_DH.token_amount * scope;
-		this_bid.stake_amount = this_DH.stake_amount * scope;
 		// distance = | hash(wallet, node_id) + token_amount - data_hash - stake_amount |
-		this_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(this_bid.token_amount),uint256(this_offer.data_hash).add(this_bid.stake_amount));
-		this_bid.active = true;
+		new_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(new_bid.token_amount),uint256(this_offer.data_hash).add(new_bid.stake_amount));
 
 		//Insert the bid in the proper place in the list
 		uint256 current_index = this_offer.first_bid_index;
-		uint256 previous_index = uint256(-1); // trust me, i'm an engineer
-		while(current_index != uint256(-1) && bid[offer_hash][current_index].distance <= this_bid.distance){
+		uint256 previous_index = uint(-1); // trust me, i'm an engineer
+		while(current_index != uint(-1) && offer[offer_hash].bid[current_index].distance <= new_bid.distance){
 			previous_index = current_index;
-			current_index = bid[offer_hash][current_index].next_bid;
+			current_index = offer[offer_hash].bid[current_index].next_bid;
 		}
-		this_bid.next_bid = current_index;
-		if(previous_index == uint256(-1)) this_offer.first_bid_index = this_bid_index;
+		new_bid.next_bid = current_index;
+		if(previous_index == uint(-1)) this_offer.first_bid_index = this_bid_index;
 		else {
 			// asserts that a DH can only add one offer per node_id
-			assert(bid[offer_hash][previous_index].DH_wallet != msg.sender && bid[offer_hash][previous_index].DH_node_id != DH_node_id);
-			bid[offer_hash][previous_index].next_bid = this_bid_index;
+			assert(offer[offer_hash].bid[previous_index].DH_wallet != msg.sender && offer[offer_hash].bid[previous_index].DH_node_id != DH_node_id);
+			offer[offer_hash].bid[previous_index].next_bid = this_bid_index;
 		}
-		this_offer.number_of_bids = this_offer.number_of_bids.add(1);
-		if(this_offer.number_of_bids >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(offer_hash);
+		this_offer.bid.push(new_bid);
+		if(this_offer.bid.length >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(offer_hash);
 
 		emit AddedBid(offer_hash, msg.sender, DH_node_id, this_bid_index);
 		return this_bid_index;
 	}
 
-	function getBidIndex(bytes32 offer_hash, bytes32 DH_node_id) public view returns(uint256){
+	function getBidIndex(bytes32 offer_hash, bytes32 DH_node_id) public view returns(uint){
 		OfferDefinition storage this_offer = offer[offer_hash];
 		uint256 i = 0;
-		while(i < this_offer.number_of_bids && (bid[offer_hash][i].DH_wallet != msg.sender || bid[offer_hash][i].DH_node_id != DH_node_id)) i = i + 1;
-		if( i == this_offer.number_of_bids) return uint256(-1);
+		while(i < this_offer.bid.length && (offer[offer_hash].bid[i].DH_wallet != msg.sender || offer[offer_hash].bid[i].DH_node_id != DH_node_id)) i = i + 1;
+		if( i == this_offer.bid.length) return uint(-1);
 		else return i;
 	}
 
-	function cancelBid(bytes32 offer_hash, uint256 bid_index)
+	function cancelBid(bytes32 offer_hash, uint bid_index)
 	public{
-		require(bid[offer_hash][bid_index].DH_wallet == msg.sender);
-		bid[offer_hash][bid_index].active = false;
+		require(offer[offer_hash].bid[bid_index].DH_wallet == msg.sender);
+		offer[offer_hash].bid[bid_index].active = false;
 	}
 
 	function chooseBids(bytes32 offer_hash) public returns (uint256[] chosen_data_holders){
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && !this_offer.finalized);
-		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.number_of_bids);
+		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
 
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
 		
@@ -300,12 +291,12 @@ contract Bidding {
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
-			BidDefinition storage chosen_bid = bid[offer_hash][i];
+			BidDefinition storage chosen_bid = offer[offer_hash].bid[i];
 			ProfileDefinition storage chosen_DH = profile[chosen_bid.DH_wallet];				
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && chosen_bid.active && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
 				//Initiating new escrow
-				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint256(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
+				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
 				
 				token_amount_sent = token_amount_sent.add(chosen_bid.token_amount);
 				
@@ -323,17 +314,17 @@ contract Bidding {
 		uint256 bid_index = this_offer.first_bid_index;
 		//TODO POkusaj da dopunis do 2N + 1 
 		for(;i < 2 * this_offer.replication_factor + 1 ; i = i + 1) {
-			while(bid_index != uint256(-1) && (!bid[offer_hash][bid_index].active || bid[offer_hash][bid_index].chosen)){
-				bid_index = bid[offer_hash][bid_index].next_bid;
+			while(bid_index != uint(-1) && (!offer[offer_hash].bid[bid_index].active || offer[offer_hash].bid[bid_index].chosen)){
+				bid_index = offer[offer_hash].bid[bid_index].next_bid;
 			} 
-			if(bid_index == uint256(-1)) break;
+			if(bid_index == uint(-1)) break;
 
-			chosen_bid = bid[offer_hash][bid_index];
+			chosen_bid = offer[offer_hash].bid[bid_index];
 			chosen_DH = profile[chosen_bid.DH_wallet];
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
 				//Initiating new escrow
-				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint256(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
+				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
 
 				token_amount_sent = token_amount_sent.add(chosen_bid.token_amount);
 
@@ -356,8 +347,8 @@ contract Bidding {
 	}
 
 
-	function isBidChosen(bytes32 offer_hash, uint256 bid_index) public constant returns (bool _isBidChosen){
-		return bid[offer_hash][bid_index].chosen;
+	function isBidChosen(bytes32 offer_hash, uint bid_index) public constant returns (bool _isBidChosen){
+		return offer[offer_hash].bid[bid_index].chosen;
 	}
 
 	function getOfferStatus(bytes32 offer_hash) public constant returns (bool isOfferFinal){
@@ -367,10 +358,10 @@ contract Bidding {
 	/*    ----------------------------- DH PROFILE -----------------------------    */
 
 	event ProfileCreated(address wallet, bytes32 node_id);
-	event BalanceModified(address wallet, uint256 new_balance);
-	event ReputationModified(address wallet, uint256 new_balance);
+	event BalanceModified(address wallet, uint new_balance);
+	event ReputationModified(address wallet, uint new_balance);
 
-	function createProfile(bytes32 node_id, uint256 price, uint256 stake, uint256 max_time, uint256 max_size) public{
+	function createProfile(bytes32 node_id, uint price, uint stake, uint max_time, uint max_size) public{
 		ProfileDefinition storage this_profile = profile[msg.sender];
 		this_profile.token_amount = price;
 		this_profile.stake_amount = stake;
@@ -379,32 +370,32 @@ contract Bidding {
 		emit ProfileCreated(msg.sender, node_id);
 	}
 
-	function setPrice(uint256 new_price) public {
+	function setPrice(uint new_price) public {
 		profile[msg.sender].token_amount = new_price;
 	}
 
-	function setStake(uint256 new_stake) public {
+	function setStake(uint new_stake) public {
 		profile[msg.sender].stake_amount = new_stake;
 	}
 
-	function setMaxTime(uint256 new_max_time) public {
+	function setMaxTime(uint new_max_time) public {
 		profile[msg.sender].max_escrow_time = new_max_time;
 	}
 
-	function setFreeSpace(uint256 new_space) public {
+	function setFreeSpace(uint new_space) public {
 		profile[msg.sender].size_available = new_space;
 	}
 
-	function depositToken(uint256 amount) public {
+	function depositToken(uint amount) public {
 		require(token.balanceOf(msg.sender) >= amount && token.allowance(msg.sender, this) >= amount);
-		uint256 amount_to_transfer = amount;
+		uint amount_to_transfer = amount;
 		amount = 0;
 		if(amount_to_transfer > 0) token.transferFrom(msg.sender, this, amount_to_transfer);
 		profile[msg.sender].balance = profile[msg.sender].balance.add(amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 	}
 
-	function withdrawToken(uint256 amount) public {
+	function withdrawToken(uint amount) public {
 		uint256 amount_to_transfer;
 		if(profile[msg.sender].balance >= amount){
 			amount_to_transfer = amount;
@@ -412,25 +403,25 @@ contract Bidding {
 		}
 		else{ 
 			amount_to_transfer = profile[msg.sender].balance;
-			profile[msg.sender].balance;
+			profile[msg.sender].balance = 0;
 		}
 		amount = 0;
 		if(amount_to_transfer > 0) token.transfer(msg.sender, amount_to_transfer);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 	}
 
-	function increaseBalance(address wallet, uint256 amount) public onlyEscrow {
+	function increaseBalance(address wallet, uint amount) public onlyEscrow {
 		profile[wallet].balance = profile[wallet].balance.add(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
-	function decreaseBalance(address wallet, uint256 amount) public onlyEscrow {
+	function decreaseBalance(address wallet, uint amount) public onlyEscrow {
 		require(profile[wallet].balance >= amount);
 		profile[wallet].balance = profile[wallet].balance.sub(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
-	function increaseReputation(address wallet, uint256 amount) public onlyEscrow {
+	function increaseReputation(address wallet, uint amount) public onlyEscrow {
 		profile[wallet].reputation = profile[wallet].reputation.add(amount);
 		emit ReputationModified(wallet, profile[wallet].reputation);
 	}
