@@ -3,77 +3,22 @@ const fs = require('fs');
 const md5 = require('md5');
 const xsd = require('libxml-xsd');
 
-const ZK = require('./ZK');
-
-const zk = new ZK();
+const GS1Helper = require('./gs1-helper');
 const GSInstance = require('./GraphStorageInstance');
-const validator = require('validator');
-
-function sanitize(old_obj, new_obj, patterns) {
-    if (typeof old_obj !== 'object') { return old_obj; }
-
-    for (const key in old_obj) {
-        let new_key = key;
-        for (const i in patterns) {
-            new_key = new_key.replace(patterns[i], '');
-        }
-        new_obj[new_key] = sanitize(old_obj[key], {}, patterns);
-    }
-    return new_obj;
-}
-
-// validate
-function emailValidation(email) {
-    const result = validator.isEmail(email);
-    return !!result;
-}
-
-function dateTimeValidation(date) {
-    const result = validator.isISO8601(date);
-    return !!result;
-}
-
-function arrayze(value) {
-    if (value) {
-        return [].concat(value);
-    }
-    return [];
-}
-
-function copyProperties(from, to) {
-    for (const property in from) {
-        to[property] = from[property];
-    }
-}
-
-function parseAttributes(attributes, ignorePattern) {
-    const output = {};
-    const inputAttributeArray = arrayze(attributes);
-
-    for (const inputElement of inputAttributeArray) {
-        output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
-    }
-
-    return output;
-}
-
-function ignorePattern(attribute, ignorePattern) {
-    return attribute.replace(ignorePattern, '');
-}
 
 function parseLocations(vocabularyElementList) {
     const locations = [];
 
     // May be an array in VocabularyElement.
-    const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
-        const childLocations = arrayze(element.children ? element.children.id : []);
+        const childLocations = GS1Helper.arrayze(element.children ? element.children.id : []);
 
         const location = {
             type: 'location',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
             extension: element.extension,
         };
@@ -88,13 +33,13 @@ function parseActors(vocabularyElementList) {
     const actors = [];
 
     // May be an array in VocabularyElement.
-    const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
         const actor = {
             type: 'actor',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
         };
 
         actors.push(actor);
@@ -107,13 +52,13 @@ function parseProducts(vocabularyElementList) {
     const products = [];
 
     // May be an array in VocabularyElement.
-    const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
         const product = {
             type: 'product',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
         };
 
         products.push(product);
@@ -126,236 +71,19 @@ function parseBatches(vocabularyElementList) {
     const batches = [];
 
     // May be an array in VocabularyElement.
-    const vocabularyElementElements = arrayze(vocabularyElementList.VocabularyElement);
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
 
     for (const element of vocabularyElementElements) {
         const batch = {
             type: 'batch',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
         };
 
         batches.push(batch);
     }
 
     return batches;
-}
-
-/**
- * Zero knowledge processing
- * @param senderId
- * @param event
- * @param eventId
- * @param categories
- * @param importId
- * @param globalR
- * @param batchVertices
- * @return {Promise<void>}
- */
-async function zeroKnowledge(
-    senderId, event, eventId, categories,
-    importId, globalR, batchVertices, db,
-) {
-    let inputQuantities = [];
-    let outputQuantities = [];
-    const { extension } = event;
-    if (categories.includes('Ownership') || categories.includes('Transport') ||
-        categories.includes('Observation')) {
-        const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
-
-        const { quantityList } = extension;
-        if (bizStep === 'shipping') {
-            // sending input
-            if (categories.includes('Ownership')) {
-                outputQuantities = arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
-                    }));
-            } else {
-                outputQuantities = arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
-            }
-
-            for (const outputQ of outputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: outputQ.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    inputQuantities.push(quantity);
-                } else {
-                    inputQuantities.push({
-                        added: true,
-                        object: outputQ.object,
-                        quantity: parseInt(outputQ.quantity, 10),
-                    });
-                }
-            }
-        } else {
-            // receiving output
-            if (categories.includes('Ownership')) {
-                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: globalR,
-                }));
-            } else {
-                inputQuantities = arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                }));
-            }
-
-            for (const inputQ of inputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    outputQuantities.push({
-                        object: inputQ.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    });
-                } else {
-                    outputQuantities.push({
-                        added: true,
-                        object: inputQ.object,
-                        quantity: parseInt(inputQ.quantity, 10),
-                    });
-                }
-            }
-        }
-    } else {
-        // Transformation
-        const { inputQuantityList, outputQuantityList } = event;
-        if (inputQuantityList) {
-            const tmpInputQuantities = arrayze(inputQuantityList.quantityElement).map(elem => ({
-                object: elem.epcClass,
-                quantity: parseInt(elem.quantity, 10),
-                r: globalR,
-            }));
-            for (const inputQuantity of tmpInputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: inputQuantity.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    inputQuantities.push(quantity);
-                } else {
-                    inputQuantities.push({
-                        added: true,
-                        object: inputQuantity.object,
-                        quantity: parseInt(inputQuantity.quantity, 10),
-                    });
-                }
-            }
-        }
-        if (outputQuantityList) {
-            const tmpOutputQuantities = arrayze(outputQuantityList.quantityElement)
-                .map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: globalR,
-                }));
-            for (const outputQuantity of tmpOutputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: outputQuantity.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    outputQuantities.push(quantity);
-                } else {
-                    outputQuantities.push({
-                        added: true,
-                        object: outputQuantity.object,
-                        quantity: parseInt(outputQuantity.quantity, 10),
-                    });
-                }
-            }
-        }
-    }
-    const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-    for (const quantity of quantities.inputs.concat(quantities.outputs)) {
-        if (quantity.added) {
-            delete quantity.added;
-            let batchFound = false;
-            for (const batch of batchVertices) {
-                if (batch.identifiers.uid === quantity.object) {
-                    batchFound = true;
-                    batch.data.quantities = quantity;
-                    batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
-                    break;
-                }
-            }
-            if (!batchFound) {
-                throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
-            }
-        }
-    }
-    event.quantities = quantities;
-}
-
-/**
- * Create event ID
- * @param senderId  Sender ID
- * @param event     Event data
- * @return {string}
- */
-function getEventId(senderId, event) {
-    if (arrayze(event.eventTime).length === 0) {
-        throw Error('Missing eventTime element for event!');
-    }
-    const event_time = event.eventTime;
-
-    const event_time_validation = dateTimeValidation(event_time);
-    if (!event_time_validation) {
-        throw Error('Invalid date and time format for event time!');
-    }
-    if (typeof event_time !== 'string') {
-        throw Error('Multiple eventTime elements found!');
-    }
-    if (arrayze(event.eventTimeZoneOffset).length === 0) {
-        throw Error('Missing event_time_zone_offset element for event!');
-    }
-
-    const event_time_zone_offset = event.eventTimeZoneOffset;
-    if (typeof event_time_zone_offset !== 'string') {
-        throw Error('Multiple event_time_zone_offset elements found!');
-    }
-
-    let eventId = `${senderId}:${event_time}Z${event_time_zone_offset}`;
-    if (arrayze(event.baseExtension).length > 0) {
-        const baseExtension_element = event.baseExtension;
-
-        if (arrayze(baseExtension_element.eventID).length === 0) {
-            throw Error('Missing eventID in baseExtension!');
-        }
-        eventId = baseExtension_element.eventID;
-    }
-    return eventId;
-}
-
-function validateSender(sender) {
-    if (sender.EmailAddress) {
-        emailValidation(sender.EmailAddress);
-    }
 }
 
 async function processXML(err, result) {
@@ -395,14 +123,13 @@ async function processXML(err, result) {
             id: senderId,
             uid: senderElement['sbdh:Identifier']._,
         },
-        data: sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
+        data: GS1Helper.sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
         vertex_type: 'SENDER',
     };
-
-    validateSender(sender.data);
+    GS1Helper.validateSender(sender.data);
 
     // Check for vocabularies.
-    const vocabularyElements = arrayze(vocabularyListElement.Vocabulary);
+    const vocabularyElements = GS1Helper.arrayze(vocabularyListElement.Vocabulary);
 
     for (const vocabularyElement of vocabularyElements) {
         switch (vocabularyElement.type) {
@@ -429,19 +156,19 @@ async function processXML(err, result) {
     // Check for events.
     // Types: Transport, Transformation, Observation and Ownership.
 
-    for (const objectEvent of arrayze(eventListElement.ObjectEvent)) {
+    for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
         events.push(objectEvent);
     }
 
     if (eventListElement.AggregationEvent) {
-        for (const aggregationEvent of arrayze(eventListElement.AggregationEvent)) {
+        for (const aggregationEvent of GS1Helper.arrayze(eventListElement.AggregationEvent)) {
             events.push(aggregationEvent);
         }
     }
 
     if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
         for (const transformationEvent of
-            arrayze(eventListElement.extension.TransformationEvent)) {
+            GS1Helper.arrayze(eventListElement.extension.TransformationEvent)) {
             events.push(transformationEvent);
         }
     }
@@ -464,7 +191,7 @@ async function processXML(err, result) {
             object_class_id: objectClassLocationId,
         };
 
-        copyProperties(location.attributes, data);
+        GS1Helper.copyProperties(location.attributes, data);
 
         const locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         locationVertices.push({
@@ -475,8 +202,8 @@ async function processXML(err, result) {
         });
 
         if (location.extension) {
-            const attrs = parseAttributes(arrayze(location.extension.attribute), 'urn:ot:location:');
-            for (const attr of arrayze(attrs)) {
+            const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
+            for (const attr of GS1Helper.arrayze(attrs)) {
                 if (attr.participantId) {
                     location.participant_id = attr.participantId;
 
@@ -527,7 +254,7 @@ async function processXML(err, result) {
             object_class_id: objectClassActorId,
         };
 
-        copyProperties(actor.attributes, data);
+        GS1Helper.copyProperties(actor.attributes, data);
 
         actorsVertices.push({
             _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
@@ -548,7 +275,7 @@ async function processXML(err, result) {
             object_class_id: objectClassProductId,
         };
 
-        copyProperties(product.attributes, data);
+        GS1Helper.copyProperties(product.attributes, data);
 
         productVertices.push({
             _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
@@ -571,7 +298,7 @@ async function processXML(err, result) {
             parent_id: productId,
         };
 
-        copyProperties(batch.attributes, data);
+        GS1Helper.copyProperties(batch.attributes, data);
 
         const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         batchesVertices.push({
@@ -598,21 +325,21 @@ async function processXML(err, result) {
 
     // TODO handle extensions
     for (const event of events) {
-        const eventId = getEventId(senderId, event);
+        const eventId = GS1Helper.getEventId(senderId, event);
 
         const { extension } = event;
 
         let eventCategories;
         if (extension.extension) {
             const eventClass = extension.extension.OTEventClass;
-            eventCategories = arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:events:'));
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:events:'));
         } else {
             const eventClass = extension.OTEventClass;
-            eventCategories = arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:event:'));
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:event:'));
         }
 
         // eslint-disable-next-line
-        await zeroKnowledge(senderId, event, eventId, eventCategories,
+        await GS1Helper.zeroKnowledge(senderId, event, eventId, eventCategories,
             importId, GLOBAL_R, batchesVertices, db,
         );
 
@@ -625,7 +352,7 @@ async function processXML(err, result) {
             object_class_id: getClassId(event),
             categories: eventCategories,
         };
-        copyProperties(event, data);
+        GS1Helper.copyProperties(event, data);
         event.vertex_type = 'EVENT';
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
@@ -635,11 +362,11 @@ async function processXML(err, result) {
                 identifiers.document_id = documentId;
             }
 
-            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
             const isSender = bizStep === 'shipping';
 
             if (extension.extension.sourceList) {
-                const sources = arrayze(extension.extension.sourceList.source._);
+                const sources = GS1Helper.arrayze(extension.extension.sourceList.source._);
                 for (const source of sources) {
                     eventEdges.push({
                         _key: md5(`source_${senderId}_${eventKey}_${source}`),
@@ -678,7 +405,8 @@ async function processXML(err, result) {
             }
 
             if (extension.extension.destinationList) {
-                const destinations = arrayze(extension.extension.destinationList.destination._);
+                const destinations =
+                    GS1Helper.arrayze(extension.extension.destinationList.destination._);
                 for (const destination of destinations) {
                     eventEdges.push({
                         _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
@@ -747,7 +475,7 @@ async function processXML(err, result) {
         }
 
         if (event.inputEPCList) {
-            for (const inputEpc of arrayze(event.inputEPCList.epc)) {
+            for (const inputEpc of GS1Helper.arrayze(event.inputEPCList.epc)) {
                 const batchId = inputEpc;
 
                 eventEdges.push({
@@ -760,7 +488,7 @@ async function processXML(err, result) {
         }
 
         if (event.epcList) {
-            for (const inputEpc of arrayze(event.epcList.epc)) {
+            for (const inputEpc of GS1Helper.arrayze(event.epcList.epc)) {
                 const batchId = inputEpc;
 
                 eventEdges.push({
@@ -779,7 +507,7 @@ async function processXML(err, result) {
         }
 
         if (event.childEPCs) {
-            for (const inputEpc of arrayze(event.childEPCs)) {
+            for (const inputEpc of GS1Helper.arrayze(event.childEPCs)) {
                 const batchId = inputEpc.epc;
 
                 eventEdges.push({
@@ -792,7 +520,7 @@ async function processXML(err, result) {
         }
 
         if (event.outputEPCList) {
-            for (const outputEpc of arrayze(event.outputEPCList.epc)) {
+            for (const outputEpc of GS1Helper.arrayze(event.outputEPCList.epc)) {
                 const batchId = outputEpc;
 
                 eventEdges.push({
@@ -943,7 +671,6 @@ async function parseGS1(gs1XmlFile) {
             },
         ));
 }
-
 
 module.exports = () => ({
     parseGS1,
