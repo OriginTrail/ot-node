@@ -9,7 +9,7 @@
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
             <sbdh:Sender><!-- Mandatory -->
                 <!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-                <sbdh:Identifier Authority="OriginTrail">0x0cC209F9c7c22519C75aBC4444E718b7710d0653</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:actor:id:Company_2</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
                     <sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>    <!-- Optional -->
@@ -43,11 +43,11 @@
                 <VocabularyList>
                     <Vocabulary type="urn:ot:mda:actor">
                         <VocabularyElementList>
-                            <VocabularyElement id="0xE35EBa007791168e0f597614F2b5c5A30cfD1B6B">
+                            <VocabularyElement id="urn:ot:actor:id:Company_1">
                                 <attribute id="urn:ot:actor:person:id:name">Company _1</attribute>
                                 <attribute id="urn:ot:actor:category">Company</attribute>
                             </VocabularyElement>
-                            <VocabularyElement id="0x0cC209F9c7c22519C75aBC4444E718b7710d0653">
+                            <VocabularyElement id="urn:ot:actor:id:Company_2">
                                 <attribute id="urn:ot:actor:person:id:name">Company _2</attribute>
                                 <attribute id="urn:ot:actor:category">Company</attribute>
                             </VocabularyElement>
