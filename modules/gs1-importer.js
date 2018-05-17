@@ -3,39 +3,8 @@ const fs = require('fs');
 const md5 = require('md5');
 const xsd = require('libxml-xsd');
 
-const ZK = require('./ZK');
-
-const zk = new ZK();
-const GSInstance = require('./GraphStorageInstance');
-const validator = require('validator');
-
 const GS1Helper = require('./gs1-helper');
-
-// validate
-function emailValidation(email) {
-    const result = validator.isEmail(email);
-    return !!result;
-}
-
-function copyProperties(from, to) {
-    for (const property in from) {
-        to[property] = from[property];
-    }
-}
-
-function parseAttributes(attributes, ignorePattern) {
-    const output = {};
-    const inputAttributeArray = GS1Helper.arrayze(attributes);
-
-    for (const inputElement of inputAttributeArray) {
-        output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
-    }
-    return output;
-}
-
-function ignorePattern(attribute, ignorePattern) {
-    return attribute.replace(ignorePattern, '');
-}
+const GSInstance = require('./GraphStorageInstance');
 
 function parseLocations(vocabularyElementList) {
     const locations = [];
@@ -49,7 +18,7 @@ function parseLocations(vocabularyElementList) {
         const location = {
             type: 'location',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:location:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
             child_locations: childLocations,
             extension: element.extension,
         };
@@ -70,7 +39,7 @@ function parseActors(vocabularyElementList) {
         const actor = {
             type: 'actor',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
         };
 
         actors.push(actor);
@@ -89,7 +58,7 @@ function parseProducts(vocabularyElementList) {
         const product = {
             type: 'product',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
         };
 
         products.push(product);
@@ -108,191 +77,13 @@ function parseBatches(vocabularyElementList) {
         const batch = {
             type: 'batch',
             id: element.id,
-            attributes: parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
         };
 
         batches.push(batch);
     }
 
     return batches;
-}
-
-/**
- * Zero knowledge processing
- * @param senderId
- * @param event
- * @param eventId
- * @param categories
- * @param importId
- * @param globalR
- * @param batchVertices
- * @return {Promise<void>}
- */
-async function zeroKnowledge(
-    senderId, event, eventId, categories,
-    importId, globalR, batchVertices, db,
-) {
-    let inputQuantities = [];
-    let outputQuantities = [];
-    const { extension } = event;
-    if (categories.includes('Ownership') || categories.includes('Transport') ||
-        categories.includes('Observation')) {
-        const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
-
-        const { quantityList } = extension;
-        if (bizStep === 'shipping') {
-            // sending input
-            if (categories.includes('Ownership')) {
-                outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
-                    }));
-            } else {
-                outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
-                    .map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
-            }
-
-            for (const outputQ of outputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: outputQ.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    inputQuantities.push(quantity);
-                } else {
-                    inputQuantities.push({
-                        added: true,
-                        object: outputQ.object,
-                        quantity: parseInt(outputQ.quantity, 10),
-                    });
-                }
-            }
-        } else {
-            // receiving output
-            if (categories.includes('Ownership')) {
-                inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: globalR,
-                }));
-            } else {
-                inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                }));
-            }
-
-            for (const inputQ of inputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    outputQuantities.push({
-                        object: inputQ.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    });
-                } else {
-                    outputQuantities.push({
-                        added: true,
-                        object: inputQ.object,
-                        quantity: parseInt(inputQ.quantity, 10),
-                    });
-                }
-            }
-        }
-    } else {
-        // Transformation
-        const { inputQuantityList, outputQuantityList } = event;
-        if (inputQuantityList) {
-            const tmpInputQuantities = GS1Helper.arrayze(inputQuantityList.quantityElement)
-                .map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: globalR,
-                }));
-            for (const inputQuantity of tmpInputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: inputQuantity.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    inputQuantities.push(quantity);
-                } else {
-                    inputQuantities.push({
-                        added: true,
-                        object: inputQuantity.object,
-                        quantity: parseInt(inputQuantity.quantity, 10),
-                    });
-                }
-            }
-        }
-        if (outputQuantityList) {
-            const tmpOutputQuantities = GS1Helper.arrayze(outputQuantityList.quantityElement)
-                .map(elem => ({
-                    object: elem.epcClass,
-                    quantity: parseInt(elem.quantity, 10),
-                    r: globalR,
-                }));
-            for (const outputQuantity of tmpOutputQuantities) {
-                // eslint-disable-next-line
-                const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
-                if (vertex) {
-                    const quantities = vertex.data.quantities.private;
-                    const quantity = {
-                        object: outputQuantity.object,
-                        quantity: parseInt(quantities.quantity, 10),
-                        r: quantities.r,
-                    };
-                    outputQuantities.push(quantity);
-                } else {
-                    outputQuantities.push({
-                        added: true,
-                        object: outputQuantity.object,
-                        quantity: parseInt(outputQuantity.quantity, 10),
-                    });
-                }
-            }
-        }
-    }
-    const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-    for (const quantity of quantities.inputs.concat(quantities.outputs)) {
-        if (quantity.added) {
-            delete quantity.added;
-            let batchFound = false;
-            for (const batch of batchVertices) {
-                if (batch.identifiers.uid === quantity.object) {
-                    batchFound = true;
-                    batch.data.quantities = quantity;
-                    batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
-                    break;
-                }
-            }
-            if (!batchFound) {
-                throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
-            }
-        }
-    }
-    event.quantities = quantities;
-}
-
-function validateSender(sender) {
-    if (sender.EmailAddress) {
-        emailValidation(sender.EmailAddress);
-    }
 }
 
 async function processXML(err, result) {
@@ -335,8 +126,7 @@ async function processXML(err, result) {
         data: GS1Helper.sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
         vertex_type: 'SENDER',
     };
-
-    validateSender(sender.data);
+    GS1Helper.validateSender(sender.data);
 
     // Check for vocabularies.
     const vocabularyElements = GS1Helper.arrayze(vocabularyListElement.Vocabulary);
@@ -401,7 +191,7 @@ async function processXML(err, result) {
             object_class_id: objectClassLocationId,
         };
 
-        copyProperties(location.attributes, data);
+        GS1Helper.copyProperties(location.attributes, data);
 
         const locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         locationVertices.push({
@@ -412,7 +202,7 @@ async function processXML(err, result) {
         });
 
         if (location.extension) {
-            const attrs = parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
+            const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
             for (const attr of GS1Helper.arrayze(attrs)) {
                 if (attr.participantId) {
                     location.participant_id = attr.participantId;
@@ -464,7 +254,7 @@ async function processXML(err, result) {
             object_class_id: objectClassActorId,
         };
 
-        copyProperties(actor.attributes, data);
+        GS1Helper.copyProperties(actor.attributes, data);
 
         actorsVertices.push({
             _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
@@ -485,7 +275,7 @@ async function processXML(err, result) {
             object_class_id: objectClassProductId,
         };
 
-        copyProperties(product.attributes, data);
+        GS1Helper.copyProperties(product.attributes, data);
 
         productVertices.push({
             _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
@@ -508,7 +298,7 @@ async function processXML(err, result) {
             parent_id: productId,
         };
 
-        copyProperties(batch.attributes, data);
+        GS1Helper.copyProperties(batch.attributes, data);
 
         const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
         batchesVertices.push({
@@ -542,14 +332,14 @@ async function processXML(err, result) {
         let eventCategories;
         if (extension.extension) {
             const eventClass = extension.extension.OTEventClass;
-            eventCategories = GS1Helper.arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:events:'));
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:events:'));
         } else {
             const eventClass = extension.OTEventClass;
-            eventCategories = GS1Helper.arrayze(eventClass).map(obj => ignorePattern(obj, 'ot:event:'));
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:event:'));
         }
 
         // eslint-disable-next-line
-        await zeroKnowledge(senderId, event, eventId, eventCategories,
+        await GS1Helper.zeroKnowledge(senderId, event, eventId, eventCategories,
             importId, GLOBAL_R, batchesVertices, db,
         );
 
@@ -562,7 +352,7 @@ async function processXML(err, result) {
             object_class_id: getClassId(event),
             categories: eventCategories,
         };
-        copyProperties(event, data);
+        GS1Helper.copyProperties(event, data);
         event.vertex_type = 'EVENT';
 
         const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
@@ -572,7 +362,7 @@ async function processXML(err, result) {
                 identifiers.document_id = documentId;
             }
 
-            const bizStep = ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
             const isSender = bizStep === 'shipping';
 
             if (extension.extension.sourceList) {
@@ -881,7 +671,6 @@ async function parseGS1(gs1XmlFile) {
             },
         ));
 }
-
 
 module.exports = () => ({
     parseGS1,

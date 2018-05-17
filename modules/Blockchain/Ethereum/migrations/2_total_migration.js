@@ -95,7 +95,6 @@ module.exports = (deployer, network, accounts) => {
                     });
             });
         break;
-
     case 'test':
         deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
             .then(() => giveMeTracToken())
@@ -115,7 +114,7 @@ module.exports = (deployer, network, accounts) => {
                                         await escrow.transferOwnership(bidding.address)
                                             .then(async () => {
                                                 await deployer.deploy(TestingUtilities);
-                                                console.log('\n\n \t Contract adressess on ganache (for testing):');
+                                                console.log('\n\n \t Contract adressess on ganache (for testing) BiddingTest:');
                                                 console.log(`\t Token contract address: ${token.address}`);
                                                 console.log(`\t Escrow contract address: ${escrow.address}`);
                                                 console.log(`\t Bidding contract address: ${bidding.address}`);

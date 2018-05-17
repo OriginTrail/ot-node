@@ -1,6 +1,42 @@
+const md5 = require('md5');
 const validator = require('validator');
 
+const ZK = require('./ZK');
+
 class GS1Helper {
+    // validate
+
+    static validateSender(sender) {
+        if (sender.EmailAddress) {
+            GS1Helper.emailValidation(sender.EmailAddress);
+        }
+    }
+
+    static emailValidation(email) {
+        const result = validator.isEmail(email);
+        return !!result;
+    }
+
+    static copyProperties(from, to) {
+        for (const property in from) {
+            to[property] = from[property];
+        }
+    }
+
+    static parseAttributes(attributes, ignorePattern) {
+        const output = {};
+        const inputAttributeArray = GS1Helper.arrayze(attributes);
+
+        for (const inputElement of inputAttributeArray) {
+            output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
+        }
+        return output;
+    }
+
+    static ignorePattern(attribute, ignorePattern) {
+        return attribute.replace(ignorePattern, '');
+    }
+
     static sanitize(old_obj, new_obj, patterns) {
         if (typeof old_obj !== 'object') { return old_obj; }
 
@@ -58,6 +94,179 @@ class GS1Helper {
             eventId = baseExtension_element.eventID;
         }
         return eventId;
+    }
+
+    /**
+     * Zero knowledge processing
+     * @param senderId
+     * @param event
+     * @param eventId
+     * @param categories
+     * @param importId
+     * @param globalR
+     * @param batchVertices
+     * @return {Promise<void>}
+     */
+    static async zeroKnowledge(
+        senderId, event, eventId, categories,
+        importId, globalR, batchVertices, db,
+    ) {
+        let inputQuantities = [];
+        let outputQuantities = [];
+        const { extension } = event;
+        if (categories.includes('Ownership') || categories.includes('Transport') ||
+            categories.includes('Observation')) {
+            const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+
+            const { quantityList } = extension;
+            if (bizStep === 'shipping') {
+                // sending input
+                if (categories.includes('Ownership')) {
+                    outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                            r: globalR,
+                        }));
+                } else {
+                    outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                        }));
+                }
+
+                for (const outputQ of outputQuantities) {
+                    // eslint-disable-next-line
+                    const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
+                    if (vertex) {
+                        const quantities = vertex.data.quantities.private;
+                        const quantity = {
+                            object: outputQ.object,
+                            quantity: parseInt(quantities.quantity, 10),
+                            r: quantities.r,
+                        };
+                        inputQuantities.push(quantity);
+                    } else {
+                        inputQuantities.push({
+                            added: true,
+                            object: outputQ.object,
+                            quantity: parseInt(outputQ.quantity, 10),
+                        });
+                    }
+                }
+            } else {
+                // receiving output
+                if (categories.includes('Ownership')) {
+                    inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
+                    }));
+                } else {
+                    inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                    }));
+                }
+
+                for (const inputQ of inputQuantities) {
+                    // eslint-disable-next-line
+                    const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
+                    if (vertex) {
+                        const quantities = vertex.data.quantities.private;
+                        outputQuantities.push({
+                            object: inputQ.object,
+                            quantity: parseInt(quantities.quantity, 10),
+                            r: quantities.r,
+                        });
+                    } else {
+                        outputQuantities.push({
+                            added: true,
+                            object: inputQ.object,
+                            quantity: parseInt(inputQ.quantity, 10),
+                        });
+                    }
+                }
+            }
+        } else {
+            // Transformation
+            const { inputQuantityList, outputQuantityList } = event;
+            if (inputQuantityList) {
+                const tmpInputQuantities = GS1Helper.arrayze(inputQuantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
+                    }));
+                for (const inputQuantity of tmpInputQuantities) {
+                    // eslint-disable-next-line
+                    const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
+                    if (vertex) {
+                        const quantities = vertex.data.quantities.private;
+                        const quantity = {
+                            object: inputQuantity.object,
+                            quantity: parseInt(quantities.quantity, 10),
+                            r: quantities.r,
+                        };
+                        inputQuantities.push(quantity);
+                    } else {
+                        inputQuantities.push({
+                            added: true,
+                            object: inputQuantity.object,
+                            quantity: parseInt(inputQuantity.quantity, 10),
+                        });
+                    }
+                }
+            }
+            if (outputQuantityList) {
+                const tmpOutputQuantities = GS1Helper.arrayze(outputQuantityList.quantityElement)
+                    .map(elem => ({
+                        object: elem.epcClass,
+                        quantity: parseInt(elem.quantity, 10),
+                        r: globalR,
+                    }));
+                for (const outputQuantity of tmpOutputQuantities) {
+                    // eslint-disable-next-line
+                    const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
+                    if (vertex) {
+                        const quantities = vertex.data.quantities.private;
+                        const quantity = {
+                            object: outputQuantity.object,
+                            quantity: parseInt(quantities.quantity, 10),
+                            r: quantities.r,
+                        };
+                        outputQuantities.push(quantity);
+                    } else {
+                        outputQuantities.push({
+                            added: true,
+                            object: outputQuantity.object,
+                            quantity: parseInt(outputQuantity.quantity, 10),
+                        });
+                    }
+                }
+            }
+        }
+        const zk = new ZK();
+        const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+        for (const quantity of quantities.inputs.concat(quantities.outputs)) {
+            if (quantity.added) {
+                delete quantity.added;
+                let batchFound = false;
+                for (const batch of batchVertices) {
+                    if (batch.identifiers.uid === quantity.object) {
+                        batchFound = true;
+                        batch.data.quantities = quantity;
+                        batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
+                        break;
+                    }
+                }
+                if (!batchFound) {
+                    throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
+                }
+            }
+        }
+        event.quantities = quantities;
     }
 }
 
