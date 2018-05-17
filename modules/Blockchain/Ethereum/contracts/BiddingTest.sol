@@ -100,6 +100,8 @@ contract BiddingTest {
 
 		uint max_escrow_time;
 		uint size_available;
+
+		bool active;
 	}
 
 	struct BidDefinition{
@@ -152,8 +154,8 @@ contract BiddingTest {
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
 
-		require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
-		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size));
+		//require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
+		//profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size));
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		offer[offer_hash].DC_wallet = msg.sender;
@@ -362,6 +364,8 @@ contract BiddingTest {
 
 	function createProfile(bytes32 node_id, uint price, uint stake, uint max_time, uint max_size) public{
 		ProfileDefinition storage this_profile = profile[msg.sender];
+		require(!this_profile.active);
+		this_profile.active = true;
 		this_profile.token_amount = price;
 		this_profile.stake_amount = stake;
 		this_profile.max_escrow_time = max_time;

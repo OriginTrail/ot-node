@@ -174,31 +174,24 @@ class OTNode {
     /**
      * Creates profile on the contract
      */
-    createProfile() {
-        BCInstance.bc.getProfile(config.wallet_address).then(() => {
-            // TODO check whether profile exists or not
-            BCInstance.bc.createProfile(
-                config.identity,
-                config.dh_price,
-                config.dh_stake_factor,
-                config.dh_max_time_mins,
-                config.dh_max_data_size_bytes,
-            ).then(() => {
-                BCInstance.bc.subscribeToEvent('ProfileCreated', null)
-                    .then((event) => {
-                        const nodeId = event.node_id;
-                        if (nodeId.startsWith(`0x${config.identity}`)) {
-                            log.info(`Profile created for node: ${config.identity}`);
-                        }
-                    }).catch((err) => {
-                        console.log(err);
-                    });
-            }).catch((err) => {
-                console.log(err);
-            });
-        }).catch((err) => {
-            console.log(err);
-        });
+    async createProfile() {
+        const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
+        if (profileInfo.active) {
+            log.trace(`Profile has already been created for ${profileInfo.active}`);
+            return;
+        }
+
+        await BCInstance.bc.createProfile(
+            config.identity,
+            config.dh_price,
+            config.dh_stake_factor,
+            config.dh_max_time_mins,
+            config.dh_max_data_size_bytes,
+        );
+        const event = await BCInstance.bc.subscribeToEvent('ProfileCreated', null);
+        if (event.node_id.includes(config.identity)) {
+            log.info(`Profile created for node: ${config.identity}`);
+        }
     }
 
     /**

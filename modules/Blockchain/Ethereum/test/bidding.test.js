@@ -80,102 +80,102 @@ contract('Bidding testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    // it('Should create 10 bidding profiles', async () => {
-    //     const escrow = await EscrowHolder.deployed();
-    //     const bidding = await Bidding.deployed();
-    //     const trace = await TracToken.deployed();
-    //     for (var i = node_id.length - 1; i >= 0; i -= 1) {
-    //         // eslint-disable-next-line no-await-in-loop
-    //         await trace.increaseApproval(bidding_address, 1e23, { from: node_id[i] });
-    //     }
-    //
-    //     const response = await trace.allowance.call(DC_wallet, bidding.address);
-    //     const allowance_DC = response.toNumber();
-    //     console.log(`\t allowance_DC: ${allowance_DC}`);
-    //
-    //     assert.equal(allowance_DC, 100000000, 'The proper amount was not allowed');
-    // });
+    it('Should create 10 bidding profiles', async () => {
+        const escrow = await EscrowHolder.deployed();
+        const bidding = await Bidding.deployed();
+        const trace = await TracToken.deployed();
+        for (var i = node_id.length - 1; i >= 0; i -= 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await trace.increaseApproval(bidding_address, 1e23, { from: node_id[i] });
+        }
+
+        const response = await trace.allowance.call(DC_wallet, bidding.address);
+        const allowance_DC = response.toNumber();
+        console.log(`\t allowance_DC: ${allowance_DC}`);
+
+        assert.equal(allowance_DC, 100000000, 'The proper amount was not allowed');
+    });
 
     // eslint-disable-next-line no-undef
-    // it('Should create escrow offer, with acc[1] and [2] as predetermined', async () => {
-    //     const bidding = await Bidding.deployed();
-    //     const trace = await TracToken.deployed();
-    //     const util = await TestingUtilities.deployed();
-    //
-    //     const predetermined_wallet = [];
-    //     predetermined_wallet.push(accounts[1]);
-    //     predetermined_wallet.push(accounts[2]);
-    //     const predetermined_node_id = [];
-    //     predetermined_node_id.push(node_id[1]);
-    //     predetermined_node_id.push(node_id[2]);
-    //
-    //     // Offer variables
-    //     const total_escrow_time = 60;
-    //     const max_token_amount = 1000e18;
-    //     const min_stake_amount = 10e18;
-    //     const min_reputation = 0;
-    //
-    //     // Data holding parameters
-    //     const data_hash = util.keccakAddressBytes(accounts[6], node_id[6]);
-    //     const data_size = 1;
-    //
-    //     await bidding.createOffer(
-    //         0, // data_id
-    //         node_id[0],
-    //
-    //         total_escrow_time,
-    //         max_token_amount,
-    //         min_stake_amount,
-    //         min_reputation,
-    //
-    //         data_hash,
-    //         data_size,
-    //
-    //         predetermined_wallet,
-    //         predetermined_node_id,
-    //         { from: DC_wallet });// eslint-disable-line function-paren-newline
-    //
-    //     let response = await bidding.createOffer.call(
-    //         0, // data_id
-    //         node_id[0],
-    //         total_escrow_time,
-    //         max_token_amount,
-    //         min_stake_amount,
-    //         min_reputation,
-    //         data_hash,
-    //         data_size,
-    //         predetermined_wallet,
-    //         predetermined_node_id,
-    //     );
-    //     offer_hash = response;
-    //     console.log(`\t offer_hash: ${offer_hash}`);
-    //
-    //     response = await bidding.offer.call(offer_hash);
-    //
-    //     const actual_DC_wallet = response[0];
-    //
-    //     let actual_max_token = response[1];
-    //     actual_max_token = actual_max_token.toNumber();
-    //
-    //     let actual_min_stake = response[2];
-    //     actual_min_stake = actual_min_stake.toNumber();
-    //
-    //     let actual_min_reputation = response[3];
-    //     actual_min_reputation = actual_min_reputation.toNumber();
-    //
-    //     let actual_escrow_time = response[4];
-    //     actual_escrow_time = actual_escrow_time.toNumber();
-    //
-    //     let replication_factor = response[8];
-    //     replication_factor = replication_factor.toNumber();
-    //
-    //     assert.equal(actual_DC_wallet, DC_wallet, 'DC_wallet not matching');
-    //     assert.equal(actual_max_token, max_token_amount, 'max_token_amount not matching');
-    //     assert.equal(actual_min_stake, min_stake_amount, 'min_stake_amount not matching');
-    //     assert.equal(actual_min_reputation, min_reputation, 'min_reputation not matching');
-    //     assert.equal(actual_escrow_time, total_escrow_time, 'total_escrow_time not matching');
-    //     assert.equal(replication_factor, 2, 'replication_factor not matching');
-    // });
+    it('Should create escrow offer, with acc[1] and [2] as predetermined', async () => {
+        const bidding = await Bidding.deployed();
+        const trace = await TracToken.deployed();
+        const util = await TestingUtilities.deployed();
+
+        const predetermined_wallet = [];
+        predetermined_wallet.push(accounts[1]);
+        predetermined_wallet.push(accounts[2]);
+        const predetermined_node_id = [];
+        predetermined_node_id.push(node_id[1]);
+        predetermined_node_id.push(node_id[2]);
+
+        // Offer variables
+        const total_escrow_time = 60;
+        const max_token_amount = 1000e18;
+        const min_stake_amount = 10e18;
+        const min_reputation = 0;
+
+        // Data holding parameters
+        const data_hash = util.keccakAddressBytes(accounts[6], node_id[6]);
+        const data_size = 1;
+
+        await bidding.createOffer(
+            0, // data_id
+            node_id[0],
+
+            total_escrow_time,
+            max_token_amount,
+            min_stake_amount,
+            min_reputation,
+
+            data_hash,
+            data_size,
+
+            predetermined_wallet,
+            predetermined_node_id,
+            { from: DC_wallet });// eslint-disable-line function-paren-newline
+
+        let response = await bidding.createOffer.call(
+            0, // data_id
+            node_id[0],
+            total_escrow_time,
+            max_token_amount,
+            min_stake_amount,
+            min_reputation,
+            data_hash,
+            data_size,
+            predetermined_wallet,
+            predetermined_node_id,
+        );
+        offer_hash = response;
+        console.log(`\t offer_hash: ${offer_hash}`);
+
+        response = await bidding.offer.call(offer_hash);
+
+        const actual_DC_wallet = response[0];
+
+        let actual_max_token = response[1];
+        actual_max_token = actual_max_token.toNumber();
+
+        let actual_min_stake = response[2];
+        actual_min_stake = actual_min_stake.toNumber();
+
+        let actual_min_reputation = response[3];
+        actual_min_reputation = actual_min_reputation.toNumber();
+
+        let actual_escrow_time = response[4];
+        actual_escrow_time = actual_escrow_time.toNumber();
+
+        let replication_factor = response[8];
+        replication_factor = replication_factor.toNumber();
+
+        assert.equal(actual_DC_wallet, DC_wallet, 'DC_wallet not matching');
+        assert.equal(actual_max_token, max_token_amount, 'max_token_amount not matching');
+        assert.equal(actual_min_stake, min_stake_amount, 'min_stake_amount not matching');
+        assert.equal(actual_min_reputation, min_reputation, 'min_reputation not matching');
+        assert.equal(actual_escrow_time, total_escrow_time, 'total_escrow_time not matching');
+        assert.equal(replication_factor, 2, 'replication_factor not matching');
+    });
 
     // createProfile(bytes32 node_id, uint price, uint stake, uint max_time, uint max_size)
     // 0: uint256: token_amount

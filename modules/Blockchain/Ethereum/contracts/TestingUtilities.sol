@@ -23,6 +23,11 @@ contract TestingUtilities{
 		return keccak256(adr, byt);
 	}
 
+	function keccak3(address adr, bytes32 nod_id, uint data_id)
+	public pure returns (bytes32){
+		return keccak256(adr, nod_id, data_id);
+	}
+
 	function getBlockTimestamp()
 	public view returns (uint){
 		return block.timestamp;
