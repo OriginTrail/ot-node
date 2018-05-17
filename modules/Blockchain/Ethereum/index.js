@@ -433,32 +433,6 @@ class Ethereum {
     }
 
     /**
-     * Reveals the bid of the offer
-     * @param dcWallet Wallet of the DC who's offer is
-     * @param dataId Id of the data in the offer
-     * @param nodeId KADemlia ID of bidder
-     * @param tokenAmount Amount of the token
-     * @param stakeAmount Amount of the stake
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    revealBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex) {
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
-        };
-
-        log.warn('Initiating escrow - revealBid');
-        return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'revealBid',
-            [dcWallet,
-                dataId,
-                this._normalizeNodeId(nodeId), tokenAmount, stakeAmount, bidIndex], options,
-        );
-    }
-
-    /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
      * @param dataId ID of data of the bid
      * @returns {Promise<any>}

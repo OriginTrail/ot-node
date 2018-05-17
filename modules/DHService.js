@@ -80,22 +80,6 @@ class DHService {
                     console.log(err);
                 });
 
-            Blockchain.bc.subscribeToEvent('RevealPhaseStarted', dataId)
-                .then((event) => {
-                    log.info(`Reveal phase started for ${dataId}`);
-                    Blockchain.bc.revealBid(
-                        dcWallet, dataId,
-                        config.identity, chosenPrice, stake, bid_index,
-                    )
-                        .then(() => {
-                            log.info(`Bid revealed for import ${dataId} and DC ${dcWallet}`);
-                        }).catch((err) => {
-                            log.warn(`Failed to reveal bid for import ${dataId} and DC ${dcWallet}. ${JSON.stringify(err)}`);
-                        });
-                }).catch((err) => {
-                    console.log(err);
-                });
-
             Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
                 .then((event) => {
                     Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
