@@ -82,12 +82,12 @@ contract BiddingTest {
 		bytes32 data_hash;
 		uint first_bid_index;
 
-		uint required_number_of_bids; 
-		uint256 number_of_bids;
 		uint replication_factor;
 
 		bool active;
 		bool finalized;
+
+		BidDefinition[] bid;
 	}
 
 	struct ProfileDefinition{
@@ -117,7 +117,7 @@ contract BiddingTest {
 		bool chosen;
 	}
 
-	mapping(bytes32 => mapping(uint => BidDefinition)) public bid; // bid[offer_hash][bid_index]
+	//mapping(bytes32 => mapping(uint => BidDefinition)) public bid; // offer[offer_hash].bid[bid_index]
 	mapping(bytes32 => OfferDefinition) public offer; //offer[offer_hash] offer_hash = keccak256(DC_wallet, DC_node_id, nonce)
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
@@ -166,8 +166,6 @@ contract BiddingTest {
 		offer[offer_hash].data_hash = data_hash;
 		offer[offer_hash].data_size = data_size;
 
-		offer[offer_hash].required_number_of_bids = predetermined_DH_wallet.length.mul(3).add(1);
-		offer[offer_hash].number_of_bids = predetermined_DH_wallet.length;
 		offer[offer_hash].replication_factor = predetermined_DH_wallet.length;
 
 		offer[offer_hash].active = true;
@@ -176,12 +174,10 @@ contract BiddingTest {
 		offer[offer_hash].first_bid_index = uint(-1);
 
 		//Writing the predetermined DC into the bid list
-		uint256 i = 0;
-		while( i < predetermined_DH_wallet.length) {
-			bid[offer_hash][i].DH_wallet = predetermined_DH_wallet[i];
-			bid[offer_hash][i].DH_node_id = predetermined_DH_node_id[i];
-			emit AddedPredeterminedBid(offer_hash, predetermined_DH_wallet[i], predetermined_DH_node_id[i], i, total_escrow_time, max_token_amount, min_stake_amount, data_size);
-			i = i + 1;
+		while(offer[offer_hash].bid.length < predetermined_DH_wallet.length) {
+			BidDefinition memory bid_def = BidDefinition(predetermined_DH_wallet[offer[offer_hash].bid.length], predetermined_DH_node_id[offer[offer_hash].bid.length], 0, 0, 0, 0, false, false);
+			offer[offer_hash].bid.push(bid_def);
+			emit AddedPredeterminedBid(offer_hash, bid_def.DH_wallet, bid_def.DH_node_id, offer[offer_hash].bid.length - 1, total_escrow_time, max_token_amount, min_stake_amount, data_size);
 		}
 
 		emit OfferCreated(offer_hash, DC_node_id, total_escrow_time, max_token_amount, min_stake_amount, min_reputation, data_size, data_hash);
@@ -206,7 +202,7 @@ contract BiddingTest {
 		
 		OfferDefinition storage this_offer = offer[offer_hash];
 		ProfileDefinition storage this_DH = profile[msg.sender];
-		BidDefinition storage this_bid = bid[offer_hash][bid_index];
+		BidDefinition storage this_bid = offer[offer_hash].bid[bid_index];
 
 		require(this_bid.DH_wallet == msg.sender && this_bid.DH_node_id == DH_node_id);
 
@@ -239,35 +235,28 @@ contract BiddingTest {
 		require(this_offer.data_size		 <= this_DH.size_available);
 
 		//Create new bid in the list
-		this_bid_index = this_offer.number_of_bids;
-		BidDefinition storage this_bid = bid[offer_hash][this_offer.number_of_bids];
-		this_offer.number_of_bids = this_offer.number_of_bids.add(1);
-		
-		this_bid.DH_wallet = msg.sender;
-		this_bid.DH_node_id = DH_node_id;
+		this_bid_index = this_offer.bid.length;
+		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount * scope, this_DH.stake_amount * scope, 0, 0, true, false);
 
-		this_bid.token_amount = this_DH.token_amount * scope;
-		this_bid.stake_amount = this_DH.stake_amount * scope;
 		// distance = | hash(wallet, node_id) + token_amount - data_hash - stake_amount |
-		this_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(this_bid.token_amount),uint256(this_offer.data_hash).add(this_bid.stake_amount));
-		this_bid.active = true;
+		new_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(new_bid.token_amount),uint256(this_offer.data_hash).add(new_bid.stake_amount));
 
 		//Insert the bid in the proper place in the list
 		uint256 current_index = this_offer.first_bid_index;
 		uint256 previous_index = uint(-1); // trust me, i'm an engineer
-		while(current_index != uint(-1) && bid[offer_hash][current_index].distance <= this_bid.distance){
+		while(current_index != uint(-1) && offer[offer_hash].bid[current_index].distance <= new_bid.distance){
 			previous_index = current_index;
-			current_index = bid[offer_hash][current_index].next_bid;
+			current_index = offer[offer_hash].bid[current_index].next_bid;
 		}
-		this_bid.next_bid = current_index;
+		new_bid.next_bid = current_index;
 		if(previous_index == uint(-1)) this_offer.first_bid_index = this_bid_index;
 		else {
 			// asserts that a DH can only add one offer per node_id
-			assert(bid[offer_hash][previous_index].DH_wallet != msg.sender && bid[offer_hash][previous_index].DH_node_id != DH_node_id);
-			bid[offer_hash][previous_index].next_bid = this_bid_index;
+			assert(offer[offer_hash].bid[previous_index].DH_wallet != msg.sender && offer[offer_hash].bid[previous_index].DH_node_id != DH_node_id);
+			offer[offer_hash].bid[previous_index].next_bid = this_bid_index;
 		}
-		this_offer.number_of_bids = this_offer.number_of_bids.add(1);
-		if(this_offer.number_of_bids >= this_offer.required_number_of_bids) emit FinalizeOfferReady(offer_hash);
+		this_offer.bid.push(new_bid);
+		if(this_offer.bid.length >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(offer_hash);
 
 		emit AddedBid(offer_hash, msg.sender, DH_node_id, this_bid_index);
 		return this_bid_index;
@@ -276,21 +265,21 @@ contract BiddingTest {
 	function getBidIndex(bytes32 offer_hash, bytes32 DH_node_id) public view returns(uint){
 		OfferDefinition storage this_offer = offer[offer_hash];
 		uint256 i = 0;
-		while(i < this_offer.number_of_bids && (bid[offer_hash][i].DH_wallet != msg.sender || bid[offer_hash][i].DH_node_id != DH_node_id)) i = i + 1;
-		if( i == this_offer.number_of_bids) return uint(-1);
+		while(i < this_offer.bid.length && (offer[offer_hash].bid[i].DH_wallet != msg.sender || offer[offer_hash].bid[i].DH_node_id != DH_node_id)) i = i + 1;
+		if( i == this_offer.bid.length) return uint(-1);
 		else return i;
 	}
 
 	function cancelBid(bytes32 offer_hash, uint bid_index)
 	public{
-		require(bid[offer_hash][bid_index].DH_wallet == msg.sender);
-		bid[offer_hash][bid_index].active = false;
+		require(offer[offer_hash].bid[bid_index].DH_wallet == msg.sender);
+		offer[offer_hash].bid[bid_index].active = false;
 	}
 
 	function chooseBids(bytes32 offer_hash) public returns (uint256[] chosen_data_holders){
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && !this_offer.finalized);
-		require(this_offer.required_number_of_bids <= this_offer.number_of_bids);
+		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
 
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
 		
@@ -302,7 +291,7 @@ contract BiddingTest {
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
-			BidDefinition storage chosen_bid = bid[offer_hash][i];
+			BidDefinition storage chosen_bid = offer[offer_hash].bid[i];
 			ProfileDefinition storage chosen_DH = profile[chosen_bid.DH_wallet];				
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && chosen_bid.active && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
@@ -325,12 +314,12 @@ contract BiddingTest {
 		uint256 bid_index = this_offer.first_bid_index;
 		//TODO POkusaj da dopunis do 2N + 1 
 		for(;i < 2 * this_offer.replication_factor + 1 ; i = i + 1) {
-			while(bid_index != uint(-1) && (!bid[offer_hash][bid_index].active || bid[offer_hash][bid_index].chosen)){
-				bid_index = bid[offer_hash][bid_index].next_bid;
+			while(bid_index != uint(-1) && (!offer[offer_hash].bid[bid_index].active || offer[offer_hash].bid[bid_index].chosen)){
+				bid_index = offer[offer_hash].bid[bid_index].next_bid;
 			} 
 			if(bid_index == uint(-1)) break;
 
-			chosen_bid = bid[offer_hash][bid_index];
+			chosen_bid = offer[offer_hash].bid[bid_index];
 			chosen_DH = profile[chosen_bid.DH_wallet];
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
@@ -359,7 +348,7 @@ contract BiddingTest {
 
 
 	function isBidChosen(bytes32 offer_hash, uint bid_index) public constant returns (bool _isBidChosen){
-		return bid[offer_hash][bid_index].chosen;
+		return offer[offer_hash].bid[bid_index].chosen;
 	}
 
 	function getOfferStatus(bytes32 offer_hash) public constant returns (bool isOfferFinal){
@@ -414,7 +403,7 @@ contract BiddingTest {
 		}
 		else{ 
 			amount_to_transfer = profile[msg.sender].balance;
-			profile[msg.sender].balance;
+			profile[msg.sender].balance = 0;
 		}
 		amount = 0;
 		if(amount_to_transfer > 0) token.transfer(msg.sender, amount_to_transfer);
