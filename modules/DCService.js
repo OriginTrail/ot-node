@@ -19,11 +19,11 @@ const minReputation = 0;
  */
 class DCService {
     static createOffer(dataId, rootHash, totalDocuments, vertices) {
-        // Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
-        //     log.info('Fingerprint written on blockchain');
-        // }).catch((e) => {
-        //     console.log('Error: ', e);
-        // });
+        Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
+            log.info('Fingerprint written on blockchain');
+        }).catch((e) => {
+            console.log('Error: ', e);
+        });
 
         const dhWallets = [];
         const dhIds = [];
@@ -70,7 +70,7 @@ class DCService {
                         console.log(err);
                     });
             }).catch((err) => {
-                log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
+                log.warn(`Failed to create offer. ${err}`);
             });
         }).catch((error) => {
             log.error(`Failed to write offer to DB. ${error}`);
