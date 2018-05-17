@@ -25,11 +25,17 @@ class DCService {
         //     console.log('Error: ', e);
         // });
 
-        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const dhWallets = [];
         const dhIds = [];
 
-        // TODO doktor: Go through vertices here to get wallets and IDs.
+        vertices.forEach((vertex) => {
+            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+                dhWallets.push(vertex.data.wallet);
+                dhIds.push(vertex.data.node_id);
+            }
+        });
+
+        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
         Models.offers.create({
             id: dataId,
