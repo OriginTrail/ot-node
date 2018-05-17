@@ -175,7 +175,7 @@ class OTNode {
      * Creates profile on the contract
      */
     createProfile() {
-        BCInstance.bc.getProfile(config.wallet_address).then((res) => {
+        BCInstance.bc.getProfile(config.wallet_address).then(() => {
             // TODO check whether profile exists or not
             BCInstance.bc.createProfile(
                 config.identity,
@@ -183,11 +183,13 @@ class OTNode {
                 config.dh_stake_factor,
                 config.dh_max_time_mins,
                 config.dh_max_data_size_bytes,
-            ).then((res) => {
-                BCInstance.bc.subscribeToEvent('ProfileCreated')
+            ).then(() => {
+                BCInstance.bc.subscribeToEvent('ProfileCreated', null)
                     .then((event) => {
-                        // TODO filter event
-                        log.info(`Profile created for node: ${config.identity}`);
+                        const nodeId = event.node_id;
+                        if (nodeId.startsWith(`0x${config.identity}`)) {
+                            log.info(`Profile created for node: ${config.identity}`);
+                        }
                     }).catch((err) => {
                         console.log(err);
                     });
