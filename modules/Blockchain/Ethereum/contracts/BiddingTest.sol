@@ -145,9 +145,9 @@ contract BiddingTest {
 
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
-	public returns (bool offerCreated){
+	public returns (bytes32 offer_hash){
 
-		bytes32 offer_hash = keccak256(msg.sender, DC_node_id, data_id);
+		offer_hash = keccak256(msg.sender, DC_node_id, data_id);
 
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
@@ -181,7 +181,6 @@ contract BiddingTest {
 		}
 
 		emit OfferCreated(offer_hash, DC_node_id, total_escrow_time, max_token_amount, min_stake_amount, min_reputation, data_size, data_hash);
-		return true;
 	}
 
 	//TODO Decide when and under which conditions DC can cancel an offer
