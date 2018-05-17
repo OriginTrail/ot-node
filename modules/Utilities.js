@@ -12,6 +12,7 @@ const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
+const BN = require('bn.js');
 
 require('dotenv').config();
 
@@ -453,7 +454,9 @@ class Utilities {
 
         for (const index in keys) {
             const key = keys[index];
-            if (typeof object[key] === 'object' && !(object[key] instanceof Array)) {
+            if (typeof object[key] === 'object' &&
+                !(object[key] instanceof Array) &&
+                !(object[key] instanceof BN)) {
                 sortedObj[key] = this.sortObject(object[key]);
             } else {
                 sortedObj[key] = object[key];
