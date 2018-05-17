@@ -42,10 +42,14 @@
 							<VocabularyElement id="urn:ot:actor:id:Company_1">
 								<attribute id="urn:ot:actor:person:id:name">Company _1</attribute>
 								<attribute id="urn:ot:actor:category">Company</attribute>
+                                <attribute id="urn:ot:actor:wallet">0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE</attribute>
+                                <attribute id="urn:ot:actor:node_id">f69cab041fe493065f77c893592316fad42330cc</attribute>
 						    </VocabularyElement>													
 						    <VocabularyElement id="urn:ot:actor:id:Company_2">
 								<attribute id="urn:ot:actor:person:id:name">Company _2</attribute>
 								<attribute id="urn:ot:actor:category">Company</attribute>
+                                <attribute id="urn:ot:actor:wallet">0xE1E9c5379C5df627a8De3a951fA493028394A050</attribute>
+                                <attribute id="urn:ot:actor:node_id">e6e0f07f313aff380b17e8983c55933dae064928</attribute>
 						    </VocabularyElement>													
 						</VocabularyElementList>				
 					</Vocabulary>		
