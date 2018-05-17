@@ -356,7 +356,7 @@ contract BiddingTest {
 		return offer[offer_hash].finalized;
 	}
 
-	/*    ----------------------------- DH PROFILE -----------------------------    */
+	/*    ----------------------------- PROFILE -----------------------------    */
 
 	event ProfileCreated(address wallet, bytes32 node_id);
 	event BalanceModified(address wallet, uint new_balance);
