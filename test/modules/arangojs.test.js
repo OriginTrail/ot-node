@@ -21,7 +21,6 @@ const oneMoreImportValue = 2520345639;
 
 let systemDb;
 let testDb;
-let db;
 
 describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
@@ -41,21 +40,19 @@ describe('Arangojs module ', async () => {
         testDb = new ArangoJs(myUserName, myPassword, myDatabaseName, '127.0.0.1', '8529');
     });
 
-    afterEach('drop ot_vertices and ot_edges', async () => {
+    afterEach('drop ot_vertices and ot_edges collections', async () => {
         try {
             const myDocumentCollection = testDb.db.collection(documentCollectionName);
             await myDocumentCollection.drop();
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.debug('There was no doc collection to drop, but that\'s OK.');
+            // this means there was no collection to drop, all good, move on
         }
 
         try {
             const myEdgeCollection = testDb.db.collection(edgeCollectionName);
             await myEdgeCollection.drop();
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.debug('There was no edge collection to drop, but that\'s OK.');
+            // this means there was no collection to drop, all good, move on
         }
     });
 
@@ -165,7 +162,7 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
-    it('trying to add same document again should result in the same vertex', async () => {
+    it('trying to add same vertex again should give result with the same vertex', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -175,6 +172,9 @@ describe('Arangojs module ', async () => {
     });
 
     it('trying to add null document', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
         try {
             await testDb.addVertex(null);
         } catch (error) {
@@ -248,15 +248,6 @@ describe('Arangojs module ', async () => {
                 assert.deepEqual(response._key, vertexOne._key);
                 assert.deepEqual(response.data, vertexOne.data);
             });
-    });
-
-    // TODO where is non existing db?
-    it.skip('attempt to getDocument on non existing db should fail', async () => {
-        try {
-            await testDb.getDocument(documentCollectionName, vertexOne._key);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
     });
 
     it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
@@ -384,26 +375,28 @@ describe('Arangojs module ', async () => {
         });
     });
 
+    it('findEdgesByImportId() with valid string importId value', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
+        await testDb.findEdgesByImportId(edgeOne.imports[0].toString()).then((response) => {
+            assert.deepEqual(response[0]._key, edgeOne._key);
+            assert.deepEqual(response[0].edge_type, edgeOne.edge_type);
+            assert.deepEqual(response[0].data_provider, edgeOne.data_provider);
+            assert.deepEqual(response[0].imports, edgeOne.imports);
+            assert.deepEqual(response[0]._from, edgeOne._from);
+            assert.deepEqual(response[0]._to, edgeOne._to);
+            assert.deepEqual(response[0].sender_id, edgeOne.sender_id);
+        });
+    });
+
     it('.findVertices() with empty query should fail', async () => {
         try {
             await testDb.findVertices();
         } catch (error) {
             // Utilities.isEmptyObject() will complain
             assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
-        }
-    });
-
-    // TODO how come we are not connected here?
-    it.skip('.findVertices() when still not connected to graph db should fail', async () => {
-        const queryObject = {
-            uid: '123',
-            vertex_type: 'BATCH',
-        };
-        try {
-            const result = await testDb.findVertices(queryObject);
-        } catch (error) {
-            console.log(error);
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
         }
     });
 
@@ -486,6 +479,7 @@ describe('Arangojs module ', async () => {
         expect(response).to.include.all.keys('_id', '_key', '_rev');
         expect(dummyVertex).to.have.property('version', 1);
     });
+
     it('should increase version to already versioned vertex', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
