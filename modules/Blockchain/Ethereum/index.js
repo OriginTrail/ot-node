@@ -361,19 +361,25 @@ class Ethereum {
     subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
+                const where = {
+                    event,
+                    finished: 0,
+                };
+                if (dataId) {
+                    where.dataId = dataId;
+                }
                 Storage.models.events.findOne({
-                    where: {
-                        event,
-                        dataId,
-                        finished: null,
-                    },
+                    where,
                 }).then((eventData) => {
                     if (eventData) {
                         globalEmitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
-                        eventData.save();
-                        clearInterval(token);
-                        resolve(JSON.parse(eventData.dataValues.data));
+                        eventData.save().then(() => {
+                            clearInterval(token);
+                            resolve(JSON.parse(eventData.dataValues.data));
+                        }).catch((err) => {
+                            log.error(`Failed to update event ${event}. ${err}`);
+                        });
                     }
                 });
             }, 2000);

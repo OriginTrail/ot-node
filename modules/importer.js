@@ -93,9 +93,9 @@ module.exports = () => {
 
                 log.info('[DC] Import complete');
 
-                const { vertices } = result.vertices;
-                const { edges } = result.edges;
-                const data_id = result.import_id;
+                const { vertices } = result;
+                const { edges } = result;
+                const { import_id } = result;
 
                 const leaves = [];
                 const hash_pairs = [];
@@ -117,10 +117,10 @@ module.exports = () => {
                 const tree = new Mtree(hash_pairs);
                 const root_hash = utilities.sha3(tree.root());
 
-                log.info(`Import id: ${data_id}`);
+                log.info(`Import id: ${import_id}`);
                 log.info(`Import hash: ${root_hash}`);
                 return {
-                    data_id,
+                    data_id: import_id,
                     root_hash,
                     total_documents: hash_pairs.length,
                     vertices,
