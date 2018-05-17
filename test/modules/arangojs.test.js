@@ -27,6 +27,13 @@ describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
+
+        // Drop test database if exist.
+        const listOfDatabases = await systemDb.listDatabases();
+        if (listOfDatabases.includes(myDatabaseName)) {
+            await systemDb.dropDatabase(myDatabaseName);
+        }
+
         await systemDb.createDatabase(
             myDatabaseName,
             [{ username: myUserName, passwd: myPassword, active: true }],
@@ -38,12 +45,12 @@ describe('Arangojs module ', async () => {
         assert(testDb.identify(), 'ArangoJS');
     });
 
-    it('should see one system and one custom database', async () => {
+    it('should see at least one system and one custom database', async () => {
         expect(testDb.db.name).to.be.equal('testDb');
         expect(systemDb).to.be.an.instanceof(Database);
         const listOfDatabases = await testDb.db.listDatabases();
-        assert.equal(listOfDatabases[0], '_system');
-        assert.equal(listOfDatabases[1], 'testDb');
+        assert.isTrue(listOfDatabases.includes('_system'));
+        assert.isTrue(listOfDatabases.includes('testDb'));
     });
 
     it('.runQuery() should give back result', async () => {
@@ -118,10 +125,9 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.addDocument() should save vertex in Document Collection', () => {
-        testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
+    it('.addDocument() should save vertex in Document Collection', async () => {
+        const response = await testDb.addVertex(vertexOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
     });
 
     it('now lets check that we\'ve really saved vertex data', async () => {
@@ -139,24 +145,22 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
-    it('trying to add same document again should resut in double insert', () => {
-        testDb.addDocument(documentCollectionName, vertexOne).then((response) => {
-            assert.equal(response, 'Double insert');
-        });
+    it('trying to add same document again should result in the same vertex', async () => {
+        const response = await testDb.addVertex(vertexOne);
+        assert.equal(response._key, vertexOne._key);
     });
 
     it('trying to add null document', async () => {
         try {
-            await testDb.addDocument(documentCollectionName, null);
+            await testDb.addVertex(null);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('ArangoError: invalid document type') >= 0);
         }
     });
 
-    it('.addDocument() should save edge in Edge Document Collection', () => {
-        testDb.addDocument(edgeCollectionName, edgeOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
+    it('.addDocument() should save edge in Edge Document Collection', async () => {
+        const response = await testDb.addEdge(edgeOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
     });
 
     it('now lets check that we\'ve saved edge correctly', async () => {
@@ -174,19 +178,33 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
     });
 
-    it('updateDocumentImports() should add/append data', async () => {
+    it('updateImports() should add/append data', async () => {
         // this will implicitly call testDb.updateDocument()
-        await testDb.updateDocumentImports(
+        await testDb.updateImports(
             edgeCollectionName,
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
+        ).then((response) => {
+            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        });
+
+        // check value of imports
+        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+            assert.include(response.imports, newImportValue);
+        });
+
+        // this will implicitly call testDb.updateDocument()
+        await testDb.updateImports(
+            edgeCollectionName,
+            // eslint-disable-next-line no-underscore-dangle
+            edgeOne._key, newImportValue + 1,
         ).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
         });
 
         // check value of imports
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
-            assert.include(response.imports, newImportValue);
+            assert.include(response.imports, newImportValue + 1);
         });
     });
 
@@ -243,14 +261,14 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('updateDocumentImports() should add/append data', async () => {
+    it('updateImports() should add/append data', async () => {
         // this will implicitly call testDb.updateDocument()
-        await testDb.updateDocumentImports(
+        await testDb.updateImports(
             edgeCollectionName,
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
 
         // check value of imports
@@ -281,8 +299,8 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('getVerticesByImportId() ', async () => {
-        await testDb.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+    it('findVerticesByImportId() ', async () => {
+        await testDb.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
@@ -292,8 +310,8 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('getVerticesByImportId() with valid string importId value ', async () => {
-        await testDb.getVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
+    it('findVerticesByImportId() with valid string importId value ', async () => {
+        await testDb.findVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
@@ -360,6 +378,106 @@ describe('Arangojs module ', async () => {
         } catch (error) {
             assert.equal(error.code, 404);
         }
+    });
+
+    it('findEvent', async () => {
+        const response = await testDb.findEvent('senderID', 'a', '1000', 'bizTest');
+        assert.deepEqual(response[0].data, vertexOne.data);
+        assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+        assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+        assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+        assert.deepEqual(response[0].imports, vertexOne.imports);
+        assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        assert.deepEqual(response[0].sender_id, vertexOne.sender_id);
+        assert.deepEqual(response[0].partner_id, vertexOne.partner_id);
+    });
+
+    describe('Vertex versioning', () => {
+        it('should add version to identified vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey',
+                identifiers: {
+                    id: 'dummyId',
+                    uid: 'dummyUid',
+                },
+                sender_id: 'dummySenderId',
+            };
+            const response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+        });
+        it('should increase version to already versioned vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey2',
+                identifiers: {
+                    id: 'dummyId2',
+                    uid: 'dummyUid2',
+                },
+                sender_id: 'dummySenderId2',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+
+            // Change key
+            dummyVertex._key = 'dummyChangedKey';
+
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 2);
+        });
+
+        it('should leave version as is to already versioned vertex', async () => {
+            const dummyVertex = {
+                _key: 'dummyKey3',
+                identifiers: {
+                    id: 'dummyId3',
+                    uid: 'dummyUid3',
+                },
+                sender_id: 'dummySenderId3',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.have.property('version', 1);
+        });
+
+        it('should ignore version for vertices without sender ID and UID', async () => {
+            let dummyVertex = {
+                _key: 'dummyKey4',
+                identifiers: {
+                    id: 'dummyId4',
+                },
+                sender_id: 'dummySenderId4',
+            };
+            let response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+
+            dummyVertex = {
+                _key: 'dummyKey5',
+                identifiers: {
+                    id: 'dummyId5',
+                    uid: 'dummyUid5',
+                },
+            };
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+
+            dummyVertex = {
+                _key: 'dummyKey6',
+                identifiers: {
+                    id: 'dummyId6',
+                },
+            };
+            response = await testDb.addVertex(dummyVertex);
+            expect(response).to.include.all.keys('_id', '_key', '_rev');
+            expect(dummyVertex).to.not.have.property('version');
+        });
     });
 
     after('drop testDb db', async () => {

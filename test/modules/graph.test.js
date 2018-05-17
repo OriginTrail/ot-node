@@ -1,29 +1,20 @@
 const {
-    describe, it, afterEach, beforeEach, before, after,
+    describe, it, before, after,
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
 const Graph = require('../../modules/Graph');
 const GraphInstance = require('../../modules/GraphInstance');
-var models = require('../../models');
+const models = require('../../models');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 const Storage = require('../../modules/Storage');
 const Utilities = require('../../modules/Utilities');
-// eslint-disable-next-line  prefer-destructuring
-const Database = require('arangojs').Database;
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GSInstance = require('../../modules/GraphStorageInstance');
-const databaseData = require('./test_data/database-data.js');
 const deasync = require('deasync-promise');
 
-const myUserName = 'otuser';
-const myPassword = 'otpass';
-const myDatabaseName = 'test_graph';
-
-
 let selectedDatabase;
-let systemDb;
 
 describe('graph module ', () => {
     before('loadSelectedDatabaseInfo() and init GraphStorage', async () => {
@@ -32,22 +23,11 @@ describe('graph module ', () => {
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
 
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.createDatabase(
-            myDatabaseName,
-            [{ username: myUserName, passwd: myPassword, active: true }],
-        );
-        selectedDatabase.database = myDatabaseName;
-
         GSInstance.db = new GraphStorage(selectedDatabase);
         GraphInstance.g = new Graph();
     });
 
     after('drop myDatabaseName db', async () => {
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.dropDatabase(myDatabaseName);
     });
 
     // TODO reenable with fix of .skipped tests
@@ -174,7 +154,7 @@ describe('graph module ', () => {
                 identifiers: {
                     uid: 4444,
                 },
-                outbound: [{ to: 3, edge_type: 'TRANSACTION_CONNECTION' }],
+                outbound: [{ to: 3, edge_type: 'EVENT_CONNECTION', transaction_flow: 'INPUT' }],
             },
             5: {
                 identifiers: {
@@ -183,7 +163,7 @@ describe('graph module ', () => {
             },
         };
         const traversal = Graph.bfs(test_raw_graph, 1111, true);
-        assert.equal(traversal.length, 5);
+        assert.equal(traversal.length, 6);
         assert.deepEqual(traversal, [
             {
                 identifiers: {
@@ -202,7 +182,19 @@ describe('graph module ', () => {
                 identifiers: {
                     uid: 4444,
                 },
-                outbound: [{ to: 3, edge_type: 'TRANSACTION_CONNECTION' }],
+                outbound: [
+                    {
+                        edge_type: 'EVENT_CONNECTION',
+                        to: 3,
+                        transaction_flow: 'INPUT',
+                    },
+                ],
+            },
+            {
+                identifiers: {
+                    uid: 3333,
+                },
+                vertex_type: 'BATCH',
             },
         ]);
     });
