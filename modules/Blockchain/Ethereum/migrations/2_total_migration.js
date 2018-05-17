@@ -106,7 +106,7 @@ module.exports = (deployer, network, accounts) => {
                     .then(async (result) => {
                         escrow = result;
                         // eslint-disable-next-line max-len
-                        await deployer.deploy(Bidding, token.address, escrow.address)
+                        await deployer.deploy(Bidding, token.address, escrow.address, { gas: 8000000 })
                             .then(() => giveMeBidding())
                             .then(async (result) => {
                                 bidding = result;
