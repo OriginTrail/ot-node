@@ -188,23 +188,6 @@ class Blockchain {
     }
 
     /**
-     * Reveals the bid of the offer
-     * @param dcWallet Wallet of the DC who's offer is
-     * @param dataId Id of the data in the offer
-     * @param nodeId KADemlia ID of bidder
-     * @param tokenAmount Amount of the token
-     * @param stakeAmount Amount of the stake
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    revealBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex) {
-        return this.blockchain.revealBid(
-            dcWallet, dataId, nodeId,
-            tokenAmount, stakeAmount, bidIndex,
-        );
-    }
-
-    /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
      * @param dataId ID of data of the bid
      * @returns {Promise<any>} Array of bid indices of chosen ones.
