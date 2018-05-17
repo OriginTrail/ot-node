@@ -169,7 +169,7 @@ class OTNode {
                 config.dh_max_time_mins,
                 config.dh_max_data_size_bytes,
             ).then((res) => {
-                Blockchain.bc.subscribeToEvent('ProfileCreated')
+                BCInstance.bc.subscribeToEvent('ProfileCreated')
                     .then((event) => {
                         // TODO filter event
                         log.info(`Profile created for node: ${config.identity}`);

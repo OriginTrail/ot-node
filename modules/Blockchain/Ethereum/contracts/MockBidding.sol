@@ -206,12 +206,15 @@ contract MockBidding {
 		return bid[offer_hash][bid_index].chosen;
 	}
 
-	function createProfile(uint price, uint stake, uint max_time, uint max_size) public{
+	event ProfileCreated(address wallet, bytes32 node_id);
+
+	function createProfile(bytes32 node_id, uint price, uint stake, uint max_time, uint max_size) public{
 		ProfileDefinition storage this_DH = profile[msg.sender];
 		this_DH.token_amount = price;
 		this_DH.stake_amount = stake;
 		this_DH.max_escrow_time = max_time;
 		this_DH.size_available = max_size;
+		emit ProfileCreated(msg.sender, node_id);
 	}
 	function setPrice(uint new_price) public {
 		profile[msg.sender].token_amount = new_price;
