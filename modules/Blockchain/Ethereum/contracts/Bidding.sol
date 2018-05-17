@@ -44,7 +44,7 @@ contract EscrowHolder {
 	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount,uint stake_amount, uint total_time) public;
 }
 
-contract Bidding {
+contract Biddding {
 	using SafeMath for uint256;
 
 	ERC20 public token;
@@ -55,7 +55,7 @@ contract Bidding {
 		_;
 	}
 	
-	function Bidding(address tokenAddress, address escrowAddress)
+	function Biddding(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);

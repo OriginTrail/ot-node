@@ -95,7 +95,7 @@ module.exports = (deployer, network, accounts) => {
                     });
             });
         break;
-    case 'test1':
+    case 'test':
         deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
             .then(() => giveMeTracToken())
             .then(async (result) => {
@@ -115,35 +115,6 @@ module.exports = (deployer, network, accounts) => {
                                             .then(async () => {
                                                 await deployer.deploy(TestingUtilities);
                                                 console.log('\n\n \t Contract adressess on ganache (for testing) BiddingTest:');
-                                                console.log(`\t Token contract address: ${token.address}`);
-                                                console.log(`\t Escrow contract address: ${escrow.address}`);
-                                                console.log(`\t Bidding contract address: ${bidding.address}`);
-                                            });
-                                    });
-                            });
-                    });
-            });
-        break;
-    case 'test2':
-        deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
-            .then(() => giveMeTracToken())
-            .then(async (result) => {
-                token = result;
-                await deployer.deploy(EscrowHolder, token.address)
-                    .then(() => giveMeEscrowHolder())
-                    .then(async (result) => {
-                        escrow = result;
-                        // eslint-disable-next-line max-len
-                        await deployer.deploy(Bidding, token.address, escrow.address, { gas: 8000000 })
-                            .then(() => giveMeBidding())
-                            .then(async (result) => {
-                                bidding = result;
-                                await escrow.setBidding(bidding.address)
-                                    .then(async () => {
-                                        await escrow.transferOwnership(bidding.address)
-                                            .then(async () => {
-                                                await deployer.deploy(TestingUtilities);
-                                                console.log('\n\n \t Contract adressess on ganache (for testing) Bidding:');
                                                 console.log(`\t Token contract address: ${token.address}`);
                                                 console.log(`\t Escrow contract address: ${escrow.address}`);
                                                 console.log(`\t Bidding contract address: ${bidding.address}`);

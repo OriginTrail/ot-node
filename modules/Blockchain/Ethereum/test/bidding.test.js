@@ -75,7 +75,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`node_id ${i} : ${node_id[i]}`);
         }
     });
-    
+
     // eslint-disable-next-line no-undef
     it('Should ceate 10 bidding profiles', async () => {
         const escrow = await EscrowHolder.deployed();
@@ -96,13 +96,13 @@ contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should create an Escrow, lasting 20 blocks, valued 100000000 trace', async () => {
         const instance = await EscrowHolder.deployed();
-        const util = await TestUtils.deployed();
+        const util = await TestingUtilities.deployed();
 
         let response = await util.getBlockNumber.call();
 
         await instance.initiateEscrow(
             DC_wallet,
-            DH_wallet,
+            accounts[1],
             data_id,
             100000000,
             100000000,
@@ -112,7 +112,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t Initiate escrow - Gas used : ${result.receipt.gasUsed}`);
         });
 
-        response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
+        response = await instance.escrow.call(DC_wallet, accounts[1], data_id);
 
 
         let token_amount = response[0];
@@ -185,7 +185,7 @@ contract('Bidding testing', async (accounts) => {
                 3 * 100000000,
                 100000000,
                 escrowDuration,
-                { from: DH_wallet },
+                { from: accounts[1] },
             ).then((result) => {
                 console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
             });
@@ -202,9 +202,9 @@ contract('Bidding testing', async (accounts) => {
         const escrowInstance = await EscrowHolder.deployed();
         const tokenInstance = await TracToken.deployed();
 
-        await tokenInstance.increaseApproval(escrow_address, 100000000, { from: DH_wallet });
+        await tokenInstance.increaseApproval(escrow_address, 100000000, { from: accounts[1] });
 
-        const response = await tokenInstance.allowance.call(DH_wallet, escrowInstance.address);
+        const response = await tokenInstance.allowance.call(accounts[1], escrowInstance.address);
         const allowance_DH = response.toNumber();
         console.log(`\t allowance_DH: ${allowance_DH}`);
 
@@ -217,12 +217,12 @@ contract('Bidding testing', async (accounts) => {
 
         await instance.verifyEscrow(
             DC_wallet, data_id, 100000000, 100000000, escrowDuration,
-            { from: DH_wallet },
+            { from: accounts[1] },
         ).then((result) => {
             console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
         });
 
-        const response = await instance.escrow.call(DC_wallet, DH_wallet, data_id);
+        const response = await instance.escrow.call(DC_wallet, accounts[1], data_id);
         let status = response[6];
         status = status.toNumber();
         switch (status) {
@@ -246,5 +246,4 @@ contract('Bidding testing', async (accounts) => {
         console.log(`\t Status: ${status}`);
         assert.equal(status, 'verified', "Escrow wasn't verified");
     });
-    */
 });
