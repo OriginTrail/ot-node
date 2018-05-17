@@ -120,7 +120,7 @@ contract('Bidding testing', async (accounts) => {
         // Data holding parameters
         const data_hash = await util.keccakAddressBytes.call(accounts[6], node_id[6]);
         const data_size = 1;
-        console.log(`Data hash ${data_hash}`);
+        console.log(`\t Data hash ${data_hash}`);
 
         offer_hash = await util.keccak3(accounts[0], node_id[0], data_id);
         console.log(`\t offer_hash: ${offer_hash}`);
@@ -144,27 +144,29 @@ contract('Bidding testing', async (accounts) => {
         response = await bidding.offer.call(offer_hash);
 
         const actual_DC_wallet = response[0];
-        console.log(`DC_wallet: ${actual_DC_wallet}`);
+        console.log(`\t DC_wallet: ${actual_DC_wallet}`);
 
         let actual_max_token = response[1];
         actual_max_token = actual_max_token.toNumber();
-        console.log(`actual_max_token: ${actual_max_token}`);
+        console.log(`\t actual_max_token: ${actual_max_token}`);
 
         let actual_min_stake = response[2];
         actual_min_stake = actual_min_stake.toNumber();
-        console.log(`actual_min_stake: ${actual_min_stake}`);
+        console.log(`\t actual_min_stake: ${actual_min_stake}`);
 
         let actual_min_reputation = response[3];
         actual_min_reputation = actual_min_reputation.toNumber();
-        console.log(`actual_min_reputation: ${actual_min_reputation}`);
+        console.log(`\t actual_min_reputation: ${actual_min_reputation}`);
 
         let actual_escrow_time = response[4];
         actual_escrow_time = actual_escrow_time.toNumber();
-        console.log(`actual_escrow_time: ${actual_escrow_time}`);
+        console.log(`\t actual_escrow_time: ${actual_escrow_time}`);
 
         let replication_factor = response[8];
         replication_factor = replication_factor.toNumber();
-        console.log(`replication_factor: ${replication_factor}`);
+        console.log(`\t replication_factor: ${replication_factor}`);
+
+        console.log('\n\nUKLJUCI UZIMANJE TOKENA NA SC KADA SE UBACI DEPOSIT TOKEN\n\n');
 
         assert.equal(actual_DC_wallet, DC_wallet, 'DC_wallet not matching');
         assert.equal(actual_max_token, max_token_amount, 'max_token_amount not matching');
@@ -174,25 +176,55 @@ contract('Bidding testing', async (accounts) => {
         assert.equal(replication_factor, 2, 'replication_factor not matching');
     });
 
-    // eslint-disable-next-line no-undef
-    it('Should try to get a bid', async () => {
-        const bidding = await Bidding.deployed();
-        const trace = await TracToken.deployed();
-        const util = await TestingUtilities.deployed();
+    // // eslint-disable-next-line no-undef
+    // it('Should try to get a bid', async () => {
+    //     const bidding = await Bidding.deployed();
+    //     const trace = await TracToken.deployed();
+    //     const util = await TestingUtilities.deployed();
 
-        const response = await bidding.offer.call(offer_hash);
-        console.log(`response: ${response}`);
+    //     const response = await bidding.offer.call(offer_hash);
+    //     console.log(`response: ${response}`);
+    // });
+
+    // eslint-disable-next-line no-undef
+    it('Should get a bid index of accounts[2]', async () => {
+        const bidding = await Bidding.deployed();
+
+        var actual_index =
+        await bidding.getBidIndex(offer_hash, node_id[2], { from: accounts[2] });
+        actual_index = actual_index.toNumber();
+
+        assert.equal(actual_index, 1, 'Bid index not equal 1');
     });
 
-    // eslint-disable-next-line no-undef
-    it('Should activate predetermined bid for acc[2]', async () => {
-        const bidding = await Bidding.deployed();
-        const trace = await TracToken.deployed();
-        const util = await TestingUtilities.deployed();
+    // TODO Ovo ukljuci kada se naprave profili
+    // // eslint-disable-next-line no-undef
+    // it('Should activate predetermined bid for acc[2]', async () => {
+    //     const bidding = await Bidding.deployed();
+    //     const trace = await TracToken.deployed();
+    //     const util = await TestingUtilities.deployed();
 
-        await bidding.activatePredeterminedBid(offer_hash, node_id[2], 1, { from: accounts[2] });
-    });
+    //     await bidding.activatePredeterminedBid(offer_hash, node_id[2], 1, { from: accounts[2] });
+    // });
 
+    // TODO I ovo ukljuvi kada se naprave profili i doda deposit token
+    // // eslint-disable-next-line no-undef
+    // it('Should add 7 more bids', async () => {
+    //     const bidding = await Bidding.deployed();
+    //     const util = await TestingUtilities.deployed();
+
+    //     for (var i = 3; i < 10; i += 1) {
+    //         console.log('\n\nUKLJUCI UZIMANJE TOKENA NA SC KADA SE UBACI DEPOSIT TOKEN\n\n');
+    //         // eslint-disable-next-line no-await-in-loop
+    //         await bidding.addBid(offer_hash, node_id[i], { from: accounts[i] });
+    //     }
+
+    //     var response = await bidding.offer.call(offer_hash);
+    //     const first_bid_index = response.toNumber();
+    //     console.log(`first_bid_index =  ${first_bid_index}`);
+
+    //     assert.equal(first_bid_index, 5, 'Something wrong');
+    // });
 /*
     // eslint-disable-next-line no-undef
     it('Should create an Escrow, lasting 20 blocks, valued 100000000 trace', async () => {
