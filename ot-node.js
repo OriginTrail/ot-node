@@ -3,14 +3,11 @@ const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
-const SystemStorage = require('./modules/Database/SystemStorage');
 const Blockchain = require('./modules/Blockchain');
-const deasync = require('deasync-promise');
 const globalEvents = require('./modules/GlobalEvents');
-const MerkleTree = require('./modules/Merkle');
 const restify = require('restify');
 const fs = require('fs');
-var models = require('./models');
+const models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
 const RemoteControl = require('./modules/RemoteControl');
@@ -22,7 +19,7 @@ const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
 require('./modules/EventHandlers');
 
-var pjson = require('./package.json');
+const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
 const { globalEmitter } = globalEvents;
@@ -39,10 +36,10 @@ class OTNode {
     /**
      * OriginTrail node system bootstrap function
      */
-    bootstrap() {
+    async bootstrap() {
         try {
             // check if all dependencies are installed
-            deasync(Utilities.checkInstalledDependencies());
+            await Utilities.checkInstalledDependencies();
             log.info('npm modules dependences check done');
 
             // Checking root folder stucture
@@ -50,52 +47,68 @@ class OTNode {
             log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
+            process.exit(1);
+        }
+
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Arango server is runing before starting ot-node');
+                process.exit(1);
+            }
         }
 
         // sync models
-        Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
         // Loading config data
         try {
-            deasync(Utilities.loadConfig());
+            await Utilities.loadConfig();
             log.info('Loaded system config');
         } catch (err) {
             console.log(err);
+            process.exit(1);
         }
 
         let selectedDatabase;
         // Loading selected graph database data
         try {
-            selectedDatabase = deasync(Utilities.loadSelectedDatabaseInfo());
+            selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
             log.info('Loaded selected database data');
             config.database = selectedDatabase;
         } catch (err) {
             console.log(err);
+            process.exit(1);
         }
 
         // Checking if selected graph database exists
         try {
-            deasync(Utilities.checkDoesStorageDbExists());
+            await Utilities.checkDoesStorageDbExists();
             log.info('Storage database check done');
         } catch (err) {
             console.log(err);
+            process.exit(1);
         }
 
         let selectedBlockchain;
         // Loading selected blockchain network
         try {
-            selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
+            selectedBlockchain = await Utilities.loadSelectedBlockchainInfo();
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
             config.blockchain = selectedBlockchain;
         } catch (err) {
             console.log(err);
+            process.exit(1);
         }
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
-                const etherBalance = deasync(Utilities.getBalanceInEthers());
+                const etherBalance = await Utilities.getBalanceInEthers();
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
@@ -105,7 +118,7 @@ class OTNode {
                     );
                 }
 
-                const atracBalance = deasync(Utilities.getAlphaTracTokenBalance());
+                const atracBalance = await Utilities.getAlphaTracTokenBalance();
                 if (atracBalance <= 0) {
                     console.log('Please get some ATRAC in the node wallet before running ot-node');
                     process.exit(1);
@@ -127,10 +140,12 @@ class OTNode {
 
         // Connecting to graph database
         try {
-            deasync(GSInstance.db.connect());
+            await GSInstance.db.connect();
             log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
         } catch (err) {
+            log.error(`Failed to connect to the graph database: ${GSInstance.db.identify()}`);
             console.log(err);
+            process.exit(1);
         }
 
         // Initialise API
@@ -146,7 +161,7 @@ class OTNode {
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
-            deasync(RemoteControl.connect());
+            await RemoteControl.connect();
         }
 
         // Starting event listener on Blockchain
@@ -169,7 +184,7 @@ class OTNode {
                 config.dh_max_time_mins,
                 config.dh_max_data_size_bytes,
             ).then((res) => {
-                Blockchain.bc.subscribeToEvent('ProfileCreated')
+                BCInstance.bc.subscribeToEvent('ProfileCreated')
                     .then((event) => {
                         // TODO filter event
                         log.info(`Profile created for node: ${config.identity}`);
@@ -334,40 +349,3 @@ console.log('===========================================');
 const otNode = new OTNode();
 otNode.bootstrap();
 
-// otNode.blockchain.increaseApproval(5).then((response) => {
-//     log.info(response);
-// }).catch((err) => {
-//     console.log(err);
-// });
-//
-//
-
-
-/*
-const leaves = ['A', 'B', 'C', 'D', 'E'];
-
-const tree = new MerkleTree(leaves);
-
-console.log(tree.levels);
-// console.log(tree.levels);
-// console.log();
-const h1 = Utilities.sha3(1);
-const h2 = Utilities.sha3(2);
-const h3 = Utilities.sha3(3); // !!!
-const h4 = Utilities.sha3(4);
-const h5 = Utilities.sha3(5);
-
-const h12 = Utilities.sha3(h1,h2);
-const h34 = Utilities.sha3(h3,h4);
-const h55 = Utilities.sha3(h5,h5);
-
-const h1234 = Utilities.sha3(h12, h34);
-const h5555 = Utilities.sha3(h55, h55);
-
-console.log(tree.verifyProof(proof, 2, 1));
-
-const proof = tree.createProof(1);
-console.log(proof);
-console.log(tree.verifyProof(proof, 'B', 1));
-console.log(tree.getRoot().toString('hex'));
-*/

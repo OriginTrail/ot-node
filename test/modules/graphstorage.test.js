@@ -72,37 +72,20 @@ describe('GraphStorage module', () => {
         assert.equal(result, selectedDatabase);
     });
 
-    it('attempt to save vertex in non existing Document Collection should fail', async () => {
+    it('attempt to updateImports on non existing db should fail', async () => {
         try {
-            await myGraphStorage.addDocument(documentCollectionName, vertexOne);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
-        }
-    });
-
-    it('attempt to save edge in non existing Edge Collection should fail', async () => {
-        try {
-            await myGraphStorage.addDocument(edgeCollectionName, edgeOne);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
-        }
-    });
-
-
-    it('attempt to updateDocumentImports on non existing db should fail', async () => {
-        try {
-            await myInvalidGraphStorage.updateDocumentImports(
+            await myInvalidGraphStorage.updateImports(
                 edgeCollectionName,
                 // eslint-disable-next-line no-underscore-dangle
                 edgeOne._key, newImportValue,
             );
         } catch (error) {
-            assert.isTrue(error.toString().indexOf('Cannot read property \'updateDocumentImports\' of undefined') >= 0);
+            assert.isTrue(error.toString().indexOf('Cannot read property \'updateImports\' of undefined') >= 0);
         }
     });
 
     it('.addVertex() should save vertex in Document Collection', () => {
-        myGraphStorage.addDocument(documentCollectionName, vertexOne).then((response) => {
+        myGraphStorage.addVertex(vertexOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
@@ -111,20 +94,20 @@ describe('GraphStorage module', () => {
     it('adding 2nd vertex from invalid storage should fail', async () => {
         try {
             const result =
-                await myInvalidGraphStorage.addDocument(documentCollectionName, vertexTwo);
+                await myInvalidGraphStorage.addVertex(vertexTwo);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
         }
     });
 
     it('.addEdge() should save edge in Edge Document Collection', () => {
-        myGraphStorage.addDocument(edgeCollectionName, edgeOne).then((response) => {
+        myGraphStorage.addEdge(edgeOne).then((response) => {
             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
         });
     });
 
-    it('getVerticesByImportId() ', async () => {
-        await myGraphStorage.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+    it('findVerticesByImportId() ', async () => {
+        await myGraphStorage.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
@@ -134,9 +117,9 @@ describe('GraphStorage module', () => {
         });
     });
 
-    it('call to getVerticesByImportId() from invalid storage should fail', async () => {
+    it('call to findVerticesByImportId() from invalid storage should fail', async () => {
         try {
-            const result = await myInvalidGraphStorage.getVerticesByImportId(vertexOne.imports[0]);
+            const result = await myInvalidGraphStorage.findVerticesByImportId(vertexOne.imports[0]);
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
         }

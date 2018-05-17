@@ -11,10 +11,9 @@ class Graph {
      * Traversing through the trail graph in Breadth-first manner
      * @param trailGraph          Virtual graph data
      * @param startVertexUID      Start vertex UID
-     * @param restrictToBatch     Restrict traversal to batch
      * @returns {Array}           traversal path
      */
-    static bfs(trailGraph, startVertexUID, restrictToBatch = false) {
+    static bfs(trailGraph, startVertexUID) {
         if (trailGraph == null) {
             return []; // return empty traversal path
         }
@@ -47,7 +46,7 @@ class Graph {
                     const edge = currentVertex.outbound[edgeId];
                     const toVertexId = edge.to;
 
-                    if (edge.edge_type !== 'TRANSACTION_CONNECTION') {
+                    if (edge.edge_type !== 'EVENT_CONNECTION') {
                         traversalPath.push(edge);
                     }
 
@@ -63,15 +62,13 @@ class Graph {
                     }
 
                     // don't follow the output flow
-                    if (edge.edge_type === 'TRANSACTION_CONNECTION' && edge.TransactionFlow === 'Output') {
+                    if (edge.edge_type === 'EVENT_CONNECTION' && edge.transaction_flow === 'OUTPUT') {
                         // eslint-disable-next-line no-continue
                         continue; // don't follow output edges
                     }
 
-                    if (restrictToBatch === false || (toVertex.vertex_type !== 'BATCH' && edge.edge_type !== 'TRANSACTION_CONNECTION')) {
-                        visitedIds[toVertexId] = true;
-                        queueToExplore.push(toVertexId);
-                    }
+                    visitedIds[toVertexId] = true;
+                    queueToExplore.push(toVertexId);
                 }
             }
         }

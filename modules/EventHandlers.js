@@ -91,8 +91,8 @@ globalEmitter.on('replication-request', (request, response) => {
         return;
     }
 
-    const verticesPromise = GraphStorage.db.getVerticesByImportId(importId);
-    const edgesPromise = GraphStorage.db.getEdgesByImportId(importId);
+    const verticesPromise = GraphStorage.db.findVerticesByImportId(importId);
+    const edgesPromise = GraphStorage.db.findEdgesByImportId(importId);
 
     Promise.all([verticesPromise, edgesPromise]).then((values) => {
         const vertices = values[0];
@@ -101,7 +101,7 @@ globalEmitter.on('replication-request', (request, response) => {
         Graph.encryptVertices(
             wallet,
             request.contact[0],
-            vertices,
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
             Storage,
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
@@ -139,7 +139,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
     log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
-    GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
+    GraphStorage.db.findVerticesByImportId(challenge.import_id).then((vertexData) => {
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
         response.send({

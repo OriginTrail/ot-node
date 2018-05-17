@@ -21,6 +21,26 @@ class Neo4jDB {
     }
 
     /**
+     * Initialize database
+     * @return {Promise<void>}
+     */
+    async initialize(allowedClasses) {
+        const session = this.driver.session();
+        for (const className of allowedClasses) {
+            // eslint-disable-next-line
+            const previous = await session.run(`MATCH (n) where n._key = '${className}' return n`);
+            if (previous.records.length === 0) {
+                // eslint-disable-next-line
+                await this.addVertex({
+                    _key: className,
+                    vertex_type: 'CLASS',
+                });
+            }
+        }
+        session.close();
+    }
+
+    /**
      * Get properties for Neo4J
      * @param obj           Extraction object
      * @param excludeList   List of excluded properties
@@ -93,9 +113,45 @@ class Neo4jDB {
      * Create vertex
      * @param value         Vertex document
      * @returns {Promise}
-     * @private
      */
-    async _createVertex(value) {
+    async addVertex(value) {
+        if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
+            throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
+        }
+
+        if (value.sender_id && value.identifiers && value.identifiers.uid) {
+            const maxVersionDoc =
+                await this.findVertexWithMaxVersion(
+                    value.sender_id,
+                    value.identifiers.uid,
+                );
+
+            if (maxVersionDoc) {
+                if (maxVersionDoc._key === value._key) {
+                    return maxVersionDoc;
+                }
+
+                value.version = maxVersionDoc.version + 1;
+                return this._addVertex(value);
+            }
+
+            value.version = 1;
+            return this._addVertex(value);
+        }
+        // First check if already exist.
+        const dbVertex = await this._fetchVertex('_key', value._key);
+
+        if (dbVertex === {}) {
+            return dbVertex;
+        }
+        return this._addVertex(value);
+    }
+    /**
+     * Create vertex
+     * @param value         Vertex document
+     * @returns {Promise}
+     */
+    async _addVertex(value) {
         const session = this.driver.session();
         if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
             throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
@@ -122,7 +178,7 @@ class Neo4jDB {
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
                 const { edge, subvalue } = objectProp;
                 // eslint-disable-next-line
-                const subnodeId = await this._createVertex(subvalue);
+                const subnodeId = await this._addVertex(subvalue);
                 // eslint-disable-next-line
                 await session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`);
             }
@@ -134,9 +190,8 @@ class Neo4jDB {
      * Create edge
      * @param edge  Edge document
      * @returns {Promise}
-     * @private
      */
-    async _createEdge(edge) {
+    async addEdge(edge) {
         const edgeType = edge.edge_type;
         const to = edge._to.slice(edge._to.indexOf('/') + 1);
         const from = edge._from.slice(edge._from.indexOf('/') + 1);
@@ -264,25 +319,30 @@ class Neo4jDB {
 
     /**
      * Gets max version where uid is the same but not the _key
-     * @param uid   Vertex uid
-     * @param _key  Vertex _key
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @param key       Key
      * @return {Promise<void>}
      */
-    async getCurrentMaxVersion(uid) {
+    async findMaxVersion(senderId, uid, key) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid return MAX(n.version)', { uid });
+        const result = await session.run(
+            'MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n._key <> $key AND n.sender_id = $senderId return MAX(n.version)',
+            { uid, senderId, key },
+        );
         session.close();
         return result.records[0]._fields[0];
     }
 
     /**
      * Gets max where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
-    async getVertexWithMaxVersion(uid) {
+    async findVertexWithMaxVersion(senderId, uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid RETURN n ORDER BY n.version DESC LIMIT 1', { uid });
+        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.sender_id = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId });
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
@@ -373,10 +433,6 @@ class Neo4jDB {
     async findTraversalPath(startVertex, depth) {
         const key = '_key';
         const value = startVertex._key;
-        if (depth == null) {
-            depth = this.getDatabaseInfo().max_path_length;
-        }
-
         const session = this.driver.session();
         const result = await session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`);
         session.close();
@@ -431,7 +487,7 @@ class Neo4jDB {
      * @param key
      * @param importNumber
      */
-    async updateDocumentImports(collectionName, key, importNumber) {
+    async updateImports(collectionName, key, importNumber) {
         if (collectionName === 'ot_edges') {
             return [];
         }
@@ -457,7 +513,7 @@ class Neo4jDB {
      * @param importId  Import ID
      * @return {Promise}
      */
-    async getVerticesByImportId(importId) {
+    async findVerticesByImportId(importId) {
         const session = this.driver.session();
         const result = await session.run(`match (n) where ${importId} in n.imports return n`);
 
@@ -470,17 +526,41 @@ class Neo4jDB {
     }
 
     /**
-     * Add new document into given collection
-     * @param {string} - collectionName
-     * @param {object} - document
-     * @returns {Promise<any>}
+     * Gets edges by the import ID
+     * @param importId  Import ID
+     * @return {Promise}
      */
-    async addDocument(collectionName, document) {
-        if (collectionName === 'ot_vertices') {
-            await this._createVertex(document);
-        } else {
-            await this._createEdge(document);
+    async findEdgesByImportId(importId) {
+        const session = this.driver.session();
+        const result = await Neo4jDB._transformProperties(await session.run(`match (n)-[r]-(m) where ${importId} in r.imports return distinct r`));
+
+        const nodes = [];
+        for (const record of result.records) {
+            nodes.push(record._fields[0].properties);
         }
+        return nodes;
+    }
+
+    /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param senderId   Sender ID
+     * @param partnerId  Partner ID
+     * @param documentId Document ID
+     * @param bizStep   BizStep value
+     * @return {Promise}
+     */
+    async findEvent(senderId, partnerId, documentId, bizStep) {
+        const session = this.driver.session();
+        let result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.document_id = $documentId AND $senderId in n.partner_id AND n.sender_id = $partnerId RETURN n', { documentId, senderId, partnerId });
+        session.close();
+        result = await Neo4jDB._transformProperties(result);
+        const nodePromises = [];
+        for (const record of result.records) {
+            nodePromises.push(this._fetchVertex('_key', record._fields[0].properties._key));
+        }
+        result = await Promise.all(nodePromises);
+        return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
     }
 
     /**
@@ -498,26 +578,6 @@ class Neo4jDB {
         log.debug('Clear the database.');
         const session = this.driver.session();
         await session.run('match (n) detach delete n');
-    }
-
-    /**
-     * This method is not applicable in Neo4jDB
-     * @deprecated
-     */
-    createCollection() {
-        return new Promise((resolve) => {
-            resolve();
-        });
-    }
-
-    /**
-     * This method is not applicable in Neo4jDB
-     * @deprecated
-     */
-    createEdgeCollection() {
-        return new Promise((resolve) => {
-            resolve();
-        });
     }
 
     /**
