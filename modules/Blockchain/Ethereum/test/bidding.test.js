@@ -97,7 +97,7 @@ contract('Bidding testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should ceate escrow offer, with acc[1] and [2] as predetermined', async () => {
+    it('Should create offer, with acc[1] and [2] as predetermined', async () => {
         const bidding = await Bidding.deployed();
         const trace = await TracToken.deployed();
         const util = await TestingUtilities.deployed();
@@ -110,17 +110,23 @@ contract('Bidding testing', async (accounts) => {
         predetermined_node_id.push(node_id[2]);
 
         // Offer variables
+        const data_id = 0;
+
         const total_escrow_time = 60;
         const max_token_amount = 1000e18;
         const min_stake_amount = 10e18;
         const min_reputation = 0;
 
         // Data holding parameters
-        const data_hash = util.keccakAddressBytes(accounts[6], node_id[6]);
+        const data_hash = await util.keccakAddressBytes.call(accounts[6], node_id[6]);
         const data_size = 1;
+        console.log(`Data hash ${data_hash}`);
 
-        await bidding.createOffer(
-            0, // data_id
+        offer_hash = await util.keccak3(accounts[0], node_id[0], data_id);
+        console.log(`\t offer_hash: ${offer_hash}`);
+
+        let response = await bidding.createOffer(
+            data_id, // data_id
             node_id[0],
 
             total_escrow_time,
@@ -135,39 +141,30 @@ contract('Bidding testing', async (accounts) => {
             predetermined_node_id,
             { from: DC_wallet });// eslint-disable-line function-paren-newline
 
-        let response = await bidding.createOffer.call(
-            0, // data_id
-            node_id[0],
-            total_escrow_time,
-            max_token_amount,
-            min_stake_amount,
-            min_reputation,
-            data_hash,
-            data_size,
-            predetermined_wallet,
-            predetermined_node_id,
-        );
-        offer_hash = response;
-        console.log(`\t offer_hash: ${offer_hash}`);
-
         response = await bidding.offer.call(offer_hash);
 
         const actual_DC_wallet = response[0];
+        console.log(`DC_wallet: ${actual_DC_wallet}`);
 
         let actual_max_token = response[1];
         actual_max_token = actual_max_token.toNumber();
+        console.log(`actual_max_token: ${actual_max_token}`);
 
         let actual_min_stake = response[2];
         actual_min_stake = actual_min_stake.toNumber();
+        console.log(`actual_min_stake: ${actual_min_stake}`);
 
         let actual_min_reputation = response[3];
         actual_min_reputation = actual_min_reputation.toNumber();
+        console.log(`actual_min_reputation: ${actual_min_reputation}`);
 
         let actual_escrow_time = response[4];
         actual_escrow_time = actual_escrow_time.toNumber();
+        console.log(`actual_escrow_time: ${actual_escrow_time}`);
 
         let replication_factor = response[8];
         replication_factor = replication_factor.toNumber();
+        console.log(`replication_factor: ${replication_factor}`);
 
         assert.equal(actual_DC_wallet, DC_wallet, 'DC_wallet not matching');
         assert.equal(actual_max_token, max_token_amount, 'max_token_amount not matching');
@@ -175,6 +172,25 @@ contract('Bidding testing', async (accounts) => {
         assert.equal(actual_min_reputation, min_reputation, 'min_reputation not matching');
         assert.equal(actual_escrow_time, total_escrow_time, 'total_escrow_time not matching');
         assert.equal(replication_factor, 2, 'replication_factor not matching');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should try to get a bid', async () => {
+        const bidding = await Bidding.deployed();
+        const trace = await TracToken.deployed();
+        const util = await TestingUtilities.deployed();
+
+        const response = await bidding.offer.call(offer_hash);
+        console.log(`response: ${response}`);
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should activate predetermined bid for acc[2]', async () => {
+        const bidding = await Bidding.deployed();
+        const trace = await TracToken.deployed();
+        const util = await TestingUtilities.deployed();
+
+        await bidding.activatePredeterminedBid(offer_hash, node_id[2], 1, { from: accounts[2] });
     });
 
 /*
