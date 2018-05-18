@@ -54,6 +54,7 @@ class DCService {
             min_reputation: minReputation,
             data_hash: rootHash,
             data_size_bytes: importSizeInBytes.toString(),
+            dh_wallets: JSON.stringify(dhWallets),
             dh_ids: JSON.stringify(dhIds),
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
