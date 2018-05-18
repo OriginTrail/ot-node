@@ -62,10 +62,6 @@ contract Bidding {
 		escrow = EscrowHolder(escrowAddress);
 	}
 
-
-	/*    ----------------------------- BIDDING -----------------------------     */
-
-
 	struct OfferDefinition{
 		address DC_wallet;
 
@@ -131,7 +127,12 @@ contract Bidding {
 	event BidTaken(bytes32 offer_hash, address DH_wallet);
 	event OfferFinalized(bytes32 offer_hash);
 
+
+
 	/*    ----------------------------- OFFERS -----------------------------     */
+
+
+
 
 	function createOffer(
 		uint data_id,
@@ -196,6 +197,14 @@ contract Bidding {
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
 	}
+
+
+
+
+	/*    ----------------------------- BIDDING -----------------------------     */
+
+
+
 
 	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index) 
 	public{
@@ -363,7 +372,6 @@ contract Bidding {
 		emit OfferFinalized(offer_hash); 
 	}
 
-
 	function isBidChosen(bytes32 offer_hash, uint bid_index) public constant returns (bool _isBidChosen){
 		return offer[offer_hash].bid[bid_index].chosen;
 	}
@@ -372,7 +380,11 @@ contract Bidding {
 		return offer[offer_hash].finalized;
 	}
 
+
+
 	/*    ----------------------------- PROFILE -----------------------------    */
+
+
 
 	event ProfileCreated(address wallet, bytes32 node_id);
 	event BalanceModified(address wallet, uint new_balance);

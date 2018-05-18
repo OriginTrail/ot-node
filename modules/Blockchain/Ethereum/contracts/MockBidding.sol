@@ -141,6 +141,8 @@ contract MockBidding {
 
 		bytes32 offer_hash = keccak256(msg.sender, DC_node_id, data_id);
 
+		offer[offer_hash].DC_wallet = msg.sender;
+
 		offer[offer_hash].total_escrow_time = total_escrow_time;
 		offer[offer_hash].max_token_amount = max_token_amount;
 		offer[offer_hash].min_stake_amount = min_stake_amount;

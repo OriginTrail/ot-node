@@ -18,6 +18,12 @@ var bidding_address;
 var offer_hash;
 var chosen = [];
 
+// Offer variables
+const total_escrow_time = 1;
+const max_token_amount = 1000e18;
+const min_stake_amount = 10e12;
+const min_reputation = 0;
+
 // eslint-disable-next-line no-undef
 contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
@@ -171,12 +177,6 @@ contract('Bidding testing', async (accounts) => {
         predetermined_node_id.push(node_id[1]);
         predetermined_node_id.push(node_id[2]);
 
-        // Offer variables
-        const total_escrow_time = 10;
-        const max_token_amount = 1000e18;
-        const min_stake_amount = 10e12;
-        const min_reputation = 0;
-
         // Data holding parameters
         const data_id = 0;
         const data_hash = await util.keccakAddressBytes(accounts[9], node_id[9]);
@@ -310,7 +310,7 @@ contract('Bidding testing', async (accounts) => {
         var promises = [];
         for (var i = 0; i < chosen.length; i += 1) {
             promises[i] = escrow.verifyEscrow(
-                DC_wallet, offer_hash, 10e18, 10e18, 10,
+                DC_wallet, offer_hash, 1e18, 1e18, total_escrow_time,
                 { from: accounts[chosen[i].toNumber() + 1] },
             );
         }
@@ -365,7 +365,7 @@ contract('Bidding testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.profile.call(accounts[chosen[i].toNumber() + 1]);
             var balance = response[2].toNumber();
-            assert.equal(balance, 5.000001e25, 'DH was not paid the correct amount');
+            assert.equal(balance, 5.0000001e25, 'DH was not paid the correct amount');
         }
     });
 });
