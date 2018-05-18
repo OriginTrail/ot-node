@@ -198,7 +198,18 @@ class Ethereum {
         };
 
         log.warn('Verifying escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'verifyEscrow',
+            [
+                dcWallet,
+                dataId,
+                tokenAmount,
+                stakeAmount,
+                Math.round(totalTime / 1000 / 60),
+            ],
+            options,
+        );
     }
 
     /**
@@ -215,7 +226,15 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'cancelEscrow', [dhWallet, dataId], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'cancelEscrow',
+            [
+                dhWallet,
+                dataId,
+            ],
+            options,
+        );
     }
 
     /**
@@ -272,7 +291,7 @@ class Ethereum {
             [
                 dataId,
                 this._normalizeNodeId(nodeId),
-                Math.round(totalEscrowTime / 1000),
+                Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
