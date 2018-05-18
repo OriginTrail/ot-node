@@ -20,28 +20,23 @@ class DHService {
    */
     static async handleOffer(
         offerHash,
-        dcWallet,
         dcNodeId,
-        dataId,
         totalEscrowTime,
         maxTokenAmount,
         minStakeAmount,
         minReputation,
         dataSizeBytes,
         dataHash,
-        pedetermentBid,
+        predeterminedBid,
     ) {
         try {
             // TODO: This should never happened in production.
             // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { id: dataId } });
+            const offerModel = await Models.offers.findOne({ where: { data_hash: dataHash } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-
-                if (offer.id === dataId) {
-                    log.trace(`Mine offer (ID ${dataId}). Ignoring.`);
-                    return;
-                }
+                log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                return;
             }
 
             const minPrice = new BN(config.dh_min_price, 10);
@@ -70,18 +65,18 @@ class DHService {
                 return;
             }
 
-            if (!pedetermentBid && !Utilities.getImportDistance(chosenPrice, dataId, stake)) {
-                log.info(`Offer ${offerHash}, data ID ${dataId} not in mine distance. Not going to participate.`);
+            if (!predeterminedBid && !Utilities.getImportDistance(chosenPrice, 1, stake)) {
+                log.info(`Offer ${offerHash}, not in mine distance. Not going to participate.`);
                 return;
             }
 
-            log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} for offer ${offerHash}.`);
+            log.trace(`Adding a bid for offer ${offerHash}.`);
 
             Blockchain.bc.addBid(offerHash, config.identity)
                 .then(Blockchain.bc.increaseBiddingApproval(stake))
                 .catch(error => log.error(`Failed to add bid. ${error}.`));
             let bid_index;
-            Blockchain.bc.subscribeToEvent('AddedBid', dataId)
+            Blockchain.bc.subscribeToEvent('AddedBid', offerHash)
                 .then((event) => {
                     bid_index = event.bidIndex;
                     this._saveBidToStorage(
@@ -91,19 +86,19 @@ class DHService {
                         totalEscrowTime,
                         stake,
                         dataSizeBytes,
-                        dataId,
+                        offerHash,
                     );
                 }).catch((err) => {
                     console.log(err);
                 });
 
-            Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
+            Blockchain.bc.subscribeToEvent('OfferFinalized', offerHash)
                 .then((event) => {
-                    Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
+                    Models.bids.findOne({ where: { offer_hash: offerHash } }).then((bidModel) => {
                         const bid = bidModel.get({ plain: true });
                         node.ot.replicationRequest(
                             {
-                                dataId,
+                                offer_hash: offerHash,
                                 wallet: config.node_wallet,
                             },
                             bid.dc_id, (err) => {
@@ -124,12 +119,12 @@ class DHService {
 
     static _saveBidToStorage(
         event,
-        dcNodeId, chosenPrice, totalEscrowTime, stake, dataSizeBytes, dataId,
+        dcNodeId, chosenPrice, totalEscrowTime, stake, dataSizeBytes, offerHash,
     ) {
         Models.bids.create({
             bid_index: event.bidIndex,
             price: chosenPrice.toString(),
-            data_id: dataId,
+            offer_hash: offerHash,
             dc_wallet: event.DC_wallet,
             dc_id: dcNodeId,
             hash: event.bid_hash,
@@ -137,7 +132,7 @@ class DHService {
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
         }).then((bid) => {
-            log.info(`Created new bid for import ${dataId}. Waiting for reveal... `);
+            log.info(`Created new bid for offer ${offerHash}. Waiting for reveal... `);
         }).catch((err) => {
             log.error(`Failed to insert new bid. ${err}`);
         });

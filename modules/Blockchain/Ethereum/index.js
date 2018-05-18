@@ -339,13 +339,13 @@ class Ethereum {
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
                         const timestamp = Date.now();
-                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt, finished) \n' +
+                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, createdAt, updatedAt, finished) \n' +
                           'SELECT ?, ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
                             replacements: [
                                 event.event,
                                 JSON.stringify(event.returnValues),
-                                event.returnValues.data_id,
+                                event.returnValues.offer_hash,
                                 event.blockNumber,
                                 timestamp,
                                 timestamp,
@@ -377,19 +377,19 @@ class Ethereum {
     /**
     * Subscribes to blockchain events
     * @param event
-    * @param dataId
+    * @param offerHash
     * @param endMs
     * @param endCallback
     */
-    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000, endCallback) {
+    subscribeToEvent(event, offerHash, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
                     event,
                     finished: 0,
                 };
-                if (dataId) {
-                    where.dataId = dataId;
+                if (offerHash) {
+                    where.offer_hash = offerHash;
                 }
                 Storage.models.events.findOne({
                     where,

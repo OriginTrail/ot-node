@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
         bid_index: DataTypes.INTEGER,
         price: DataTypes.STRING,
         hash: DataTypes.STRING(128),
-        data_id: DataTypes.INTEGER,
+        offer_hash: DataTypes.STRING,
         dc_wallet: DataTypes.STRING,
         dc_id: DataTypes.STRING,
         total_escrow_time: DataTypes.INTEGER,

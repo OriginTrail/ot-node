@@ -199,22 +199,18 @@ globalEmitter.on('eth-OfferCreated', async (eventData) => {
 
     const {
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
         min_reputation,
-        data_size,
         data_hash,
+        data_size,
     } = eventData;
 
     await DHService.handleOffer(
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
@@ -230,22 +226,18 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
 
     const {
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
         min_reputation,
-        data_size,
         data_hash,
+        data_size,
     } = eventData;
 
     await DHService.handleOffer(
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,

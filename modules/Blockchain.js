@@ -146,12 +146,12 @@ class Blockchain {
     /**
     * Subscribe to a particular event
     * @param event
-    * @param dataId
+    * @param offerHash
     * @param endMs
     */
-    subscribeToEvent(event, dataId, endMs) {
+    subscribeToEvent(event, offerHash, endMs) {
         return this.blockchain
-            .subscribeToEvent(event, dataId, endMs);
+            .subscribeToEvent(event, offerHash, endMs);
     }
 
     /**
