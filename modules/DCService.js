@@ -39,6 +39,7 @@ class DCService {
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
+        // TODO: Store offer hash in DB.
         const offerHash = abi.soliditySHA3(
             ['address', 'bytes32', 'uint256'],
             [config.wallet, `0x${config.identity}`, dataId],
@@ -138,9 +139,14 @@ class DCService {
                 log.info(`Choose bids for data ${dataId}`);
                 Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        Blockchain.bc.chooseBids(dataId)
+                        const offerHash = abi.soliditySHA3(
+                            ['address', 'bytes32', 'uint256'],
+                            [config.wallet, `0x${config.identity}`, dataId],
+                        ).toString('hex');
+
+                        Blockchain.bc.chooseBids(offerHash)
                             .then(() => {
-                                log.info(`Bids chosen for data ${dataId}`);
+                                log.info(`Bids chosen for data ${dataId}[${offerHash}]`);
                                 resolve();
                             }).catch((err) => {
                                 log.warn(`Failed call choose bids for data ${dataId}. ${err}`);

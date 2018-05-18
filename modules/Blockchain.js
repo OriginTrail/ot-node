@@ -198,11 +198,11 @@ class Blockchain {
 
     /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param dataId ID of data of the bid
+     * @param offerHash Hash of the offer
      * @returns {Promise<any>} Array of bid indices of chosen ones.
      */
-    chooseBids(dataId) {
-        return this.blockchain.chooseBids(dataId);
+    chooseBids(offerHash) {
+        return this.blockchain.chooseBids(offerHash);
     }
 
     /**

@@ -490,10 +490,10 @@ class Ethereum {
 
     /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param dataId ID of data of the bid
+     * @param offerHash Offer hash
      * @returns {Promise<any>}
      */
-    chooseBids(dataId) {
+    chooseBids(offerHash) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -503,7 +503,7 @@ class Ethereum {
         log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
-            [dataId], options,
+            [offerHash], options,
         );
     }
 
