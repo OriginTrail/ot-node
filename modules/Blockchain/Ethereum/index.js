@@ -547,6 +547,18 @@ class Ethereum {
         });
     }
 
+    getDcWalletFromOffer(offer_hash) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Asking for offer's (${offer_hash}) DC wallet.`);
+            this.biddingContract.methods.offer(offer_hash).call()
+                .then((res) => {
+                    resolve(res);
+                }).catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
     /**
      * Normalizes Kademlia node ID
      * @param nodeId     Kademlia node ID

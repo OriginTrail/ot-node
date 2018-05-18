@@ -225,6 +225,10 @@ class Blockchain {
     getOfferStatus(dcWallet, dataId) {
         return this.blockchain.getOfferStatus(dcWallet, dataId);
     }
+
+    getDcWalletFromOffer(offer_hash) {
+        return this.blockchain.getDcWalletFromOffer(offer_hash);
+    }
 }
 
 module.exports = Blockchain;
