@@ -374,10 +374,10 @@ class Ethereum {
     * Subscribes to blockchain events
     * @param event
     * @param dataId
-    * @param params
     * @param endMs
+    * @param endCallback
     */
-    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000) {
+    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
@@ -398,11 +398,13 @@ class Ethereum {
                             resolve(JSON.parse(eventData.dataValues.data));
                         }).catch((err) => {
                             log.error(`Failed to update event ${event}. ${err}`);
+                            reject(err);
                         });
                     }
                 });
             }, 2000);
             setTimeout(() => {
+                endCallback();
                 clearInterval(token);
             }, endMs);
         });
