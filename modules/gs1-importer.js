@@ -2,6 +2,7 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
 const xsd = require('libxml-xsd');
+const Utilities = require('./Utilities');
 
 const GS1Helper = require('./gs1-helper');
 const GSInstance = require('./GraphStorageInstance');
@@ -323,8 +324,12 @@ async function processXML(err, result) {
         return objectEventTransformationId;
     }
 
-    // TODO handle extensions
+    const batchesToRemove = [];
     for (const event of events) {
+        const tmpEventEdges = [];
+        const tmpEventVertices = [];
+        const tmpBatchesToRemove = [];
+
         const eventId = GS1Helper.getEventId(senderId, event);
 
         const { extension } = event;
@@ -368,7 +373,7 @@ async function processXML(err, result) {
             if (extension.extension.sourceList) {
                 const sources = GS1Helper.arrayze(extension.extension.sourceList.source._);
                 for (const source of sources) {
-                    eventEdges.push({
+                    tmpEventEdges.push({
                         _key: md5(`source_${senderId}_${eventKey}_${source}`),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + source}`,
@@ -379,20 +384,20 @@ async function processXML(err, result) {
                         // receiving
                         const filtered = locations.filter(location => location.id === source);
                         for (const location of filtered) {
-                            event.partner_id = location.participant_id;
+                            event.partner_id = [location.participant_id];
                         }
 
                         // eslint-disable-next-line
                         const shippingEventVertex = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
                         if (shippingEventVertex.length > 0) {
-                            eventEdges.push({
+                            tmpEventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${shippingEventVertex[0]._key}_${eventKey}`),
                                 _from: `ot_vertices/${shippingEventVertex[0]._key}`,
                                 _to: `ot_vertices/${eventKey}`,
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'OUTPUT',
                             });
-                            eventEdges.push({
+                            tmpEventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
                                 _from: `ot_vertices/${eventKey}`,
                                 _to: `ot_vertices/${shippingEventVertex[0]._key}`,
@@ -408,7 +413,7 @@ async function processXML(err, result) {
                 const destinations =
                     GS1Helper.arrayze(extension.extension.destinationList.destination._);
                 for (const destination of destinations) {
-                    eventEdges.push({
+                    tmpEventEdges.push({
                         _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + destination}`,
@@ -419,20 +424,20 @@ async function processXML(err, result) {
                         // shipping
                         const filtered = locations.filter(location => location.id === destination);
                         for (const location of filtered) {
-                            event.partner_id = location.participant_id;
+                            event.partner_id = [location.participant_id];
                         }
 
                         // eslint-disable-next-line
                         const receivingEventVertices = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                         if (receivingEventVertices.length > 0) {
-                            eventEdges.push({
+                            tmpEventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${receivingEventVertices[0]._key}_${eventKey}`),
                                 _from: `ot_vertices/${receivingEventVertices[0]._key}`,
                                 _to: `ot_vertices/${eventKey}`,
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'INPUT',
                             });
-                            eventEdges.push({
+                            tmpEventEdges.push({
                                 _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
                                 _from: `ot_vertices/${eventKey}`,
                                 _to: `ot_vertices/${receivingEventVertices[0]._key}`,
@@ -445,18 +450,19 @@ async function processXML(err, result) {
             }
         }
 
-        eventVertices.push({
+        const eventVertex = {
             _key: eventKey,
             data,
             identifiers,
             partner_id: event.partner_id,
             vertex_type: 'EVENT',
-        });
+        };
+        tmpEventVertices.push(eventVertex);
 
         const { bizLocation } = event;
         if (bizLocation) {
             const bizLocationId = bizLocation.id;
-            eventEdges.push({
+            tmpEventEdges.push({
                 _key: md5(`at_${senderId}_${eventKey}_${bizLocationId}`),
                 _from: `ot_vertices/${eventKey}`,
                 _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
@@ -466,7 +472,7 @@ async function processXML(err, result) {
 
         if (event.readPoint) {
             const locationReadPoint = event.readPoint.id;
-            eventEdges.push({
+            tmpEventEdges.push({
                 _key: md5(`read_point_${senderId}_${eventKey}_${locationReadPoint}`),
                 _from: `ot_vertices/${eventKey}`,
                 _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
@@ -478,12 +484,13 @@ async function processXML(err, result) {
             for (const inputEpc of GS1Helper.arrayze(event.inputEPCList.epc)) {
                 const batchId = inputEpc;
 
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'INPUT_BATCH',
                 });
+                tmpBatchesToRemove.push(batchId);
             }
         }
 
@@ -491,18 +498,19 @@ async function processXML(err, result) {
             for (const inputEpc of GS1Helper.arrayze(event.epcList.epc)) {
                 const batchId = inputEpc;
 
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'EVENT_BATCH',
                 });
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
                     _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                     _to: `ot_vertices/${eventKey}`,
                     edge_type: 'EVENT_BATCH',
                 });
+                tmpBatchesToRemove.push(batchId);
             }
         }
 
@@ -510,12 +518,13 @@ async function processXML(err, result) {
             for (const inputEpc of GS1Helper.arrayze(event.childEPCs)) {
                 const batchId = inputEpc.epc;
 
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'CHILD_BATCH',
                 });
+                tmpBatchesToRemove.push(batchId);
             }
         }
 
@@ -523,31 +532,62 @@ async function processXML(err, result) {
             for (const outputEpc of GS1Helper.arrayze(event.outputEPCList.epc)) {
                 const batchId = outputEpc;
 
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'OUTPUT_BATCH',
                 });
-                eventEdges.push({
+                tmpEventEdges.push({
                     _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
                     _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                     _to: `ot_vertices/${eventKey}`,
                     edge_type: 'OUTPUT_BATCH',
                 });
+                tmpBatchesToRemove.push(batchId);
             }
         }
 
-        for (const batch of batchesVertices) {
-            const productId = batch.data.parent_id;
+        // eslint-disable-next-line
+        const existingEventVertex = await db.findVertexWithMaxVersion(senderId, eventId, eventKey);
+        let add = false;
+        if (existingEventVertex) {
+            const { data } = eventVertex;
+            const existingData = existingEventVertex.data;
 
-            batchEdges.push({
-                _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
-                _from: `ot_vertices/${batch._key}`,
-                _to: `${EDGE_KEY_TEMPLATE + productId}`,
-                edge_type: 'IS',
-            });
+            const match = Utilities.objectDistance(data, existingData, ['quantities']);
+            if (match !== 100) {
+                add = true;
+            }
+        } else {
+            add = true;
         }
+        if (add) {
+            eventEdges.push(...tmpEventEdges);
+            eventVertices.push(...tmpEventVertices);
+        } else {
+            batchesToRemove.push(...tmpBatchesToRemove);
+        }
+    }
+
+    for (const batchId of batchesToRemove) {
+        for (const index in batchesVertices) {
+            const batch = batchesVertices[index];
+            if (batch.identifiers.uid === batchId) {
+                batchesVertices.splice(index, 1);
+            }
+        }
+    }
+
+    for (const batch of batchesVertices) {
+        const productId = batch.data.parent_id;
+
+        batchEdges.push({
+            _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
+            _from: `ot_vertices/${batch._key}`,
+            _to: `${EDGE_KEY_TEMPLATE + productId}`,
+            edge_type: 'IS',
+        });
     }
 
     const allVertices =
