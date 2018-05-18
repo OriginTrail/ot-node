@@ -11,10 +11,7 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
-<<<<<<< HEAD
 const levenshtein = require('js-levenshtein');
-=======
->>>>>>> feature/157588720-amicloseenough-function
 const BN = require('bn.js');
 
 require('dotenv').config();
