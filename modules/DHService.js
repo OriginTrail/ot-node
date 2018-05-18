@@ -75,14 +75,12 @@ class DHService {
             Blockchain.bc.addBid(offerHash, config.identity)
                 .then(Blockchain.bc.increaseBiddingApproval(stake))
                 .catch(error => log.error(`Failed to add bid. ${error}.`));
-            let bid_index;
             Blockchain.bc.subscribeToEvent('AddedBid', offerHash)
                 .then(async (event) => {
-                    bid_index = event.bidIndex;
                     const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
                     this._saveBidToStorage(
                         event,
-                        dcNodeId,
+                        dcNodeId.substring(2, 42),
                         dcWallet,
                         chosenPrice,
                         totalEscrowTime,
@@ -130,12 +128,11 @@ class DHService {
         offerHash,
     ) {
         Models.bids.create({
-            bid_index: event.bidIndex,
+            bid_index: event.bid_index,
             price: chosenPrice.toString(),
             offer_hash: offerHash,
             dc_wallet: dcWallet,
             dc_id: dcNodeId,
-            hash: event.bid_hash,
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),

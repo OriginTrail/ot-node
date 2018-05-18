@@ -23,10 +23,6 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        hash: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
         dc_id: {
             allowNull: false,
             type: Sequelize.STRING,
