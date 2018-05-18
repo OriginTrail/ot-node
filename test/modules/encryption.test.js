@@ -24,12 +24,13 @@ describe('Encryption modules ', () => {
         return key.getKeySize();
     }
 
-
-    it('generateKeyPair() should generate valid 512 b key pair', () => {
+    before('prepare generation', () => {
         myObj = encryption.generateKeyPair();
         myPrivateKey = myObj.privateKey;
         myPublicKey = myObj.publicKey;
+    });
 
+    it('generateKeyPair() should generate valid 512 b key pair', () => {
         assert.isFalse(isMyKeyEmpty(myPrivateKey, privateFormatId), 'Key should not be empty');
         assert.isFalse(isMyKeyEmpty(myPublicKey, publicFormatId), 'Key should not be empty');
         assert.equal(getMyKeySize(myPrivateKey, privateFormatId), keySize, 'Key size should be 512');
