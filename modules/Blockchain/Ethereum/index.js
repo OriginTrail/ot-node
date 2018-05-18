@@ -552,7 +552,7 @@ class Ethereum {
             log.trace(`Asking for offer's (${offer_hash}) DC wallet.`);
             this.biddingContract.methods.offer(offer_hash).call()
                 .then((res) => {
-                    resolve(res);
+                    resolve(res[0]);
                 }).catch((e) => {
                     reject(e);
                 });
