@@ -11,7 +11,10 @@ const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
+<<<<<<< HEAD
 const levenshtein = require('js-levenshtein');
+=======
+>>>>>>> feature/157588720-amicloseenough-function
 const BN = require('bn.js');
 
 require('dotenv').config();
@@ -710,6 +713,22 @@ class Utilities {
             }
         }
         return res;
+    }
+
+    /**
+     * Calculates import distance from my node
+     * @param price Token amount to offer
+     * @param importId ID
+     * @param stakeAmount Stake amount in offer.
+     * @returns {number} Distance
+     */
+    static getImportDistance(price, importId, stakeAmount) {
+        const wallet = new BN(config.wallet);
+        const nodeId = new BN(`0x${config.node_kademlia_id}`);
+        const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
+        const myBid = hashWallerNodeId.add(price);
+        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        return Math.abs(myBid.sub(offer));
     }
 }
 
