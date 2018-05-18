@@ -177,15 +177,12 @@ class Blockchain {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
-     * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once
-     * revealBid() is called. @note token amount cannot be greater then max token amount
+     * @param offerHash Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, bidHash) {
-        return this.blockchain.addBid(dcWallet, dataId, nodeId, bidHash);
+    addBid(offerHash, dhNodeId) {
+        return this.blockchain.addBid(offerHash, dhNodeId);
     }
 
     /**
