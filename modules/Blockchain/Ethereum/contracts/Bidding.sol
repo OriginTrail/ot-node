@@ -44,18 +44,18 @@ contract EscrowHolder {
 	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount,uint stake_amount, uint total_time) public;
 }
 
-contract Biddding {
+contract Bidding {
 	using SafeMath for uint256;
 
 	ERC20 public token;
 	EscrowHolder public escrow;
-    
+
 	modifier onlyEscrow() {
 		require(EscrowHolder(msg.sender) == escrow);
 		_;
 	}
 	
-	function Biddding(address tokenAddress, address escrowAddress)
+	function Bidding(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
@@ -100,6 +100,8 @@ contract Biddding {
 
 		uint max_escrow_time;
 		uint size_available;
+
+		bool active;
 	}
 
 	struct BidDefinition{
@@ -145,15 +147,15 @@ contract Biddding {
 
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
-	public returns (bool offerCreated){
+	public returns (bytes32 offer_hash){
 
-		bytes32 offer_hash = keccak256(msg.sender, DC_node_id, data_id);
+		offer_hash = keccak256(msg.sender, DC_node_id, data_id);
 
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
 
 		require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
-		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size));
+		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size).mul(predetermined_DH_wallet.length.mul(2).add(1)));
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		offer[offer_hash].DC_wallet = msg.sender;
@@ -181,7 +183,6 @@ contract Biddding {
 		}
 
 		emit OfferCreated(offer_hash, DC_node_id, total_escrow_time, max_token_amount, min_stake_amount, min_reputation, data_size, data_hash);
-		return true;
 	}
 
 	//TODO Decide when and under which conditions DC can cancel an offer
@@ -236,26 +237,40 @@ contract Biddding {
 
 		//Create new bid in the list
 		this_bid_index = this_offer.bid.length;
-		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount * scope, this_DH.stake_amount * scope, 0, 0, true, false);
+		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount * scope, this_DH.stake_amount * scope, 0, uint(-1), true, false);
 
 		// distance = | hash(wallet, node_id) + token_amount - data_hash - stake_amount |
 		new_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(new_bid.token_amount),uint256(this_offer.data_hash).add(new_bid.stake_amount));
 
+
 		//Insert the bid in the proper place in the list
-		uint256 current_index = this_offer.first_bid_index;
-		uint256 previous_index = uint(-1); // trust me, i'm an engineer
-		while(current_index != uint(-1) && offer[offer_hash].bid[current_index].distance <= new_bid.distance){
-			previous_index = current_index;
-			current_index = offer[offer_hash].bid[current_index].next_bid;
+		if(this_offer.first_bid_index == uint(-1)){
+			this_offer.first_bid_index = this_bid_index;
+			this_offer.bid.push(new_bid);
 		}
-		new_bid.next_bid = current_index;
-		if(previous_index == uint(-1)) this_offer.first_bid_index = this_bid_index;
-		else {
-			// asserts that a DH can only add one offer per node_id
-			assert(offer[offer_hash].bid[previous_index].DH_wallet != msg.sender && offer[offer_hash].bid[previous_index].DH_node_id != DH_node_id);
-			offer[offer_hash].bid[previous_index].next_bid = this_bid_index;
+		else{
+			uint256 current_index = this_offer.first_bid_index;
+			if(this_offer.bid[current_index].distance > new_bid.distance){
+				this_offer.first_bid_index = this_bid_index;
+				new_bid.next_bid = current_index;
+				this_offer.bid.push(new_bid);
+			}
+			else {
+				while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance <= new_bid.distance){
+					current_index = this_offer.bid[current_index].next_bid;
+				}
+				if(this_offer.bid[current_index].next_bid == uint(-1)){
+					this_offer.bid[current_index].next_bid = this_bid_index;
+					this_offer.bid.push(new_bid);
+				}
+				else{
+					new_bid.next_bid = this_offer.bid[current_index].next_bid;
+					this_offer.bid[current_index].next_bid = this_bid_index;
+					this_offer.bid.push(new_bid);
+				}
+			}
 		}
-		this_offer.bid.push(new_bid);
+
 		if(this_offer.bid.length >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(offer_hash);
 
 		emit AddedBid(offer_hash, msg.sender, DH_node_id, this_bid_index);
@@ -277,49 +292,50 @@ contract Biddding {
 	}
 
 	function chooseBids(bytes32 offer_hash) public returns (uint256[] chosen_data_holders){
+
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && !this_offer.finalized);
 		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
 
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
-		
+
 		uint256 i;
 		uint256 current_index = 0;
 
 		uint256 token_amount_sent = 0;
-		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
+		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size).mul(this_offer.replication_factor.mul(2).add(1));
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
-			BidDefinition storage chosen_bid = offer[offer_hash].bid[i];
+			BidDefinition storage chosen_bid = this_offer.bid[i];
 			ProfileDefinition storage chosen_DH = profile[chosen_bid.DH_wallet];				
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && chosen_bid.active && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
 				//Initiating new escrow
 				escrow.initiateEscrow(msg.sender, chosen_bid.DH_wallet, uint(offer_hash), chosen_bid.token_amount, chosen_bid.stake_amount, this_offer.total_escrow_time);
-				
+
 				token_amount_sent = token_amount_sent.add(chosen_bid.token_amount);
-				
-				chosen_DH.size_available = chosen_DH.size_available.sub(this_offer.data_size);
+
+				//chosen_DH.size_available = chosen_DH.size_available.sub(this_offer.data_size);
 
 				chosen_bid.chosen = true;
 				chosen_data_holders[current_index] = i;
 				current_index = current_index + 1;
-				
+
 				emit BidTaken(offer_hash, chosen_bid.DH_wallet);
 			}
 		}		
 
 		//Sending escrow requests to network bids
 		uint256 bid_index = this_offer.first_bid_index;
-		//TODO POkusaj da dopunis do 2N + 1 
-		for(;i < 2 * this_offer.replication_factor + 1 ; i = i + 1) {
-			while(bid_index != uint(-1) && (!offer[offer_hash].bid[bid_index].active || offer[offer_hash].bid[bid_index].chosen)){
-				bid_index = offer[offer_hash].bid[bid_index].next_bid;
+		while(current_index < this_offer.replication_factor.mul(2).add(1)) {
+
+			while(bid_index != uint(-1) && !this_offer.bid[bid_index].active){
+				bid_index = this_offer.bid[bid_index].next_bid;
 			} 
 			if(bid_index == uint(-1)) break;
 
-			chosen_bid = offer[offer_hash].bid[bid_index];
+			chosen_bid = this_offer.bid[bid_index];
 			chosen_DH = profile[chosen_bid.DH_wallet];
 
 			if(profile[chosen_bid.DH_wallet].balance >= chosen_bid.stake_amount && profile[chosen_bid.DH_wallet].size_available >= this_offer.data_size){
@@ -331,6 +347,7 @@ contract Biddding {
 				chosen_bid.chosen = true;
 				chosen_data_holders[current_index] = bid_index;
 				current_index = current_index + 1;
+				bid_index = this_offer.bid[bid_index].next_bid;
 
 				emit BidTaken(offer_hash, chosen_bid.DH_wallet);
 			}
@@ -355,7 +372,7 @@ contract Biddding {
 		return offer[offer_hash].finalized;
 	}
 
-	/*    ----------------------------- DH PROFILE -----------------------------    */
+	/*    ----------------------------- PROFILE -----------------------------    */
 
 	event ProfileCreated(address wallet, bytes32 node_id);
 	event BalanceModified(address wallet, uint new_balance);
@@ -363,6 +380,8 @@ contract Biddding {
 
 	function createProfile(bytes32 node_id, uint price, uint stake, uint max_time, uint max_size) public{
 		ProfileDefinition storage this_profile = profile[msg.sender];
+		require(!this_profile.active);
+		this_profile.active = true;
 		this_profile.token_amount = price;
 		this_profile.stake_amount = stake;
 		this_profile.max_escrow_time = max_time;
@@ -391,7 +410,7 @@ contract Biddding {
 		uint amount_to_transfer = amount;
 		amount = 0;
 		if(amount_to_transfer > 0) token.transferFrom(msg.sender, this, amount_to_transfer);
-		profile[msg.sender].balance = profile[msg.sender].balance.add(amount);
+		profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 	}
 

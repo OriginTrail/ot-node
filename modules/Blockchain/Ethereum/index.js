@@ -449,13 +449,11 @@ class Ethereum {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
-     * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once revealBid() is called
+     * @param offerHash Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, bidHash) {
+    addBid(offerHash, dhNodeId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -465,7 +463,7 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [dcWallet, dataId, this._normalizeNodeId(nodeId), bidHash], options,
+            [offerHash, this._normalizeNodeId(dhNodeId)], options,
         );
     }
 

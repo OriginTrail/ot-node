@@ -75,14 +75,9 @@ class DHService {
                 return;
             }
 
-            const bidHash = abi.soliditySHA3(
-                ['address', 'uint', 'uint', 'uint'],
-                [config.node_wallet, `0x${config.identity}`, chosenPrice, stake],
-            ).toString('hex');
+            log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} for offer ${offerHash}.`);
 
-            log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
-
-            Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
+            Blockchain.bc.addBid(offerHash, config.identity)
                 .then(Blockchain.bc.increaseBiddingApproval(stake))
                 .catch(error => log.error(`Failed to add bid. ${error}.`));
             let bid_index;
