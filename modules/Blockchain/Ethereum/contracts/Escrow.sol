@@ -132,14 +132,11 @@ library SafeMath {
  		require(escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.active
  			&&  escrow[DC_wallet][DH_wallet][data_id].escrow_status != EscrowStatus.canceled);
 
- 		require(token_amount > 0 && total_time > 0);
-
- 		require(token.allowance(DC_wallet,this) >= token_amount);
- 		token.transferFrom(DC_wallet, this, token_amount);
+ 		require(total_time > 0);
 
  		escrow[DC_wallet][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, stake_amount, 0, 0, total_time, EscrowStatus.initiated);
 
- 		emit EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time);
+ 		emit EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time.mul(60));
  	}
 
  	function verifyEscrow(address DC_wallet, uint data_id, uint token_amount, uint stake_amount, uint total_time)

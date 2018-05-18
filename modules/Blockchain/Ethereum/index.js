@@ -198,7 +198,18 @@ class Ethereum {
         };
 
         log.warn('Verifying escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'verifyEscrow',
+            [
+                dcWallet,
+                dataId,
+                tokenAmount,
+                stakeAmount,
+                Math.round(totalTime / 1000 / 60),
+            ],
+            options,
+        );
     }
 
     /**
@@ -215,7 +226,15 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'cancelEscrow', [dhWallet, dataId], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'cancelEscrow',
+            [
+                dhWallet,
+                dataId,
+            ],
+            options,
+        );
     }
 
     /**
@@ -272,7 +291,7 @@ class Ethereum {
             [
                 dataId,
                 this._normalizeNodeId(nodeId),
-                Math.round(totalEscrowTime / 1000),
+                Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
@@ -355,10 +374,10 @@ class Ethereum {
     * Subscribes to blockchain events
     * @param event
     * @param dataId
-    * @param params
     * @param endMs
+    * @param endCallback
     */
-    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000) {
+    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
@@ -379,15 +398,48 @@ class Ethereum {
                             resolve(JSON.parse(eventData.dataValues.data));
                         }).catch((err) => {
                             log.error(`Failed to update event ${event}. ${err}`);
+                            reject(err);
                         });
                     }
                 });
             }, 2000);
             setTimeout(() => {
+                endCallback();
                 clearInterval(token);
             }, endMs);
         });
     }
+
+    /**
+     * Subscribes to Blockchain event
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * @param event Event to listen to
+     * @returns {number | Object} Event handle
+     */
+    subscribeToEventPermanent(event) {
+        const handle = setInterval(async () => {
+            const where = {
+                event,
+                finished: 0,
+            };
+
+            const eventData = await Storage.models.events.findOne({ where });
+            if (eventData) {
+                globalEmitter.emit(event, eventData.dataValues);
+                eventData.finished = true;
+                await eventData.save();
+            }
+        }, 2000);
+
+        return handle;
+    }
+
+    unsubscribeToEventPermanent(eventHandle) {
+        clearInterval(eventHandle);
+    }
+
 
     /**
      * Adds bid to the offer on Ethereum blockchain

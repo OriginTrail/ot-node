@@ -192,7 +192,7 @@ contract MockBidding {
 
 		this_offer.bid.push(new_bid);
 		emit AddedBid(offer_hash, msg.sender, DH_node_id, this_offer.bid.length - 1);
-
+		emit FinalizeOfferReady(offer_hash);
 		return this_offer.bid.length - 1;
 	}	
 

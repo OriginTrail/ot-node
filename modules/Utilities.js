@@ -711,6 +711,22 @@ class Utilities {
         }
         return res;
     }
+
+    /**
+     * Calculates import distance from my node
+     * @param price Token amount to offer
+     * @param importId ID
+     * @param stakeAmount Stake amount in offer.
+     * @returns {number} Distance
+     */
+    static getImportDistance(price, importId, stakeAmount) {
+        const wallet = new BN(config.wallet);
+        const nodeId = new BN(`0x${config.node_kademlia_id}`);
+        const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
+        const myBid = hashWallerNodeId.add(price);
+        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        return Math.abs(myBid.sub(offer));
+    }
 }
 
 module.exports = Utilities;

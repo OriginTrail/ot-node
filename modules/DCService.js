@@ -7,10 +7,12 @@ const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const abi = require('ethereumjs-abi');
 
 const log = Utilities.getLogger();
 
 const totalEscrowTime = 10 * 60 * 1000;
+const finalizeWaitTime = 10 * 60 * 1000;
 const minStakeAmount = new BN('100');
 const maxTokenAmount = new BN('1000');
 const minReputation = 0;
@@ -37,6 +39,13 @@ class DCService {
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
+        const offerHash = abi.soliditySHA3(
+            ['address', 'bytes32', 'uint256'],
+            [config.wallet, `0x${config.identity}`, dataId],
+        ).toString('hex');
+
+        log.info(`Offer hash is ${offerHash}.`);
+
         Models.offers.create({
             id: dataId,
             total_escrow_time: totalEscrowTime,
@@ -45,9 +54,9 @@ class DCService {
             min_reputation: minReputation,
             data_hash: rootHash,
             data_size_bytes: importSizeInBytes.toString(),
-            dh_wallets: JSON.stringify(dhWallets),
             dh_ids: JSON.stringify(dhIds),
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
+            status: 'PENDING',
         }).then((offer) => {
             Blockchain.bc.createOffer(
                 dataId,
@@ -62,13 +71,40 @@ class DCService {
                 dhIds,
             ).then(() => {
                 log.info('Offer written to blockchain. Started bidding phase.');
-                Blockchain.bc.subscribeToEvent('ChoosingPhaseStarted', dataId)
-                    .then((event) => {
-                        log.trace('Started choosing phase.');
-                        DCService.chooseBids(dataId, totalEscrowTime);
-                    }).catch((err) => {
-                        console.log(err);
+                offer.status = 'STARTED';
+                offer.save({ fields: ['status'] });
+
+                const finalizationCallback = () => {
+                    Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
+                        if (offerModel.status === 'STARTED') {
+                            log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+
+                            offer.status = 'FAILED';
+                            offer.save({ fields: ['status'] });
+                        }
                     });
+                };
+
+                Blockchain.bc.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+                    log.trace('Started choosing phase.');
+
+                    offer.status = 'FINALIZING';
+                    offer.save({ fields: ['status'] });
+                    DCService.chooseBids(dataId, totalEscrowTime).then(() => {
+                        Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
+                            .then(() => {
+                                offer.status = 'FINALIZED';
+                                offer.save({ fields: ['status'] });
+
+                                log.info(`Offer for ${dataId} finalized`);
+                            }).catch((error) => {
+                                log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
+                            });
+                    }).catch(() => {
+                        offer.status = 'FAILED';
+                        offer.save({ fields: ['status'] });
+                    });
+                });
             }).catch((err) => {
                 log.warn(`Failed to create offer. ${err}`);
             });
@@ -90,34 +126,33 @@ class DCService {
     }
 
     /**
-   * Chose DHs
-   * @param dataId            Data ID
-   * @param totalEscrowTime   Total escrow time
-   */
+     * Chose DHs
+     * @param dataId            Data ID
+     * @param totalEscrowTime   Total escrow time
+     */
     static chooseBids(dataId, totalEscrowTime) {
-        Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
-            const offer = offerModel.get({ plain: true });
-            log.info(`Choose bids for data ${dataId}`);
-            Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
-                .then(() => {
-                    Blockchain.bc.chooseBids(dataId)
-                        .then(() => {
-                            log.info(`Bids chosen for data ${dataId}`);
-                        }).catch((err) => {
-                            log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
-                        });
-                }).catch((err) => {
-                    log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
-                });
-
-            Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
-                .then((event) => {
-                    log.info(`Offer for ${dataId} finalized`);
-                }).catch((error) => {
-                    log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
-                });
-        }).catch((error) => {
-            log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
+        return new Promise((resolve, reject) => {
+            Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
+                const offer = offerModel.get({ plain: true });
+                log.info(`Choose bids for data ${dataId}`);
+                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
+                    .then(() => {
+                        Blockchain.bc.chooseBids(dataId)
+                            .then(() => {
+                                log.info(`Bids chosen for data ${dataId}`);
+                                resolve();
+                            }).catch((err) => {
+                                log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
+                                reject(err);
+                            });
+                    }).catch((err) => {
+                        log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        reject(err);
+                    });
+            }).catch((err) => {
+                log.error(`Failed to get offer (data ID ${dataId}). ${err}.`);
+                reject(err);
+            });
         });
     }
 }
