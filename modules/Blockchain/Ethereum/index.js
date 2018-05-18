@@ -337,17 +337,20 @@ class Ethereum {
                     // TODO: make filters - we don't need to listen all events
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
-                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt) \n' +
-                          'SELECT ?, ?, ?, ?, ?, ? \n' +
+                        const timestamp = Date.now();
+                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt, finished) \n' +
+                          'SELECT ?, ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
-                            replacements: [event.event,
+                            replacements: [
+                                event.event,
                                 JSON.stringify(event.returnValues),
                                 event.returnValues.data_id,
                                 event.blockNumber,
-                                Date.now(),
-                                Date.now(),
+                                timestamp,
+                                timestamp,
                                 event.event,
-                                JSON.stringify(event.returnValues)],
+                                JSON.stringify(event.returnValues),
+                            ],
                         }).catch((err) => {
                             console.log(err);
                         });
@@ -427,7 +430,7 @@ class Ethereum {
 
             const eventData = await Storage.models.events.findOne({ where });
             if (eventData) {
-                globalEmitter.emit(event, eventData.dataValues);
+                globalEmitter.emit('eth-offer-created', JSON.parse(eventData.dataValues.data));
                 eventData.finished = true;
                 await eventData.save();
             }
