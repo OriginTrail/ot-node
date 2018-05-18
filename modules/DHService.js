@@ -29,6 +29,7 @@ class DHService {
         minReputation,
         dataSizeBytes,
         dataHash,
+        pedetermentBid
     ) {
         try {
             // TODO: This should never happened in production.
@@ -69,7 +70,7 @@ class DHService {
                 return;
             }
 
-            if (!Utilities.getImportDistance(chosenPrice, dataId, stake)) {
+            if (!pedetermentBid && !Utilities.getImportDistance(chosenPrice, dataId, stake)) {
                 log.info(`Offer ${offerHash}, data ID ${dataId} not in mine distance. Not going to participate.`);
                 return;
             }
@@ -182,7 +183,7 @@ class DHService {
     }
 
     static listenToOffers() {
-        Blockchain.bc.subscribeToEventPermanent('OfferCreated');
+        Blockchain.bc.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
     }
 }
 

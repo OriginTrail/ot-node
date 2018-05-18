@@ -5,6 +5,7 @@ const Utilities = require('../../Utilities');
 const globalEvents = require('../../GlobalEvents');
 const SystemStorage = require('../../Database/SystemStorage');
 const Storage = require('../../Storage');
+const Op = require('sequelize/lib/operators');
 
 const { globalEmitter } = globalEvents;
 
@@ -424,15 +425,17 @@ class Ethereum {
     subscribeToEventPermanent(event) {
         const handle = setInterval(async () => {
             const where = {
-                event,
+                [Op.or]: event.map(e => ({ event: e })),
                 finished: 0,
             };
 
-            const eventData = await Storage.models.events.findOne({ where });
+            const eventData = await Storage.models.events.findAll({ where });
             if (eventData) {
-                globalEmitter.emit('eth-offer-created', JSON.parse(eventData.dataValues.data));
-                eventData.finished = true;
-                await eventData.save();
+                eventData.forEach(async (data) => {
+                    globalEmitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    data.finished = true;
+                    await data.save();
+                });
             }
         }, 2000);
 
