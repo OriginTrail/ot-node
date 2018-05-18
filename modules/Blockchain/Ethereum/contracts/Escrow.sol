@@ -105,7 +105,7 @@ library SafeMath {
  	/*    ----------------------------- ESCROW -----------------------------     */
 
 
- 	enum EscrowStatus {initiated, active, canceled, completed}
+ 	enum EscrowStatus {inactive, initiated, active, canceled, completed}
 
  	struct EscrowDefinition{
  		uint token_amount;
@@ -154,7 +154,7 @@ library SafeMath {
  		bidding.decreaseBalance(msg.sender, stake_amount);
 
  		escrow_def.last_confirmation_time = block.timestamp;
- 		escrow_def.end_time = SafeMath.add(block.timestamp, total_time);
+ 		escrow_def.end_time = SafeMath.add(block.timestamp, total_time.mul(60));
 
  		escrow_def.escrow_status = EscrowStatus.active;
  		isVerified = true;
