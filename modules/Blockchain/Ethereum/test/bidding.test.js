@@ -93,19 +93,26 @@ contract('Bidding testing', async (accounts) => {
         const bidding = await Bidding.deployed();
         const token_amount = [];
         const stake_amount = [];
+        var response = []
         for (let i = 0; i < 10; i += 1) {
             // console.log(`Creating profile ${node_id[i]}`);
-            token_amount[i] = Math.round(Math.random() * 100) * 1e15;
-            stake_amount[i] = (Math.round(Math.random() * 1000) + 10) * 1e15;
-            // eslint-disable-next-line
-            await bidding.createProfile(node_id[i], token_amount[i], stake_amount[i], 1000, 1000, { from: accounts[i] });
+            token_amount[i] = 1000 * 1e15;
+            stake_amount[i] = 1000 * 1e15;
+            response[i] = bidding.createProfile(
+                node_id[i],
+                token_amount[i],
+                stake_amount[i],
+                1000,
+                1000,
+                { from: accounts[i] },
+            );
         }
 
+        await Promise.all(response);
         const response = await bidding.profile.call(accounts[2]);
 
-        // await Promise.all(response);
-        console.log(` account price: ${response[0].toNumber() / 1e18}`);
-        console.log(` account stake: ${response[1].toNumber() / 1e18}`);
+        console.log(`\t account price: ${response[0].toNumber() / 1e18}`);
+        console.log(`\t account stake: ${response[1].toNumber() / 1e18}`);
 
         assert.equal(response[0].toNumber(), token_amount[2], 'Price not matching');
         assert.equal(response[1].toNumber(), stake_amount[2], 'Stake not matching');
@@ -303,160 +310,106 @@ contract('Bidding testing', async (accounts) => {
         }
     });
 
-/*
-    // eslint-disable-next-line no-undef
-    it('Should create an Escrow, lasting 20 blocks, valued 100000000 trace', async () => {
-        const instance = await EscrowHolder.deployed();
-        const util = await TestingUtilities.deployed();
-
-        let response = await util.getBlockNumber.call();
-
-        await instance.initiateEscrow(
-            DC_wallet,
-            accounts[1],
-            data_id,
-            100000000,
-            100000000,
-            escrowDuration,
-            { from: DC_wallet },
-        ).then((result) => {
-            console.log(`\t Initiate escrow - Gas used : ${result.receipt.gasUsed}`);
-        });
-
-        response = await instance.escrow.call(DC_wallet, accounts[1], data_id);
-
-
-        let token_amount = response[0];
-        token_amount = token_amount.toNumber();
-
-        let tokens_sent = response[1];
-        tokens_sent = tokens_sent.toNumber();
-
-        let stake_amount = response[2];
-        stake_amount = stake_amount.toNumber();
-
-        let actual_startTime = response[3];
-        actual_startTime = actual_startTime.toNumber();
-
-        let endTime = response[4];
-        endTime = endTime.toNumber();
-
-        let total_time = response[5];
-        total_time = total_time.toNumber();
-
-        let status = response[6];
-        status = status.toNumber();
-        switch (status) {
-        case 0:
-            status = 'initated';
-            break;
-        case 1:
-            status = 'verified';
-            break;
-        case 2:
-            status = 'canceled';
-            break;
-        case 3:
-            status = 'completed';
-            break;
-        default:
-            status = 'err';
-            break;
-        }
-
-        console.log('Escrow values: ');
-        console.log(`\t token_amount: ${token_amount}`);
-        console.log(`\t tokens_sent: ${tokens_sent}`);
-        console.log(`\t stake_amount: ${stake_amount}`);
-        console.log(`\t start_time: ${actual_startTime}`);
-        console.log(`\t end_time: ${endTime}`);
-        console.log(`\t total_time: ${total_time}`);
-        console.log(`\t status: ${status}`);
-
-
-        assert.equal(token_amount, 100000000, 'Amount of tokens does not match!');
-        assert.equal(tokens_sent, 0, 'Sent tokens not equal zero!');
-        // eslint-disable-next-line no-undef
-        assert.equal(stake_amount, 100000000, 'Stake amount does not match!');
-        assert.equal(0, actual_startTime, 'Start time not equal zero!');
-        assert.equal(0, endTime, 'End time not equal zero!');
-        assert.equal(escrowDuration, total_time, 'Escrow duration does not match!');
-        assert.equal(status, 'initated', 'Escrow status not initated properly!');
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should break - DH verifies escrow with wrong token amount', async () => {
-        const instance = await EscrowHolder.deployed();
-
-        let error;
-        try {
-            await instance.verifyEscrow(
-                DC_wallet,
-                data_id,
-                3 * 100000000,
-                100000000,
-                escrowDuration,
-                { from: accounts[1] },
-            ).then((result) => {
-                console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
-            });
-        } catch (e) {
-            error = e;
-        }
-
-        assert.notEqual(error, undefined, 'Error must be thrown');
-        assert.isAbove(error.message.search('Exception while processing transaction: revert'), -1, 'revert error must be returned');
-    });
-
-    // eslint-disable-next-line no-undef
-    it('Should increase DH-escrow approval before verification', async () => {
-        const escrowInstance = await EscrowHolder.deployed();
-        const tokenInstance = await TracToken.deployed();
-
-        await tokenInstance.increaseApproval(escrow_address, 100000000, { from: accounts[1] });
-
-        const response = await tokenInstance.allowance.call(accounts[1], escrowInstance.address);
-        const allowance_DH = response.toNumber();
-        console.log(`\t allowance_DH: ${allowance_DH}`);
-
-        assert.equal(allowance_DH, 100000000, 'The proper amount was not allowed');
-    });
-
     // eslint-disable-next-line no-undef
     it('Should verify an existing escrow', async () => {
-        const instance = await EscrowHolder.deployed();
+        const escrow = await EscrowHolder.deployed();
 
-        await instance.verifyEscrow(
-            DC_wallet, data_id, 100000000, 100000000, escrowDuration,
-            { from: accounts[1] },
-        ).then((result) => {
-            console.log(`\t Verify escrow - Gas used : ${result.receipt.gasUsed}`);
-        });
+        var response = await escrow.escrow(DC_wallet, accounts[2], offer_hash);
+        console.log(JSON.stringify(response));
 
-        const response = await instance.escrow.call(DC_wallet, accounts[1], data_id);
-        let status = response[6];
-        status = status.toNumber();
-        switch (status) {
-        case 0:
-            status = 'initated';
-            break;
-        case 1:
-            status = 'verified';
-            break;
-        case 2:
-            status = 'canceled';
-            break;
-        case 3:
-            status = 'completed';
-            break;
-        default:
-            status = 'err';
-            break;
+        await escrow.verifyEscrow(
+            DC_wallet, offer_hash, 10e18, 10e18, 10,
+            { from: accounts[2] },
+        );
+        await escrow.verifyEscrow(
+            DC_wallet, offer_hash, 10e18, 10e18, 10,
+            { from: accounts[3] },
+        );
+        await escrow.verifyEscrow(
+            DC_wallet, offer_hash, 10e18, 10e18, 10,
+            { from: accounts[4] },
+        );
+        await escrow.verifyEscrow(
+            DC_wallet, offer_hash, 10e18, 10e18, 10,
+            { from: accounts[8] },
+        );
+        await escrow.verifyEscrow(
+            DC_wallet, offer_hash, 10e18, 10e18, 10,
+            { from: accounts[9] },
+        );
+
+        for (var i = 1; i < 10; i += 1) {
+            // eslint-disable-next-line
+            var response = await escrow.escrow.call(DC_wallet, accounts[i], offer_hash);
+            let status = response[6];
+            status = status.toNumber();
+            switch (status) {
+            case 0:
+                status = 'initated';
+                break;
+            case 1:
+                status = 'active';
+                break;
+            case 2:
+                status = 'canceled';
+                break;
+            case 3:
+                status = 'completed';
+                break;
+            default:
+                status = 'err';
+                break;
+            }
+            console.log(`\t Status: ${status}`);
+            if (i === 2 || i === 3 || i === 4 || i === 8 || i === 9) {
+                assert.equal(status, 'active', "Escrow wasn't verified");
+            }
         }
-
-        console.log(`\t Status: ${status}`);
-        assert.equal(status, 'verified', "Escrow wasn't verified");
     });
 
-    */
+    // eslint-disable-next-line no-undef
+    it('Should wait a minute, then pay out all DH_s', async () => {
+        const escrow = await EscrowHolder.deployed();
+        const bidding = await Bidding.deployed();
+
+        await new Promise(resolve => setTimeout(resolve, 60000));
+
+        await escrow.payOut(
+            DC_wallet, offer_hash,
+            { from: accounts[2] },
+        );
+        await escrow.payOut(
+            DC_wallet, offer_hash,
+            { from: accounts[3] },
+        );
+        await escrow.payOut(
+            DC_wallet, offer_hash,
+            { from: accounts[4] },
+        );
+        await escrow.payOut(
+            DC_wallet, offer_hash,
+            { from: accounts[8] },
+        );
+        await escrow.payOut(
+            DC_wallet, offer_hash,
+            { from: accounts[9] },
+        );
+
+        var balances = [];
+        var response;
+        response = await bidding.profile.call(accounts[2]);
+        balances[0] = response[2].toNumber();
+        response = await bidding.profile.call(accounts[3]);
+        balances[1] = response[2].toNumber();
+        response = await bidding.profile.call(accounts[4]);
+        balances[2] = response[2].toNumber();
+        response = await bidding.profile.call(accounts[8]);
+        balances[3] = response[2].toNumber();
+        response = await bidding.profile.call(accounts[9]);
+        balances[4] = response[2].toNumber();
+
+        for (var i = 0; i < 5; i += 1) {
+            assert.equal(balances[i], 5.000001e25, 'DH was not paid the correct amount');
+        }
+    });
 });

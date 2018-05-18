@@ -50,7 +50,7 @@ var fingerprint;
 var DC_wallet;
 var DH_wallet;
 
-const amountToMint = 25e25;
+const amountToMint = 5e25;
 
 module.exports = (deployer, network, accounts) => {
     switch (network) {
@@ -75,18 +75,21 @@ module.exports = (deployer, network, accounts) => {
                                         fingerprint = result;
                                         escrow.transferOwnership(bidding.address)
                                             .then(() => {
-                                                token.mint(DC_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                var amounts = [];
+                                                var recepients = [];
+                                                for (var i = 0; i < 10; i += 10) {
+                                                    amounts.push(amountToMint); // eslint-disable-line max-len
+                                                    recepients.push(accounts[i]);
+                                                }
+                                                token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
                                                     .then(() => {
-                                                        token.mint(DH_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                        token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
                                                             .then(() => {
-                                                                token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
-                                                                    .then(() => {
-                                                                        console.log('\n\n \t Contract adressess on ganache:');
-                                                                        console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-                                                                    });
+                                                                console.log('\n\n \t Contract adressess on ganache:');
+                                                                console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+                                                                console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
                                                             });
                                                     });
                                             });
@@ -168,18 +171,21 @@ module.exports = (deployer, network, accounts) => {
                                         fingerprint = result;
                                         escrow.transferOwnership(bidding.address)
                                             .then(() => {
-                                                token.mint(DC_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                var amounts = [];
+                                                var recepients = [];
+                                                for (var i = 0; i < 10; i += 10) {
+                                                    amounts.push(amountToMint); // eslint-disable-line max-len
+                                                    recepients.push(accounts[i]);
+                                                }
+                                                token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
                                                     .then(() => {
-                                                        token.mint(DH_wallet, amountToMint, { from: accounts[0] }) // eslint-disable-line max-len
+                                                        token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
                                                             .then(() => {
-                                                                token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
-                                                                    .then(() => {
-                                                                        console.log('\n\n \t Contract adressess on ganache (mock versions):');
-                                                                        console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-                                                                    });
+                                                                console.log('\n\n \t Contract adressess on ganache (mock versions):');
+                                                                console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+                                                                console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
                                                             });
                                                     });
                                             });
