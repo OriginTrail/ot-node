@@ -29,7 +29,7 @@ class DHService {
         minReputation,
         dataSizeBytes,
         dataHash,
-        pedetermentBid
+        pedetermentBid,
     ) {
         try {
             // TODO: This should never happened in production.

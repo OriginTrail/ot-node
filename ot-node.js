@@ -180,7 +180,7 @@ class OTNode {
     async createProfile() {
         const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.trace(`Profile has already been created for ${profileInfo.active}`);
+            log.trace(`Profile has already been created for ${config.identity}`);
             return;
         }
 
