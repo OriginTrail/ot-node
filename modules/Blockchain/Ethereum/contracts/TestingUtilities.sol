@@ -42,4 +42,13 @@ contract TestingUtilities{
 	public{
 		internalData = !internalData;
 	}
+
+	event PreIPosle(uint a);
+
+	function error()
+	public{
+		emit PreIPosle(1);
+		require(false);
+		emit PreIPosle(2);
+	}
 }

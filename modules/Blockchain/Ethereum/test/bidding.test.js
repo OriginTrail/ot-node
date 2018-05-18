@@ -22,7 +22,7 @@ contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should get TracToken contract', async () => {
         await TracToken.deployed().then((res) => {
-            console.log(`\t Bidding address: ${res.address}`);
+            console.log(`\t TracToken address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
@@ -45,7 +45,7 @@ contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should get TestingUtilities contract', async () => {
         await TestingUtilities.deployed().then((res) => {
-            console.log(`\t Bidding address: ${res.address}`);
+            console.log(`\t TestingUtilities address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
@@ -61,11 +61,13 @@ contract('Bidding testing', async (accounts) => {
         }
         await trace.endMinting();
 
-        const response = await trace.balanceOf.call(accounts[0]);
-        const actual_balance = response.toNumber();
-        // console.log(`\t balance: ${actual_balance}`);
-
-        assert.equal(actual_balance, amount, 'balance not 5e25');
+        for (i = 0; i < 10; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            const response = await trace.balanceOf.call(accounts[0]);
+            const actual_balance = response.toNumber();
+            // console.log(`\t balance: ${actual_balance}`);
+            assert.equal(actual_balance, amount, 'balance not 5e25');
+        }
     });
 
     // eslint-disable-next-line no-undef
@@ -92,19 +94,18 @@ contract('Bidding testing', async (accounts) => {
         const token_amount = [];
         const stake_amount = [];
         for (let i = 0; i < 10; i += 1) {
-            console.log(`Creating profile ${node_id[i]}`);
-            token_amount[i] = Math.round(Math.random() * 100) * 1e18;
-            stake_amount[i] = (Math.round(Math.random() * 1000) + 10) * 1e18;
+            // console.log(`Creating profile ${node_id[i]}`);
+            token_amount[i] = Math.round(Math.random() * 100) * 1e15;
+            stake_amount[i] = (Math.round(Math.random() * 1000) + 10) * 1e15;
             // eslint-disable-next-line
-            bidding.createProfile(node_id[i], token_amount[i], stake_amount[i], 1, 1, { from: accounts[i] });
+            await bidding.createProfile(node_id[i], token_amount[i], stake_amount[i], 1000, 1000, { from: accounts[i] });
         }
 
         const response = await bidding.profile.call(accounts[2]);
-        console.log(JSON.stringify(response));
 
         // await Promise.all(response);
-        console.log(response[0].toNumber() / 1e18);
-        console.log(response[1].toNumber() / 1e18);
+        console.log(` account price: ${response[0].toNumber() / 1e18}`);
+        console.log(` account stake: ${response[1].toNumber() / 1e18}`);
 
         assert.equal(response[0].toNumber(), token_amount[2], 'Price not matching');
         assert.equal(response[1].toNumber(), stake_amount[2], 'Stake not matching');
@@ -164,14 +165,14 @@ contract('Bidding testing', async (accounts) => {
         predetermined_node_id.push(node_id[2]);
 
         // Offer variables
-        const total_escrow_time = 1;
+        const total_escrow_time = 10;
         const max_token_amount = 1000e18;
-        const min_stake_amount = 10e18;
+        const min_stake_amount = 10e12;
         const min_reputation = 0;
 
         // Data holding parameters
         const data_id = 0;
-        const data_hash = await util.keccakAddressBytes(accounts[6], node_id[6]);
+        const data_hash = await util.keccakAddressBytes(accounts[9], node_id[9]);
         const data_size = 1;
 
         console.log(`\t Data hash ${data_hash}`);
@@ -233,15 +234,6 @@ contract('Bidding testing', async (accounts) => {
         assert.equal(actual_escrow_time, total_escrow_time, 'total_escrow_time not matching');
         assert.equal(replication_factor, 2, 'replication_factor not matching');
     });
-    // // eslint-disable-next-line no-undef
-    // it('Should try to get a bid', async () => {
-    //     const bidding = await Bidding.deployed();
-    //     const trace = await TracToken.deployed();
-    //     const util = await TestingUtilities.deployed();
-
-    //     const response = await bidding.offer.call(offer_hash);
-    //     console.log(`response: ${response}`);
-    // });
 
     // eslint-disable-next-line no-undef
     it('Should get a bid index of accounts[2]', async () => {
@@ -271,23 +263,44 @@ contract('Bidding testing', async (accounts) => {
         for (var i = 3; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             await bidding.addBid(offer_hash, node_id[i], { from: accounts[i] });
+            var response = await bidding.offer.call(offer_hash); // eslint-disable-line
+            var first_bid_index = response[7].toNumber();
+            console.log(`first_bid_index =  ${first_bid_index}`);
         }
 
-        var response = await bidding.offer.call(offer_hash);
-        const first_bid_index = response[7].toNumber();
+        response = await bidding.offer.call(offer_hash);
+        first_bid_index = response[7].toNumber();
         console.log(`first_bid_index =  ${first_bid_index}`);
 
-        assert.equal(first_bid_index, 5, 'Something wrong');
+        assert.equal(first_bid_index, 8, 'Something wrong');
     });
+
+    // EscrowDefinition
+    // 0: uint token_amount
+    // 1: uint tokens_sent
+
+    // 2: uint stake_amount
+
+    // 3: uint last_confirmation_time
+    // 4: uint end_time
+    // 5: uint total_time
 
     // eslint-disable-next-line no-undef
     it('Should choose bids', async () => {
         const bidding = await Bidding.deployed();
+        const escrow = await EscrowHolder.deployed();
+        const util = await TestingUtilities.deployed();
 
-        var response = await bidding.chooseBids.call(offer_hash);
-        console.log(JSON.stringify(response));
+        var chosen = await bidding.chooseBids.call(offer_hash, { from: DC_wallet });
+        console.log(JSON.stringify(chosen));
 
         await bidding.chooseBids(offer_hash);
+
+        for (var i = 1; i < 10; i += 1) {
+            // eslint-disable-next-line
+            var response = await escrow.escrow(DC_wallet, accounts[i], offer_hash);
+            console.log(JSON.stringify(response));
+        }
     });
 
 /*
