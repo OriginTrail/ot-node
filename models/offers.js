@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         dh_wallets: DataTypes.STRING,
         dh_ids: DataTypes.STRING,
         start_tender_time: DataTypes.INTEGER,
+        status: DataTypes.STRING,
 
     }, {});
     offers.associate = function (models) {
