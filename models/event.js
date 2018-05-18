@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
         data: DataTypes.TEXT,
         dataId: DataTypes.INTEGER,
         block: DataTypes.INTEGER,
-        finished: DataTypes.STRING,
+        finished: DataTypes.BOOLEAN,
     }, {});
     Event.associate = function (models) {
     // associations can be defined here

@@ -194,7 +194,7 @@ globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
 });
 
-globalEmitter.on('eth-offer-created', async (event) => {
+globalEmitter.on('eth-offer-created', async (eventData) => {
     log.info('eth-offer-created');
 
     const {
@@ -208,7 +208,7 @@ globalEmitter.on('eth-offer-created', async (event) => {
         min_reputation,
         data_size,
         data_hash,
-    } = event.returnValues;
+    } = eventData;
 
     await DHService.handleOffer(
         offer_hash,

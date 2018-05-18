@@ -14,6 +14,7 @@ module.exports = {
             type: Sequelize.TEXT,
         },
         block: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
 
@@ -21,7 +22,8 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         finished: {
-            type: Sequelize.STRING,
+            allowNull: false,
+            type: Sequelize.INTEGER,
         },
         createdAt: {
             allowNull: false,
