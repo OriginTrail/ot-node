@@ -18,15 +18,31 @@ class DHService {
    * Handles new offer
    *
    */
-    static handleOffer(
+    static async handleOffer(
+        offerHash,
         dcWallet,
         dcNodeId,
         dataId,
         totalEscrowTime,
+        maxTokenAmount,
         minStakeAmount,
+        minReputation,
         dataSizeBytes,
+        dataHash,
     ) {
         try {
+            // TODO: This should never happened in production.
+            // Check if mine offer and if so ignore it.
+            const offerModel = await Models.offers.findOne({ where: { id: dataId } });
+            if (offerModel) {
+                const offer = offerModel.get({ plain: true });
+
+                if (offer.id === dataId) {
+                    log.trace(`Mine offer (ID ${dataId}). Ignoring.`);
+                    return;
+                }
+            }
+
             const minPrice = new BN(config.dh_min_price, 10);
             const maxPrice = new BN(config.dh_max_price, 10);
             const maxStakeAmount = new BN(config.dh_max_stake, 10);
@@ -50,6 +66,11 @@ class DHService {
 
             if (maxDataSizeBytes.lt(dataSizeBytes)) {
                 log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
+                return;
+            }
+
+            if (!Utilities.getImportDistance(chosenPrice, dataId, stake)) {
+                log.info(`Offer ${offerHash}, data ID ${dataId} not in mine distance. Not going to participate.`);
                 return;
             }
 
@@ -158,6 +179,10 @@ class DHService {
         }).catch((error) => {
             log.error(`Couldn't find bid with data ID ${data.data_id}. ${error}.`);
         });
+    }
+
+    static listenToOffers() {
+        Blockchain.bc.subscribeToEventPermanent('OfferCreated');
     }
 }
 

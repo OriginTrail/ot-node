@@ -411,6 +411,37 @@ class Ethereum {
     }
 
     /**
+     * Subscribes to Blockchain event
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * @param event Event to listen to
+     * @returns {number | Object} Event handle
+     */
+    subscribeToEventPermanent(event) {
+        const handle = setInterval(async () => {
+            const where = {
+                event,
+                finished: 0,
+            };
+
+            const eventData = await Storage.models.events.findOne({ where });
+            if (eventData) {
+                globalEmitter.emit(event, eventData.dataValues);
+                eventData.finished = true;
+                await eventData.save();
+            }
+        }, 2000);
+
+        return handle;
+    }
+
+    unsubscribeToEventPermanent(eventHandle) {
+        clearInterval(eventHandle);
+    }
+
+
+    /**
      * Adds bid to the offer on Ethereum blockchain
      * @param dcWallet Wallet of the bidder
      * @param dataId ID of the data of the bid

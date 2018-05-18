@@ -4,17 +4,13 @@ const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
-const deasync = require('deasync-promise');
-const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const challenger = require('./Challenger');
-const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
-const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -162,7 +158,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
 /**
  * Handles bidding-broadcast on the DH side
  */
-globalEmitter.on('bidding-broadcast', (message) => {
+globalEmitter.on('bidding-broadcast', async (message) => {
     log.info('bidding-broadcast received');
 
     const {
@@ -174,7 +170,7 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dataSizeBytes,
     } = message;
 
-    DHService.handleOffer(
+    await DHService.handleOffer(
         dcWallet,
         dcId,
         dataId,
@@ -198,26 +194,33 @@ globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
 });
 
-globalEmitter.on('eth-offer-created', (event) => {
+globalEmitter.on('eth-offer-created', async (event) => {
     log.info('eth-offer-created');
-    // ( DC_wallet, DC_node_id,  data_id,  total_escrow_time,  min_stake_amount,  data_size);
 
     const {
+        offer_hash,
         DC_wallet,
         DC_node_id,
         data_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
+        min_reputation,
         data_size,
+        data_hash,
     } = event.returnValues;
 
-    DHService.handleOffer(
+    await DHService.handleOffer(
+        offer_hash,
         DC_wallet,
         DC_node_id,
         data_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
+        min_reputation,
         data_size,
+        data_hash,
     );
 });
 

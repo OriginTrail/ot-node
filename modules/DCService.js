@@ -7,6 +7,7 @@ const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const abi = require('ethereumjs-abi');
 
 const log = Utilities.getLogger();
 
@@ -37,6 +38,13 @@ class DCService {
         });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
+
+        const offerHash = abi.soliditySHA3(
+            ['address', 'bytes32', 'uint256'],
+            [config.wallet, `0x${config.identity}`, dataId],
+        ).toString('hex');
+
+        log.info(`Offer hash is ${offerHash}.`);
 
         Models.offers.create({
             id: dataId,

@@ -17,6 +17,7 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
+const DHService = require('./modules/DHService');
 require('./modules/EventHandlers');
 
 const pjson = require('./package.json');
@@ -169,6 +170,8 @@ class OTNode {
         setInterval(() => {
             BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         }, 3000);
+
+        DHService.listenToOffers();
     }
 
     /**
