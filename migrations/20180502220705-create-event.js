@@ -14,14 +14,16 @@ module.exports = {
             type: Sequelize.TEXT,
         },
         block: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
 
-        dataId: {
-            type: Sequelize.INTEGER,
+        offer_hash: {
+            type: Sequelize.STRING,
         },
         finished: {
-            type: Sequelize.STRING,
+            allowNull: false,
+            type: Sequelize.INTEGER,
         },
         createdAt: {
             allowNull: false,

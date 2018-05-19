@@ -8,30 +8,35 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         bid_index: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
         price: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
-        data_id: {
-            type: Sequelize.INTEGER,
+        offer_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
         dc_wallet: {
-            type: Sequelize.STRING,
-        },
-        hash: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         dc_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         total_escrow_time: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
         stake: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         data_size_bytes: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
     }),

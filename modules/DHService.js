@@ -1,7 +1,6 @@
 const node = require('./Node');
 const config = require('./Config');
 const BN = require('bn.js');
-const abi = require('ethereumjs-abi');
 const Blockchain = require('./BlockChainInstance');
 const importer = require('./importer')();
 
@@ -20,27 +19,35 @@ class DHService {
    */
     static async handleOffer(
         offerHash,
-        dcWallet,
         dcNodeId,
-        dataId,
         totalEscrowTime,
         maxTokenAmount,
         minStakeAmount,
         minReputation,
         dataSizeBytes,
         dataHash,
+        predeterminedBid,
     ) {
         try {
-            // TODO: This should never happened in production.
             // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { id: dataId } });
+            const offerModel = await Models.offers.findOne({ where: { data_hash: dataHash } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
+                log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                return;
+            }
 
-                if (offer.id === dataId) {
-                    log.trace(`Mine offer (ID ${dataId}). Ignoring.`);
-                    return;
-                }
+            // Check if we are in the predetermined list
+            const eventModel = await Models.events.findOne({
+                where: {
+                    event: 'AddedPredeterminedBid',
+                    offer_hash: offerHash,
+                },
+            });
+            if (eventModel && !predeterminedBid) {
+                // skip handling since we are already doing it
+                log.trace('We are already in the predetermined list. Skip handling.');
+                return;
             }
 
             const minPrice = new BN(config.dh_min_price, 10);
@@ -69,45 +76,40 @@ class DHService {
                 return;
             }
 
-            if (!Utilities.getImportDistance(chosenPrice, dataId, stake)) {
-                log.info(`Offer ${offerHash}, data ID ${dataId} not in mine distance. Not going to participate.`);
+            if (!predeterminedBid && !Utilities.getImportDistance(chosenPrice, 1, stake)) {
+                log.info(`Offer ${offerHash}, not in mine distance. Not going to participate.`);
                 return;
             }
 
-            const bidHash = abi.soliditySHA3(
-                ['address', 'uint', 'uint', 'uint'],
-                [config.node_wallet, `0x${config.identity}`, chosenPrice, stake],
-            ).toString('hex');
+            log.trace(`Adding a bid for offer ${offerHash}.`);
 
-            log.trace(`Adding a bid for DC wallet ${dcWallet} and data ID ${dataId} hash ${bidHash}`);
-
-            Blockchain.bc.addBid(dcWallet, dataId, config.identity, `0x${bidHash}`)
+            Blockchain.bc.addBid(offerHash, config.identity)
                 .then(Blockchain.bc.increaseBiddingApproval(stake))
                 .catch(error => log.error(`Failed to add bid. ${error}.`));
-            let bid_index;
-            Blockchain.bc.subscribeToEvent('AddedBid', dataId)
-                .then((event) => {
-                    bid_index = event.bidIndex;
+            Blockchain.bc.subscribeToEvent('AddedBid', offerHash)
+                .then(async (event) => {
+                    const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
                     this._saveBidToStorage(
                         event,
-                        dcNodeId,
+                        dcNodeId.substring(2, 42),
+                        dcWallet,
                         chosenPrice,
                         totalEscrowTime,
                         stake,
                         dataSizeBytes,
-                        dataId,
+                        offerHash,
                     );
                 }).catch((err) => {
                     console.log(err);
                 });
 
-            Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
+            Blockchain.bc.subscribeToEvent('OfferFinalized', offerHash)
                 .then((event) => {
-                    Models.bids.findOne({ where: { data_id: dataId } }).then((bidModel) => {
+                    Models.bids.findOne({ where: { offer_hash: offerHash } }).then((bidModel) => {
                         const bid = bidModel.get({ plain: true });
                         node.ot.replicationRequest(
                             {
-                                dataId,
+                                offer_hash: offerHash,
                                 wallet: config.node_wallet,
                             },
                             bid.dc_id, (err) => {
@@ -128,20 +130,25 @@ class DHService {
 
     static _saveBidToStorage(
         event,
-        dcNodeId, chosenPrice, totalEscrowTime, stake, dataSizeBytes, dataId,
+        dcNodeId,
+        dcWallet,
+        chosenPrice,
+        totalEscrowTime,
+        stake,
+        dataSizeBytes,
+        offerHash,
     ) {
         Models.bids.create({
-            bid_index: event.bidIndex,
+            bid_index: event.bid_index,
             price: chosenPrice.toString(),
-            data_id: dataId,
-            dc_wallet: event.DC_wallet,
+            offer_hash: offerHash,
+            dc_wallet: dcWallet,
             dc_id: dcNodeId,
-            hash: event.bid_hash,
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
         }).then((bid) => {
-            log.info(`Created new bid for import ${dataId}. Waiting for reveal... `);
+            log.info(`Created new bid for offer ${offerHash}. Waiting for reveal... `);
         }).catch((err) => {
             log.error(`Failed to insert new bid. ${err}`);
         });
@@ -182,7 +189,7 @@ class DHService {
     }
 
     static listenToOffers() {
-        Blockchain.bc.subscribeToEventPermanent('OfferCreated');
+        Blockchain.bc.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
     }
 }
 

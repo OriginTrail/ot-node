@@ -194,33 +194,57 @@ globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
 });
 
-globalEmitter.on('eth-offer-created', async (event) => {
-    log.info('eth-offer-created');
+globalEmitter.on('eth-OfferCreated', async (eventData) => {
+    log.info('eth-OfferCreated');
 
     const {
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
         min_reputation,
-        data_size,
         data_hash,
-    } = event.returnValues;
+        data_size,
+    } = eventData;
 
     await DHService.handleOffer(
         offer_hash,
-        DC_wallet,
         DC_node_id,
-        data_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
         min_reputation,
         data_size,
         data_hash,
+        false,
+    );
+});
+
+globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
+    log.info('eth-AddedPredeterminedBid');
+
+    const {
+        offer_hash,
+        DC_node_id,
+        total_escrow_time,
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        data_hash,
+        data_size,
+    } = eventData;
+
+    await DHService.handleOffer(
+        offer_hash,
+        DC_node_id,
+        total_escrow_time,
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        data_size,
+        data_hash,
+        true,
     );
 });
 

@@ -39,9 +39,9 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:mda:actor">				
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:actor:id:Company_1">
-								<attribute id="urn:ot:actor:person:id:name">Company _1</attribute>				
-								<attribute id="urn:ot:actor:category">Company</attribute>
+							<VocabularyElement id="urn:ot:mda:actor:id:Company_1">
+								<attribute id="urn:ot:mda:actor:person:id:name">Company _1</attribute>
+								<attribute id="urn:ot:mda:actor:category">Company</attribute>
 						    </VocabularyElement>																		
 						</VocabularyElementList>			
 					</Vocabulary>		
@@ -52,7 +52,7 @@
 								<attribute id="urn:ot:mda:location:category">Building _1</attribute>
 								<attribute id="urn:ot:mda:location:description">Description of building _1</attribute>	
 								<extension>
-									<attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company_1</attribute>
+									<attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_1</attribute>
 								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>

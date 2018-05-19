@@ -5,6 +5,7 @@ const Utilities = require('../../Utilities');
 const globalEvents = require('../../GlobalEvents');
 const SystemStorage = require('../../Database/SystemStorage');
 const Storage = require('../../Storage');
+const Op = require('sequelize/lib/operators');
 
 const { globalEmitter } = globalEvents;
 
@@ -337,17 +338,20 @@ class Ethereum {
                     // TODO: make filters - we don't need to listen all events
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
-                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt) \n' +
-                          'SELECT ?, ?, ?, ?, ?, ? \n' +
+                        const timestamp = Date.now();
+                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, createdAt, updatedAt, finished) \n' +
+                          'SELECT ?, ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
-                            replacements: [event.event,
-                                JSON.stringify(event.returnValues),
-                                event.returnValues.data_id,
-                                event.blockNumber,
-                                Date.now(),
-                                Date.now(),
+                            replacements: [
                                 event.event,
-                                JSON.stringify(event.returnValues)],
+                                JSON.stringify(event.returnValues),
+                                event.returnValues.offer_hash,
+                                event.blockNumber,
+                                timestamp,
+                                timestamp,
+                                event.event,
+                                JSON.stringify(event.returnValues),
+                            ],
                         }).catch((err) => {
                             console.log(err);
                         });
@@ -373,19 +377,19 @@ class Ethereum {
     /**
     * Subscribes to blockchain events
     * @param event
-    * @param dataId
+    * @param offerHash
     * @param endMs
     * @param endCallback
     */
-    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000, endCallback) {
+    subscribeToEvent(event, offerHash, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
                     event,
                     finished: 0,
                 };
-                if (dataId) {
-                    where.dataId = dataId;
+                if (offerHash) {
+                    where.offer_hash = offerHash;
                 }
                 Storage.models.events.findOne({
                     where,
@@ -421,15 +425,17 @@ class Ethereum {
     subscribeToEventPermanent(event) {
         const handle = setInterval(async () => {
             const where = {
-                event,
+                [Op.or]: event.map(e => ({ event: e })),
                 finished: 0,
             };
 
-            const eventData = await Storage.models.events.findOne({ where });
+            const eventData = await Storage.models.events.findAll({ where });
             if (eventData) {
-                globalEmitter.emit(event, eventData.dataValues);
-                eventData.finished = true;
-                await eventData.save();
+                eventData.forEach(async (data) => {
+                    globalEmitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    data.finished = true;
+                    await data.save();
+                });
             }
         }, 2000);
 
@@ -443,13 +449,11 @@ class Ethereum {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
-     * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once revealBid() is called
+     * @param offerHash Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, bidHash) {
+    addBid(offerHash, dhNodeId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -459,7 +463,7 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [dcWallet, dataId, this._normalizeNodeId(nodeId), bidHash], options,
+            [offerHash, this._normalizeNodeId(dhNodeId)], options,
         );
     }
 
@@ -486,10 +490,10 @@ class Ethereum {
 
     /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param dataId ID of data of the bid
+     * @param offerHash Offer hash
      * @returns {Promise<any>}
      */
-    chooseBids(dataId) {
+    chooseBids(offerHash) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -499,7 +503,7 @@ class Ethereum {
         log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
-            [dataId], options,
+            [offerHash], options,
         );
     }
 
@@ -540,6 +544,18 @@ class Ethereum {
             }).catch((e) => {
                 reject(e);
             });
+        });
+    }
+
+    getDcWalletFromOffer(offer_hash) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Asking for offer's (${offer_hash}) DC wallet.`);
+            this.biddingContract.methods.offer(offer_hash).call()
+                .then((res) => {
+                    resolve(res[0]);
+                }).catch((e) => {
+                    reject(e);
+                });
         });
     }
 

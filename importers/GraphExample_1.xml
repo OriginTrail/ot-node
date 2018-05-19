@@ -6,7 +6,7 @@
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender><!-- Mandatory -->
 				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:actor:id:Company_1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:mda:actor:id:Company_1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				
@@ -39,17 +39,17 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:mda:actor">				
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:actor:id:Company_1">
-								<attribute id="urn:ot:actor:person:id:name">Company _1</attribute>
-								<attribute id="urn:ot:actor:category">Company</attribute>
-                                <attribute id="urn:ot:actor:wallet">0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE</attribute>
-                                <attribute id="urn:ot:actor:node_id">f69cab041fe493065f77c893592316fad42330cc</attribute>
+							<VocabularyElement id="urn:ot:mda:actor:id:Company_1">
+								<attribute id="urn:ot:mda:actor:person:id:name">Company _1</attribute>
+								<attribute id="urn:ot:mda:actor:category">Company</attribute>
+                                <attribute id="urn:ot:mda:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:mda:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
 						    </VocabularyElement>													
-						    <VocabularyElement id="urn:ot:actor:id:Company_2">
-								<attribute id="urn:ot:actor:person:id:name">Company _2</attribute>
-								<attribute id="urn:ot:actor:category">Company</attribute>
-                                <attribute id="urn:ot:actor:wallet">0xE1E9c5379C5df627a8De3a951fA493028394A050</attribute>
-                                <attribute id="urn:ot:actor:node_id">e6e0f07f313aff380b17e8983c55933dae064928</attribute>
+						    <VocabularyElement id="urn:ot:mda:actor:id:Company_2">
+								<attribute id="urn:ot:mda:actor:person:id:name">Company _2</attribute>
+								<attribute id="urn:ot:mda:actor:category">Company</attribute>
+                                <attribute id="urn:ot:mda:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:mda:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
 						    </VocabularyElement>													
 						</VocabularyElementList>				
 					</Vocabulary>		
@@ -60,14 +60,14 @@
 								<attribute id="urn:ot:mda:location:category">Building _1</attribute>
 								<attribute id="urn:ot:mda:location:description">Description of building _1</attribute>
 								<extension>
-									<attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company_1</attribute>
+									<attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_1</attribute>
 								</extension>
 							</VocabularyElement>
 							<VocabularyElement id="urn:epc:id:sgln:Building_2">
 								<attribute id="urn:ot:mda:location:category">Building _2</attribute>
 								<attribute id="urn:ot:mda:location:description">Description of building _2</attribute>
 								<extension>
-									<attribute id="urn:ot:location:participantId">urn:ot:actor:id:Company_2</attribute>
+									<attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_2</attribute>
 								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>

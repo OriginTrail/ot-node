@@ -105,7 +105,7 @@ library SafeMath {
  	/*    ----------------------------- ESCROW -----------------------------     */
 
 
- 	enum EscrowStatus {initiated, active, canceled, completed}
+ 	enum EscrowStatus {inactive, initiated, active, canceled, completed}
 
  	struct EscrowDefinition{
  		uint token_amount;
@@ -134,7 +134,7 @@ library SafeMath {
 
  		require(total_time > 0);
 
- 		escrow[DC_wallet][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, stake_amount, 0, 0, total_time, EscrowStatus.initiated);
+ 		escrow[DC_wallet][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, stake_amount, 0, 0, total_time.mul(60), EscrowStatus.initiated);
 
  		emit EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time.mul(60));
  	}
@@ -148,13 +148,13 @@ library SafeMath {
  		require(escrow_def.token_amount == token_amount &&
  			escrow_def.stake_amount == stake_amount &&
  			escrow_def.escrow_status == EscrowStatus.initiated &&
- 			escrow_def.total_time == total_time);
+ 			escrow_def.total_time == total_time.mul(60));
 
  		//Transfer the stake_amount to the escrow
  		bidding.decreaseBalance(msg.sender, stake_amount);
 
  		escrow_def.last_confirmation_time = block.timestamp;
- 		escrow_def.end_time = SafeMath.add(block.timestamp, total_time);
+ 		escrow_def.end_time = SafeMath.add(block.timestamp, total_time.mul(60));
 
  		escrow_def.escrow_status = EscrowStatus.active;
  		isVerified = true;
