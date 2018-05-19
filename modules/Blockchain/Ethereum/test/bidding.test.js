@@ -439,7 +439,8 @@ contract('Bidding testing', async (accounts) => {
             /* assert.equal(
                 balance,
                 // eslint-disable-next-line max-len
-                5e25 + (Math.round((DH_price[chosen_bids[i]] * total_escrow_time * data_size) / 1e15) * 1e15),
+                5e25 + (Math.round((DH_price[chosen_bids[i]]
+                * total_escrow_time * data_size) / 1e15) * 1e15),
                 'DH was not paid the correct amount',
             ); */
         }

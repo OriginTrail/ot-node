@@ -46,7 +46,7 @@ class DHService {
             });
             if (eventModel && !predeterminedBid) {
                 // skip handling since we are already doing it
-                log.trace('We are already in the predetermined list. Skip handling.')
+                log.trace('We are already in the predetermined list. Skip handling.');
                 return;
             }
 
