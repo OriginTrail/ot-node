@@ -7,6 +7,7 @@ var { expect } = require('chai');
 const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
 const SystemStorage = require('../../modules/Database/SystemStorage');
+const Utilities = require('../../modules/Utilities');
 
 // Global declarations.
 const vertexData = [
@@ -179,16 +180,16 @@ describe('Challenge tests', () => {
         });
     });
 
-    describe('Adding challenges to db', () => {
+    describe('Adding to and manipulating challenges from db', () => {
         const numberOfChallengesToGenerate = 10;
         const numberOfChallengesToAnswer = 5;
         const byteSize = 32;
         const myDataCreatorId = 'dummyDC';
         const myImportId = 'dummyImportId';
-        const myStartTime = new Date('May 1, 2018 03:24:00').getTime();
-        const myEndTime = new Date('January 1, 2019 00:24:00').getTime();
+        const myStartTime = new Date('January 1, 2019 03:24:00').getTime();
+        const myEndTime = new Date('January 1, 2020 00:24:00').getTime();
 
-        before('cleanup db', async () => {
+        beforeEach('cleanup db and populate db with generated challenges', async () => {
             try {
                 await SystemStorage.connect();
             } catch (error) {
@@ -202,11 +203,10 @@ describe('Challenge tests', () => {
                 console.log('Smth went wrong with SystemStorage.runSystemQuery()');
                 console.log(error);
             }
-        });
 
-        it('adding generated challenges should store them in db', async () => {
             // eslint-disable-next-line max-len
             const generatedTests = Challenge.generateTests(myDataCreatorId, myImportId, numberOfChallengesToGenerate, myStartTime, myEndTime, byteSize, vertexData);
+            // adding generated challenges should store them in db
             try {
                 await Challenge.addTests(generatedTests);
             } catch (error) {
@@ -226,10 +226,13 @@ describe('Challenge tests', () => {
 
         it('getNextTest() should return non-answered test if any present from current moment', async () => {
             const result = await Challenge.getNextTest(myDataCreatorId, myImportId);
-            expect(result.length).to.not.be.above(numberOfChallengesToGenerate);
+            // this expect is connected to values set for myStartTime and myEndTime
+            // since the method impl. checks for challenges from present moment till future
+            // we can excpect that in this case it will retrieve all of them
+            expect(result.length).to.be.equal(numberOfChallengesToGenerate);
         });
 
-        it('completeTest() should mark corresponing entry as correctly answered', async () => {
+        it('completeTest() should mark corresponding entry as correctly answered', async () => {
             const tests = await Challenge.getTests(myDataCreatorId, myImportId);
             for (let j = 0; j < numberOfChallengesToAnswer; j += 1) {
                 await Challenge.completeTest(tests[j].id); // eslint-disable-line no-await-in-loop
@@ -240,9 +243,9 @@ describe('Challenge tests', () => {
             expect(unansweredTests.length).to.be.equal(numberOfChallengesToGenerate - numberOfChallengesToAnswer);
         });
 
-        it('failTest() should mark corresponsing entry as incorreclty answered', async () => {
+        it('failTest() should mark corresponding entry as incorrectly answered', async () => {
             const unansweredTests = await Challenge.getUnansweredTest(myStartTime, myEndTime);
-            const randomIndex = Math.floor(Math.random() * Math.floor(unansweredTests.length));
+            const randomIndex = Utilities.getRandomInt(unansweredTests.length - 1);
             await Challenge.failTest(unansweredTests[randomIndex].id);
             const unansweredTestsAfterFail =
                 await Challenge.getUnansweredTest(myStartTime, myEndTime);
