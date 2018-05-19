@@ -236,7 +236,7 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
         data_size,
     } = eventData;
 
-    if (DH_wallet !== config.node_wallet && config.identity === DH_node_id.substring(2, 42)) {
+    if (DH_wallet !== config.node_wallet || config.identity !== DH_node_id.substring(2, 42)) {
         // Offer not for me.
         return;
     }
