@@ -37,16 +37,10 @@ class DHService {
                 return;
             }
 
-            // Check if we are in the predetermined list
-            const eventModel = await Models.events.findOne({
-                where: {
-                    event: 'AddedPredeterminedBid',
-                    offer_hash: offerHash,
-                },
-            });
-            if (eventModel && !predeterminedBid) {
-                // skip handling since we are already doing it
-                log.trace('We are already in the predetermined list. Skip handling.');
+            // Check if already applied.
+            let bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
+            if (bidModel) {
+                log.info(`I already sent my bid for offer: ${offerHash}.`);
                 return;
             }
 
@@ -83,48 +77,61 @@ class DHService {
 
             log.trace(`Adding a bid for offer ${offerHash}.`);
 
-            Blockchain.bc.addBid(offerHash, config.identity)
-                .then(Blockchain.bc.increaseBiddingApproval(stake))
-                .catch(error => log.error(`Failed to add bid. ${error}.`));
-            Blockchain.bc.subscribeToEvent('AddedBid', offerHash)
-                .then(async (event) => {
-                    const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
-                    this._saveBidToStorage(
-                        event,
-                        dcNodeId.substring(2, 42),
-                        dcWallet,
-                        chosenPrice,
-                        totalEscrowTime,
-                        stake,
-                        dataSizeBytes,
-                        offerHash,
-                    );
-                }).catch((err) => {
-                    console.log(err);
-                });
+            await Blockchain.bc.addBid(offerHash, config.identity);
+            await Blockchain.bc.increaseBiddingApproval(stake);
+            const addedBidEvent = await Blockchain.bc.subscribeToEvent('AddedBid', offerHash);
+            const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
+            this._saveBidToStorage(
+                addedBidEvent,
+                dcNodeId.substring(2, 42),
+                dcWallet,
+                chosenPrice,
+                totalEscrowTime,
+                stake,
+                dataSizeBytes,
+                offerHash,
+            );
 
-            Blockchain.bc.subscribeToEvent('OfferFinalized', offerHash)
-                .then((event) => {
-                    Models.bids.findOne({ where: { offer_hash: offerHash } }).then((bidModel) => {
-                        const bid = bidModel.get({ plain: true });
-                        node.ot.replicationRequest(
-                            {
-                                offer_hash: offerHash,
-                                wallet: config.node_wallet,
-                            },
-                            bid.dc_id, (err) => {
-                                if (err) {
-                                    log.warn(`Failed to send replication request ${err}`);
-                                    // TODO Cancel bid here.
-                                }
-                            },
-                        );
-                    });
-                }).catch((err) => {
-                    console.log(err);
-                });
-        } catch (e) {
-            console.log(e);
+            await Blockchain.bc.subscribeToEvent('OfferFinalized', offerHash);
+            // Now check if bid taken.
+            // emit BidTaken(offer_hash, this_bid.DH_wallet);
+            const eventModelBid = await Models.events.findOne({
+                where:
+                        {
+                            event: 'BidTaken',
+                            offer_hash: offerHash,
+                        },
+            });
+            if (!eventModelBid) {
+                // Probably contract failed since no event fired.
+                log.info(`BidTaken not received for offer ${offerHash}.`);
+                return;
+            }
+
+            const eventBid = eventModelBid.get({ plain: true });
+            const eventBidData = JSON.parse(eventBid.data);
+
+            if (eventBidData.DH_wallet !== config.node_wallet) {
+                log.info(`Bid not taken for offer ${offerHash}.`);
+                return;
+            }
+
+            bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
+            const bid = bidModel.get({ plain: true });
+            node.ot.replicationRequest(
+                {
+                    offer_hash: offerHash,
+                    wallet: config.node_wallet,
+                },
+                bid.dc_id, (err) => {
+                    if (err) {
+                        log.warn(`Failed to send replication request ${err}`);
+                        // TODO Cancel bid here.
+                    }
+                },
+            );
+        } catch (error) {
+            log.error(`Failed to handle offer. ${error}`);
         }
     }
 

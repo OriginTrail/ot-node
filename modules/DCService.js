@@ -137,7 +137,7 @@ class DCService {
         return new Promise((resolve, reject) => {
             Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                log.info(`Choose bids for data ${offerHash}`);
+                log.info(`Choose bids for offer ${offerHash}`);
                 Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
                         Blockchain.bc.chooseBids(offerHash)
