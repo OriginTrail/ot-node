@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         offer_hash: DataTypes.STRING,
         block: DataTypes.INTEGER,
         finished: DataTypes.BOOLEAN,
+        timestamp: DataTypes.INTEGER,
     }, {});
     Event.associate = function (models) {
     // associations can be defined here

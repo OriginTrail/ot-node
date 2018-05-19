@@ -339,15 +339,14 @@ class Ethereum {
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
                         const timestamp = Date.now();
-                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, createdAt, updatedAt, finished) \n' +
-                          'SELECT ?, ?, ?, ?, ?, ?, 0 \n' +
+                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, timestamp, finished) \n' +
+                          'SELECT ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
                             replacements: [
                                 event.event,
                                 JSON.stringify(event.returnValues),
                                 event.returnValues.offer_hash,
                                 event.blockNumber,
-                                timestamp,
                                 timestamp,
                                 event.event,
                                 JSON.stringify(event.returnValues),
@@ -424,8 +423,11 @@ class Ethereum {
      */
     subscribeToEventPermanent(event) {
         const handle = setInterval(async () => {
+            const startBlockNumber = parseInt(await Utilities.getBlockNumberFromWeb3(), 16);
+
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
+                block: { [Op.gte]: startBlockNumber },
                 finished: 0,
             };
 

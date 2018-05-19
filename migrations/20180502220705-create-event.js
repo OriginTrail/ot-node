@@ -25,13 +25,9 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        createdAt: {
+        timestamp: {
             allowNull: false,
-            type: Sequelize.DATE,
-        },
-        updatedAt: {
-            allowNull: false,
-            type: Sequelize.DATE,
+            type: Sequelize.INTEGER,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('Events'),
