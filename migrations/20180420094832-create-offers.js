@@ -3,9 +3,12 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('offers', {
         id: {
             allowNull: false,
-            autoIncrement: false,
             primaryKey: true,
+            type: Sequelize.STRING,
+        },
+        import_id: {
             type: Sequelize.INTEGER,
+            allowNull: false,
         },
         total_escrow_time: {
             type: Sequelize.INTEGER,

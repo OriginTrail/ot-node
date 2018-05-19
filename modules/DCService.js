@@ -40,15 +40,16 @@ class DCService {
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
         // TODO: Store offer hash in DB.
-        const offerHash = abi.soliditySHA3(
+        const offerHash = `0x${abi.soliditySHA3(
             ['address', 'bytes32', 'uint256'],
             [config.node_wallet, `0x${config.identity}`, dataId],
-        ).toString('hex');
+        ).toString('hex')}`;
 
         log.info(`Offer hash is ${offerHash}.`);
 
         Models.offers.create({
-            id: dataId,
+            id: offerHash,
+            import_id: dataId,
             total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
@@ -77,7 +78,7 @@ class DCService {
                 offer.save({ fields: ['status'] });
 
                 const finalizationCallback = () => {
-                    Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
+                    Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
                         if (offerModel.status === 'STARTED') {
                             log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
@@ -92,15 +93,15 @@ class DCService {
 
                     offer.status = 'FINALIZING';
                     offer.save({ fields: ['status'] });
-                    DCService.chooseBids(dataId, totalEscrowTime).then(() => {
-                        Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
+                    DCService.chooseBids(offer.id, totalEscrowTime).then(() => {
+                        Blockchain.bc.subscribeToEvent('OfferFinalized', offer.id)
                             .then(() => {
                                 offer.status = 'FINALIZED';
                                 offer.save({ fields: ['status'] });
 
-                                log.info(`Offer for ${dataId} finalized`);
+                                log.info(`Offer for ${offer.id} finalized`);
                             }).catch((error) => {
-                                log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
+                                log.error(`Failed to get offer ${offer.id}). ${error}.`);
                             });
                     }).catch(() => {
                         offer.status = 'FAILED';
@@ -129,27 +130,22 @@ class DCService {
 
     /**
      * Chose DHs
-     * @param dataId            Data ID
+     * @param offerHash Offer identifier
      * @param totalEscrowTime   Total escrow time
      */
-    static chooseBids(dataId, totalEscrowTime) {
+    static chooseBids(offerHash, totalEscrowTime) {
         return new Promise((resolve, reject) => {
-            Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
+            Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                log.info(`Choose bids for data ${dataId}`);
+                log.info(`Choose bids for data ${offerHash}`);
                 Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        const offerHash = abi.soliditySHA3(
-                            ['address', 'bytes32', 'uint256'],
-                            [config.node_wallet, `0x${config.identity}`, dataId],
-                        ).toString('hex');
-
                         Blockchain.bc.chooseBids(offerHash)
                             .then(() => {
-                                log.info(`Bids chosen for data ${dataId}[${offerHash}]`);
+                                log.info(`Bids chosen for data ${offerHash}`);
                                 resolve();
                             }).catch((err) => {
-                                log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
+                                log.warn(`Failed call choose bids for data ${offerHash}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
@@ -157,7 +153,7 @@ class DCService {
                         reject(err);
                     });
             }).catch((err) => {
-                log.error(`Failed to get offer (data ID ${dataId}). ${err}.`);
+                log.error(`Failed to get offer (data ID ${offerHash}). ${err}.`);
                 reject(err);
             });
         });
