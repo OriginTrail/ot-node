@@ -11,6 +11,7 @@ const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
+const config = require('./Config');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -226,24 +227,43 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
 
     const {
         offer_hash,
-        DC_node_id,
+        DH_wallet,
+        DH_node_id,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
-        min_reputation,
-        data_hash,
         data_size,
     } = eventData;
 
+    if (DH_wallet !== config.node_wallet && config.identity === DH_node_id.substring(2, 42)) {
+        // Offer not for me.
+        return;
+    }
+
+    // TODO: This is a hack. DH doesn't know with whom to sign the offer. Try to dig it from events.
+    const createOfferEventEventModel = await Storage.models.events.findOne({
+        where: {
+            event: 'OfferCreated',
+            offer_hash,
+        },
+    });
+
+    if (!createOfferEventEventModel) {
+        log.warn(`Couldn't find event CreateOffer for offer ${offer_hash}.`);
+        return;
+    }
+
+    const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+
     await DHService.handleOffer(
         offer_hash,
-        DC_node_id,
+        createOfferEvent.DC_node_id.substring(2, 42),
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
-        min_reputation,
+        createOfferEvent.min_reputation,
         data_size,
-        data_hash,
+        createOfferEvent.data_hash,
         true,
     );
 });
