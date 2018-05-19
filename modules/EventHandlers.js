@@ -12,6 +12,7 @@ const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
 const config = require('./Config');
+const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -241,7 +242,7 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
     }
 
     // TODO: This is a hack. DH doesn't know with whom to sign the offer. Try to dig it from events.
-    const createOfferEventEventModel = await Storage.models.events.findOne({
+    const createOfferEventEventModel = await Models.events.findOne({
         where: {
             event: 'OfferCreated',
             offer_hash,
@@ -253,19 +254,24 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
         return;
     }
 
-    const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+    try {
+        const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+        const createOfferEventData = JSON.parse(createOfferEvent.data);
 
-    await DHService.handleOffer(
-        offer_hash,
-        createOfferEvent.DC_node_id.substring(2, 42),
-        total_escrow_time,
-        max_token_amount,
-        min_stake_amount,
-        createOfferEvent.min_reputation,
-        data_size,
-        createOfferEvent.data_hash,
-        true,
-    );
+        await DHService.handleOffer(
+            offer_hash,
+            createOfferEventData.DC_node_id.substring(2, 42),
+            total_escrow_time,
+            max_token_amount,
+            min_stake_amount,
+            createOfferEventData.min_reputation,
+            data_size,
+            createOfferEventData.data_hash,
+            true,
+        );
+    } catch (error) {
+        log.error(`Failed to handle predetermined bid. ${error}.`);
+    }
 });
 
 globalEmitter.on('eth-offer-canceled', (event) => {
