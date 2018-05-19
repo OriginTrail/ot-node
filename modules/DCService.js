@@ -42,7 +42,7 @@ class DCService {
         // TODO: Store offer hash in DB.
         const offerHash = abi.soliditySHA3(
             ['address', 'bytes32', 'uint256'],
-            [config.wallet, `0x${config.identity}`, dataId],
+            [config.node_wallet, `0x${config.identity}`, dataId],
         ).toString('hex');
 
         log.info(`Offer hash is ${offerHash}.`);
@@ -141,7 +141,7 @@ class DCService {
                     .then(() => {
                         const offerHash = abi.soliditySHA3(
                             ['address', 'bytes32', 'uint256'],
-                            [config.wallet, `0x${config.identity}`, dataId],
+                            [config.node_wallet, `0x${config.identity}`, dataId],
                         ).toString('hex');
 
                         Blockchain.bc.chooseBids(offerHash)
