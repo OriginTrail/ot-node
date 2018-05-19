@@ -1,7 +1,6 @@
 const node = require('./Node');
 const config = require('./Config');
 const BN = require('bn.js');
-const abi = require('ethereumjs-abi');
 const Blockchain = require('./BlockChainInstance');
 const importer = require('./importer')();
 
@@ -30,12 +29,24 @@ class DHService {
         predeterminedBid,
     ) {
         try {
-            // TODO: This should never happened in production.
             // Check if mine offer and if so ignore it.
             const offerModel = await Models.offers.findOne({ where: { data_hash: dataHash } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
                 log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                return;
+            }
+
+            // Check if we are in the predetermined list
+            const eventModel = await Models.events.findOne({
+                where: {
+                    event: 'AddedPredeterminedBid',
+                    offer_hash: offerHash,
+                },
+            });
+            if (eventModel && !predeterminedBid) {
+                // skip handling since we are already doing it
+                log.trace('We are already in the predetermined list. Skip handling.')
                 return;
             }
 
