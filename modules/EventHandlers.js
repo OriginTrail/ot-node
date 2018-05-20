@@ -176,7 +176,7 @@ globalEmitter.on('bidding-broadcast', async (message) => {
         dcWallet,
         dcId,
         dataId,
-        totalEscrowTime,
+        totalEscrowTime * 60000, // in ms.
         new BN(minStakeAmount),
         new BN(dataSizeBytes),
     );
@@ -213,7 +213,7 @@ globalEmitter.on('eth-OfferCreated', async (eventData) => {
     await DHService.handleOffer(
         offer_hash,
         DC_node_id,
-        total_escrow_time,
+        total_escrow_time * 60000, // In ms.
         max_token_amount,
         min_stake_amount,
         min_reputation,
@@ -261,7 +261,7 @@ globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
         await DHService.handleOffer(
             offer_hash,
             createOfferEventData.DC_node_id.substring(2, 42),
-            total_escrow_time,
+            total_escrow_time * 60000, // In ms.
             max_token_amount,
             min_stake_amount,
             createOfferEventData.min_reputation,
