@@ -74,16 +74,16 @@ module.exports = (deployer, network, accounts) => {
                                     .then((result) => {
                                         fingerprint = result;
                                         escrow.transferOwnership(bidding.address)
-                                            .then(() => {
+                                            .then(async () => {
                                                 var amounts = [];
                                                 var recepients = [];
                                                 for (let i = 0; i < 10; i += 1) {
                                                     amounts.push(amountToMint); // eslint-disable-line max-len
                                                     recepients.push(accounts[i]);
                                                 }
-                                                token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
-                                                    .then(() => {
-                                                        token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                    .then(async () => {
+                                                        await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
                                                             .then(() => {
                                                                 console.log('\n\n \t Contract adressess on ganache:');
                                                                 console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
@@ -170,16 +170,16 @@ module.exports = (deployer, network, accounts) => {
                                     .then((result) => {
                                         fingerprint = result;
                                         escrow.transferOwnership(bidding.address)
-                                            .then(() => {
+                                            .then(async () => {
                                                 var amounts = [];
                                                 var recepients = [];
                                                 for (var i = 0; i < 10; i += 10) {
                                                     amounts.push(amountToMint); // eslint-disable-line max-len
                                                     recepients.push(accounts[i]);
                                                 }
-                                                token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
-                                                    .then(() => {
-                                                        token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                    .then(async () => {
+                                                        await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
                                                             .then(() => {
                                                                 console.log('\n\n \t Contract adressess on ganache (mock versions):');
                                                                 console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
