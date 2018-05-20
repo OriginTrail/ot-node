@@ -20,7 +20,7 @@ const minReputation = 0;
  * DC operations (handling new offers, etc.)
  */
 class DCService {
-    static createOffer(dataId, rootHash, totalDocuments, vertices) {
+    static async createOffer(dataId, rootHash, totalDocuments, vertices) {
         Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
@@ -47,7 +47,7 @@ class DCService {
 
         log.info(`Offer hash is ${offerHash}.`);
 
-        Models.offers.create({
+        const newOfferRow = {
             id: offerHash,
             import_id: dataId,
             total_escrow_time: totalEscrowTime,
@@ -60,59 +60,74 @@ class DCService {
             dh_ids: JSON.stringify(dhIds),
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
-        }).then((offer) => {
-            Blockchain.bc.createOffer(
-                dataId,
-                config.identity,
-                totalEscrowTime,
-                maxTokenAmount,
-                minStakeAmount,
-                minReputation,
-                rootHash,
-                importSizeInBytes,
-                dhWallets,
-                dhIds,
-            ).then(() => {
-                log.info('Offer written to blockchain. Started bidding phase.');
-                offer.status = 'STARTED';
-                offer.save({ fields: ['status'] });
+        };
 
-                const finalizationCallback = () => {
-                    Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
-                        if (offerModel.status === 'STARTED') {
-                            log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+        const offer = await Models.offers.create(newOfferRow);
 
-                            offer.status = 'FAILED';
-                            offer.save({ fields: ['status'] });
-                        }
-                    });
-                };
+        // From smart contract:
+        // require(profile[msg.sender].balance >=
+        // max_token_amount.mul(total_escrow_time).mul(data_size));
+        // Check for balance.
+        const profileBalance =
+            new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
+        const condition =
+            maxTokenAmount.mul(new BN(Math.round(totalEscrowTime / 1000 / 60)))
+                .mul(importSizeInBytes);
 
-                Blockchain.bc.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
-                    log.trace('Started choosing phase.');
+        if (profileBalance < condition) {
+            await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);
+            await Blockchain.bc.depositToken(condition - profileBalance);
+        }
 
-                    offer.status = 'FINALIZING';
-                    offer.save({ fields: ['status'] });
-                    DCService.chooseBids(offer.id, totalEscrowTime).then(() => {
-                        Blockchain.bc.subscribeToEvent('OfferFinalized', offer.id)
-                            .then(() => {
-                                offer.status = 'FINALIZED';
-                                offer.save({ fields: ['status'] });
+        Blockchain.bc.createOffer(
+            dataId,
+            config.identity,
+            totalEscrowTime,
+            maxTokenAmount,
+            minStakeAmount,
+            minReputation,
+            rootHash,
+            importSizeInBytes,
+            dhWallets,
+            dhIds,
+        ).then(() => {
+            log.info('Offer written to blockchain. Started bidding phase.');
+            offer.status = 'STARTED';
+            offer.save({ fields: ['status'] });
 
-                                log.info(`Offer for ${offer.id} finalized`);
-                            }).catch((error) => {
-                                log.error(`Failed to get offer ${offer.id}). ${error}.`);
-                            });
-                    }).catch(() => {
+            const finalizationCallback = () => {
+                Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                    if (offerModel.status === 'STARTED') {
+                        log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
-                    });
+                    }
                 });
-            }).catch((err) => {
-                log.warn(`Failed to create offer. ${err}`);
+            };
+
+            Blockchain.bc.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+                log.trace('Started choosing phase.');
+
+                offer.status = 'FINALIZING';
+                offer.save({ fields: ['status'] });
+                DCService.chooseBids(offer.id, totalEscrowTime).then(() => {
+                    Blockchain.bc.subscribeToEvent('OfferFinalized', offer.id)
+                        .then(() => {
+                            offer.status = 'FINALIZED';
+                            offer.save({ fields: ['status'] });
+
+                            log.info(`Offer for ${offer.id} finalized`);
+                        }).catch((error) => {
+                            log.error(`Failed to get offer ${offer.id}). ${error}.`);
+                        });
+                }).catch(() => {
+                    offer.status = 'FAILED';
+                    offer.save({ fields: ['status'] });
+                });
             });
-        }).catch((error) => {
-            log.error(`Failed to write offer to DB. ${error}`);
+        }).catch((err) => {
+            log.warn(`Failed to create offer. ${err}`);
         });
     }
 
