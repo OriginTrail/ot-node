@@ -139,7 +139,11 @@ describe('Utilities module', () => {
         const myResult = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(myResult, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
-        assert.equal(myResult.database_system, 'arango_db');
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            assert.equal(myResult.database_system, 'arango_db');
+        } else if (process.env.GRAPH_DATABASE === 'neo4j') {
+            assert.equal(myResult.database_system, 'neo4j');
+        }
     });
 
 

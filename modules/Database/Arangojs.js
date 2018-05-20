@@ -339,6 +339,21 @@ class ArangoJS {
         }
     }
 
+    /**
+     * Deletes the collection in the database.
+     * @param collectionName
+     */
+    async dropCollection(collectionName) {
+        if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
+        const collection = this.db.collection(collectionName);
+        try {
+            await collection.drop();
+            return 'Collection is now deleted';
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async createEdgeCollection(collectionName) {
         const collection = this.db.edgeCollection(collectionName);
         try {
