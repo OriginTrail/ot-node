@@ -115,7 +115,6 @@ describe('GraphStorage module', () => {
         });
     });
 
-
     it('adding vertex from invalid storage should fail', async () => {
         try {
             const result =
@@ -154,8 +153,12 @@ describe('GraphStorage module', () => {
     });
 
     after('drop myGraphStorage db', async () => {
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.dropDatabase(myDatabaseName);
+        if (selectedDatabase.database_system === 'arango_db') {
+            systemDb = new Database();
+            systemDb.useBasicAuth('root', 'root');
+            await systemDb.dropDatabase(myDatabaseName);
+        } else if (selectedDatabase.database_system === 'neo4j') {
+            // TODO implement me
+        }
     });
 });
