@@ -18,6 +18,7 @@ const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
 const DHService = require('./modules/DHService');
+const BN = require('bn.js');
 require('./modules/EventHandlers');
 
 const pjson = require('./package.json');
@@ -154,8 +155,10 @@ class OTNode {
 
         // Starting the kademlia
         const network = new Network();
-        network.start().then((res) => {
-            this.createProfile();
+        network.start().then(async (res) => {
+            await this.createProfile();
+            // Check the balance
+            const balance = await BCInstance.bc.getProfileBalance(config.node_wallet);
         }).catch((e) => {
             console.log(e);
         });
@@ -179,8 +182,17 @@ class OTNode {
      */
     async createProfile() {
         const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
+        const requiredBalance = new BN('1000000000000000000', 10); // TODO: add balance to the config.
         if (profileInfo.active) {
             log.trace(`Profile has already been created for ${config.identity}`);
+
+            // Check for balance.
+            const balance = new BN(profileInfo.balance, 10);
+
+            if (balance < requiredBalance) {
+                await BCInstance.bc.increaseApproval(requiredBalance - balance);
+                await BCInstance.bc.depositToken(requiredBalance - balance);
+            }
             return;
         }
 
@@ -195,6 +207,8 @@ class OTNode {
         if (event.node_id.includes(config.identity)) {
             log.info(`Profile created for node: ${config.identity}`);
         }
+        await BCInstance.bc.increaseApproval(requiredBalance);
+        await BCInstance.bc.depositToken(requiredBalance);
     }
 
     /**

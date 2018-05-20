@@ -570,6 +570,20 @@ class Ethereum {
     _normalizeNodeId(nodeId) {
         return `0x${nodeId}`;
     }
+
+    async depositToken(amount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.warn(`Calling - depositToken(${amount.toString()})`);
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'depositToken',
+            [amount], options,
+        );
+    }
 }
 
 module.exports = Ethereum;

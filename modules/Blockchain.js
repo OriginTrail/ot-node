@@ -229,6 +229,10 @@ class Blockchain {
     getDcWalletFromOffer(offer_hash) {
         return this.blockchain.getDcWalletFromOffer(offer_hash);
     }
+
+    async depositToken(amount) {
+        return this.blockchain.depositToken(amount);
+    }
 }
 
 module.exports = Blockchain;
