@@ -77,6 +77,20 @@ class DHService {
 
             log.trace(`Adding a bid for offer ${offerHash}.`);
 
+            // From smart contract:
+            // uint scope = this_offer.data_size * this_offer.total_escrow_time;
+            // require((this_offer.min_stake_amount  <= this_DH.stake_amount * scope) &&
+            //          (this_DH.stake_amount * scope <= profile[msg.sender].balance));
+            const profileBalance =
+                new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
+            const condition =
+                stake.mul(dataSizeBytes).mul(new BN(Math.round(totalEscrowTime / 1000 / 60)));
+
+            if (profileBalance < condition) {
+                await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);
+                await Blockchain.bc.depositToken(condition - profileBalance);
+            }
+
             await Blockchain.bc.addBid(offerHash, config.identity);
             await Blockchain.bc.increaseBiddingApproval(stake);
             const addedBidEvent = await Blockchain.bc.subscribeToEvent('AddedBid', offerHash);
