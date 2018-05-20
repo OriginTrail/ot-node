@@ -173,7 +173,7 @@ module.exports = (deployer, network, accounts) => {
                                             .then(async () => {
                                                 var amounts = [];
                                                 var recepients = [];
-                                                for (var i = 0; i < 10; i += 10) {
+                                                for (var i = 0; i < 10; i += 1) {
                                                     amounts.push(amountToMint); // eslint-disable-line max-len
                                                     recepients.push(accounts[i]);
                                                 }
