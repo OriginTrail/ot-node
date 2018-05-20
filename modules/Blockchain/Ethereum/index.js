@@ -407,7 +407,11 @@ class Ethereum {
                 });
             }, 2000);
             setTimeout(() => {
-                endCallback();
+                if (endCallback) {
+                    endCallback();
+                } else {
+                    log.warn(`Tried to call undefined endCallback for event: ${event}`);
+                }
                 clearInterval(token);
             }, endMs);
         });
