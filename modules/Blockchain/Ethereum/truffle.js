@@ -1,6 +1,6 @@
 var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
 
-var mnemonic = '<INSERT MNEOMONIC OF YOUR METAMASK HERE>';
+var mnemonic = 'shift exhibit talent click apology idle shed page giant catalog matter spare';
 
 module.exports = {
     networks: {
@@ -33,7 +33,7 @@ module.exports = {
         },
 
         rinkeby: {
-            provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/<INSERT INFURA ACCESS KEY HERE>'),
+            provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'),
             network_id: 3,
             gas: 4000000,
         },

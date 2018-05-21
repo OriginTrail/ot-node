@@ -191,16 +191,16 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && this_offer.DC_wallet == msg.sender);
 		this_offer.active = false;
-		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
+		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.replication_factor.mul(2).add(1));
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
 	}
 
-	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index) 
+	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index)
 	public{
 		require(offer[offer_hash].active && !offer[offer_hash].finalized);
-		
+
 		OfferDefinition storage this_offer = offer[offer_hash];
 		ProfileDefinition storage this_DH = profile[msg.sender];
 		BidDefinition storage this_bid = offer[offer_hash].bid[bid_index];
@@ -303,7 +303,7 @@ contract Bidding {
 		uint256 current_index = 0;
 
 		uint256 token_amount_sent = 0;
-		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size).mul(this_offer.replication_factor.mul(2).add(1));
+		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.replication_factor.mul(2).add(1));
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){

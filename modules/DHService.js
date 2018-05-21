@@ -14,9 +14,9 @@ const log = Utilities.getLogger();
  */
 class DHService {
     /**
-   * Handles new offer
-   *
-   */
+     * Handles new offer
+     *
+     */
     static async handleOffer(
         offerHash,
         dcNodeId,
@@ -49,28 +49,36 @@ class DHService {
             const maxStakeAmount = new BN(config.dh_max_stake, 10);
             const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
-            let temp = maxPrice.sub(minPrice);
-            temp = Utilities.getRandomIntRange(0, temp.toNumber());
-            const chosenPrice = minPrice.add(new BN(temp.toString()));
+            const profile = await Blockchain.bc.getProfile(config.node_wallet);
 
+            maxTokenAmount = new BN(maxTokenAmount);
             minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
+            const totalEscrowTimePerMinute = Math.round(totalEscrowTime / 60000);
+            const myPrice = new BN(profile.token_amount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
+            const myStake = new BN(profile.stake_amount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
 
-            if (minStakeAmount > maxStakeAmount) {
-                log.trace(`Skipping offer because of the minStakeAmount. MinStakeAmount is ${minStakeAmount}.`);
+
+            if (maxTokenAmount.lt(myPrice)) {
+                log.info(`Offer ${offerHash} too expensive for me.`);
                 return;
             }
 
-            temp = maxStakeAmount.sub(minStakeAmount);
-            temp = Utilities.getRandomIntRange(0, temp.toNumber());
-            const stake = minPrice.add(new BN(temp.toString()));
+            if (minStakeAmount.gt(myStake)) {
+                log.info(`Skipping offer ${offerHash}. Stake too high.`);
+                return;
+            }
 
             if (maxDataSizeBytes.lt(dataSizeBytes)) {
                 log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
                 return;
             }
 
-            if (!predeterminedBid && !Utilities.getImportDistance(chosenPrice, 1, stake)) {
+            if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
                 log.info(`Offer ${offerHash}, not in mine distance. Not going to participate.`);
                 return;
             }
@@ -81,27 +89,25 @@ class DHService {
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
             // require((this_offer.min_stake_amount  <= this_DH.stake_amount * scope) &&
             //          (this_DH.stake_amount * scope <= profile[msg.sender].balance));
-            const profileBalance =
-                new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
-            const condition =
-                stake.mul(dataSizeBytes).mul(new BN(Math.round(totalEscrowTime / 1000 / 60)));
+            const profileBalance = new BN(profile.balance, 10);
+            const condition = myStake;
 
-            if (profileBalance < condition) {
-                await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);
-                await Blockchain.bc.depositToken(condition - profileBalance);
+            if (profileBalance.lt(condition)) {
+                await Blockchain.bc.increaseBiddingApproval(condition.sub(profileBalance));
+                await Blockchain.bc.depositToken(condition.sub(profileBalance));
             }
 
             await Blockchain.bc.addBid(offerHash, config.identity);
-            await Blockchain.bc.increaseBiddingApproval(stake);
+            // await Blockchain.bc.increaseBiddingApproval(myStake);
             const addedBidEvent = await Blockchain.bc.subscribeToEvent('AddedBid', offerHash);
             const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
             this._saveBidToStorage(
                 addedBidEvent,
                 dcNodeId.substring(2, 42),
                 dcWallet,
-                chosenPrice,
+                myPrice,
                 totalEscrowTime,
-                stake,
+                myStake,
                 dataSizeBytes,
                 offerHash,
             );
@@ -111,10 +117,10 @@ class DHService {
             // emit BidTaken(offer_hash, this_bid.DH_wallet);
             const eventModelBid = await Models.events.findOne({
                 where:
-                        {
-                            event: 'BidTaken',
-                            offer_hash: offerHash,
-                        },
+                    {
+                        event: 'BidTaken',
+                        offer_hash: offerHash,
+                    },
             });
             if (!eventModelBid) {
                 // Probably contract failed since no event fired.
@@ -207,7 +213,7 @@ class DHService {
             await Blockchain.bc.increaseApproval(bid.stake);
             await Blockchain.bc.verifyEscrow(
                 bid.dc_wallet,
-                data.import_id,
+                bid.offer_hash,
                 bid.price,
                 bid.stake,
                 bid.total_escrow_time,
