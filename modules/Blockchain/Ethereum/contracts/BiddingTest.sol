@@ -154,8 +154,8 @@ contract BiddingTest {
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
 
-		require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
-		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size).mul(predetermined_DH_wallet.length.mul(2).add(1)));
+		require(profile[msg.sender].balance >= max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1));
+		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1)));
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		offer[offer_hash].DC_wallet = msg.sender;

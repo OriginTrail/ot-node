@@ -71,25 +71,28 @@ module.exports = (deployer, network, accounts) => {
                                 bidding = result;
                                 await deployer.deploy(OTFingerprintStore)
                                     .then(() => giveMeFingerprint())
-                                    .then((result) => {
+                                    .then(async (result) => {
                                         fingerprint = result;
-                                        escrow.transferOwnership(bidding.address)
+                                        await escrow.setBidding(bidding.address)
                                             .then(async () => {
-                                                var amounts = [];
-                                                var recepients = [];
-                                                for (let i = 0; i < 10; i += 1) {
-                                                    amounts.push(amountToMint); // eslint-disable-line max-len
-                                                    recepients.push(accounts[i]);
-                                                }
-                                                await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                await escrow.transferOwnership(bidding.address)
                                                     .then(async () => {
-                                                        await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
-                                                            .then(() => {
-                                                                console.log('\n\n \t Contract adressess on ganache:');
-                                                                console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-                                                                console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-                                                                console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-                                                                console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+                                                        var amounts = [];
+                                                        var recepients = [];
+                                                        for (let i = 0; i < 10; i += 1) {
+                                                            amounts.push(amountToMint); // eslint-disable-line max-len
+                                                            recepients.push(accounts[i]);
+                                                        }
+                                                        await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                            .then(async () => {
+                                                                await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                                    .then(() => {
+                                                                        console.log('\n\n \t Contract adressess on ganache:');
+                                                                        console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+                                                                    });
                                                             });
                                                     });
                                             });
