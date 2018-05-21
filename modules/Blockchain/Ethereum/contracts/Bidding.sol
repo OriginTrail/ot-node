@@ -191,7 +191,7 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && this_offer.DC_wallet == msg.sender);
 		this_offer.active = false;
-		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
+		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.replication_factor.mul(2).add(1));
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
