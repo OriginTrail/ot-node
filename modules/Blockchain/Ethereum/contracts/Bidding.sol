@@ -303,7 +303,7 @@ contract Bidding {
 		uint256 current_index = 0;
 
 		uint256 token_amount_sent = 0;
-		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size).mul(this_offer.replication_factor.mul(2).add(1));
+		uint256 max_total_token_amount = this_offer.max_token_amount.mul(this_offer.replication_factor.mul(2).add(1));
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
