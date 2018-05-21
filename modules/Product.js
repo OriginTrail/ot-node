@@ -1,71 +1,7 @@
-const fs = require('fs');
-
 const Graph = require('./Graph');
-const GraphInstance = require('./GraphInstance');
 const GraphStorageInstance = require('./GraphStorageInstance');
 const Utilities = require('./Utilities');
 const ZK = require('./ZK');
-const BN = require('bn.js');
-
-/**
- * Creates product journey
- * @param virtualGraph          Virtual graph data
- * @param traversal             Current traversal from a particular node
- * @returns {Array}             Journey
- * @private
- */
-function _getProductJourney(virtualGraph, traversal) {
-    const journey = [];
-    const batches = [];
-    const usedBatchUIDs = [];
-    const transactions = [];
-    const usedTransactionIDs = [];
-
-    for (let i = 0; i < traversal.length; i += 1) {
-        const vertex = traversal[i];
-        if (vertex.vertex_type === 'BATCH' && usedBatchUIDs[vertex.identifiers.uid] !== true) {
-            const edges = vertex.outbound;
-
-            for (const j in edges) {
-                if (edges[j].edge_type === 'INSTANCE_OF') {
-                    vertex.product_info = virtualGraph[edges[j].to];
-                } else if (edges[j].edge_type === 'OUTPUT_BATCH' || edges[j].edge_type === 'OF_BATCH') {
-                    const event = virtualGraph[edges[j].to];
-                    const event_edges = event.outbound;
-
-                    for (i in event_edges) {
-                        if (event_edges[i].edge_type === 'AT') {
-                            vertex.location = virtualGraph[event_edges[i].to];
-                        }
-                    }
-                }
-            }
-            usedBatchUIDs[vertex.identifiers.uid] = true;
-            batches.push(vertex);
-        }
-
-        if (vertex.vertex_type === 'TRANSACTION' && usedTransactionIDs[vertex.identifiers.TransactionId] !== true) {
-            usedTransactionIDs[vertex.identifiers.TransactionId] = true;
-            transactions.push(vertex);
-        }
-    }
-    let i = 1;
-    let j = 0;
-
-    if (batches.length > 0) {
-        journey.push(batches[0]);
-    }
-
-    while (i < batches.length && j < transactions.length) {
-        journey.push(transactions[j += 1]);
-        journey.push(batches[i += 1]);
-    }
-
-    if (i < batches.length) {
-        journey.push(batches[i]);
-    }
-    return journey;
-}
 
 /**
  * Encapsulates product related operations
@@ -78,10 +14,7 @@ class Product {
      */
     getTrail(queryObject) {
         return new Promise((resolve, reject) => {
-            let restricted = false;
-
             if (queryObject.restricted !== undefined) {
-                restricted = { queryObject };
                 delete queryObject.restricted;
             }
 
@@ -117,22 +50,9 @@ class Product {
                             BFSt[i] = Utilities.sortObject(BFSt[i]);
                         }
 
-                        const BFS = Graph.bfs(
-                            Utilities.copyObject(virtualGraph.data),
-                            start_vertex.identifiers.uid,
-                            restricted,
-                        );
-
-                        const fetchedJourney = _getProductJourney(
-                            Utilities.copyObject(virtualGraph.data),
-                            Utilities.copyObject(BFS),
-                        );
-
-
                         const responseObject = {
                             graph: virtualGraph.data,
                             traversal: BFSt,
-                            journey: fetchedJourney,
                             sha3: Utilities.sha3(JSON.stringify(BFSt)),
                         };
                         resolve(responseObject);
@@ -239,24 +159,6 @@ class Product {
     }
 
     /**
-     * Gets trail based on product UID
-     * @param uid
-     * @returns {Promise}
-     */
-    getTrailByUID(uid) {
-        return new Promise((resolve, reject) => {
-            const queryObject = {
-                uid,
-            };
-            this.getTrail(queryObject).then((res) => {
-                resolve(res);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
-    }
-
-    /**
      * Gets trail based on every query parameter
      * @param queryObject
      * @returns {Promise}
@@ -269,30 +171,6 @@ class Product {
                 reject(err);
             });
         });
-    }
-
-    /**
-     * Hashes trail and writes it to a file
-     * @param trail
-     * @param startVertexUID
-     * @returns {string}
-     */
-    hashTrail(trail, startVertexUID) {
-        const bfsTraversal = GraphInstance.g.bfs(trail, startVertexUID, true);
-        for (const i in bfsTraversal) {
-            if (bfsTraversal[i].outbound !== undefined) {
-                delete bfsTraversal[i].outbound;
-            }
-        }
-        for (const i in bfsTraversal) {
-            bfsTraversal[i] = Utilities.sortObject(bfsTraversal[i]);
-        }
-
-        // Import log entry
-        const bfsTraversalJson = JSON.stringify(bfsTraversal);
-        fs.appendFile('import-log.txt', `\n\n-----------------\n UID: ${startVertexUID}\n\nUID hash: ${Utilities.sha3(startVertexUID)}\n\nTraversal: ${bfsTraversalJson}\n\nTraversal hashed: ${Utilities.sha3(bfsTraversalJson)}\n\n-----------------\n\n`, 'utf8', () => {
-        });
-        return Utilities.sha3(bfsTraversalJson);
     }
 }
 

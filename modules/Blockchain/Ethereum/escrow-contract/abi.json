@@ -1,241 +1,20 @@
 [
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
     "constant": false,
     "inputs": [
       {
-        "name": "DH_wallet",
+        "name": "spender",
         "type": "address"
       },
       {
-        "name": "data_id",
+        "name": "value",
         "type": "uint256"
       }
     ],
-    "name": "cancelEscrow",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "name": "token_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "total_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "initiateEscrow",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
-      }
-    ],
-    "name": "EscrowCanceled",
-    "type": "event"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "name": "data_id",
-        "type": "uint256"
-      }
-    ],
-    "name": "payOut",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "verification_successful",
-        "type": "bool"
-      }
-    ],
-    "name": "EscrowVerified",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "token_amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "stake_amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "total_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "EscrowInitated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
-      }
-    ],
-    "name": "EscrowCompleted",
-    "type": "event"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "DC_wallet",
-        "type": "address"
-      },
-      {
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "name": "token_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "total_time",
-        "type": "uint256"
-      }
-    ],
-    "name": "verifyEscrow",
+    "name": "approve",
     "outputs": [
       {
-        "name": "isVerified",
+        "name": "",
         "type": "bool"
       }
     ],
@@ -244,61 +23,59 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
     "inputs": [
       {
-        "name": "tokenAddress",
+        "name": "from",
         "type": "address"
+      },
+      {
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "transferFrom",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
       }
     ],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "constructor"
+    "type": "function"
   },
   {
     "constant": true,
     "inputs": [
       {
-        "name": "",
+        "name": "who",
         "type": "address"
-      },
-      {
-        "name": "",
-        "type": "address"
-      },
-      {
-        "name": "",
-        "type": "uint256"
       }
     ],
-    "name": "escrow",
+    "name": "balanceOf",
     "outputs": [
       {
-        "name": "token_amount",
+        "name": "",
         "type": "uint256"
-      },
-      {
-        "name": "tokens_sent",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "last_confirmation_time",
-        "type": "uint256"
-      },
-      {
-        "name": "end_time",
-        "type": "uint256"
-      },
-      {
-        "name": "total_time",
-        "type": "uint256"
-      },
-      {
-        "name": "escrow_status",
-        "type": "uint8"
       }
     ],
     "payable": false,
@@ -306,13 +83,45 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "owner",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "transfer",
     "outputs": [
       {
         "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "owner",
         "type": "address"
+      },
+      {
+        "name": "spender",
+        "type": "address"
+      }
+    ],
+    "name": "allowance",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
       }
     ],
     "payable": false,
@@ -320,17 +129,47 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "token",
-    "outputs": [
+    "anonymous": false,
+    "inputs": [
       {
-        "name": "",
+        "indexed": true,
+        "name": "owner",
         "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "spender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
       }
     ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
+    "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "value",
+        "type": "uint256"
+      }
+    ],
+    "name": "Transfer",
+    "type": "event"
   }
 ]

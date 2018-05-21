@@ -4,16 +4,14 @@ const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
-const deasync = require('deasync-promise');
-const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const challenger = require('./Challenger');
-const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
+const config = require('./Config');
 const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
@@ -69,30 +67,36 @@ globalEmitter.on('gs1-import-request', async (data) => {
     });
 });
 
-globalEmitter.on('replication-request', (request, response) => {
+globalEmitter.on('replication-request', async (request, response) => {
     log.trace('replication-request received');
 
-    let price;
-    let importId;
-    const { dataId } = request.params.message;
-    const { wallet } = request.contact[1];
-    // const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
 
-    if (dataId) {
-        // TODO: decouple import ID from data id or load it from database.
-        importId = dataId;
-        // ({ price } = bid);
-    }
+    const { offer_hash, wallet } = request.params.message;
+    const { kadWallet } = request.contact[1];
 
-    if (!importId || !wallet) {
-        const errorMessage = 'Asked replication without providing offer ID or wallet not found.';
+    if (!offer_hash || !wallet) {
+        const errorMessage = 'Asked replication without providing offer hash or wallet.';
         log.warn(errorMessage);
         response.send({ status: 'fail', error: errorMessage });
         return;
     }
 
-    const verticesPromise = GraphStorage.db.findVerticesByImportId(importId);
-    const edgesPromise = GraphStorage.db.findEdgesByImportId(importId);
+    if (kadWallet !== wallet) {
+        log.warn(`Wallet from KADemlia differs from replication request for offer hash ${offer_hash}.`);
+    }
+
+    const offerModel = await Models.offers.findOne({ where: { id: offer_hash } });
+    if (!offerModel) {
+        const errorMessage = `Replication request for offer I don't know: ${offer_hash}.`;
+        log.warn(errorMessage);
+        response.send({ status: 'fail', error: errorMessage });
+        return;
+    }
+
+    const offer = offerModel.get({ plain: true });
+
+    const verticesPromise = GraphStorage.db.findVerticesByImportId(offer.import_id);
+    const edgesPromise = GraphStorage.db.findEdgesByImportId(offer.import_id);
 
     Promise.all([verticesPromise, edgesPromise]).then((values) => {
         const vertices = values[0];
@@ -106,11 +110,12 @@ globalEmitter.on('replication-request', (request, response) => {
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
-            /* eslint-disable-next-line */
+            data.offer_hash = offer.id;
+            // eslint-disable-next-line
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
-            data.data_id = dataId;
+            data.import_id = offer.import_id;
             data.encryptedVertices = encryptedVertices;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
@@ -123,9 +128,9 @@ globalEmitter.on('replication-request', (request, response) => {
     response.send({ status: 'success' });
 });
 
-globalEmitter.on('payload-request', (request) => {
+globalEmitter.on('payload-request', async (request) => {
     log.trace(`payload-request arrived from ${request.contact[0]}`);
-    DHService.handleImport(request.params.message.payload);
+    await DHService.handleImport(request.params.message.payload);
 
     // TODO doktor: send fail in case of fail.
 });
@@ -162,7 +167,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
 /**
  * Handles bidding-broadcast on the DH side
  */
-globalEmitter.on('bidding-broadcast', (message) => {
+globalEmitter.on('bidding-broadcast', async (message) => {
     log.info('bidding-broadcast received');
 
     const {
@@ -174,11 +179,11 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dataSizeBytes,
     } = message;
 
-    DHService.handleOffer(
+    await DHService.handleOffer(
         dcWallet,
         dcId,
         dataId,
-        totalEscrowTime,
+        totalEscrowTime * 60000, // in ms.
         new BN(minStakeAmount),
         new BN(dataSizeBytes),
     );
@@ -198,27 +203,82 @@ globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
 });
 
-globalEmitter.on('eth-offer-created', (event) => {
-    log.info('eth-offer-created');
-    // ( DC_wallet, DC_node_id,  data_id,  total_escrow_time,  min_stake_amount,  data_size);
+globalEmitter.on('eth-OfferCreated', async (eventData) => {
+    log.info('eth-OfferCreated');
 
     const {
-        DC_wallet,
+        offer_hash,
         DC_node_id,
-        data_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
+        min_reputation,
+        data_hash,
         data_size,
-    } = event.returnValues;
+    } = eventData;
 
-    DHService.handleOffer(
-        DC_wallet,
+    await DHService.handleOffer(
+        offer_hash,
         DC_node_id,
-        data_id,
+        total_escrow_time * 60000, // In ms.
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        data_size,
+        data_hash,
+        false,
+    );
+});
+
+globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
+    log.info('eth-AddedPredeterminedBid');
+
+    const {
+        offer_hash,
+        DH_wallet,
+        DH_node_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
         data_size,
-    );
+    } = eventData;
+
+    if (DH_wallet !== config.node_wallet || config.identity !== DH_node_id.substring(2, 42)) {
+        // Offer not for me.
+        return;
+    }
+
+    // TODO: This is a hack. DH doesn't know with whom to sign the offer. Try to dig it from events.
+    const createOfferEventEventModel = await Models.events.findOne({
+        where: {
+            event: 'OfferCreated',
+            offer_hash,
+        },
+    });
+
+    if (!createOfferEventEventModel) {
+        log.warn(`Couldn't find event CreateOffer for offer ${offer_hash}.`);
+        return;
+    }
+
+    try {
+        const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+        const createOfferEventData = JSON.parse(createOfferEvent.data);
+
+        await DHService.handleOffer(
+            offer_hash,
+            createOfferEventData.DC_node_id.substring(2, 42),
+            total_escrow_time * 60000, // In ms.
+            max_token_amount,
+            min_stake_amount,
+            createOfferEventData.min_reputation,
+            data_size,
+            createOfferEventData.data_hash,
+            true,
+        );
+    } catch (error) {
+        log.error(`Failed to handle predetermined bid. ${error}.`);
+    }
 });
 
 globalEmitter.on('eth-offer-canceled', (event) => {

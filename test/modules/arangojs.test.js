@@ -452,7 +452,7 @@ describe('Arangojs module ', async () => {
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
 
-        const response = await testDb.findEvent('senderID', 'a', '1000', 'bizTest');
+        const response = await testDb.findEvent('senderID', ['a'], '1000', 'bizTest');
         assert.deepEqual(response[0].data, vertexOne.data);
         assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
         assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
