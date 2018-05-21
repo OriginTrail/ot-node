@@ -70,7 +70,7 @@ class DCService {
         // Check for balance.
         const profileBalance =
             new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
-        const condition = maxTokenAmount.mul(new BN(dhWallets.length * 2 + 1));
+        const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
         if (profileBalance < condition) {
             await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);

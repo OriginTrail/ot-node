@@ -67,30 +67,36 @@ globalEmitter.on('gs1-import-request', async (data) => {
     });
 });
 
-globalEmitter.on('replication-request', (request, response) => {
+globalEmitter.on('replication-request', async (request, response) => {
     log.trace('replication-request received');
 
-    let price;
-    let importId;
-    const { dataId } = request.params.message;
-    const { wallet } = request.contact[1];
-    // const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
 
-    if (dataId) {
-        // TODO: decouple import ID from data id or load it from database.
-        importId = dataId;
-        // ({ price } = bid);
-    }
+    const { offer_hash, wallet } = request.params.message;
+    const { kadWallet } = request.contact[1];
 
-    if (!importId || !wallet) {
-        const errorMessage = 'Asked replication without providing offer ID or wallet not found.';
+    if (!offer_hash || !wallet) {
+        const errorMessage = 'Asked replication without providing offer hash or wallet.';
         log.warn(errorMessage);
         response.send({ status: 'fail', error: errorMessage });
         return;
     }
 
-    const verticesPromise = GraphStorage.db.findVerticesByImportId(importId);
-    const edgesPromise = GraphStorage.db.findEdgesByImportId(importId);
+    if (kadWallet !== wallet) {
+        log.warn(`Wallet from KADemlia differs from replication request for offer hash ${offer_hash}.`);
+    }
+
+    const offerModel = await Models.offers.findOne({ where: { id: offer_hash } });
+    if (!offerModel) {
+        const errorMessage = `Replication request for offer I don't know: ${offer_hash}.`;
+        log.warn(errorMessage);
+        response.send({ status: 'fail', error: errorMessage });
+        return;
+    }
+
+    const offer = offerModel.get({ plain: true });
+
+    const verticesPromise = GraphStorage.db.findVerticesByImportId(offer.import_id);
+    const edgesPromise = GraphStorage.db.findEdgesByImportId(offer.import_id);
 
     Promise.all([verticesPromise, edgesPromise]).then((values) => {
         const vertices = values[0];
@@ -108,7 +114,7 @@ globalEmitter.on('replication-request', (request, response) => {
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
-            data.data_id = dataId;
+            data.data_id = offer.import_id;
             data.encryptedVertices = encryptedVertices;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
