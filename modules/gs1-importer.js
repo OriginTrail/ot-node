@@ -1,1411 +1,718 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
-const deasync = require('deasync-promise');
+const xsd = require('libxml-xsd');
+const Utilities = require('./Utilities');
 
+const GS1Helper = require('./gs1-helper');
 const GSInstance = require('./GraphStorageInstance');
-const utilities = require('./Utilities');
-const async = require('async');
 
-// Update import data
+function parseLocations(vocabularyElementList) {
+    const locations = [];
 
+    // May be an array in VocabularyElement.
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
 
-function updateImportNumber(collection, document, importId) {
-    const { db } = GSInstance;
-    return db.updateDocumentImports(collection, document, importId);
+    for (const element of vocabularyElementElements) {
+        const childLocations = GS1Helper.arrayze(element.children ? element.children.id : []);
+
+        const location = {
+            type: 'location',
+            id: element.id,
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
+            child_locations: childLocations,
+            extension: element.extension,
+        };
+
+        locations.push(location);
+    }
+
+    return locations;
 }
 
-/**
- * Find values helper
- * @param obj
- * @param key
- * @param list
- * @return {*}
- */
-function findValuesHelper(obj, key, list) {
-    if (!obj) return list;
-    if (obj instanceof Array) {
-        for (var i in obj) {
-            list = list.concat(findValuesHelper(obj[i], key, []));
-        }
-        return list;
-    }
-    if (obj[key]) list.push(obj[key]);
+function parseActors(vocabularyElementList) {
+    const actors = [];
 
-    if ((typeof obj === 'object') && (obj !== null)) {
-        var children = Object.keys(obj);
-        if (children.length > 0) {
-            for (i = 0; i < children.length; i += 1) {
-                list = list.concat(findValuesHelper(obj[children[i]], key, []));
+    // May be an array in VocabularyElement.
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+
+    for (const element of vocabularyElementElements) {
+        const actor = {
+            type: 'actor',
+            id: element.id,
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+        };
+
+        actors.push(actor);
+    }
+
+    return actors;
+}
+
+function parseProducts(vocabularyElementList) {
+    const products = [];
+
+    // May be an array in VocabularyElement.
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+
+    for (const element of vocabularyElementElements) {
+        const product = {
+            type: 'product',
+            id: element.id,
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+        };
+
+        products.push(product);
+    }
+
+    return products;
+}
+
+function parseBatches(vocabularyElementList) {
+    const batches = [];
+
+    // May be an array in VocabularyElement.
+    const vocabularyElementElements = GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+
+    for (const element of vocabularyElementElements) {
+        const batch = {
+            type: 'batch',
+            id: element.id,
+            attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+        };
+
+        batches.push(batch);
+    }
+
+    return batches;
+}
+
+async function processXML(err, result) {
+    const { db } = GSInstance;
+    const GLOBAL_R = 131317;
+    const importId = Date.now();
+
+    const epcisDocumentElement = result['epcis:EPCISDocument'];
+
+    // Header stuff.
+    const standardBusinessDocumentHeaderElement = epcisDocumentElement.EPCISHeader['sbdh:StandardBusinessDocumentHeader'];
+    const senderElement = standardBusinessDocumentHeaderElement['sbdh:Sender'];
+    const vocabularyListElement =
+        epcisDocumentElement.EPCISHeader.extension.EPCISMasterData.VocabularyList;
+    const eventListElement = epcisDocumentElement.EPCISBody.EventList;
+
+    // Outputs.
+    let locations = [];
+    let actors = [];
+    let products = [];
+    let batches = [];
+    const events = [];
+    const eventEdges = [];
+    const locationEdges = [];
+    const locationVertices = [];
+    const actorsVertices = [];
+    const productVertices = [];
+    const batchEdges = [];
+    const batchesVertices = [];
+    const eventVertices = [];
+
+    const EDGE_KEY_TEMPLATE = 'ot_vertices/OT_KEY_';
+
+    const senderId = senderElement['sbdh:Identifier']._;
+    const sender = {
+        identifiers: {
+            id: senderId,
+            uid: senderElement['sbdh:Identifier']._,
+        },
+        data: GS1Helper.sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
+        vertex_type: 'SENDER',
+    };
+    GS1Helper.validateSender(sender.data);
+
+    // Check for vocabularies.
+    const vocabularyElements = GS1Helper.arrayze(vocabularyListElement.Vocabulary);
+
+    for (const vocabularyElement of vocabularyElements) {
+        switch (vocabularyElement.type) {
+        case 'urn:ot:mda:actor':
+            actors = actors.concat(parseActors(vocabularyElement.VocabularyElementList));
+            break;
+        case 'urn:ot:mda:product':
+            products =
+                    products.concat(parseProducts(vocabularyElement.VocabularyElementList));
+            break;
+        case 'urn:ot:mda:batch':
+            batches =
+                    batches.concat(parseBatches(vocabularyElement.VocabularyElementList));
+            break;
+        case 'urn:ot:mda:location':
+            locations =
+                    locations.concat(parseLocations(vocabularyElement.VocabularyElementList));
+            break;
+        default:
+            throw Error(`Unimplemented or unknown type: ${vocabularyElement.type}.`);
+        }
+    }
+
+    // Check for events.
+    // Types: Transport, Transformation, Observation and Ownership.
+
+    for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
+        events.push(objectEvent);
+    }
+
+    if (eventListElement.AggregationEvent) {
+        for (const aggregationEvent of GS1Helper.arrayze(eventListElement.AggregationEvent)) {
+            events.push(aggregationEvent);
+        }
+    }
+
+    if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
+        for (const transformationEvent of
+            GS1Helper.arrayze(eventListElement.extension.TransformationEvent)) {
+            events.push(transformationEvent);
+        }
+    }
+
+    // pre-fetch from DB.
+    const objectClassLocationId = await db.getClassId('Location');
+    const objectClassActorId = await db.getClassId('Actor');
+    const objectClassProductId = await db.getClassId('Product');
+    const objectEventTransportId = await db.getClassId('Transport');
+    const objectEventTransformationId = await db.getClassId('Transformation');
+    const objectEventObservationId = await db.getClassId('Observation');
+    const objectEventOwnershipId = await db.getClassId('Ownership');
+
+    for (const location of locations) {
+        const identifiers = {
+            id: location.id,
+            uid: location.id,
+        };
+        const data = {
+            object_class_id: objectClassLocationId,
+        };
+
+        GS1Helper.copyProperties(location.attributes, data);
+
+        const locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+        locationVertices.push({
+            _key: locationKey,
+            identifiers,
+            data,
+            vertex_type: 'LOCATION',
+        });
+
+        if (location.extension) {
+            const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
+            for (const attr of GS1Helper.arrayze(attrs)) {
+                if (attr.participantId) {
+                    location.participant_id = attr.participantId;
+
+                    locationEdges.push({
+                        _key: md5(`owned_by_${senderId}_${locationKey}_${attr.participantId}`),
+                        _from: `ot_vertices/${locationKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
+                        edge_type: 'OWNED_BY',
+                    });
+                }
+            }
+        }
+
+        const { child_locations } = location;
+        for (const childId of child_locations) {
+            const identifiers = {
+                id: childId,
+                uid: childId,
+            };
+            const data = {
+                parent_id: location.id,
+            };
+
+            const childLocationKey = md5(`child_business_location_${senderId}_${md5(JSON.stringify(identifiers))}_${md5(JSON.stringify(data))}`);
+            locationVertices.push({
+                _key: childLocationKey,
+                identifiers,
+                data,
+                vertex_type: 'CHILD_BUSINESS_LOCATION',
+            });
+
+            locationEdges.push({
+                _key: md5(`child_business_location_${senderId}_${location.id}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+                _from: `ot_vertices/${childLocationKey}`,
+                _to: `ot_vertices/${locationKey}`,
+                edge_type: 'CHILD_BUSINESS_LOCATION',
+            });
+        }
+    }
+
+    for (const actor of actors) {
+        const identifiers = {
+            id: actor.id,
+            uid: actor.id,
+        };
+
+        const data = {
+            object_class_id: objectClassActorId,
+        };
+
+        GS1Helper.copyProperties(actor.attributes, data);
+
+        actorsVertices.push({
+            _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+            _id: actor.id,
+            identifiers,
+            data,
+            vertex_type: 'ACTOR',
+        });
+    }
+
+    for (const product of products) {
+        const identifiers = {
+            id: product.id,
+            uid: product.id,
+        };
+
+        const data = {
+            object_class_id: objectClassProductId,
+        };
+
+        GS1Helper.copyProperties(product.attributes, data);
+
+        productVertices.push({
+            _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+            _id: product.id,
+            data,
+            identifiers,
+            vertex_type: 'PRODUCT',
+        });
+    }
+
+    for (const batch of batches) {
+        const productId = batch.attributes.productid;
+
+        const identifiers = {
+            id: batch.id,
+            uid: batch.id,
+        };
+
+        const data = {
+            parent_id: productId,
+        };
+
+        GS1Helper.copyProperties(batch.attributes, data);
+
+        const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+        batchesVertices.push({
+            _key: key,
+            identifiers: {
+                id: batch.id,
+                uid: batch.id,
+            },
+            data,
+            vertex_type: 'BATCH',
+        });
+    }
+
+    // Store vertices in db. Update versions
+
+
+    function getClassId(event) {
+        // TODO: Support all other types.
+        if (event.action && event.action === 'OBSERVE') {
+            return objectEventObservationId;
+        }
+        return objectEventTransformationId;
+    }
+
+    const batchesToRemove = [];
+    for (const event of events) {
+        const tmpEventEdges = [];
+        const tmpEventVertices = [];
+        const tmpBatchesToRemove = [];
+
+        const eventId = GS1Helper.getEventId(senderId, event);
+
+        const { extension } = event;
+
+        let eventCategories;
+        if (extension.extension) {
+            const eventClass = extension.extension.OTEventClass;
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:events:'));
+        } else {
+            const eventClass = extension.OTEventClass;
+            eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:event:'));
+        }
+
+        // eslint-disable-next-line
+        await GS1Helper.zeroKnowledge(senderId, event, eventId, eventCategories,
+            importId, GLOBAL_R, batchesVertices, db,
+        );
+
+        const identifiers = {
+            id: eventId,
+            uid: eventId,
+        };
+
+        const data = {
+            object_class_id: getClassId(event),
+            categories: eventCategories,
+        };
+        GS1Helper.copyProperties(event, data);
+        event.vertex_type = 'EVENT';
+
+        const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+        if (extension.extension) {
+            const { documentId } = extension.extension;
+            if (documentId) {
+                identifiers.document_id = documentId;
+            }
+
+            const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const isSender = bizStep === 'shipping';
+
+            if (extension.extension.sourceList) {
+                const sources = GS1Helper.arrayze(extension.extension.sourceList.source._);
+                for (const source of sources) {
+                    tmpEventEdges.push({
+                        _key: md5(`source_${senderId}_${eventKey}_${source}`),
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + source}`,
+                        edge_type: 'SOURCE',
+                    });
+
+                    if (!isSender) {
+                        // receiving
+                        const filtered = locations.filter(location => location.id === source);
+                        for (const location of filtered) {
+                            event.partner_id = [location.participant_id];
+                        }
+
+                        // eslint-disable-next-line
+                        const shippingEventVertex = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
+                        if (shippingEventVertex.length > 0) {
+                            tmpEventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${shippingEventVertex[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                            tmpEventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${shippingEventVertex[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (extension.extension.destinationList) {
+                const destinations =
+                    GS1Helper.arrayze(extension.extension.destinationList.destination._);
+                for (const destination of destinations) {
+                    tmpEventEdges.push({
+                        _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
+                        _from: `ot_vertices/${eventKey}`,
+                        _to: `${EDGE_KEY_TEMPLATE + destination}`,
+                        edge_type: 'DESTINATION',
+                    });
+
+                    if (isSender) {
+                        // shipping
+                        const filtered = locations.filter(location => location.id === destination);
+                        for (const location of filtered) {
+                            event.partner_id = [location.participant_id];
+                        }
+
+                        // eslint-disable-next-line
+                        const receivingEventVertices = await db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
+                        if (receivingEventVertices.length > 0) {
+                            tmpEventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${receivingEventVertices[0]._key}_${eventKey}`),
+                                _from: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                _to: `ot_vertices/${eventKey}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                            tmpEventEdges.push({
+                                _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
+                                _from: `ot_vertices/${eventKey}`,
+                                _to: `ot_vertices/${receivingEventVertices[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        const eventVertex = {
+            _key: eventKey,
+            data,
+            identifiers,
+            partner_id: event.partner_id,
+            vertex_type: 'EVENT',
+        };
+        tmpEventVertices.push(eventVertex);
+
+        const { bizLocation } = event;
+        if (bizLocation) {
+            const bizLocationId = bizLocation.id;
+            tmpEventEdges.push({
+                _key: md5(`at_${senderId}_${eventKey}_${bizLocationId}`),
+                _from: `ot_vertices/${eventKey}`,
+                _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
+                edge_type: 'AT',
+            });
+        }
+
+        if (event.readPoint) {
+            const locationReadPoint = event.readPoint.id;
+            tmpEventEdges.push({
+                _key: md5(`read_point_${senderId}_${eventKey}_${locationReadPoint}`),
+                _from: `ot_vertices/${eventKey}`,
+                _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
+                edge_type: 'READ_POINT',
+            });
+        }
+
+        if (event.inputEPCList) {
+            for (const inputEpc of GS1Helper.arrayze(event.inputEPCList.epc)) {
+                const batchId = inputEpc;
+
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'INPUT_BATCH',
+                });
+                tmpBatchesToRemove.push(batchId);
+            }
+        }
+
+        if (event.epcList) {
+            for (const inputEpc of GS1Helper.arrayze(event.epcList.epc)) {
+                const batchId = inputEpc;
+
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'EVENT_BATCH',
+                });
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'EVENT_BATCH',
+                });
+                tmpBatchesToRemove.push(batchId);
+            }
+        }
+
+        if (event.childEPCs) {
+            for (const inputEpc of GS1Helper.arrayze(event.childEPCs)) {
+                const batchId = inputEpc.epc;
+
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'CHILD_BATCH',
+                });
+                tmpBatchesToRemove.push(batchId);
+            }
+        }
+
+        if (event.outputEPCList) {
+            for (const outputEpc of GS1Helper.arrayze(event.outputEPCList.epc)) {
+                const batchId = outputEpc;
+
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    edge_type: 'OUTPUT_BATCH',
+                });
+                tmpEventEdges.push({
+                    _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                    _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'OUTPUT_BATCH',
+                });
+                tmpBatchesToRemove.push(batchId);
+            }
+        }
+
+        // eslint-disable-next-line
+        const existingEventVertex = await db.findVertexWithMaxVersion(senderId, eventId, eventKey);
+        let add = false;
+        if (existingEventVertex) {
+            const { data } = eventVertex;
+            const existingData = existingEventVertex.data;
+
+            const match = Utilities.objectDistance(data, existingData, ['quantities']);
+            if (match !== 100) {
+                add = true;
+            }
+        } else {
+            add = true;
+        }
+        if (add) {
+            eventEdges.push(...tmpEventEdges);
+            eventVertices.push(...tmpEventVertices);
+        } else {
+            batchesToRemove.push(...tmpBatchesToRemove);
+        }
+    }
+
+    for (const batchId of batchesToRemove) {
+        for (const index in batchesVertices) {
+            const batch = batchesVertices[index];
+            if (batch.identifiers.uid === batchId) {
+                batchesVertices.splice(index, 1);
             }
         }
     }
-    return list;
-}
 
-// sanitize
+    for (const batch of batchesVertices) {
+        const productId = batch.data.parent_id;
 
-function sanitize(old_obj, new_obj, patterns) {
-    if (typeof old_obj !== 'object') { return old_obj; }
-
-    for (const key in old_obj) {
-        var new_key = key;
-
-        for (const i in patterns) {
-            new_key = new_key.replace(patterns[i], '');
-        }
-
-        new_obj[new_key] = sanitize(old_obj[key], {}, patterns);
+        batchEdges.push({
+            _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
+            _from: `ot_vertices/${batch._key}`,
+            _to: `${EDGE_KEY_TEMPLATE + productId}`,
+            edge_type: 'IS',
+        });
     }
 
-    return new_obj;
+    const allVertices =
+        locationVertices
+            .concat(actorsVertices)
+            .concat(productVertices)
+            .concat(batchesVertices)
+            .concat(eventVertices)
+            .map((vertex) => {
+                vertex.sender_id = senderId;
+                return vertex;
+            });
+
+    const promises = allVertices.map(vertex => db.addVertex(vertex));
+    await Promise.all(promises);
+
+    const classObjectEdges = [];
+
+    eventVertices.forEach((vertex) => {
+        for (const category of vertex.data.categories) {
+            eventVertices.forEach((vertex) => {
+                classObjectEdges.push({
+                    _key: md5(`is_${senderId}_${vertex.id}_${category}`),
+                    _from: `ot_vertices/${vertex._key}`,
+                    _to: `ot_vertices/${category}`,
+                    edge_type: 'IS',
+                });
+            });
+        }
+    });
+
+    locationVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassLocationId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassLocationId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    actorsVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassActorId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassActorId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    productVertices.forEach((vertex) => {
+        classObjectEdges.push({
+            _key: md5(`is_${senderId}_${vertex._key}_${objectClassProductId}`),
+            _from: `ot_vertices/${vertex._key}`,
+            _to: `ot_vertices/${objectClassProductId}`,
+            edge_type: 'IS',
+        });
+    });
+
+    eventVertices.forEach((vertex) => {
+        vertex.data.categories.forEach(async (category) => {
+            const classKey = await db.getClassId(category);
+            classObjectEdges.push({
+                _key: md5(`is_${senderId}_${vertex._key}_${classKey}`),
+                _from: `ot_vertices/${vertex._key}`,
+                _to: `ot_vertices/${classKey}`,
+                edge_type: 'IS',
+            });
+        });
+    });
+
+    const allEdges = locationEdges
+        .concat(eventEdges)
+        .concat(batchEdges)
+        .concat(classObjectEdges)
+        .map((edge) => {
+            edge.sender_id = senderId;
+            return edge;
+        });
+
+    for (const edge of allEdges) {
+        const to = edge._to;
+        const from = edge._from;
+
+        if (to.startsWith(EDGE_KEY_TEMPLATE)) {
+            // eslint-disable-next-line
+            const vertex = await db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
+            edge._to = `ot_vertices/${vertex._key}`;
+        }
+        if (from.startsWith(EDGE_KEY_TEMPLATE)) {
+            // eslint-disable-next-line
+            const vertex = await db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
+            edge._from = `ot_vertices/${vertex._key}`;
+        }
+    }
+
+    await Promise.all(allEdges.map(edge => db.addEdge(edge)));
+
+    await Promise.all(allVertices.map(vertex => db.updateImports('ot_vertices', vertex._key, importId)));
+
+    console.log('Done parsing and importing.');
+    return { vertices: allVertices, edges: allEdges, import_id: importId };
 }
 
-// parsing
+async function parseGS1(gs1XmlFile) {
+    const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
+    const xsdFileBuffer = fs.readFileSync('./importers/EPCglobal-epcis-masterdata-1_2.xsd');
+    const schema = xsd.parse(xsdFileBuffer.toString());
 
-function Error(message) {
-    console.log(`Error: ${message}`);
-    return false;
+    const validationResult = schema.validate(gs1XmlFileBuffer.toString());
+    if (validationResult !== null) {
+        throw Error(`Failed to validate schema. ${validationResult}`);
+    }
+
+    return new Promise(resolve =>
+        parseString(
+            gs1XmlFileBuffer,
+            { explicitArray: false, mergeAttrs: true },
+            /* eslint-disable consistent-return */
+            async (err, json) => {
+                resolve(processXML(err, json));
+            },
+        ));
 }
 
 module.exports = () => ({
-    parseGS1(gs1_xml_file, callback) {
-        const { db } = GSInstance;
-        var gs1_xml = fs.readFileSync(gs1_xml_file);
-        parseString(
-            gs1_xml,
-            { explicitArray: false, mergeAttrs: true },
-            /* eslint-disable consistent-return */
-            async (err, result) => {
-                /**
-                 * Variables
-                 */
-
-                var sanitized_EPCIS_document;
-
-                let Vocabulary_elements;
-                let vocabulary_element;
-                let inside;
-                var Bussines_location_elements;
-                let VocabularyElementList_element;
-                let business_location_id;
-                let attribute_id;
-
-
-                let data_object = {};
-                let participants_data = {};
-                const object_data = {};
-                const batch_data = {};
-
-
-                var sender = {};
-                var receiver = {};
-                var document_meta = {};
-                var locations = {};
-                var participants = {};
-                var objects = {};
-                var batches = {};
-
-
-                const object_events = {};
-                const aggregation_events = {};
-                const transformation_events = {};
-
-
-                var owned_by_edges = [];
-                var instance_of_edges = [];
-                var at_edges = [];
-                var read_point_edges = [];
-                var event_batch_edges = [];
-                var parent_batches_edges = [];
-                var child_batches_edges = [];
-                var input_batches_edges = [];
-                var output_batches_edges = [];
-                var business_location_edges = [];
-
-                // READING EPCIS Document
-                const doc = findValuesHelper(result, 'epcis:EPCISDocument', []);
-                if (doc.length <= 0) {
-                    return Error('Missing EPCISDocument element!');
-                }
-
-                const EPCISDocument_element = result['epcis:EPCISDocument'];
-
-                const new_obj = {};
-                sanitized_EPCIS_document = sanitize(EPCISDocument_element, new_obj, ['sbdh:', 'xmlns:']);
-
-
-                const head = findValuesHelper(sanitized_EPCIS_document, 'EPCISHeader', []);
-                if (head.length <= 0) {
-                    return Error('Missing EPCISHeader element for EPCISDocument element!');
-                }
-                const EPCISHeader_element = sanitized_EPCIS_document.EPCISHeader;
-
-
-                const standard_doc_header = findValuesHelper(EPCISHeader_element, 'StandardBusinessDocumentHeader', []);
-                if (standard_doc_header.length <= 0) {
-                    return Error('Missing StandardBusinessDocumentHeader element for EPCISHeader element!');
-                }
-                const StandardBusinessDocumentHeader_element =
-                    EPCISHeader_element.StandardBusinessDocumentHeader;
-
-
-                // //SENDER
-                const send = findValuesHelper(StandardBusinessDocumentHeader_element, 'Sender', []);
-                if (send.length <= 0) {
-                    return Error('Missing Sender element for StandardBusinessDocumentHeader element!');
-                }
-                const Sender_element = StandardBusinessDocumentHeader_element.Sender;
-
-
-                const send_id = findValuesHelper(Sender_element, 'Identifier', []);
-                if (send_id.length <= 0) {
-                    return Error('Missing Identifier element for Sender element!');
-                }
-                const sender_id_element = Sender_element.Identifier;
-
-
-                const sendid = findValuesHelper(sender_id_element, '_', []);
-                if (sendid.length <= 0) {
-                    return Error('Missing _ element for sender_id element!');
-                }
-                const sender_id = sender_id_element._;
-
-
-                const contact_info = findValuesHelper(Sender_element, 'ContactInformation', []);
-                if (contact_info.length <= 0) {
-                    return Error('Missing ContactInformation element for Sender element!');
-                }
-                const ContactInformation_element = Sender_element.ContactInformation;
-
-
-                // ///RECEIVER
-                const receive = findValuesHelper(StandardBusinessDocumentHeader_element, 'Receiver', []);
-                if (receive.length <= 0) {
-                    return Error('Missing Receiver element for StandardBusinessDocumentHeader element!');
-                }
-                const Receiver_element = StandardBusinessDocumentHeader_element.Receiver;
-
-
-                const receive_id = findValuesHelper(Receiver_element, 'Identifier', []);
-                if (receive_id.length <= 0) {
-                    return Error('Missing Identifier element for Receiver element!');
-                }
-                const receiver_id_element = Receiver_element.Identifier;
-
-
-                const receiveid = findValuesHelper(receiver_id_element, '_', []);
-                if (receiveid.length <= 0) {
-                    return Error('Missing Identifier element for Receiver element!');
-                }
-                const receiver_id = receiver_id_element._;
-
-
-                const contact_info_rec = findValuesHelper(Receiver_element, 'ContactInformation', []);
-                if (contact_info_rec.length <= 0) {
-                    return Error('Missing ContactInformation element for Receiver element!');
-                }
-                const ContactInformation_element_receiver = Receiver_element.ContactInformation;
-
-
-                const doc_identification = findValuesHelper(StandardBusinessDocumentHeader_element, 'DocumentIdentification', []);
-                if (doc_identification.length <= 0) {
-                    return Error('Missing DocumentIdentification element for StandardBusinessDocumentHeader element!');
-                }
-                const DocumentIdentification_element =
-                    StandardBusinessDocumentHeader_element.DocumentIdentification;
-
-
-                const bus_scope = findValuesHelper(StandardBusinessDocumentHeader_element, 'BusinessScope', []);
-                if (bus_scope.length <= 0) {
-                    return Error('Missing BusinessScope element for StandardBusinessDocumentHeader element!');
-                }
-                const BusinessScope_element =
-                    StandardBusinessDocumentHeader_element.BusinessScope;
-
-
-                sender.sender_id = {};
-                sender.sender_id.identifiers = {};
-                sender.sender_id.identifiers.sender_id = sender_id;
-                sender.sender_id.identifiers.uid = sender_id;
-                sender.sender_id.data = ContactInformation_element;
-                sender.sender_id.vertex_type = 'SENDER';
-
-
-                receiver.receiver_id = {};
-                receiver.receiver_id.identifiers = {};
-                receiver.receiver_id.identifiers.receiver_id = receiver_id;
-                receiver.receiver_id.data = ContactInformation_element_receiver;
-                receiver.receiver_id.vertex_type = 'RECEIVER';
-
-                // /BUSINESS SCOPE AND DOCUMENT IDENTIFICATION
-
-                document_meta = Object.assign(
-                    {},
-                    document_meta,
-                    { BusinessScope_element, DocumentIdentification_element },
-                );
-
-
-                // ///////////READING Master Data///////////
-
-                const ext = findValuesHelper(EPCISHeader_element, 'extension', []);
-                if (ext.length <= 0) {
-                    return Error('Missing extension element for EPCISHeader element!');
-                }
-                const extension_element = EPCISHeader_element.extension;
-
-
-                const epcis_master = findValuesHelper(extension_element, 'EPCISMasterData', []);
-                if (epcis_master.length <= 0) {
-                    return Error('Missing EPCISMasterData element for extension element!');
-                }
-                const EPCISMasterData_element = extension_element.EPCISMasterData;
-
-
-                const vocabulary_li = findValuesHelper(EPCISMasterData_element, 'VocabularyList', []);
-                if (vocabulary_li.length <= 0) {
-                    return Error('Missing VocabularyList element for EPCISMasterData element!');
-                }
-                const VocabularyList_element = EPCISMasterData_element.VocabularyList;
-
-
-                const vocabulary = findValuesHelper(VocabularyList_element, 'Vocabulary', []);
-                if (vocabulary.length <= 0) {
-                    return Error('Missing Vocabulary element for VocabularyList element!');
-                }
-                Vocabulary_elements = VocabularyList_element.Vocabulary;
-
-
-                if (!(Vocabulary_elements instanceof Array)) {
-                    const temp_vocabulary_elements = Vocabulary_elements;
-                    Vocabulary_elements = [];
-                    Vocabulary_elements.push(temp_vocabulary_elements);
-                }
-
-
-                for (const i in Vocabulary_elements) {
-                    vocabulary_element = Vocabulary_elements[i];
-
-                    if (!(vocabulary_element instanceof Array)) {
-                        const temp_vocabularyel_elements = vocabulary_element;
-                        vocabulary_element = [];
-                        vocabulary_element.push(temp_vocabularyel_elements);
-                    }
-
-                    for (let j in vocabulary_element) {
-                        inside = vocabulary_element[j];
-                        let pro;
-
-                        for (j in inside) {
-                            pro = inside[j];
-
-                            const typ = findValuesHelper(pro, 'type', []);
-                            if (typ.length <= 0) {
-                                return Error('Missing type element for element!');
-                            }
-                            const v_type = pro.type;
-
-                            // ////////BUSINESS_LOCATION/////////////
-                            if (v_type === 'urn:epcglobal:epcis:vtype:BusinessLocation') {
-                                Bussines_location_elements = pro;
-
-                                const voc_el_list = findValuesHelper(Bussines_location_elements, 'VocabularyElementList', []);
-                                if (voc_el_list.length === 0) {
-                                    return Error('Missing VocabularyElementList element for element!');
-                                }
-                                VocabularyElementList_element =
-                                    Bussines_location_elements.VocabularyElementList;
-
-
-                                for (const k in VocabularyElementList_element) {
-                                    data_object = {};
-
-                                    const VocabularyElement_element =
-                                        VocabularyElementList_element[k];
-                                    // console.log(VocabularyElement_element)
-
-                                    for (const x in VocabularyElement_element) {
-                                        const v = VocabularyElement_element[x];
-                                        // console.log(v)
-
-                                        const loc_id = findValuesHelper(v, 'id', []);
-                                        if (loc_id.length <= 0) {
-                                            return Error('Missing id element for VocabularyElement element!');
-                                        }
-                                        const str = v.id;
-                                        business_location_id = str.replace('urn:epc:id:sgln:', '');
-
-
-                                        const attr = findValuesHelper(v, 'attribute', []);
-                                        if (attr.length <= 0) {
-                                            return Error('Missing attribute element for VocabularyElement element!');
-                                        }
-                                        const { attribute } = v;
-
-                                        for (const y in attribute) {
-                                            const kk = attribute[y];
-
-
-                                            const att_id = findValuesHelper(kk, 'id', []);
-                                            if (att_id.length <= 0) {
-                                                return Error('Missing id attribute for element!');
-                                            }
-                                            const str = kk.id;
-                                            attribute_id = str;
-
-
-                                            data_object[attribute_id] = kk._;
-                                        }
-
-                                        var children_elements;
-                                        const children_check = findValuesHelper(v, 'children', []);
-                                        if (children_check.length === 0) {
-                                            return Error('Missing children element for element!');
-                                        }
-                                        children_elements = v.children;
-
-
-                                        if (findValuesHelper(children_elements, 'id', []).length === 0) {
-                                            return Error('Missing id element in children element for business location!');
-                                        }
-
-                                        const children_id = children_elements.id;
-                                        var child_id_obj;
-                                        var child_location_id;
-                                        for (const mn in children_id) {
-                                            child_id_obj = (children_id[mn]);
-
-                                            if (!(child_id_obj instanceof Array)) {
-                                                const temp_child_id = child_id_obj;
-                                                child_id_obj = [];
-                                                child_id_obj.push(temp_child_id);
-                                            }
-
-                                            for (const r in child_id_obj) {
-                                                child_location_id = child_id_obj[r];
-
-                                                business_location_edges.push({
-                                                    _key: md5(`child_business_location_${sender_id}_${child_location_id}_${business_location_id}`),
-                                                    _from: `ot_vertices/${md5(`business_location_${sender_id}_${child_location_id}`)}`,
-                                                    _to: `ot_vertices/${md5(`business_location_${sender_id}_${business_location_id}`)}`,
-                                                    edge_type: 'CHILD_BUSINESS_LOCATION',
-                                                });
-
-                                                locations[child_location_id] = {};
-                                                locations[child_location_id].data = { type: 'child_location' };
-                                                locations[child_location_id].identifiers = {};
-                                                locations[child_location_id]
-                                                    .identifiers
-                                                    .bussines_location_id = child_location_id;
-                                                locations[child_location_id]
-                                                    .identifiers.uid = child_location_id;
-                                                locations[child_location_id].vertex_type = 'BUSINESS_LOCATION';
-                                                locations[child_location_id]._key = md5(`business_location_${sender_id}_${child_location_id}`);
-                                            }
-                                        }
-
-                                        if (findValuesHelper(v, 'extension', []).length !== 0) {
-                                            const attr = findValuesHelper(v.extension, 'attribute', []);
-                                            if (attr.length !== 0) {
-                                                let ext_attribute;
-                                                ext_attribute = v.extension.attribute;
-
-                                                if (ext_attribute.length === undefined) {
-                                                    ext_attribute = [ext_attribute];
-                                                }
-
-                                                for (const y in ext_attribute) {
-                                                    const kk = ext_attribute[y];
-
-
-                                                    const att_id = findValuesHelper(kk, 'id', []);
-                                                    if (att_id.length <= 0) {
-                                                        return Error('Missing id attribute for element!');
-                                                    }
-                                                    const str = kk.id;
-                                                    attribute_id = str;
-
-
-                                                    attribute_id = attribute_id.replace('urn:ot:location:', '');
-
-
-                                                    if (attribute_id === 'participantId') {
-                                                        owned_by_edges.push({
-                                                            _from: `ot_vertices/${md5(`business_location_${sender_id}_${business_location_id}`)}`,
-                                                            _to: `ot_vertices/${md5(`participant_${sender_id}_${kk._}`)}`,
-                                                            edge_type: 'OWNED_BY',
-                                                            _key: md5(`owned_by_${sender_id}_${business_location_id}_${kk._}`),
-                                                        });
-                                                    }
-                                                }
-                                            }
-                                        }
-
-
-                                        locations[business_location_id] = {};
-                                        locations[business_location_id].identifiers = {};
-                                        locations[business_location_id]
-                                            .identifiers
-                                            .bussines_location_id = business_location_id;
-                                        locations[business_location_id]
-                                            .identifiers.uid = business_location_id;
-                                        locations[business_location_id]
-                                            .data = utilities.copyObject(data_object);
-                                        locations[business_location_id].vertex_type = 'BUSINESS_LOCATION';
-                                        locations[business_location_id]._key = md5(`business_location_${sender_id}_${business_location_id}`);
-                                    }
-                                }
-                            }
-
-                            var Participant_elements;
-                            var exten_element;
-                            var OTVocabularyElement_element;
-                            var participant_id;
-                            var attribute_elements;
-                            // /////PARTICIPANT///////////
-                            if (v_type === 'urn:ot:mda:participant') {
-                                Participant_elements = pro;
-
-                                const extension_check = findValuesHelper(Participant_elements, 'extension', []);
-                                if (extension_check.length === 0) {
-                                    return Error('Missing extension element for Participant element!');
-                                }
-                                exten_element = Participant_elements.extension;
-
-
-                                const ot_voc_check = findValuesHelper(exten_element, 'OTVocabularyElement', []);
-                                if (ot_voc_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement for extension element!');
-                                }
-                                OTVocabularyElement_element = exten_element.OTVocabularyElement;
-
-
-                                const participant_id_check = findValuesHelper(OTVocabularyElement_element, 'id', []);
-                                if (participant_id_check.length === 0) {
-                                    return Error('Missing id for Participant element!');
-                                }
-                                participant_id = OTVocabularyElement_element.id;
-
-
-                                const attribute_check = findValuesHelper(OTVocabularyElement_element, 'attribute', []);
-                                if (attribute_check.length === 0) {
-                                    return Error('Missing attribute for Participant element!');
-                                }
-                                attribute_elements = OTVocabularyElement_element.attribute;
-
-
-                                participants_data = {};
-
-                                for (const zx in attribute_elements) {
-                                    const attribute_el = attribute_elements[zx];
-
-                                    var value;
-                                    const value_check = findValuesHelper(attribute_el, '_', []);
-                                    if (value_check.length === 0) {
-                                        return Error('Missing value for attribute element!');
-                                    }
-                                    value = attribute_el._;
-
-
-                                    var attr_id;
-                                    const attr_id_check = findValuesHelper(attribute_el, 'id', []);
-                                    if (attr_id_check.length === 0) {
-                                        return Error('Missing id element for attribute element!');
-                                    }
-                                    attr_id = attribute_el.id.replace('urn:ot:mda:participant:', '');
-
-
-                                    participants_data[attr_id] = value;
-                                }
-
-                                participants[participant_id] = {};
-                                participants[participant_id].identifiers = {};
-                                participants[participant_id]
-                                    .identifiers
-                                    .participant_id = participant_id;
-                                participants[participant_id].identifiers.uid = participant_id;
-                                participants[participant_id]
-                                    .data = utilities.copyObject(participants_data);
-                                participants[participant_id].vertex_type = 'PARTICIPANT';
-                                participants[participant_id]._key = md5(`participant_${sender_id}_${participant_id}`);
-                            }
-
-
-                            var Object_elements;
-                            // ////OBJECT////////
-                            if (v_type === 'urn:ot:mda:object') {
-                                Object_elements = pro;
-
-                                var extensio_element;
-                                const extensio_check = findValuesHelper(Object_elements, 'extension', []);
-                                if (extensio_check.length === 0) {
-                                    return Error('Missing extension element for Object element!');
-                                }
-                                extensio_element = Object_elements.extension;
-
-
-                                var OTVocabularyEl;
-                                const OTVocabularyEl_check = findValuesHelper(extensio_element, 'OTVocabularyElement', []);
-                                if (OTVocabularyEl_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement element for extension element!');
-                                }
-                                OTVocabularyEl = extensio_element.OTVocabularyElement;
-
-
-                                var object_id;
-                                const object_id_check = findValuesHelper(OTVocabularyEl, 'id', []);
-                                if (object_id_check.length === 0) {
-                                    return Error('Missing id element for OTVocabularyElement!');
-                                }
-                                object_id = OTVocabularyEl.id;
-
-
-                                var object_attribute_elements;
-                                const attribute_el_check = findValuesHelper(OTVocabularyEl, 'attribute', []);
-                                if (attribute_el_check.length === 0) {
-                                    return Error('Missing attribute element for OTVocabularyElement!');
-                                }
-                                object_attribute_elements = OTVocabularyEl.attribute;
-
-
-                                for (const rr in object_attribute_elements) {
-                                    var single_attribute;
-                                    single_attribute = object_attribute_elements[rr];
-
-                                    var single_attribute_id;
-                                    const single_attribute_id_check = findValuesHelper(single_attribute, 'id', []);
-                                    if (single_attribute_id_check.length === 0) {
-                                        return Error('Missing id element for attribute element!');
-                                    }
-                                    single_attribute_id = single_attribute.id;
-
-
-                                    var single_attribute_value;
-                                    const single_attribute_value_check = findValuesHelper(single_attribute, '_', []);
-                                    if (single_attribute_value_check.length === 0) {
-                                        return Error('Missing value element for attribute element!');
-                                    }
-                                    single_attribute_value = single_attribute._;
-
-
-                                    object_data[single_attribute_id] = single_attribute_value;
-                                    const new_obj = {};
-                                    const sanitized_object_data = sanitize(object_data, new_obj, ['urn:', 'ot:', 'mda:', 'object:']);
-
-
-                                    objects[object_id] = {};
-                                    objects[object_id].identifiers = {};
-                                    objects[object_id].identifiers.object_id = object_id;
-                                    objects[object_id]
-                                        .data = utilities.copyObject(sanitized_object_data);
-                                    objects[object_id].vertex_type = 'OBJECT';
-                                    objects[object_id]._key = md5(`object_${sender_id}_${object_id}`);
-                                }
-                            }
-
-                            var Batch_elements;
-                            // //////BATCH/////////
-                            if (v_type === 'urn:ot:mda:batch') {
-                                Batch_elements = pro;
-
-                                var batch_extension;
-                                const batch_extension_check = findValuesHelper(Batch_elements, 'extension', []);
-                                if (batch_extension_check.length === 0) {
-                                    return Error('Missing extension element for Batch element!');
-                                }
-                                batch_extension = Batch_elements.extension;
-
-
-                                var OTVoc_El_elements;
-                                const OTVoc_El_elements_check = findValuesHelper(batch_extension, 'OTVocabularyElement', []);
-                                if (OTVoc_El_elements_check.length === 0) {
-                                    return Error('Missing OTVocabularyElement element for extension element!');
-                                }
-                                OTVoc_El_elements = batch_extension.OTVocabularyElement;
-
-
-                                var ot_vocabulary_element;
-                                for (const g in OTVoc_El_elements) {
-                                    ot_vocabulary_element = OTVoc_El_elements[g];
-
-                                    var batch_id;
-                                    const batch_id_element_check = findValuesHelper(ot_vocabulary_element, 'id', []);
-                                    if (batch_id_element_check.length === 0) {
-                                        return Error('Missing id element for OTVocabularyElement!');
-                                    }
-                                    batch_id = ot_vocabulary_element.id;
-
-
-                                    var batch_attribute_el;
-                                    const batch_attribute_el_check = findValuesHelper(ot_vocabulary_element, 'attribute', []);
-                                    if (batch_attribute_el_check.length === 0) {
-                                        return Error('Missing attribute element for OTVocabularyElement!');
-                                    }
-                                    batch_attribute_el = ot_vocabulary_element.attribute;
-
-
-                                    var single;
-                                    for (const one in batch_attribute_el) {
-                                        single = batch_attribute_el[one];
-
-                                        var batch_attribute_id;
-                                        const batch_attribute_id_check = findValuesHelper(single, 'id', []);
-                                        if (batch_attribute_id_check.length === 0) {
-                                            return Error('Missing id element for attribute element!');
-                                        }
-                                        batch_attribute_id = single.id;
-
-
-                                        var batch_attribute_value;
-                                        const batch_attribute_value_check = findValuesHelper(single, '_', []);
-                                        if (batch_attribute_value_check.length === 0) {
-                                            return Error('Missing value element for attribute element!');
-                                        }
-                                        batch_attribute_value = single._;
-
-
-                                        batch_data[batch_attribute_id] = batch_attribute_value;
-
-                                        const new_obj = {};
-                                        const sanitized_batch_data = sanitize(batch_data, new_obj, ['urn:', 'ot:', 'mda:', 'batch:']);
-
-                                        if (sanitized_batch_data.objectid !== undefined) {
-                                            instance_of_edges.push({
-                                                _from: `ot_vertices/${md5(`batch_${sender_id}_${batch_id}`)}`,
-                                                _to: `ot_vertices/${md5(`object_${sender_id}_${object_id}`)}`,
-                                                _key: md5(`object_${sender_id}__${batch_id}${object_id}`),
-                                                edge_type: 'INSTANCE_OF',
-                                            });
-                                        }
-
-
-                                        batches[batch_id] = {};
-                                        batches[batch_id].identifiers = {};
-                                        batches[batch_id].identifiers.batch_id = batch_id;
-                                        batches[batch_id].identifiers.uid = batch_id;
-                                        batches[batch_id]
-                                            .data = utilities.copyObject(sanitized_batch_data);
-                                        batches[batch_id].vertex_type = 'BATCH';
-                                        batches[batch_id]._key = md5(`batch_${sender_id}_${batch_id}`);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // READING EPCIS Document Body
-
-                if (findValuesHelper(EPCISDocument_element, 'EPCISBody', []).length !== 0) {
-                    const body_element = EPCISDocument_element.EPCISBody;
-
-                    if (findValuesHelper(result, 'EventList', []).length === 0) {
-                        return Error('Missing EventList element');
-                    }
-
-                    var event_list_element = body_element.EventList;
-
-
-                    for (var event_type in event_list_element) {
-                        let events = [];
-
-                        if (event_list_element[event_type].length === undefined) {
-                            events = [event_list_element[event_type]];
-                        } else {
-                            events = event_list_element[event_type];
-                        }
-
-
-                        for (const i in events) {
-                            let event_batches = [];
-
-                            const event = events[i];
-
-                            if (event_type === 'ObjectEvent') {
-                                // eventTime
-                                if (findValuesHelper(event, 'eventTime', []).length === 0) {
-                                    return Error('Missing eventTime element for event!');
-                                }
-
-                                const event_time = event.eventTime;
-
-                                if (typeof event_time !== 'string') {
-                                    return Error('Multiple eventTime elements found!');
-                                }
-
-                                // eventTimeZoneOffset
-                                if (findValuesHelper(event, 'eventTimeZoneOffset', []).length === 0) {
-                                    return Error('Missing event_time_zone_offset element for event!');
-                                }
-
-                                const event_time_zone_offset = event.eventTimeZoneOffset;
-
-                                if (typeof event_time_zone_offset !== 'string') {
-                                    return Error('Multiple event_time_zone_offset elements found!');
-                                }
-
-                                let event_id = `${sender_id}:${event_time}Z${event_time_zone_offset}`;
-
-                                // baseExtension + eventID
-                                if (findValuesHelper(event, 'baseExtension', []).length > 0) {
-                                    const baseExtension_element = event.baseExtension;
-
-
-                                    if (findValuesHelper(baseExtension_element, 'eventID', []).length === 0) {
-                                        return Error('Missing eventID in baseExtension!');
-                                    }
-
-                                    event_id = baseExtension_element.eventID;
-                                }
-
-                                // epcList
-                                if (findValuesHelper(event, 'epcList', []).length === 0) {
-                                    return Error('Missing epcList element for event!');
-                                }
-
-                                const { epcList } = event;
-
-                                if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                    return Error('Missing epc element in epcList for event!');
-                                }
-
-                                const { epc } = epcList;
-
-                                if (typeof epc === 'string') {
-                                    event_batches = [epc];
-                                } else {
-                                    event_batches = epc;
-                                }
-
-                                // readPoint
-                                let read_point;
-                                if (findValuesHelper(event, 'readPoint', []).length !== 0) {
-                                    const read_point_element = event.readPoint;
-
-                                    if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                        return Error('Missing id for readPoint!');
-                                    }
-
-                                    read_point = read_point_element.id;
-                                }
-
-
-                                // bizLocation
-                                let biz_location;
-                                if (findValuesHelper(event, 'bizLocation', []).length !== 0) {
-                                    const biz_location_element = event.bizLocation;
-
-                                    if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                        return Error('Missing id for bizLocation!');
-                                    }
-
-                                    biz_location = biz_location_element.id;
-                                }
-
-                                const object_event = {
-                                    identifiers: {
-                                        event_id,
-                                        uid: event_id,
-                                    },
-                                    data: event,
-                                    vertex_type: 'EVENT',
-                                    _key: md5(`event_${sender_id}_${event_id}`),
-                                };
-
-                                object_events[event_id] = utilities.copyObject(object_event);
-
-                                for (const bi in event_batches) {
-                                    event_batch_edges.push({
-                                        _key: md5(`event_batch_${sender_id}_${event_id}_${event_batches[bi]}`),
-                                        _from: `ot_vertices/${md5(`batch_${sender_id}_${event_batches[bi]}`)}`,
-                                        _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                        edge_type: 'EVENT_BATCHES',
-                                    });
-                                }
-
-                                if (read_point !== undefined) {
-                                    read_point_edges.push({
-                                        _key: md5(`read_point_${sender_id}_${event_id}_${read_point}`),
-                                        _from: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                        _to: `ot_vertices/${md5(`business_location_${sender_id}_${read_point}`)}`,
-                                        edge_type: 'READ_POINT',
-                                    });
-                                }
-
-                                if (biz_location !== undefined) {
-                                    at_edges.push({
-                                        _key: md5(`at_${sender_id}_${event_id}_${biz_location}`),
-                                        _from: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                        _to: `ot_vertices/${md5(`business_location_${sender_id}_${biz_location}`)}`,
-                                        edge_type: 'AT',
-                                    });
-                                }
-                            } else if (event_type === 'AggregationEvent') {
-                                // eventTime
-                                if (findValuesHelper(event, 'eventTime', []).length === 0) {
-                                    return Error('Missing eventTime element for event!');
-                                }
-
-                                const event_time = event.eventTime;
-
-                                if (typeof event_time !== 'string') {
-                                    return Error('Multiple eventTime elements found!');
-                                }
-
-                                // eventTimeZoneOffset
-                                if (findValuesHelper(event, 'eventTimeZoneOffset', []).length === 0) {
-                                    return Error('Missing event_time_zone_offset element for event!');
-                                }
-
-                                const event_time_zone_offset = event.eventTimeZoneOffset;
-
-                                if (typeof event_time_zone_offset !== 'string') {
-                                    return Error('Multiple event_time_zone_offset elements found!');
-                                }
-
-                                let event_id = `${sender_id}:${event_time}Z${event_time_zone_offset}`;
-
-                                // baseExtension + eventID
-                                if (findValuesHelper(event, 'baseExtension', []).length > 0) {
-                                    const baseExtension_element = event.baseExtension;
-
-
-                                    if (findValuesHelper(baseExtension_element, 'eventID', []).length === 0) {
-                                        return Error('Missing eventID in baseExtension!');
-                                    }
-
-                                    event_id = baseExtension_element.eventID;
-                                }
-
-                                // parentID
-                                if (findValuesHelper(event, 'parentID', []).length === 0) {
-                                    return Error('Missing parentID element for Aggregation event!');
-                                }
-
-                                const parent_id = event.parentID;
-
-                                // childEPCs
-                                let child_epcs = [];
-
-                                if (findValuesHelper(event, 'childEPCs', []).length === 0) {
-                                    return Error('Missing childEPCs element for event!');
-                                }
-
-                                const epcList = event.childEPCs;
-
-                                if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                    return Error('Missing epc element in epcList for event!');
-                                }
-
-                                const { epc } = epcList;
-
-                                if (typeof epc === 'string') {
-                                    child_epcs = [epc];
-                                } else {
-                                    child_epcs = epc;
-                                }
-
-                                // readPoint
-                                let read_point;
-                                if (findValuesHelper(event, 'readPoint', []).length !== 0) {
-                                    const read_point_element = event.readPoint;
-
-                                    if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                        return Error('Missing id for readPoint!');
-                                    }
-
-                                    read_point = read_point_element.id;
-                                }
-
-                                // bizLocation
-                                let biz_location;
-                                if (findValuesHelper(event, 'bizLocation', []).length !== 0) {
-                                    const biz_location_element = event.bizLocation;
-
-                                    if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                        return Error('Missing id for bizLocation!');
-                                    }
-
-                                    biz_location = biz_location_element.id;
-                                }
-
-                                const aggregation_event = {
-                                    identifiers: {
-                                        event_id,
-                                        uid: event_id,
-                                    },
-                                    data: event,
-                                    vertex_type: 'EVENT',
-                                    _key: md5(`event_${sender_id}_${event_id}`),
-                                };
-
-
-                                aggregation_events[event_id] =
-                                    utilities.copyObject(aggregation_event);
-
-                                for (const bi in child_epcs) {
-                                    child_batches_edges.push({
-                                        _key: md5(`child_batch_${sender_id}_${event_id}_${child_epcs[bi]}`),
-                                        _from: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                        _to: `ot_vertices/${md5(`batch_${sender_id}_${child_epcs[bi]}`)}`,
-                                        edge_type: 'CHILD_BATCH',
-                                    });
-                                }
-
-                                if (read_point !== undefined) {
-                                    read_point_edges.push({
-                                        _key: md5(`read_point_${sender_id}_${event_id}_${read_point}`),
-                                        _from: `ot_vertices/${md5(`event_${sender}_${event_id}`)}`,
-                                        _to: `ot_vertices/${md5(`business_location_${sender_id}_${read_point}`)}`,
-                                        edge_type: 'READ_POINT',
-
-                                    });
-                                }
-
-                                if (biz_location !== undefined) {
-                                    at_edges.push({
-                                        _key: md5(`at_${sender_id}_${event_id}_${biz_location}`),
-                                        _from: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                        _to: `ot_vertices/${md5(`business_location_${sender_id}_${biz_location}`)}`,
-                                        edge_type: 'AT',
-                                    });
-                                }
-
-                                parent_batches_edges.push({
-                                    _key: md5(`at_${sender_id}_${event_id}_${biz_location}`),
-                                    _from: `ot_vertices/${md5(`batch_${sender_id}_${parent_id}`)}`,
-                                    _to: `ot_vertices/${md5(`event_${sender_id}_${event_id}`)}`,
-                                    edge_type: 'PARENT_BATCH',
-                                });
-                            } else if (event_type === 'extension') {
-                                const extension_events = event;
-
-                                for (var ext_event_type in extension_events) {
-                                    let ext_events = [];
-
-                                    if (extension_events[ext_event_type].length === undefined) {
-                                        ext_events = [extension_events[ext_event_type]];
-                                    } else {
-                                        ext_events = event_list_element[ext_event_type];
-                                    }
-
-
-                                    for (const i in ext_events) {
-                                        const ext_event = ext_events[i];
-
-                                        if (ext_event_type === 'TransformationEvent') {
-                                            // eventTime
-                                            if (findValuesHelper(ext_event, 'transformationID', []).length === 0) {
-                                                return Error('Missing transformationID element for event!');
-                                            }
-
-                                            const ext_event_id = ext_event.transformationID;
-
-                                            // inputEPCList
-                                            let input_epcs = [];
-
-                                            if (findValuesHelper(ext_event, 'inputEPCList', []).length === 0) {
-                                                return Error('Missing inputEPCList element for event!');
-                                            }
-
-                                            const epcList = ext_event.inputEPCList;
-
-                                            if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                                return Error('Missing epc element in epcList for event!');
-                                            }
-
-                                            const { epc } = epcList;
-
-                                            if (typeof epc === 'string') {
-                                                input_epcs = [epc];
-                                            } else {
-                                                input_epcs = epc;
-                                            }
-
-                                            // outputEPCList
-                                            let output_epcs = [];
-
-                                            if (findValuesHelper(ext_event, 'outputEPCList', []).length !== 0) {
-                                                const epcList = ext_event.outputEPCList;
-
-                                                if (findValuesHelper(epcList, 'epc', []).length === 0) {
-                                                    return Error('Missing epc element in epcList for event!');
-                                                }
-
-                                                const { epc } = epcList;
-
-                                                if (typeof epc === 'string') {
-                                                    output_epcs = [epc];
-                                                } else {
-                                                    output_epcs = epc;
-                                                }
-                                            }
-
-
-                                            // readPoint
-                                            let read_point;
-                                            if (findValuesHelper(ext_event, 'readPoint', []).length !== 0) {
-                                                const read_point_element = ext_event.readPoint;
-
-                                                if (findValuesHelper(read_point_element, 'id', []).length === 0) {
-                                                    return Error('Missing id for readPoint!');
-                                                }
-
-                                                read_point = read_point_element.id;
-                                            }
-
-                                            const transformation_event = {
-                                                identifiers: {
-                                                    event_id: ext_event_id,
-                                                    uid: ext_event_id,
-                                                },
-                                                data: ext_event,
-                                                vertex_type: 'EVENT',
-                                                _key: md5(`event_${sender_id}_${ext_event_id}`),
-                                            };
-
-                                            transformation_events[ext_event_id] =
-                                                utilities.copyObject(transformation_event);
-
-                                            // bizLocation
-                                            let biz_location;
-                                            if (findValuesHelper(
-                                                ext_event,
-                                                'bizLocation',
-                                                [],
-                                            ).length !== 0) {
-                                                const biz_location_element =
-                                                    ext_event.bizLocation;
-
-                                                if (findValuesHelper(biz_location_element, 'id', []).length === 0) {
-                                                    return Error('Missing id for bizLocation!');
-                                                }
-
-                                                biz_location = biz_location_element.id;
-                                            }
-
-
-                                            for (const bi in input_epcs) {
-                                                input_batches_edges.push({
-                                                    _key: md5(`child_batch_${sender_id}_${ext_event_id}_${input_epcs[bi]}`),
-                                                    _from: `ot_vertices/${md5(`event_${sender_id}_${ext_event_id}`)}`,
-                                                    _to: `ot_vertices/${md5(`batch_${sender_id}_${input_epcs[bi]}`)}`,
-                                                    edge_type: 'INPUT_BATCH',
-                                                });
-                                            }
-
-                                            for (const bi in output_epcs) {
-                                                output_batches_edges.push({
-                                                    _key: md5(`child_batch_${sender_id}_${ext_event_id}_${output_epcs[bi]}`),
-                                                    _from: `ot_vertices/${md5(`batch_${sender_id}_${output_epcs[bi]}`)}`,
-                                                    _to: `ot_vertices/${md5(`event_${sender_id}_${ext_event_id}`)}`,
-                                                    edge_type: 'OUTPUT_BATCH',
-                                                });
-                                            }
-
-                                            if (read_point !== undefined) {
-                                                read_point_edges.push({
-                                                    _key: md5(`read_point_${sender_id}_${ext_event_id}_${read_point}`),
-                                                    _from: `ot_vertices/${md5(`event_${sender_id}_${ext_event_id}`)}`,
-                                                    _to: `ot_vertices/${md5(`business_location_${sender_id}_${read_point}`)}`,
-                                                    edge_type: 'READ_POINT',
-
-                                                });
-                                            }
-
-                                            if (biz_location !== undefined) {
-                                                at_edges.push({
-                                                    _key: md5(`at_${sender_id}_${ext_event_id}_${biz_location}`),
-                                                    _from: `ot_vertices/${md5(`event_${sender_id}_${ext_event_id}`)}`,
-                                                    _to: `ot_vertices/${md5(`business_location_${sender_id}_${biz_location}`)}`,
-                                                    edge_type: 'AT',
-                                                });
-                                            }
-                                        } else {
-                                            return Error(`Unsupported event type: ${event_type}`);
-                                        }
-                                    }
-                                }
-                            } else {
-                                return Error(`Unsupported event type: ${event_type}`);
-                            }
-                        }
-                    }
-
-                    var vertices_list = [];
-                    var edges_list = [];
-                    var import_id = Date.now();
-
-                    var temp_participants = [];
-                    for (const i in participants) {
-                        temp_participants.push(participants[i]);
-                        vertices_list.push(participants[i]);
-                    }
-
-                    try {
-                        deasync(db.createCollection('ot_vertices'));
-                        deasync(db.createEdgeCollection('ot_edges'));
-                    } catch (err) {
-                        console.log(err);
-                    }
-
-                    async.each(temp_participants, (participant, next) => {
-                        db.addDocument('ot_vertices', participant).then(() => {
-                            updateImportNumber('ot_vertices', participant, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing participants complete');
-                    });
-
-                    var temp_objects = [];
-                    for (const i in objects) {
-                        temp_objects.push(objects[i]);
-                        vertices_list.push(objects[i]);
-                    }
-
-                    async.each(temp_objects, (object, next) => {
-                        db.addDocument('ot_vertices', object).then(() => {
-                            updateImportNumber('ot_vertices', object, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing objects complete');
-                    });
-
-                    var temp_locations = [];
-                    for (const i in locations) {
-                        temp_locations.push(locations[i]);
-                        vertices_list.push(locations[i]);
-                    }
-
-                    async.each(temp_locations, (location, next) => {
-                        db.addDocument('ot_vertices', location).then(() => {
-                            updateImportNumber('ot_vertices', location, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing business locations complete');
-                    });
-
-                    var temp_batches = [];
-                    for (const i in batches) {
-                        temp_batches.push(batches[i]);
-                        vertices_list.push(batches[i]);
-                    }
-
-                    async.each(temp_batches, (batch, next) => {
-                        db.addDocument('ot_vertices', batch).then(() => {
-                            updateImportNumber('ot_vertices', batch, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing batches complete');
-                    });
-
-
-                    var temp_object_events = [];
-                    for (const i in object_events) {
-                        temp_object_events.push(object_events[i]);
-                        vertices_list.push(object_events[i]);
-                    }
-
-                    async.each(temp_object_events, (event, next) => {
-                        db.addDocument('ot_vertices', event).then(() => {
-                            updateImportNumber('ot_vertices', event, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing object events complete');
-                    });
-
-                    var temp_aggregation_events = [];
-                    for (const i in aggregation_events) {
-                        temp_aggregation_events.push(aggregation_events[i]);
-                        vertices_list.push(aggregation_events[i]);
-                    }
-
-                    async.each(temp_aggregation_events, (event, next) => {
-                        db.addDocument('ot_vertices', event).then(() => {
-                            updateImportNumber('ot_vertices', event, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing aggregation events complete');
-                    });
-
-                    var temp_transformation_events = [];
-                    for (const i in transformation_events) {
-                        temp_transformation_events.push(transformation_events[i]);
-                        vertices_list.push(transformation_events[i]);
-                    }
-
-                    async.each(temp_transformation_events, (event, next) => {
-                        db.addDocument('ot_vertices', event).then(() => {
-                            updateImportNumber('ot_vertices', event, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing transformation events complete');
-                    });
-
-
-                    for (const i in instance_of_edges) {
-                        edges_list.push(instance_of_edges[i]);
-                    }
-
-                    async.each(instance_of_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing instance_of edges complete');
-                    });
-
-                    for (const i in owned_by_edges) {
-                        edges_list.push(owned_by_edges[i]);
-                    }
-
-                    async.each(owned_by_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing owned_by edges complete');
-                    });
-
-                    for (const i in at_edges) {
-                        edges_list.push(at_edges[i]);
-                    }
-
-                    async.each(at_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing at_edges complete');
-                    });
-
-
-                    for (const i in read_point_edges) {
-                        edges_list.push(read_point_edges[i]);
-                    }
-
-                    async.each(read_point_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing read_point edges  complete');
-                    });
-
-                    for (const i in event_batch_edges) {
-                        edges_list.push(event_batch_edges[i]);
-                    }
-
-                    async.each(event_batch_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing event_batch edges  complete');
-                    });
-
-                    for (const i in parent_batches_edges) {
-                        edges_list.push(parent_batches_edges[i]);
-                    }
-
-                    async.each(parent_batches_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing parent_batches edges  complete');
-                    });
-
-                    for (const i in child_batches_edges) {
-                        edges_list.push(child_batches_edges[i]);
-                    }
-
-                    async.each(child_batches_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing child_batches edges  complete');
-                    });
-
-                    for (const i in input_batches_edges) {
-                        edges_list.push(input_batches_edges[i]);
-                    }
-
-                    async.each(input_batches_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing input_batches edges  complete');
-                    });
-
-                    for (const i in output_batches_edges) {
-                        edges_list.push(output_batches_edges[i]);
-                    }
-
-                    async.each(output_batches_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing output_batches edges  complete');
-                    });
-
-                    for (const i in business_location_edges) {
-                        edges_list.push(business_location_edges[i]);
-                    }
-
-                    async.each(business_location_edges, (edge, next) => {
-                        db.addDocument('ot_edges', edge).then(() => {
-                            updateImportNumber('ot_edges', edge, import_id).then(() => {
-                                next();
-                            });
-                        });
-                    }, () => {
-                        console.log('Writing business_location edges  complete');
-                    });
-
-
-                    utilities.executeCallback(
-                        callback,
-                        { vertices: vertices_list, edges: edges_list, import_id },
-                    );
-                }
-            },
-        );
-    },
+    parseGS1,
 });
+

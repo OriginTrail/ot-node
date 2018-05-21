@@ -37,6 +37,7 @@ class Transactions {
             newTransaction.args,
             newTransaction.options,
         );
+
         const transaction = new Tx(rawTx);
         transaction.sign(this.privateKey);
 
@@ -102,6 +103,24 @@ class Transactions {
                     reject(err);
                 });
         }));
+    }
+
+    /**
+    * Get the value from getter
+    * @param contract
+    * @param functionName
+    * @param functionParameters
+    * @return {Promise<string>}
+    */
+    getValue(contract, functionName, functionParameters) {
+        console.log(contract);
+        var callData = contract.methods.cancelBid.call(0, (err, res) => {
+            console.log(res);
+        });
+        // return this.web3.eth.call({
+        //     to: this.walletAddress,
+        //     data: callData,
+        // });
     }
 }
 

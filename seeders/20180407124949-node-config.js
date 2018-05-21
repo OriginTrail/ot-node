@@ -1,6 +1,8 @@
 require('dotenv').config();
 
 const bootstrap_node = (process.env.BOOTSTRAP_NODE) ? `"${process.env.BOOTSTRAP_NODE}"` : '';
+
+const selected_database = (process.env.GRAPH_DATABASE === 'neo4j') ? 2 : 1;
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'node_wallet',
@@ -22,7 +24,7 @@ module.exports = {
     },
     {
         key: 'selected_graph_database',
-        value: '1',
+        value: selected_database,
     },
     {
         key: 'selected_blockchain',

@@ -18,45 +18,23 @@ const log = utilities.getLogger();
 module.exports = () => {
     const importer = {
 
-        importJSON(json_document, callback) {
-            return new Promise((resolve, reject) => {
-                log.info('Entering importJSON');
-                const graph = json_document;
+        async importJSON(json_document) {
+            log.info('Entering importJSON');
+            const { vertices, edges, import_id } = json_document;
 
-                GSdb.db.createCollection('ot_vertices')
-                    .then(() => GSdb.db.createEdgeCollection('ot_edges'))
-                    .then(() => {
-                        // eslint-disable-next-line  prefer-destructuring
-                        const vertices = graph.vertices;
-                        // eslint-disable-next-line  prefer-destructuring
-                        const edges = graph.edges;
-                        const { data_id } = graph.data_id;
-                        log.trace('Vertex importing');
-                        async.each(
-                            vertices, (vertex, next) => {
-                                GSdb.db.addDocument('ot_vertices', vertex)
-                                    .then(() => GSdb.db.updateDocumentImports('ot_vertices', vertex, data_id))
-                                    .then(() => {
-                                        next();
-                                    });
-                            }
-                            , () => {
-                                async.each(edges, (edge, next) => {
-                                    GSdb.db.addDocument('ot_edges', edge).then((import_status) => {
-                                        GSdb.db.updateDocumentImports('ot_edges', edge, data_id).then((update_status) => {
-                                            next();
-                                        }).catch((err) => {
-                                            reject(err);
-                                        });
-                                    });
-                                }, () => {
-                                    log.info('JSON import complete');
-                                    resolve('success');
-                                });
-                            },
-                        );
-                    });
-            });
+            if (typeof import_id !== 'number') {
+                throw Error(`Invalid import ID. ${import_id}.`);
+            }
+
+            log.trace('Vertex importing');
+
+            // TODO: Use transaction here.
+            await Promise.all(vertices.map(vertex => GSdb.db.addVertex(vertex))
+                .concat(edges.map(edge => GSdb.db.addEdge(edge))));
+            await Promise.all(vertices.map(vertex => GSdb.db.updateImports('ot_vertices', vertex, import_id))
+                .concat(edges.map(edge => GSdb.db.updateImports('ot_edges', edge, import_id))));
+
+            log.info('JSON import complete');
         },
 
         // eslint-disable-next-line no-shadow
@@ -109,54 +87,50 @@ module.exports = () => {
             });
         },
 
-        importXMLgs1(ot_xml_document) {
-            return new Promise((resolve, reject) => {
-                gs1.parseGS1(ot_xml_document, (response) => {
-                    log.info('[DC] Import complete');
+        async importXMLgs1(ot_xml_document) {
+            try {
+                const result = await gs1.parseGS1(ot_xml_document);
 
+                log.info('[DC] Import complete');
 
-                    const result = response;
-                    // eslint-disable-next-line  prefer-destructuring
-                    const vertices = result.vertices;
-                    // eslint-disable-next-line  prefer-destructuring
-                    const edges = result.edges;
-                    const data_id = result.import_id;
+                const { vertices } = result;
+                const { edges } = result;
+                const { import_id } = result;
 
-                    const leaves = [];
-                    const hash_pairs = [];
+                const leaves = [];
+                const hash_pairs = [];
 
-                    for (const i in vertices) {
-                        // eslint-disable-next-line max-len
-                        leaves.push(utilities.sha3(utilities.sortObject({
+                for (const i in vertices) {
+                    leaves.push(utilities.sha3(utilities.sortObject({
+                        identifiers: vertices[i].identifiers,
+                        data: vertices[i].data,
+                    })));
+                    hash_pairs.push({
+                        key: vertices[i]._key,
+                        hash: utilities.sha3({
                             identifiers: vertices[i].identifiers,
                             data: vertices[i].data,
-                        })));
-                        // eslint-disable-next-line no-underscore-dangle
-                        hash_pairs.push({
-                            key: vertices[i]._key,
-                            hash: utilities.sha3({
-                                identifiers: vertices[i].identifiers,
-                                data: vertices[i].data,
-                            }),
-                        }); // eslint-disable-line max-len
-                    }
-
-                    const tree = new Mtree(hash_pairs);
-                    const root_hash = utilities.sha3(tree.root());
-
-                    log.info(`Import id: ${data_id}`);
-                    log.info(`Import hash: ${root_hash}`);
-                    resolve({
-                        data_id,
-                        root_hash,
-                        total_documents: hash_pairs.length,
-                        vertices,
-                        edges,
+                        }),
                     });
-                });
-            });
-        },
+                }
 
+                const tree = new Mtree(hash_pairs);
+                const root_hash = utilities.sha3(tree.root());
+
+                log.info(`Import id: ${import_id}`);
+                log.info(`Import hash: ${root_hash}`);
+                return {
+                    data_id: import_id,
+                    root_hash,
+                    total_documents: hash_pairs.length,
+                    vertices,
+                    edges,
+                };
+            } catch (error) {
+                log.error(`Failed to parse XML. Error ${error}.`);
+                return null;
+            }
+        },
     };
 
     return importer;

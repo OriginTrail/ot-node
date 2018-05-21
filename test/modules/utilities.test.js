@@ -14,22 +14,51 @@ const databaseData = require('./test_data/database-data.js');
 let myConfig;
 
 describe('Utilities module', () => {
-    before('loadConfig() should populate myConfig object', () => {
+    before('loadConfig() should populate myConfig object', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
 
-        Utilities.loadConfig().then((result) => {
-            myConfig = result;
-            assert.hasAllKeys(
-                result, ['node_wallet', 'node_private_key', 'node_rpc_ip', 'node_port',
-                    'node_kademlia_id', 'selected_graph_database', 'selected_blockchain', 'request_timeout', 'ssl_keypath',
-                    'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
-                    'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
-                    'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                    'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
-                    'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake'],
-                'Some config items are missing',
-            );
+        myConfig = await Utilities.loadConfig();
+    });
+
+    it('node_config should contain certain entries', () => {
+        assert.hasAllKeys(
+            myConfig, ['node_wallet', 'node_private_key', 'node_rpc_ip', 'node_port',
+                'node_kademlia_id', 'selected_graph_database', 'selected_blockchain', 'request_timeout', 'ssl_keypath',
+                'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
+                'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
+                'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
+                'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
+                'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
+                'dh_max_time_mins', 'dh_price', 'dh_stake_factor'],
+            'Some config items are missing in node_config',
+        );
+    });
+
+    it('getNodeNetworkType()', async () => {
+        await Utilities.getNodeNetworkType().then((result) => {
+            assert.equal(result, 'rinkeby');
+        }).catch((error) => {
+            console.log(error);
         });
+    });
+
+    // way to check is rinkeby with our token healthy
+    it('getInfuraRinkebyApiMethods()', async () => {
+        const response = await Utilities.getInfuraRinkebyApiMethods();
+        assert.equal(response.statusCode, 200);
+        assert.containsAllKeys(response.body, ['get', 'post']);
+    });
+
+    // way to chech is method from rinkeby with our token healthy
+    it('getBlockNumberInfuraRinkebyApiMethod()', async () => {
+        const responseFromApi = await Utilities.getBlockNumberInfuraRinkebyApiMethod();
+        assert.equal(responseFromApi.statusCode, 200);
+        const responseFromWeb3 = await Utilities.getBlockNumberFromWeb3();
+        // assert.equal(responseFromApi.body.result, responseFromWeb3);
+        // Not possible to match exactly the block every time as new ones get mined,
+        // so range is used
+        expect(Utilities.hexToNumber(responseFromApi.body.result))
+            .to.be.closeTo(Utilities.hexToNumber(responseFromWeb3), 5);
     });
 
     it('loadSelectedBlockchainInfo()', async () => {
@@ -160,6 +189,13 @@ describe('Utilities module', () => {
         assert.deepEqual(edgeOne, copyEdgeOne);
     });
 
+    it('hexToNumber() and numberToHex check', () => {
+        const hexValue = Utilities.numberToHex(500);
+        const intValue = Utilities.hexToNumber(hexValue);
+        assert.equal(hexValue, intValue);
+    });
+
+
     it('executeCallback() callback not defined scenario', async () => {
         // helper function
         function first(timeInterval) {
@@ -173,6 +209,87 @@ describe('Utilities module', () => {
         } catch (error) {
             console.log(error);
         }
+    });
+
+    it('flattenObject() regular', async () => {
+        const regularObj = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors: ['red', 'orange'],
+            isWearing: {
+                shirt: {
+                    color: 'white',
+                },
+                shorts: {
+                    color: 'blue',
+                },
+            },
+        };
+        const expectedFlattened = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors_0: 'red',
+            favoriteColors_1: 'orange',
+            isWearing_shirt_color: 'white',
+            isWearing_shorts_color: 'blue',
+        };
+
+        const flattened = Utilities.flattenObject(regularObj);
+        assert.deepEqual(flattened, expectedFlattened);
+    });
+
+    it('flattenObject() null', async () => {
+        const flattened = Utilities.flattenObject(null);
+        assert.deepEqual(flattened, null);
+    });
+
+    it('flattenObject() empty', async () => {
+        const flattened = Utilities.flattenObject({});
+        assert.deepEqual(flattened, {});
+    });
+
+    it('objectDistance() test 1', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            a: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
+    });
+
+    it('objectDistance() test 2', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            b: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 0);
+    });
+
+    it('objectDistance() test 3', async () => {
+        const obj1 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+        const obj2 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
     });
 
     after('cleanup', () => {

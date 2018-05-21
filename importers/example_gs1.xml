@@ -90,7 +90,7 @@
 								<attribute id="urn:ot:mda:object:name">Winter sallad mix</attribute>
 							    <attribute id="urn:ot:mda:object:type">Sallad</attribute>
 								<attribute id="urn:ot:mda:object:category">Fresh salad</attribute>
-								<attribute id="urn:ot:mda:object:ean13">8438454123998</attribute>																	
+								<attribute id="urn:ot:mda:object:ean13">501234567890</attribute>
 							</OTVocabularyElement>
 						</extension>
 					</Vocabulary>					

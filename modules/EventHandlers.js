@@ -4,19 +4,15 @@ const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const GraphStorage = require('./GraphStorageInstance');
 const replication = require('./DataReplication');
-const deasync = require('deasync-promise');
-const config = require('./Config');
 const ProductInstance = require('./ProductInstance');
 const Challenge = require('./Challenge');
 const challenger = require('./Challenger');
-const node = require('./Node');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
 const BN = require('bn.js');
-
-// TODO remove below after SC intro
-const SmartContractInstance = require('./temp/MockSmartContractInstance');
+const config = require('./Config');
+const Models = require('../models');
 
 const { globalEmitter } = globalEvents;
 const log = Utilities.getLogger();
@@ -34,52 +30,72 @@ globalEmitter.on('trail', (data) => {
         data.response.send(500); // TODO rethink about status codes
     });
 });
-globalEmitter.on('gs1-import-request', (data) => {
-    importer.importXMLgs1(data.filepath).then((response) => {
-        const {
-            data_id,
-            root_hash,
-            total_documents,
-            vertices,
-        } = response;
+globalEmitter.on('gs1-import-request', async (data) => {
+    const response = await importer.importXMLgs1(data.filepath);
 
-        Storage.connect().then(() => {
-            Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents])
-                .then((data_info) => {
-                    DCService.createOffer(data_id, root_hash, total_documents, vertices);
-                });
-        }).catch((err) => {
-            log.warn(err);
+    if (response === null) {
+        data.response.send({
+            status: 500,
+            message: 'Failed to parse XML.',
         });
-    }).catch((e) => {
-        console.log(e);
+        return;
+    }
+
+    const {
+        data_id,
+        root_hash,
+        total_documents,
+        vertices,
+    } = response;
+
+    try {
+        await Storage.connect();
+        await Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents]);
+        await DCService.createOffer(data_id, root_hash, total_documents, vertices);
+    } catch (error) {
+        log.error(`Failed to start offer. Error ${error}.`);
+        data.response.send({
+            status: 500,
+            message: 'Failed to parse XML.',
+        });
+        return;
+    }
+
+    data.response.send({
+        status: 200,
+        message: 'Ok.',
     });
 });
 
-globalEmitter.on('replication-request', (request, response) => {
+globalEmitter.on('replication-request', async (request, response) => {
     log.trace('replication-request received');
 
-    let price;
-    let importId;
-    const { dataId } = request.params.message;
-    const { wallet } = request.contact[1];
-    // const bid = SmartContractInstance.sc.getBid(dataId, request.contact[0]);
+    const { offer_hash, wallet } = request.params.message;
+    const { wallet: kadWallet } = request.contact[1];
 
-    if (dataId) {
-        // TODO: decouple import ID from data id or load it from database.
-        importId = dataId;
-        // ({ price } = bid);
-    }
-
-    if (!importId || !wallet) {
-        const errorMessage = 'Asked replication without providing offer ID or wallet not found.';
+    if (!offer_hash || !wallet) {
+        const errorMessage = 'Asked replication without providing offer hash or wallet.';
         log.warn(errorMessage);
         response.send({ status: 'fail', error: errorMessage });
         return;
     }
 
-    const verticesPromise = GraphStorage.db.getVerticesByImportId(importId);
-    const edgesPromise = GraphStorage.db.getEdgesByImportId(importId);
+    if (kadWallet !== wallet) {
+        log.warn(`Wallet from KADemlia differs from replication request for offer hash ${offer_hash}.`);
+    }
+
+    const offerModel = await Models.offers.findOne({ where: { id: offer_hash } });
+    if (!offerModel) {
+        const errorMessage = `Replication request for offer I don't know: ${offer_hash}.`;
+        log.warn(errorMessage);
+        response.send({ status: 'fail', error: errorMessage });
+        return;
+    }
+
+    const offer = offerModel.get({ plain: true });
+
+    const verticesPromise = GraphStorage.db.findVerticesByImportId(offer.import_id);
+    const edgesPromise = GraphStorage.db.findEdgesByImportId(offer.import_id);
 
     Promise.all([verticesPromise, edgesPromise]).then((values) => {
         const vertices = values[0];
@@ -88,16 +104,17 @@ globalEmitter.on('replication-request', (request, response) => {
         Graph.encryptVertices(
             wallet,
             request.contact[0],
-            vertices,
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
             Storage,
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
-            /* eslint-disable-next-line */
+            data.offer_hash = offer.id;
+            // eslint-disable-next-line
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
-            data.data_id = dataId;
+            data.import_id = offer.import_id;
             data.encryptedVertices = encryptedVertices;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
@@ -107,12 +124,12 @@ globalEmitter.on('replication-request', (request, response) => {
         });
     });
 
-    response.send({ status: 'succes' });
+    response.send({ status: 'success' });
 });
 
-globalEmitter.on('payload-request', (request) => {
+globalEmitter.on('payload-request', async (request) => {
     log.trace(`payload-request arrived from ${request.contact[0]}`);
-    DHService.handleImport(request.params.message.payload);
+    await DHService.handleImport(request.params.message.payload);
 
     // TODO doktor: send fail in case of fail.
 });
@@ -126,7 +143,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
     log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
-    GraphStorage.db.getVerticesByImportId(challenge.import_id).then((vertexData) => {
+    GraphStorage.db.findVerticesByImportId(challenge.import_id).then((vertexData) => {
         const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
         response.send({
@@ -149,7 +166,7 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
 /**
  * Handles bidding-broadcast on the DH side
  */
-globalEmitter.on('bidding-broadcast', (message) => {
+globalEmitter.on('bidding-broadcast', async (message) => {
     log.info('bidding-broadcast received');
 
     const {
@@ -161,11 +178,11 @@ globalEmitter.on('bidding-broadcast', (message) => {
         dataSizeBytes,
     } = message;
 
-    DHService.handleOffer(
+    await DHService.handleOffer(
         dcWallet,
         dcId,
         dataId,
-        totalEscrowTime,
+        totalEscrowTime * 60000, // in ms.
         new BN(minStakeAmount),
         new BN(dataSizeBytes),
     );
@@ -175,62 +192,92 @@ globalEmitter.on('offer-ended', (message) => {
     const { scId } = message;
 
     log.info(`Offer ${scId} has ended.`);
-
-    // TODO: Trigger escrow to end bidding and notify chosen.
-    const bids = SmartContractInstance.sc.choose(scId);
-
-    bids.forEach((bid) => {
-        console.log(bid);
-        node.ot.biddingWon(
-            { dataId: scId },
-            bid.dhId, (error) => {
-                if (error) {
-                    log.warn(error);
-                }
-            },
-        );
-    });
 });
 
+globalEmitter.on('AddedBid', (message) => {
+
+});
 
 globalEmitter.on('kad-bidding-won', (message) => {
     log.info('Wow I won bidding. Let\'s get into it.');
-
-    const { dataId } = message.params.message;
-
-    // Now request data to check validity of offer.
-
-    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
-
-
-    node.ot.replicationRequest({ dataId }, dcId, (err) => {
-        if (err) {
-            log.warn(err);
-        }
-    });
 });
 
-globalEmitter.on('eth-offer-created', (event) => {
-    log.info('eth-offer-created');
-    // ( DC_wallet, DC_node_id,  data_id,  total_escrow_time,  min_stake_amount,  data_size);
+globalEmitter.on('eth-OfferCreated', async (eventData) => {
+    log.info('eth-OfferCreated');
 
     const {
-        DC_wallet,
+        offer_hash,
         DC_node_id,
-        data_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
+        min_reputation,
+        data_hash,
         data_size,
-    } = event.returnValues;
+    } = eventData;
 
-    DHService.handleOffer(
-        DC_wallet,
+    await DHService.handleOffer(
+        offer_hash,
         DC_node_id,
-        data_id,
+        total_escrow_time * 60000, // In ms.
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        data_size,
+        data_hash,
+        false,
+    );
+});
+
+globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
+    log.info('eth-AddedPredeterminedBid');
+
+    const {
+        offer_hash,
+        DH_wallet,
+        DH_node_id,
         total_escrow_time,
+        max_token_amount,
         min_stake_amount,
         data_size,
-    );
+    } = eventData;
+
+    if (DH_wallet !== config.node_wallet || config.identity !== DH_node_id.substring(2, 42)) {
+        // Offer not for me.
+        return;
+    }
+
+    // TODO: This is a hack. DH doesn't know with whom to sign the offer. Try to dig it from events.
+    const createOfferEventEventModel = await Models.events.findOne({
+        where: {
+            event: 'OfferCreated',
+            offer_hash,
+        },
+    });
+
+    if (!createOfferEventEventModel) {
+        log.warn(`Couldn't find event CreateOffer for offer ${offer_hash}.`);
+        return;
+    }
+
+    try {
+        const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+        const createOfferEventData = JSON.parse(createOfferEvent.data);
+
+        await DHService.handleOffer(
+            offer_hash,
+            createOfferEventData.DC_node_id.substring(2, 42),
+            total_escrow_time * 60000, // In ms.
+            max_token_amount,
+            min_stake_amount,
+            createOfferEventData.min_reputation,
+            data_size,
+            createOfferEventData.data_hash,
+            true,
+        );
+    } catch (error) {
+        log.error(`Failed to handle predetermined bid. ${error}.`);
+    }
 });
 
 globalEmitter.on('eth-offer-canceled', (event) => {

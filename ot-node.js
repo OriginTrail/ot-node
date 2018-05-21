@@ -3,25 +3,25 @@ const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
-const SystemStorage = require('./modules/Database/SystemStorage');
 const Blockchain = require('./modules/Blockchain');
-const deasync = require('deasync-promise');
 const globalEvents = require('./modules/GlobalEvents');
-const MerkleTree = require('./modules/Merkle');
 const restify = require('restify');
-var models = require('./models');
+const fs = require('fs');
+const models = require('./models');
 const Storage = require('./modules/Storage');
 const config = require('./modules/Config');
+const RemoteControl = require('./modules/RemoteControl');
+const corsMiddleware = require('restify-cors-middleware');
 
 const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
-const MockSmartContract = require('./modules/temp/MockSmartContract');
-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
+const DHService = require('./modules/DHService');
+const BN = require('bn.js');
 require('./modules/EventHandlers');
 
-var pjson = require('./package.json');
+const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
 const { globalEmitter } = globalEvents;
@@ -30,44 +30,108 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
+
 /**
  * Main node object
  */
-
 class OTNode {
     /**
      * OriginTrail node system bootstrap function
      */
-    bootstrap() {
+    async bootstrap() {
+        try {
+            // check if all dependencies are installed
+            await Utilities.checkInstalledDependencies();
+            log.info('npm modules dependences check done');
+
+            // Checking root folder stucture
+            Utilities.checkOtNodeDirStructure();
+            log.info('ot-node folder structure check done');
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
+        }
+
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Arango server is runing before starting ot-node');
+                process.exit(1);
+            }
+        }
+
         // sync models
-        Storage.models = deasync(models.sequelize.sync()).models;
+        Storage.models = (await models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
 
         // Loading config data
         try {
-            deasync(Utilities.loadConfig());
+            await Utilities.loadConfig();
             log.info('Loaded system config');
         } catch (err) {
             console.log(err);
+            process.exit(1);
         }
 
         let selectedDatabase;
         // Loading selected graph database data
         try {
-            selectedDatabase = deasync(Utilities.loadSelectedDatabaseInfo());
+            selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
             log.info('Loaded selected database data');
             config.database = selectedDatabase;
         } catch (err) {
             console.log(err);
+            process.exit(1);
+        }
+
+        // Checking if selected graph database exists
+        try {
+            await Utilities.checkDoesStorageDbExists();
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
         }
 
         let selectedBlockchain;
-        // Loading selected graph database data
+        // Loading selected blockchain network
         try {
-            selectedBlockchain = deasync(Utilities.loadSelectedBlockchainInfo());
+            selectedBlockchain = await Utilities.loadSelectedBlockchainInfo();
             log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
             config.blockchain = selectedBlockchain;
         } catch (err) {
             console.log(err);
+            process.exit(1);
+        }
+
+        // check does node_wallet has sufficient Ether and ATRAC tokens
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                const etherBalance = await Utilities.getBalanceInEthers();
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
+
+                const atracBalance = await Utilities.getAlphaTracTokenBalance();
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
+            }
         }
 
         // wire instances
@@ -75,14 +139,15 @@ class OTNode {
         BCInstance.bc = new Blockchain(selectedBlockchain);
         ProductInstance.p = new Product();
         GraphInstance.g = new Graph();
-        MockSmartContractInstance.sc = new MockSmartContract();
 
         // Connecting to graph database
         try {
-            deasync(GSInstance.db.connect());
+            await GSInstance.db.connect();
             log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
         } catch (err) {
+            log.error(`Failed to connect to the graph database: ${GSInstance.db.identify()}`);
             console.log(err);
+            process.exit(1);
         }
 
         // Initialise API
@@ -90,11 +155,47 @@ class OTNode {
 
         // Starting the kademlia
         const network = new Network();
-        network.start().then((res) => {
-            // console.log(res);
+        network.start().then(async (res) => {
+            await this.createProfile();
         }).catch((e) => {
             console.log(e);
         });
+
+        if (parseInt(config.remote_control_enabled, 10)) {
+            log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
+            await RemoteControl.connect();
+        }
+
+        // Starting event listener on Blockchain
+        log.info('Starting blockchain event listener');
+        setInterval(() => {
+            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+        }, 3000);
+
+        DHService.listenToOffers();
+    }
+
+    /**
+     * Creates profile on the contract
+     */
+    async createProfile() {
+        const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
+        if (profileInfo.active) {
+            log.trace(`Profile has already been created for ${config.identity}`);
+            return;
+        }
+
+        await BCInstance.bc.createProfile(
+            config.identity,
+            config.dh_price,
+            config.dh_stake_factor,
+            config.dh_max_time_mins,
+            config.dh_max_data_size_bytes,
+        );
+        const event = await BCInstance.bc.subscribeToEvent('ProfileCreated', null);
+        if (event.node_id.includes(config.identity)) {
+            log.info(`Profile created for node: ${config.identity}`);
+        }
     }
 
     /**
@@ -104,11 +205,52 @@ class OTNode {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
+            formatters: {
+                'application/json': (req, res, body) => {
+                    if (!body) {
+                        if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                            res.setHeader('Content-Length', 0);
+                        }
+                        return null;
+                    }
+
+                    if (body instanceof Error) {
+                        // snoop for RestError or HttpError, but don't rely on instanceof
+                        if ((body.restCode || body.httpCode) && body.body) {
+                            // eslint-disable-next-line
+                            body = body.body;
+                        } else {
+                            body = {
+                                message: body.message,
+                            };
+                        }
+                    }
+
+                    if (Buffer.isBuffer(body)) {
+                        body = body.toString('base64');
+                    }
+
+                    const data = JSON.stringify(body, null, 2);
+                    if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                        res.setHeader('Content-Length', Buffer.byteLength(data));
+                    }
+                    return data;
+                },
+            },
         });
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
         server.use(restify.plugins.bodyParser());
+        const cors = corsMiddleware({
+            preflightMaxAge: 5, // Optional
+            origins: ['*'],
+            allowHeaders: ['API-Token'],
+            exposeHeaders: ['API-Token-Expiry'],
+        });
+
+        server.pre(cors.preflight);
+        server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify('%s exposed at %s', server.name, server.url);
@@ -136,10 +278,30 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
@@ -165,22 +327,43 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                res.send({
-                    status: 400,
-                    message: 'Input file not provided!',
-                });
+                if (req.body.importfile !== undefined) {
+                    const fileData = req.body.importfile;
+
+                    fs.writeFile('tmp/import.xml', fileData, (err) => {
+                        if (err) {
+                            return console.log(err);
+                        }
+                        console.log('The file was saved!');
+
+                        const input_file = '/tmp/import.xml';
+                        const queryObject = {
+                            filepath: input_file,
+                            contact: req.contact,
+                            response: res,
+                        };
+
+                        globalEmitter.emit('gs1-import-request', queryObject);
+                    });
+                } else {
+                    res.send({
+                        status: 400,
+                        message: 'Input file not provided!',
+                    });
+                }
             } else {
                 const input_file = req.files.importfile.path;
                 const queryObject = {
                     filepath: input_file,
                     contact: req.contact,
+                    response: res,
                 };
 
                 globalEmitter.emit('gs1-import-request', queryObject);
             }
         });
 
-        server.get('/api/trail/batches', (req, res) => {
+        server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             globalEmitter.emit('trail', {
                 query: queryObject,
@@ -195,42 +378,7 @@ console.log(`         OriginTrail Node v${pjson.version}`);
 console.log('===========================================');
 
 const otNode = new OTNode();
-otNode.bootstrap();
+otNode.bootstrap().then(() => {
+    log.info('OT Node started');
+});
 
-// otNode.blockchain.increaseApproval(5).then((response) => {
-//     log.info(response);
-// }).catch((err) => {
-//     console.log(err);
-// });
-//
-//
-
-
-/*
-const leaves = ['A', 'B', 'C', 'D', 'E'];
-
-const tree = new MerkleTree(leaves);
-
-console.log(tree.levels);
-// console.log(tree.levels);
-// console.log();
-const h1 = Utilities.sha3(1);
-const h2 = Utilities.sha3(2);
-const h3 = Utilities.sha3(3); // !!!
-const h4 = Utilities.sha3(4);
-const h5 = Utilities.sha3(5);
-
-const h12 = Utilities.sha3(h1,h2);
-const h34 = Utilities.sha3(h3,h4);
-const h55 = Utilities.sha3(h5,h5);
-
-const h1234 = Utilities.sha3(h12, h34);
-const h5555 = Utilities.sha3(h55, h55);
-
-console.log(tree.verifyProof(proof, 2, 1));
-
-const proof = tree.createProof(1);
-console.log(proof);
-console.log(tree.verifyProof(proof, 'B', 1));
-console.log(tree.getRoot().toString('hex'));
-*/
