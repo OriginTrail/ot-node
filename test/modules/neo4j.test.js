@@ -61,7 +61,7 @@ describe('Neo4j module ', async () => {
         });
     });
 
-    it('pass regular for vertex', async () => {
+    it.skip('pass regular for vertex', async () => {
         await testDb.addVertex(vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
                 assert.deepEqual(vertexOne, result[0]);
