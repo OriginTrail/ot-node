@@ -62,6 +62,10 @@ contract Bidding {
 		escrow = EscrowHolder(escrowAddress);
 	}
 
+
+	/*    ----------------------------- BIDDING -----------------------------     */
+
+
 	struct OfferDefinition{
 		address DC_wallet;
 
@@ -127,12 +131,7 @@ contract Bidding {
 	event BidTaken(bytes32 offer_hash, address DH_wallet);
 	event OfferFinalized(bytes32 offer_hash);
 
-
-
 	/*    ----------------------------- OFFERS -----------------------------     */
-
-
-
 
 	function createOffer(
 		uint data_id,
@@ -155,8 +154,8 @@ contract Bidding {
 		require(max_token_amount > 0 && total_escrow_time > 0 && data_size > 0);
 		require(offer[offer_hash].active == false);
 
-		require(profile[msg.sender].balance >= max_token_amount.mul(total_escrow_time).mul(data_size));
-		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(total_escrow_time).mul(data_size).mul(predetermined_DH_wallet.length.mul(2).add(1)));
+		require(profile[msg.sender].balance >= max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1)));
+		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1)));
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		offer[offer_hash].DC_wallet = msg.sender;
@@ -197,14 +196,6 @@ contract Bidding {
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
 	}
-
-
-
-
-	/*    ----------------------------- BIDDING -----------------------------     */
-
-
-
 
 	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index) 
 	public{
@@ -372,6 +363,7 @@ contract Bidding {
 		emit OfferFinalized(offer_hash); 
 	}
 
+
 	function isBidChosen(bytes32 offer_hash, uint bid_index) public constant returns (bool _isBidChosen){
 		return offer[offer_hash].bid[bid_index].chosen;
 	}
@@ -380,11 +372,7 @@ contract Bidding {
 		return offer[offer_hash].finalized;
 	}
 
-
-
 	/*    ----------------------------- PROFILE -----------------------------    */
-
-
 
 	event ProfileCreated(address wallet, bytes32 node_id);
 	event BalanceModified(address wallet, uint new_balance);
@@ -421,9 +409,11 @@ contract Bidding {
 		require(token.balanceOf(msg.sender) >= amount && token.allowance(msg.sender, this) >= amount);
 		uint amount_to_transfer = amount;
 		amount = 0;
-		if(amount_to_transfer > 0) token.transferFrom(msg.sender, this, amount_to_transfer);
-		profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
-		emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		if(amount_to_transfer > 0) {
+			token.transferFrom(msg.sender, this, amount_to_transfer);
+			profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
+			emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		}
 	}
 
 	function withdrawToken(uint amount) public {
@@ -437,8 +427,10 @@ contract Bidding {
 			profile[msg.sender].balance = 0;
 		}
 		amount = 0;
-		if(amount_to_transfer > 0) token.transfer(msg.sender, amount_to_transfer);
-		emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		if(amount_to_transfer > 0){
+			token.transfer(msg.sender, amount_to_transfer);
+			emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		} 
 	}
 
 	function increaseBalance(address wallet, uint amount) public onlyEscrow {
