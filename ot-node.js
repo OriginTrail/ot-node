@@ -30,10 +30,10 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
+
 /**
  * Main node object
  */
-
 class OTNode {
     /**
      * OriginTrail node system bootstrap function
@@ -205,6 +205,38 @@ class OTNode {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
+            formatters: {
+                'application/json': (req, res, body) => {
+                    if (!body) {
+                        if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                            res.setHeader('Content-Length', 0);
+                        }
+                        return null;
+                    }
+
+                    if (body instanceof Error) {
+                        // snoop for RestError or HttpError, but don't rely on instanceof
+                        if ((body.restCode || body.httpCode) && body.body) {
+                            // eslint-disable-next-line
+                            body = body.body;
+                        } else {
+                            body = {
+                                message: body.message,
+                            };
+                        }
+                    }
+
+                    if (Buffer.isBuffer(body)) {
+                        body = body.toString('base64');
+                    }
+
+                    const data = JSON.stringify(body, null, 2);
+                    if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                        res.setHeader('Content-Length', Buffer.byteLength(data));
+                    }
+                    return data;
+                },
+            },
         });
 
         server.use(restify.plugins.acceptParser(server.acceptable));
@@ -331,7 +363,7 @@ class OTNode {
             }
         });
 
-        server.get('/api/trail/batches', (req, res) => {
+        server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             globalEmitter.emit('trail', {
                 query: queryObject,
@@ -346,5 +378,7 @@ console.log(`         OriginTrail Node v${pjson.version}`);
 console.log('===========================================');
 
 const otNode = new OTNode();
-otNode.bootstrap();
+otNode.bootstrap().then(() => {
+    log.info('OT Node started');
+});
 

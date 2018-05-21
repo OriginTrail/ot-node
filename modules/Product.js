@@ -78,10 +78,7 @@ class Product {
      */
     getTrail(queryObject) {
         return new Promise((resolve, reject) => {
-            let restricted = false;
-
             if (queryObject.restricted !== undefined) {
-                restricted = { queryObject };
                 delete queryObject.restricted;
             }
 
@@ -117,22 +114,9 @@ class Product {
                             BFSt[i] = Utilities.sortObject(BFSt[i]);
                         }
 
-                        const BFS = Graph.bfs(
-                            Utilities.copyObject(virtualGraph.data),
-                            start_vertex.identifiers.uid,
-                            restricted,
-                        );
-
-                        const fetchedJourney = _getProductJourney(
-                            Utilities.copyObject(virtualGraph.data),
-                            Utilities.copyObject(BFS),
-                        );
-
-
                         const responseObject = {
                             graph: virtualGraph.data,
                             traversal: BFSt,
-                            journey: fetchedJourney,
                             sha3: Utilities.sha3(JSON.stringify(BFSt)),
                         };
                         resolve(responseObject);
