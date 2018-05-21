@@ -72,7 +72,7 @@ globalEmitter.on('replication-request', async (request, response) => {
 
 
     const { offer_hash, wallet } = request.params.message;
-    const { kadWallet } = request.contact[1];
+    const { wallet: kadWallet } = request.contact[1];
 
     if (!offer_hash || !wallet) {
         const errorMessage = 'Asked replication without providing offer hash or wallet.';
