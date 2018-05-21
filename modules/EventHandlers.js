@@ -110,11 +110,11 @@ globalEmitter.on('replication-request', async (request, response) => {
         ).then((encryptedVertices) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
-            /* eslint-disable-next-line */
+            data.offer_hash = offer.id;
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;
-            data.data_id = offer.import_id;
+            data.import_id = offer.import_id;
             data.encryptedVertices = encryptedVertices;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
@@ -127,9 +127,9 @@ globalEmitter.on('replication-request', async (request, response) => {
     response.send({ status: 'success' });
 });
 
-globalEmitter.on('payload-request', (request) => {
+globalEmitter.on('payload-request', async (request) => {
     log.trace(`payload-request arrived from ${request.contact[0]}`);
-    DHService.handleImport(request.params.message.payload);
+    await DHService.handleImport(request.params.message.payload);
 
     // TODO doktor: send fail in case of fail.
 });

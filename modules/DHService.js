@@ -175,38 +175,49 @@ class DHService {
         });
     }
 
-    static handleImport(data) {
-        Models.bids.findOne({ where: { data_id: data.data_id } }).then(async (bidModel) => {
-            // TODO: Check data before signing escrow.
-            const bid = bidModel.get({ plain: true });
+    static async handleImport(data) {
+        /*
+            payload: {
+                offer_hash: data.offer_hash,
+                edges: data.edges,
+                import_id: data.import_id,
+                dc_wallet: config.blockchain.wallet_address,
+                public_key: data.encryptedVertices.public_key,
+                vertices: data.encryptedVertices.vertices,
+            },
+         */
+        const bidModel = await Models.bids.findOne({ where: { offer_hash: data.offer_hash } });
 
-            try {
-                await importer.importJSON(data);
-            } catch (err) {
-                log.warn(`Failed to import JSON successfully. ${err}.`);
-                return;
-            }
-            log.trace('[DH] Replication finished');
-            Blockchain.bc.increaseApproval(bid.stake).then(() => {
-                Blockchain.bc.verifyEscrow(
-                    bid.dc_wallet,
-                    data.data_id,
-                    bid.price,
-                    bid.stake,
-                    bid.total_escrow_time,
-                ).then(() => {
-                    // TODO No need to notify DC. DC should catch event from verifyEscrow().
-                    log.important('Finished negotiation. Job starting. Waiting for challenges.');
-                    node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
-                }).catch((error) => {
-                    log.error(`Failed to verify escrow. ${error}`);
-                });
-            }).catch((e) => {
-                log.error(`Failed to increase approval. ${e}`);
-            });
-        }).catch((error) => {
-            log.error(`Couldn't find bid with data ID ${data.data_id}. ${error}.`);
-        });
+        if (!bidModel) {
+            log.warn(`Couldn't find bid for offer hash ${data.offer_hash}.`);
+            return;
+        }
+        // TODO: Check data before signing escrow.
+        const bid = bidModel.get({ plain: true });
+
+        try {
+            await importer.importJSON(data);
+        } catch (err) {
+            log.warn(`Failed to import JSON successfully. ${err}.`);
+            return;
+        }
+        log.trace('[DH] Replication finished');
+
+        try {
+            await Blockchain.bc.increaseApproval(bid.stake);
+            await Blockchain.bc.verifyEscrow(
+                bid.dc_wallet,
+                data.import_id,
+                bid.price,
+                bid.stake,
+                bid.total_escrow_time,
+            );
+
+            log.important('Finished negotiation. Job starting. Waiting for challenges.');
+            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
+        } catch (error) {
+            log.error(`Failed to verify escrow. ${error}.`);
+        }
     }
 
     static listenToOffers() {
