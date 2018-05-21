@@ -111,6 +111,7 @@ globalEmitter.on('replication-request', async (request, response) => {
             log.info('[DC] Preparing to enter sendPayload');
             const data = {};
             data.offer_hash = offer.id;
+            // eslint-disable-next-line
             data.contact = request.contact[0];
             data.vertices = vertices;
             data.edges = edges;

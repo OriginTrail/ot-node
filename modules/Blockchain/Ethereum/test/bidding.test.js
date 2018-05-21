@@ -379,7 +379,7 @@ contract('Bidding testing', async (accounts) => {
         }
     });
 
-     // eslint-disable-next-line no-undef
+    // eslint-disable-next-line no-undef
     it('Should wait a 30 seconds, then pay all DHs', async () => {
         // Get instances of contracts used in the test
         const escrow = await EscrowHolder.deployed();
@@ -408,73 +408,4 @@ contract('Bidding testing', async (accounts) => {
             // console.log(`\t new DH balance[${chosen_bids[i]}]: ${balance}`);
         }
     });
-
-    /* // eslint-disable-next-line no-undef
-    it('Should wait another 30 seconds, then pay out all DH_s', async () => {
-        // Get instances of contracts used in the test
-        const escrow = await EscrowHolder.deployed();
-        const bidding = await Bidding.deployed();
-        const util = await TestingUtilities.deployed();
-
-        // Await for 35 seconds, just to be on the safe side
-        await new Promise(resolve => setTimeout(resolve, 35000));
-
-        var response = await util.getBlockTimestamp.call();
-        response = response.toNumber();
-        console.log(`\t Escrow finish time: ${response}`);
-
-        var promises = [];
-        for (var i = 0; i < chosen_bids.length; i += 1) {
-            promises[i] = escrow.payOut(
-                DC_wallet, offer_hash,
-                { from: accounts[chosen_bids[i]], gas: 1000000 },
-            );
-        }
-        await Promise.all(promises);
-
-        for (i = 0; i < chosen_bids.length; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            response = await bidding.profile.call(accounts[chosen_bids[i]]);
-            var balance = response[2].toNumber();
-            console.log(`\t new DH balance[${chosen_bids[i]}]: ${balance}`);
-            // TODO Fix the rounding of the token amount issue
-            // assert.equal(
-            //     balance,
-            //     // eslint-disable-next-line max-len
-            //     5e25 + (((DH_price[chosen_bids[i]] * total_escrow_time * data_size) / 1e15) * 1e15),
-            //     'DH was not paid the correct amount',
-            // ); 
-        }
-
-        for (i = 1; i < 10; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            response = await escrow.escrow.call(DC_wallet, accounts[i], offer_hash);
-            let status = response[6];
-            status = status.toNumber();
-            switch (status) {
-            case 0:
-                status = 'inactive';
-                break;
-            case 1:
-                status = 'initiated';
-                break;
-            case 2:
-                status = 'active';
-                break;
-            case 3:
-                status = 'canceled';
-                break;
-            case 4:
-                status = 'completed';
-                break;
-            default:
-                status = 'err';
-                break;
-            }
-            console.log(`\t EscrowStatus for account[${i}]: ${status}`);
-            if (chosen_bids.includes(i)) {
-                assert.equal(status, 'completed', "Escrow wasn't completed");
-            }
-        }
-    }); */
 });
