@@ -409,9 +409,11 @@ contract BiddingTest {
 		require(token.balanceOf(msg.sender) >= amount && token.allowance(msg.sender, this) >= amount);
 		uint amount_to_transfer = amount;
 		amount = 0;
-		if(amount_to_transfer > 0) token.transferFrom(msg.sender, this, amount_to_transfer);
-		profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
-		emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		if(amount_to_transfer > 0) {
+			token.transferFrom(msg.sender, this, amount_to_transfer);
+			profile[msg.sender].balance = profile[msg.sender].balance.add(amount_to_transfer);
+			emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		}
 	}
 
 	function withdrawToken(uint amount) public {
@@ -425,8 +427,10 @@ contract BiddingTest {
 			profile[msg.sender].balance = 0;
 		}
 		amount = 0;
-		if(amount_to_transfer > 0) token.transfer(msg.sender, amount_to_transfer);
-		emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		if(amount_to_transfer > 0){
+			token.transfer(msg.sender, amount_to_transfer);
+			emit BalanceModified(msg.sender, profile[msg.sender].balance);
+		} 
 	}
 
 	function increaseBalance(address wallet, uint amount) public onlyEscrow {

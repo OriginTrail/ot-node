@@ -134,7 +134,13 @@ library SafeMath {
 
  		require(total_time > 0);
 
- 		escrow[DC_wallet][DH_wallet][data_id] = EscrowDefinition(token_amount, 0, stake_amount, 0, 0, total_time.mul(60), EscrowStatus.initiated);
+ 		escrow[DC_wallet][DH_wallet][data_id].token_amount = token_amount;
+ 		escrow[DC_wallet][DH_wallet][data_id].tokens_sent = 0;
+ 		escrow[DC_wallet][DH_wallet][data_id].stake_amount = stake_amount;
+ 		escrow[DC_wallet][DH_wallet][data_id].last_confirmation_time = 0;
+ 		escrow[DC_wallet][DH_wallet][data_id].end_time = 0;
+ 		escrow[DC_wallet][DH_wallet][data_id].total_time = total_time.mul(60);
+ 		escrow[DC_wallet][DH_wallet][data_id].escrow_status = EscrowStatus.initiated;
 
  		emit EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time.mul(60));
  	}
