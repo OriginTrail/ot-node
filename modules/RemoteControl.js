@@ -46,11 +46,15 @@ class RemoteControl {
                     });
                 }
             });
+
+            this.socket.on('get-imports', (data) => {
+                RemoteControl.getListOfImports();
+            });
         });
     }
 
     /**
-     * Returns basic informations about the running node
+     * Returns basic information about the running node
      * @param {Control~getProtocolInfoCallback} callback
      */
     static getProtocolInfo() {
@@ -71,6 +75,19 @@ class RemoteControl {
                 contact: this.node.contact,
                 peers,
             });
+        });
+    }
+
+    /**
+   * Gets the list of all imports
+   */
+    static getListOfImports() {
+        return new Promise((resolve, reject) => {
+            Models.data_info.findAll()
+                .then((rows) => {
+                    this.socket.emit('imports', rows);
+                    resolve();
+                });
         });
     }
 }
