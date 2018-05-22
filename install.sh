@@ -14,12 +14,17 @@ case $i in
 esac
 done
 
+if [ -z "$db" ]; then
+  echo "Parameter expected."
+  exit 1
+fi
+
 if [ $db != "arangodb" ] && [ $db != "neo4j" ] ; then
     echo "Invalid database: arangodb or neo4j expected."
     exit 1
 fi
 
-if [ $db == "arangodb" ]; then
+if [ $db = "arangodb" ]; then
   wget https://www.arangodb.com/repositories/arangodb3/xUbuntu_16.04/Release.key
   sudo apt-key add Release.key
   sudo apt-add-repository 'deb https://www.arangodb.com/repositories/arangodb3/xUbuntu_16.04/ /'
@@ -29,7 +34,7 @@ if [ $db == "arangodb" ]; then
   sudo apt-get install arangodb3
 fi
 
-if [ $db == "neo4j" ]; then
+if [ $db = "neo4j" ]; then
   sudo add-apt-repository ppa:webupd8team/java
   sudo apt-get update
   sudo apt-get install oracle-java8-installer
