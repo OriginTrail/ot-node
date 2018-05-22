@@ -116,6 +116,7 @@ globalEmitter.on('replication-request', async (request, response) => {
             data.edges = edges;
             data.import_id = offer.import_id;
             data.encryptedVertices = encryptedVertices;
+            data.total_escrow_time = offer.total_escrow_time;
             replication.sendPayload(data).then(() => {
                 log.info('[DC] Payload sent');
             });
@@ -143,8 +144,9 @@ globalEmitter.on('kad-challenge-request', (request, response) => {
     log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
     const challenge = request.params.message.payload;
 
-    GraphStorage.db.findVerticesByImportId(challenge.import_id).then((vertexData) => {
-        const answer = Challenge.answerTestQuestion(challenge.block_id, vertexData, 16);
+    GraphStorage.db.findVerticesByImportId(challenge.import_id).then((vertices) => {
+        vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
+        const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 16);
         log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
         response.send({
             status: 'success',
