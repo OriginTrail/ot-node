@@ -19,12 +19,12 @@ before_script:
   - npm install -g ganache-cli
   - npm install -g truffle
 script:
-  - which java
-  - which neo4j
+  - which java && java -version
+  - which neo4j && neo4j -version
   - npm run lint
   - npm test
   - npm start &>start.log &
-  - sleep 20
+  - sleep 12
   - jobs
   - kill %1
   - node isStartHealthy.js
