@@ -550,7 +550,7 @@ class Utilities {
                 .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
                 .then((res) => {
                     if (res.status === 200) {
-                        resolve(res.body);
+                        resolve(res.body.version);
                     } else {
                         // eslint-disable-next-line prefer-promise-reject-errors
                         reject('Failed to contact arangodb');
@@ -568,7 +568,7 @@ class Utilities {
                 .auth(process.env.NEO_USERNAME, process.env.NEO_PASSWORD)
                 .then((res) => {
                     if (res.status === 200) {
-                        resolve(res.body);
+                        resolve(res.body.neo4j_version);
                     } else {
                         // eslint-disable-next-line prefer-promise-reject-errors
                         reject('Failed to contact neo4j');
