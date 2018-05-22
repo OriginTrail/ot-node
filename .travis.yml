@@ -20,7 +20,7 @@ before_script:
   - npm install -g truffle
 script:
   - which java && java -version
-  - which neo4j && neo4j -version
+  - which neo4j && neo4j version
   - npm run lint
   - npm test
   - npm start &>start.log &
