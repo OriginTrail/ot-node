@@ -63,6 +63,17 @@ class OTNode {
             }
         }
 
+        // check if Neo4j service is running at all
+        if (process.env.GRAPH_DATABASE === 'neo4j') {
+            try {
+                const responseFromNeo4j = await Utilities.getNeo4jVersion();
+                log.info(`Neo4j server version ${responseFromNeo4j.neo4j_version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Neo4j server is runing before starting ot-node');
+                process.exit(1);
+            }
+        }
+
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;

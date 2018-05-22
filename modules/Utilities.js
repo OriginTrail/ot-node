@@ -553,7 +553,25 @@ class Utilities {
                         resolve(res.body);
                     } else {
                         // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact DB');
+                        reject('Failed to contact arangodb');
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
+    }
+
+    static getNeo4jVersion() {
+        return new Promise((resolve, reject) => {
+            request
+                .get(`http://${process.env.NEO_HOST}:7474/db/data/`)
+                .auth(process.env.NEO_USERNAME, process.env.NEO_PASSWORD)
+                .then((res) => {
+                    if (res.status === 200) {
+                        resolve(res.body);
+                    } else {
+                        // eslint-disable-next-line prefer-promise-reject-errors
+                        reject('Failed to contact neo4j');
                     }
                 }).catch((err) => {
                     reject(err);
@@ -671,8 +689,8 @@ class Utilities {
             const value2 = normalizedObj2[key];
 
             if (value1 == null || value2 == null) {
-                // eslint-disable-next-line
-                continue;
+            // eslint-disable-next-line
+            continue;
             }
 
             const valStr1 = `${value1}`;
