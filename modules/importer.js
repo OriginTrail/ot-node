@@ -20,10 +20,10 @@ module.exports = () => {
 
         async importJSON(json_document) {
             log.info('Entering importJSON');
-            const { vertices, edges, data_id } = json_document;
+            const { vertices, edges, import_id } = json_document;
 
-            if (typeof data_id !== 'number') {
-                throw Error(`Invalid data ID. ${data_id}.`);
+            if (typeof import_id !== 'number') {
+                throw Error(`Invalid import ID. ${import_id}.`);
             }
 
             log.trace('Vertex importing');
@@ -31,8 +31,8 @@ module.exports = () => {
             // TODO: Use transaction here.
             await Promise.all(vertices.map(vertex => GSdb.db.addVertex(vertex))
                 .concat(edges.map(edge => GSdb.db.addEdge(edge))));
-            await Promise.all(vertices.map(vertex => GSdb.db.updateImports('ot_vertices', vertex, data_id))
-                .concat(edges.map(edge => GSdb.db.updateImports('ot_edges', edge, data_id))));
+            await Promise.all(vertices.map(vertex => GSdb.db.updateImports('ot_vertices', vertex, import_id))
+                .concat(edges.map(edge => GSdb.db.updateImports('ot_edges', edge, import_id))));
 
             log.info('JSON import complete');
         },
@@ -93,9 +93,9 @@ module.exports = () => {
 
                 log.info('[DC] Import complete');
 
-                const { vertices } = result.vertices;
-                const { edges } = result.edges;
-                const data_id = result.import_id;
+                const { vertices } = result;
+                const { edges } = result;
+                const { import_id } = result;
 
                 const leaves = [];
                 const hash_pairs = [];
@@ -117,10 +117,10 @@ module.exports = () => {
                 const tree = new Mtree(hash_pairs);
                 const root_hash = utilities.sha3(tree.root());
 
-                log.info(`Import id: ${data_id}`);
+                log.info(`Import id: ${import_id}`);
                 log.info(`Import hash: ${root_hash}`);
                 return {
-                    data_id,
+                    data_id: import_id,
                     root_hash,
                     total_documents: hash_pairs.length,
                     vertices,

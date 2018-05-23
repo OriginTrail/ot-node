@@ -17,6 +17,8 @@ const BCInstance = require('./modules/BlockChainInstance');
 const GraphInstance = require('./modules/GraphInstance');
 const GSInstance = require('./modules/GraphStorageInstance');
 const ProductInstance = require('./modules/ProductInstance');
+const DHService = require('./modules/DHService');
+const BN = require('bn.js');
 require('./modules/EventHandlers');
 
 const pjson = require('./package.json');
@@ -28,10 +30,10 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
+
 /**
  * Main node object
  */
-
 class OTNode {
     /**
      * OriginTrail node system bootstrap function
@@ -48,6 +50,17 @@ class OTNode {
         } catch (err) {
             console.log(err);
             process.exit(1);
+        }
+
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Arango server is runing before starting ot-node');
+                process.exit(1);
+            }
         }
 
         // sync models
@@ -142,8 +155,8 @@ class OTNode {
 
         // Starting the kademlia
         const network = new Network();
-        network.start().then((res) => {
-            // console.log(res);
+        network.start().then(async (res) => {
+            await this.createProfile();
         }).catch((e) => {
             console.log(e);
         });
@@ -155,10 +168,34 @@ class OTNode {
 
         // Starting event listener on Blockchain
         log.info('Starting blockchain event listener');
-        // BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         setInterval(() => {
             BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
         }, 3000);
+
+        DHService.listenToOffers();
+    }
+
+    /**
+     * Creates profile on the contract
+     */
+    async createProfile() {
+        const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
+        if (profileInfo.active) {
+            log.trace(`Profile has already been created for ${config.identity}`);
+            return;
+        }
+
+        await BCInstance.bc.createProfile(
+            config.identity,
+            config.dh_price,
+            config.dh_stake_factor,
+            config.dh_max_time_mins,
+            config.dh_max_data_size_bytes,
+        );
+        const event = await BCInstance.bc.subscribeToEvent('ProfileCreated', null);
+        if (event.node_id.includes(config.identity)) {
+            log.info(`Profile created for node: ${config.identity}`);
+        }
     }
 
     /**
@@ -168,6 +205,38 @@ class OTNode {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
+            formatters: {
+                'application/json': (req, res, body) => {
+                    if (!body) {
+                        if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                            res.setHeader('Content-Length', 0);
+                        }
+                        return null;
+                    }
+
+                    if (body instanceof Error) {
+                        // snoop for RestError or HttpError, but don't rely on instanceof
+                        if ((body.restCode || body.httpCode) && body.body) {
+                            // eslint-disable-next-line
+                            body = body.body;
+                        } else {
+                            body = {
+                                message: body.message,
+                            };
+                        }
+                    }
+
+                    if (Buffer.isBuffer(body)) {
+                        body = body.toString('base64');
+                    }
+
+                    const data = JSON.stringify(body, null, 2);
+                    if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
+                        res.setHeader('Content-Length', Buffer.byteLength(data));
+                    }
+                    return data;
+                },
+            },
         });
 
         server.use(restify.plugins.acceptParser(server.acceptable));
@@ -294,7 +363,7 @@ class OTNode {
             }
         });
 
-        server.get('/api/trail/batches', (req, res) => {
+        server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             globalEmitter.emit('trail', {
                 query: queryObject,
@@ -309,5 +378,7 @@ console.log(`         OriginTrail Node v${pjson.version}`);
 console.log('===========================================');
 
 const otNode = new OTNode();
-otNode.bootstrap();
+otNode.bootstrap().then(() => {
+    log.info('OT Node started');
+});
 

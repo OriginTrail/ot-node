@@ -7,79 +7,125 @@ const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const abi = require('ethereumjs-abi');
 
 const log = Utilities.getLogger();
 
-// TODO
 const totalEscrowTime = 10 * 60 * 1000;
-const replicationFactor = 1;
-const biddingTime = 2 * 60 * 1000;
-const tenderDuration = biddingTime + 1000;
-const minNumberOfBids = 1;
+const finalizeWaitTime = 10 * 60 * 1000;
 const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('1000');
+const maxTokenAmount = new BN('100000');
+const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
 class DCService {
-    static createOffer(dataId, rootHash, totalDocuments, vertices) {
+    static async createOffer(dataId, rootHash, totalDocuments, vertices) {
         Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
             console.log('Error: ', e);
         });
 
+        const dhWallets = [];
+        const dhIds = [];
+
+        vertices.forEach((vertex) => {
+            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+                dhWallets.push(vertex.data.wallet);
+                dhIds.push(vertex.data.node_id);
+            }
+        });
+
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
-        const price = `${Utilities.getRandomIntRange(1, 10).toString()}00`;
-        Models.offers.create({
-            id: dataId,
-            data_lifespan: totalEscrowTime,
-            start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
-            tender_duration: tenderDuration,
-            min_number_applicants: minNumberOfBids,
-            price_tokens: price,
-            data_size_bytes: importSizeInBytes.toString(),
-            replication_number: replicationFactor,
-            root_hash: rootHash,
+
+        // TODO: Store offer hash in DB.
+        const offerHash = `0x${abi.soliditySHA3(
+            ['address', 'bytes32', 'uint256'],
+            [config.node_wallet, `0x${config.identity}`, dataId],
+        ).toString('hex')}`;
+
+        log.info(`Offer hash is ${offerHash}.`);
+
+        const newOfferRow = {
+            id: offerHash,
+            import_id: dataId,
+            total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
-        }).then((offer) => {
-            Blockchain.bc.createOffer(
-                dataId,
-                config.identity,
-                totalEscrowTime,
-                maxTokenAmount,
-                minStakeAmount,
-                biddingTime,
-                minNumberOfBids,
-                importSizeInBytes,
-                replicationFactor,
-            ).then((startTime) => {
-                log.info('Offer written to blockchain. Broadcast event.');
-                node.ot.quasar.quasarPublish('bidding-broadcast-channel', {
-                    dataId,
-                    dcId: config.identity,
-                    dcWallet: config.node_wallet,
-                    totalEscrowTime,
-                    maxTokenAmount: maxTokenAmount.toString(),
-                    minStakeAmount: minStakeAmount.toString(),
-                    biddingTime,
-                    minNumberOfBids,
-                    importSizeInBytes: importSizeInBytes.toString(),
-                    replicationFactor,
+            min_stake_amount: minStakeAmount.toString(),
+            min_reputation: minReputation,
+            data_hash: rootHash,
+            data_size_bytes: importSizeInBytes.toString(),
+            dh_wallets: JSON.stringify(dhWallets),
+            dh_ids: JSON.stringify(dhIds),
+            start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
+            status: 'PENDING',
+        };
+
+        const offer = await Models.offers.create(newOfferRow);
+
+        // From smart contract:
+        // require(profile[msg.sender].balance >=
+        // max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1)));
+        // Check for balance.
+        const profileBalance =
+            new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
+        const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
+
+        if (profileBalance < condition) {
+            await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);
+            await Blockchain.bc.depositToken(condition - profileBalance);
+        }
+
+        Blockchain.bc.createOffer(
+            dataId,
+            config.identity,
+            totalEscrowTime,
+            maxTokenAmount,
+            minStakeAmount,
+            minReputation,
+            rootHash,
+            importSizeInBytes,
+            dhWallets,
+            dhIds,
+        ).then(() => {
+            log.info('Offer written to blockchain. Started bidding phase.');
+            offer.status = 'STARTED';
+            offer.save({ fields: ['status'] });
+
+            const finalizationCallback = () => {
+                Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                    if (offerModel.status === 'STARTED') {
+                        log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+
+                        offer.status = 'FAILED';
+                        offer.save({ fields: ['status'] });
+                    }
                 });
-                log.trace('Started bidding phase');
-                Blockchain.bc.subscribeToEvent('ChoosingPhaseStarted', dataId)
-                    .then((event) => {
-                        log.trace('Started choosing phase.');
-                        DCService.chooseBids(dataId, totalEscrowTime);
-                    }).catch((err) => {
-                        console.log(err);
-                    });
-            }).catch((err) => {
-                log.warn(`Failed to create offer. ${JSON.stringify(err)}`);
+            };
+
+            Blockchain.bc.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+                log.trace('Started choosing phase.');
+
+                offer.status = 'FINALIZING';
+                offer.save({ fields: ['status'] });
+                DCService.chooseBids(offer.id, totalEscrowTime).then(() => {
+                    Blockchain.bc.subscribeToEvent('OfferFinalized', offer.id)
+                        .then(() => {
+                            offer.status = 'FINALIZED';
+                            offer.save({ fields: ['status'] });
+
+                            log.info(`Offer for ${offer.id} finalized`);
+                        }).catch((error) => {
+                            log.error(`Failed to get offer ${offer.id}). ${error}.`);
+                        });
+                }).catch(() => {
+                    offer.status = 'FAILED';
+                    offer.save({ fields: ['status'] });
+                });
             });
-        }).catch((error) => {
-            log.error(`Failed to write offer to DB. ${error}`);
+        }).catch((err) => {
+            log.warn(`Failed to create offer. ${err}`);
         });
     }
 
@@ -96,34 +142,33 @@ class DCService {
     }
 
     /**
-   * Chose DHs
-   * @param dataId            Data ID
-   * @param totalEscrowTime   Total escrow time
-   */
-    static chooseBids(dataId, totalEscrowTime) {
-        Models.offers.findOne({ where: { id: dataId } }).then((offerModel) => {
-            const offer = offerModel.get({ plain: true });
-            log.info(`Choose bids for data ${dataId}`);
-            Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
-                .then(() => {
-                    Blockchain.bc.chooseBids(dataId)
-                        .then(() => {
-                            log.info(`Bids chosen for data ${dataId}`);
-                        }).catch((err) => {
-                            log.warn(`Failed call choose bids for data ${dataId}. ${err}`);
-                        });
-                }).catch((err) => {
-                    log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
-                });
-
-            Blockchain.bc.subscribeToEvent('OfferFinalized', dataId)
-                .then((event) => {
-                    log.info(`Offer for ${dataId} finalized`);
-                }).catch((error) => {
-                    log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
-                });
-        }).catch((error) => {
-            log.error(`Failed to get offer (data ID ${dataId}). ${error}.`);
+     * Chose DHs
+     * @param offerHash Offer identifier
+     * @param totalEscrowTime   Total escrow time
+     */
+    static chooseBids(offerHash, totalEscrowTime) {
+        return new Promise((resolve, reject) => {
+            Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                const offer = offerModel.get({ plain: true });
+                log.info(`Choose bids for offer ${offerHash}`);
+                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
+                    .then(() => {
+                        Blockchain.bc.chooseBids(offerHash)
+                            .then(() => {
+                                log.info(`Bids chosen for data ${offerHash}`);
+                                resolve();
+                            }).catch((err) => {
+                                log.warn(`Failed call choose bids for data ${offerHash}. ${err}`);
+                                reject(err);
+                            });
+                    }).catch((err) => {
+                        log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        reject(err);
+                    });
+            }).catch((err) => {
+                log.error(`Failed to get offer (data ID ${offerHash}). ${err}.`);
+                reject(err);
+            });
         });
     }
 }

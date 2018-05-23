@@ -44,7 +44,7 @@ contract EscrowHolder {
 	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount,uint stake_amount, uint total_time) public;
 }
 
-contract Bidding {
+contract BiddingTest {
 	using SafeMath for uint256;
 
 	ERC20 public token;
@@ -55,7 +55,7 @@ contract Bidding {
 		_;
 	}
 	
-	function Bidding(address tokenAddress, address escrowAddress)
+	function BiddingTest(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
@@ -191,16 +191,16 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[offer_hash];
 		require(this_offer.active && this_offer.DC_wallet == msg.sender);
 		this_offer.active = false;
-		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.replication_factor.mul(2).add(1));
+		uint max_total_token_amount = this_offer.max_token_amount.mul(this_offer.total_escrow_time).mul(this_offer.data_size);
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(offer_hash);
 	}
 
-	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index)
+	function activatePredeterminedBid(bytes32 offer_hash, bytes32 DH_node_id, uint bid_index) 
 	public{
 		require(offer[offer_hash].active && !offer[offer_hash].finalized);
-
+		
 		OfferDefinition storage this_offer = offer[offer_hash];
 		ProfileDefinition storage this_DH = profile[msg.sender];
 		BidDefinition storage this_bid = offer[offer_hash].bid[bid_index];

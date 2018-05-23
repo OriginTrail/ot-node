@@ -1,10 +1,10 @@
 const {
-    describe, before, after, it,
+    describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
 const { assert, expect } = require('chai');
 const ArangoJs = require('../../modules/Database/Arangojs');
 const databaseData = require('./test_data/database-data.js');
-// eslint-disable-next-line  prefer-destructuring
+// eslint-disable-next-line prefer-destructuring
 const Database = require('arangojs').Database;
 
 const myUserName = 'otuser';
@@ -21,7 +21,6 @@ const oneMoreImportValue = 2520345639;
 
 let systemDb;
 let testDb;
-let db;
 
 describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
@@ -39,6 +38,22 @@ describe('Arangojs module ', async () => {
             [{ username: myUserName, passwd: myPassword, active: true }],
         );
         testDb = new ArangoJs(myUserName, myPassword, myDatabaseName, '127.0.0.1', '8529');
+    });
+
+    afterEach('drop ot_vertices and ot_edges collections', async () => {
+        try {
+            const myDocumentCollection = testDb.db.collection(documentCollectionName);
+            await myDocumentCollection.drop();
+        } catch (error) {
+            // this means there was no collection to drop, all good, move on
+        }
+
+        try {
+            const myEdgeCollection = testDb.db.collection(edgeCollectionName);
+            await myEdgeCollection.drop();
+        } catch (error) {
+            // this means there was no collection to drop, all good, move on
+        }
     });
 
     it('.identify() should return correct name', () => {
@@ -106,7 +121,7 @@ describe('Arangojs module ', async () => {
         assert.isFalse(data.isSystem);
         assert.equal(data.name, edgeCollectionName);
         const info = await testDb.db.listCollections();
-        assert.equal(info.length, 2);
+        assert.equal(info.length, 1);
     });
 
     it('.createEdgeCollection() with system collection name should be illegal', async () => {
@@ -125,13 +140,14 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.addDocument() should save vertex in Document Collection', () => {
-        testDb.addVertex(vertexOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
-    });
+    it('.addVertex() should save vertex in Document Collection ot_vertices', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
 
-    it('now lets check that we\'ve really saved vertex data', async () => {
+        const response = await testDb.addVertex(vertexOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+
+        // now lets check that we\'ve really saved vertex data
         const myCollection = testDb.db.collection(documentCollectionName);
         // eslint-disable-next-line no-underscore-dangle
         const retrievedVertex = await myCollection.document(vertexOne._key);
@@ -146,13 +162,19 @@ describe('Arangojs module ', async () => {
         assert.equal(retrievedVertex._key, vertexOne._key);
     });
 
-    it('trying to add same document again should resut in double insert', () => {
-        testDb.addVertex(vertexOne).then((response) => {
-            assert.equal(response, 'Double insert');
-        });
+    it('trying to add same vertex again should give result with the same vertex', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
+        const response = await testDb.addVertex(vertexOne);
+        assert.equal(response._key, vertexOne._key);
     });
 
     it('trying to add null document', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
         try {
             await testDb.addVertex(null);
         } catch (error) {
@@ -160,13 +182,14 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.addDocument() should save edge in Edge Document Collection', () => {
-        testDb.addEdge(edgeOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
-    });
+    it('.addEdge() should save edge in Edge Document Collection', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
 
-    it('now lets check that we\'ve saved edge correctly', async () => {
+        const response = await testDb.addEdge(edgeOne);
+        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+
+        // now lets check that we\'ve saved edge correctly
         const myCollection = testDb.db.edgeCollection(edgeCollectionName);
         // eslint-disable-next-line no-underscore-dangle
         const retrievedEdge = await myCollection.edge(edgeOne._key);
@@ -182,6 +205,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('updateImports() should add/append data', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
         // this will implicitly call testDb.updateDocument()
         await testDb.updateImports(
             edgeCollectionName,
@@ -212,19 +239,15 @@ describe('Arangojs module ', async () => {
     });
 
     it('getDocument() by vertexKey should give back vertex itself', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         await testDb.getDocument(documentCollectionName, vertexOne._key)
             .then((response) => {
                 assert.deepEqual(response._key, vertexOne._key);
                 assert.deepEqual(response.data, vertexOne.data);
             });
-    });
-
-    it('attempt to getDocument on non existing db should fail', async () => {
-        try {
-            await testDb.getDocument(documentCollectionName, vertexOne._key);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
     });
 
     it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
@@ -236,6 +259,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('getDocument() by edgeKey should give back edge itself', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
             // eslint-disable-next-line no-underscore-dangle
             assert.equal(response._from, edgeOne._from);
@@ -247,6 +274,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('getDocument() by vertexKey should give back vertex itself', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         await testDb.getDocument(documentCollectionName, vertexOne._key).then((response) => {
             assert.deepEqual(response._key, vertexOne._key);
             assert.deepEqual(response.data, vertexOne.data);
@@ -254,6 +285,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('getDocument() by edgeKey should give back edge itself', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
             // eslint-disable-next-line no-underscore-dangle
             assert.equal(response._from, edgeOne._from);
@@ -265,6 +300,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('updateImports() should add/append data', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
         // this will implicitly call testDb.updateDocument()
         await testDb.updateImports(
             edgeCollectionName,
@@ -281,6 +320,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('updateDocument() should also add/append data', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
         const updatetedEdgeOne = {
             _key: '6eb743d84a605b2ab6be67a373b883d4',
             edge_type: 'OWNED_BY',
@@ -303,6 +346,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('findVerticesByImportId() ', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         await testDb.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
@@ -314,6 +361,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('findVerticesByImportId() with valid string importId value ', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         await testDb.findVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
@@ -321,6 +372,22 @@ describe('Arangojs module ', async () => {
             assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
             assert.deepEqual(response[0].imports, vertexOne.imports);
             assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        });
+    });
+
+    it('findEdgesByImportId() with valid string importId value', async () => {
+        // precondition
+        await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.addEdge(edgeOne);
+
+        await testDb.findEdgesByImportId(edgeOne.imports[0].toString()).then((response) => {
+            assert.deepEqual(response[0]._key, edgeOne._key);
+            assert.deepEqual(response[0].edge_type, edgeOne.edge_type);
+            assert.deepEqual(response[0].data_provider, edgeOne.data_provider);
+            assert.deepEqual(response[0].imports, edgeOne.imports);
+            assert.deepEqual(response[0]._from, edgeOne._from);
+            assert.deepEqual(response[0]._to, edgeOne._to);
+            assert.deepEqual(response[0].sender_id, edgeOne.sender_id);
         });
     });
 
@@ -333,19 +400,10 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.findVertices() when still not connected to graph db should fail', async () => {
-        const queryObject = {
-            uid: '123',
-            vertex_type: 'BATCH',
-        };
-        try {
-            const result = await testDb.findVertices(queryObject);
-        } catch (error) {
-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
-        }
-    });
-
     it('.findVertices() on top of empty collection should find nothing', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
         const queryObject = {
             uid: '123',
             vertex_type: 'BATCH',
@@ -357,7 +415,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('.findTraversalPath() with non valid startVertex should fail', async () => {
-        // db alredy connected and ot_vertices exists
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         const myStartVertex = {
             _id: undefined,
         };
@@ -371,7 +432,10 @@ describe('Arangojs module ', async () => {
     });
 
     it('.findTraversalPath() with non existing startVertex should fail', async () => {
-        // db alredy connected and ot_vertices exists
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
         const myStartVertex = {
             _id: 0,
         };
@@ -383,10 +447,124 @@ describe('Arangojs module ', async () => {
         }
     });
 
+    it('findEvent', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+        await testDb.addVertex(vertexOne);
+
+        const response = await testDb.findEvent('senderID', ['a'], '1000', 'bizTest');
+        assert.deepEqual(response[0].data, vertexOne.data);
+        assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
+        assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
+        assert.deepEqual(response[0].vertex_key, vertexOne.vertex_key);
+        assert.deepEqual(response[0].imports, vertexOne.imports);
+        assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
+        assert.deepEqual(response[0].sender_id, vertexOne.sender_id);
+        assert.deepEqual(response[0].partner_id, vertexOne.partner_id);
+    });
+
+    it('should add version to identified vertex', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex = {
+            _key: 'dummyKey',
+            identifiers: {
+                id: 'dummyId',
+                uid: 'dummyUid',
+            },
+            sender_id: 'dummySenderId',
+        };
+        const response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.have.property('version', 1);
+    });
+
+    it('should increase version to already versioned vertex', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex = {
+            _key: 'dummyKey2',
+            identifiers: {
+                id: 'dummyId2',
+                uid: 'dummyUid2',
+            },
+            sender_id: 'dummySenderId2',
+        };
+        let response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.have.property('version', 1);
+
+        // Change key
+        dummyVertex._key = 'dummyChangedKey';
+
+        response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.have.property('version', 2);
+    });
+
+    it('should leave version as is to already versioned vertex', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex = {
+            _key: 'dummyKey3',
+            identifiers: {
+                id: 'dummyId3',
+                uid: 'dummyUid3',
+            },
+            sender_id: 'dummySenderId3',
+        };
+        let response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.have.property('version', 1);
+
+        response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.have.property('version', 1);
+    });
+
+    it('should ignore version for vertices without sender ID and UID', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        let dummyVertex = {
+            _key: 'dummyKey4',
+            identifiers: {
+                id: 'dummyId4',
+            },
+            sender_id: 'dummySenderId4',
+        };
+        let response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.not.have.property('version');
+
+        dummyVertex = {
+            _key: 'dummyKey5',
+            identifiers: {
+                id: 'dummyId5',
+                uid: 'dummyUid5',
+            },
+        };
+        response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.not.have.property('version');
+
+        dummyVertex = {
+            _key: 'dummyKey6',
+            identifiers: {
+                id: 'dummyId6',
+            },
+        };
+        response = await testDb.addVertex(dummyVertex);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex).to.not.have.property('version');
+    });
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
         await systemDb.dropDatabase(myDatabaseName);
     });
 });
-

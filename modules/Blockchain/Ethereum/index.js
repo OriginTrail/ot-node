@@ -5,6 +5,7 @@ const Utilities = require('../../Utilities');
 const globalEvents = require('../../GlobalEvents');
 const SystemStorage = require('../../Database/SystemStorage');
 const Storage = require('../../Storage');
+const Op = require('sequelize/lib/operators');
 
 const { globalEmitter } = globalEvents;
 
@@ -110,6 +111,48 @@ class Ethereum {
     }
 
     /**
+     * Gets profile by wallet
+     * @param wallet
+     */
+    getProfile(wallet) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Get profile by wallet ${wallet}`);
+            this.biddingContract.methods.profile(wallet).call({
+                from: wallet,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Creates node profile on the Bidding contract
+     * @param nodeId        Kademlia node ID
+     * @param price         Price (byte per min)
+     * @param stakeFactor   Stake factor
+     * @param maxTimeMins   Max time in minutes
+     * @param maxSizeBytes  Max size in bytes
+     * @return {Promise<any>}
+     */
+    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.trace(`Create profile for node ${nodeId}`);
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'createProfile',
+            [this._normalizeNodeId(nodeId), price,
+                stakeFactor, maxTimeMins,
+                maxSizeBytes], options,
+        );
+    }
+
+    /**
      * Increase token approval for escrow contract on Ethereum blockchain
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
@@ -156,7 +199,18 @@ class Ethereum {
         };
 
         log.warn('Verifying escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'verifyEscrow', [dcWallet, dataId, tokenAmount, stakeAmount, Math.round(totalTime / 1000)], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'verifyEscrow',
+            [
+                dcWallet,
+                dataId,
+                tokenAmount,
+                stakeAmount,
+                Math.round(totalTime / 1000 / 60),
+            ],
+            options,
+        );
     }
 
     /**
@@ -173,7 +227,15 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'cancelEscrow', [dhWallet, dataId], options);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'cancelEscrow',
+            [
+                dhWallet,
+                dataId,
+            ],
+            options,
+        );
     }
 
     /**
@@ -195,15 +257,16 @@ class Ethereum {
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @param dataId Data ID of the bid
+     * @param dataId Data ID of the offer.
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
-     * @param biddingTime Total time of the bid in milliseconds
-     * @param minNumberOfBids Number of bid required for offer to be successful
+     * @param minReputation Minimum required reputation
+     * @param dataHash Hash of the data put to the offer
      * @param dataSize Size of the data for storing in bytes
-     * @param ReplicationFactor Number of replications
+     * @param predeterminedDhWallets Array of predetermined DH wallets to be used in offer
+     * @param predeterminedDhNodeIds Array of predetermined node IDs to be used in offer
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
@@ -211,9 +274,11 @@ class Ethereum {
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
-        biddingTime,
-        minNumberOfBids,
-        dataSize, ReplicationFactor,
+        minReputation,
+        dataHash,
+        dataSize,
+        predeterminedDhWallets,
+        predeterminedDhNodeIds,
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -221,16 +286,22 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - createOffer');
+        log.warn('Calling - createOffer() on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
-            [dataId, this._normalizeNodeId(nodeId),
-                Math.round(totalEscrowTime / 1000),
+            [
+                dataId,
+                this._normalizeNodeId(nodeId),
+                Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
                 MinStakeAmount,
-                Math.round(biddingTime / 1000),
-                minNumberOfBids,
-                dataSize, ReplicationFactor], options,
+                minReputation,
+                dataHash,
+                dataSize,
+                predeterminedDhWallets,
+                predeterminedDhNodeIds.map(id => this._normalizeNodeId(id)),
+            ],
+            options,
         );
     }
 
@@ -260,24 +331,26 @@ class Ethereum {
         Utilities.getBlockNumberFromWeb3().then((currentBlockHex) => {
             const currentBlock = Utilities.hexToNumber(currentBlockHex);
             this.contractsByName[contractName].getPastEvents('allEvents', {
-                fromBlock: currentBlock - 10,
+                fromBlock: Math.min(currentBlock, 10),
                 toBlock: 'latest',
             }).then((events) => {
                 events.forEach((event) => {
                     // TODO: make filters - we don't need to listen all events
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
-                        Storage.db.query('INSERT INTO events(event,data, dataId, block, createdAt, updatedAt) \n' +
-                          'SELECT ?, ?, ?, ?, ?, ? \n' +
+                        const timestamp = Date.now();
+                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, timestamp, finished) \n' +
+                          'SELECT ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
-                            replacements: [event.event,
-                                JSON.stringify(event.returnValues),
-                                event.returnValues.data_id,
-                                event.blockNumber,
-                                Date.now(),
-                                Date.now(),
+                            replacements: [
                                 event.event,
-                                JSON.stringify(event.returnValues)],
+                                JSON.stringify(event.returnValues),
+                                event.returnValues.offer_hash,
+                                event.blockNumber,
+                                timestamp,
+                                event.event,
+                                JSON.stringify(event.returnValues),
+                            ],
                         }).catch((err) => {
                             console.log(err);
                         });
@@ -294,50 +367,99 @@ class Ethereum {
                 log.error('Failed to get past events');
                 console.log(err);
             });
+        }).catch((err) => {
+            log.error('Failed to get block number from the blockchain');
+            console.log(err);
         });
     }
 
     /**
     * Subscribes to blockchain events
     * @param event
-    * @param dataId
-    * @param params
+    * @param offerHash
     * @param endMs
+    * @param endCallback
     */
-    subscribeToEvent(event, dataId, endMs = 5 * 60 * 1000) {
+    subscribeToEvent(event, offerHash, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
+                const where = {
+                    event,
+                    finished: 0,
+                };
+                if (offerHash) {
+                    where.offer_hash = offerHash;
+                }
                 Storage.models.events.findOne({
-                    where: {
-                        event,
-                        dataId,
-                        finished: null,
-                    },
+                    where,
                 }).then((eventData) => {
                     if (eventData) {
                         globalEmitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
-                        eventData.save();
-                        clearInterval(token);
-                        resolve(JSON.parse(eventData.dataValues.data));
+                        eventData.save().then(() => {
+                            clearInterval(token);
+                            resolve(JSON.parse(eventData.dataValues.data));
+                        }).catch((err) => {
+                            log.error(`Failed to update event ${event}. ${err}`);
+                            reject(err);
+                        });
                     }
                 });
             }, 2000);
             setTimeout(() => {
+                if (endCallback) {
+                    endCallback();
+                } else {
+                    log.warn(`Tried to call undefined endCallback for event: ${event}`);
+                }
                 clearInterval(token);
             }, endMs);
         });
     }
 
     /**
+     * Subscribes to Blockchain event
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * @param event Event to listen to
+     * @returns {number | Object} Event handle
+     */
+    subscribeToEventPermanent(event) {
+        const handle = setInterval(async () => {
+            const startBlockNumber = parseInt(await Utilities.getBlockNumberFromWeb3(), 16);
+
+            const where = {
+                [Op.or]: event.map(e => ({ event: e })),
+                block: { [Op.gte]: startBlockNumber },
+                finished: 0,
+            };
+
+            const eventData = await Storage.models.events.findAll({ where });
+            if (eventData) {
+                eventData.forEach(async (data) => {
+                    globalEmitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    data.finished = true;
+                    await data.save();
+                });
+            }
+        }, 2000);
+
+        return handle;
+    }
+
+    unsubscribeToEventPermanent(eventHandle) {
+        clearInterval(eventHandle);
+    }
+
+
+    /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
-     * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once revealBid() is called
+     * @param offerHash Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, bidHash) {
+    addBid(offerHash, dhNodeId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -347,7 +469,7 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [dcWallet, dataId, this._normalizeNodeId(nodeId), bidHash], options,
+            [offerHash, this._normalizeNodeId(dhNodeId)], options,
         );
     }
 
@@ -373,37 +495,11 @@ class Ethereum {
     }
 
     /**
-     * Reveals the bid of the offer
-     * @param dcWallet Wallet of the DC who's offer is
-     * @param dataId Id of the data in the offer
-     * @param nodeId KADemlia ID of bidder
-     * @param tokenAmount Amount of the token
-     * @param stakeAmount Amount of the stake
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    revealBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex) {
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
-        };
-
-        log.warn('Initiating escrow - revealBid');
-        return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'revealBid',
-            [dcWallet,
-                dataId,
-                this._normalizeNodeId(nodeId), tokenAmount, stakeAmount, bidIndex], options,
-        );
-    }
-
-    /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param dataId ID of data of the bid
+     * @param offerHash Offer hash
      * @returns {Promise<any>}
      */
-    chooseBids(dataId) {
+    chooseBids(offerHash) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -413,7 +509,7 @@ class Ethereum {
         log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
-            [dataId], options,
+            [offerHash], options,
         );
     }
 
@@ -457,6 +553,18 @@ class Ethereum {
         });
     }
 
+    getDcWalletFromOffer(offer_hash) {
+        return new Promise((resolve, reject) => {
+            log.trace(`Asking for offer's (${offer_hash}) DC wallet.`);
+            this.biddingContract.methods.offer(offer_hash).call()
+                .then((res) => {
+                    resolve(res[0]);
+                }).catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
     /**
      * Normalizes Kademlia node ID
      * @param nodeId     Kademlia node ID
@@ -465,6 +573,20 @@ class Ethereum {
      */
     _normalizeNodeId(nodeId) {
         return `0x${nodeId}`;
+    }
+
+    async depositToken(amount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        log.warn(`Calling - depositToken(${amount.toString()})`);
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'depositToken',
+            [amount], options,
+        );
     }
 }
 

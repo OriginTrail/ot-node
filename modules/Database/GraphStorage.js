@@ -72,15 +72,16 @@ class GraphStorage {
 
     /**
      * Finds traversal path starting from particular vertex
+     * @param depth             Traversal depth
      * @param startVertex       Starting vertex
      * @return {Promise<void>}
      */
-    findTraversalPath(startVertex) {
+    findTraversalPath(startVertex, depth) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findTraversalPath(startVertex).then((result) => {
+                this.db.findTraversalPath(startVertex, depth).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -91,16 +92,17 @@ class GraphStorage {
 
     /**
      * Gets max version where uid is the same but not the _key
-     * @param uid   Vertex uid
-     * @param _key  Vertex _key
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @param _key      Vertex _key
      * @return {Promise<void>}
      */
-    findMaxVersion(uid, _key) {
+    findMaxVersion(senderId, uid, _key) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findMaxVersion(uid, _key).then((result) => {
+                this.db.findMaxVersion(senderId, uid, _key).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -111,15 +113,16 @@ class GraphStorage {
 
     /**
      * Gets max vertex_key where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
-    findVertexWithMaxVersion(uid) {
+    findVertexWithMaxVersion(senderId, uid) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVertexWithMaxVersion(uid).then((result) => {
+                this.db.findVertexWithMaxVersion(senderId, uid).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -130,7 +133,7 @@ class GraphStorage {
 
     /**
      * Add vertex
-     * @param {vertex} - document
+     * @param vertex Vertex data
      * @returns {Promise<any>}
      */
     addVertex(vertex) {
@@ -149,7 +152,7 @@ class GraphStorage {
 
     /**
      * Add edge
-     * @param {vertex} - document
+     * @param edge Edge data
      * @returns {Promise<any>}
      */
     addEdge(edge) {
@@ -222,6 +225,29 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findEdgesByImportId(data_id).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param senderId    Sender ID
+     * @param partnerId   Partner ID
+     * @param documentId  Document ID
+     * @param bizStep     Shipping/Receiving
+     * @return {Promise}
+     */
+    findEvent(senderId, partnerId, documentId, bizStep) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findEvent(senderId, partnerId, documentId, bizStep).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
