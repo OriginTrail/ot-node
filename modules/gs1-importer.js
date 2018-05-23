@@ -755,8 +755,8 @@ async function processXML(err, result) {
 
     console.log('Done parsing and importing.');
 
-    const edgesPerImport = await db.findVerticesByImportId(importId);
-    const verticesPerImport = await db.findEdgesByImportId(importId);
+    const edgesPerImport = await db.findEdgesByImportId(importId);
+    const verticesPerImport = await db.findVerticesByImportId(importId);
     return { vertices: verticesPerImport, edges: edgesPerImport, import_id: importId };
 }
 
