@@ -1,3 +1,5 @@
+const Utilities = require('../../modules/Utilities');
+
 const {
     describe, before, after, it,
 } = require('mocha');
@@ -179,6 +181,38 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._to, edgeOne._to);
         // eslint-disable-next-line no-underscore-dangle
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
+    });
+
+    it('parse virtualGraph', async () => {
+        testDb.addVertex(vertexTwo).then((response) => {
+            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        });
+
+        const path = await testDb.findTraversalPath(vertexOne, 1000);
+
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return 1;
+            }
+            if (a._key > b._key) {
+                return -1;
+            }
+            return 0;
+        }
+
+        const objectVertices = [vertexOne, vertexTwo];
+        const objectEdges = [edgeOne];
+        assert.deepEqual(testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectEdges).sort(sortByKey),
+        );
+        assert.deepEqual(testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectVertices).sort(sortByKey),
+        );
+    });
+
+    it('importVirtualGraph', async () => {
+        // TODO
+        return 0;
     });
 
     it('updateImports() should add/append data', async () => {
@@ -393,7 +427,9 @@ describe('Arangojs module ', async () => {
                 console.log(JSON.stringify(res));
             });
         });
-    })
+    });
+
+
 
     after('drop testDb db', async () => {
         systemDb = new Database();

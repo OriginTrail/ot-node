@@ -428,7 +428,6 @@ class Neo4jDB {
             delete relation.identity;
             delete relation.start;
             delete relation.end;
-            delete relation.type;
             fromNode.edges.push(relation);
         }
 
@@ -522,6 +521,67 @@ class Neo4jDB {
      */
     identify() {
         return 'Neo4j';
+    }
+
+    /**
+     * Extracts edges from a virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+     getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const edges = [];
+        for (const node in virtualGraph) {
+            for (const edge in virtualGraph[node].edges) {
+                delete virtualGraph[node].edges[edge].type;
+                virtualGraph[node].edges[edge].imports = [virtualGraph[node].edges[edge].imports[0].low];
+                virtualGraph[node].edges[edge]._from = `ot_vertices/${virtualGraph[node].edges[edge]._from}`;
+                virtualGraph[node].edges[edge]._to = `ot_vertices/${virtualGraph[node].edges[edge]._to}`;
+                edges.push(virtualGraph[node].edges[edge]);
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Extracts vertices from a virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+     getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph)
+        const vertices = [];
+        for (const node in virtualGraph) {
+            delete virtualGraph[node].edges;
+            vertices.push(virtualGraph[node]);
+        }
+        return vertices;
+    }
+
+    /**
+     * Imports virtual graph to database
+     * @param virtual graph
+     * @returns
+     */
+    async importVirtualGraph(virtualGraph) {
+        const virtualEdges = this.getEdgesFromVirtualGraph(virtualGraph);
+        const virtualVertices = this.getVerticesFromVirtualGraph(virtualGraph);
+
+        const vertices = [];
+        for (const i in virtualVertices) {
+            vertices.push(this.addVertex(virtualVertices[i]));
+        }
+        await Promise.all(vertices);
+
+        const edges = [];
+        for (const i in virtualEdges) {
+            edges.push(this.addEdge(virtualEdges[i]));
+        }
+        await Promise.all(edges);
+
+        console.log(`insert into Neo4j done`);
+
+        return 0;
     }
 }
 

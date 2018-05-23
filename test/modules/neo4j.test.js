@@ -1,3 +1,5 @@
+const Utilities = require('../../modules/Utilities');
+
 const {
     describe, before, after, it, afterEach,
 } = require('mocha');
@@ -115,6 +117,34 @@ describe('Neo4j module ', async () => {
         console.log(JSON.stringify(path));
         // TODO assert.deepEqual
     });
+
+    it('parse virtualGraph', async () => {
+        const path = await testDb.findTraversalPath(vertexOne, 1000);
+
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return 1;
+            }
+            if (a._key > b._key) {
+                return -1;
+            }
+            return 0;
+        }
+
+        const objectVertices = [vertexOne, vertexTwo];
+        const objectEdges = [edgeOne];
+        assert.deepEqual(testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectEdges).sort(sortByKey),
+        );
+        assert.deepEqual(testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectVertices).sort(sortByKey),
+        );
+    });
+
+    it('importVirtualGraph', async () => {
+        // TODO
+        return 0;
+    })
 
     it('findMaxVersion single version vertex', async () => {
         // vertexTwo has one version

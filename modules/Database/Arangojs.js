@@ -350,6 +350,50 @@ class ArangoJS {
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
     }
+
+     getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph)
+        const edges = [];
+        for (const node in virtualGraph) {
+            for (const edge in virtualGraph[node].outbound) {
+                virtualGraph[node].outbound[edge]._from = `ot_vertices/${virtualGraph[node].outbound[edge]._from}`;
+                virtualGraph[node].outbound[edge]._to = `ot_vertices/${virtualGraph[node].outbound[edge]._to}`;
+                edges.push(virtualGraph[node].outbound[edge]);
+            }
+        }
+        return edges;
+    }
+
+     getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph)
+        const vertices = [];
+        for (const node in virtualGraph) {
+            delete virtualGraph[node].outbound;
+            vertices.push(virtualGraph[node]);
+        }
+        return vertices;
+    }
+
+    async importVirtualGraph(virtualGraph) {
+        const virtualEdges = this.getEdgesFromVirtualGraph(virtualGraph);
+        const virtualVertices = this.getVerticesFromVirtualGraph(virtualGraph);
+
+        const vertices = [];
+        for (const i in virtualVertices) {
+            vertices.push(this.addVertex(virtualVertices[i]));
+        }
+        await Promise.all(vertices);
+
+        const edges = [];
+        for (const i in virtualEdges) {
+            edges.push(this.addEdge(virtualEdges[i]));
+        }
+        await Promise.all(edges);
+
+        console.log(`insert into ArangoDB done`);
+
+        return 0;
+    }
 }
 
 module.exports = ArangoJS;
