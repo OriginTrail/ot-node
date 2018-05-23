@@ -196,6 +196,28 @@ class GraphStorage {
     }
 
     /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    updateEdgeImportsByUID(senderId, uid, importNumber) {
+        return this.db.updateEdgeImportsByUID(senderId, uid, importNumber);
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    updateVertexImportsByUID(senderId, uid, importNumber) {
+        return this.db.updateVertexImportsByUID(senderId, uid, importNumber);
+    }
+
+    /**
      * Get list of vertices by import ID
      * @param importId   Import ID
      * @return {Promise}
