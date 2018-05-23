@@ -1,0 +1,28 @@
+From b360aa9fdf92d1f56f251d71f44ea30fe51a1907 Mon Sep 17 00:00:00 2001
+From: Vladimir Lelicanin <v.lelicanin@sae.edu>
+Date: Wed, 2 May 2018 22:21:09 +0200
+Subject: [PATCH 07/22] Fix: Duplicate declaration of Web3 and eslint
+
+---
+ modules/Utilities.js | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/modules/Utilities.js b/modules/Utilities.js
+index 7308649..67e5d6d 100644
+--- a/modules/Utilities.js
++++ b/modules/Utilities.js
+@@ -10,9 +10,8 @@ const _ = require('lodash');
+ const randomString = require('randomstring');
+ const Web3 = require('web3');
+ const request = require('superagent');
+-// eslint-disable-next-line  prefer-destructuring
+-const Database = require('arangojs').Database;
+-const Web3 = require('web3');
++const { Database } = require('arangojs');
++
+ require('dotenv').config();
+ 
+ 
+-- 
+2.13.5 (Apple Git-94)
+

@@ -1,0 +1,91 @@
+From 46f2976a647a9d026dc48ef9b1ad50de7c85235e Mon Sep 17 00:00:00 2001
+From: radomir-sebek <rasho.ieee@gmail.com>
+Date: Fri, 27 Apr 2018 11:30:30 +0200
+Subject: [PATCH 03/22] [Improvement] Check do we have origintrail database
+ present in arangoDB (#87)
+
+* [Improvement] Check do we have origintrail database present in arangoDB
+
+* fixing lint errors
+---
+ modules/Utilities.js | 39 +++++++++++++++++++++++++++++++++++++++
+ ot-node.js           |  5 ++++-
+ 2 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/modules/Utilities.js b/modules/Utilities.js
+index 4eecd20..ed20958 100644
+--- a/modules/Utilities.js
++++ b/modules/Utilities.js
+@@ -8,6 +8,9 @@ const Storage = require('./Storage');
+ const config = require('./Config');
+ const _ = require('lodash');
+ const randomString = require('randomstring');
++// eslint-disable-next-line  prefer-destructuring
++const Database = require('arangojs').Database;
++require('dotenv').config();
+ 
+ 
+ class Utilities {
+@@ -150,6 +153,42 @@ class Utilities {
+     }
+ 
+     /**
++     * Check does origintrail database exists, otherwise create one
++     * @returns {Promise<any>}
++     */
++    static checkDoesStorageDbExists() {
++        return new Promise((resolve, reject) => {
++            const systemDb = new Database();
++            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
++            systemDb.listDatabases().then((result) => {
++                let databaseAlreadyExists = false;
++                for (let i = 0; i < result.length; i += 1) {
++                    if (result[i].toString() === process.env.DB_DATABASE) {
++                        databaseAlreadyExists = true;
++                    }
++                }
++                if (!databaseAlreadyExists) {
++                    systemDb.createDatabase(
++                        process.env.DB_DATABASE,
++                        [{
++                            username: process.env.DB_USERNAME,
++                            passwd: process.env.DB_PASSWORD,
++                            active: true,
++                        }],
++                    ).then((result) => {
++                        resolve();
++                    }).catch((error) => {
++                        reject(error);
++                    });
++                }
++                resolve();
++            }).catch((error) => {
++                reject(error);
++            });
++        });
++    }
++
++    /**
+      * Get information of selected graph storage database
+      * @returns {Promise<any>}
+      */
+diff --git a/ot-node.js b/ot-node.js
+index 7b5130e..d84e922 100644
+--- a/ot-node.js
++++ b/ot-node.js
+@@ -39,8 +39,11 @@ class OTNode {
+      * OriginTrail node system bootstrap function
+      */
+     bootstrap() {
+-        // Checking root folder stucture
+         try {
++            // make sure arango database exists
++            deasync(Utilities.checkDoesStorageDbExists());
++            log.info('Storage database check done');
++            // Checking root folder stucture
+             Utilities.checkOtNodeDirStructure();
+             log.info('ot-node folder structure checked');
+         } catch (err) {
+-- 
+2.13.5 (Apple Git-94)
+

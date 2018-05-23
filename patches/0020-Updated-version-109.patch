@@ -1,0 +1,23 @@
+From 4bd3bbdadb6fbb834a007750847f8ef06de1a1ac Mon Sep 17 00:00:00 2001
+From: Vuk Djoric <djoric.vuk@gmail.com>
+Date: Mon, 7 May 2018 21:49:58 +0200
+Subject: [PATCH 20/22] Updated version (#109)
+
+---
+ package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 54f8902..0c7b3c7 100644
+--- a/package.json
++++ b/package.json
+@@ -1,5 +1,5 @@
+ {
+-  "name": "origintrail-node-0.6a",
++  "name": "origintrail-node-0.7a",
+   "version": "0.7.0",
+   "description": "OriginTrail node",
+   "main": ".eslintrc.js",
+-- 
+2.13.5 (Apple Git-94)
+

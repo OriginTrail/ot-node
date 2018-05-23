@@ -1,0 +1,1937 @@
+From 4e2a188701d37005c736b6962bcd5112fb9b860e Mon Sep 17 00:00:00 2001
+From: Janko Simonovic <simonovic86@gmail.com>
+Date: Sun, 6 May 2018 08:19:07 +0200
+Subject: [PATCH 14/22] Neo4j support (#99)
+
+---
+ .travis.yml                               |   3 +
+ modules/Database/Arangojs.js              | 142 +++++++++
+ modules/Database/GraphStorage.js          | 102 +++----
+ modules/Database/Neo4j.js                 | 478 ++++++++++++++++++++++++++++++
+ modules/EventHandlers.js                  |  31 --
+ modules/Graph.js                          | 141 ---------
+ modules/Network.js                        |   6 +-
+ modules/Product.js                        |   6 +-
+ modules/gs1-importer.js                   |   4 +-
+ modules/temp/MockSmartContract.js         |  59 ----
+ modules/temp/MockSmartContractInstance.js |  12 -
+ ot-node.js                                |   5 +-
+ package.json                              |   4 +
+ seeders/20180407121512-graph-database.js  |  12 +-
+ setup_neo4j.sh                            |  24 ++
+ test/modules/arangojs.test.js             | 133 ++++++++-
+ test/modules/graph.test.js                | 128 --------
+ test/modules/graphstorage.test.js         |  73 +----
+ test/modules/neo4j.test.js                | 114 +++++++
+ 19 files changed, 961 insertions(+), 516 deletions(-)
+ create mode 100644 modules/Database/Neo4j.js
+ delete mode 100644 modules/temp/MockSmartContract.js
+ delete mode 100644 modules/temp/MockSmartContractInstance.js
+ create mode 100644 setup_neo4j.sh
+ create mode 100644 test/modules/neo4j.test.js
+
+diff --git a/.travis.yml b/.travis.yml
+index dfb8d14..40b16c4 100644
+--- a/.travis.yml
++++ b/.travis.yml
+@@ -13,6 +13,9 @@ before_script:
+   - chmod +x setup_arangodb.sh
+   - ./setup_arangodb.sh
+   - rm -rf ArangoDB-3.2.2.tar.gz
++  - chmod +x setup_neo4j.sh
++  - ./setup_neo4j.sh
++  - service neo4j start
+ script:
+   - npm run lint
+   - npm test
+diff --git a/modules/Database/Arangojs.js b/modules/Database/Arangojs.js
+index dcda161..1d36862 100644
+--- a/modules/Database/Arangojs.js
++++ b/modules/Database/Arangojs.js
+@@ -21,6 +21,148 @@ class ArangoJS {
+         this.db.useBasicAuth(username, password);
+     }
+ 
++    /**
++     * Find set of vertices
++     * @param queryObject       Query for getting vertices
++     * @returns {Promise<any>}
++     */
++    findVertices(queryObject) {
++        const that = this;
++        return new Promise((resolve, reject) => {
++            let queryString = 'FOR v IN ot_vertices ';
++            const params = {};
++            if (Utilities.isEmptyObject(queryObject) === false) {
++                queryString += 'FILTER ';
++
++                let count = 1;
++                const filters = [];
++                for (const key in queryObject) {
++                    if (key.match(/^[\w\d]+$/g) !== null) {
++                        let searchKey;
++                        if (key !== 'vertex_type' && key !== '_key') {
++                            searchKey = `identifiers.${key}`;
++                        } else {
++                            searchKey = key;
++                        }
++                        const param = `param${count}`;
++                        filters.push(`v.${searchKey} == @param${count}`);
++
++                        count += 1;
++                        params[param] = queryObject[key];
++                    }
++                }
++                queryString += filters.join(' AND ');
++            }
++            queryString += ' RETURN v';
++            that.runQuery(queryString, params).then((result) => {
++                resolve(result);
++            }).catch((err) => {
++                reject(err);
++            });
++        });
++    }
++
++    /**
++     * Finds traversal path starting from particular vertex
++     * @param startVertex       Starting vertex
++     * @param depth             Explicit traversal depth
++     * @returns {Promise<any>}
++     */
++    findTraversalPath(startVertex, depth) {
++        const that = this;
++        return new Promise((resolve, reject) => {
++            if (startVertex === undefined || startVertex._id === undefined) {
++                resolve([]);
++                return;
++            }
++            if (depth == null) {
++                depth = that.getDatabaseInfo().max_path_length;
++            }
++            const queryString = `FOR vertice, edge, path IN 1 .. ${depth}
++            OUTBOUND '${startVertex._id}'
++            GRAPH 'origintrail_graph'
++            RETURN path`;
++
++            that.runQuery(queryString).then((result) => {
++                resolve(ArangoJS.convertToVirtualGraph(result));
++            }).catch((err) => {
++                reject(err);
++            });
++        });
++    }
++
++    /**
++     * Transforms raw graph data to virtual one (without
++     * @param rawGraph  Raw graph structure
++     * @returns {{}}
++     */
++    static convertToVirtualGraph(rawGraph) {
++        const resultList = {};
++        const resultEdges = {};
++        const resultVertices = {};
++
++        for (const id in rawGraph) {
++            const graph = rawGraph[id];
++            if (graph.edges == null) {
++                // eslint-disable-next-line no-continue
++                continue;
++            }
++
++            for (const edgeId in graph.edges) {
++                const edge = graph.edges[edgeId];
++                if (edge !== null) {
++                    edge.key = edge._key;
++                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
++                    edge.from = edge._from.split('/')[1];
++                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
++                    edge.to = edge._to.split('/')[1];
++
++                    delete edge._key;
++                    delete edge._id;
++                    delete edge._rev;
++                    delete edge._to;
++                    delete edge._from;
++
++                    // eslint-disable-next-line  prefer-destructuring
++                    const key = edge.key;
++                    if (resultEdges[key] === undefined) {
++                        resultEdges[key] = edge;
++                    }
++                }
++            }
++
++            if (graph.vertices !== undefined) {
++                for (const vertexId in graph.vertices) {
++                    const vertex = graph.vertices[vertexId];
++                    if (vertex !== null) {
++                        vertex.key = vertex._key;
++                        vertex.outbound = [];
++
++                        delete vertex._key;
++                        delete vertex._id;
++                        delete vertex._rev;
++
++                        // eslint-disable-next-line  prefer-destructuring
++                        const key = vertex.key;
++                        if (resultVertices[key] === undefined) {
++                            resultVertices[key] = vertex;
++                        }
++                    }
++                }
++            }
++        }
++
++        for (const vertexId in resultVertices) {
++            resultList[resultVertices[vertexId].key] = resultVertices[vertexId];
++        }
++        for (const edgeId in resultEdges) {
++            resultList[resultEdges[edgeId].from].outbound.push(resultEdges[edgeId]);
++        }
++        return {
++            data: resultList,
++        };
++    }
++
+ 
+     updateDocumentImports(collectionName, document, importNumber) {
+         return new Promise((resolve, reject) => {
+diff --git a/modules/Database/GraphStorage.js b/modules/Database/GraphStorage.js
+index bca6463..d4b91b9 100644
+--- a/modules/Database/GraphStorage.js
++++ b/modules/Database/GraphStorage.js
+@@ -1,5 +1,6 @@
+ const Utilities = require('../Utilities');
+ const ArangoJS = require('./Arangojs');
++const Neo4j = require('./Neo4j');
+ 
+ const log = Utilities.getLogger();
+ 
+@@ -28,6 +29,16 @@ class GraphStorage {
+                     );
+                     resolve(this.db);
+                     break;
++                case 'neo4j':
++                    this.db = new Neo4j(
++                        this.selectedDatabase.username,
++                        this.selectedDatabase.password,
++                        this.selectedDatabase.database,
++                        this.selectedDatabase.host,
++                        this.selectedDatabase.port,
++                    );
++                    resolve(this.db);
++                    break;
+                 default:
+                     log.error(this.selectedDatabase);
+                     reject(Error('Unsupported graph database system'));
+@@ -37,17 +48,16 @@ class GraphStorage {
+     }
+ 
+     /**
+-     * Runs query on selected database
+-     * @param {string} - queryString - Query string
+-     * @param {object} - params - Query parameters
++     * Find set of vertices from Graph storage
++     * @param queryObject       Query for getting vertices
+      * @returns {Promise<any>}
+      */
+-    runQuery(queryString, params) {
++    findVertices(queryObject) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.runQuery(queryString, params).then((result) => {
++                this.db.findVertices(queryObject).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+@@ -57,17 +67,16 @@ class GraphStorage {
+     }
+ 
+     /**
+-     * Gets max version where uid is the same but not the _key
+-     * @param uid   Vertex uid
+-     * @param _key  Vertex _key
++     * Finds traversal path starting from particular vertex
++     * @param startVertex       Starting vertex
+      * @return {Promise<void>}
+      */
+-    getCurrentMaxVersion(uid, _key) {
++    findTraversalPath(startVertex) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.getCurrentMaxVersion(uid, _key).then((result) => {
++                this.db.findTraversalPath(startVertex).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+@@ -77,16 +86,17 @@ class GraphStorage {
+     }
+ 
+     /**
+-     * Gets max vertex_key where uid is the same and has the max version
++     * Gets max version where uid is the same but not the _key
+      * @param uid   Vertex uid
++     * @param _key  Vertex _key
+      * @return {Promise<void>}
+      */
+-    getVertexKeyWithMaxVersion(uid) {
++    getCurrentMaxVersion(uid, _key) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.getVertexKeyWithMaxVersion(uid).then((result) => {
++                this.db.getCurrentMaxVersion(uid, _key).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+@@ -96,17 +106,16 @@ class GraphStorage {
+     }
+ 
+     /**
+-     * Add new document into given collection on selected database
+-     * @param {string} - collectionName
+-     * @param {object} - document
+-     * @returns {Promise<any>}
++     * Gets max vertex_key where uid is the same and has the max version
++     * @param uid   Vertex uid
++     * @return {Promise<void>}
+      */
+-    addDocument(collectionName, document) {
++    getVertexKeyWithMaxVersion(uid) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.addDocument(collectionName, document).then((result) => {
++                this.db.getVertexKeyWithMaxVersion(uid).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+@@ -115,37 +124,19 @@ class GraphStorage {
+         });
+     }
+ 
++
+     /**
+-     * Update document in selected graph database
++     * Add new document into given collection on selected database
+      * @param {string} - collectionName
+      * @param {object} - document
+      * @returns {Promise<any>}
+      */
+-    updateDocument(collectionName, document) {
+-        return new Promise((resolve, reject) => {
+-            if (!this.db) {
+-                reject(Error('Not connected to graph database'));
+-            } else {
+-                this.db.updateDocument(collectionName, document).then((result) => {
+-                    resolve(result);
+-                }).catch((err) => {
+-                    reject(err);
+-                });
+-            }
+-        });
+-    }
+-
+-    /**
+-     * Get document from selected graph database
+-     * @param collectionName
+-     * @param document
+-     */
+-    getDocument(collectionName, documentKey) {
++    addDocument(collectionName, document) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.getDocument(collectionName, documentKey).then((result) => {
++                this.db.addDocument(collectionName, document).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+@@ -170,14 +161,12 @@ class GraphStorage {
+         return this.selectedDatabase;
+     }
+ 
+-    addEdge(collection_name, edge) {
+-        return this.addDocument(collection_name, edge);
+-    }
+-
+-    addVertex(collection_name, vertex) {
+-        return this.addDocument(collection_name, vertex);
+-    }
+-
++    /**
++     * Updates document with the import ID
++     * @param collectionName
++     * @param document
++     * @param importNumber
++     */
+     updateDocumentImports(collectionName, document, importNumber) {
+         return this.db.updateDocumentImports(collectionName, document, importNumber);
+     }
+@@ -185,6 +174,7 @@ class GraphStorage {
+     /**
+      * Create document collection, if collection does not exist
+      * @param collectionName
++     * @return {Promise}
+      */
+     createCollection(collectionName) {
+         return new Promise((resolve, reject) => {
+@@ -200,6 +190,11 @@ class GraphStorage {
+         });
+     }
+ 
++    /**
++     * Creates edge collection, if collection does not exist
++     * @param collectionName
++     * @return {Promise}
++     */
+     createEdgeCollection(collectionName) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+@@ -214,12 +209,17 @@ class GraphStorage {
+         });
+     }
+ 
+-    getVerticesByImportId(data_id) {
++    /**
++     * Get list of vertices by import ID
++     * @param importId   Import ID
++     * @return {Promise}
++     */
++    getVerticesByImportId(importId) {
+         return new Promise((resolve, reject) => {
+             if (!this.db) {
+                 reject(Error('Not connected to graph database'));
+             } else {
+-                this.db.getVerticesByImportId(data_id).then((result) => {
++                this.db.getVerticesByImportId(importId).then((result) => {
+                     resolve(result);
+                 }).catch((err) => {
+                     reject(err);
+diff --git a/modules/Database/Neo4j.js b/modules/Database/Neo4j.js
+new file mode 100644
+index 0000000..169e5a5
+--- /dev/null
++++ b/modules/Database/Neo4j.js
+@@ -0,0 +1,478 @@
++const neo4j = require('neo4j-driver').v1;
++const Utilities = require('../Utilities');
++
++const log = Utilities.getLogger();
++
++/**
++ * Neo4j storage adapter
++ */
++class Neo4jDB {
++    /**
++     * Neo4jDB constructor
++     * @param username  Username
++     * @param password  Password
++     * @param database  Database name
++     * @param host      Database connection host
++     * @param port      Database connection port
++     */
++    constructor(username, password, database, host, port) {
++        this.driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(username, password));
++    }
++
++    /**
++     * Get properties for Neo4J
++     * @param obj           Extraction object
++     * @param excludeList   List of excluded properties
++     * @private
++     */
++    static _getParams(obj, excludeList) {
++        const values = {};
++        const queries = [];
++        for (const p in obj) {
++            if (typeof obj[p] !== 'object') {
++                if (!excludeList || !excludeList.includes(p)) {
++                    values[p] = obj[p];
++                    queries.push(`${p}:$${p}`);
++                }
++            } else if (Array.isArray(obj[p])) {
++                const array = [];
++                for (const item of obj[p]) {
++                    if (typeof item === 'object' || Array.isArray(item)) {
++                        array.push(JSON.stringify(item));
++                    } else {
++                        array.push(item);
++                    }
++                }
++                if (!excludeList || !excludeList.includes(p)) {
++                    values[p] = array;
++                    queries.push(`${p}:$${p}`);
++                }
++            }
++        }
++        return {
++            values,
++            queries,
++        };
++    }
++
++    /**
++     * Get nested objects from object
++     * @param obj           Extraction object
++     * @returns {Array}     Array of nested objects
++     * @private
++     */
++    static _getNestedObjects(obj) {
++        const result = [];
++        for (const p in obj) {
++            if (typeof obj[p] === 'object' && !Array.isArray(obj[p])) {
++                result.push({
++                    edge: p,
++                    subvalue: obj[p],
++                });
++            }
++        }
++        return result;
++    }
++
++    /**
++     * Create vertex
++     * @param value         Vertex document
++     * @returns {Promise}
++     * @private
++     */
++    async _createVertex(value) {
++        const session = this.driver.session();
++        if (value == null || typeof value !== 'object' || Object.keys(value).length === 0) {
++            throw new Error(`Invalid vertex ${JSON.stringify(value)}`);
++        }
++        if (typeof value === 'object') {
++            const objectProps = Neo4jDB._getParams(value);
++            let params = '';
++            if (objectProps.queries.length > 0) {
++                params = ` {${objectProps.queries.join()}}`;
++            }
++            const r = await session.run(`CREATE (a${params}) RETURN a`, objectProps.values);
++            const nodeId = r.records[0]._fields[0].identity.toString();
++
++            for (const objectProp of Neo4jDB._getNestedObjects(value)) {
++                const { edge, subvalue } = objectProp;
++                // eslint-disable-next-line
++                const subnodeId = await this._createVertex(subvalue);
++                // eslint-disable-next-line
++                await session.run(`MATCH (a),(b) WHERE ID(a)=${nodeId} AND ID(b)=${subnodeId} CREATE (a)-[r:CONTAINS {value: '${edge}'}]->(b) return r`);
++            }
++            return nodeId;
++        }
++    }
++
++    /**
++     * Create edge
++     * @param edge  Edge document
++     * @returns {Promise}
++     * @private
++     */
++    async _createEdge(edge) {
++        const edgeType = edge.edge_type;
++        const to = edge._to.slice(edge._to.indexOf('/') + 1);
++        const from = edge._from.slice(edge._from.indexOf('/') + 1);
++
++        const objectProps = Neo4jDB._getParams(edge, ['_to', '_from']);
++        objectProps.queries.push('_to:$_to');
++        objectProps.queries.push('_from:$_from');
++        objectProps.values._to = to;
++        objectProps.values._from = from;
++        const params = ` {${objectProps.queries.join()}}`;
++        const session = this.driver.session();
++        const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType}${params}]->(b) return r`, objectProps.values);
++        session.close();
++        return r;
++    }
++
++    /**
++     * Transforms Neo4j property to Javascript compatible one
++     * @param property Property value
++     * @returns {*}
++     * @private
++     */
++    static _transformProperty(property) {
++        if (neo4j.isInt(property)) {
++            if (neo4j.integer.inSafeRange(property)) {
++                return property.toNumber();
++            }
++            return property.toString();
++        }
++        if (Array.isArray(property)) {
++            const newArray = [];
++            for (const item of property) {
++                let deserialized = item;
++                try {
++                    deserialized = JSON.parse(item);
++                } catch (e) {
++                    // skip
++                }
++                newArray.push(Neo4jDB._transformProperty(deserialized));
++            }
++            return newArray;
++        }
++        return property;
++    }
++
++    /**
++     * Transforms Neo4j properties to Javascript types
++     * @param properties    Property values
++     * @returns {Promise}
++     * @private
++     */
++    static async _transformProperties(properties) {
++        properties.records.forEach((row) => {
++            row._fields.forEach((val) => {
++                const processProperties = (properties, parent) => {
++                    if (properties) {
++                        const newProperties = {};
++                        for (const key in properties) {
++                            const property = properties[key];
++                            newProperties[key] = Neo4jDB._transformProperty(property);
++                        }
++                        parent.properties = newProperties;
++                    }
++                };
++                if (Array.isArray(val)) {
++                    for (const item of val) {
++                        processProperties(item.properties, item);
++                    }
++                } else {
++                    processProperties(val.properties, val);
++                }
++            });
++        });
++        return properties;
++    }
++
++    /**
++     * Gets all CONTAINS edges and forms one vertex
++     * @param key           Vertex property key
++     * @param value         Vertex property value
++     * @returns {Promise}
++     * @private
++     */
++    async _fetchVertex(key, value) {
++        const session = this.driver.session();
++        let result = await session.run(`MATCH (n { ${key}: ${JSON.stringify(value)} })-[r:CONTAINS *0..]->(k) RETURN n,r,k`);
++        session.close();
++
++        result = await Neo4jDB._transformProperties(result);
++        const json = {};
++        for (const r of result.records) {
++            const leftNode = r.get('n');
++            const relations = r.get('r');
++            const rightNode = r.get('k');
++
++            Object.assign(json, leftNode.properties);
++            const nestedKeys = [];
++            for (const relation of relations) {
++                nestedKeys.push(relation.properties.value);
++            }
++
++            if (relations.length > 0) {
++                let tempJson = json;
++                for (let i = 0; i < nestedKeys.length - 1; i += 1) {
++                    tempJson = tempJson[nestedKeys[i]];
++                }
++                tempJson[nestedKeys[nestedKeys.length - 1]] = rightNode.properties;
++            }
++        }
++        return json;
++    }
++
++    /**
++     * Gets max version where uid is the same but not the _key
++     * @param uid   Vertex uid
++     * @param _key  Vertex _key
++     * @return {Promise<void>}
++     */
++    async getCurrentMaxVersion(uid, _key) {
++        const session = this.driver.session();
++        const result = await session.run('MATCH (n) WHERE n.uid = $uid and n._key <> $_key return MAX(n.version)', { uid, _key });
++        session.close();
++        return result;
++    }
++
++    /**
++     * Gets max vertex_key where uid is the same and has the max version
++     * @param uid   Vertex uid
++     * @return {Promise<void>}
++     */
++    async getVertexKeyWithMaxVersion(uid) {
++        const session = this.driver.session();
++        const result = await session.run('MATCH (n) WHERE n.uid = $uid RETURN n.version AS v ORDER BY v DESC LIMIT 1', { uid });
++        session.close();
++        return result;
++    }
++
++    /**
++     * Find set of vertices
++     * @param queryObject       Query for getting vertices
++     * @returns {Promise<any>}
++     */
++    async findVertices(queryObject) {
++        const subQueries = [];
++        const properties = {};
++
++        let rSuffix = 1;
++        let kSuffix = 1;
++
++        for (const key in queryObject) {
++            if (key.match(/^[\w\d]+$/g) !== null) {
++                let searchKey;
++                if (key !== 'vertex_type' && key !== '_key') {
++                    searchKey = `identifiers.${key}`;
++                } else {
++                    searchKey = key;
++                }
++                const isComposite = searchKey.indexOf('.') !== -1;
++
++                if (isComposite) {
++                    const keyParts = searchKey.split('.');
++
++                    let subQuery = 'match (n)';
++                    let wheres = null;
++                    for (let i = 0; i < keyParts.length - 1; i += 1) {
++                        const subkey = keyParts[i];
++                        subQuery += `-[r_${rSuffix}:CONTAINS]`;
++                        if (wheres == null) {
++                            wheres = `r_${rSuffix}.value = '${subkey}'`;
++                        } else {
++                            wheres += `AND r_${rSuffix}.value = '${subkey}'`;
++                        }
++                        rSuffix += 1;
++                    }
++                    subQuery += `-(k_${kSuffix}) WHERE ${wheres} AND k_${kSuffix}.${keyParts[keyParts.length - 1]} = ${JSON.stringify(queryObject[key])}`;
++                    kSuffix += 1;
++                    subQueries.push(subQuery);
++                } else {
++                    properties[searchKey] = queryObject[key];
++                }
++            }
++        }
++
++        let query;
++        if (Utilities.isEmptyObject(properties)) {
++            query = 'match (n)';
++        } else {
++            query = 'match (n {';
++            for (const propertyKey in properties) {
++                const property = properties[propertyKey];
++                query += `${propertyKey}: ${JSON.stringify(property)}`;
++            }
++            query += '})';
++        }
++
++        for (const subQuery of subQueries) {
++            query += ` with n ${subQuery}`;
++        }
++        query += ' return n';
++        const session = this.driver.session();
++        let result = await session.run(query);
++        session.close();
++        result = await Neo4jDB._transformProperties(result);
++        const nodePromises = [];
++        for (const record of result.records) {
++            nodePromises.push(this._fetchVertex('_key', record._fields[0].properties._key));
++        }
++        result = await Promise.all(nodePromises);
++        return result;
++    }
++
++    /**
++     * Find traversal path for key/value start
++     * @param startVertex Start vertex
++     * @param depth       Explicit traversal depth
++     * @return
++     */
++    async findTraversalPath(startVertex, depth) {
++        const key = '_key';
++        const value = startVertex._key;
++        if (depth == null) {
++            depth = this.getDatabaseInfo().max_path_length;
++        }
++
++        const session = this.driver.session();
++        const result = await session.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`);
++        session.close();
++
++        const vertices = {};
++        for (const r of result.records) {
++            const leftNode = r.get('n');
++            const rightNode = r.get('k');
++
++            const relations = r.get('r');
++            const relation = relations[relations.length - 1];
++
++            let first = vertices[leftNode.properties._key];
++            if (!first) {
++                // eslint-disable-next-line
++                first = await this._fetchVertex('_key', leftNode.properties._key);
++                first.key = first._key;
++                delete first._key;
++                vertices[first.key] = first;
++                vertices[first.key].edges = [];
++            }
++
++            let second = vertices[rightNode.properties._key];
++            if (!second) {
++                // eslint-disable-next-line
++                second = await this._fetchVertex('_key', rightNode.properties._key);
++                second.key = second._key;
++                delete second._key;
++                vertices[second.key] = second;
++                vertices[second.key].edges = [];
++            }
++
++            const fromNode = vertices[relation.properties._from];
++            Object.assign(relation, relation.properties);
++            delete relation.properties;
++            delete relation.identity;
++            delete relation.start;
++            delete relation.end;
++            fromNode.edges.push(relation);
++        }
++
++        const res = [];
++        for (const k in vertices) {
++            res.push(vertices[k]);
++        }
++        return res;
++    }
++
++    /**
++     * Updates document with the import ID
++     * @param collectionName
++     * @param document
++     * @param importNumber
++     */
++    async updateDocumentImports(collectionName, document, importNumber) {
++        if (collectionName === 'ot_edges') {
++            return [];
++        }
++        const session = this.driver.session();
++        return session.run(`MATCH(n) WHERE n._key = '${document._key}' SET n.imports = n.imports + ${importNumber} return n`);
++    }
++
++    /**
++     * Gets vertices by the import ID
++     * @param importId  Import ID
++     * @return {Promise}
++     */
++    async getVerticesByImportId(importId) {
++        const session = this.driver.session();
++        const result = await session.run(`match (n) where ${importId} in n.imports return n`);
++
++        const nodes = [];
++        for (const record of result.records) {
++            // eslint-disable-next-line
++            nodes.push(await this._fetchVertex('_key', record._fields[0].properties._key));
++        }
++        return nodes;
++    }
++
++    /**
++     * Add new document into given collection
++     * @param {string} - collectionName
++     * @param {object} - document
++     * @returns {Promise<any>}
++     */
++    async addDocument(collectionName, document) {
++        if (collectionName === 'ot_vertices') {
++            await this._createVertex(document);
++        } else {
++            await this._createEdge(document);
++        }
++    }
++
++    /**
++     * Shut down the driver
++     */
++    close() {
++        this.driver.close();
++    }
++
++    /**
++     * Clear the db
++     * @return {Promise}
++     */
++    async clear() {
++        log.debug('Clear the database.');
++        const session = this.driver.session();
++        await session.run('match (n) detach delete n');
++    }
++
++    /**
++     * This method is not applicable in Neo4jDB
++     * @deprecated
++     */
++    createCollection() {
++        return new Promise((resolve) => {
++            resolve();
++        });
++    }
++
++    /**
++     * This method is not applicable in Neo4jDB
++     * @deprecated
++     */
++    createEdgeCollection() {
++        return new Promise((resolve) => {
++            resolve();
++        });
++    }
++
++    /**
++     * Identify selected database as Neo4j
++     * @returns {string} - Graph database identifier string
++     */
++    identify() {
++        return 'Neo4j';
++    }
++}
++
++module.exports = Neo4jDB;
+diff --git a/modules/EventHandlers.js b/modules/EventHandlers.js
+index 7d209d6..63251dc 100644
+--- a/modules/EventHandlers.js
++++ b/modules/EventHandlers.js
+@@ -15,9 +15,6 @@ const DHService = require('./DHService');
+ const DCService = require('./DCService');
+ const BN = require('bn.js');
+ 
+-// TODO remove below after SC intro
+-const SmartContractInstance = require('./temp/MockSmartContractInstance');
+-
+ const { globalEmitter } = globalEvents;
+ const log = Utilities.getLogger();
+ 
+@@ -175,39 +172,11 @@ globalEmitter.on('offer-ended', (message) => {
+     const { scId } = message;
+ 
+     log.info(`Offer ${scId} has ended.`);
+-
+-    // TODO: Trigger escrow to end bidding and notify chosen.
+-    const bids = SmartContractInstance.sc.choose(scId);
+-
+-    bids.forEach((bid) => {
+-        console.log(bid);
+-        node.ot.biddingWon(
+-            { dataId: scId },
+-            bid.dhId, (error) => {
+-                if (error) {
+-                    log.warn(error);
+-                }
+-            },
+-        );
+-    });
+ });
+ 
+ 
+ globalEmitter.on('kad-bidding-won', (message) => {
+     log.info('Wow I won bidding. Let\'s get into it.');
+-
+-    const { dataId } = message.params.message;
+-
+-    // Now request data to check validity of offer.
+-
+-    const dcId = SmartContractInstance.sc.getDcForBid(dataId);
+-
+-
+-    node.ot.replicationRequest({ dataId }, dcId, (err) => {
+-        if (err) {
+-            log.warn(err);
+-        }
+-    });
+ });
+ 
+ globalEmitter.on('eth-offer-created', (event) => {
+diff --git a/modules/Graph.js b/modules/Graph.js
+index a1b07c9..73cc2ff 100644
+--- a/modules/Graph.js
++++ b/modules/Graph.js
+@@ -1,8 +1,6 @@
+-const Utilities = require('./Utilities');
+ const Encryption = require('./Encryption');
+ 
+ const sysdb = require('./Database/SystemStorage');
+-const GraphStorage = require('./GraphStorageInstance');
+ 
+ /**
+  * Graph class encapsulates every operation related to
+@@ -10,144 +8,6 @@ const GraphStorage = require('./GraphStorageInstance');
+  */
+ class Graph {
+     /**
+-     * Find set of vertices from Graph storage
+-     * @param queryObject       Query for getting vertices
+-     * @returns {Promise<any>}
+-     */
+-    findVertices(queryObject) {
+-        return new Promise((resolve, reject) => {
+-            let queryString = 'FOR v IN ot_vertices ';
+-            const params = {};
+-            if (Utilities.isEmptyObject(queryObject) === false) {
+-                queryString += 'FILTER ';
+-
+-                let count = 1;
+-                const filters = [];
+-                for (const key in queryObject) {
+-                    if (key.match(/^[\w\d]+$/g) !== null) {
+-                        let searchKey;
+-                        if (key !== 'vertex_type' && key !== '_key') {
+-                            searchKey = `identifiers.${key}`;
+-                        } else {
+-                            searchKey = key;
+-                        }
+-                        const param = `param${count}`;
+-                        filters.push(`v.${searchKey} == @param${count}`);
+-
+-                        count += 1;
+-                        params[param] = queryObject[key];
+-                    }
+-                }
+-                queryString += filters.join(' AND ');
+-            }
+-            queryString += ' RETURN v';
+-
+-            GraphStorage.db.runQuery(queryString, params).then((result) => {
+-                resolve(result);
+-            }).catch((err) => {
+-                reject(err);
+-            });
+-        });
+-    }
+-
+-    /**
+-     * Finds traversal path starting from particular vertex
+-     * @param startVertex       Starting vertex
+-     * @returns {Promise<any>}
+-     */
+-    findTraversalPath(startVertex) {
+-        return new Promise((resolve, reject) => {
+-            if (startVertex === undefined || startVertex._id === undefined) {
+-                resolve([]);
+-                return;
+-            }
+-            const maxPathLength = GraphStorage.db.getDatabaseInfo().max_path_length;
+-            const queryString = `FOR vertice, edge, path IN 1 .. ${maxPathLength}
+-            OUTBOUND '${startVertex._id}'
+-            GRAPH 'origintrail_graph'
+-            RETURN path`;
+-
+-            GraphStorage.db.runQuery(queryString).then((result) => {
+-                resolve(result);
+-            }).catch((err) => {
+-                reject(err);
+-            });
+-        });
+-    }
+-
+-    /**
+-     * Transforms raw graph data to virtual one (without
+-     * @param rawGraph  Raw graph structure
+-     * @returns {{}}
+-     */
+-    static convertToVirtualGraph(rawGraph) {
+-        const resultList = {};
+-        const resultEdges = {};
+-        const resultVertices = {};
+-
+-        for (const id in rawGraph) {
+-            const graph = rawGraph[id];
+-            if (graph.edges == null) {
+-                // eslint-disable-next-line no-continue
+-                continue;
+-            }
+-
+-            for (const edgeId in graph.edges) {
+-                const edge = graph.edges[edgeId];
+-                if (edge !== null) {
+-                    edge.key = edge._key;
+-                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
+-                    edge.from = edge._from.split('/')[1];
+-                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
+-                    edge.to = edge._to.split('/')[1];
+-
+-                    delete edge._key;
+-                    delete edge._id;
+-                    delete edge._rev;
+-                    delete edge._to;
+-                    delete edge._from;
+-
+-                    // eslint-disable-next-line  prefer-destructuring
+-                    const key = edge.key;
+-                    if (resultEdges[key] === undefined) {
+-                        resultEdges[key] = edge;
+-                    }
+-                }
+-            }
+-
+-            if (graph.vertices !== undefined) {
+-                for (const vertexId in graph.vertices) {
+-                    const vertex = graph.vertices[vertexId];
+-                    if (vertex !== null) {
+-                        vertex.key = vertex._key;
+-                        vertex.outbound = [];
+-
+-                        delete vertex._key;
+-                        delete vertex._id;
+-                        delete vertex._rev;
+-
+-                        // eslint-disable-next-line  prefer-destructuring
+-                        const key = vertex.key;
+-                        if (resultVertices[key] === undefined) {
+-                            resultVertices[key] = vertex;
+-                        }
+-                    }
+-                }
+-            }
+-        }
+-
+-        for (const vertexId in resultVertices) {
+-            resultList[resultVertices[vertexId].key] = resultVertices[vertexId];
+-        }
+-        for (const edgeId in resultEdges) {
+-            resultList[resultEdges[edgeId].from].outbound.push(resultEdges[edgeId]);
+-        }
+-        return {
+-            data: resultList,
+-        };
+-    }
+-
+-    /**
+      * Traversing through the trail graph in Breadth-first manner
+      * @param trailGraph          Virtual graph data
+      * @param startVertexUID      Start vertex UID
+@@ -292,5 +152,4 @@ class Graph {
+     }
+ }
+ 
+-
+ module.exports = Graph;
+diff --git a/modules/Network.js b/modules/Network.js
+index 78ad30c..971c7ef 100644
+--- a/modules/Network.js
++++ b/modules/Network.js
+@@ -14,9 +14,6 @@ const NetworkUtilities = require('./NetworkUtilities');
+ const utilities = require('./Utilities');
+ const globalEvents = require('./GlobalEvents');
+ 
+-// TODO remove below after SC intro
+-const SmartContractInstance = require('./temp/MockSmartContractInstance');
+-
+ const { globalEmitter } = globalEvents;
+ let ns = {};
+ 
+@@ -288,9 +285,8 @@ class Network {
+         // TODO remove temp add bid route
+         node.ot.use('add-bid', (request, response, next) => {
+             log.info('add-bid');
+-            const { offerId, bid } = request.params.message;
++            const { bid } = request.params.message;
+             [bid.dhId] = request.contact;
+-            SmartContractInstance.sc.addDhBid(offerId, bid);
+             response.send({
+                 status: 'OK',
+             });
+diff --git a/modules/Product.js b/modules/Product.js
+index 314d1e3..a4585e3 100644
+--- a/modules/Product.js
++++ b/modules/Product.js
+@@ -89,11 +89,7 @@ class Product {
+                 }
+ 
+                 const start_vertex = vertices[0];
+-                GraphInstance.g.findTraversalPath(start_vertex).then((raw_graph_data) => {
+-                    const copiedRawGraph = Utilities.copyObject(raw_graph_data);
+-                    const virtualGraph = Graph.convertToVirtualGraph(copiedRawGraph);
+-
+-
++                GraphInstance.g.findTraversalPath(start_vertex).then((virtualGraph) => {
+                     const returnBFS = Utilities.copyObject(virtualGraph);
+                     const BFSt = Graph.bfs(
+                         Utilities.copyObject(returnBFS.data),
+diff --git a/modules/gs1-importer.js b/modules/gs1-importer.js
+index 7936b54..2b1c40a 100644
+--- a/modules/gs1-importer.js
++++ b/modules/gs1-importer.js
+@@ -690,6 +690,8 @@ module.exports = () => ({
+                                             }
+                                         }
+ 
++                                        const new_obj = {};
++                                        const sanitized_object_data = sanitize(object_data, new_obj, ['urn:', 'ot:', 'mda:', 'object:']);
+ 
+                                         locations[business_location_id] = {};
+                                         locations[business_location_id].identifiers = {};
+@@ -699,7 +701,7 @@ module.exports = () => ({
+                                         locations[business_location_id]
+                                             .identifiers.uid = business_location_id;
+                                         locations[business_location_id]
+-                                            .data = utilities.copyObject(data_object);
++                                            .data = utilities.copyObject(sanitized_object_data);
+                                         locations[business_location_id].vertex_type = 'BUSINESS_LOCATION';
+                                         locations[business_location_id]._key = md5(`business_location_${sender_id}_${business_location_id}`);
+                                     }
+diff --git a/modules/temp/MockSmartContract.js b/modules/temp/MockSmartContract.js
+deleted file mode 100644
+index d5eb5d2..0000000
+--- a/modules/temp/MockSmartContract.js
++++ /dev/null
+@@ -1,59 +0,0 @@
+-const globalEvents = require('../GlobalEvents');
+-const log = require('../Utilities').getLogger();
+-
+-const { globalEmitter } = globalEvents;
+-
+-class MockSmartContract {
+-    constructor() {
+-        this.offers = [];
+-        this.dhs = [];
+-        this.dcs = [];
+-
+-        // TODO: Check for already send offers and bids in database and start timers.
+-    }
+-
+-    /**
+-     * Creates offer
+-     */
+-    createOffer(dataId, offer) {
+-        this.offers[dataId] = offer;
+-        this.dhs[dataId] = [];
+-
+-        // simulate timed event
+-        // setTimeout(() => {
+-        //     log.info('Offer ended');
+-        //     globalEmitter.emit('offer-ended', {
+-        //         scId: dataId,
+-        //     });
+-        // }, 15 * 1000);
+-        return dataId;
+-    }
+-
+-    /**
+-     * Adds single DH bid
+-     */
+-    addDhBid(dataId, dhBid) {
+-        this.dhs[dataId].push(dhBid);
+-    }
+-
+-    addDcOffer(dataId, dcId) {
+-        this.dcs[dataId] = dcId;
+-    }
+-
+-    /**
+-     * Choose some of the DHs
+-     */
+-    choose(dataId) {
+-        return this.dhs[dataId];
+-    }
+-
+-    getDcForBid(dataId) {
+-        return this.dcs[dataId];
+-    }
+-
+-    getBid(dataId, dhId) {
+-        return this.dhs[dataId].find(element => element.dhId === dhId);
+-    }
+-}
+-
+-module.exports = MockSmartContract;
+diff --git a/modules/temp/MockSmartContractInstance.js b/modules/temp/MockSmartContractInstance.js
+deleted file mode 100644
+index 7805eda..0000000
+--- a/modules/temp/MockSmartContractInstance.js
++++ /dev/null
+@@ -1,12 +0,0 @@
+-let instance = null;
+-
+-class MockSmartContractInstance {
+-    constructor() {
+-        if (!instance) {
+-            instance = this;
+-        }
+-        return instance;
+-    }
+-}
+-
+-module.exports = new MockSmartContractInstance();
+diff --git a/ot-node.js b/ot-node.js
+index d527ed6..32b769e 100644
+--- a/ot-node.js
++++ b/ot-node.js
+@@ -17,8 +17,6 @@ const BCInstance = require('./modules/BlockChainInstance');
+ const GraphInstance = require('./modules/GraphInstance');
+ const GSInstance = require('./modules/GraphStorageInstance');
+ const ProductInstance = require('./modules/ProductInstance');
+-const MockSmartContract = require('./modules/temp/MockSmartContract');
+-const MockSmartContractInstance = require('./modules/temp/MockSmartContractInstance');
+ require('./modules/EventHandlers');
+ 
+ var pjson = require('./package.json');
+@@ -85,7 +83,7 @@ class OTNode {
+         }
+ 
+         // check does node_wallet has sufficient Ether and ATRAC tokens
+-        if (process.env !== 'test') {
++        if (process.env.NODE_ENV !== 'test') {
+             try {
+                 const etherBalance = deasync(Utilities.getBalanceInEthers());
+                 if (etherBalance <= 0) {
+@@ -116,7 +114,6 @@ class OTNode {
+         BCInstance.bc = new Blockchain(selectedBlockchain);
+         ProductInstance.p = new Product();
+         GraphInstance.g = new Graph();
+-        MockSmartContractInstance.sc = new MockSmartContract();
+ 
+         // Connecting to graph database
+         try {
+diff --git a/package.json b/package.json
+index 226e9f0..82b4993 100644
+--- a/package.json
++++ b/package.json
+@@ -40,6 +40,7 @@
+   "dependencies": {
+     "@garbados/merkle-tree": "^1.0.3-alpha",
+     "@kadenceproject/kadence": "^3.2.2",
++    "ajv": "^5.5.2",
+     "arangojs": "^5.8.0",
+     "async": "^2.6.0",
+     "bn.js": "^4.11.8",
+@@ -54,6 +55,7 @@
+     "ethereumjs-tx": "^1.3.4",
+     "hdkey": "^0.8.0",
+     "ipaddr.js": "^1.6.0",
++    "json-stable-stringify": "^1.0.1",
+     "knex": "^0.14.5",
+     "leveldown": "^3.0.0",
+     "levelup": "^2.0.2",
+@@ -61,8 +63,10 @@
+     "lodash": "^4.17.5",
+     "md5": "^2.2.1",
+     "ms": "^2.1.1",
++    "neo4j-driver": "^1.5.0",
+     "node-rsa": "^0.4.2",
+     "nodeify": "^1.0.1",
++    "npm": "^6.0.0",
+     "pem": "^1.12.3",
+     "python-shell": "^0.5.0",
+     "randomstring": "^1.1.5",
+diff --git a/seeders/20180407121512-graph-database.js b/seeders/20180407121512-graph-database.js
+index 8cc4a70..2fb6d7b 100644
+--- a/seeders/20180407121512-graph-database.js
++++ b/seeders/20180407121512-graph-database.js
+@@ -9,7 +9,17 @@ module.exports = {
+         port: process.env.DB_PORT,
+         max_path_length: 1000,
+         database: process.env.DB_DATABASE,
+-    }], {}),
++    },
++    {
++        database_system: 'neo4j',
++        username: process.env.NEO_USERNAME,
++        password: process.env.NEO_PASSWORD,
++        host: process.env.NEO_HOST,
++        port: process.env.NEO_PORT,
++        max_path_length: 1000,
++        database: process.env.NEO_DATABASE,
++    },
++    ], {}),
+ 
+     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('graph_database', null, {}),
+ };
+diff --git a/setup_neo4j.sh b/setup_neo4j.sh
+new file mode 100644
+index 0000000..4c3a6ab
+--- /dev/null
++++ b/setup_neo4j.sh
+@@ -0,0 +1,24 @@
++#!/bin/bash
++
++DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
++cd $DIR
++
++echo "Installing Java 8 as user `whoami` "
++
++sudo echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" | tee /etc/apt/sources.list.d/webupd8team-java.list
++sudo echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list
++
++# Accept license non-iteractive
++sudo echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
++sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
++sudo apt-get update
++sudo apt-get install -y oracle-java8-installer
++
++# Make sure Java 8 becomes default java
++sudo apt-get install -y oracle-java8-set-default
++
++# Install Neo4j
++wget --no-check-certificate -O - https://debian.neo4j.org/neotechnology.gpg.key | sudo apt-key add -
++sudo echo 'deb http://debian.neo4j.org/repo stable/' | sudo tee /etc/apt/sources.list.d/neo4j.list
++sudo apt update -y
++sudo apt install neo4j
+\ No newline at end of file
+diff --git a/test/modules/arangojs.test.js b/test/modules/arangojs.test.js
+index 8455077..9d9cb7e 100644
+--- a/test/modules/arangojs.test.js
++++ b/test/modules/arangojs.test.js
+@@ -53,6 +53,15 @@ describe('Arangojs module ', async () => {
+         });
+     });
+ 
++    it('.runQuery() on invalid instance should not give back result', async () => {
++        const now = Date.now();
++        try {
++            await testDb.runQuery('RETURN @value', { value: now });
++        } catch (error) {
++            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
++        }
++    });
++
+     it('.createCollection() should create Document Collection', async () => {
+         // first time creating Document Collection
+         await testDb.createCollection(documentCollectionName).then((response) => {
+@@ -165,6 +174,57 @@ describe('Arangojs module ', async () => {
+         assert.deepEqual(retrievedEdge._from, edgeOne._from);
+     });
+ 
++    it('updateDocumentImports() should add/append data', async () => {
++        // this will implicitly call testDb.updateDocument()
++        await testDb.updateDocumentImports(
++            edgeCollectionName,
++            // eslint-disable-next-line no-underscore-dangle
++            edgeOne._key, newImportValue,
++        ).then((response) => {
++            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
++        });
++
++        // check value of imports
++        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
++            assert.include(response.imports, newImportValue);
++        });
++    });
++
++    it('getDocument() by vertexKey should give back vertex itself', async () => {
++        await testDb.getDocument(documentCollectionName, vertexOne._key)
++            .then((response) => {
++                assert.deepEqual(response._key, vertexOne._key);
++                assert.deepEqual(response.data, vertexOne.data);
++            });
++    });
++
++    it('attempt to getDocument on non existing db should fail', async () => {
++        try {
++            await testDb.getDocument(documentCollectionName, vertexOne._key);
++        } catch (error) {
++            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
++        }
++    });
++
++    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
++        try {
++            await testDb.getDocument(edgeCollectionName, edgeOne._key);
++        } catch (error) {
++            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
++        }
++    });
++
++    it('getDocument() by edgeKey should give back edge itself', async () => {
++        await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
++            // eslint-disable-next-line no-underscore-dangle
++            assert.equal(response._from, edgeOne._from);
++            // eslint-disable-next-line no-underscore-dangle
++            assert.equal(response._to, edgeOne._to);
++            // eslint-disable-next-line no-underscore-dangle
++            assert.equal(response._key, edgeOne._key);
++        });
++    });
++
+     it('getDocument() by vertexKey should give back vertex itself', async () => {
+         await testDb.getDocument(documentCollectionName, vertexOne._key).then((response) => {
+             assert.deepEqual(response._key, vertexOne._key);
+@@ -209,15 +269,11 @@ describe('Arangojs module ', async () => {
+             _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+         };
+ 
+-        try {
+-            testDb.updateDocument(
+-                edgeCollectionName,
+-                // eslint-disable-next-line no-underscore-dangle
+-                updatetedEdgeOne,
+-            );
+-        } catch (error) {
+-            console.log(error);
+-        }
++        await testDb.updateDocument(
++            edgeCollectionName,
++            // eslint-disable-next-line no-underscore-dangle
++            updatetedEdgeOne,
++        );
+ 
+         // check value of new imports
+         await testDb.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+@@ -247,6 +303,65 @@ describe('Arangojs module ', async () => {
+         });
+     });
+ 
++    it('.findVertices() with empty query should fail', async () => {
++        try {
++            await testDb.findVertices();
++        } catch (error) {
++            // Utilities.isEmptyObject() will complain
++            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
++        }
++    });
++
++    it('.findVertices() when still not connected to graph db should fail', async () => {
++        const queryObject = {
++            uid: '123',
++            vertex_type: 'BATCH',
++        };
++        try {
++            const result = await testDb.findVertices(queryObject);
++        } catch (error) {
++            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
++        }
++    });
++
++    it('.findVertices() on top of empty collection should find nothing', async () => {
++        const queryObject = {
++            uid: '123',
++            vertex_type: 'BATCH',
++        };
++        await testDb.findVertices(queryObject).then((response) => {
++            assert.isEmpty(response);
++            assert.isTrue(typeof (response) === 'object');
++        });
++    });
++
++    it('.findTraversalPath() with non valid startVertex should fail', async () => {
++        // db alredy connected and ot_vertices exists
++        const myStartVertex = {
++            _id: undefined,
++        };
++        try {
++            const response = await testDb.findTraversalPath(myStartVertex);
++            assert.isEmpty(response);
++            assert.isTrue(typeof (response) === 'object');
++        } catch (error) {
++            console.log(error);
++        }
++    });
++
++    it('.findTraversalPath() with non existing startVertex should fail', async () => {
++        // db alredy connected and ot_vertices exists
++        const myStartVertex = {
++            _id: 0,
++        };
++
++        try {
++            const response = await testDb.findTraversalPath(myStartVertex, 1);
++        } catch (error) {
++            assert.equal(error.code, 404);
++        }
++    });
++
+     after('drop testDb db', async () => {
+         systemDb = new Database();
+         systemDb.useBasicAuth('root', 'root');
+diff --git a/test/modules/graph.test.js b/test/modules/graph.test.js
+index 04957f0..a9f75d2 100644
+--- a/test/modules/graph.test.js
++++ b/test/modules/graph.test.js
+@@ -272,71 +272,6 @@ describe('graph module ', () => {
+             { identifiers: { uid: 5555 } },
+         ]);
+     });
+-    it('Create virtual graph test', () => {
+-        const test_raw_graph = {
+-            graph_1: {
+-                vertices: [{
+-                    vertex_type: 'BUSINESS_LOCATION',
+-                    identifiers: {
+-                        BusinessLocationId: 'FARM_1',
+-                        uid: 'ot:WALLET_ID:otblid:FARM_1',
+-                    },
+-                    vertex_key: '2e0b1ba163be76138d51a0b8258e97d7',
+-                    _key: '2e0b1ba163be76138d51a0b8258e97d7',
+-                },
+-                {
+-                    vertex_type: 'PARTICIPANT',
+-                    identifiers: {
+-                        ParticipantId: 'PARTNER_ID',
+-                        uid: 'ot:WALLET_ID:otpartid:PARTNER_ID',
+-                    },
+-                    vertex_key: 'cd923bec4266a7f63b68722da254f205',
+-                    _key: 'cd923bec4266a7f63b68722da254f205',
+-                },
+-                ],
+-                edges: [
+-                    {
+-                        _key: '6eb743d84a605b2ab6be67a373b883d4',
+-                        edge_type: 'OWNED_BY',
+-                        _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
+-                        _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+-                    },
+-                ],
+-            },
+-        };
+-        const traversal = Graph.convertToVirtualGraph(test_raw_graph);
+-        assert.deepEqual(traversal, {
+-            data: {
+-                '2e0b1ba163be76138d51a0b8258e97d7': {
+-                    identifiers: {
+-                        BusinessLocationId: 'FARM_1',
+-                        uid: 'ot:WALLET_ID:otblid:FARM_1',
+-                    },
+-                    key: '2e0b1ba163be76138d51a0b8258e97d7',
+-                    outbound: [
+-                        {
+-                            edge_type: 'OWNED_BY',
+-                            from: '2e0b1ba163be76138d51a0b8258e97d7',
+-                            key: '6eb743d84a605b2ab6be67a373b883d4',
+-                            to: 'cd923bec4266a7f63b68722da254f205',
+-                        },
+-                    ],
+-                    vertex_key: '2e0b1ba163be76138d51a0b8258e97d7',
+-                    vertex_type: 'BUSINESS_LOCATION',
+-                },
+-                cd923bec4266a7f63b68722da254f205: {
+-                    identifiers: {
+-                        ParticipantId: 'PARTNER_ID',
+-                        uid: 'ot:WALLET_ID:otpartid:PARTNER_ID',
+-                    },
+-                    key: 'cd923bec4266a7f63b68722da254f205',
+-                    outbound: [],
+-                    vertex_key: 'cd923bec4266a7f63b68722da254f205',
+-                    vertex_type: 'PARTICIPANT',
+-                },
+-            },
+-        });
+-    });
+     // TODO
+     it.skip('Encrypt vertices, key not found test', () => {
+         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
+@@ -406,67 +341,4 @@ describe('graph module ', () => {
+         assert.isNotNull(encryptedData);
+         assert.equal(encryptedData, encryptedVertex.data);
+     });
+-
+-    it('.findVertices() with empty query should fail', async () => {
+-        try {
+-            await GraphInstance.g.findVertices();
+-        } catch (error) {
+-            // Utilities.isEmptyObject() will complain
+-            assert.isTrue(error.toString().indexOf('Cannot convert undefined or null to object') >= 0);
+-        }
+-    });
+-
+-    it('.findVertices() when still not connected to graph db should fail', async () => {
+-        const queryObject = {
+-            uid: '123',
+-            vertex_type: 'BATCH',
+-        };
+-        try {
+-            const result = await GraphInstance.g.findVertices(queryObject);
+-        } catch (error) {
+-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+-        }
+-    });
+-
+-    it('.findVertices() on top of empty collection should find nothing', async () => {
+-        await GSInstance.db.connect();
+-        await GSInstance.db.createCollection('ot_vertices').then((response) => {
+-            assert.equal(response, 'Collection created');
+-        });
+-        const queryObject = {
+-            uid: '123',
+-            vertex_type: 'BATCH',
+-        };
+-        await GraphInstance.g.findVertices(queryObject).then((response) => {
+-            assert.isEmpty(response);
+-            assert.isTrue(typeof (response) === 'object');
+-        });
+-    });
+-
+-    it('.findTraversalPath() with non valid startVertex should fail', async () => {
+-        // db alredy connected and ot_vertices exists
+-        const myStartVertex = {
+-            _id: undefined,
+-        };
+-        try {
+-            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+-            assert.isEmpty(response);
+-            assert.isTrue(typeof (response) === 'object');
+-        } catch (error) {
+-            console.log(error);
+-        }
+-    });
+-
+-    it('.findTraversalPath() with non existing startVertex should fail', async () => {
+-        // db alredy connected and ot_vertices exists
+-        const myStartVertex = {
+-            _id: 0,
+-        };
+-
+-        try {
+-            const response = await GraphInstance.g.findTraversalPath(myStartVertex);
+-        } catch (error) {
+-            assert.equal(error.code, 404);
+-        }
+-    });
+ });
+diff --git a/test/modules/graphstorage.test.js b/test/modules/graphstorage.test.js
+index 216ed36..a52cb64 100644
+--- a/test/modules/graphstorage.test.js
++++ b/test/modules/graphstorage.test.js
+@@ -72,25 +72,9 @@ describe('GraphStorage module', () => {
+         assert.equal(result, selectedDatabase);
+     });
+ 
+-    it('.runQuery() should give back result', async () => {
+-        const now = Date.now();
+-        await myGraphStorage.runQuery('RETURN @value', { value: now }).then((response) => {
+-            assert.approximately(response[0], now, 1000, 'Resulted time is approx same as current');
+-        });
+-    });
+-
+-    it('.runQuery() on invalid instance should not give back result', async () => {
+-        const now = Date.now();
+-        try {
+-            await myInvalidGraphStorage.runQuery('RETURN @value', { value: now });
+-        } catch (error) {
+-            assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
+-        }
+-    });
+-
+     it('attempt to save vertex in non existing Document Collection should fail', async () => {
+         try {
+-            await myGraphStorage.addVertex(documentCollectionName, vertexOne);
++            await myGraphStorage.addDocument(documentCollectionName, vertexOne);
+         } catch (error) {
+             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_vertices') >= 0);
+         }
+@@ -98,19 +82,12 @@ describe('GraphStorage module', () => {
+ 
+     it('attempt to save edge in non existing Edge Collection should fail', async () => {
+         try {
+-            await myGraphStorage.addEdge(edgeCollectionName, edgeOne);
++            await myGraphStorage.addDocument(edgeCollectionName, edgeOne);
+         } catch (error) {
+             assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+         }
+     });
+ 
+-    it('attempt to getDocument by edgeKey on non existing collection should fail', async () => {
+-        try {
+-            await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key);
+-        } catch (error) {
+-            assert.isTrue(error.toString().indexOf('ArangoError: collection not found: ot_edges') >= 0);
+-        }
+-    });
+ 
+     it('attempt to create doc Collection on non existing db should fail', async () => {
+         try {
+@@ -128,13 +105,6 @@ describe('GraphStorage module', () => {
+         }
+     });
+ 
+-    it('attempt to getDocument on non existing db should fail', async () => {
+-        try {
+-            await myInvalidGraphStorage.getDocument(documentCollectionName, vertexOne._key);
+-        } catch (error) {
+-            assert.isTrue(error.toString().indexOf('Error: Not connected to graph database') >= 0);
+-        }
+-    });
+ 
+     it('attempt to updateDocumentImports on non existing db should fail', async () => {
+         try {
+@@ -178,7 +148,7 @@ describe('GraphStorage module', () => {
+     });
+ 
+     it('.addVertex() should save vertex in Document Collection', () => {
+-        myGraphStorage.addVertex(documentCollectionName, vertexOne).then((response) => {
++        myGraphStorage.addDocument(documentCollectionName, vertexOne).then((response) => {
+             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+         });
+     });
+@@ -194,46 +164,11 @@ describe('GraphStorage module', () => {
+     });
+ 
+     it('.addEdge() should save edge in Edge Document Collection', () => {
+-        myGraphStorage.addEdge(edgeCollectionName, edgeOne).then((response) => {
++        myGraphStorage.addDocument(edgeCollectionName, edgeOne).then((response) => {
+             assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+         });
+     });
+ 
+-    it('getDocument() by vertexKey should give back vertex itself', async () => {
+-        await myGraphStorage.getDocument(documentCollectionName, vertexOne._key)
+-            .then((response) => {
+-                assert.deepEqual(response._key, vertexOne._key);
+-                assert.deepEqual(response.data, vertexOne.data);
+-            });
+-    });
+-
+-    it('getDocument() by edgeKey should give back edge itself', async () => {
+-        await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+-            // eslint-disable-next-line no-underscore-dangle
+-            assert.equal(response._from, edgeOne._from);
+-            // eslint-disable-next-line no-underscore-dangle
+-            assert.equal(response._to, edgeOne._to);
+-            // eslint-disable-next-line no-underscore-dangle
+-            assert.equal(response._key, edgeOne._key);
+-        });
+-    });
+-
+-    it('updateDocumentImports() should add/append data', async () => {
+-        // this will implicitly call testDb.updateDocument()
+-        await myGraphStorage.updateDocumentImports(
+-            edgeCollectionName,
+-            // eslint-disable-next-line no-underscore-dangle
+-            edgeOne._key, newImportValue,
+-        ).then((response) => {
+-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+-        });
+-
+-        // check value of imports
+-        await myGraphStorage.getDocument(edgeCollectionName, edgeOne._key).then((response) => {
+-            assert.include(response.imports, newImportValue);
+-        });
+-    });
+-
+     it('getVerticesByImportId() ', async () => {
+         await myGraphStorage.getVerticesByImportId(vertexOne.imports[0]).then((response) => {
+             assert.deepEqual(response[0].data, vertexOne.data);
+diff --git a/test/modules/neo4j.test.js b/test/modules/neo4j.test.js
+new file mode 100644
+index 0000000..1ff5835
+--- /dev/null
++++ b/test/modules/neo4j.test.js
+@@ -0,0 +1,114 @@
++const {
++    describe, before, after, it, afterEach,
++} = require('mocha');
++const { assert, expect } = require('chai');
++const stringify = require('json-stable-stringify');
++
++const Neo4j = require('../../modules/Database/Neo4j.js');
++const databaseData = require('./test_data/database-data.js');
++
++const myUsername = 'neo4j';
++const myPassword = 'neo4j';
++const myDatabaseName = 'testDb';
++const host = 'localhost';
++const port = '7687';
++
++const vertexOne = databaseData.vertices[0];
++const vertexTwo = databaseData.vertices[1];
++
++const edgeOne = databaseData.edges[0];
++
++let testDb;
++
++describe('Neo4j module ', async () => {
++    before('create and use testDb db', async () => {
++        // TODO kreirati novu bazu
++
++        testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port);
++    });
++
++    it('.identify() should return correct name', () => {
++        assert(testDb.identify(), 'Neo4j');
++    });
++
++    it('pass null for vertex', async () => {
++        await testDb.addDocument('ot_vertices', null).catch((err) => {
++            assert.equal(err.message, 'Invalid vertex null');
++        });
++    });
++    it('pass empty for vertex', async () => {
++        await testDb.addDocument('ot_vertices', {}).catch((err) => {
++            assert.equal(err.message, 'Invalid vertex {}');
++        });
++    });
++    it('pass regular for vertex', async () => {
++        await testDb.addDocument('ot_vertices', vertexOne);
++        const result = await testDb.findVertices({ _key: vertexOne._key });
++        assert.equal(stringify(vertexOne), stringify(result[0]));
++    });
++    it('.findTraversalPath() with regular vertices', async () => {
++        await testDb.addDocument('ot_vertices', vertexOne);
++        await testDb.addDocument('ot_vertices', vertexTwo);
++        await testDb.addDocument('ot_edges', edgeOne);
++
++        const path = await testDb.findTraversalPath(vertexOne, 2);
++        assert.equal(path.length, 2);
++    });
++
++    it('.findTraversalPath() non existing starting vertex', async () => {
++        const startVertex = {
++            _key: '-1',
++        };
++
++        const path = await testDb.findTraversalPath(startVertex, 1);
++        assert.equal(path, '');
++    });
++
++    it('.findTraversalPath() less than max length', async () => {
++        const vertices = [{ data: 'A', _key: '100' }, { data: 'B', _key: '101' }, { data: 'C', _key: '102' }];
++        const edges = [{ edgeType: 'IS', _from: '100', _to: '101' }, { edgeType: 'IS', _from: '101', _to: '102' }];
++
++        await testDb.addDocument('ot_vertices', vertices[0]);
++        await testDb.addDocument('ot_vertices', vertices[1]);
++        await testDb.addDocument('ot_vertices', vertices[2]);
++        await testDb.addDocument('ot_edges', edges[0]);
++        await testDb.addDocument('ot_edges', edges[1]);
++
++        const path = await testDb.findTraversalPath({ _key: '100' }, 1);
++        assert.equal(path.length, 2);
++    });
++
++    it('.findTraversalPath() with max length', async () => {
++        const vertices = [
++            { data: 'A', _key: '100' },
++            { data: 'B', _key: '101' },
++            { data: 'C', _key: '102' },
++            { data: 'D', _key: '103' }];
++        const edges = [
++            { edgeType: 'IS', _from: '100', _to: '101' },
++            { edgeType: 'IS', _from: '101', _to: '102' },
++            { edgeType: 'IS', _from: '102', _to: '103' },
++            { edgeType: 'IS', _from: '101', _to: '103' }];
++
++        await testDb.addDocument('ot_vertices', vertices[0]);
++        await testDb.addDocument('ot_vertices', vertices[1]);
++        await testDb.addDocument('ot_vertices', vertices[2]);
++        await testDb.addDocument('ot_vertices', vertices[3]);
++        await testDb.addDocument('ot_edges', edges[0]);
++        await testDb.addDocument('ot_edges', edges[1]);
++        await testDb.addDocument('ot_edges', edges[2]);
++        await testDb.addDocument('ot_edges', edges[3]);
++
++        const path = await testDb.findTraversalPath({ _key: '100' }, 10);
++        assert.equal(path.length, 4);
++    });
++
++    afterEach('clear testDb db', async () => {
++        await testDb.clear();
++    });
++
++    after('drop testDb db', async () => {
++        testDb.close();
++    });
++});
++
+-- 
+2.13.5 (Apple Git-94)
+
