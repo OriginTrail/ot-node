@@ -132,7 +132,6 @@ class ArangoJS {
                 for (const vertexId in graph.vertices) {
                     const vertex = graph.vertices[vertexId];
                     if (vertex !== null) {
-
                         vertex.outbound = [];
 
                         delete vertex._id;
@@ -351,8 +350,8 @@ class ArangoJS {
         return this.runQuery(queryString, params);
     }
 
-     getEdgesFromVirtualGraph(graph) {
-        const virtualGraph = Utilities.copyObject(graph)
+    getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
         const edges = [];
         for (const node in virtualGraph) {
             for (const edge in virtualGraph[node].outbound) {
@@ -364,8 +363,8 @@ class ArangoJS {
         return edges;
     }
 
-     getVerticesFromVirtualGraph(graph) {
-        const virtualGraph = Utilities.copyObject(graph)
+    getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
         const vertices = [];
         for (const node in virtualGraph) {
             delete virtualGraph[node].outbound;
@@ -390,7 +389,7 @@ class ArangoJS {
         }
         await Promise.all(edges);
 
-        console.log(`insert into ArangoDB done`);
+        console.log('insert into ArangoDB done');
 
         return 0;
     }

@@ -526,15 +526,16 @@ class Neo4jDB {
     /**
      * Extracts edges from a virtual graph
      * @param virtual graph
-     * @returns {JSON}
+     * @returns
      */
-     getEdgesFromVirtualGraph(graph) {
+    getEdgesFromVirtualGraph(graph) {
         const virtualGraph = Utilities.copyObject(graph);
         const edges = [];
         for (const node in virtualGraph) {
             for (const edge in virtualGraph[node].edges) {
                 delete virtualGraph[node].edges[edge].type;
-                virtualGraph[node].edges[edge].imports = [virtualGraph[node].edges[edge].imports[0].low];
+                virtualGraph[node].edges[edge].imports =
+                    [virtualGraph[node].edges[edge].imports[0].low];
                 virtualGraph[node].edges[edge]._from = `ot_vertices/${virtualGraph[node].edges[edge]._from}`;
                 virtualGraph[node].edges[edge]._to = `ot_vertices/${virtualGraph[node].edges[edge]._to}`;
                 edges.push(virtualGraph[node].edges[edge]);
@@ -546,10 +547,10 @@ class Neo4jDB {
     /**
      * Extracts vertices from a virtual graph
      * @param virtual graph
-     * @returns {JSON}
+     * @returns
      */
-     getVerticesFromVirtualGraph(graph) {
-        const virtualGraph = Utilities.copyObject(graph)
+    getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
         const vertices = [];
         for (const node in virtualGraph) {
             delete virtualGraph[node].edges;
@@ -579,7 +580,7 @@ class Neo4jDB {
         }
         await Promise.all(edges);
 
-        console.log(`insert into Neo4j done`);
+        console.log('insert into Neo4j done');
 
         return 0;
     }

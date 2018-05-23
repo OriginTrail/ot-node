@@ -202,17 +202,19 @@ describe('Arangojs module ', async () => {
 
         const objectVertices = [vertexOne, vertexTwo];
         const objectEdges = [edgeOne];
-        assert.deepEqual(testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
+        assert.deepEqual(
+            testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
             Utilities.copyObject(objectEdges).sort(sortByKey),
         );
-        assert.deepEqual(testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
+        assert.deepEqual(
+            testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
             Utilities.copyObject(objectVertices).sort(sortByKey),
         );
     });
 
     it('importVirtualGraph', async () => {
         // TODO
-        return 0;
+        console.log('');
     });
 
     it('updateImports() should add/append data', async () => {
@@ -428,8 +430,6 @@ describe('Arangojs module ', async () => {
             });
         });
     });
-
-
 
     after('drop testDb db', async () => {
         systemDb = new Database();

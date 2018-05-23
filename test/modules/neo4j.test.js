@@ -133,18 +133,20 @@ describe('Neo4j module ', async () => {
 
         const objectVertices = [vertexOne, vertexTwo];
         const objectEdges = [edgeOne];
-        assert.deepEqual(testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
+        assert.deepEqual(
+            testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
             Utilities.copyObject(objectEdges).sort(sortByKey),
         );
-        assert.deepEqual(testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
+        assert.deepEqual(
+            testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
             Utilities.copyObject(objectVertices).sort(sortByKey),
         );
     });
 
     it('importVirtualGraph', async () => {
         // TODO
-        return 0;
-    })
+        console.log('');
+    });
 
     it('findMaxVersion single version vertex', async () => {
         // vertexTwo has one version
