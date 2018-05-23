@@ -332,7 +332,8 @@ class ArangoJS {
         const collection = this.db.collection(collectionName);
         if (document.sender_id && document.identifiers && document.identifiers.uid) {
             const maxVersionDoc =
-                await this.findVertexWithMaxVersion(
+                await this.findDocumentWithMaxVersion(
+                    collectionName,
                     document.sender_id,
                     document.identifiers.uid,
                 );
