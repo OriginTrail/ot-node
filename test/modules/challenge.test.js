@@ -244,7 +244,7 @@ describe('Challenge tests', () => {
         });
 
         it('failTest() should mark corresponding entry as incorrectly answered', async function () {
-            // Retry all failed tests in this suite up to 3 times
+            // Retry this individual test up to 3 times
             this.retries(3);
 
             const unansweredTests = await Challenge.getUnansweredTest(myStartTime, myEndTime);
