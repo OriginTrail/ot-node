@@ -32,13 +32,11 @@ class GraphStorage {
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
-                        break;
                     } catch (error) {
                         console.log(error);
                         reject(Error('Unable to connect to graph database'));
                     }
-
-                // eslint-disable-next-line no-fallthrough
+                    break;
                 case 'neo4j':
                     try {
                         this.db = new Neo4j(
@@ -50,12 +48,10 @@ class GraphStorage {
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
-                        break;
                     } catch (error) {
                         reject(Error('Unable to connect to graph database'));
                     }
-
-                // eslint-disable-next-line no-fallthrough
+                    break;
                 default:
                     log.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
