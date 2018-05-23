@@ -1,8 +1,8 @@
 require('dotenv').config();
 const {
-    describe, before, beforeEach, after, afterEach, it,
+    describe, before, after, it,
 } = require('mocha');
-var { expect } = require('chai');
+const { expect } = require('chai');
 const gs1 = require('../../modules/gs1-importer')();
 const path = require('path');
 const { Database } = require('arangojs');
@@ -83,19 +83,19 @@ describe('GS1 Importer tests', () => {
                     expect(import1Result.edges.length).to.be
                         .equal(import2Result.edges.length);
 
-                    import1Result.forEach((vertex) => {
-                        const vertex2 = import2Result
-                            .findOne(element => vertex._key === element._key);
-                        expect(vertex2).not.to.be.undefined();
+                    import1Result.vertices.forEach((vertex) => {
+                        const vertex2 = import2Result.vertices
+                            .find(element => vertex._key === element._key);
+                        expect(vertex2).not.to.be.equal(undefined);
 
                         if (vertex.identifiers) {
-                            expect(vertex.identifiers).to.be.deepEqual(vertex2.identifiers);
+                            expect(vertex.identifiers).to.deep.equal(vertex2.identifiers);
                         }
                         if (vertex.data) {
-                            expect(vertex.data).to.be.deepEqual(vertex2.data);
+                            expect(vertex.data).to.deep.equal(vertex2.data);
                         }
                         if (vertex.vertex_type) {
-                            expect(vertex.vertex_type).to.be.deepEqual(vertex2.vertex_type);
+                            expect(vertex.vertex_type).to.deep.equal(vertex2.vertex_type);
                         }
                     });
                 },

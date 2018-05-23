@@ -613,7 +613,11 @@ async function processXML(err, result) {
             eventVertices.push(...tmpEventVertices);
         } else {
             // eslint-disable-next-line
-            await Promise.all(tmpEventEdges.map(edge => db.updateEdgeImportsByUID(senderId, edge.identifiers.id, importId)));
+            await Promise.all(tmpEventEdges.map(async (edge) => {
+                if (edge.edge_type !== 'EVENT_CONNECTION') {
+                    await db.updateEdgeImportsByUID(senderId, edge.identifiers.id, importId);
+                }
+            }));
             // eslint-disable-next-line
             await Promise.all(tmpEventVertices.map(vertice => db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
             batchesToRemove.push(...tmpBatchesToRemove);
@@ -750,7 +754,10 @@ async function processXML(err, result) {
     await Promise.all(allEdges.map(edge => db.updateImports('ot_edges', edge, importId)));
 
     console.log('Done parsing and importing.');
-    return { vertices: allVertices, edges: allEdges, import_id: importId };
+
+    const edgesPerImport = await db.findVerticesByImportId(importId);
+    const verticesPerImport = await db.findEdgesByImportId(importId);
+    return { vertices: verticesPerImport, edges: edgesPerImport, import_id: importId };
 }
 
 async function parseGS1(gs1XmlFile) {
