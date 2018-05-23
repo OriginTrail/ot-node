@@ -9,7 +9,7 @@ const path = require('path');
 let myConnection;
 
 describe('SystemStorage module', () => {
-    it('connect() to existing system.db', async () => {
+    before('connect() to existing system.db', async () => {
         myConnection = await SystemStorage.connect();
         assert.isTrue(myConnection.filename.toString().indexOf('system.db') >= 0);
     });

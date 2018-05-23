@@ -26,6 +26,27 @@ class Blockchain {
     }
 
     /**
+     * Gets profile by wallet
+     * @param wallet
+     */
+    getProfile(wallet) {
+        return this.blockchain.getProfile(wallet);
+    }
+
+    /**
+     * Creates node profile on the Bidding contract
+     * @param nodeId        Kademlia node ID
+     * @param price         Price (byte per min)
+     * @param stakeFactor   Stake factor
+     * @param maxTimeMins   Max time in minutes
+     * @param maxSizeBytes  Max size in bytes
+     * @return {Promise<any>}
+     */
+    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
+        return this.blockchain.createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes);
+    }
+
+    /**
      * Increase token approval for escrow contract
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
@@ -83,10 +104,11 @@ class Blockchain {
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
      * @param MinStakeAmount Minimum stake in tokens
-     * @param biddingTime Total time of the bid in milliseconds
-     * @param minNumberOfBids Number of bid required for offer to be successful
+     * @param minReputation Minimum required reputation
+     * @param dataHash Hash of the data put to the offer
      * @param dataSize Size of the data for storing in bytes
-     * @param ReplicationFactor Number of replications
+     * @param predeterminedDhWallets Array of predetermined DH wallets to be used in offer
+     * @param predeterminedDhNodeIds Array of predetermined node IDs to be used in offer
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
@@ -94,18 +116,22 @@ class Blockchain {
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
-        biddingTime,
-        minNumberOfBids,
-        dataSize, ReplicationFactor,
+        minReputation,
+        dataHash,
+        dataSize,
+        predeterminedDhWallets,
+        predeterminedDhNodeIds,
     ) {
         return this.blockchain.createOffer(
             dataId, nodeId,
             totalEscrowTime,
             maxTokenAmount,
             MinStakeAmount,
-            biddingTime,
-            minNumberOfBids,
-            dataSize, ReplicationFactor,
+            minReputation,
+            dataHash,
+            dataSize,
+            predeterminedDhWallets,
+            predeterminedDhNodeIds,
         );
     }
 
@@ -120,12 +146,24 @@ class Blockchain {
     /**
     * Subscribe to a particular event
     * @param event
-    * @param dataId
+    * @param offerHash
     * @param endMs
     */
-    subscribeToEvent(event, dataId, endMs) {
+    subscribeToEvent(event, offerHash, endMs) {
         return this.blockchain
-            .subscribeToEvent(event, dataId, endMs);
+            .subscribeToEvent(event, offerHash, endMs);
+    }
+
+    /**
+     * Subscribes to Blockchain event
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * @param event Event to listen to
+     * @returns {number | Object} Event handle
+     */
+    subscribeToEventPermanent(event) {
+        return this.blockchain.subscribeToEventPermanent(event);
     }
 
     /**
@@ -139,15 +177,12 @@ class Blockchain {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
-     * @param nodeId KADemlia ID of this node
-     * @param bidHash Hashed bid that will be revealed once
-     * revealBid() is called. @note token amount cannot be greater then max token amount
+     * @param offerHash Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(dcWallet, dataId, nodeId, bidHash) {
-        return this.blockchain.addBid(dcWallet, dataId, nodeId, bidHash);
+    addBid(offerHash, dhNodeId) {
+        return this.blockchain.addBid(offerHash, dhNodeId);
     }
 
     /**
@@ -162,29 +197,12 @@ class Blockchain {
     }
 
     /**
-     * Reveals the bid of the offer
-     * @param dcWallet Wallet of the DC who's offer is
-     * @param dataId Id of the data in the offer
-     * @param nodeId KADemlia ID of bidder
-     * @param tokenAmount Amount of the token
-     * @param stakeAmount Amount of the stake
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    revealBid(dcWallet, dataId, nodeId, tokenAmount, stakeAmount, bidIndex) {
-        return this.blockchain.revealBid(
-            dcWallet, dataId, nodeId,
-            tokenAmount, stakeAmount, bidIndex,
-        );
-    }
-
-    /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param dataId ID of data of the bid
+     * @param offerHash Hash of the offer
      * @returns {Promise<any>} Array of bid indices of chosen ones.
      */
-    chooseBids(dataId) {
-        return this.blockchain.chooseBids(dataId);
+    chooseBids(offerHash) {
+        return this.blockchain.chooseBids(offerHash);
     }
 
     /**
@@ -206,6 +224,14 @@ class Blockchain {
     */
     getOfferStatus(dcWallet, dataId) {
         return this.blockchain.getOfferStatus(dcWallet, dataId);
+    }
+
+    getDcWalletFromOffer(offer_hash) {
+        return this.blockchain.getDcWalletFromOffer(offer_hash);
+    }
+
+    async depositToken(amount) {
+        return this.blockchain.depositToken(amount);
     }
 }
 

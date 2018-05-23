@@ -28,7 +28,8 @@ describe('Utilities module', () => {
                 'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                 'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
                 'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
-                'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port'],
+                'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
+                'dh_max_time_mins', 'dh_price', 'dh_stake_factor'],
             'Some config items are missing in node_config',
         );
     });
@@ -139,7 +140,11 @@ describe('Utilities module', () => {
         const myResult = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(myResult, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
-        assert.equal(myResult.database_system, 'arango_db');
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            assert.equal(myResult.database_system, 'arango_db');
+        } else if (process.env.GRAPH_DATABASE === 'neo4j') {
+            assert.equal(myResult.database_system, 'neo4j');
+        }
     });
 
 
@@ -208,6 +213,87 @@ describe('Utilities module', () => {
         } catch (error) {
             console.log(error);
         }
+    });
+
+    it('flattenObject() regular', async () => {
+        const regularObj = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors: ['red', 'orange'],
+            isWearing: {
+                shirt: {
+                    color: 'white',
+                },
+                shorts: {
+                    color: 'blue',
+                },
+            },
+        };
+        const expectedFlattened = {
+            name: 'fiiv',
+            birthYear: 1986,
+            favoriteColors_0: 'red',
+            favoriteColors_1: 'orange',
+            isWearing_shirt_color: 'white',
+            isWearing_shorts_color: 'blue',
+        };
+
+        const flattened = Utilities.flattenObject(regularObj);
+        assert.deepEqual(flattened, expectedFlattened);
+    });
+
+    it('flattenObject() null', async () => {
+        const flattened = Utilities.flattenObject(null);
+        assert.deepEqual(flattened, null);
+    });
+
+    it('flattenObject() empty', async () => {
+        const flattened = Utilities.flattenObject({});
+        assert.deepEqual(flattened, {});
+    });
+
+    it('objectDistance() test 1', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            a: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
+    });
+
+    it('objectDistance() test 2', async () => {
+        const obj1 = {
+            a: 'abc',
+        };
+        const obj2 = {
+            b: 'abc',
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 0);
+    });
+
+    it('objectDistance() test 3', async () => {
+        const obj1 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+        const obj2 = {
+            a: {
+                b: {
+                    c: 'asdf',
+                },
+            },
+        };
+
+        const distance = Utilities.objectDistance(obj1, obj2);
+        assert.equal(distance, 100);
     });
 
     after('cleanup', () => {

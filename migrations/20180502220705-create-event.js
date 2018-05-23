@@ -14,22 +14,20 @@ module.exports = {
             type: Sequelize.TEXT,
         },
         block: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
 
-        dataId: {
-            type: Sequelize.INTEGER,
-        },
-        finished: {
+        offer_hash: {
             type: Sequelize.STRING,
         },
-        createdAt: {
+        finished: {
             allowNull: false,
-            type: Sequelize.DATE,
+            type: Sequelize.INTEGER,
         },
-        updatedAt: {
+        timestamp: {
             allowNull: false,
-            type: Sequelize.DATE,
+            type: Sequelize.INTEGER,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('Events'),

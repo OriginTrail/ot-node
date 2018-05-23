@@ -250,7 +250,7 @@ class Network {
         // add replication-request route
         node.ot.use('replication-request', (request, response, next) => {
             log.info('replication-request received');
-            globalEmitter.emit('replication-request', request);
+            globalEmitter.emit('replication-request', request, response);
         });
 
         // add replication-finished route

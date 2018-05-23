@@ -179,35 +179,40 @@ class ArangoJS {
 
     /**
      * Gets max version where uid is the same but not the _key
-     * @param uid   Vertex uid
-     * @param _key  Vertex _key
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @param _key      Vertex _key
      * @return {Promise<void>}
      */
-    async findMaxVersion(uid) {
+    async findMaxVersion(senderId, uid, _key) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid' +
+                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v.version';
         const params = {
             uid,
+            _key,
+            senderId,
         };
         return this.runQuery(queryString, params);
     }
 
     /**
      * Gets max where uid is the same and has the max version
-     * @param uid   Vertex uid
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
      * @return {Promise<void>}
      */
-    async findVertexWithMaxVersion(uid) {
+    async findVertexWithMaxVersion(senderId, uid) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid ' +
+                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
                 'SORT v.version DESC ' +
                 'LIMIT 1 ' +
                 'RETURN v';
         const params = {
             uid,
+            senderId,
         };
 
         const result = await this.runQuery(queryString, params);
@@ -253,15 +258,35 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async addDocument(collectionName, document) {
+        if (document === undefined || document === null) { throw Error('ArangoError: invalid document type'); }
+        if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
+
         const collection = this.db.collection(collectionName);
-        try {
-            return await collection.save(document);
-        } catch (err) {
-            const errorCode = err.response.body.code;
-            if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
-                return 'Double insert';
+        if (document.sender_id && document.identifiers && document.identifiers.uid) {
+            const maxVersionDoc =
+                await this.findVertexWithMaxVersion(
+                    document.sender_id,
+                    document.identifiers.uid,
+                );
+
+            if (maxVersionDoc) {
+                if (maxVersionDoc._key === document._key) {
+                    return maxVersionDoc;
+                }
+
+                document.version = maxVersionDoc.version + 1;
+                return collection.save(document);
             }
-            throw err;
+
+            document.version = 1;
+            return collection.save(document);
+        }
+        try {
+            // First check if already exist.
+            const dbVertex = await this.getDocument(collectionName, document);
+            return dbVertex;
+        } catch (ignore) {
+            return collection.save(document);
         }
     }
 
@@ -310,6 +335,21 @@ class ArangoJS {
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                 return 'Double insert';
             }
+            throw err;
+        }
+    }
+
+    /**
+     * Deletes the collection in the database.
+     * @param collectionName
+     */
+    async dropCollection(collectionName) {
+        if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
+        const collection = this.db.collection(collectionName);
+        try {
+            await collection.drop();
+            return 'Collection is now deleted';
+        } catch (err) {
             throw err;
         }
     }
@@ -392,6 +432,28 @@ class ArangoJS {
         console.log('insert into ArangoDB done');
 
         return 0;
+    }
+
+    /**
+     * Find event based on ID and bizStep
+     * Note: based on bizStep we define INPUT(shipping) or OUTPUT(receiving)
+     * @param senderId      Sender ID
+     * @param partnerId     Partner ID
+     * @param documentId    Document ID
+     * @param bizStep       BizStep value
+     * @return {Promise}
+     */
+    async findEvent(senderId, partnerId, documentId, bizStep) {
+        const queryString = 'FOR v IN ot_vertices ' +
+            'FILTER v.identifiers.document_id == @documentId AND @senderId in v.partner_id AND v.sender_id in @partnerId ' +
+            'RETURN v';
+        const params = {
+            partnerId,
+            documentId,
+            senderId,
+        };
+        const result = await this.runQuery(queryString, params);
+        return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
     }
 }
 
