@@ -74,8 +74,12 @@ describe('GS1 Importer tests', () => {
                 .equal(import2Result.total_documents);
             expect(import1Result.vertices.length).to.be
                 .equal(import2Result.vertices.length);
-            expect(import1Result.edges.length).to.be
-                .equal(import2Result.edges.length);
+
+            const filteredEdges1 = import1Result.edges.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+            const filteredEdges2 = import2Result.edges.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+
+            expect(filteredEdges1.length).to.be
+                .equal(filteredEdges2.length);
 
             import1Result.vertices.forEach((vertex) => {
                 const vertex2 = import2Result.vertices
