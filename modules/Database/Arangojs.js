@@ -274,7 +274,7 @@ class ArangoJS {
      */
     async findDocumentWithMaxVersion(collection, senderId, uid) {
         const queryString = `FOR v IN  ${collection} ` +
-            'FILTER v.identifiers.id == @uid AND v.sender_id == @senderId ' +
+            'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
             'SORT v.version DESC ' +
             'LIMIT 1 ' +
             'RETURN v';

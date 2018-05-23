@@ -212,7 +212,7 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
                         edge_type: 'OWNED_BY',
                         identifiers: {
-                            id: `owned_by_${location.id}_${attr.participantId}`,
+                            uid: `owned_by_${location.id}_${attr.participantId}`,
                         },
                     });
                 }
@@ -243,7 +243,7 @@ async function processXML(err, result) {
                 _to: `ot_vertices/${locationKey}`,
                 edge_type: 'CHILD_BUSINESS_LOCATION',
                 identifiers: {
-                    id: `child_business_location_${childId}_${location.id}`,
+                    uid: `child_business_location_${childId}_${location.id}`,
                 },
             });
         }
@@ -383,7 +383,7 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + source}`,
                         edge_type: 'SOURCE',
                         identifiers: {
-                            id: `source_${eventId}_${source}`,
+                            uid: `source_${eventId}_${source}`,
                         },
                     });
 
@@ -404,7 +404,7 @@ async function processXML(err, result) {
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'OUTPUT',
                                 identifiers: {
-                                    id: `event_connection_${shippingEventVertex[0].identifiers.id}_${eventId}`,
+                                    uid: `event_connection_${shippingEventVertex[0].identifiers.id}_${eventId}`,
                                 },
                             });
                             tmpEventEdges.push({
@@ -414,7 +414,7 @@ async function processXML(err, result) {
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'INPUT',
                                 identifiers: {
-                                    id: `event_connection_${eventId}_${shippingEventVertex[0].identifiers.id}`,
+                                    uid: `event_connection_${eventId}_${shippingEventVertex[0].identifiers.id}`,
                                 },
                             });
                         }
@@ -432,7 +432,7 @@ async function processXML(err, result) {
                         _to: `${EDGE_KEY_TEMPLATE + destination}`,
                         edge_type: 'DESTINATION',
                         identifiers: {
-                            id: `destination_${eventId}_${destination}`,
+                            uid: `destination_${eventId}_${destination}`,
                         },
                     });
 
@@ -453,7 +453,7 @@ async function processXML(err, result) {
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'INPUT',
                                 identifiers: {
-                                    id: `event_connection_${receivingEventVertices[0].identifiers.id}_${eventId}`,
+                                    uid: `event_connection_${receivingEventVertices[0].identifiers.id}_${eventId}`,
                                 },
                             });
                             tmpEventEdges.push({
@@ -463,7 +463,7 @@ async function processXML(err, result) {
                                 edge_type: 'EVENT_CONNECTION',
                                 transaction_flow: 'OUTPUT',
                                 identifiers: {
-                                    id: `event_connection_${eventId}_${receivingEventVertices[0].identifiers.id}`,
+                                    uid: `event_connection_${eventId}_${receivingEventVertices[0].identifiers.id}`,
                                 },
                             });
                         }
@@ -490,7 +490,7 @@ async function processXML(err, result) {
                 _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
                 edge_type: 'AT',
                 identifiers: {
-                    id: `at_${eventId}_${bizLocationId}`,
+                    uid: `at_${eventId}_${bizLocationId}`,
                 },
             });
         }
@@ -503,7 +503,7 @@ async function processXML(err, result) {
                 _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
                 edge_type: 'READ_POINT',
                 identifiers: {
-                    id: `read_point_${eventId}_${event.readPoint.id}`,
+                    uid: `read_point_${eventId}_${event.readPoint.id}`,
                 },
             });
         }
@@ -518,7 +518,7 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'INPUT_BATCH',
                     identifiers: {
-                        id: `event_batch_${eventId}_${batchId}`,
+                        uid: `event_batch_${eventId}_${batchId}`,
                     },
                 });
                 tmpBatchesToRemove.push(batchId);
@@ -535,7 +535,7 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'EVENT_BATCH',
                     identifiers: {
-                        id: `event_batch_${eventId}_${batchId}`,
+                        uid: `event_batch_${eventId}_${batchId}`,
                     },
                 });
                 tmpEventEdges.push({
@@ -544,7 +544,7 @@ async function processXML(err, result) {
                     _to: `ot_vertices/${eventKey}`,
                     edge_type: 'EVENT_BATCH',
                     identifiers: {
-                        id: `event_batch_${batchId}_${eventId}`,
+                        uid: `event_batch_${batchId}_${eventId}`,
                     },
                 });
                 tmpBatchesToRemove.push(batchId);
@@ -561,7 +561,7 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'CHILD_BATCH',
                     identifiers: {
-                        id: `event_batch_${eventId}_${batchId}`,
+                        uid: `event_batch_${eventId}_${batchId}`,
                     },
                 });
                 tmpBatchesToRemove.push(batchId);
@@ -578,7 +578,7 @@ async function processXML(err, result) {
                     _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                     edge_type: 'OUTPUT_BATCH',
                     identifiers: {
-                        id: `event_batch_${eventId}_${batchId}`,
+                        uid: `event_batch_${eventId}_${batchId}`,
                     },
                 });
                 tmpEventEdges.push({
@@ -587,7 +587,7 @@ async function processXML(err, result) {
                     _to: `ot_vertices/${eventKey}`,
                     edge_type: 'OUTPUT_BATCH',
                     identifiers: {
-                        id: `event_batch_${batchId}_${eventId}`,
+                        uid: `event_batch_${batchId}_${eventId}`,
                     },
                 });
                 tmpBatchesToRemove.push(batchId);
@@ -615,7 +615,7 @@ async function processXML(err, result) {
             // eslint-disable-next-line
             await Promise.all(tmpEventEdges.map(async (edge) => {
                 if (edge.edge_type !== 'EVENT_CONNECTION') {
-                    await db.updateEdgeImportsByUID(senderId, edge.identifiers.id, importId);
+                    await db.updateEdgeImportsByUID(senderId, edge.identifiers.uid, importId);
                 }
             }));
             // eslint-disable-next-line
@@ -650,7 +650,7 @@ async function processXML(err, result) {
             _to: `${EDGE_KEY_TEMPLATE + productId}`,
             edge_type: 'IS',
             identifiers: {
-                id: `batch_product_${batch.identifiers.id}_${productId}`,
+                uid: `batch_product_${batch.identifiers.id}_${productId}`,
             },
         });
     }
@@ -751,7 +751,7 @@ async function processXML(err, result) {
     await Promise.all(classObjectEdges.map(edge => db.addEdge(edge)));
 
     await Promise.all(allVertices.map(vertex => db.updateImports('ot_vertices', vertex._key, importId)));
-    await Promise.all(allEdges.map(edge => db.updateImports('ot_edges', edge, importId)));
+    await Promise.all(allEdges.map(edge => db.updateImports('ot_edges', edge._key, importId)));
 
     console.log('Done parsing and importing.');
 
