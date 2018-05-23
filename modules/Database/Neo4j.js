@@ -212,7 +212,6 @@ class Neo4jDB {
             paramString = `{${paramString}}`;
         }
         const session = this.driver.session();
-        // console.log(paramString);
         const r = await session.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType} ${paramString}]->(b) return r`);
         session.close();
         return r;

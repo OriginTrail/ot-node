@@ -79,9 +79,6 @@ class ArangoJS {
         if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        if (depth == null) {
-            depth = this.getDatabaseInfo().max_path_length;
-        }
         const queryString = `FOR vertex, edge, path
             IN 1 .. ${depth}
             OUTBOUND 'ot_vertices/${startVertex._key}'
