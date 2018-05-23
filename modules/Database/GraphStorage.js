@@ -205,11 +205,6 @@ class GraphStorage {
                 reject(err);
             });
         });
-        // const version = await this.db.version(
-        //     this.selectedDatabase.host, this.selectedDatabase.port,
-        //     this.selectedDatabase.username, this.selectedDatabase.password,
-        // );
-        // return version;
     }
 
     /**
