@@ -1,5 +1,6 @@
 const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
+const request = require('superagent');
 
 const log = Utilities.getLogger();
 const BN = require('bn.js');
@@ -586,6 +587,32 @@ class Neo4jDB {
      */
     identify() {
         return 'Neo4j';
+    }
+
+    /**
+    * Get Neo4j
+    * @param {string} - host
+    * @param {string} - port
+    * @param {string} - username
+    * @param {string} - password
+    * @returns {Promise<any>}
+    */
+    version(host, port, username, password) {
+        return new Promise((resolve, reject) => {
+            request
+                .get(`http://${host}:7474/db/data/`)
+                .auth(username, password)
+                .then((res) => {
+                    if (res.status === 200) {
+                        resolve(res.body.neo4j_version);
+                    } else {
+                    // eslint-disable-next-line prefer-promise-reject-errors
+                        reject('Failed to contact neo4j');
+                    }
+                }).catch((err) => {
+                    reject(err);
+                });
+        });
     }
 }
 

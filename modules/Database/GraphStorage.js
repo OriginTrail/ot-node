@@ -22,27 +22,39 @@ class GraphStorage {
             } else {
                 switch (this.selectedDatabase.database_system) {
                 case 'arango_db':
-                    this.db = new ArangoJS(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
-                    break;
+                    try {
+                        this.db = new ArangoJS(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                        break;
+                    } catch (error) {
+                        reject(Error('Unable to connect to graph database'));
+                    }
+
+                // eslint-disable-next-line no-fallthrough
                 case 'neo4j':
-                    this.db = new Neo4j(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
-                    break;
+                    try {
+                        this.db = new Neo4j(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                        break;
+                    } catch (error) {
+                        reject(Error('Unable to connect to graph database'));
+                    }
+
+                // eslint-disable-next-line no-fallthrough
                 default:
                     log.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
@@ -175,6 +187,28 @@ class GraphStorage {
      */
     identify() {
         return this.db.identify();
+    }
+
+    /**
+    * Get version of selected graph database
+    * @returns {Promise<any>}
+    */
+    version() {
+        return new Promise((resolve, reject) => {
+            this.db.version(
+                this.selectedDatabase.host, this.selectedDatabase.port,
+                this.selectedDatabase.username, this.selectedDatabase.password,
+            ).then((result) => {
+                resolve(result);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+        // const version = await this.db.version(
+        //     this.selectedDatabase.host, this.selectedDatabase.port,
+        //     this.selectedDatabase.username, this.selectedDatabase.password,
+        // );
+        // return version;
     }
 
     /**

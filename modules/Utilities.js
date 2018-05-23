@@ -543,42 +543,6 @@ class Utilities {
         });
     }
 
-    static getArangoDbVersion() {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
-                .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body.version);
-                    } else {
-                        // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact arangodb');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
-    }
-
-    static getNeo4jVersion() {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${process.env.NEO_HOST}:7474/db/data/`)
-                .auth(process.env.NEO_USERNAME, process.env.NEO_PASSWORD)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body.neo4j_version);
-                    } else {
-                        // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact neo4j');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
-    }
-
     /**
      * Gets block number from web3
      * @returns {Promise<any>}

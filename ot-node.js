@@ -52,28 +52,6 @@ class OTNode {
             process.exit(1);
         }
 
-        // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            try {
-                const arangoVersion = await Utilities.getArangoDbVersion();
-                log.info(`Arango server version ${arangoVersion} is up and running`);
-            } catch (err) {
-                log.error('Please make sure Arango server is runing before starting ot-node');
-                process.exit(1);
-            }
-        }
-
-        // check if Neo4j service is running at all
-        if (process.env.GRAPH_DATABASE === 'neo4j') {
-            try {
-                const neo4jVersion = await Utilities.getNeo4jVersion();
-                log.info(`Neo4j server version ${neo4jVersion} is up and running`);
-            } catch (err) {
-                log.error('Please make sure Neo4j server is runing before starting ot-node');
-                process.exit(1);
-            }
-        }
-
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
@@ -93,15 +71,6 @@ class OTNode {
             selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
             log.info('Loaded selected database data');
             config.database = selectedDatabase;
-        } catch (err) {
-            console.log(err);
-            process.exit(1);
-        }
-
-        // Checking if selected graph database exists
-        try {
-            await Utilities.checkDoesStorageDbExists();
-            log.info('Storage database check done');
         } catch (err) {
             console.log(err);
             process.exit(1);
@@ -155,8 +124,19 @@ class OTNode {
         try {
             await GSInstance.db.connect();
             log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
+            const version = await GSInstance.db.version();
+            log.info(`Database version: ${version}`);
         } catch (err) {
-            log.error(`Failed to connect to the graph database: ${GSInstance.db.identify()}`);
+            log.error(`Failed to connect to the graph database: ${GSInstance.db.selectedDatabase.database_system}, please make sure it is running`);
+            console.log(err);
+            process.exit(1);
+        }
+
+        // Checking if selected graph database exists
+        try {
+            await Utilities.checkDoesStorageDbExists();
+            log.info('Storage database check done');
+        } catch (err) {
             console.log(err);
             process.exit(1);
         }
