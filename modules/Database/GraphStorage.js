@@ -34,6 +34,7 @@ class GraphStorage {
                         resolve(this.db);
                         break;
                     } catch (error) {
+                        console.log(error);
                         reject(Error('Unable to connect to graph database'));
                     }
 
