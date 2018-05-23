@@ -2,6 +2,7 @@ require('dotenv').config();
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
+var { expect } = require('chai');
 const gs1 = require('../../modules/gs1-importer')();
 const path = require('path');
 const { Database } = require('arangojs');
@@ -22,6 +23,12 @@ function buildSelectedDatabaseParam(databaseName) {
 describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let systemDb;
+    const inputXmlFiles = [
+        { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
+        { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../../importers/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../../importers/GraphExample_3.xml')] },
+    ];
 
     before('Setup DB', async () => {
         systemDb = new Database();
@@ -44,13 +51,6 @@ describe('GS1 Importer tests', () => {
     });
 
     describe('Parse XML', () => {
-        const inputXmlFiles = [
-            { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
-            { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
-            { args: [path.join(__dirname, '../../importers/GraphExample_2.xml')] },
-            { args: [path.join(__dirname, '../../importers/GraphExample_3.xml')] },
-        ];
-
         inputXmlFiles.forEach((test) => {
             it(
                 `should correctly parse and import ${path.basename(test.args[0])} file`,
@@ -62,6 +62,43 @@ describe('GS1 Importer tests', () => {
             it(
                 `should correctly parse and import ${path.basename(test.args[0])} file 2nd time`,
                 async () => gs1.parseGS1(test.args[0]),
+            );
+        });
+    });
+
+    describe('Graph validation', async () => {
+        inputXmlFiles.forEach((test) => {
+            it(
+                `should generate the same graph for subsequent ${path.basename(test.args[0])} imports`,
+                async () => {
+                    const import1Result = await gs1.parseGS1(test.args[0]);
+                    const import2Result = await gs1.parseGS1(test.args[0]);
+
+                    expect(import1Result.root_hash).to.be
+                        .equal(import2Result.root_hash);
+                    expect(import1Result.total_documents).to.be
+                        .equal(import2Result.total_documents);
+                    expect(import1Result.vertices.length).to.be
+                        .equal(import2Result.vertices.length);
+                    expect(import1Result.edges.length).to.be
+                        .equal(import2Result.edges.length);
+
+                    import1Result.forEach((vertex) => {
+                        const vertex2 = import2Result
+                            .findOne(element => vertex._key === element._key);
+                        expect(vertex2).not.to.be.undefined();
+
+                        if (vertex.identifiers) {
+                            expect(vertex.identifiers).to.be.deepEqual(vertex2.identifiers);
+                        }
+                        if (vertex.data) {
+                            expect(vertex.data).to.be.deepEqual(vertex2.data);
+                        }
+                        if (vertex.vertex_type) {
+                            expect(vertex.vertex_type).to.be.deepEqual(vertex2.vertex_type);
+                        }
+                    });
+                },
             );
         });
     });
