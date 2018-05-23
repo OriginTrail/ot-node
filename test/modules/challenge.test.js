@@ -1,7 +1,7 @@
 'use-strict';
 
 const {
-    describe, before, beforeEach, after, afterEach, it,
+    describe, before, beforeEach, after, afterEach, it, retry,
 } = require('mocha');
 var { expect } = require('chai');
 const assert = require('assert').strict;
@@ -243,7 +243,10 @@ describe('Challenge tests', () => {
             expect(unansweredTests.length).to.be.equal(numberOfChallengesToGenerate - numberOfChallengesToAnswer);
         });
 
-        it('failTest() should mark corresponding entry as incorrectly answered', async () => {
+        it('failTest() should mark corresponding entry as incorrectly answered', async function () {
+            // Retry this individual test up to 3 times
+            this.retries(3);
+
             const unansweredTests = await Challenge.getUnansweredTest(myStartTime, myEndTime);
             const randomIndex = Utilities.getRandomInt(unansweredTests.length - 1);
             await Challenge.failTest(unansweredTests[randomIndex].id);
