@@ -119,21 +119,26 @@ class RemoteControl {
                         || vertex._id === 'ot_vertices/Location'
                         || vertex._id === 'ot_vertices/Actor'
                     ));
-                    console.log(vertex);
+                    const caption = (vertex.vertex_type === 'CLASS') ?
+                        vertex._key : vertex.identifiers.uid;
                     nodes.push({
                         id: vertex._id,
-                        caption: vertex._id,
+                        type: caption,
+                        caption,
                         root: isRoot,
+                        data: vertex,
                         // category: vertex.data.category,
                         // description: vertex.data.description,
                         // object_class_id: vertex.data.object_class_id,
                     });
                 });
                 values[1].forEach((edge) => {
-                    console.log(edge);
                     edges.push({
                         source: edge._from,
                         target: edge._to,
+                        type: edge.edge_type,
+                        caption: edge.edge_type,
+                        github: edge,
                     });
                 });
 
