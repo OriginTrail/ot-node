@@ -76,6 +76,15 @@ class OTNode {
             process.exit(1);
         }
 
+        // Checking if selected graph database exists
+        try {
+            await Utilities.checkDoesStorageDbExists();
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
+        }
+
         let selectedBlockchain;
         // Loading selected blockchain network
         try {
@@ -128,15 +137,6 @@ class OTNode {
             log.info(`Database version: ${version}`);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${GSInstance.db.selectedDatabase.database_system}, please make sure server is running`);
-            console.log(err);
-            process.exit(1);
-        }
-
-        // Checking if selected graph database exists
-        try {
-            await Utilities.checkDoesStorageDbExists();
-            log.info('Storage database check done');
-        } catch (err) {
             console.log(err);
             process.exit(1);
         }

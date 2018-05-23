@@ -337,18 +337,12 @@ class ArangoJS {
                 .auth(username, password)
                 .then((res) => {
                     if (res.status === 200) {
-                        console.log('START Debug');
-                        console.log(res);
-                        console.log('END Debug');
                         resolve(res.body.version);
                     } else {
                         // eslint-disable-next-line prefer-promise-reject-errors
                         reject('Failed to contact arangodb');
                     }
                 }).catch((err) => {
-                    console.log('START Debug');
-                    console.log(`http://${host}:${port}/_api/version${username}${password}`);
-                    console.log('END Debug');
                     reject(err);
                 });
         });
