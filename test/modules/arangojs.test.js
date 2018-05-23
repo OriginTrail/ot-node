@@ -209,15 +209,16 @@ describe('Arangojs module ', async () => {
     it('parse virtualGraph', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
+        await testDb.createCollection(documentCollectionName);
 
         const responseEdgeOne = await testDb.addEdge(edgeOne);
         assert.containsAllKeys(responseEdgeOne, ['_id', '_key', '_rev']);
 
-        const responseVertexOne = testDb.addVertex(vertexOne);
-        assert.containsAllKeys(responseVertexOne, ['_id', '_key', '_rev']);
+        const responseVertexOne = await testDb.addVertex(vertexOne);
+        assert.equal(responseVertexOne._key, vertexOne._key);
 
-        const responseVertexTwo = testDb.addVertex(vertexTwo);
-        assert.containsAllKeys(responseVertexTwo, ['_id', '_key', '_rev']);
+        const responseVertexTwo = await testDb.addVertex(vertexTwo);
+        assert.equal(responseVertexTwo._key, vertexTwo._key);
 
         const path = await testDb.findTraversalPath(vertexOne, 1000);
 
