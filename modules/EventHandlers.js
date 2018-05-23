@@ -10,6 +10,7 @@ const challenger = require('./Challenger');
 const Utilities = require('./Utilities');
 const DHService = require('./DHService');
 const DCService = require('./DCService');
+const RemoteControl = require('./RemoteControl');
 const BN = require('bn.js');
 const config = require('./Config');
 const Models = require('../models');
@@ -49,8 +50,13 @@ globalEmitter.on('gs1-import-request', async (data) => {
     } = response;
 
     try {
-        await Storage.connect();
-        await Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents]);
+        await Models.data_info.create({
+            data_id,
+            root_hash,
+            import_timestamp: new Date(),
+            total_documents,
+        });
+        await RemoteControl.updateImports();
         await DCService.createOffer(data_id, root_hash, total_documents, vertices);
     } catch (error) {
         log.error(`Failed to start offer. Error ${error}.`);
