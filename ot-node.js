@@ -127,7 +127,7 @@ class OTNode {
             const version = await GSInstance.db.version();
             log.info(`Database version: ${version}`);
         } catch (err) {
-            log.error(`Failed to connect to the graph database: ${GSInstance.db.selectedDatabase.database_system}, please make sure it is running`);
+            log.error(`Failed to connect to the graph database: ${GSInstance.db.selectedDatabase.database_system}, please make sure server is running`);
             console.log(err);
             process.exit(1);
         }
