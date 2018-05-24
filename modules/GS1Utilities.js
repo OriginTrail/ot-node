@@ -157,16 +157,18 @@ class GS1Utilities {
             } else {
                 // receiving output
                 if (categories.includes('Ownership')) {
-                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement).map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
-                    }));
+                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                            r: globalR,
+                        }));
                 } else {
-                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement).map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
+                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                        }));
                 }
 
                 for (const inputQ of inputQuantities) {
