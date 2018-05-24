@@ -9,7 +9,7 @@ const Utilities = require('../../modules/Utilities');
 const config = require('../../modules/Config');
 const Storage = require('../../modules/Storage');
 const kadence = require('@kadenceproject/kadence');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/arangodb-data.js');
 
 let myConfig;
 

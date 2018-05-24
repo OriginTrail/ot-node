@@ -179,6 +179,53 @@ class ArangoJS {
     }
 
     /**
+     * Updates document imports by ID
+     * @param collectionName
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateDocumentImportsByUID(collectionName, senderId, uid, importNumber) {
+        const result = await this.findDocumentWithMaxVersion(collectionName, senderId, uid);
+        let new_imports = [];
+        if (result.imports !== undefined) {
+            new_imports = result.imports;
+
+            if (new_imports.includes(importNumber)) {
+                return result;
+            }
+        }
+
+        new_imports.push(importNumber);
+
+        result.imports = new_imports;
+        return this.updateDocument(collectionName, result);
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateVertexImportsByUID(senderId, uid, importNumber) {
+        return this.updateDocumentImportsByUID('ot_vertices', senderId, uid, importNumber);
+    }
+
+    /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateEdgeImportsByUID(senderId, uid, importNumber) {
+        return this.updateDocumentImportsByUID('ot_edges', senderId, uid, importNumber);
+    }
+
+    /**
      * Gets max version where uid is the same but not the _key
      * @param senderId  Sender ID
      * @param uid       Vertex uid
@@ -206,7 +253,28 @@ class ArangoJS {
      * @return {Promise<void>}
      */
     async findVertexWithMaxVersion(senderId, uid) {
-        const queryString = 'FOR v IN ot_vertices ' +
+        return this.findDocumentWithMaxVersion('ot_vertices', senderId, uid);
+    }
+
+    /**
+     * Gets max where uid is the same and has the max version
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @return {Promise<void>}
+     */
+    async findEdgeWithMaxVersion(senderId, uid) {
+        return this.findDocumentWithMaxVersion('ot_edges', senderId, uid);
+    }
+
+    /**
+     * Gets max where uid is the same and has the max version
+     * @param senderId   Sender ID
+     * @param uid        Vertex uid
+     * @param collection Collection name
+     * @return {Promise<void>}
+     */
+    async findDocumentWithMaxVersion(collection, senderId, uid) {
+        const queryString = `FOR v IN  ${collection} ` +
             'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
             'SORT v.version DESC ' +
             'LIMIT 1 ' +
@@ -265,7 +333,8 @@ class ArangoJS {
         const collection = this.db.collection(collectionName);
         if (document.sender_id && document.identifiers && document.identifiers.uid) {
             const maxVersionDoc =
-                await this.findVertexWithMaxVersion(
+                await this.findDocumentWithMaxVersion(
+                    collectionName,
                     document.sender_id,
                     document.identifiers.uid,
                 );
@@ -400,7 +469,7 @@ class ArangoJS {
     }
 
     async findEdgesByImportId(data_id) {
-        const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
         if (typeof data_id !== 'number') {
             data_id = parseInt(data_id, 10);
