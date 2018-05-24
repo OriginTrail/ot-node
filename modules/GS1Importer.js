@@ -541,11 +541,11 @@ class GS1Importer {
                 eventVertices.push(...tmpEventVertices);
             } else {
                 const updates = [];
-                for (const category of existingEventVertex.data.categories) {
-                    const { id } = existingEventVertex.identifiers;
-                    updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${id}_${category}`, importId));
+                for (const category of eventCategories) {
+                    updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${eventId}_${category}`, importId));
                 }
-                Promise.all(updates);
+                // eslint-disable-next-line
+                await Promise.all(updates);
 
                 // eslint-disable-next-line
                 await Promise.all(tmpEventEdges.map(async (edge) => {
