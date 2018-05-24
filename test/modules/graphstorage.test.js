@@ -10,7 +10,7 @@ const Storage = require('../../modules/Storage');
 const Database = require('arangojs').Database;
 const ArangoJs = require('../../modules/Database/Arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/arangodb-data.js');
 
 const myUserName = 'otuser';
 const myPassword = 'otpass';
