@@ -597,22 +597,15 @@ class Neo4jDB {
     * @param {string} - password
     * @returns {Promise<any>}
     */
-    version(host, port, username, password) {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${host}:7474/db/data/`)
-                .auth(username, password)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body.neo4j_version);
-                    } else {
-                    // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact neo4j');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
+    async version(host, port, username, password) {
+        const result = await request
+            .get(`http://${host}:7474/db/data/`)
+            .auth(username, password);
+
+        if (result.status === 200) {
+            return result.body.neo4j_version;
+        }
+        throw Error('Failed to contact neo4j');
     }
 }
 

@@ -190,17 +190,16 @@ class GraphStorage {
     * Get version of selected graph database
     * @returns {Promise<any>}
     */
-    version() {
-        return new Promise((resolve, reject) => {
-            this.db.version(
+    async version() {
+        try {
+            const result = await this.db.version(
                 this.selectedDatabase.host, this.selectedDatabase.port,
                 this.selectedDatabase.username, this.selectedDatabase.password,
-            ).then((result) => {
-                resolve(result);
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+            );
+            return result;
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**

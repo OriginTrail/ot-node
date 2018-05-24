@@ -187,10 +187,10 @@ class ArangoJS {
      */
     async findMaxVersion(senderId, uid, _key) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
-                'SORT v.version DESC ' +
-                'LIMIT 1 ' +
-                'RETURN v.version';
+            'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
+            'SORT v.version DESC ' +
+            'LIMIT 1 ' +
+            'RETURN v.version';
         const params = {
             uid,
             _key,
@@ -207,10 +207,10 @@ class ArangoJS {
      */
     async findVertexWithMaxVersion(senderId, uid) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
-                'SORT v.version DESC ' +
-                'LIMIT 1 ' +
-                'RETURN v';
+            'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
+            'SORT v.version DESC ' +
+            'LIMIT 1 ' +
+            'RETURN v';
         const params = {
             uid,
             senderId,
@@ -330,22 +330,15 @@ class ArangoJS {
     * @param {string} - password
     * @returns {Promise<any>}
     */
-    version(host, port, username, password) {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${host}:${port}/_api/version`)
-                .auth(username, password)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body.version);
-                    } else {
-                        // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact arangodb');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
+    async version(host, port, username, password) {
+        const result = await request
+            .get(`http://${host}:${port}/_api/version`)
+            .auth(username, password);
+
+        if (result.status === 200) {
+            return result.body.version;
+        }
+        throw Error('Failed to contact arangodb');
     }
 
     /**
