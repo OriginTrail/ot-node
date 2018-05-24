@@ -216,6 +216,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
+                    console.log('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }
@@ -543,24 +544,6 @@ class Utilities {
         });
     }
 
-    static getArangoDbVersion() {
-        return new Promise((resolve, reject) => {
-            request
-                .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
-                .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
-                .then((res) => {
-                    if (res.status === 200) {
-                        resolve(res.body);
-                    } else {
-                        // eslint-disable-next-line prefer-promise-reject-errors
-                        reject('Failed to contact DB');
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-        });
-    }
-
     /**
      * Gets block number from web3
      * @returns {Promise<any>}
@@ -671,8 +654,8 @@ class Utilities {
             const value2 = normalizedObj2[key];
 
             if (value1 == null || value2 == null) {
-                // eslint-disable-next-line
-                continue;
+            // eslint-disable-next-line
+            continue;
             }
 
             const valStr1 = `${value1}`;
