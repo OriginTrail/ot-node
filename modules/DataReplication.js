@@ -1,20 +1,18 @@
 const Challenge = require('./Challenge');
 const config = require('./Config');
-const Blockchain = require('./BlockChainInstance');
 const challenger = require('./Challenger');
 const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
-
 class DataReplication {
     /**
-   * Sends data to DH for replication
-   *
-   * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-   * @return object response
-   */
-    static async sendPayload(data) {
+     * Sends data to DH for replication
+     *
+     * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+     * @return object response
+     */
+    async sendPayload(data) {
         log.info('Entering sendPayload');
 
         const currentUnixTime = Date.now();
@@ -27,7 +25,7 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data = this.sortEncryptedVertices(data);
+        data = this._sortEncryptedVertices(data);
 
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
@@ -58,7 +56,13 @@ class DataReplication {
         });
     }
 
-    static sortEncryptedVertices(data) {
+    /**
+     * Sort encypted vertices according to their keys
+     * @param data
+     * @return {*}
+     * @private
+     */
+    _sortEncryptedVertices(data) {
         data.encryptedVertices.vertices.sort((a, b) => {
             if (a._key < b._key) {
                 return -1;

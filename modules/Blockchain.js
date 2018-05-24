@@ -4,14 +4,20 @@ const Ethereum = require('./Blockchain/Ethereum/index.js');
 const log = Utilities.getLogger();
 
 class Blockchain {
-    constructor(blockchainConfig) {
-        this.config = blockchainConfig;
-        switch (blockchainConfig.blockchain_title) {
+    /**
+     * Default constructor
+     * @param ctx IoC context
+     */
+    constructor(ctx) {
+        this.config = ctx.config.blockchain;
+        this.emitter = ctx.emitter;
+
+        switch (this.config.blockchain_title) {
         case 'Ethereum':
-            this.blockchain = new Ethereum(blockchainConfig);
+            this.blockchain = new Ethereum(this.config, this.emitter);
             break;
         default:
-            log.error('Unsupported blockchain', blockchainConfig.blockchain_title);
+            log.error('Unsupported blockchain', this.config.blockchain_title);
         }
     }
 
