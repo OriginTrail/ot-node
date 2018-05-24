@@ -540,6 +540,13 @@ class GS1Importer {
                 eventEdges.push(...tmpEventEdges);
                 eventVertices.push(...tmpEventVertices);
             } else {
+                const updates = [];
+                for (const category of existingEventVertex.data.categories) {
+                    const { id } = existingEventVertex.identifiers;
+                    updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${id}_${category}`, importId));
+                }
+                Promise.all(updates);
+
                 // eslint-disable-next-line
                 await Promise.all(tmpEventEdges.map(async (edge) => {
                     if (edge.edge_type !== 'EVENT_CONNECTION') {
@@ -608,6 +615,9 @@ class GS1Importer {
                         _from: `ot_vertices/${vertex._key}`,
                         _to: `ot_vertices/${category}`,
                         edge_type: 'IS',
+                        identifiers: {
+                            uid: `event_batch_${vertex.identifiers.uid}_${category}`,
+                        },
                     });
                 });
             }
@@ -655,6 +665,7 @@ class GS1Importer {
         const allEdges = locationEdges
             .concat(eventEdges)
             .concat(batchEdges)
+            .concat(classObjectEdges)
             .map((edge) => {
                 edge.sender_id = senderId;
                 return edge;
@@ -675,9 +686,7 @@ class GS1Importer {
                 edge._from = `ot_vertices/${vertex._key}`;
             }
         }
-
         await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
-        await Promise.all(classObjectEdges.map(edge => this.db.addEdge(edge)));
 
         await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
         await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
