@@ -52,17 +52,6 @@ class OTNode {
             process.exit(1);
         }
 
-        // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            try {
-                const responseFromArango = await Utilities.getArangoDbVersion();
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
-            } catch (err) {
-                log.error('Please make sure Arango server is runing before starting ot-node');
-                process.exit(1);
-            }
-        }
-
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
@@ -165,6 +154,8 @@ class OTNode {
         try {
             await graphStorage.connect();
             log.info(`Connected to graph database: ${graphStorage.identify()}`);
+            const myVersion = await graphStorage.version();
+            log.info(`Database version: ${myVersion}`);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);

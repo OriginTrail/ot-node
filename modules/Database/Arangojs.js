@@ -1,5 +1,6 @@
 const { Database } = require('arangojs');
 const Utilities = require('./../Utilities');
+const request = require('superagent');
 
 const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
@@ -233,10 +234,10 @@ class ArangoJS {
      */
     async findMaxVersion(senderId, uid, _key) {
         const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
-                'SORT v.version DESC ' +
-                'LIMIT 1 ' +
-                'RETURN v.version';
+            'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
+            'SORT v.version DESC ' +
+            'LIMIT 1 ' +
+            'RETURN v.version';
         const params = {
             uid,
             _key,
@@ -388,6 +389,28 @@ class ArangoJS {
      */
     identify() {
         return 'ArangoJS';
+    }
+
+    /**
+    * Get ArangoDB version
+    * @param {string} - host
+    * @param {string} - port
+    * @param {string} - username
+    * @param {string} - password
+    * @returns {Promise<any>}
+    */
+    async version(host, port, username, password) {
+        const result = await request
+            .get(`http://${host}:${port}/_api/version`)
+            .auth(username, password);
+
+        try {
+            if (result.status === 200) {
+                return result.body.version;
+            }
+        } catch (error) {
+            throw Error(`Failed to contact arangodb${error}`);
+        }
     }
 
     /**
