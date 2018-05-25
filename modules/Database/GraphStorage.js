@@ -22,26 +22,35 @@ class GraphStorage {
             } else {
                 switch (this.selectedDatabase.database_system) {
                 case 'arango_db':
-                    this.db = new ArangoJS(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
+                    try {
+                        this.db = new ArangoJS(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                    } catch (error) {
+                        console.log(error);
+                        reject(Error('Unable to connect to graph database'));
+                    }
                     break;
                 case 'neo4j':
-                    this.db = new Neo4j(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
+                    try {
+                        this.db = new Neo4j(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                    } catch (error) {
+                        reject(Error('Unable to connect to graph database'));
+                    }
                     break;
                 default:
                     log.error(this.selectedDatabase);
@@ -175,6 +184,22 @@ class GraphStorage {
      */
     identify() {
         return this.db.identify();
+    }
+
+    /**
+    * Get version of selected graph database
+    * @returns {Promise<any>}
+    */
+    async version() {
+        try {
+            const result = await this.db.version(
+                this.selectedDatabase.host, this.selectedDatabase.port,
+                this.selectedDatabase.username, this.selectedDatabase.password,
+            );
+            return result;
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**
