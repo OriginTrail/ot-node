@@ -2,13 +2,13 @@
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 const Mtree = require('./mtree')();
-const GSdb = require('./GraphStorageInstance');
 
 const log = utilities.getLogger();
 
 class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
+        this.graphStorage = ctx.graphStorage;
     }
 
     async importJSON(json_document) {
@@ -22,10 +22,10 @@ class Importer {
         log.trace('Vertex importing');
 
         // TODO: Use transaction here.
-        await Promise.all(vertices.map(vertex => GSdb.db.addVertex(vertex))
-            .concat(edges.map(edge => GSdb.db.addEdge(edge))));
-        await Promise.all(vertices.map(vertex => GSdb.db.updateImports('ot_vertices', vertex, import_id))
-            .concat(edges.map(edge => GSdb.db.updateImports('ot_edges', edge, import_id))));
+        await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
+            .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
+        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, import_id))
+            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
 
         log.info('JSON import complete');
     }
