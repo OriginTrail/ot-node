@@ -1,7 +1,7 @@
 OriginTrail Node
 ================
 
-[![Build Status](https://travis-ci.org/OriginTrail/ot-node.svg?branch=develop)](https://travis-ci.org/OriginTrail/ot-node)
+[![Build Status](https://travis-ci.org/OriginTrail/ot-node.svg?branch=master)](https://travis-ci.org/OriginTrail/ot-node)
 
 Company Website: [origintrail.io](https://origintrail.io)
 
