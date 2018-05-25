@@ -173,6 +173,25 @@ class Challenge {
     }
 
     /**
+    * Returns current state of database.
+    * @returns {Promise<any>}
+    */
+    static getCurrentDbState() {
+        return new Promise((resolve, reject) => {
+            SystemStorage.connect().then(() => {
+                SystemStorage.runSystemQuery('SELECT id, time, block_id, answer, dh_id, import_id, answered FROM data_challenges', [])
+                    .then((rows) => {
+                        resolve(rows);
+                    }).catch((err) => {
+                        reject(err);
+                    });
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Returns promise of all unanswered challenges between startTime and endTime.
      * @param startTime Unix time in milliseconds.
      * @param endTime Unix time in milliseconds.
