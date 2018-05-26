@@ -26,6 +26,9 @@ script:
   - sleep 10
   - jobs
   - kill %1
+  # hack to make sure previous deamon is really terminated
+  - jobs
+  - jobs
   - node isStartHealthy.js arangodb
   # switches graph database in .env
   - node switchDatabase.js
