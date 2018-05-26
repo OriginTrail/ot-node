@@ -62,19 +62,20 @@ class GS1Importer {
         for (const vocabularyElement of vocabularyElements) {
             switch (vocabularyElement.type) {
             case 'urn:ot:mda:actor':
-                actors = actors.concat(this._parseActors(vocabularyElement.VocabularyElementList));
+                actors = actors
+                    .concat(GS1Importer._parseActors(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:product':
-                products =
-                    products.concat(this._parseProducts(vocabularyElement.VocabularyElementList));
+                products = products
+                    .concat(GS1Importer._parseProducts(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:batch':
-                batches =
-                        batches.concat(this._parseBatches(vocabularyElement.VocabularyElementList));
+                batches = batches
+                    .concat(GS1Importer._parseBatches(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:location':
-                locations =
-                    locations.concat(this._parseLocations(vocabularyElement.VocabularyElementList));
+                locations = locations
+                    .concat(GS1Importer._parseLocations(vocabularyElement.VocabularyElementList));
                 break;
             default:
                 throw Error(`Unimplemented or unknown type: ${vocabularyElement.type}.`);
@@ -119,15 +120,18 @@ class GS1Importer {
 
             GS1Helper.copyProperties(location.attributes, data);
 
-            const locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
-            locationVertices.push({
-                _key: locationKey,
-                identifiers,
-                data,
-                vertex_type: 'LOCATION',
-            });
-
+            const privateData = {};
+            let locationKey;
             if (location.extension) {
+                if (location.extension.private) {
+                    data.private = {};
+                    for (const key in location.extension.private) {
+                        const value = location.extension.private[key];
+                        privateData[key] = value;
+                        data.private[key] = md5(`${value}`);
+                    }
+                }
+                locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
                 const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
                 for (const attr of GS1Helper.arrayze(attrs)) {
                     if (attr.participantId) {
@@ -145,6 +149,17 @@ class GS1Importer {
                     }
                 }
             }
+            if (!locationKey) {
+                locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+            }
+
+            locationVertices.push({
+                _key: locationKey,
+                identifiers,
+                data,
+                private: privateData,
+                vertex_type: 'LOCATION',
+            });
 
             const { child_locations } = location;
             for (const childId of child_locations) {
@@ -188,11 +203,24 @@ class GS1Importer {
 
             GS1Helper.copyProperties(actor.attributes, data);
 
+            const privateData = {};
+            if (actor.extension) {
+                if (actor.extension.private) {
+                    data.private = {};
+                    for (const key in actor.extension.private) {
+                        const value = actor.extension.private[key];
+                        privateData[key] = value;
+                        data.private[key] = md5(`${value}`);
+                    }
+                }
+            }
+
             actorsVertices.push({
                 _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                 _id: actor.id,
                 identifiers,
                 data,
+                private: privateData,
                 vertex_type: 'ACTOR',
             });
         }
@@ -209,11 +237,24 @@ class GS1Importer {
 
             GS1Helper.copyProperties(product.attributes, data);
 
+            const privateData = {};
+            if (product.extension) {
+                if (product.extension.private) {
+                    data.private = {};
+                    for (const key in product.extension.private) {
+                        const value = product.extension.private[key];
+                        privateData[key] = value;
+                        data.private[key] = md5(`${value}`);
+                    }
+                }
+            }
+
             productVertices.push({
                 _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
                 _id: product.id,
                 data,
                 identifiers,
+                private: privateData,
                 vertex_type: 'PRODUCT',
             });
         }
@@ -232,6 +273,18 @@ class GS1Importer {
 
             GS1Helper.copyProperties(batch.attributes, data);
 
+            const privateData = {};
+            if (batch.extension) {
+                if (batch.extension.private) {
+                    data.private = {};
+                    for (const key in batch.extension.private) {
+                        const value = batch.extension.private[key];
+                        privateData[key] = value;
+                        data.private[key] = md5(`${value}`);
+                    }
+                }
+            }
+
             const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
             batchesVertices.push({
                 _key: key,
@@ -240,21 +293,12 @@ class GS1Importer {
                     uid: batch.id,
                 },
                 data,
+                private: privateData,
                 vertex_type: 'BATCH',
             });
         }
 
-        // Store vertices in db. Update versions
-
-
-        function getClassId(event) {
-            // TODO: Support all other types.
-            if (event.action && event.action === 'OBSERVE') {
-                return objectEventObservationId;
-            }
-            return objectEventTransformationId;
-        }
-
+        // Handle events
         const batchesToRemove = [];
         for (const event of events) {
             const tmpEventEdges = [];
@@ -284,15 +328,33 @@ class GS1Importer {
                 uid: eventId,
             };
 
+            let classId = null;
+            if (event.action && event.action === 'OBSERVE') {
+                classId = objectEventObservationId;
+            } else {
+                classId = objectEventTransformationId; // TODO map to class ID
+            }
+
             const data = {
-                object_class_id: getClassId(event),
+                object_class_id: classId,
                 categories: eventCategories,
             };
             GS1Helper.copyProperties(event, data);
             event.vertex_type = 'EVENT';
 
-            const eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+            const privateData = {};
+            let eventKey;
             if (extension.extension) {
+                if (extension.extension.private) {
+                    data.private = {};
+                    for (const key in extension.extension.private) {
+                        const value = extension.extension.private[key];
+                        privateData[key] = value;
+                        data.private[key] = md5(`${value}`);
+                    }
+                }
+                eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+
                 const { documentId } = extension.extension;
                 if (documentId) {
                     identifiers.document_id = documentId;
@@ -350,8 +412,8 @@ class GS1Importer {
                 }
 
                 if (extension.extension.destinationList) {
-                    const destinations =
-                        GS1Helper.arrayze(extension.extension.destinationList.destination._);
+                    let destinations = extension.extension.destinationList.destination._;
+                    destinations = GS1Helper.arrayze(destinations);
                     for (const destination of destinations) {
                         tmpEventEdges.push({
                             _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
@@ -399,12 +461,16 @@ class GS1Importer {
                     }
                 }
             }
+            if (!eventKey) {
+                eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+            }
 
             const eventVertex = {
                 _key: eventKey,
                 data,
                 identifiers,
                 partner_id: event.partner_id,
+                private: privateData,
                 vertex_type: 'EVENT',
             };
             tmpEventVertices.push(eventVertex);
@@ -695,8 +761,16 @@ class GS1Importer {
 
         let edgesPerImport = await this.db.findEdgesByImportId(importId);
         edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+        edgesPerImport = edgesPerImport.map((edge) => {
+            delete edge.private;
+            return edge;
+        });
 
-        const verticesPerImport = await this.db.findVerticesByImportId(importId);
+        let verticesPerImport = await this.db.findVerticesByImportId(importId);
+        verticesPerImport = verticesPerImport.map((vertex) => {
+            delete vertex.private;
+            return vertex;
+        });
         return { vertices: verticesPerImport, edges: edgesPerImport, import_id: importId };
     }
 
@@ -721,7 +795,7 @@ class GS1Importer {
             ));
     }
 
-    _parseLocations(vocabularyElementList) {
+    static _parseLocations(vocabularyElementList) {
         const locations = [];
 
         // May be an array in VocabularyElement.
@@ -743,7 +817,7 @@ class GS1Importer {
         return locations;
     }
 
-    _parseActors(vocabularyElementList) {
+    static _parseActors(vocabularyElementList) {
         const actors = [];
 
         // May be an array in VocabularyElement.
@@ -755,13 +829,14 @@ class GS1Importer {
                 type: 'actor',
                 id: element.id,
                 attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+                extension: element.extension,
             };
             actors.push(actor);
         }
         return actors;
     }
 
-    _parseProducts(vocabularyElementList) {
+    static _parseProducts(vocabularyElementList) {
         const products = [];
 
         // May be an array in VocabularyElement.
@@ -773,13 +848,14 @@ class GS1Importer {
                 type: 'product',
                 id: element.id,
                 attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+                extension: element.extension,
             };
             products.push(product);
         }
         return products;
     }
 
-    _parseBatches(vocabularyElementList) {
+    static _parseBatches(vocabularyElementList) {
         const batches = [];
 
         // May be an array in VocabularyElement.
@@ -791,6 +867,7 @@ class GS1Importer {
                 type: 'batch',
                 id: element.id,
                 attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+                extension: element.extension,
             };
             batches.push(batch);
         }
