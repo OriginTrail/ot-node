@@ -35,11 +35,12 @@ script:
   # checks for neo4j based solution
   - npm run config
   - npm test
-  - npm start &>neo4j.log &
+  - pwd && ls -al
+  - node ot-node.js &>neo4jdb.log &
   - sleep 10
   - jobs
   - kill %1
-  - node isStartHealthy.js neo4j
+  - node isStartHealthy.js neo4jdb
   - ganache-cli -i 5777 -p 7545 &>ganache.log &
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
   # - truffle test --network ganache
@@ -49,8 +50,8 @@ script:
 after_script:
   - cat arangodb.log
   - rm -f arangodb.log
-  - cat neo4j.log
-  - rm -f neo4j.log
+  - cat neo4jdb.log
+  - rm -f neo4jdb.log
   - cat ganache.log
   - rm -f ganache.log
   - kill -9 $(pgrep arangod)
