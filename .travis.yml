@@ -12,7 +12,7 @@ before_script:
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
-  - ./setup_arangodb.sh
+  - ./setup_arangodb.sh &> /dev/null
   - rm -rf ArangoDB-3.2.2.tar.gz
   - npm install -g ganache-cli
   - npm install -g truffle
