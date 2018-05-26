@@ -34,8 +34,7 @@ script:
   - node switchDatabase.js
   # checks for neo4j based solution
   - npm run config
-  - npm test
-  - pwd && ls -al
+  # - npm test
   - node ot-node.js &>neo4jdb.log &
   - sleep 10
   - jobs
