@@ -128,7 +128,7 @@ class GS1Importer {
                     for (const key in location.extension.private) {
                         const value = location.extension.private[key];
                         privateData[key] = value;
-                        data.private[key] = md5(`${value}`);
+                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
                     }
                 }
                 locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
@@ -210,7 +210,7 @@ class GS1Importer {
                     for (const key in actor.extension.private) {
                         const value = actor.extension.private[key];
                         privateData[key] = value;
-                        data.private[key] = md5(`${value}`);
+                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
                     }
                 }
             }
@@ -244,7 +244,7 @@ class GS1Importer {
                     for (const key in product.extension.private) {
                         const value = product.extension.private[key];
                         privateData[key] = value;
-                        data.private[key] = md5(`${value}`);
+                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
                     }
                 }
             }
@@ -280,7 +280,7 @@ class GS1Importer {
                     for (const key in batch.extension.private) {
                         const value = batch.extension.private[key];
                         privateData[key] = value;
-                        data.private[key] = md5(`${value}`);
+                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
                     }
                 }
             }
@@ -342,15 +342,15 @@ class GS1Importer {
             GS1Helper.copyProperties(event, data);
             event.vertex_type = 'EVENT';
 
-            const privateData = {};
             let eventKey;
+            const privateData = {};
             if (extension.extension) {
                 if (extension.extension.private) {
                     data.private = {};
                     for (const key in extension.extension.private) {
                         const value = extension.extension.private[key];
                         privateData[key] = value;
-                        data.private[key] = md5(`${value}`);
+                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
                     }
                 }
                 eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
