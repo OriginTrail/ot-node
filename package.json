@@ -4,6 +4,7 @@
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
+    "testWithReport": "nyc --silent=true mocha --recursive test/modules/*.test.js",
     "test": "nyc mocha --recursive test/modules/*.test.js",
     "start": "node ot-node.js",
     "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",

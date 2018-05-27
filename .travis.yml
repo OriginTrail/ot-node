@@ -35,7 +35,7 @@ script:
   - kill $(lsof -t -i:8900)
   # checks for neo4j based solution
   - npm run config
-  - npm test
+  - npm run testWithReport
   - npm start &>neo4jdb.log &
   - sleep 10
   - jobs
