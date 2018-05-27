@@ -9,6 +9,7 @@ const log = utilities.getLogger();
 class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
+        this.wotImporter = ctx.wotImporter;
     }
 
     async importJSON(json_document) {
@@ -80,45 +81,58 @@ class Importer {
         });
     }
 
+    async afterImport(result) {
+        log.info('[DC] Import complete');
+
+        const { vertices } = result;
+        const { edges } = result;
+        const { import_id } = result;
+
+        const leaves = [];
+        const hash_pairs = [];
+
+        for (const i in vertices) {
+            leaves.push(utilities.sha3(utilities.sortObject({
+                identifiers: vertices[i].identifiers,
+                data: vertices[i].data,
+            })));
+            hash_pairs.push({
+                key: vertices[i]._key,
+                hash: utilities.sha3({
+                    identifiers: vertices[i].identifiers,
+                    data: vertices[i].data,
+                }),
+            });
+        }
+
+        const tree = new Mtree(hash_pairs);
+        const root_hash = utilities.sha3(tree.root());
+
+        log.info(`Import id: ${import_id}`);
+        log.info(`Import hash: ${root_hash}`);
+        return {
+            data_id: import_id,
+            root_hash,
+            total_documents: hash_pairs.length,
+            vertices,
+            edges,
+        };
+    }
+
+    async importWOT(document) {
+        try {
+            const result = await this.wotImporter.parse(document);
+            return await this.afterImport(result);
+        } catch (error) {
+            log.error(`Failed to parse XML. Error ${error}.`);
+            return null;
+        }
+    }
+
     async importXMLgs1(ot_xml_document) {
         try {
             const result = await this.gs1Importer.parseGS1(ot_xml_document);
-
-            log.info('[DC] Import complete');
-
-            const { vertices } = result;
-            const { edges } = result;
-            const { import_id } = result;
-
-            const leaves = [];
-            const hash_pairs = [];
-
-            for (const i in vertices) {
-                leaves.push(utilities.sha3(utilities.sortObject({
-                    identifiers: vertices[i].identifiers,
-                    data: vertices[i].data,
-                })));
-                hash_pairs.push({
-                    key: vertices[i]._key,
-                    hash: utilities.sha3({
-                        identifiers: vertices[i].identifiers,
-                        data: vertices[i].data,
-                    }),
-                });
-            }
-
-            const tree = new Mtree(hash_pairs);
-            const root_hash = utilities.sha3(tree.root());
-
-            log.info(`Import id: ${import_id}`);
-            log.info(`Import hash: ${root_hash}`);
-            return {
-                data_id: import_id,
-                root_hash,
-                total_documents: hash_pairs.length,
-                vertices,
-                edges,
-            };
+            return await this.afterImport(result);
         } catch (error) {
             log.error(`Failed to parse XML. Error ${error}.`);
             return null;

@@ -83,7 +83,6 @@ class GS1Importer {
 
         // Check for events.
         // Types: Transport, Transformation, Observation and Ownership.
-
         for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
             events.push(objectEvent);
         }
