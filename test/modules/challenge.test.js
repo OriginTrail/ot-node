@@ -1,7 +1,10 @@
 'use-strict';
 
+const models = require('../../models');
+const Storage = require('../../modules/Storage');
+
 const {
-    describe, beforeEach, it,
+    describe, before, beforeEach, it,
 } = require('mocha');
 const { expect } = require('chai');
 const assert = require('assert').strict;
@@ -188,6 +191,11 @@ describe('Challenge tests', () => {
         const myImportId = 'dummyImportId';
         const myStartTime = new Date('January 1, 2019 03:24:00').getTime();
         const myEndTime = new Date('January 1, 2020 00:24:00').getTime();
+
+        before('Sync models', async () => {
+            Storage.models = (await models.sequelize.sync()).models;
+            Storage.db = models.sequelize;
+        });
 
         beforeEach('cleanup db and populate db with generated challenges', async () => {
             try {
