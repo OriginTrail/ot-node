@@ -94,13 +94,13 @@ class EventEmitter {
         this.globalEmitter.on('replication-request', async (request, response) => {
             log.trace('replication-request received');
 
-            const {offer_hash, wallet} = request.params.message;
-            const {wallet: kadWallet} = request.contact[1];
+            const { offer_hash, wallet } = request.params.message;
+            const { wallet: kadWallet } = request.contact[1];
 
             if (!offer_hash || !wallet) {
                 const errorMessage = 'Asked replication without providing offer hash or wallet.';
                 log.warn(errorMessage);
-                response.send({status: 'fail', error: errorMessage});
+                response.send({ status: 'fail', error: errorMessage });
                 return;
             }
 
@@ -108,15 +108,15 @@ class EventEmitter {
                 log.warn(`Wallet from KADemlia differs from replication request for offer hash ${offer_hash}.`);
             }
 
-            const offerModel = await Models.offers.findOne({where: {id: offer_hash}});
+            const offerModel = await Models.offers.findOne({ where: { id: offer_hash } });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${offer_hash}.`;
                 log.warn(errorMessage);
-                response.send({status: 'fail', error: errorMessage});
+                response.send({ status: 'fail', error: errorMessage });
                 return;
             }
 
-            const offer = offerModel.get({plain: true});
+            const offer = offerModel.get({ plain: true });
 
             const verticesPromise = GraphStorage.db.findVerticesByImportId(offer.import_id);
             const edgesPromise = GraphStorage.db.findEdgesByImportId(offer.import_id);
@@ -149,7 +149,7 @@ class EventEmitter {
                 });
             });
 
-            response.send({status: 'success'});
+            response.send({ status: 'success' });
         });
 
         this.globalEmitter.on('payload-request', async (request) => {
@@ -215,7 +215,7 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('offer-ended', (message) => {
-            const {scId} = message;
+            const { scId } = message;
 
             log.info(`Offer ${scId} has ended.`);
         });
@@ -289,7 +289,7 @@ class EventEmitter {
             }
 
             try {
-                const createOfferEvent = createOfferEventEventModel.get({plain: true});
+                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
                 await dhService.handleOffer(
