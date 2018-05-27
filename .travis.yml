@@ -35,12 +35,13 @@ script:
   - kill $(lsof -t -i:8900)
   # checks for neo4j based solution
   - npm run config
-  # - npm test
+  - npm test
   - npm start &>neo4jdb.log &
   - sleep 10
   - jobs
   - kill %1
   - node isStartHealthy.js neo4jdb
+  # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 &>ganache.log &
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
   # - truffle test --network ganache
