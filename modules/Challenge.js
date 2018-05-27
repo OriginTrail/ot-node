@@ -1,4 +1,6 @@
 const SystemStorage = require('./Database/SystemStorage');
+const Storage = require('./Storage');
+
 const log = require('./Utilities').getLogger();
 
 class Challenge {
@@ -178,16 +180,14 @@ class Challenge {
     */
     static getCurrentDbState() {
         return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery('SELECT id, time, block_id, answer, dh_id, import_id, answered FROM data_challenges', [])
-                    .then((rows) => {
-                        resolve(rows);
-                    }).catch((err) => {
-                        reject(err);
-                    });
-            }).catch((err) => {
-                reject(err);
-            });
+            Storage.db.query('SELECT * FROM data_challenges', {
+                replacements: [],
+            })
+                .then((res) => {
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
         });
     }
 
