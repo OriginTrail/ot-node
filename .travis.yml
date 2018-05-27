@@ -26,16 +26,17 @@ script:
   - sleep 10
   - jobs
   - kill %1
-  # hack to make sure previous deamon is really terminated
+  # make sure previous deamon is really terminated
   - jobs
   - jobs
   - node isStartHealthy.js arangodb
   # switches graph database in .env
   - node switchDatabase.js
+  - kill $(lsof -t -i:8900)
   # checks for neo4j based solution
   - npm run config
   # - npm test
-  - node ot-node.js &>neo4jdb.log &
+  - npm start &>neo4jdb.log &
   - sleep 10
   - jobs
   - kill %1
