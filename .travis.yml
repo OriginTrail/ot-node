@@ -28,7 +28,6 @@ script:
   - kill %1
   # make sure previous deamon is really terminated
   - jobs
-  - jobs
   - kill $(lsof -t -i:8900)
   - node isStartHealthy.js arangodb
   # switches graph database in .env
