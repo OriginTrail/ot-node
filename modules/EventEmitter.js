@@ -1,6 +1,5 @@
 const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
-const GraphStorage = require('./GraphStorageInstance');
 const Challenge = require('./Challenge');
 const challenger = require('./Challenger');
 const Utilities = require('./Utilities');
@@ -19,6 +18,7 @@ class EventEmitter {
      */
     constructor(ctx) {
         this.product = ctx.product;
+        this.graphStorage = ctx.graphStorage;
         this.globalEmitter = new events.EventEmitter();
     }
 
@@ -109,8 +109,8 @@ class EventEmitter {
 
             const offer = offerModel.get({ plain: true });
 
-            const verticesPromise = GraphStorage.db.findVerticesByImportId(offer.import_id);
-            const edgesPromise = GraphStorage.db.findEdgesByImportId(offer.import_id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
             Promise.all([verticesPromise, edgesPromise]).then((values) => {
                 const vertices = values[0];
@@ -159,7 +159,7 @@ class EventEmitter {
             log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
-            GraphStorage.db.findVerticesByImportId(challenge.import_id).then((vertices) => {
+            this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 16);
                 log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);

@@ -52,6 +52,17 @@ class OTNode {
             process.exit(1);
         }
 
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Arango server is runing before starting ot-node');
+                process.exit(1);
+            }
+        }
+
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
@@ -129,17 +140,17 @@ class OTNode {
         });
 
         container.register({
-            emitter: awilix.asClass(EventEmitter),
-            network: awilix.asClass(Network),
-            graph: awilix.asClass(Graph),
-            product: awilix.asClass(Product),
-            dhService: awilix.asClass(DHService),
-            dcService: awilix.asClass(DCService),
+            emitter: awilix.asClass(EventEmitter).singleton(),
+            network: awilix.asClass(Network).singleton(),
+            graph: awilix.asClass(Graph).singleton(),
+            product: awilix.asClass(Product).singleton(),
+            dhService: awilix.asClass(DHService).singleton(),
+            dcService: awilix.asClass(DCService).singleton(),
             config: awilix.asValue(config),
-            importer: awilix.asClass(Importer),
-            blockchain: awilix.asClass(Blockchain),
-            dataReplication: awilix.asClass(DataReplication),
-            gs1Importer: awilix.asClass(GS1Importer),
+            importer: awilix.asClass(Importer).singleton(),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            dataReplication: awilix.asClass(DataReplication).singleton(),
+            gs1Importer: awilix.asClass(GS1Importer).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
         });
         const emitter = container.resolve('emitter');
