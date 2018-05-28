@@ -18,7 +18,7 @@ class RemoteControl {
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
             this.socket = socket;
-            RemoteControl.getProtocolInfo().then((res) => {
+            this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
                 Models.node_config.findAll()
@@ -29,7 +29,7 @@ class RemoteControl {
                         socket.emit('config', config);
                     });
             }).then((res) => {
-                RemoteControl.updateImports();
+                this.updateImports();
             });
 
             this.socket.on('config-update', (data) => {
@@ -55,11 +55,11 @@ class RemoteControl {
             });
 
             this.socket.on('get-imports', () => {
-                RemoteControl.updateImports();
+                this.updateImports();
             });
 
             this.socket.on('get-visual-graph', (import_id) => {
-                RemoteControl.getImport(import_id);
+                this.getImport(import_id);
             });
         });
     }
@@ -68,7 +68,7 @@ class RemoteControl {
      * Returns basic information about the running node
      * @param {Control~getProtocolInfoCallback} callback
      */
-    static getProtocolInfo() {
+    getProtocolInfo() {
         return new Promise((resolve, reject) => {
             const peers = [];
             const dump = this.node.router.getClosestContactsToKey(
@@ -92,7 +92,7 @@ class RemoteControl {
     /**
      * Update imports table from data_info
      */
-    static updateImports() {
+    updateImports() {
         return new Promise((resolve, reject) => {
             Models.data_info.findAll()
                 .then((rows) => {
@@ -106,7 +106,7 @@ class RemoteControl {
      * Get graph by import_id
      * @import_id int
      */
-    static getImport(import_id) {
+    getImport(import_id) {
         return new Promise((resolve, reject) => {
             const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);
