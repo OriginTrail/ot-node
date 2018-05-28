@@ -1,4 +1,8 @@
 var RSA = require('node-rsa');
+const crypto = require('crypto');
+const BN = require('bn.js');
+const xor = require('buffer-xor');
+const Utilities = require('./Utilities');
 
 class Encryption {
     /**
@@ -71,18 +75,17 @@ class Encryption {
      * @returns {string} - Hex string
      */
     static padKey(publicKey) {
-
-        publicKey = publicKey.substring(27, 160)
+        publicKey = publicKey.substring(27, 160);
         const randomBlock = crypto.randomBytes(1280);
         console.log();
 
         const keyBuffer = Buffer.from(publicKey);
 
-        let paddedKey = Buffer.from(randomBlock.toString('hex'), 'hex');
+        const paddedKey = Buffer.from(randomBlock.toString('hex'), 'hex');
 
-        for (let i = 0; i <= 16; i++) {
-            for (let j = 0; j < 8; j++) {
-                paddedKey[i * 80 + j] = keyBuffer[i * 8 + j];
+        for (let i = 0; i <= 16; i += 1) {
+            for (let j = 0; j < 8; j += 1) {
+                paddedKey[(i * 80) + j] = keyBuffer[(i * 8) + j];
             }
         }
 
@@ -95,13 +98,13 @@ class Encryption {
      * @returns {string} - Unpadded public key
      */
     static unpadKey(paddedKey) {
-        let unpaddedKey = Buffer.alloc(128, 0);
+        const unpaddedKey = Buffer.alloc(128, 0);
 
-        let paddedKeyBuffer = Buffer.from(paddedKey, 'hex');
+        const paddedKeyBuffer = Buffer.from(paddedKey, 'hex');
 
-        for (let i = 0; i <= 16; i++) {
-            for (let j = 0; j < 8; j++) {
-                unpaddedKey[i * 8 + j] = paddedKeyBuffer[i * 80 + j];
+        for (let i = 0; i <= 16; i += 1) {
+            for (let j = 0; j < 8; j += 1) {
+                unpaddedKey[(i * 8) + j] = paddedKeyBuffer[(i * 80) + j];
             }
         }
 
@@ -196,8 +199,7 @@ class Encryption {
      * @returns {*}
      */
     static calculateBlockChecksum(block, blockNumber, r1, offset = 0) {
-
-        if(block.length != 32) {
+        if (block.length !== 32) {
             return false;
         }
 
@@ -220,8 +222,7 @@ class Encryption {
      * @returns {*}
      */
     static calculateDataChecksum(data, r1, r2, offset = 0) {
-
-        if (data.length % 32 != 0) {
+        if (data.length % 32 !== 0) {
             return false;
         }
 
@@ -232,8 +233,8 @@ class Encryption {
         let checksum = (new BN(0)).toRed(red);
 
         while (i < data.length) {
-            let dataBlock = data.substring(i, i+32);
-            let blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
+            const dataBlock = data.substring(i, i + 32);
+            const blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
             checksum = checksum.redAdd((new BN(blockChecksum, 'hex')).toRed(red));
 
             i += 32;
@@ -252,8 +253,8 @@ class Encryption {
      * @returns {*}
      */
     static xor(data, key) {
-        const buffer1 = Buffer.from(data, 'hex')
-        const buffer2 = Buffer.from(key, 'hex')
+        const buffer1 = Buffer.from(data, 'hex');
+        const buffer2 = Buffer.from(key, 'hex');
 
         return xor(buffer1, buffer2).toString('hex');
     }
@@ -278,7 +279,7 @@ class Encryption {
         let M2C = (new BN(Encryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex')).toRed(red);
 
 
-        if (M1C.redAdd(missingC).redAdd(M2C).toString('hex') != sd) {
+        if (M1C.redAdd(missingC).redAdd(M2C).toString('hex') !== sd) {
             return false;
         }
 
@@ -287,8 +288,8 @@ class Encryption {
         M2C = (new BN(Encryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex')).toRed(red);
 
         const spd = M1C.redAdd(missingC).redAdd(M2C);
-        
-        if (Utilities.sha3(spd.toString('hex')) != spdHash) {
+
+        if (Utilities.sha3(spd.toString('hex')) !== spdHash) {
             return false;
         }
 
@@ -301,18 +302,16 @@ class Encryption {
      * @returns {*}
      */
     static randomDataSplit(data) {
-
-        if (data.length % 32 != 0) {
+        if (data.length % 32 !== 0) {
             return false;
         }
 
-        let dataBlocks = []
+        const dataBlocks = [];
 
         let i = 0;
 
         while (i < data.length) {
-
-            dataBlocks.push(data.substring(i, i+32));
+            dataBlocks.push(data.substring(i, i + 32));
 
             i += 32;
         }
@@ -320,16 +319,15 @@ class Encryption {
         const selectedBlockNumber = Utilities.getRandomIntRange(1, dataBlocks.length - 2);
         const selectedBlock = dataBlocks[selectedBlockNumber];
         const M1 = dataBlocks.slice(0, selectedBlockNumber).join('');
-        const M2 = dataBlocks.slice(selectedBlockNumber+1).join('');
+        const M2 = dataBlocks.slice(selectedBlockNumber + 1).join('');
 
         return {
             M1,
             M2,
             selectedBlockNumber,
-            selectedBlock
-        }
+            selectedBlock,
+        };
     }
-
 }
 
 module.exports = Encryption;
