@@ -16,7 +16,7 @@ class Challenger {
             // TODO doktor: temp solution to delay.
             // Should be started after replication-finished received.
             setTimeout(() => {
-                setInterval(this.intervalFunc, intervalMs);
+                setInterval(this.intervalFunc, intervalMs, this);
             }, 30000);
             log.info(`Started challenging timer at ${intervalMs}ms.`);
         }
@@ -67,13 +67,12 @@ class Challenger {
         });
     }
 
-    intervalFunc() {
-        const that = this;
+    intervalFunc(challenger) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
             .then((challenges) => {
                 if (challenges.length > 0) {
-                    challenges.forEach(challenge => that.sendChallenge(challenge));
+                    challenges.forEach(challenge => challenger.sendChallenge(challenge));
                 } else {
                 //  log.trace('No challenges found.');
                 }
