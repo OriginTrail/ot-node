@@ -9,6 +9,7 @@ class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
+        this.graphStorage = ctx.graphStorage;
     }
 
     async importJSON(json_document) {
