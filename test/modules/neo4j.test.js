@@ -1,7 +1,7 @@
 const Utilities = require('../../modules/Utilities');
 
 const {
-    describe, before, after, it,
+    describe, before, after, afterEach, it,
 } = require('mocha');
 const { assert } = require('chai');
 
@@ -83,6 +83,9 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with regular vertices', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+
         await testDb.addVertex(vertexTwo);
         await testDb.addEdge(edgeOne);
 
@@ -114,11 +117,35 @@ describe('Neo4j module ', async () => {
     });
 
     it('.findTraversalPath() with max length', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
+
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
         assert.equal(path.length, 4);
     });
 
     it('traversal path with interconnected vertices', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
+
         await testDb.addEdge(edges[3]);
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
@@ -166,6 +193,21 @@ describe('Neo4j module ', async () => {
     });
 
     it('findVerticesByImportId', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
+        await testDb.addEdge(edges[3]);
+        await testDb.addVertex(vertexOneV2);
+        await testDb.addVertex(vertexOneV3);
+
         const response = await testDb.findVerticesByImportId('1520345631');
 
         function sortByKey(a, b) {
@@ -183,11 +225,40 @@ describe('Neo4j module ', async () => {
 
 
     it('findEvent', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
+        await testDb.addEdge(edges[3]);
+        await testDb.addVertex(vertexOneV2);
+        await testDb.addVertex(vertexOneV3);
         const response = await testDb.findEvent('senderID', 'myID', '1000', 'bizTest');
         assert.deepEqual(response[0], vertexOne);
     });
 
     it('update document imports', async () => {
+        // predecondition
+        await testDb.addVertex(vertexOne);
+        await testDb.addVertex(vertexTwo);
+        await testDb.addEdge(edgeOne);
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addVertex(vertices[3]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+        await testDb.addEdge(edges[2]);
+        await testDb.addEdge(edges[3]);
+        await testDb.addVertex(vertexOneV2);
+        await testDb.addVertex(vertexOneV3);
+
         await testDb.updateImports('ot_vertices', vertexOne._key, 101100);
         const response = await testDb.findVerticesByImportId(101100);
 
@@ -199,9 +270,11 @@ describe('Neo4j module ', async () => {
         assert.deepEqual(response[0].imports, [vertexOne.imports[0], 101100]);
         assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
     });
-
-    after('drop testDb db', async () => {
+    afterEach('clear testDb', async () => {
         await testDb.clear();
+    });
+
+    after('drop testDb', () => {
         testDb.close();
     });
 });

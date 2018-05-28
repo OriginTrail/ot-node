@@ -5,7 +5,7 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const ArangoJs = require('../../modules/Database/Arangojs');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/arangodb-data.js');
 // eslint-disable-next-line prefer-destructuring
 const Database = require('arangojs').Database;
 
@@ -44,15 +44,13 @@ describe('Arangojs module ', async () => {
 
     afterEach('drop ot_vertices and ot_edges collections', async () => {
         try {
-            const myDocumentCollection = testDb.db.collection(documentCollectionName);
-            await myDocumentCollection.drop();
+            await testDb.dropCollection(documentCollectionName);
         } catch (error) {
             // this means there was no collection to drop, all good, move on
         }
 
         try {
-            const myEdgeCollection = testDb.db.collection(edgeCollectionName);
-            await myEdgeCollection.drop();
+            await testDb.dropCollection(edgeCollectionName);
         } catch (error) {
             // this means there was no collection to drop, all good, move on
         }
