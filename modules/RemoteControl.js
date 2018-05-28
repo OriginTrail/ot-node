@@ -1,15 +1,18 @@
 const config = require('./Config');
 const app = require('http').createServer();
 const remote = require('socket.io')(app);
-const node = require('./Node');
 const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
 
 class RemoteControl {
-    static async connect() {
-        this.node = node.ot;
+    constructor(ctx) {
+        this.network = ctx.network;
+    }
+
+    async connect() {
+        this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
             this.socket = socket;
