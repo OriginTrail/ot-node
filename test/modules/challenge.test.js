@@ -1,9 +1,9 @@
 'use-strict';
 
 const {
-    describe, before, beforeEach, after, afterEach, it,
+    describe, beforeEach, it,
 } = require('mocha');
-var { expect } = require('chai');
+const { expect } = require('chai');
 const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
 const SystemStorage = require('../../modules/Database/SystemStorage');

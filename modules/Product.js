@@ -1,5 +1,4 @@
 const Graph = require('./Graph');
-const GraphStorageInstance = require('./GraphStorageInstance');
 const Utilities = require('./Utilities');
 const ZK = require('./ZK');
 
@@ -7,6 +6,10 @@ const ZK = require('./ZK');
  * Encapsulates product related operations
  */
 class Product {
+    constructor(ctx) {
+        this.graphStorage = ctx.graphStorage;
+    }
+
     /**
      * Gets trail based on query parameter map
      * @param queryObject   Query parameter map
@@ -18,15 +21,15 @@ class Product {
                 delete queryObject.restricted;
             }
 
-            GraphStorageInstance.db.findVertices(queryObject).then((vertices) => {
+            this.graphStorage.findVertices(queryObject).then((vertices) => {
                 if (vertices.length === 0) {
                     resolve([]);
                     return;
                 }
 
                 const start_vertex = vertices[0];
-                const depth = GraphStorageInstance.db.getDatabaseInfo().max_path_length;
-                GraphStorageInstance.db.findTraversalPath(start_vertex, depth)
+                const depth = this.graphStorage.getDatabaseInfo().max_path_length;
+                this.graphStorage.findTraversalPath(start_vertex, depth)
                     .then((virtualGraph) => {
                         virtualGraph = this.consensusCheck(virtualGraph);
                         virtualGraph = this.zeroKnowledge(virtualGraph);

@@ -1,30 +1,32 @@
 const Network = require('./modules/Network');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
-const Graph = require('./modules/Graph');
-const Product = require('./modules/Product');
 const Blockchain = require('./modules/Blockchain');
-const globalEvents = require('./modules/GlobalEvents');
 const restify = require('restify');
 const fs = require('fs');
 const models = require('./models');
 const Storage = require('./modules/Storage');
+const Importer = require('./modules/importer');
+const GS1Importer = require('./modules/GS1Importer');
+const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
+const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 
-const BCInstance = require('./modules/BlockChainInstance');
-const GraphInstance = require('./modules/GraphInstance');
-const GSInstance = require('./modules/GraphStorageInstance');
-const ProductInstance = require('./modules/ProductInstance');
+const awilix = require('awilix');
+
+const Graph = require('./modules/Graph');
+const Product = require('./modules/Product');
+
+const EventEmitter = require('./modules/EventEmitter');
+const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
-const BN = require('bn.js');
-require('./modules/EventHandlers');
+const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
-const { globalEmitter } = globalEvents;
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -134,65 +136,91 @@ class OTNode {
             }
         }
 
-        // wire instances
-        GSInstance.db = new GraphStorage(selectedDatabase);
-        BCInstance.bc = new Blockchain(selectedBlockchain);
-        ProductInstance.p = new Product();
-        GraphInstance.g = new Graph();
+        // Create the container and set the injectionMode to PROXY (which is also the default).
+        const container = awilix.createContainer({
+            injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        container.register({
+            emitter: awilix.asClass(EventEmitter).singleton(),
+            network: awilix.asClass(Network).singleton(),
+            graph: awilix.asClass(Graph).singleton(),
+            product: awilix.asClass(Product).singleton(),
+            dhService: awilix.asClass(DHService).singleton(),
+            dcService: awilix.asClass(DCService).singleton(),
+            config: awilix.asValue(config),
+            importer: awilix.asClass(Importer).singleton(),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            dataReplication: awilix.asClass(DataReplication).singleton(),
+            gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            wotImporter: awilix.asClass(WOTImporter).singleton(),
+            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
+            remoteControl: awilix.asClass(RemoteControl).singleton(),
+            challenger: awilix.asClass(Challenger).singleton(),
+        });
+        const emitter = container.resolve('emitter');
+        const dhService = container.resolve('dhService');
+        const remoteControl = container.resolve('remoteControl');
+        emitter.initialize();
 
         // Connecting to graph database
+        const graphStorage = container.resolve('graphStorage');
         try {
-            await GSInstance.db.connect();
-            log.info(`Connected to graph database: ${GSInstance.db.identify()}`);
+            await graphStorage.connect();
+            log.info(`Connected to graph database: ${graphStorage.identify()}`);
+            // TODO https://www.pivotaltracker.com/story/show/157873617
+            // const myVersion = await graphStorage.version();
+            // log.info(`Database version: ${myVersion}`);
         } catch (err) {
-            log.error(`Failed to connect to the graph database: ${GSInstance.db.identify()}`);
+            log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
             process.exit(1);
         }
 
         // Initialise API
-        this.startRPC();
+        this.startRPC(emitter);
 
         // Starting the kademlia
-        const network = new Network();
+        const network = container.resolve('network');
+        const blockchain = container.resolve('blockchain');
         network.start().then(async (res) => {
-            await this.createProfile();
+            await this.createProfile(blockchain);
         }).catch((e) => {
             console.log(e);
         });
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
-            await RemoteControl.connect();
+            await remoteControl.connect();
         }
 
         // Starting event listener on Blockchain
         log.info('Starting blockchain event listener');
         setInterval(() => {
-            BCInstance.bc.getAllPastEvents('BIDDING_CONTRACT');
+            blockchain.getAllPastEvents('BIDDING_CONTRACT');
         }, 3000);
 
-        DHService.listenToOffers();
+        dhService.listenToOffers();
     }
 
     /**
      * Creates profile on the contract
      */
-    async createProfile() {
-        const profileInfo = await BCInstance.bc.getProfile(config.node_wallet);
+    async createProfile(blockchain) {
+        const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
             log.trace(`Profile has already been created for ${config.identity}`);
             return;
         }
 
-        await BCInstance.bc.createProfile(
+        await blockchain.createProfile(
             config.identity,
             config.dh_price,
             config.dh_stake_factor,
             config.dh_max_time_mins,
             config.dh_max_data_size_bytes,
         );
-        const event = await BCInstance.bc.subscribeToEvent('ProfileCreated', null);
+        const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(config.identity)) {
             log.info(`Profile created for node: ${config.identity}`);
         }
@@ -201,7 +229,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC() {
+    startRPC(emitter) {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
@@ -256,16 +284,14 @@ class OTNode {
             log.notify('%s exposed at %s', server.name, server.url);
         });
 
-        this.exposeAPIRoutes(server);
+        this.exposeAPIRoutes(server, emitter);
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server) {
-        server.post('/import', (req, res) => {
-            log.important('Import request received!');
-
+    exposeAPIRoutes(server, emitter) {
+        const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
 
@@ -274,6 +300,15 @@ class OTNode {
                     message: 'Unauthorized request',
                     data: [],
                 });
+                return false;
+            }
+            return true;
+        };
+
+        server.post('/import', (req, res) => {
+            log.important('Import request received!');
+
+            if (!authorize(req, res)) {
                 return;
             }
 
@@ -294,7 +329,7 @@ class OTNode {
                             response: res,
                         };
 
-                        globalEmitter.emit('gs1-import-request', queryObject);
+                        emitter.emit('gs1-import-request', queryObject);
                     });
                 } else {
                     res.send({
@@ -308,21 +343,14 @@ class OTNode {
                     filepath: input_file,
                 };
 
-                globalEmitter.emit('import-request', queryObject);
+                emitter.emit('import-request', queryObject);
             }
         });
 
         server.post('/import_gs1', (req, res) => {
             log.important('Import request received!');
 
-            const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            const remote_access = config.remote_access_whitelist;
-
-            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
-                res.send({
-                    message: 'Unauthorized request',
-                    data: [],
-                });
+            if (!authorize(req, res)) {
                 return;
             }
 
@@ -343,7 +371,7 @@ class OTNode {
                             response: res,
                         };
 
-                        globalEmitter.emit('gs1-import-request', queryObject);
+                        emitter.emit('gs1-import-request', queryObject);
                     });
                 } else {
                     res.send({
@@ -359,13 +387,30 @@ class OTNode {
                     response: res,
                 };
 
-                globalEmitter.emit('gs1-import-request', queryObject);
+                emitter.emit('gs1-import-request', queryObject);
             }
+        });
+
+        server.post('/import_wot', (req, res) => {
+            log.important('Import request received!');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            const input_file = req.files.importfile.path;
+            const queryObject = {
+                filepath: input_file,
+                contact: req.contact,
+                response: res,
+            };
+
+            emitter.emit('wot-import-request', queryObject);
         });
 
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
-            globalEmitter.emit('trail', {
+            emitter.emit('trail', {
                 query: queryObject,
                 response: res,
             });

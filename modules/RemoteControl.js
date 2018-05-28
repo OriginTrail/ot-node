@@ -1,16 +1,20 @@
 const config = require('./Config');
 const app = require('http').createServer();
 const remote = require('socket.io')(app);
-const node = require('./Node');
 const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
-const GraphStorage = require('./GraphStorageInstance');
+
 
 class RemoteControl {
-    static async connect() {
-        this.node = node.ot;
+    constructor(ctx) {
+        this.network = ctx.network;
+        this.graphStorage = ctx.graphStorage;
+    }
+
+    async connect() {
+        this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
             this.socket = socket;
@@ -104,8 +108,8 @@ class RemoteControl {
      */
     static getImport(import_id) {
         return new Promise((resolve, reject) => {
-            const verticesPromise = GraphStorage.db.findVerticesByImportId(import_id);
-            const edgesPromise = GraphStorage.db.findEdgesByImportId(import_id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);
 
             Promise.all([verticesPromise, edgesPromise]).then((values) => {
                 var nodes = [];
@@ -127,9 +131,6 @@ class RemoteControl {
                         caption,
                         root: isRoot,
                         data: vertex,
-                        // category: vertex.data.category,
-                        // description: vertex.data.description,
-                        // object_class_id: vertex.data.object_class_id,
                     });
                 });
                 values[1].forEach((edge) => {
