@@ -165,6 +165,9 @@ class OTNode {
         try {
             await graphStorage.connect();
             log.info(`Connected to graph database: ${graphStorage.identify()}`);
+            // TODO https://www.pivotaltracker.com/story/show/157873617
+            // const myVersion = await graphStorage.version();
+            // log.info(`Database version: ${myVersion}`);
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
