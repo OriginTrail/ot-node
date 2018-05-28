@@ -592,7 +592,7 @@ class Neo4jDB {
         log.debug('Clear the database.');
         const session = this.driver.session();
         await session.writeTransaction(tx => tx.run('match (n) detach delete n'));
-        session.close()
+        session.close();
     }
 
     /**
