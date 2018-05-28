@@ -176,18 +176,11 @@ class Challenge {
 
     /**
     * Returns current state of database.
-    * @returns {Promise<any>}
+    * @returns {Promise}
     */
-    static getCurrentDbState() {
-        return new Promise((resolve, reject) => {
-            Storage.db.query('SELECT * FROM data_challenges', {
-                replacements: [],
-            })
-                .then((res) => {
-                    resolve(res);
-                }).catch((err) => {
-                    reject(err);
-                });
+    static async getCurrentDbState() {
+        Storage.db.query('SELECT * FROM data_challenges', {
+            replacements: [],
         });
     }
 
