@@ -17,6 +17,7 @@ class EventEmitter {
      * @param ctx IoC context
      */
     constructor(ctx) {
+        this.ctx = ctx;
         this.product = ctx.product;
         this.graphStorage = ctx.graphStorage;
         this.globalEmitter = new events.EventEmitter();
@@ -24,12 +25,12 @@ class EventEmitter {
 
     /**
      * Initializes event listeners
-     * @param dcService
-     * @param dhService
-     * @param dataReplication
-     * @param importer
      */
-    initialize(dcService, dhService, dataReplication, importer) {
+    initialize() {
+        const {
+            dcService, dhService, dataReplication, importer,
+        } = this.ctx;
+
         this.globalEmitter.on('import-request', (data) => {
             importer.importXML(data.filepath, (response) => {
                 // emit response
@@ -45,9 +46,7 @@ class EventEmitter {
             });
         });
 
-        this.globalEmitter.on('gs1-import-request', async (data) => {
-            const response = await importer.importXMLgs1(data.filepath);
-
+        const processImport = async (response, data) => {
             if (response === null) {
                 data.response.send({
                     status: 500,
@@ -80,6 +79,16 @@ class EventEmitter {
                 status: 200,
                 message: 'Ok.',
             });
+        };
+
+        this.globalEmitter.on('gs1-import-request', async (data) => {
+            const response = await importer.importXMLgs1(data.filepath);
+            await processImport(response, data);
+        });
+
+        this.globalEmitter.on('wot-import-request', async (data) => {
+            const response = await importer.importWOT(data.filepath);
+            await processImport(response, data);
         });
 
         this.globalEmitter.on('replication-request', async (request, response) => {

@@ -8,6 +8,7 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
+const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
@@ -151,14 +152,12 @@ class OTNode {
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
-        const dcService = container.resolve('dcService');
-        const dataReplication = container.resolve('dataReplication');
-        const importer = container.resolve('importer');
-        emitter.initialize(dcService, dhService, dataReplication, importer);
+        emitter.initialize();
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -288,9 +287,7 @@ class OTNode {
      * API Routes
      */
     exposeAPIRoutes(server, emitter) {
-        server.post('/import', (req, res) => {
-            log.important('Import request received!');
-
+        const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
 
@@ -299,6 +296,15 @@ class OTNode {
                     message: 'Unauthorized request',
                     data: [],
                 });
+                return false;
+            }
+            return true;
+        };
+
+        server.post('/import', (req, res) => {
+            log.important('Import request received!');
+
+            if (!authorize(req, res)) {
                 return;
             }
 
@@ -340,14 +346,7 @@ class OTNode {
         server.post('/import_gs1', (req, res) => {
             log.important('Import request received!');
 
-            const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            const remote_access = config.remote_access_whitelist;
-
-            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
-                res.send({
-                    message: 'Unauthorized request',
-                    data: [],
-                });
+            if (!authorize(req, res)) {
                 return;
             }
 
@@ -386,6 +385,23 @@ class OTNode {
 
                 emitter.emit('gs1-import-request', queryObject);
             }
+        });
+
+        server.post('/import_wot', (req, res) => {
+            log.important('Import request received!');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            const input_file = req.files.importfile.path;
+            const queryObject = {
+                filepath: input_file,
+                contact: req.contact,
+                response: res,
+            };
+
+            emitter.emit('wot-import-request', queryObject);
         });
 
         server.get('/api/trail', (req, res) => {
