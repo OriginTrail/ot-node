@@ -1,4 +1,3 @@
-const node = require('./Node');
 const config = require('./Config');
 const BN = require('bn.js');
 
@@ -18,6 +17,7 @@ class DHService {
     constructor(ctx) {
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
+        this.network = ctx.network;
     }
 
     /**
@@ -145,7 +145,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
             const bid = bidModel.get({ plain: true });
-            node.ot.replicationRequest(
+            this.network.kademlia().replicationRequest(
                 {
                     offer_hash: offerHash,
                     wallet: config.node_wallet,
@@ -227,7 +227,7 @@ class DHService {
             );
 
             log.important('Finished negotiation. Job starting. Waiting for challenges.');
-            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
+            this.network.kademlia().replicationFinished({ status: 'success' }, bid.dc_id);
         } catch (error) {
             log.error(`Failed to verify escrow. ${error}.`);
         }

@@ -1,7 +1,6 @@
 const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
-const challenger = require('./Challenger');
 const Utilities = require('./Utilities');
 const BN = require('bn.js');
 const config = require('./Config');
@@ -28,7 +27,7 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dataReplication, importer,
+            dcService, dhService, dataReplication, importer, challenger,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
