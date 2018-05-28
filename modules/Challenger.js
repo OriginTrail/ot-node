@@ -40,7 +40,7 @@ class Challenger {
             },
         };
 
-        this.network.kademlia().challengeRequest(payload, challenge.dh, (error, response) => {
+        this.network.kademlia().challengeRequest(payload, challenge.dh_id, (error, response) => {
             if (error) {
                 log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
                 return;
