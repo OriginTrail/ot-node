@@ -191,52 +191,143 @@ class Encryption {
      * Calculates checksum of single 128 bit block (32 character hex string)
      * @param block
      * @param blockNumber
+     * @param r1
      * @param offset
      * @returns {*}
      */
-    static calculateBlockChecksum(block, blockNumber, offset = 0) {
+    static calculateBlockChecksum(block, blockNumber, r1, offset = 0) {
 
         if(block.length != 32) {
-            return -1;
+            return false;
         }
 
         const blockHex = Buffer.from(block).toString('hex');
-        const red = BN.red((new BN(2)).pow(new BN(64)));
+        const red = BN.red((new BN(2)).pow(new BN(128)));
         const g = (new BN(11)).toRed(red);
+        const r1Bn = new BN(r1);
         const bi = g.redPow((new BN(blockHex).mul(new BN(blockNumber + offset))));
         const blockChecksum = Utilities.sha3(bi);
 
-        return (new BN(blockChecksum.substring(2)).toRed(red).toString('hex'));
+        return (new BN(blockChecksum.substring(2)).add(r1Bn)).toRed(red).toString('hex');
     }
 
     /**
      * Calculates sum of block checksums of hex data string
      * @param data
+     * @param r1
+     * @param r2
      * @param offset
      * @returns {*}
      */
-    static calculateDataChecksum(data, offset = 0) {
+    static calculateDataChecksum(data, r1, r2, offset = 0) {
 
         if (data.length % 32 != 0) {
-            return -1;
+            return false;
         }
 
         let i = 0;
-        let blockNum = 0;
+        let blockNum = 1;
 
-        const red = BN.red((new BN(2)).pow(new BN(64)));
+        const red = BN.red((new BN(2)).pow(new BN(128)));
         let checksum = (new BN(0)).toRed(red);
 
         while (i < data.length) {
             let dataBlock = data.substring(i, i+32);
-            let blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, offset);
+            let blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
             checksum = checksum.redAdd((new BN(blockChecksum, 'hex')).toRed(red));
 
             i += 32;
             blockNum += 1;
         }
 
+        checksum = checksum.redAdd((new BN(r2)).toRed(red));
+
         return checksum.toString('hex');
+    }
+
+    /**
+     * XOR buffers
+     * @param data
+     * @param key
+     * @returns {*}
+     */
+    static xor(data, key) {
+        const buffer1 = Buffer.from(data, 'hex')
+        const buffer2 = Buffer.from(key, 'hex')
+
+        return xor(buffer1, buffer2).toString('hex');
+    }
+
+    /**
+     * Verifying data checksum
+     * @param M1
+     * @param missing
+     * @param missingBlockNumber
+     * @param M2
+     * @param sd
+     * @param spdHash
+     * @param r1
+     * @param r2
+     * @returns {boolean}
+     */
+    static verifyDataChecksum(M1, missing, missingBlockNumber, M2, sd, spdHash, r1, r2) {
+        const red = BN.red((new BN(2)).pow(new BN(128)));
+
+        let M1C = (new BN(Encryption.calculateDataChecksum(M1, 0, 0), 'hex')).toRed(red);
+        let missingC = new BN(Encryption.calculateDataChecksum(missing, 0, 0, missingBlockNumber), 'hex').toRed(red);
+        let M2C = (new BN(Encryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex')).toRed(red);
+
+
+        if (M1C.redAdd(missingC).redAdd(M2C).toString('hex') != sd) {
+            return false;
+        }
+
+        M1C = (new BN(Encryption.calculateDataChecksum(M1, r1, r2), 'hex')).toRed(red);
+        missingC = new BN(Encryption.calculateDataChecksum(missing, r1, r2, missingBlockNumber), 'hex').toRed(red);
+        M2C = (new BN(Encryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex')).toRed(red);
+
+        const spd = M1C.redAdd(missingC).redAdd(M2C);
+        
+        if (Utilities.sha3(spd.toString('hex')) != spdHash) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Split data and extract random block
+     * @param data
+     * @returns {*}
+     */
+    static randomDataSplit(data) {
+
+        if (data.length % 32 != 0) {
+            return false;
+        }
+
+        let dataBlocks = []
+
+        let i = 0;
+
+        while (i < data.length) {
+
+            dataBlocks.push(data.substring(i, i+32));
+
+            i += 32;
+        }
+
+        const selectedBlockNumber = Utilities.getRandomIntRange(1, dataBlocks.length - 2);
+        const selectedBlock = dataBlocks[selectedBlockNumber];
+        const M1 = dataBlocks.slice(0, selectedBlockNumber).join('');
+        const M2 = dataBlocks.slice(selectedBlockNumber+1).join('');
+
+        return {
+            M1,
+            M2,
+            selectedBlockNumber,
+            selectedBlock
+        }
     }
 
 }
