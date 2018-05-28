@@ -9,7 +9,6 @@ const deasync = require('deasync-promise');
 const utilities = require('./Utilities');
 const log = require('./Utilities').getLogger();
 const config = require('./Config');
-const node = require('./Node');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
@@ -162,7 +161,7 @@ class NetworkUtilities {
             'ControlSock and ControlPort cannot both be enabled',
         );
 
-        const controller = new boscar.Server(new Control(node.ot));
+        const controller = new boscar.Server(new Control(node));
 
         if (parseInt(config.control_port_enabled, 10)) {
             log.notify(`Binding controller to port ${config.control_port}`);
@@ -178,7 +177,7 @@ class NetworkUtilities {
     /**
     * Spawn solvers for hashes
     */
-    spawnHashSolverProcesses() {
+    spawnHashSolverProcesses(node) {
         const cpus = parseInt(config.cpus, 10);
 
         if (cpus === 0) {
@@ -190,7 +189,7 @@ class NetworkUtilities {
         }
 
         for (let c = 0; c < cpus; c += 1) {
-            this.forkHashSolver(c);
+            this.forkHashSolver(c, node);
         }
     }
 
@@ -198,7 +197,7 @@ class NetworkUtilities {
     * Create child processes for hash solvers
     * @param c
     */
-    forkHashSolver(c) {
+    forkHashSolver(c, node) {
         log.info(`Forking solver process ${c}`);
 
         const solver = fork(path.join(__dirname, 'workers', 'solver.js'), [], {
@@ -215,14 +214,14 @@ class NetworkUtilities {
           `in ${msg.result.attempts} attempts (${ms(msg.result.time)})`);
 
             const solution = new kadence.permission.PermissionSolution(Buffer.from(msg.result.solution, 'hex'));
-            node.ot.wallet.put(solution);
+            node.wallet.put(solution);
         });
 
         solver.on('error', (err) => {
             log.error(`solver ${c} error, ${err.message}`);
         });
 
-        solver.send({ privateKey: node.ot.spartacus.privateKey.toString('hex') });
+        solver.send({ privateKey: node.spartacus.privateKey.toString('hex') });
         this.solvers.push(solver);
     }
 
