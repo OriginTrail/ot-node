@@ -162,7 +162,7 @@ class DHService {
         }
     }
 
-    static _saveBidToStorage(
+    _saveBidToStorage(
         event,
         dcNodeId,
         dcWallet,
