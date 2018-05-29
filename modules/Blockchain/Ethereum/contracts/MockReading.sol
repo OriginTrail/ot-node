@@ -1,5 +1,8 @@
-pragem solidity ^0.4.23;
+pragma solidity ^0.4.21;
 
+contract EscrowHolder{
+	function writeRootHashAndKeyChecksum(uint data_id, address DC_wallet, bytes32 root_hash, uint EPKChecksum);
+}
 
 contract Reading{
 
@@ -25,7 +28,7 @@ contract Reading{
 	event PurchaseConfirmed(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event EncryptedBlockSent(bytes32 import_id, address DH_wallet, address DV_wallet);
 
-	constructor(address escrow_address){
+	function constructor(address escrow_address){
 		escrow = escrow_address;
 	}
 
@@ -52,7 +55,7 @@ contract Reading{
 	public {
 		ReadingDefinition this_reading = reading[msg.sender][DV_wallet][import_id];
 
-		this_reading.commitment = commitment
+		this_reading.commitment = commitment;
 		this_reading.reading_status = ReadingStatus.commited;
 		emit CommitmentSent(import_id, msg.sender, DV_wallet);
 	}
@@ -74,5 +77,4 @@ contract Reading{
 		this_reading.reading_status = ReadingStatus.sent;
 		emit EncryptedBlockSent(import_id, msg.sender, DV_wallet);
 	}
-
 }
