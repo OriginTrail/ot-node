@@ -1,5 +1,6 @@
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const BN = require('bn.js');
 
 const log = Utilities.getLogger();
 
@@ -23,9 +24,10 @@ class DVService {
     /**
      * Sends query to the network
      * @param queryParams
+     * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(queryParams) {
+    async queryNetwork(queryParams, totalTime = 60000) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -47,9 +49,14 @@ class DVService {
              }
          */
 
+        const networkQueryModel = Models.network_queries.create({
+            query: JSON.stringify(queryParams),
+            timestamp: Date.now(),
+        });
+
         const dataLocationRequestObject = {
             message: {
-                id: 1,
+                id: networkQueryModel.id,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identity,
                 query: {
@@ -79,6 +86,35 @@ class DVService {
                 log.info(`Published query to the network. Query ID ${networkQuery.id}.`);
             },
         );
+
+        return new Promise((resolve, reject) => {
+            setTimeout(async () => {
+                // Check for all offers.
+                const responseModels = await Models.network_query_responses.findAll({
+                    where: { query_id: networkQueryModel.id },
+                });
+
+                log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
+
+                // TODO: Get some choose logic here.
+                let lowestOffer;
+                responseModels.forEach((response) => {
+                    const price = new BN(response.data_price, 10);
+                    if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
+                        lowestOffer = response;
+                    }
+                });
+
+                if (lowestOffer === undefined) {
+                    log.info('Didn\'t find answer or no one replied.');
+                    return;
+                }
+
+                // Start escrow from here.
+
+                resolve(lowestOffer);
+            }, totalTime);
+        });
     }
 }
 
