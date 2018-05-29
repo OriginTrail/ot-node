@@ -90,14 +90,29 @@ describe('GS1 Importer tests', () => {
                 .equal(import2Result.edges.length);
 
             import1Result.vertices.forEach((vertex) => {
-                const vertex2 = import2Result.vertices
-                    .find(element => vertex._key === element._key);
+                let vertex2;
+                if (vertex.identifiers) {
+                    // private data is changing the _key
+                    vertex2 = import2Result.vertices.find((element) => {
+                        if (element.identifiers &&
+                            vertex.identifiers.id === element.identifiers.id) {
+                            return element;
+                        }
+                        return null;
+                    });
+                } else {
+                    // find by _key
+                    vertex2 = import2Result.vertices.find(element => vertex._key === element._key);
+                }
+
                 expect(vertex2).not.to.be.equal(undefined);
 
                 if (vertex.identifiers) {
                     expect(vertex.identifiers).to.deep.equal(vertex2.identifiers);
                 }
                 if (vertex.data) {
+                    delete vertex.data.private;
+                    delete vertex2.data.private;
                     expect(vertex.data).to.deep.equal(vertex2.data);
                 }
                 if (vertex.vertex_type) {
