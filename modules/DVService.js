@@ -60,14 +60,12 @@ class DVService {
             },
         };
 
-
-        const signature = this.web3.eth.accounts.sign(
-            JSON.stringify(dataLocationRequestObject.message),
-            `0x${this.config.node_private_key}`,
-        );
-
         dataLocationRequestObject.messageSignature =
-            { r: signature.r, s: signature.s, v: signature.v };
+            Utilities.generateRsvSignature(
+                JSON.stringify(dataLocationRequestObject.message),
+                this.web3,
+                this.config.node_private_key,
+            );
 
         this.network.kademlia().quasar.quasarPublish(
             'data-location-request',

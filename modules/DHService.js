@@ -319,13 +319,12 @@ class DHService {
             stakeFactor: 1000,
         };
 
-        const web3Signature = this.web3.eth.accounts.sign(
-            JSON.stringify(messageResponse),
-            `0x${config.node_private_key}`,
-        );
-
         const messageResponseSignature =
-            { r: web3Signature.r, s: web3Signature.s, v: web3Signature.v };
+            Utilities.generateRsvSignature(
+                JSON.stringify(messageResponse),
+                this.web3,
+                config.node_private_key,
+            );
 
         const dataLocationResponseObject = {
             message: messageResponse,

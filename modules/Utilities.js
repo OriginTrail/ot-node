@@ -730,6 +730,16 @@ class Utilities {
         return Math.abs(myBid.sub(offer));
     }
 
+    static generateRsvSignature(message, web3, privateKey) {
+        const signature = web3.eth.accounts.sign(
+            message,
+            privateKey.toLowerCase().startsWith('0x') ?
+                privateKey : `0x${privateKey}`,
+        );
+
+        return { r: signature.r, s: signature.s, v: signature.v };
+    }
+
     static isMessageSigned(web3, message, signature) {
         const signedAddress = web3.eth.accounts.recover(
             JSON.stringify(message),
