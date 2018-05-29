@@ -4,7 +4,7 @@ contract EscrowHolder{
 	function writeRootHashAndKeyChecksum(uint data_id, address DC_wallet, bytes32 root_hash, uint EPKChecksum);
 }
 
-contract Reading{
+contract MockReading{
 
 	address escrow;
 
