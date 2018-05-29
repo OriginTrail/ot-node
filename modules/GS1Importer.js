@@ -1,6 +1,7 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
 const md5 = require('md5');
+const crypto = require('crypto');
 const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
 
@@ -84,20 +85,22 @@ class GS1Importer {
 
         // Check for events.
         // Types: Transport, Transformation, Observation and Ownership.
-        for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
-            events.push(objectEvent);
-        }
-
-        if (eventListElement.AggregationEvent) {
-            for (const aggregationEvent of GS1Helper.arrayze(eventListElement.AggregationEvent)) {
-                events.push(aggregationEvent);
+        if (eventListElement) {
+            for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
+                events.push(objectEvent);
             }
-        }
+            if (eventListElement.AggregationEvent) {
+                const aggregationEvents = GS1Helper.arrayze(eventListElement.AggregationEvent);
+                for (const aggregationEvent of aggregationEvents) {
+                    events.push(aggregationEvent);
+                }
+            }
 
-        if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
-            for (const transformationEvent of
-                GS1Helper.arrayze(eventListElement.extension.TransformationEvent)) {
-                events.push(transformationEvent);
+            if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
+                for (const transformationEvent of
+                    GS1Helper.arrayze(eventListElement.extension.TransformationEvent)) {
+                    events.push(transformationEvent);
+                }
             }
         }
 
@@ -119,16 +122,11 @@ class GS1Importer {
 
             GS1Helper.copyProperties(location.attributes, data);
 
-            const privateData = {};
             let locationKey;
+            const privateData = {};
             if (location.extension) {
                 if (location.extension.private) {
-                    data.private = {};
-                    for (const key in location.extension.private) {
-                        const value = location.extension.private[key];
-                        privateData[key] = value;
-                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
-                    }
+                    GS1Helper.handlePrivate(location.extension.private, data, privateData);
                 }
                 locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
                 const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
@@ -205,12 +203,7 @@ class GS1Importer {
             const privateData = {};
             if (actor.extension) {
                 if (actor.extension.private) {
-                    data.private = {};
-                    for (const key in actor.extension.private) {
-                        const value = actor.extension.private[key];
-                        privateData[key] = value;
-                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
-                    }
+                    GS1Helper.handlePrivate(actor.extension.private, data, privateData);
                 }
             }
 
@@ -239,12 +232,7 @@ class GS1Importer {
             const privateData = {};
             if (product.extension) {
                 if (product.extension.private) {
-                    data.private = {};
-                    for (const key in product.extension.private) {
-                        const value = product.extension.private[key];
-                        privateData[key] = value;
-                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
-                    }
+                    GS1Helper.handlePrivate(product.extension.private, data, privateData);
                 }
             }
 
@@ -275,12 +263,7 @@ class GS1Importer {
             const privateData = {};
             if (batch.extension) {
                 if (batch.extension.private) {
-                    data.private = {};
-                    for (const key in batch.extension.private) {
-                        const value = batch.extension.private[key];
-                        privateData[key] = value;
-                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
-                    }
+                    GS1Helper.handlePrivate(batch.extension.private, data, privateData);
                 }
             }
 
@@ -345,12 +328,7 @@ class GS1Importer {
             const privateData = {};
             if (extension.extension) {
                 if (extension.extension.private) {
-                    data.private = {};
-                    for (const key in extension.extension.private) {
-                        const value = extension.extension.private[key];
-                        privateData[key] = value;
-                        data.private[key] = Utilities.sha3(JSON.stringify(`${value}`));
-                    }
+                    GS1Helper.handlePrivate(extension.extension.private, data, privateData);
                 }
                 eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
 
@@ -587,15 +565,20 @@ class GS1Importer {
                 }
             }
 
+            let add = false;
             // eslint-disable-next-line
             const existingEventVertex = await this.db.findVertexWithMaxVersion(senderId, eventId, eventKey);
-            let add = false;
             if (existingEventVertex) {
                 const { data } = eventVertex;
                 const existingData = existingEventVertex.data;
 
-                const match = Utilities.objectDistance(data, existingData, ['quantities']);
-                if (match !== 100) {
+                let matchPrivate = 100;
+                if (existingEventVertex.data.private) {
+                    matchPrivate = this._eventPrivateDistance(eventVertex, existingEventVertex);
+                }
+
+                const matchVertex = Utilities.objectDistance(data, existingData, ['quantities', 'private']);
+                if (matchPrivate !== 100 || matchVertex !== 100) {
                     add = true;
                 }
             } else {
@@ -792,6 +775,29 @@ class GS1Importer {
                     resolve(this.processXML(err, json));
                 },
             ));
+    }
+
+    /**
+     * Calculate distance for private data
+     * @param eventVertex
+     * @param existingEventVertex
+     * @return {*}
+     * @private
+     */
+    _eventPrivateDistance(eventVertex, existingEventVertex) {
+        const salt = existingEventVertex.private._salt;
+
+        const existingPrivate = {};
+        GS1Helper.copyProperties(existingEventVertex.private, existingPrivate);
+        delete existingPrivate._salt;
+
+        const newPrivate = {};
+        GS1Helper.copyProperties(eventVertex.private, newPrivate);
+        delete newPrivate._salt;
+        return GS1Helper.checkPrivate(
+            existingEventVertex.data.private,
+            newPrivate, salt,
+        );
     }
 
     static _parseLocations(vocabularyElementList) {
