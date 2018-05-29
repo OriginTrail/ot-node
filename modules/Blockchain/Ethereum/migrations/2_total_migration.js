@@ -68,7 +68,7 @@ module.exports = (deployer, network, accounts) => {
             .then(() => giveMeTracToken())
             .then(async (result) => {
                 token = result;
-                await deployer.deploy(EscrowHolder, token.address)
+                await deployer.deploy(EscrowHolder, token.address, { gas: 8000000 })
                     .then(() => giveMeEscrowHolder())
                     .then(async (result) => {
                         escrow = result;
