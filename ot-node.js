@@ -415,6 +415,14 @@ class OTNode {
                 response: res,
             });
         });
+
+        server.get('/api/get_root_hash', (req, res) => {
+            const queryObject = req.query;
+            emitter.emit('get_root_hash', {
+                query: queryObject,
+                response: res,
+            });
+        });
     }
 }
 
