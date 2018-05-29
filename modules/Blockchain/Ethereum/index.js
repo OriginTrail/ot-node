@@ -12,11 +12,12 @@ class Ethereum {
      * Initializing Ethereum blockchain connector
      * @param blockchainConfig
      * @param emitter
+     * @param web3
      */
-    constructor(blockchainConfig, emitter) {
+    constructor(blockchainConfig, emitter, web3) {
         // Loading Web3
         this.emitter = emitter;
-        this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
+        this.web3 = web3;
         this.transactions = new Transactions(
             this.web3,
             blockchainConfig.wallet_private_key,

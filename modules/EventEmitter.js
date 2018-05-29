@@ -18,6 +18,7 @@ class EventEmitter {
     constructor(ctx) {
         this.ctx = ctx;
         this.product = ctx.product;
+        this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.globalEmitter = new events.EventEmitter();
     }
@@ -191,26 +192,11 @@ class EventEmitter {
         /**
          * Handles bidding-broadcast on the DH side
          */
-        this.globalEmitter.on('bidding-broadcast', async (message) => {
-            log.info('bidding-broadcast received');
+        this.globalEmitter.on('kad-data-location-request', async (message) => {
+            log.info('kad-data-location-request received');
 
-            const {
-                dataId,
-                dcId,
-                dcWallet,
-                totalEscrowTime,
-                minStakeAmount,
-                dataSizeBytes,
-            } = message;
-
-            await dhService.handleOffer(
-                dcWallet,
-                dcId,
-                dataId,
-                totalEscrowTime * 60000, // in ms.
-                new BN(minStakeAmount),
-                new BN(dataSizeBytes),
-            );
+            dhService.handleDataLocationRequest(message)
+                .catch(error => log.error(`Failed to handle location request. ${error}`));
         });
 
         this.globalEmitter.on('offer-ended', (message) => {
@@ -322,6 +308,73 @@ class EventEmitter {
                 min_stake_amount,
                 data_size,
             } = event.returnValues;
+        });
+
+        this.globalEmitter.on('kad-data-location-response', async (event) => {
+            log.info('kad-data-location-response');
+
+            /*
+                dataLocationResponseObject = {
+                    message: {
+                        id: ID,
+                        wallet: DH_WALLET,
+                        nodeId: KAD_ID,
+                        imports: [
+                                    {sender_id: …,
+                                     importId: …
+                                          }, …
+                                ],
+                        dataSize: DATA_BYTE_SIZE,
+                        dataPrice: TOKEN_AMOUNT,
+                        stakeFactor: X
+                    }
+                    messageSignature: {
+                        c: …,
+                        r: …,
+                        s: …
+                    }
+                }
+             */
+
+            try {
+                const dataLocationResponseObject = event.params.message;
+                const { message, messageSignature } = dataLocationResponseObject;
+                const queryId = message.id;
+
+                if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                    log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                    return;
+                }
+
+                // Find the query.
+                const networkQuery = await Models.network_queries.findOne({
+                    where: { id: queryId },
+                });
+
+                if (!networkQuery) {
+                    log.info(`Didn't find query with ID ${queryId}.`);
+                    return;
+                }
+
+                // Store the offer.
+                const networkQueryResponse = await Models.network_query_responses.create({
+                    query: JSON.stringify(dataLocationResponseObject.message.query),
+                    query_id: queryId,
+                    wallet: message.wallet,
+                    node_id: message.nodeId,
+                    imports: JSON.stringify(message.imports),
+                    data_size: message.dataSize,
+                    data_price: message.dataPrice,
+                    stake_factor: message.stakeFactor,
+                });
+
+                if (!networkQueryResponse) {
+                    log.info(`Failed to add query response. ${message}.`);
+                    return;
+                }
+            } catch (error) {
+                log.error(`Failed to process location response. ${error}.`);
+            }
         });
     }
 

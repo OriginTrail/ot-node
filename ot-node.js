@@ -27,6 +27,7 @@ const DataReplication = require('./modules/DataReplication');
 const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
+const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -109,6 +110,9 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
@@ -149,6 +153,7 @@ class OTNode {
             dhService: awilix.asClass(DHService).singleton(),
             dcService: awilix.asClass(DCService).singleton(),
             config: awilix.asValue(config),
+            web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),

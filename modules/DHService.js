@@ -19,6 +19,7 @@ class DHService {
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.network = ctx.network;
+        this.web3 = ctx.web3;
     }
 
     /**
@@ -246,6 +247,97 @@ class DHService {
         } catch (error) {
             log.error(`Failed to verify escrow. ${error}.`);
         }
+    }
+
+    async handleDataLocationRequest(dataLocationRequestObject) {
+        /*
+            dataLocationRequestObject = {
+                message: {
+                    id: ID,
+                    wallet: DV_WALLET,
+                    nodeId: KAD_ID
+                    query: {
+                              identifiers: { … }
+                              data: { … }
+                              senderId: { … }
+                    }
+                }
+                messageSignature: {
+                    v: …,
+                    r: …,
+                    s: …
+                }
+             }
+         */
+
+        const { message, messageSignature } = dataLocationRequestObject;
+
+        // Check if mine publish.
+        if (message.nodeId === config.identity &&
+            message.wallet === config.node_wallet) {
+            log.trace('Received mine publish. Ignoring.');
+            return;
+        }
+
+        if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+            log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+        }
+
+        // Handle query here.
+
+        // TODO: Case I want to participate.
+        /*
+            dataLocationResponseObject = {
+                message: {
+                    id: ID,
+                    wallet: DH_WALLET,
+                    nodeId: KAD_ID,
+                    imports: [
+                                {sender_id: …,
+                                 importId: …
+                                      }, …
+                            ],
+                    dataSize: DATA_BYTE_SIZE,
+                    dataPrice: TOKEN_AMOUNT,
+                    stakeFactor: X
+                }
+                messageSignature: {
+                    c: …,
+                    r: …,
+                    s: …
+                }
+            }
+         */
+
+        const messageResponse = {
+            id: message.id,
+            wallet: config.node_wallet,
+            nodeId: config.identity,
+            imports: [],
+            dataSize: 500,
+            dataPrice: 100000,
+            stakeFactor: 1000,
+        };
+
+        const web3Signature = this.web3.eth.accounts.sign(
+            JSON.stringify(messageResponse),
+            `0x${config.node_private_key}`,
+        );
+
+        const messageResponseSignature =
+            { r: web3Signature.r, s: web3Signature.s, v: web3Signature.v };
+
+        const dataLocationResponseObject = {
+            message: messageResponse,
+            messageSignature: messageResponseSignature,
+        };
+
+        this.network.kademlia().sendDataLocationResponse(
+            dataLocationResponseObject,
+            message.nodeId,
+        );
+
+        // Store message in DB to know later prices.
     }
 
     listenToOffers() {

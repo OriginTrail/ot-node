@@ -11,10 +11,11 @@ class Blockchain {
     constructor(ctx) {
         this.config = ctx.config.blockchain;
         this.emitter = ctx.emitter;
+        this.web3 = ctx.web3;
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':
-            this.blockchain = new Ethereum(this.config, this.emitter);
+            this.blockchain = new Ethereum(this.config, this.emitter, this.web3);
             break;
         default:
             log.error('Unsupported blockchain', this.config.blockchain_title);

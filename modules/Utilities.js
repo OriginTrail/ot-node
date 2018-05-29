@@ -13,6 +13,7 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
+const Models = require('../models');
 
 require('dotenv').config();
 
@@ -727,6 +728,74 @@ class Utilities {
         const myBid = hashWallerNodeId.add(price);
         const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
+    }
+
+    static isMessageSigned(web3, message, signature) {
+        const signedAddress = web3.eth.accounts.recover(
+            JSON.stringify(message),
+            signature.v,
+            signature.r,
+            signature.s,
+        );
+
+        return signedAddress === message.wallet;
+    }
+
+    static doTheMagic(web3, network, log) {
+        /*
+        dataLocationRequestObject = {
+            message: {
+                id: ID,
+                dataViewer: DV_WALLET,
+                dvKademliaId: KAD_ID
+                query: {
+                          identifiers: { … }
+                          data: { … }
+                          senderId: { … }
+                }
+            }
+            messageSignature: {
+                v: …,
+                r: …,
+                s: …
+            }
+         }
+         */
+
+        const dataLocationRequestObject = {
+            message: {
+                id: 1,
+                wallet: config.node_wallet,
+                nodeId: config.identity,
+                query: {
+                    identifiers: { dummy: 'dummy' },
+                    data: { id: 1234567890 },
+                    senderId: { id: 'SENDER_PROVIDER_ID' },
+                },
+            },
+        };
+
+
+        const signature = web3.eth.accounts.sign(
+            JSON.stringify(dataLocationRequestObject.message),
+            `0x${config.node_private_key}`,
+        );
+
+        dataLocationRequestObject.messageSignature =
+            { r: signature.r, s: signature.s, v: signature.v };
+
+        network.kademlia().quasar.quasarPublish(
+            'data-location-request',
+            dataLocationRequestObject,
+            {},
+            async () => {
+                const networkQuery = await Models.network_queries.create({
+                    query: JSON.stringify(dataLocationRequestObject.message.query),
+                    timestamp: Date.now(),
+                });
+                log.info(`Published query to the network. Query ID ${networkQuery.id}.`);
+            },
+        );
     }
 }
 

@@ -225,10 +225,11 @@ class Network {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        this.node.quasar.quasarSubscribe('bidding-broadcast-channel', (message, err) => {
-            log.info('New bidding offer received');
-            this.emitter.emit('bidding-broadcast', message);
+        this.node.quasar.quasarSubscribe('data-location-request', (message, err) => {
+            log.info('New location request received');
+            this.emitter.emit('kad-data-location-request', message);
         });
+
 
         // add payload-request route
         this.node.use('payload-request', (request, response, next) => {
@@ -266,6 +267,11 @@ class Network {
             response.send({
                 error: 'replication-finished error',
             });
+        });
+
+        this.node.use('kad-data-location-response', (request, response, next) => {
+            log.info('kad-data-location-response received');
+            this.emitter.emit('kad-data-location-response', request, response);
         });
 
         // add challenge-request route
@@ -389,6 +395,12 @@ class Network {
                 const contact = node.getContact(contactId);
                 node.send('kad-bidding-won', { message }, [contactId, contact], callback);
             };
+
+            node.sendDataLocationResponse = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-data-location-response', { message }, [contactId, contact], callback);
+            };
+
         });
         // Define a global custom error handler rule
         this.node.use((err, request, response, next) => {
