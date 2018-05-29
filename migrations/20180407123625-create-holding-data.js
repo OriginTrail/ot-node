@@ -3,33 +3,21 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('holding_data', {
         id: {
             allowNull: false,
-            autoIncrement: true,
+            autoIncrement: false,
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        dc_id: {
-            type: Sequelize.INTEGER,
+        source_wallet: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        data_id: {
-            type: Sequelize.INTEGER,
+        data_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        start_time: {
-            type: Sequelize.DATE,
-        },
-        end_time: {
-            type: Sequelize.DATE,
-        },
-        total_token_amount: {
-            type: Sequelize.REAL,
-        },
-        data_size: {
-            type: Sequelize.REAL,
-        },
-        my_stake: {
-            type: Sequelize.REAL,
-        },
-        dc_stake: {
-            type: Sequelize.REAL,
+        data_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('holding_data'),

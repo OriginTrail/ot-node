@@ -3,6 +3,7 @@ const BN = require('bn.js');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const Encryption = require('./Encryption');
 
 const log = Utilities.getLogger();
 
@@ -225,6 +226,20 @@ class DHService {
                 bid.stake,
                 bid.total_escrow_time,
             );
+
+            // Store holding information and generate keys for eventual
+            // data replication.
+            const keyPair = Encryption.generateKeyPair(512);
+            const holdingData = await Models.holding_data.create({
+                id: data.import_id,
+                source_wallet: bid.dc_wallet,
+                data_public_key: keyPair.privateKey,
+                data_private_key: keyPair.privateKey,
+            });
+
+            if (!holdingData) {
+                log.warn('Failed to store holding data info.');
+            }
 
             log.important('Finished negotiation. Job starting. Waiting for challenges.');
             this.network.kademlia().replicationFinished({ status: 'success' }, bid.dc_id);
