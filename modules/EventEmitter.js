@@ -27,7 +27,13 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dataReplication, importer, challenger,
+            dcService,
+            dhService,
+            dataReplication,
+            importer,
+            challenger,
+            blockchain,
+            product,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -37,10 +43,21 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('trail', (data) => {
-            this.product.p.getTrailByQuery(data.query).then((res) => {
+            product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);
             }).catch(() => {
                 log.error(`Failed to get trail for query ${data.query}`);
+                data.response.send(500); // TODO rethink about status codes
+            });
+        });
+
+        this.globalEmitter.on('get_root_hash', (data) => {
+            const dcWallet = data.query.dc_wallet;
+            const importId = data.query.import_id;
+            blockchain.getRootHash(dcWallet, importId).then((res) => {
+                data.response.send(res);
+            }).catch((err) => {
+                log.error(`Failed to get root hash for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
