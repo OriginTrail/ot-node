@@ -740,63 +740,6 @@ class Utilities {
 
         return signedAddress === message.wallet;
     }
-
-    static doTheMagic(web3, network, log) {
-        /*
-        dataLocationRequestObject = {
-            message: {
-                id: ID,
-                dataViewer: DV_WALLET,
-                dvKademliaId: KAD_ID
-                query: {
-                          identifiers: { … }
-                          data: { … }
-                          senderId: { … }
-                }
-            }
-            messageSignature: {
-                v: …,
-                r: …,
-                s: …
-            }
-         }
-         */
-
-        const dataLocationRequestObject = {
-            message: {
-                id: 1,
-                wallet: config.node_wallet,
-                nodeId: config.identity,
-                query: {
-                    identifiers: { dummy: 'dummy' },
-                    data: { id: 1234567890 },
-                    senderId: { id: 'SENDER_PROVIDER_ID' },
-                },
-            },
-        };
-
-
-        const signature = web3.eth.accounts.sign(
-            JSON.stringify(dataLocationRequestObject.message),
-            `0x${config.node_private_key}`,
-        );
-
-        dataLocationRequestObject.messageSignature =
-            { r: signature.r, s: signature.s, v: signature.v };
-
-        network.kademlia().quasar.quasarPublish(
-            'data-location-request',
-            dataLocationRequestObject,
-            {},
-            async () => {
-                const networkQuery = await Models.network_queries.create({
-                    query: JSON.stringify(dataLocationRequestObject.message.query),
-                    timestamp: Date.now(),
-                });
-                log.info(`Published query to the network. Query ID ${networkQuery.id}.`);
-            },
-        );
-    }
 }
 
 module.exports = Utilities;

@@ -28,7 +28,7 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dataReplication, importer, challenger,
+            dcService, dhService, dvService, dataReplication, importer, challenger,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -44,6 +44,11 @@ class EventEmitter {
                 log.error(`Failed to get trail for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
+        });
+
+        this.globalEmitter.on('network-query', (data) => {
+            dvService.queryNetwork('').catch(error => log.error(`Failed to query network. ${error}.`));
+            data.response.send(200);
         });
 
         const processImport = async (response, data) => {

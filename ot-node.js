@@ -22,6 +22,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
+const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
@@ -152,6 +153,7 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
             dcService: awilix.asClass(DCService).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
@@ -165,6 +167,7 @@ class OTNode {
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
+        const dvService = container.resolve('dvService');
         const remoteControl = container.resolve('remoteControl');
         emitter.initialize();
 
@@ -416,6 +419,14 @@ class OTNode {
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get('/api/network/query', (req, res) => {
+            const queryObject = req.query;
+            emitter.emit('network-query', {
                 query: queryObject,
                 response: res,
             });
