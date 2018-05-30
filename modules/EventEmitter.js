@@ -47,7 +47,9 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('network-query', (data) => {
-            dvService.queryNetwork('').catch(error => log.error(`Failed to query network. ${error}.`));
+            dvService.queryNetwork('')
+                .then((offer) => { if (offer) dvService.handleReadOffer(offer); })
+                .catch(error => log.error(`Failed to query network. ${error}.`));
             data.response.send(200);
         });
 
@@ -321,16 +323,12 @@ class EventEmitter {
             /*
                 dataLocationResponseObject = {
                     message: {
-                        id: ID,
                         wallet: DH_WALLET,
                         nodeId: KAD_ID,
                         imports: [
-                                    {sender_id: …,
                                      importId: …
-                                          }, …
                                 ],
                         dataSize: DATA_BYTE_SIZE,
-                        dataPrice: TOKEN_AMOUNT,
                         stakeFactor: X
                     }
                     messageSignature: {
@@ -343,7 +341,6 @@ class EventEmitter {
             try {
                 const dataLocationResponseObject = request.params.message;
                 const { message, messageSignature } = dataLocationResponseObject;
-                const queryId = message.id;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                     const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
@@ -355,46 +352,12 @@ class EventEmitter {
                     return;
                 }
 
-                // Find the query.
-                const networkQuery = await Models.network_queries.findOne({
-                    where: { id: queryId },
-                });
-
-                if (!networkQuery) {
-                    const returnMessage = `Didn't find query with ID ${queryId}.`;
-                    log.warn(returnMessage);
-                    response.send({
-                        status: 'FAIL',
-                        message: returnMessage,
-                    });
-                    return;
-                }
-
-                // Store the offer.
-                const networkQueryResponse = await Models.network_query_responses.create({
-                    query: JSON.stringify(dataLocationResponseObject.message.query),
-                    query_id: queryId,
-                    wallet: message.wallet,
-                    node_id: message.nodeId,
-                    imports: JSON.stringify(message.imports),
-                    data_size: message.dataSize,
-                    data_price: message.dataPrice,
-                    stake_factor: message.stakeFactor,
-                });
-
-                if (!networkQueryResponse) {
-                    log.info(`Failed to add query response. ${message}.`);
-                    response.send({
-                        status: 'FAIL',
-                        message: 'Internal error.',
-                    });
-                    return;
-                }
+                await dvService.handleDataLocationResponse(message);
             } catch (error) {
                 log.error(`Failed to process location response. ${error}.`);
                 response.send({
                     status: 'FAIL',
-                    message: 'Internal error.',
+                    message: error,
                 });
                 return;
             }
@@ -402,6 +365,39 @@ class EventEmitter {
             response.send({
                 status: 'OK',
                 message: 'Location response successfully noted.',
+            });
+        });
+
+        this.globalEmitter.on('kad-data-read-request', async (request, response) => {
+            log.info('kad-data-read-request');
+
+            const dataReadRequestObject = request.params.message;
+            const { message, messageSignature } = dataReadRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                log.warn(returnMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: returnMessage,
+                });
+                return;
+            }
+
+            try {
+                await dhService.handleDataReadRequest(message);
+            } catch (error) {
+                const errorMessage = `Failed to process data read request. ${error}.`;
+                log.warn(errorMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: errorMessage,
+                });
+                return;
+            }
+            response.send({
+                status: 'OK',
+                message: 'Successfully noted. Data is being prepared and on the way.',
             });
         });
     }

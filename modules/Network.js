@@ -274,6 +274,11 @@ class Network {
             this.emitter.emit('kad-data-location-response', request, response);
         });
 
+        this.node.use('kad-data-read-request', (request, response, next) => {
+            log.info('kad-data-read-request received');
+            this.emitter.emit('kad-data-read-request', request, response);
+        });
+
         // add challenge-request route
         this.node.use('challenge-request', (request, response, next) => {
             log.info('challenge-request received');
@@ -401,6 +406,10 @@ class Network {
                 node.send('kad-data-location-response', { message }, [contactId, contact], callback);
             };
 
+            node.dataReadRequest = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-data-read-request', { message }, [contactId, contact], callback);
+            };
         });
         // Define a global custom error handler rule
         this.node.use((err, request, response, next) => {
