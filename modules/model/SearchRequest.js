@@ -1,4 +1,3 @@
-const uuidv1 = require('uuid/v1');
 const { Enum } = require('enumify');
 
 /**
@@ -9,17 +8,14 @@ class OPCODE extends Enum {
 
 OPCODE.initEnum(['IN', 'EQ']);
 
+/**
+ * SearchRequest model
+ */
 class SearchRequest {
     /**
      * Default constructor
-     * @param id
      */
-    constructor(id) {
-        if (id) {
-            this.id = id;
-        } else {
-            this.id = uuidv1();
-        }
+    constructor() {
         this.parts = [];
     }
 
@@ -48,7 +44,7 @@ class SearchRequest {
      */
     static deserialize(requestText) {
         const obj = JSON.parse(requestText);
-        const request = new SearchRequest(obj.id);
+        const request = new SearchRequest();
         for (const part of obj.parts) {
             request.add(part[0], part[1], OPCODE.enumValueOf(part[2]));
         }
