@@ -13,13 +13,14 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage,
+        network, blockchain, web3, config, graphStorage, importer,
     }) {
         this.network = network;
         this.blockchain = blockchain;
         this.web3 = web3;
         this.config = config;
         this.graphStorage = graphStorage;
+        this.importer = importer;
     }
 
     /**
@@ -190,7 +191,38 @@ class DVService {
     }
 
     async handleDataReadResponse(message) {
-        // TODO implement
+        /*
+            message: {
+                id: REPLY_ID
+                wallet: DH_WALLET,
+                nodeId: KAD_ID
+                agreementStatus: CONFIRMED/REJECTED,
+                purchaseId: PURCHASE_ID,
+                encryptedData: { … }
+                importId: IMPORT_ID,        // Temporal. Remove it.
+            },
+         */
+        if (message.agreementStatus !== 'CONFIRMED') {
+            throw Error('Read not confirmed');
+        }
+
+        // TODO: check is it mine request based on ID and remove redundant data.
+        const { importId } = message;
+
+        // TODO: Calculate root hash and check is it the same on the SC.
+
+        try {
+            await this.importer.importJSON({
+                vertices: message.encryptedData.vertices,
+                edges: message.encryptedData.edges,
+                import_id: importId,
+            });
+        } catch (error) {
+            log.warn(`Failed to import JSON. ${error}.`);
+            return;
+        }
+
+        log.info(`Import ID ${importId} imported successfully.`);
     }
 }
 

@@ -425,6 +425,7 @@ class DHService {
                 vertices,
                 edges,
             },
+            importId: import_id, // TODO: Temporal. Remove it.
         };
         const dataReadResponseObject = {
             message: replyMessage,
