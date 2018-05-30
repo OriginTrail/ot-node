@@ -13,12 +13,13 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config,
+        network, blockchain, web3, config, graphStorage,
     }) {
         this.network = network;
         this.blockchain = blockchain;
         this.web3 = web3;
         this.config = config;
+        this.graphStorage = graphStorage;
     }
 
     /**
@@ -185,23 +186,7 @@ class DVService {
         }
     }
 
-    async handleDataReadRequest(message) {
-        /*
-        message: {
-            id: ID,
-            wallet: DH_WALLET,
-            nodeId: KAD_ID,
-            imports: [
-                         importId: …
-                    ],
-            dataSize: DATA_BYTE_SIZE,
-            stakeFactor: X
-        }
-        */
-
-        // TODO: data read request should have own ID created by DH when placed the offer.
-
-        // TODO: Initiate sending here. Do not wait.
+    async handleDataReadResponse(message) {
     }
 }
 

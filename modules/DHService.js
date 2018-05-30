@@ -345,6 +345,94 @@ class DHService {
         // Store message in DB to know later prices.
     }
 
+    async handleDataReadRequest(message) {
+        /*
+        message: {
+            wallet: DH_WALLET,
+            nodeId: KAD_ID,
+            imports: [
+                         importId: …
+                    ],
+            dataSize: DATA_BYTE_SIZE,
+            stakeFactor: X
+        }
+        */
+
+        // TODO: Data read request should have own ID created by DH when placed the offer.
+        // TODO: No need to send imports. Should be stored in request in order to avoid getting a different import.
+
+        const { nodeId, wallet, imports } = message;
+
+        // TODO: Only one import ID used. Later we'll support replication from multiple imports.
+        const import_id = imports[0];
+
+        const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
+        const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);
+
+        const values = await Promise.all([verticesPromise, edgesPromise]);
+        const vertices = values[0];
+        const edges = values[1];
+
+        // Get replication key and then encrypt data.
+        const holdingDataModel = await Models.holding_data.find({ where: { id: import_id } });
+
+        if (!holdingDataModel) {
+            throw Error(`Didn't find import with ID. ${import_id}`);
+        }
+
+        const holdingData = holdingDataModel.get({ plain: true });
+        const replicationPrivateKey = holdingData.data_private_key;
+        const replicationPublicKey = holdingData.data_public_key;
+
+        Utilities.encryptVerticesWithKeys(
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+            replicationPrivateKey,
+            replicationPublicKey,
+        );
+
+        // TODO: Sign escrow here.
+
+        // TODO: dataReadResponseObject might be redundant since same info can be gathered from escrow.
+        /*
+            dataReadResponseObject = {
+                message: {
+                    id: REPLY_ID
+                    wallet: DH_WALLET,
+                    nodeId: KAD_ID
+                    agreementStatus: CONFIRMED/REJECTED,
+                    purchaseId: PURCHASE_ID,
+                    encryptedData: { … }
+                },
+                messageSignature: {
+                    c: …,
+                    r: …,
+                    s: …
+               }
+            }
+         */
+
+        const replyMessage = {
+            wallet: this.config.wallet,
+            nodeId: this.config.identity,
+            agreementStatus: 'CONFIRMED',
+            purchaseId: 'PURCHASE_ID',
+            encryptedData: {
+                vertices,
+                edges,
+            },
+        };
+        const dataReadResponseObject = {
+            message: replyMessage,
+            messageSignature: Utilities.generateRsvSignature(
+                JSON.stringify(replyMessage),
+                this.web3,
+                this.config.node_private_key,
+            ),
+        };
+
+        this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+    }
+
     listenToOffers() {
         this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
     }

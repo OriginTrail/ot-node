@@ -279,6 +279,11 @@ class Network {
             this.emitter.emit('kad-data-read-request', request, response);
         });
 
+        this.node.use('kad-data-read-response', (request, response, next) => {
+            log.info('kad-data-read-response received');
+            this.emitter.emit('kad-data-read-response', request, response);
+        });
+
         // add challenge-request route
         this.node.use('challenge-request', (request, response, next) => {
             log.info('challenge-request received');
@@ -409,6 +414,11 @@ class Network {
             node.dataReadRequest = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('kad-data-read-request', { message }, [contactId, contact], callback);
+            };
+
+            node.sendDataReadResponse = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-data-read-response', { message }, [contactId, contact], callback);
             };
         });
         // Define a global custom error handler rule

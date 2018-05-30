@@ -13,7 +13,7 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-const Models = require('../models');
+const Encryption = require('./Encryption');
 
 require('dotenv').config();
 
@@ -749,6 +749,21 @@ class Utilities {
         );
 
         return signedAddress === message.wallet;
+    }
+
+    /**
+     * Encrypt vertices data with specified public and private keys
+     * @param vertices    Vertices to be encrypted
+     * @param privateKey  Private key used for encryption
+     * @param publicKey   Public key used for decryption
+     */
+    static encryptVerticesWithKeys(vertices, privateKey, publicKey) {
+        for (const id in vertices) {
+            const vertex = vertices[id];
+            if (vertex.data) {
+                vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            }
+        }
     }
 }
 

@@ -408,6 +408,39 @@ class EventEmitter {
                 message: 'Successfully noted. Data is being prepared and on the way.',
             });
         });
+
+        this.globalEmitter.on('kad-data-read-response', async (request, response) => {
+            log.info('kad-data-read-response');
+
+            const dataReadResponseObject = request.params.message;
+            const { message, messageSignature } = dataReadResponseObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                log.warn(returnMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: returnMessage,
+                });
+                return;
+            }
+
+            try {
+                await dhService.handleDataReadResponse(message);
+            } catch (error) {
+                const errorMessage = `Failed to process data read response. ${error}.`;
+                log.warn(errorMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: errorMessage,
+                });
+                return;
+            }
+            response.send({
+                status: 'OK',
+                message: 'Successfully imported data.',
+            });
+        });
     }
 
     emit(event, ...args) {
