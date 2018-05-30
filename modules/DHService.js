@@ -362,7 +362,8 @@ class DHService {
         */
 
         // TODO: Data read request should have own ID created by DH when placed the offer.
-        // TODO: No need to send imports. Should be stored in request in order to avoid getting a different import.
+        // TODO: No need to send imports. Should be stored in request
+        // TODO in order to avoid getting a different import.
 
         const { nodeId, wallet, imports } = message;
 
@@ -395,7 +396,8 @@ class DHService {
 
         // TODO: Sign escrow here.
 
-        // TODO: dataReadResponseObject might be redundant since same info can be gathered from escrow.
+        // TODO: dataReadResponseObject might be redundant
+        // TODO since same info can be gathered from escrow.
         /*
             dataReadResponseObject = {
                 message: {
