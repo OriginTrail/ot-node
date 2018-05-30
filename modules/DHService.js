@@ -20,6 +20,7 @@ class DHService {
         this.blockchain = ctx.blockchain;
         this.network = ctx.network;
         this.web3 = ctx.web3;
+        this.graphStorage = ctx.graphStorage;
     }
 
     /**
@@ -256,11 +257,11 @@ class DHService {
                     id: ID,
                     wallet: DV_WALLET,
                     nodeId: KAD_ID
-                    query: {
-                              identifiers: { … }
-                              data: { … }
-                              senderId: { … }
-                    }
+                    query: [
+                        [path, value, opcode],
+                        [path, value, opcode],
+                        ...
+                    ]
                 }
                 messageSignature: {
                     v: …,
@@ -284,8 +285,14 @@ class DHService {
         }
 
         // Handle query here.
+        const { query } = message;
+        const imports = this.graphStorage.findImportIds(query);
+        if (imports.length === 0) {
+            // I don't want to participate
+            log.trace(`No imports found for request ${message.id}`);
+            return;
+        }
 
-        // TODO: Case I want to participate.
         /*
             dataLocationResponseObject = {
                 message: {
@@ -293,9 +300,8 @@ class DHService {
                     wallet: DH_WALLET,
                     nodeId: KAD_ID,
                     imports: [
-                                {sender_id: …,
-                                 importId: …
-                                      }, …
+                                importId1,
+                                importId2
                             ],
                     dataSize: DATA_BYTE_SIZE,
                     dataPrice: TOKEN_AMOUNT,
@@ -313,7 +319,7 @@ class DHService {
             id: message.id,
             wallet: config.node_wallet,
             nodeId: config.identity,
-            imports: [],
+            imports,
             dataSize: 500,
             dataPrice: 100000,
             stakeFactor: 1000,
