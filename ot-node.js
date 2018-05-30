@@ -425,8 +425,20 @@ class OTNode {
         });
 
         server.get('/api/network/query_by_id', (req, res) => {
+            log.info('Query by ID received!');
+
             const queryObject = req.query;
             const query = [['identifiers.id', queryObject.id, 'EQ']];
+            emitter.emit('network-query', {
+                query,
+                response: res,
+            });
+        });
+
+        server.post('/api/network/query', (req, res) => {
+            log.important('Query received!');
+
+            const { query } = req.body;
             emitter.emit('network-query', {
                 query,
                 response: res,
