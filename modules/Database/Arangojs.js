@@ -71,6 +71,43 @@ class ArangoJS {
     }
 
     /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param dataLocationQuery
+     */
+    async findImportIds(dataLocationQuery) {
+        const params = {};
+        const filters = [];
+
+        let count = 1;
+        let queryString = 'FOR v IN ot_vertices FILTER ';
+        for (const searchRequestPart of dataLocationQuery) {
+            const [path, value, opcode] = searchRequestPart;
+
+            switch (opcode) {
+            case 'EQ':
+                filters.push(`v.${path} == @param${count}`);
+                break;
+            case 'IN':
+                filters.push(`v.${path} != null AND POSITION(v.${path}, @param${count}, false) != false`);
+                break;
+            default:
+                throw new Error(`OPCODE ${opcode} is not defined`);
+            }
+            params[`param${count}`] = value;
+            count += 1;
+        }
+        queryString += `${filters.join(' AND ')} RETURN v`;
+        const results = await this.runQuery(queryString, params);
+        const imports = results.reduce((prevVal, elem) => {
+            for (const importId of elem.imports) {
+                prevVal.add(importId);
+            }
+            return prevVal;
+        }, new Set([]));
+        return [...imports].sort();
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
      * @param depth             Explicit traversal depth

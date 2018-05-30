@@ -5,6 +5,10 @@ const Neo4j = require('./Neo4j');
 const log = Utilities.getLogger();
 
 class GraphStorage {
+    /**
+     * Default constructor
+     * @param selectedDatabase Selected graph database
+     */
     constructor(selectedDatabase) {
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
@@ -71,6 +75,28 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findVertices(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Finds imports IDs based on data location query
+     *
+     * DataLocationQuery structure: [[path, value, opcode]*]
+     *
+     * @param dataLocationQuery
+     * @return {Promise}
+     */
+    findImportIds(dataLocationQuery) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findImportIds(dataLocationQuery).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

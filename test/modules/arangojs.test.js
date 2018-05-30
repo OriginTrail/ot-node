@@ -560,6 +560,50 @@ describe('Arangojs module ', async () => {
         expect(dummyVertex).to.not.have.property('version');
     });
 
+    it('should find imports', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex1 = {
+            _key: 'dummyKey1',
+            identifiers: {
+                id: 'dummyId1',
+            },
+            imports: [1, 2, 3, 4],
+            sender_id: 'dummySenderId',
+        };
+        const dummyVertex2 = {
+            _key: 'dummyKey2',
+            data: {
+                some_key: ['some value 1', 'some value 2'],
+            },
+            identifiers: {
+                id: 'dummyId2',
+            },
+            imports: [7, 8],
+            sender_id: 'dummySenderId',
+        };
+        let response = await testDb.addVertex(dummyVertex1);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex1).to.not.have.property('version');
+
+        response = await testDb.addVertex(dummyVertex2);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex2).to.not.have.property('version');
+
+        let dataLocationQuery = [['identifiers.id', 'dummyId1', 'EQ']];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([1, 2, 3, 4], response);
+
+        dataLocationQuery = [['data.some_key', 'some value 1', 'IN']];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([7, 8], response);
+
+        dataLocationQuery = [['sender_id', 'dummySenderId', 'EQ']];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([1, 2, 3, 4, 7, 8], response);
+    });
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth('root', 'root');
