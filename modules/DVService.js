@@ -102,7 +102,7 @@ class DVService {
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
                     if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
-                        lowestOffer = response;
+                        lowestOffer = response.get({ plain: true });
                     }
                 });
 
@@ -138,11 +138,11 @@ class DVService {
             }
          */
         const message = {
-            wallet: this.config.wallet,
+            wallet: this.config.node_wallet,
             nodeId: this.config.identity,
             agreedPrice: offer.data_price,
             imports: offer.imports,
-            stakeFactor: offer.stakeFactor,
+            stakeFactor: offer.stake_factor,
         };
 
         const dataReadRequestObject = {
@@ -156,7 +156,7 @@ class DVService {
 
         this.network.kademlia().dataReadRequest(
             dataReadRequestObject,
-            offer.nodeId,
+            offer.node_id,
         );
     }
 

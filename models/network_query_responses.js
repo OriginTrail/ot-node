@@ -1,7 +1,6 @@
 
 module.exports = (sequelize, DataTypes) => {
     const network_query_responses = sequelize.define('network_query_responses', {
-        query: DataTypes.STRING,
         query_id: DataTypes.INTEGER,
         wallet: DataTypes.STRING,
         node_id: DataTypes.STRING,
