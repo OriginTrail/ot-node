@@ -49,14 +49,14 @@ class DVService {
              }
          */
 
-        const networkQueryModel = Models.network_queries.create({
+        const networkQueryModel = await Models.network_queries.create({
             query: JSON.stringify(queryParams),
             timestamp: Date.now(),
         });
 
         const dataLocationRequestObject = {
             message: {
-                id: networkQueryModel.id,
+                id: networkQueryModel.dataValues.id,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identity,
                 query: {
@@ -91,10 +91,10 @@ class DVService {
             setTimeout(async () => {
                 // Check for all offers.
                 const responseModels = await Models.network_query_responses.findAll({
-                    where: { query_id: networkQueryModel.id },
+                    where: { query_id: networkQueryModel.dataValues.id },
                 });
 
-                log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
+                log.trace(`Finalizing query ID ${networkQueryModel.dataValues.id}. Got ${responseModels.length} offer(s).`);
 
                 // TODO: Get some choose logic here.
                 let lowestOffer;

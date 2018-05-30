@@ -315,7 +315,7 @@ class EventEmitter {
             } = event.returnValues;
         });
 
-        this.globalEmitter.on('kad-data-location-response', async (event) => {
+        this.globalEmitter.on('kad-data-location-response', async (request, response) => {
             log.info('kad-data-location-response');
 
             /*
@@ -340,14 +340,18 @@ class EventEmitter {
                     }
                 }
              */
-
             try {
-                const dataLocationResponseObject = event.params.message;
+                const dataLocationResponseObject = request.params.message;
                 const { message, messageSignature } = dataLocationResponseObject;
                 const queryId = message.id;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                    log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                    log.warn(returnMessage);
+                    response.send({
+                        status: 'FAIL',
+                        message: returnMessage,
+                    });
                     return;
                 }
 
@@ -357,7 +361,12 @@ class EventEmitter {
                 });
 
                 if (!networkQuery) {
-                    log.info(`Didn't find query with ID ${queryId}.`);
+                    const returnMessage = `Didn't find query with ID ${queryId}.`;
+                    log.warn(returnMessage);
+                    response.send({
+                        status: 'FAIL',
+                        message: returnMessage,
+                    });
                     return;
                 }
 
@@ -375,11 +384,25 @@ class EventEmitter {
 
                 if (!networkQueryResponse) {
                     log.info(`Failed to add query response. ${message}.`);
+                    response.send({
+                        status: 'FAIL',
+                        message: 'Internal error.',
+                    });
                     return;
                 }
             } catch (error) {
                 log.error(`Failed to process location response. ${error}.`);
+                response.send({
+                    status: 'FAIL',
+                    message: 'Internal error.',
+                });
+                return;
             }
+
+            response.send({
+                status: 'OK',
+                message: 'Location response successfully noted.',
+            });
         });
     }
 
