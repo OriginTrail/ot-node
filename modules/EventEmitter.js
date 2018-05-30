@@ -47,8 +47,16 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('network-query', (data) => {
-            dvService.queryNetwork('')
-                .then((offer) => { if (offer) dvService.handleReadOffer(offer); })
+            dvService.queryNetwork(data.query)
+                .then((offer) => {
+                    if (offer) {
+                        dvService.handleReadOffer(offer).then(() => {
+                            log.trace('Read offer handled');
+                        }).catch((err) => {
+                            log.warn(`Failed to handle offer. ${err}`);
+                        });
+                    }
+                })
                 .catch(error => log.error(`Failed to query network. ${error}.`));
             data.response.send(200);
         });

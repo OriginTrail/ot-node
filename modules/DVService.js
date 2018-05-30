@@ -23,11 +23,11 @@ class DVService {
 
     /**
      * Sends query to the network
-     * @param queryParams
+     * @param query
      * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(queryParams, totalTime = 60000) {
+    async queryNetwork(query, totalTime = 60000) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -50,7 +50,7 @@ class DVService {
          */
 
         const networkQueryModel = await Models.network_queries.create({
-            query: JSON.stringify(queryParams),
+            query: JSON.stringify(query),
             timestamp: Date.now(),
         });
 
@@ -59,11 +59,7 @@ class DVService {
                 id: networkQueryModel.dataValues.id,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identity,
-                query: {
-                    identifiers: { dummy: 'dummy' },
-                    data: { id: 1234567890 },
-                    senderId: { id: 'SENDER_PROVIDER_ID' },
-                },
+                query,
             },
         };
 

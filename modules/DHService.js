@@ -286,7 +286,7 @@ class DHService {
 
         // Handle query here.
         const { query } = message;
-        const imports = this.graphStorage.findImportIds(query);
+        const imports = await this.graphStorage.findImportIds(query);
         if (imports.length === 0) {
             // I don't want to participate
             log.trace(`No imports found for request ${message.id}`);

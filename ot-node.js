@@ -424,10 +424,11 @@ class OTNode {
             });
         });
 
-        server.get('/api/network/query', (req, res) => {
+        server.get('/api/network/query_by_id', (req, res) => {
             const queryObject = req.query;
+            const query = [['identifiers.id', queryObject.id, 'EQ']];
             emitter.emit('network-query', {
-                query: queryObject,
+                query,
                 response: res,
             });
         });
