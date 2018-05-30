@@ -258,8 +258,11 @@ class DHService {
                     wallet: DV_WALLET,
                     nodeId: KAD_ID
                     query: [
-                        [path, value, opcode],
-                        [path, value, opcode],
+                        {
+                                path: _path,
+                                value: _value,
+                                opcode: OPCODE
+                        },
                         ...
                     ]
                 }

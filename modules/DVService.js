@@ -36,11 +36,14 @@ class DVService {
                     id: ID,
                     wallet: DV_WALLET,
                     nodeId: KAD_ID
-                    query: {
-                              identifiers: { … }
-                              data: { … }
-                              senderId: { … }
-                    }
+                    query: [
+                              {
+                                path: _path,
+                                value: _value,
+                                opcode: OPCODE
+                              },
+                              ...
+                    ]
                 }
                 messageSignature: {
                     v: …,

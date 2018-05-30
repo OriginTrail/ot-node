@@ -428,7 +428,11 @@ class OTNode {
             log.info('Query by ID received!');
 
             const queryObject = req.query;
-            const query = [['identifiers.id', queryObject.id, 'EQ']];
+            const query = [{
+                path: 'identifiers.id',
+                value: queryObject.id,
+                opcode: 'EQ',
+            }];
             emitter.emit('network-query', {
                 query,
                 response: res,

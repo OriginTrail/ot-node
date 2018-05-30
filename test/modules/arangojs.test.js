@@ -591,15 +591,27 @@ describe('Arangojs module ', async () => {
         expect(response).to.include.all.keys('_id', '_key', '_rev');
         expect(dummyVertex2).to.not.have.property('version');
 
-        let dataLocationQuery = [['identifiers.id', 'dummyId1', 'EQ']];
+        let dataLocationQuery = [{
+            path: 'identifiers.id',
+            value: 'dummyId1',
+            opcode: 'EQ',
+        }];
         response = await testDb.findImportIds(dataLocationQuery);
         assert.deepEqual([1, 2, 3, 4], response);
 
-        dataLocationQuery = [['data.some_key', 'some value 1', 'IN']];
+        dataLocationQuery = [{
+            path: 'data.some_key',
+            value: 'some value 1',
+            opcode: 'IN',
+        }];
         response = await testDb.findImportIds(dataLocationQuery);
         assert.deepEqual([7, 8], response);
 
-        dataLocationQuery = [['sender_id', 'dummySenderId', 'EQ']];
+        dataLocationQuery = [{
+            path: 'sender_id',
+            value: 'dummySenderId',
+            opcode: 'EQ',
+        }];
         response = await testDb.findImportIds(dataLocationQuery);
         assert.deepEqual([1, 2, 3, 4, 7, 8], response);
     });

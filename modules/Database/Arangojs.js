@@ -81,7 +81,7 @@ class ArangoJS {
         let count = 1;
         let queryString = 'FOR v IN ot_vertices FILTER ';
         for (const searchRequestPart of dataLocationQuery) {
-            const [path, value, opcode] = searchRequestPart;
+            const { path, value, opcode } = searchRequestPart;
 
             switch (opcode) {
             case 'EQ':
