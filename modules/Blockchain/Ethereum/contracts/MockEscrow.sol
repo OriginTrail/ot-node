@@ -120,20 +120,20 @@ contract MockEscrowHolder is Ownable{
 
 	function initiateEscrow(address DC_wallet, address DH_wallet, uint data_id, uint token_amount, uint stake_amount,  uint total_time_in_minutes)
 	public onlyOwner{
-		EscrowDefinition this_escrow = escrow[DC_wallet][DH_wallet][data_id];
-		 this_escrow.token_amount = token_amount;
-		 this_escrow.tokens_sent = 0;
-		 this_escrow.stake_amount = stake_amount;
-		 this_escrow.last_confirmation_time = 0;
-		 this_escrow.end_time = 0;
-		 this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
-		 this_escrow.escrow_status = EscrowStatus.initiated;
-		EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time_in_minutes);
+		EscrowDefinition storage this_escrow = escrow[DC_wallet][DH_wallet][data_id];
+		this_escrow.token_amount = token_amount;
+		this_escrow.tokens_sent = 0;
+		this_escrow.stake_amount = stake_amount;
+		this_escrow.last_confirmation_time = 0;
+		this_escrow.end_time = 0;
+		this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
+		this_escrow.escrow_status = EscrowStatus.initiated;
+		emit EscrowInitated(DC_wallet, DH_wallet, data_id, token_amount, stake_amount, total_time_in_minutes);
 	}
 
 	function writeRootHashAndKeyChecksum(uint data_id, address DC_wallet, bytes32 root_hash, uint EPKChecksum)
 	public {
-		EscrowDefinition this_escrow = escrow[DC_wallet][msg.sender][data_id];
+		EscrowDefinition storage this_escrow = escrow[DC_wallet][msg.sender][data_id];
 		this_escrow.root_hash = root_hash;
 		this_escrow.checksum = EPKChecksum;
 	}
@@ -154,7 +154,7 @@ contract MockEscrowHolder is Ownable{
 
 		escrow_def.escrow_status = EscrowStatus.active;
 		isVerified = true;
-		EscrowVerified(msg.sender, DH_wallet, data_id, isVerified);
+		emit EscrowVerified(msg.sender, DH_wallet, data_id, isVerified);
 	}
 
 	function payOut(address DC_wallet, uint data_id)
@@ -167,13 +167,11 @@ contract MockEscrowHolder is Ownable{
 		if(this_escrow.escrow_status == EscrowStatus.active){
 			uint end_time = block.timestamp;
 			if(end_time > this_escrow.end_time){
-				uint stake_to_send = this_escrow.stake_amount;
 				this_escrow.stake_amount = 0;
-				//if(stake_to_send > 0) token.transfer(msg.sender, stake_to_send);
 
 				amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 				this_escrow.escrow_status = EscrowStatus.completed;
-				EscrowCompleted(DC_wallet, msg.sender, data_id);
+				emit EscrowCompleted(DC_wallet, msg.sender, data_id);
 			}
 			else{
 				amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
@@ -183,7 +181,7 @@ contract MockEscrowHolder is Ownable{
 		else {
 			amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
 			this_escrow.escrow_status = EscrowStatus.completed;
-			EscrowCompleted(DC_wallet, msg.sender, data_id);
+			emit EscrowCompleted(DC_wallet, msg.sender, data_id);
 		}
 
 		if(amount_to_send > 0) {
@@ -226,12 +224,10 @@ contract MockEscrowHolder is Ownable{
 			//token.transfer(msg.sender,amount_to_send);
 		}
 
-		uint stake_to_send = this_escrow.stake_amount;
 		this_escrow.stake_amount = 0;
-		//if(stake_to_send > 0) token.transfer(DH_wallet, stake_to_send);
-
+		
 		this_escrow.escrow_status = EscrowStatus.completed;
-		EscrowCanceled(msg.sender, DH_wallet, data_id);
+		emit EscrowCanceled(msg.sender, DH_wallet, data_id);
 	}
 
 }

@@ -68,7 +68,8 @@ module.exports = (deployer, network, accounts) => {
             .then(() => giveMeTracToken())
             .then(async (result) => {
                 token = result;
-                await deployer.deploy(EscrowHolder, token.address, { gas: 8000000 })
+                // eslint-disable-next-line max-len
+                await deployer.deploy(EscrowHolder, token.address, { gas: 8000000, from: accounts[0] })
                     .then(() => giveMeEscrowHolder())
                     .then(async (result) => {
                         escrow = result;
@@ -80,9 +81,11 @@ module.exports = (deployer, network, accounts) => {
                                     .then(() => giveMeFingerprint())
                                     .then(async (result) => {
                                         fingerprint = result;
-                                        await escrow.setBidding(bidding.address)
+                                        // eslint-disable-next-line max-len
+                                        await escrow.setBidding(bidding.address, { from: accounts[0] })
                                             .then(async () => {
-                                                await escrow.transferOwnership(bidding.address)
+                                                // eslint-disable-next-line max-len
+                                                await escrow.transferOwnership(bidding.address, { from: accounts[0] })
                                                     .then(async () => {
                                                         var amounts = [];
                                                         var recepients = [];

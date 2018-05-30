@@ -83,13 +83,20 @@ library SafeMath {
  	function decreaseBalance(address wallet, uint amount) public;
  	function increaseReputation(address wallet, uint amount) public;
  }
+
+ contract Reading {
+ 	function addReadData(bytes32 import_id, address DH_wallet, address DC_wallet,
+ 	bytes32 data_root_hash, uint checksum) public;
+ 	function removeReadData(bytes32 import_id, address DH_wallet) public;
+ }
  contract EscrowHolder is Ownable{
  	using SafeMath for uint256;
 
  	ERC20 public token;
  	Bidding public bidding;
+ 	Reading public reading;
 
- 	function EscrowHolder(address tokenAddress)
+ 	function constructor(address tokenAddress)
  	public{
  		require ( tokenAddress != address(0) );
  		token = ERC20(tokenAddress);
@@ -99,6 +106,12 @@ library SafeMath {
  	public onlyOwner{
  		require ( biddingAddress != address(0) );
  		bidding = Bidding(biddingAddress);
+ 	}
+
+ 	function setReading(address readingAddress)
+ 	public onlyOwner{
+ 		require ( readingAddress != address(0));
+ 		reading = Reading(readingAddress);
  	}
 
 
@@ -177,6 +190,8 @@ library SafeMath {
 
  		this_escrow.last_confirmation_time = block.timestamp;
  		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time);
+
+ 		reading.addReadData(import_id, DH_wallet, msg.sender, this_escrow.data_root_hash, this_escrow.checksum);
 
  		this_escrow.escrow_status = EscrowStatus.active;
  		emit EscrowVerified(import_id, DH_wallet);
@@ -325,6 +340,7 @@ library SafeMath {
 				this_litigation.litigation_status = LitigationStatus.completed;
 				this_escrow.escrow_status = EscrowStatus.completed;
 				//TODO Transfer remaining escrow tokens
+				reading.removeReadData(import_id, msg.sender);
 				bidding.increaseBalance(this_escrow.DC_wallet, this_escrow.stake_amount);
 				this_escrow.stake_amount = 0;
 				emit LitigationTimedOut(import_id, msg.sender);
@@ -345,9 +361,12 @@ library SafeMath {
 
 			require(this_escrow.DC_wallet == msg.sender && this_litigation.litigation_start_time > 0 && this_litigation.litigation_status != LitigationStatus.completed);
 
-			if (block.timestamp > this_litigation.litigation_start_time + 30 minutes || this_litigation.litigation_status == LitigationStatus.initiated){
+			if (block.timestamp > this_litigation.litigation_start_time + 30 minutes && this_litigation.litigation_status == LitigationStatus.initiated){
 				this_litigation.litigation_status = LitigationStatus.completed;
 				this_escrow.escrow_status = EscrowStatus.completed;
+
+				reading.removeReadData(import_id, DH_wallet);
+
 				bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
 				this_escrow.stake_amount = 0;
 				// send tokens to DC
@@ -386,6 +405,8 @@ library SafeMath {
 				if(proof_hash == this_escrow.data_root_hash){
 					bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
 					this_escrow.stake_amount = 0;
+ 					reading.removeReadData(import_id, DH_wallet);
+
 					this_litigation.litigation_status = LitigationStatus.completed;
 					emit LitigationCompleted(import_id, DH_wallet, false);
 				}

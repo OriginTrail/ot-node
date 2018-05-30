@@ -50,7 +50,7 @@ contract MockBidding {
 	ERC20 public token;
 	MockEscrowHolder public escrow;
 
-	function MockBidding(address tokenAddress, address escrowAddress)
+	function constructor(address tokenAddress, address escrowAddress)
 	public {
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
@@ -177,6 +177,8 @@ contract MockBidding {
 		ProfileDefinition storage this_DH = profile[msg.sender];
 		BidDefinition storage this_bid = offer[offer_hash].bid[bid_index];
 
+		this_bid.DH_node_id = DH_node_id; 
+
 		uint scope = this_offer.total_escrow_time.mul(this_offer.data_size);
 		this_bid.token_amount = this_DH.token_amount * scope;
 		this_bid.stake_amount = this_DH.stake_amount * scope;
@@ -230,7 +232,7 @@ contract MockBidding {
 			i = i + 1;
 		}
 		this_offer.finalized = true;
-		OfferFinalized(offer_hash);
+		emit OfferFinalized(offer_hash);
 	}
 	function isBidChosen(bytes32 offer_hash, uint bid_index) public view returns(bool){
 		return offer[offer_hash].bid[bid_index].chosen;
