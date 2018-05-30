@@ -88,7 +88,7 @@ class ArangoJS {
                 filters.push(`v.${path} == @param${count}`);
                 break;
             case 'IN':
-                filters.push(`v.${path} != null AND POSITION(v.${path}, @param${count}, false) != false`);
+                filters.push(`POSITION(v.${path}, @param${count}) == true`);
                 break;
             default:
                 throw new Error(`OPCODE ${opcode} is not defined`);

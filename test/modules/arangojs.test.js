@@ -569,6 +569,9 @@ describe('Arangojs module ', async () => {
             identifiers: {
                 id: 'dummyId1',
             },
+            data: {
+                some_key: 'scalar',
+            },
             imports: [1, 2, 3, 4],
             sender_id: 'dummySenderId',
         };
@@ -583,6 +586,17 @@ describe('Arangojs module ', async () => {
             imports: [7, 8],
             sender_id: 'dummySenderId',
         };
+        const dummyVertex3 = {
+            _key: 'dummyKey3',
+            data: {
+                some_key: [],
+            },
+            identifiers: {
+                id: 'dummyId3',
+            },
+            imports: [10, 11],
+            sender_id: 'dummySenderId',
+        };
         let response = await testDb.addVertex(dummyVertex1);
         expect(response).to.include.all.keys('_id', '_key', '_rev');
         expect(dummyVertex1).to.not.have.property('version');
@@ -590,6 +604,10 @@ describe('Arangojs module ', async () => {
         response = await testDb.addVertex(dummyVertex2);
         expect(response).to.include.all.keys('_id', '_key', '_rev');
         expect(dummyVertex2).to.not.have.property('version');
+
+        response = await testDb.addVertex(dummyVertex3);
+        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(dummyVertex3).to.not.have.property('version');
 
         let dataLocationQuery = [{
             path: 'identifiers.id',
@@ -613,7 +631,7 @@ describe('Arangojs module ', async () => {
             opcode: 'EQ',
         }];
         response = await testDb.findImportIds(dataLocationQuery);
-        assert.deepEqual([1, 2, 3, 4, 7, 8], response);
+        assert.deepEqual([1, 10, 11, 2, 3, 4, 7, 8], response);
     });
 
     after('drop testDb db', async () => {
