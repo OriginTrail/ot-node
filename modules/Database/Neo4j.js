@@ -326,7 +326,7 @@ class Neo4jDB {
      */
     async findVertexWithMaxVersion(senderId, uid) {
         const session = this.driver.session();
-        const result = await session.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.sender_id = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId });
+        const result = await session.readTransaction(tx => tx.run('MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n.sender_id = $senderId RETURN n ORDER BY n.version DESC LIMIT 1', { uid, senderId }));
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
@@ -524,10 +524,10 @@ class Neo4jDB {
         } else {
             imports = [importNumber];
         }
-        const response = await session.run('MATCH (n) WHERE n._key = $_key SET n.imports = $imports return n', {
+        const response = await session.writeTransaction(tx => tx.run('MATCH (n) WHERE n._key = $_key SET n.imports = $imports return n', {
             _key: result._key,
             imports,
-        });
+        }));
         session.close();
         return response;
     }
@@ -548,10 +548,11 @@ class Neo4jDB {
         } else {
             imports = [importNumber];
         }
-        const response = await session.run('MATCH ()-[r]->() WHERE r._key = $_key SET r.imports = $imports return r', {
+        const response = await session.writeTransaction(tx => tx.run('MATCH ()-[r]->() WHERE r._key = $_key SET r.imports = $imports return r', {
             _key: result._key,
             imports,
-        });
+        }));
+        session.close();
         return response;
     }
 
