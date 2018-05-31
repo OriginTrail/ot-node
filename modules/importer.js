@@ -95,7 +95,24 @@ class Importer {
 
         const leaves = [];
         const hash_pairs = [];
+        await this.merkleStructure(vertices, edges, leaves, hash_pairs);
 
+        leaves.sort();
+        const tree = new MerkleTree(leaves);
+        const root_hash = utilities.sha3(tree.getRoot());
+
+        log.info(`Import id: ${import_id}`);
+        log.info(`Import hash: ${root_hash}`);
+        return {
+            data_id: import_id,
+            root_hash,
+            total_documents: hash_pairs.length,
+            vertices,
+            edges,
+        };
+    }
+
+    async merkleStructure(vertices, edges, leaves, hash_pairs) {
         // process vertices
         for (const i in vertices) {
             const hash = utilities.sha3(utilities.sortObject({
@@ -122,20 +139,6 @@ class Importer {
                 hash,
             });
         }
-
-        leaves.sort();
-        const tree = new MerkleTree(leaves);
-        const root_hash = utilities.sha3(tree.getRoot());
-
-        log.info(`Import id: ${import_id}`);
-        log.info(`Import hash: ${root_hash}`);
-        return {
-            data_id: import_id,
-            root_hash,
-            total_documents: hash_pairs.length,
-            vertices,
-            edges,
-        };
     }
 
     async importWOT(document) {

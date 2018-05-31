@@ -4,6 +4,7 @@ const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
+const MerkleTree = require('./Merkle');
 
 const log = Utilities.getLogger();
 
@@ -217,6 +218,19 @@ class DHService {
             log.warn(`Failed to import JSON successfully. ${err}.`);
             return;
         }
+
+        const leaves = [];
+        const hash_pairs = [];
+        await this.importer.merkleStructure(
+            data.encryptedVertices.vertices, data.edges,
+            leaves, hash_pairs,
+        );
+
+        leaves.sort();
+        const tree = new MerkleTree(leaves);
+        const rootHash = Utilities.sha3(tree.getRoot());
+        log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
+
         log.trace('[DH] Replication finished');
 
         try {
