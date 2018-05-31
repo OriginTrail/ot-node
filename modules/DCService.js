@@ -12,7 +12,7 @@ const log = Utilities.getLogger();
 const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
 const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('100000');
+const maxTokenAmount = new BN('1000000');
 const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
@@ -78,7 +78,7 @@ class DCService {
             new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
         const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
-        if (profileBalance < condition) {
+        if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition - profileBalance);
             await this.blockchain.depositToken(condition - profileBalance);
         }
