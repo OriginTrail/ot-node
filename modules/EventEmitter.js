@@ -71,7 +71,7 @@ class EventEmitter {
             }
 
             const {
-                data_id,
+                import_id,
                 root_hash,
                 total_documents,
                 vertices,
@@ -81,18 +81,18 @@ class EventEmitter {
             try {
                 await Models.data_info
                     .create({
-                        data_id, root_hash, import_timestamp: new Date(), total_documents,
+                        import_id, root_hash, import_timestamp: new Date(), total_documents,
                     }).catch(e => log.error(e));
                 // Store holding information and generate keys for eventual
                 // data replication.
                 const keyPair = Encryption.generateKeyPair(512);
                 await Models.holding_data.create({
-                    id: data_id,
+                    id: import_id,
                     source_wallet: wallet,
                     data_public_key: keyPair.privateKey,
                     data_private_key: keyPair.privateKey,
                 }).catch(e => log.error(e));
-                await dcService.createOffer(data_id, root_hash, total_documents, vertices);
+                await dcService.createOffer(import_id, root_hash, total_documents, vertices);
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);
                 data.response.send({
@@ -121,23 +121,23 @@ class EventEmitter {
         this.globalEmitter.on('replication-request', async (request, response) => {
             log.trace('replication-request received');
 
-            const { offer_hash, wallet } = request.params.message;
+            const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
 
-            if (!offer_hash || !wallet) {
-                const errorMessage = 'Asked replication without providing offer hash or wallet.';
+            if (!import_id || !wallet) {
+                const errorMessage = 'Asked replication without providing import ID or wallet.';
                 log.warn(errorMessage);
                 response.send({ status: 'fail', error: errorMessage });
                 return;
             }
 
             if (kadWallet !== wallet) {
-                log.warn(`Wallet from KADemlia differs from replication request for offer hash ${offer_hash}.`);
+                log.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
             }
 
-            const offerModel = await Models.offers.findOne({ where: { id: offer_hash } });
+            const offerModel = await Models.offers.findOne({ where: { id: import_id } });
             if (!offerModel) {
-                const errorMessage = `Replication request for offer I don't know: ${offer_hash}.`;
+                const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
                 log.warn(errorMessage);
                 response.send({ status: 'fail', error: errorMessage });
                 return;
@@ -160,7 +160,6 @@ class EventEmitter {
                 ).then((encryptedVertices) => {
                     log.info('[DC] Preparing to enter sendPayload');
                     const data = {};
-                    data.offer_hash = offer.id;
                     // eslint-disable-next-line
                     data.contact = request.contact[0];
                     data.vertices = vertices;
@@ -254,7 +253,7 @@ class EventEmitter {
             log.info('eth-OfferCreated');
 
             const {
-                offer_hash,
+                import_id,
                 DC_node_id,
                 total_escrow_time,
                 max_token_amount,
@@ -265,7 +264,7 @@ class EventEmitter {
             } = eventData;
 
             await dhService.handleOffer(
-                offer_hash,
+                import_id,
                 DC_node_id,
                 total_escrow_time * 60000, // In ms.
                 max_token_amount,
@@ -281,7 +280,7 @@ class EventEmitter {
             log.info('eth-AddedPredeterminedBid');
 
             const {
-                offer_hash,
+                import_id,
                 DH_wallet,
                 DH_node_id,
                 total_escrow_time,
@@ -301,12 +300,12 @@ class EventEmitter {
             const createOfferEventEventModel = await Models.events.findOne({
                 where: {
                     event: 'OfferCreated',
-                    offer_hash,
+                    import_id,
                 },
             });
 
             if (!createOfferEventEventModel) {
-                log.warn(`Couldn't find event CreateOffer for offer ${offer_hash}.`);
+                log.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
                 return;
             }
 
@@ -315,7 +314,7 @@ class EventEmitter {
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
                 await dhService.handleOffer(
-                    offer_hash,
+                    import_id,
                     createOfferEventData.DC_node_id.substring(2, 42),
                     total_escrow_time * 60000, // In ms.
                     max_token_amount,
@@ -340,7 +339,7 @@ class EventEmitter {
             const {
                 DC_wallet,
                 DC_node_id,
-                data_id,
+                import_id,
                 total_escrow_time,
                 min_stake_amount,
                 data_size,

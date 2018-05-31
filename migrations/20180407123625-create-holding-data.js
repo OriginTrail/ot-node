@@ -5,7 +5,7 @@ module.exports = {
             allowNull: false,
             autoIncrement: false,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         source_wallet: {
             allowNull: false,

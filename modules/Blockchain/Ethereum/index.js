@@ -92,21 +92,21 @@ class Ethereum {
 
     /**
      * Writes data import root hash on Ethereum blockchain
-     * @param dataId
+     * @param importId
      * @param rootHash
      * @returns {Promise}
      */
-    writeRootHash(dataId, rootHash) {
+    writeRootHash(importId, rootHash) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.otContractAddress,
         };
 
-        const dataIdHash = Utilities.sha3(dataId);
+        const importIdHash = Utilities.sha3(importId);
 
         log.warn('Writing root hash');
-        return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [dataId, dataIdHash, rootHash], options);
+        return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
     }
 
     /**
@@ -187,13 +187,13 @@ class Ethereum {
     /**
      * Verify escrow contract contract data and start data holding process on Ethereum blockchain
      * @param {string} - dcWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @param {number} - tokenAmount
      * @param {number} - stakeAmount
      * @param {number} - totalTime
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime) {
+    verifyEscrow(dcWallet, importId, tokenAmount, stakeAmount, totalTime) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -206,7 +206,7 @@ class Ethereum {
             'verifyEscrow',
             [
                 dcWallet,
-                dataId,
+                importId,
                 tokenAmount,
                 stakeAmount,
                 Math.round(totalTime / 1000 / 60),
@@ -218,10 +218,10 @@ class Ethereum {
     /**
      * Cancel data holding escrow process on Ethereum blockchain
      * @param {string} - dhWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @returns {Promise}
      */
-    cancelEscrow(dhWallet, dataId) {
+    cancelEscrow(dhWallet, importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -234,7 +234,7 @@ class Ethereum {
             'cancelEscrow',
             [
                 dhWallet,
-                dataId,
+                importId,
             ],
             options,
         );
@@ -243,10 +243,10 @@ class Ethereum {
     /**
      * Pay out tokens from escrow on Ethereum blockchain
      * @param {string} - dcWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @returns {Promise}
      */
-    payOut(dcWallet, dataId) {
+    payOut(dcWallet, importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -254,12 +254,12 @@ class Ethereum {
         };
 
         log.warn('Initiating escrow - payOut');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, dataId], options);
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, importId], options);
     }
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @param dataId Data ID of the offer.
+     * @param importId Import ID of the offer.
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
@@ -272,7 +272,7 @@ class Ethereum {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
-        dataId, nodeId,
+        importId, nodeId,
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
@@ -292,7 +292,7 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
-                dataId,
+                importId,
                 this._normalizeHex(nodeId),
                 Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
@@ -309,9 +309,9 @@ class Ethereum {
 
     /**
      * Cancel offer for data storing on Ethereum blockchain.
-     * @param dataId Data if of the offer.
+     * @param importId Data if of the offer.
      */
-    cancelOffer(dataId) {
+    cancelOffer(importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -321,7 +321,7 @@ class Ethereum {
         log.warn('Initiating escrow - cancelOffer');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelOffer',
-            [dataId], options,
+            [importId], options,
         );
     }
 
@@ -341,13 +341,13 @@ class Ethereum {
                     /* eslint-disable-next-line */
                     if (event.event === 'OfferCreated' || 1 === 1) {
                         const timestamp = Date.now();
-                        Storage.db.query('INSERT INTO events(event, data, offer_hash, block, timestamp, finished) \n' +
+                        Storage.db.query('INSERT INTO events(event, data, import_id, block, timestamp, finished) \n' +
                           'SELECT ?, ?, ?, ?, ?, 0 \n' +
                           'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
                             replacements: [
                                 event.event,
                                 JSON.stringify(event.returnValues),
-                                event.returnValues.offer_hash,
+                                event.returnValues.import_id,
                                 event.blockNumber,
                                 timestamp,
                                 event.event,
@@ -378,19 +378,19 @@ class Ethereum {
     /**
     * Subscribes to blockchain events
     * @param event
-    * @param offerHash
+    * @param importId
     * @param endMs
     * @param endCallback
     */
-    subscribeToEvent(event, offerHash, endMs = 5 * 60 * 1000, endCallback) {
+    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
                     event,
                     finished: 0,
                 };
-                if (offerHash) {
-                    where.offer_hash = offerHash;
+                if (importId) {
+                    where.import_id = importId;
                 }
                 Storage.models.events.findOne({
                     where,
@@ -457,11 +457,11 @@ class Ethereum {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param offerHash Hash of the offer
+     * @param importId Hash of the offer
      * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(offerHash, dhNodeId) {
+    addBid(importId, dhNodeId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -471,18 +471,18 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [offerHash, this._normalizeHex(dhNodeId)], options,
+            [importId, this._normalizeHex(dhNodeId)], options,
         );
     }
 
     /**
      * Cancel the bid on Ethereum blockchain
      * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
+     * @param importId ID of the data of the bid
      * @param bidIndex Index of the bid
      * @returns {Promise<any>}
      */
-    cancelBid(dcWallet, dataId, bidIndex) {
+    cancelBid(dcWallet, importId, bidIndex) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -492,16 +492,16 @@ class Ethereum {
         log.warn('Initiating escrow - cancelBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelBid',
-            [dcWallet, dataId, bidIndex], options,
+            [dcWallet, importId, bidIndex], options,
         );
     }
 
     /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param offerHash Offer hash
+     * @param importId Import ID
      * @returns {Promise<any>}
      */
-    chooseBids(offerHash) {
+    chooseBids(importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -511,18 +511,18 @@ class Ethereum {
         log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
-            [offerHash], options,
+            [importId], options,
         );
     }
 
     /**
      *
      * @param dcWallet
-     * @param dataId
+     * @param importId
      * @param bidIndex
      * @returns {Promise<any>}
      */
-    getBid(dcWallet, dataId, bidIndex) {
+    getBid(dcWallet, importId, bidIndex) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -532,20 +532,20 @@ class Ethereum {
         log.warn('Initiating escrow - getBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'getBid',
-            [dcWallet, dataId, bidIndex], options,
+            [dcWallet, importId, bidIndex], options,
         );
     }
 
     /**
     * Gets status of the offer
     * @param dcWallet
-    * @param dataId
+    * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, dataId) {
+    getOfferStatus(dcWallet, importId) {
         return new Promise((resolve, reject) => {
-            log.trace(`Asking for ${dataId} offer status`);
-            this.biddingContract.methods.getOfferStatus(dcWallet, dataId).call({
+            log.trace(`Asking for ${importId} offer status`);
+            this.biddingContract.methods.getOfferStatus(dcWallet, importId).call({
                 from: dcWallet,
             }).then((res) => {
                 resolve(res);
@@ -555,10 +555,10 @@ class Ethereum {
         });
     }
 
-    getDcWalletFromOffer(offer_hash) {
+    getDcWalletFromOffer(importId) {
         return new Promise((resolve, reject) => {
-            log.trace(`Asking for offer's (${offer_hash}) DC wallet.`);
-            this.biddingContract.methods.offer(offer_hash).call()
+            log.trace(`Asking for offer's (${importId}) DC wallet.`);
+            this.biddingContract.methods.offer(importId).call()
                 .then((res) => {
                     resolve(res[0]);
                 }).catch((e) => {
@@ -602,7 +602,7 @@ class Ethereum {
      * @private
      */
     _normalizeHex(number) {
-        if (!number.lowerCase().startsWith('0x')) {
+        if (!number.toLowerCase().startsWith('0x')) {
             return `0x${number}`;
         }
         return number;

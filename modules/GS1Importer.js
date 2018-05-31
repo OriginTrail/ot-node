@@ -17,7 +17,7 @@ class GS1Importer {
 
     async processXML(err, result) {
         const GLOBAL_R = 131317;
-        const importId = Date.now();
+        const importId = Utilities.createImportId();
 
         const epcisDocumentElement = result['epcis:EPCISDocument'];
 

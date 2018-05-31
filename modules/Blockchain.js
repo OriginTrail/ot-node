@@ -24,12 +24,12 @@ class Blockchain {
 
     /**
      * Writes data import root hash on blockchain
-     * @param dataId
+     * @param importId
      * @param rootHash
      * @returns {Promise}
      */
-    writeRootHash(dataId, rootHash) {
-        return this.blockchain.writeRootHash(dataId, rootHash);
+    writeRootHash(importId, rootHash) {
+        return this.blockchain.writeRootHash(importId, rootHash);
     }
 
     /**
@@ -81,39 +81,42 @@ class Blockchain {
     /**
      * Verify escrow contract contract data and start data holding process
      * @param {string} - dcWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @param {number} - tokenAmount
      * @param {number} - stakeAmount
      * @param {number} - totalTime
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime) {
-        return this.blockchain.verifyEscrow(dcWallet, dataId, tokenAmount, stakeAmount, totalTime);
+    verifyEscrow(dcWallet, importId, tokenAmount, stakeAmount, totalTime) {
+        return this.blockchain.verifyEscrow(
+            dcWallet, importId, tokenAmount,
+            stakeAmount, totalTime,
+        );
     }
 
     /**
      * Cancel data holding escrow process
      * @param {string} - dhWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @returns {Promise}
      */
-    cancelEscrow(dhWallet, dataId) {
-        return this.blockchain.cancelEscrow(dhWallet, dataId);
+    cancelEscrow(dhWallet, importId) {
+        return this.blockchain.cancelEscrow(dhWallet, importId);
     }
 
     /**
      * Pay out tokens from escrow
      * @param {string} - dcWallet
-     * @param {number} - dataId
+     * @param {number} - importId
      * @returns {Promise}
      */
-    payOut(dcWallet, dataId) {
-        return this.blockchain.payOut(dcWallet, dataId);
+    payOut(dcWallet, importId) {
+        return this.blockchain.payOut(dcWallet, importId);
     }
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @param dataId Data ID of the offer.
+     * @param importId Import ID of the offer.
      * @param nodeId KADemlia node ID of offer creator
      * @param totalEscrowTime Total time of the escrow in milliseconds
      * @param maxTokenAmount Maximum price per DH
@@ -126,7 +129,7 @@ class Blockchain {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
-        dataId, nodeId,
+        importId, nodeId,
         totalEscrowTime,
         maxTokenAmount,
         MinStakeAmount,
@@ -137,7 +140,7 @@ class Blockchain {
         predeterminedDhNodeIds,
     ) {
         return this.blockchain.createOffer(
-            dataId, nodeId,
+            importId, nodeId,
             totalEscrowTime,
             maxTokenAmount,
             MinStakeAmount,
@@ -151,21 +154,21 @@ class Blockchain {
 
     /**
      * Cancel offer for data storing on Ethereum blockchain.
-     * @param dataId Data if of the offer.
+     * @param importId Data if of the offer.
      */
-    cancelOffer(dataId) {
-        return this.blockchain.cancelOffer(dataId);
+    cancelOffer(importId) {
+        return this.blockchain.cancelOffer(importId);
     }
 
     /**
     * Subscribe to a particular event
     * @param event
-    * @param offerHash
+    * @param importId
     * @param endMs
     */
-    subscribeToEvent(event, offerHash, endMs) {
+    subscribeToEvent(event, importId, endMs) {
         return this.blockchain
-            .subscribeToEvent(event, offerHash, endMs);
+            .subscribeToEvent(event, importId, endMs);
     }
 
     /**
@@ -191,57 +194,57 @@ class Blockchain {
 
     /**
      * Adds bid to the offer on Ethereum blockchain
-     * @param offerHash Hash of the offer
+     * @param importId Import ID
      * @param dhNodeId KADemlia ID of the DH node that wants to add bid
      * @returns {Promise<any>} Index of the bid.
      */
-    addBid(offerHash, dhNodeId) {
-        return this.blockchain.addBid(offerHash, dhNodeId);
+    addBid(importId, dhNodeId) {
+        return this.blockchain.addBid(importId, dhNodeId);
     }
 
     /**
      * Cancel the bid on Ethereum blockchain
      * @param dcWallet Wallet of the bidder
-     * @param dataId ID of the data of the bid
+     * @param importId ID of the data of the bid
      * @param bidIndex Index of the bid
      * @returns {Promise<any>}
      */
-    cancelBid(dcWallet, dataId, bidIndex) {
-        return this.blockchain.cancelBid(dcWallet, dataId, bidIndex);
+    cancelBid(dcWallet, importId, bidIndex) {
+        return this.blockchain.cancelBid(dcWallet, importId, bidIndex);
     }
 
     /**
      * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param offerHash Hash of the offer
+     * @param importId Import ID
      * @returns {Promise<any>} Array of bid indices of chosen ones.
      */
-    chooseBids(offerHash) {
-        return this.blockchain.chooseBids(offerHash);
+    chooseBids(importId) {
+        return this.blockchain.chooseBids(importId);
     }
 
     /**
      *
      * @param dcWallet
-     * @param dataId
+     * @param importId
      * @param bidIndex
      * @returns {Promise<any>}
      */
-    getBid(dcWallet, dataId, bidIndex) {
-        return this.blockchain.getBid(dcWallet, dataId, bidIndex);
+    getBid(dcWallet, importId, bidIndex) {
+        return this.blockchain.getBid(dcWallet, importId, bidIndex);
     }
 
     /**
     * Gets status of the offer
     * @param dcWallet
-    * @param dataId
+    * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, dataId) {
-        return this.blockchain.getOfferStatus(dcWallet, dataId);
+    getOfferStatus(dcWallet, importId) {
+        return this.blockchain.getOfferStatus(dcWallet, importId);
     }
 
-    getDcWalletFromOffer(offer_hash) {
-        return this.blockchain.getDcWalletFromOffer(offer_hash);
+    getDcWalletFromOffer(importId) {
+        return this.blockchain.getDcWalletFromOffer(importId);
     }
 
     async depositToken(amount) {

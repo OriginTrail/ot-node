@@ -25,7 +25,6 @@ class DataReplication {
 
         const currentUnixTime = Date.now();
         const options = {
-            offer_hash: data.offer_hash,
             dh_wallet: config.dh_wallet,
             import_id: data.import_id,
             amount: data.vertices.length + data.edges.length,
@@ -49,7 +48,6 @@ class DataReplication {
 
         const payload = {
             payload: {
-                offer_hash: data.offer_hash,
                 edges: data.edges,
                 import_id: data.import_id,
                 dc_wallet: config.blockchain.wallet_address,

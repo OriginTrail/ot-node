@@ -31,7 +31,7 @@ class DHService {
      *
      */
     async handleOffer(
-        offerHash,
+        importId,
         dcNodeId,
         totalEscrowTime,
         maxTokenAmount,
@@ -43,7 +43,7 @@ class DHService {
     ) {
         try {
             // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { id: offerHash } });
+            const offerModel = await Models.offers.findOne({ where: { id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
                 log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
@@ -51,9 +51,9 @@ class DHService {
             }
 
             // Check if already applied.
-            let bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
+            let bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             if (bidModel) {
-                log.info(`I already sent my bid for offer: ${offerHash}.`);
+                log.info(`I already sent my bid for offer: ${importId}.`);
                 return;
             }
 
@@ -74,12 +74,12 @@ class DHService {
 
 
             if (maxTokenAmount.lt(myPrice)) {
-                log.info(`Offer ${offerHash} too expensive for me.`);
+                log.info(`Offer ${importId} too expensive for me.`);
                 return;
             }
 
             if (minStakeAmount.gt(myStake)) {
-                log.info(`Skipping offer ${offerHash}. Stake too high.`);
+                log.info(`Skipping offer ${importId}. Stake too high.`);
                 return;
             }
 
@@ -89,11 +89,11 @@ class DHService {
             }
 
             if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
-                log.info(`Offer ${offerHash}, not in mine distance. Not going to participate.`);
+                log.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
                 return;
             }
 
-            log.trace(`Adding a bid for offer ${offerHash}.`);
+            log.trace(`Adding a bid for offer ${importId}.`);
 
             // From smart contract:
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
@@ -107,10 +107,10 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            await this.blockchain.addBid(offerHash, config.identity);
+            await this.blockchain.addBid(importId, config.identity);
             // await blockchainc.increaseBiddingApproval(myStake);
-            const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', offerHash);
-            const dcWallet = await this.blockchain.getDcWalletFromOffer(offerHash);
+            const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
             this._saveBidToStorage(
                 addedBidEvent,
                 dcNodeId.substring(2, 42),
@@ -119,22 +119,22 @@ class DHService {
                 totalEscrowTime,
                 myStake,
                 dataSizeBytes,
-                offerHash,
+                importId,
             );
 
-            await this.blockchain.subscribeToEvent('OfferFinalized', offerHash);
+            await this.blockchain.subscribeToEvent('OfferFinalized', importId);
             // Now check if bid taken.
-            // emit BidTaken(offer_hash, this_bid.DH_wallet);
+            // emit BidTaken(bytes32 import_id, address DH_wallet);
             const eventModelBid = await Models.events.findOne({
                 where:
                     {
                         event: 'BidTaken',
-                        offer_hash: offerHash,
+                        import_id: importId,
                     },
             });
             if (!eventModelBid) {
                 // Probably contract failed since no event fired.
-                log.info(`BidTaken not received for offer ${offerHash}.`);
+                log.info(`BidTaken not received for offer ${importId}.`);
                 return;
             }
 
@@ -142,15 +142,15 @@ class DHService {
             const eventBidData = JSON.parse(eventBid.data);
 
             if (eventBidData.DH_wallet !== config.node_wallet) {
-                log.info(`Bid not taken for offer ${offerHash}.`);
+                log.info(`Bid not taken for offer ${importId}.`);
                 return;
             }
 
-            bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
+            bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
             this.network.kademlia().replicationRequest(
                 {
-                    offer_hash: offerHash,
+                    import_id: importId,
                     wallet: config.node_wallet,
                 },
                 bid.dc_id, (err) => {
@@ -173,19 +173,19 @@ class DHService {
         totalEscrowTime,
         stake,
         dataSizeBytes,
-        offerHash,
+        importId,
     ) {
         Models.bids.create({
             bid_index: event.bid_index,
             price: chosenPrice.toString(),
-            offer_hash: offerHash,
+            import_id: importId,
             dc_wallet: dcWallet,
             dc_id: dcNodeId,
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
         }).then((bid) => {
-            log.info(`Created new bid for offer ${offerHash}. Waiting for reveal... `);
+            log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
         }).catch((err) => {
             log.error(`Failed to insert new bid. ${err}`);
         });
@@ -194,7 +194,6 @@ class DHService {
     async handleImport(data) {
         /*
             payload: {
-                offer_hash: data.offer_hash,
                 edges: data.edges,
                 import_id: data.import_id,
                 dc_wallet: config.blockchain.wallet_address,
@@ -202,9 +201,9 @@ class DHService {
                 vertices: data.encryptedVertices.vertices,
             },
          */
-        const bidModel = await Models.bids.findOne({ where: { offer_hash: data.offer_hash } });
+        const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
         if (!bidModel) {
-            log.warn(`Couldn't find bid for offer hash ${data.offer_hash}.`);
+            log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
             return;
         }
         // TODO: Check data before signing escrow.
@@ -238,7 +237,7 @@ class DHService {
             await this.blockchain.increaseApproval(bid.stake);
             await this.blockchain.verifyEscrow(
                 bid.dc_wallet,
-                bid.offer_hash,
+                bid.import_id,
                 bid.price,
                 bid.stake,
                 bid.total_escrow_time,

@@ -289,15 +289,15 @@ class GraphStorage {
 
     /**
      * Gets edges by import ID from the underlying database
-     * @param data_id       Import ID
+     * @param import_id       Import ID
      * @returns {Promise}
      */
-    findEdgesByImportId(data_id) {
+    findEdgesByImportId(import_id) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findEdgesByImportId(data_id).then((result) => {
+                this.db.findEdgesByImportId(import_id).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

@@ -26,8 +26,8 @@ class DCService {
         this.blockchain = ctx.blockchain;
     }
 
-    async createOffer(dataId, rootHash, totalDocuments, vertices) {
-        this.blockchain.writeRootHash(dataId, rootHash).then((res) => {
+    async createOffer(importId, rootHash, totalDocuments, vertices) {
+        this.blockchain.writeRootHash(importId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
             console.log('Error: ', e);
@@ -45,17 +45,8 @@ class DCService {
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
-        // TODO: Store offer hash in DB.
-        const offerHash = `0x${abi.soliditySHA3(
-            ['address', 'bytes32', 'uint256'],
-            [config.node_wallet, `0x${config.identity}`, dataId],
-        ).toString('hex')}`;
-
-        log.info(`Offer hash is ${offerHash}.`);
-
         const newOfferRow = {
-            id: offerHash,
-            import_id: dataId,
+            id: importId,
             total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
@@ -84,7 +75,7 @@ class DCService {
         }
 
         this.blockchain.createOffer(
-            dataId,
+            importId,
             config.identity,
             totalEscrowTime,
             maxTokenAmount,
@@ -100,7 +91,7 @@ class DCService {
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
                         log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
@@ -149,22 +140,22 @@ class DCService {
 
     /**
      * Chose DHs
-     * @param offerHash Offer identifier
+     * @param importId Offer identifier
      * @param totalEscrowTime   Total escrow time
      */
-    chooseBids(offerHash, totalEscrowTime) {
+    chooseBids(importId, totalEscrowTime) {
         return new Promise((resolve, reject) => {
-            Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+            Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                log.info(`Choose bids for offer ${offerHash}`);
+                log.info(`Choose bids for offer ${importId}`);
                 this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        this.blockchain.chooseBids(offerHash)
+                        this.blockchain.chooseBids(importId)
                             .then(() => {
-                                log.info(`Bids chosen for data ${offerHash}`);
+                                log.info(`Bids chosen for data ${importId}`);
                                 resolve();
                             }).catch((err) => {
-                                log.warn(`Failed call choose bids for data ${offerHash}. ${err}`);
+                                log.warn(`Failed call choose bids for data ${importId}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
@@ -172,7 +163,7 @@ class DCService {
                         reject(err);
                     });
             }).catch((err) => {
-                log.error(`Failed to get offer (data ID ${offerHash}). ${err}.`);
+                log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
                 reject(err);
             });
         });

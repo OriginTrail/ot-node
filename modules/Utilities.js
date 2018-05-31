@@ -23,6 +23,14 @@ class Utilities {
     }
 
     /**
+     * Creates new hash import ID.
+     * @returns {*}
+     */
+    static createImportId() {
+        return soliditySha3(Date.now().toString() + config.node_wallet);
+    }
+
+    /**
      * Get configuration parameters from SystemStorage database, table node_config
      * @returns {Promise<void>}
      */

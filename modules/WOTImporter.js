@@ -1,5 +1,6 @@
 const fs = require('fs');
 const md5 = require('md5');
+const Utilities = require('./Utilities')
 
 /**
  * Web Of Things model importer
@@ -26,7 +27,7 @@ class WOTImporter {
      */
     async parse(payloadFile) {
         const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
-        const importId = Date.now();
+        const importId = Utilities.createImportId();
         const { things, sender } = payload.data;
 
         const edges = [];

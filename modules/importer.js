@@ -57,7 +57,7 @@ class Importer {
 
             // eslint-disable-next-line  prefer-destructuring
             const edges = result.edges;
-            const data_id = result.import_id;
+            const { import_id } = result;
 
             const leaves = [];
             const hash_pairs = [];
@@ -72,7 +72,7 @@ class Importer {
             const tree = new MerkleTree(hash_pairs);
             const root_hash = tree.root();
 
-            log.info(`Import id: ${data_id}`);
+            log.info(`Import id: ${import_id}`);
             log.info(`Import hash: ${root_hash}`);
 
             utilities.executeCallback(callback, {
@@ -112,7 +112,7 @@ class Importer {
         log.info(`Import id: ${import_id}`);
         log.info(`Import hash: ${root_hash}`);
         return {
-            data_id: import_id,
+            import_id,
             root_hash,
             total_documents: hash_pairs.length,
             vertices,
