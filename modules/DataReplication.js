@@ -37,7 +37,7 @@ class DataReplication {
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
             options.start_time, options.start_time + options.total_time,
-            16, data.encryptedVertices.vertices,
+            32, data.encryptedVertices.vertices,
         );
 
         Challenge.addTests(tests).then(() => {

@@ -60,7 +60,7 @@ function checkForTests(
      }
      */
 
-    const blocks = Challenge.__getBlocks__(vertexData, expectedBlockSize);
+    const blocks = Challenge.getBlocks(vertexData, expectedBlockSize);
     let previousTestTime = startTime;
 
     tests.forEach((test) => {
@@ -78,13 +78,13 @@ function checkForTests(
 // Test functions.
 
 function testBlocks() {
-    let blocks = Challenge.__getBlocks__(vertexData, 32);
+    let blocks = Challenge.getBlocks(vertexData, 32);
     checkBlocks(blocks, vertexData);
 
-    blocks = Challenge.__getBlocks__(vertexData, 16);
+    blocks = Challenge.getBlocks(vertexData, 16);
     checkBlocks(blocks, vertexData);
 
-    blocks = Challenge.__getBlocks__(vertexData, 1);
+    blocks = Challenge.getBlocks(vertexData, 1);
     checkBlocks(blocks, vertexData);
 }
 
@@ -146,7 +146,7 @@ describe('Challenge tests', () => {
 
         blockTests.forEach((test) => {
             it(`should correctly generate blocks of ${test.args[1]} bytes`, () => {
-                const blocks = Challenge.__getBlocks__(test.args[0], test.args[1]);
+                const blocks = Challenge.getBlocks(test.args[0], test.args[1]);
                 checkBlocks(blocks, test.args[0]);
             });
         });

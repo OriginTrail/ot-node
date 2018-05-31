@@ -28,7 +28,7 @@ class Encryption {
      * @returns {*}
      */
     static encryptObject(obj, privateKey) {
-        const data = JSON.stringify(obj);
+        const data = JSON.stringify(Utilities.sortObject(obj));
         return this.encryptRawData(data, privateKey);
     }
 

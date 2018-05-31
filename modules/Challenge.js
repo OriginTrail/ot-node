@@ -51,7 +51,7 @@ class Challenge {
             // console.log(new Date(randomIntervals[i]).toString());
         }
 
-        const blocks = this.__getBlocks__(vertexData, blockSizeBytes);
+        const blocks = this.getBlocks(vertexData, blockSizeBytes);
 
         // for (let i = 0; i < blocks.length; i += 1) {
         //     console.log(`Block ${i}, size ${blocks[i].length} ${blocks[i]}`);
@@ -239,7 +239,7 @@ class Challenge {
      * @returns {String}
      */
     static answerTestQuestion(blockId, vertexData, blockSize) {
-        const blocks = this.__getBlocks__(vertexData, blockSize);
+        const blocks = this.getBlocks(vertexData, blockSize);
         return blocks[blockId];
     }
 
@@ -249,9 +249,8 @@ class Challenge {
      * @param vertexData Vertex data in form { ..., data: "vertex-data" }
      * @param blockSizeBytes Desired size of each block.
      * @returns {Array} of blocks.
-     * @private
      */
-    static __getBlocks__(vertexData, blockSizeBytes) {
+    static getBlocks(vertexData, blockSizeBytes) {
         const blocks = [];
         let block = String();
         let byteIndex = 0;

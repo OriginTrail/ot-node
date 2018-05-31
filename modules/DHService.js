@@ -5,6 +5,8 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const MerkleTree = require('./Merkle');
+const Challenge = require('./Challenge');
+const Graph = require('./Graph');
 
 const log = Utilities.getLogger();
 
@@ -243,9 +245,43 @@ class DHService {
                 bid.total_escrow_time,
             );
 
+            let encryptedVertices = data.encryptedVertices.vertices;
+            // sort vertices
+            encryptedVertices.sort(((a, b) => {
+                if (a._key < b._key) {
+                    return -1;
+                } else if (a._key > b._key) {
+                    return 1;
+                }
+                return 0;
+            }));
+            // filter CLASS vertices
+            encryptedVertices = encryptedVertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
+
+            const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
+            const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+
+            const keyPair = Encryption.generateKeyPair(512);
+            const decryptedVertices = encryptedVertices.map((encVertex) => {
+                const key = data.encryptedVertices.public_key;
+                encVertex.data = Encryption.decryptObject(encVertex.data, key);
+                return encVertex;
+            });
+            Graph.encryptVerticesWithKeys(decryptedVertices, keyPair.privateKey, keyPair.publicKey);
+
+            const encLeaves = [];
+            const encHashPairs = [];
+            await this.importer.merkleStructure(
+                decryptedVertices, data.edges,
+                encLeaves, encHashPairs,
+            );
+            const distributionMerkleTree = new MerkleTree(leaves);
+
+            const epk = Encryption.packEPK(keyPair.publicKey);
+            const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+
             // Store holding information and generate keys for eventual
             // data replication.
-            const keyPair = Encryption.generateKeyPair(512);
             const holdingData = await Models.holding_data.create({
                 id: data.import_id,
                 source_wallet: bid.dc_wallet,

@@ -196,8 +196,18 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
+                // sort vertices
+                vertices.sort(((a, b) => {
+                    if (a._key < b._key) {
+                        return -1;
+                    } else if (a._key > b._key) {
+                        return 1;
+                    }
+                    return 0;
+                }));
+                // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-                const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 16);
+                const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
                 log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
                 response.send({
                     status: 'success',
