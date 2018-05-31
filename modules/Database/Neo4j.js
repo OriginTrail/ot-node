@@ -442,7 +442,7 @@ class Neo4jDB {
         const key = '_key';
         const value = startVertex._key;
         const session = this.driver.session();
-        const result = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
+        const rawGraph = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
         session.close();
         return this.convertToVirtualGraph(rawGraph);
     }
