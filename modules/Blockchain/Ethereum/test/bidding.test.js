@@ -296,11 +296,6 @@ contract('Bidding testing', async (accounts) => {
         await bidding.chooseBids(import_id).then((res) => {
             console.log(res.tx);
         });
-        for (i = 0; i < chosen_bids.length; i += 1) {
-            // eslint-disable-next-line
-            var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
-            console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
-        }
     });
 
     // Merkle tree structure
@@ -352,6 +347,7 @@ contract('Bidding testing', async (accounts) => {
             promises[i] = escrow.addRootHashAndChecksum(
                 import_id,
                 root_hash,
+                root_hash,
                 checksum,
                 { from: accounts[chosen_bids[i]] },
             );
@@ -373,7 +369,6 @@ contract('Bidding testing', async (accounts) => {
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
-            console.log('2');
             promises[i] = escrow.verifyEscrow(
                 import_id,
                 accounts[chosen_bids[i]],
@@ -383,16 +378,14 @@ contract('Bidding testing', async (accounts) => {
         await Promise.all(promises);
 
         // Get block timestamp
-        console.log('3');
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
         console.log(`\t Escrow start time: ${response}, Escrow end time: ${response + (60 * total_escrow_time)}`);
 
         for (i = 1; i < 10; i += 1) {
-            console.log('4');
             // eslint-disable-next-line no-await-in-loop
             response = await escrow.escrow.call(import_id, accounts[i]);
-            let status = response[9];
+            let status = response[10];
             status = status.toNumber();
             switch (status) {
             case 0:

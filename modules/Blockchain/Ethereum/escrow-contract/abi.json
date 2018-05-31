@@ -21,28 +21,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "root_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "checksum",
-        "type": "uint256"
-      }
-    ],
-    "name": "addRootHashAndChecksum",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "DC_wallet",
         "type": "address"
       },
@@ -175,6 +153,32 @@
         "type": "bytes32"
       },
       {
+        "name": "litigation_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distribution_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "checksum",
+        "type": "uint256"
+      }
+    ],
+    "name": "addRootHashAndChecksum",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
         "name": "DH_wallet",
         "type": "address"
       },
@@ -237,7 +241,11 @@
         "type": "uint256"
       },
       {
-        "name": "data_root_hash",
+        "name": "litigation_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distribution_root_hash",
         "type": "bytes32"
       },
       {

@@ -23,7 +23,7 @@ contract Reading{
 
  	struct PurchaseDefinition {
  		address DC_wallet;
- 		bytes32 data_root_hash;
+ 		bytes32 distribution_root_hash;
  		uint256 checksum;
  	}
 
@@ -42,12 +42,12 @@ contract Reading{
 		escrow = escrow_address;
 	}
 
-	function addReadData (bytes32 import_id, address DH_wallet, address DC_wallet, bytes32 data_root_hash, uint checksum)
+	function addReadData (bytes32 import_id, address DH_wallet, address DC_wallet, bytes32 distribution_root_hash, uint checksum)
 	public onlyEscrow {
 		PurchaseDefinition storage this_purchase = purchased_data[import_id][DH_wallet];
 
 		this_purchase.DC_wallet = DC_wallet;
-		this_purchase.data_root_hash = data_root_hash;
+		this_purchase.distribution_root_hash = distribution_root_hash;
 		this_purchase.checksum = checksum;
 	}
 
@@ -56,7 +56,7 @@ contract Reading{
 		PurchaseDefinition storage this_purchase = purchased_data[import_id][DH_wallet];
 
 		this_purchase.DC_wallet = address(0);
-		this_purchase.data_root_hash = bytes32(0);
+		this_purchase.distribution_root_hash = bytes32(0);
 		this_purchase.checksum = 0;
 	}	
 
@@ -104,8 +104,8 @@ contract Reading{
 
 		this_reading.encrypted_block = encrypted_block;
 
-		this_purchase.DC_wallet = msg.sender;
-		this_purchase.data_root_hash = previous_purchase.data_root_hash;
+		this_purchase.DC_wallet = previous_purchase.DC_wallet;
+		this_purchase.distribution_root_hash = previous_purchase.distribution_root_hash;
 		this_purchase.checksum = previous_purchase.checksum;
 
 		this_reading.reading_status = ReadingStatus.sent;

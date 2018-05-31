@@ -85,7 +85,7 @@ library SafeMath {
 
  contract Reading {
  	function addReadData(bytes32 import_id, address DH_wallet, address DC_wallet,
- 		bytes32 data_root_hash, uint checksum) public;
+ 		bytes32 distribution_root_hash, uint checksum) public;
  	function removeReadData(bytes32 import_id, address DH_wallet) public;
  }
 
@@ -132,7 +132,8 @@ library SafeMath {
  		uint end_time;
  		uint total_time_in_seconds;
 
- 		bytes32 data_root_hash;
+ 		bytes32 litigation_root_hash;
+ 		bytes32 distribution_root_hash;
  		uint checksum;
 
  		EscrowStatus escrow_status;
@@ -165,13 +166,14 @@ library SafeMath {
  		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
  	}
 
- 	function addRootHashAndChecksum(bytes32 import_id, bytes32 root_hash, uint checksum)
+ 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint checksum)
  	public {
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
  		require(this_escrow.escrow_status == EscrowStatus.initiated);
 
- 		this_escrow.data_root_hash = root_hash;
+ 		this_escrow.litigation_root_hash = litigation_root_hash;
+ 		this_escrow.distribution_root_hash = distribution_root_hash;
  		this_escrow.checksum = checksum;
 
  		//Transfer the stake_amount to the escrow
@@ -185,13 +187,13 @@ library SafeMath {
  	public {
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
- 		// require(this_escrow.DC_wallet == msg.sender
- 		// 	&& this_escrow.escrow_status == EscrowStatus.confirmed);
+ 		require(this_escrow.DC_wallet == msg.sender
+ 			&& this_escrow.escrow_status == EscrowStatus.confirmed);
 
  		this_escrow.last_confirmation_time = block.timestamp;
  		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time_in_seconds);
 
- 		reading.addReadData(import_id, DH_wallet, msg.sender, this_escrow.data_root_hash, this_escrow.checksum);
+ 		reading.addReadData(import_id, DH_wallet, msg.sender, this_escrow.distribution_root_hash, this_escrow.checksum);
 
  		this_escrow.escrow_status = EscrowStatus.active;
  		emit EscrowVerified(import_id, DH_wallet);
@@ -396,13 +398,13 @@ library SafeMath {
  			i++;
  		}
 
- 		if(answer_hash == this_escrow.data_root_hash){
+ 		if(answer_hash == this_escrow.litigation_root_hash){
  			this_litigation.litigation_status = LitigationStatus.completed;
  			emit LitigationCompleted(import_id, DH_wallet, false);
  			return false;
  		}
  		else {
- 			if(proof_hash == this_escrow.data_root_hash){
+ 			if(proof_hash == this_escrow.litigation_root_hash){
  				bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
  				this_escrow.stake_amount = 0;
  				reading.removeReadData(import_id, DH_wallet);

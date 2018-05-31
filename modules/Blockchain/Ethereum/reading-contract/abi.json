@@ -18,7 +18,7 @@
 				"type": "address"
 			},
 			{
-				"name": "data_root_hash",
+				"name": "distribution_root_hash",
 				"type": "bytes32"
 			},
 			{
@@ -191,7 +191,7 @@
 				"type": "address"
 			},
 			{
-				"name": "data_root_hash",
+				"name": "distribution_root_hash",
 				"type": "bytes32"
 			},
 			{
