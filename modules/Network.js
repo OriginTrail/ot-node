@@ -12,9 +12,7 @@ const fs = require('fs');
 const node = require('./Node');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
-const globalEvents = require('./GlobalEvents');
 
-const { globalEmitter } = globalEvents;
 let ns = {};
 
 /**
@@ -24,7 +22,9 @@ class Network {
     /**
      * Setup options and construct a node
      */
-    constructor() {
+    constructor(ctx) {
+        this.emitter = ctx.emitter;
+
         kadence.constants.T_RESPONSETIMEOUT = 20000;
         kadence.constants.K = 20;
         if (parseInt(config.test_network, 10)) {
@@ -228,13 +228,13 @@ class Network {
     _registerRoutes() {
         node.ot.quasar.quasarSubscribe('bidding-broadcast-channel', (message, err) => {
             log.info('New bidding offer received');
-            globalEmitter.emit('bidding-broadcast', message);
+            this.emitter.emit('bidding-broadcast', message);
         });
 
         // add payload-request route
         node.ot.use('payload-request', (request, response, next) => {
             log.info('payload-request received');
-            globalEmitter.emit('payload-request', request, response);
+            this.emitter.emit('payload-request', request, response);
             response.send({
                 status: 'OK',
             });
@@ -250,13 +250,13 @@ class Network {
         // add replication-request route
         node.ot.use('replication-request', (request, response, next) => {
             log.info('replication-request received');
-            globalEmitter.emit('replication-request', request, response);
+            this.emitter.emit('replication-request', request, response);
         });
 
         // add replication-finished route
         node.ot.use('replication-finished', (request, response, next) => {
             log.info('replication-finished received');
-            globalEmitter.emit('replication-finished', request);
+            this.emitter.emit('replication-finished', request);
             response.send({
                 status: 'OK',
             });
@@ -272,7 +272,7 @@ class Network {
         // add challenge-request route
         node.ot.use('challenge-request', (request, response, next) => {
             log.info('challenge-request received');
-            globalEmitter.emit('kad-challenge-request', request, response);
+            this.emitter.emit('kad-challenge-request', request, response);
         });
 
         // add challenge-request error handler
@@ -303,7 +303,7 @@ class Network {
         // add kad-bidding-won route
         node.ot.use('kad-bidding-won', (request, response, next) => {
             log.info('kad-bidding-won received');
-            globalEmitter.emit('kad-bidding-won', request, response);
+            this.emitter.emit('kad-bidding-won', request, response);
         });
 
         // add kad-bidding-won error handler

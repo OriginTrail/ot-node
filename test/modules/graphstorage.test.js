@@ -8,15 +8,13 @@ const Utilities = require('../../modules/Utilities');
 const Storage = require('../../modules/Storage');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
-const ArangoJs = require('../../modules/Database/Arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/arangodb-data.js');
 
 const myUserName = 'otuser';
 const myPassword = 'otpass';
 const myDatabaseName = 'test_origintrail';
 
-const documentCollectionName = 'ot_vertices';
 const edgeCollectionName = 'ot_edges';
 const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
