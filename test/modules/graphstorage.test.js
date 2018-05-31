@@ -152,6 +152,40 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('test virtualGraph', async () => {
+        // precondition
+        const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
+        const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);
+        const responseEdgeOne = await myGraphStorage.addEdge(edgeOne);
+
+        assert.equal(responseVertexOne._key, vertexOne._key);
+        assert.equal(responseVertexTwo._key, vertexTwo._key);
+        assert.equal(responseEdgeOne._key, edgeOne._key);
+
+        const path = await myGraphStorage.findTraversalPath(vertexOne, 1000);
+
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return 1;
+            }
+            if (a._key > b._key) {
+                return -1;
+            }
+            return 0;
+        }
+
+        const objectVertices = [vertexOne, vertexTwo];
+        const objectEdges = [edgeOne];
+        assert.deepEqual(
+            GraphStorage.getEdgesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectEdges).sort(sortByKey),
+        );
+        assert.deepEqual(
+            GraphStorage.getVerticesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectVertices).sort(sortByKey),
+        );
+    });
+
     after('drop myGraphStorage db', async () => {
         if (selectedDatabase.database_system === 'arango_db') {
             systemDb = new Database();

@@ -268,6 +268,63 @@ class GraphStorage {
     }
 
     /**
+     * Extract vertices from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const vertices = [];
+        for (const key in virtualGraph['data']) {
+            delete virtualGraph['data'][key].outbound;
+            vertices.push(virtualGraph['data'][key]);
+        }
+        return vertices;
+    }
+
+    /**
+     * Extracts edges from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const edges = [];
+        for (const key in virtualGraph['data']) {
+            for (const edge in virtualGraph['data'][key].outbound) {
+                virtualGraph['data'][key].outbound[edge]._from = `ot_vertices/${virtualGraph['data'][key].outbound[edge]._from}`;
+                virtualGraph['data'][key].outbound[edge]._to = `ot_vertices/${virtualGraph['data'][key].outbound[edge]._to}`;
+                edges.push(virtualGraph['data'][key].outbound[edge]);
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Imports virtual graph to database
+     * @param virtual graph
+     * @returns
+     */
+    async importVirtualGraph(virtualGraph) {
+        const virtualEdges = GraphStorage.getEdgesFromVirtualGraph(virtualGraph);
+        const virtualVertices = GraphStorage.getVerticesFromVirtualGraph(virtualGraph);
+
+        const vertices = [];
+        for (const i in virtualVertices) {
+            vertices.push(this.db.addVertex(virtualVertices[i]));
+        }
+        await Promise.all(vertices);
+
+        const edges = [];
+        for (const i in virtualEdges) {
+            edges.push(this.db.addEdge(virtualEdges[i]));
+        }
+        await Promise.all(edges);
+
+        return 0;
+    }
+
+    /**
      * Initializes database with predefined collections and vertices.
      * @returns {Promise<void>}
      * @private

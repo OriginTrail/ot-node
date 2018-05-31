@@ -206,49 +206,6 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
     });
 
-    it('parse virtualGraph', async () => {
-        // precondition
-        await testDb.createEdgeCollection(edgeCollectionName);
-        await testDb.createCollection(documentCollectionName);
-
-        const responseEdgeOne = await testDb.addEdge(edgeOne);
-        assert.containsAllKeys(responseEdgeOne, ['_id', '_key', '_rev']);
-
-        const responseVertexOne = await testDb.addVertex(vertexOne);
-        assert.equal(responseVertexOne._key, vertexOne._key);
-
-        const responseVertexTwo = await testDb.addVertex(vertexTwo);
-        assert.equal(responseVertexTwo._key, vertexTwo._key);
-
-        const path = await testDb.findTraversalPath(vertexOne, 1000);
-
-        function sortByKey(a, b) {
-            if (a._key < b._key) {
-                return 1;
-            }
-            if (a._key > b._key) {
-                return -1;
-            }
-            return 0;
-        }
-
-        const objectVertices = [vertexOne, vertexTwo];
-        const objectEdges = [edgeOne];
-        assert.deepEqual(
-            testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
-            Utilities.copyObject(objectEdges).sort(sortByKey),
-        );
-        assert.deepEqual(
-            testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
-            Utilities.copyObject(objectVertices).sort(sortByKey),
-        );
-    });
-
-    it('importVirtualGraph', async () => {
-        // TODO
-        console.log('');
-    });
-
     it('updateImports() should add/append data', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);

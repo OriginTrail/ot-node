@@ -87,7 +87,7 @@ describe('Neo4j module ', async () => {
         await testDb.addEdge(edgeOne);
 
         const path = await testDb.findTraversalPath(vertexOne, 1);
-        assert.equal(path.length, 2);
+        assert.equal(Object.keys(path['data']).length, 2);
     });
 
     it('.findTraversalPath() with non existing starting vertex', async () => {
@@ -96,7 +96,7 @@ describe('Neo4j module ', async () => {
         };
 
         const path = await testDb.findTraversalPath(startVertex, 1);
-        assert.equal(path, '');
+        assert.isEmpty(path['data']);
     });
 
     it('.findTraversalPath() with depth less than max length', async () => {
@@ -110,12 +110,12 @@ describe('Neo4j module ', async () => {
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 2);
         console.log(path);
-        assert.equal(path.length, 3);
+        assert.equal(Object.keys(path['data']).length, 3);
     });
 
     it('.findTraversalPath() with max length', async () => {
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
-        assert.equal(path.length, 4);
+        assert.equal(Object.keys(path['data']).length, 4);
     });
 
     it('traversal path with interconnected vertices', async () => {
@@ -125,36 +125,6 @@ describe('Neo4j module ', async () => {
 
         console.log(JSON.stringify(path));
         // TODO assert.deepEqual
-    });
-
-    it('parse virtualGraph', async () => {
-        const path = await testDb.findTraversalPath(vertexOne, 1000);
-
-        function sortByKey(a, b) {
-            if (a._key < b._key) {
-                return 1;
-            }
-            if (a._key > b._key) {
-                return -1;
-            }
-            return 0;
-        }
-
-        const objectVertices = [vertexOne, vertexTwo];
-        const objectEdges = [edgeOne];
-        assert.deepEqual(
-            testDb.getEdgesFromVirtualGraph(path).sort(sortByKey),
-            Utilities.copyObject(objectEdges).sort(sortByKey),
-        );
-        assert.deepEqual(
-            testDb.getVerticesFromVirtualGraph(path).sort(sortByKey),
-            Utilities.copyObject(objectVertices).sort(sortByKey),
-        );
-    });
-
-    it('importVirtualGraph', async () => {
-        // TODO
-        console.log('');
     });
 
     it('findVertexWithMaxVersion', async () => {
