@@ -36,9 +36,9 @@ contract Reading{
 	event PurchaseConfirmed(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event EncryptedBlockSent(bytes32 import_id, address DH_wallet, address DV_wallet);
 
-	function constructor(address escrow_address)
+	function Reading(address escrow_address)
 	public {
-		require(escrow != address(0));
+		require(escrow_address != address(0));
 		escrow = escrow_address;
 	}
 

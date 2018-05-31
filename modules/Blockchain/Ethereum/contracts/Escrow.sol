@@ -33,17 +33,15 @@ library SafeMath {
  contract Ownable {
  	address public owner;
 
-
  	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
 	/**
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-     function Ownable() public {
+    function Ownable () public {
      	owner = msg.sender;
-     }
+    }
 
 	/**
      * @dev Throws if called by any account other than the owner.
@@ -64,6 +62,7 @@ library SafeMath {
      }
 
  }
+
  contract ERC20Basic {
  	uint256 public totalSupply;
  	function balanceOf(address who) public constant returns (uint256);
@@ -86,9 +85,10 @@ library SafeMath {
 
  contract Reading {
  	function addReadData(bytes32 import_id, address DH_wallet, address DC_wallet,
- 	bytes32 data_root_hash, uint checksum) public;
+ 		bytes32 data_root_hash, uint checksum) public;
  	function removeReadData(bytes32 import_id, address DH_wallet) public;
  }
+
  contract EscrowHolder is Ownable{
  	using SafeMath for uint256;
 
@@ -96,7 +96,7 @@ library SafeMath {
  	Bidding public bidding;
  	Reading public reading;
 
- 	function constructor(address tokenAddress)
+ 	function EscrowHolder(address tokenAddress)
  	public{
  		require ( tokenAddress != address(0) );
  		token = ERC20(tokenAddress);
@@ -130,7 +130,7 @@ library SafeMath {
 
  		uint last_confirmation_time;
  		uint end_time;
- 		uint total_time;
+ 		uint total_time_in_seconds;
 
  		bytes32 data_root_hash;
  		uint checksum;
@@ -140,29 +140,29 @@ library SafeMath {
 
  	mapping(bytes32 => mapping(address => EscrowDefinition)) public escrow;
 
- 	event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time);
+ 	event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time_in_seconds);
  	event EscrowConfirmed(bytes32 import_id, address DH_wallet);
  	event EscrowVerified(bytes32 import_id, address DH_wallet);
  	event EscrowCanceled(bytes32 import_id, address DH_wallet);
  	event EscrowCompleted(bytes32 import_id, address DH_wallet);
 
- 	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount,  uint total_time)
+	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
  	public onlyOwner{
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
  		require(this_escrow.escrow_status == EscrowStatus.completed
  			||	this_escrow.escrow_status == EscrowStatus.inactive);
 
- 		require(total_time > 0);
-        this_escrow.DC_wallet = DC_wallet;
+ 		require(total_time_in_minutes > 0);
+ 		this_escrow.DC_wallet = DC_wallet;
  		this_escrow.token_amount = token_amount;
  		this_escrow.tokens_sent = 0;
  		this_escrow.stake_amount = stake_amount;
  		this_escrow.last_confirmation_time = 0;
  		this_escrow.end_time = 0;
- 		this_escrow.total_time = total_time.mul(60);
+ 		this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
  		this_escrow.escrow_status = EscrowStatus.initiated;
 
- 		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time);
+ 		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
  	}
 
  	function addRootHashAndChecksum(bytes32 import_id, bytes32 root_hash, uint checksum)
@@ -189,7 +189,7 @@ library SafeMath {
  			&& this_escrow.escrow_status == EscrowStatus.confirmed);
 
  		this_escrow.last_confirmation_time = block.timestamp;
- 		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time);
+ 		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time_in_seconds);
 
  		reading.addReadData(import_id, DH_wallet, msg.sender, this_escrow.data_root_hash, this_escrow.checksum);
 
@@ -219,7 +219,7 @@ library SafeMath {
  			emit EscrowCompleted(import_id, msg.sender);
  		}
  		else{
- 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time;
+ 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
  			this_escrow.last_confirmation_time = end_time;
  		}
  		
@@ -243,7 +243,7 @@ library SafeMath {
  			uint cancelation_time = block.timestamp;
  			if(this_escrow.end_time < block.timestamp) cancelation_time = this_escrow.end_time;
 
- 			amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time;
+ 			amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
  		}
  		else {
  			amount_to_send = this_escrow.token_amount;
@@ -295,126 +295,126 @@ library SafeMath {
  	// 	4. At the end the result should be the root hash of the merkle tree of the entire data, hence it gets compared to the total_data_hash defined in the escrow
  	// 	5. If the hashes are equal the Answer/Proof is correct. Otherwise, it fails.
 
-		enum LitigationStatus {inactive, initiated, answered, timed_out, completed}
+ 	enum LitigationStatus {inactive, initiated, answered, timed_out, completed}
 
-		struct LitigationDefinition{
-			uint requested_data_index;
-			bytes32 requested_data;
-			bytes32[] hash_array;
-			uint litigation_start_time;
-			LitigationStatus litigation_status;
-		}
+ 	struct LitigationDefinition{
+ 		uint requested_data_index;
+ 		bytes32 requested_data;
+ 		bytes32[] hash_array;
+ 		uint litigation_start_time;
+ 		LitigationStatus litigation_status;
+ 	}
 
-		event LitigationInitiated(bytes32 import_id, address DH_wallet, uint requested_data_index);
-		event LitigationAnswered(bytes32 import_id, address DH_wallet);
-		event LitigationTimedOut(bytes32 import_id, address DH_wallet);
-		event LitigationCompleted(bytes32 import_id, address DH_wallet, bool DH_was_penalized);
+ 	event LitigationInitiated(bytes32 import_id, address DH_wallet, uint requested_data_index);
+ 	event LitigationAnswered(bytes32 import_id, address DH_wallet);
+ 	event LitigationTimedOut(bytes32 import_id, address DH_wallet);
+ 	event LitigationCompleted(bytes32 import_id, address DH_wallet, bool DH_was_penalized);
 
-		mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
+ 	mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
 
-		function initateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
-		public returns (bool newLitigationInitiated){
-			LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
-			EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+ 	function initateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
+ 	public returns (bool newLitigationInitiated){
+ 		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
+ 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-			require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
-			require(this_litigation.litigation_start_time == 0 || this_litigation.litigation_status == LitigationStatus.completed);
+ 		require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
+ 		require(this_litigation.litigation_start_time == 0 || this_litigation.litigation_status == LitigationStatus.completed);
 
-			this_litigation.requested_data_index = requested_data_index;
-			this_litigation.hash_array = hash_array;
-			this_litigation.litigation_start_time = block.timestamp;
-			this_litigation.litigation_status = LitigationStatus.initiated;
+ 		this_litigation.requested_data_index = requested_data_index;
+ 		this_litigation.hash_array = hash_array;
+ 		this_litigation.litigation_start_time = block.timestamp;
+ 		this_litigation.litigation_status = LitigationStatus.initiated;
 
-			emit LitigationInitiated(import_id, DH_wallet, requested_data_index);
-			return true;
-		}
+ 		emit LitigationInitiated(import_id, DH_wallet, requested_data_index);
+ 		return true;
+ 	}
 
-		function answerLitigation(bytes32 import_id, bytes32 requested_data)
-		public returns (bool answer_accepted){
-			LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
-			EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
+ 	function answerLitigation(bytes32 import_id, bytes32 requested_data)
+ 	public returns (bool answer_accepted){
+ 		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
+ 		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
-			require(this_litigation.litigation_start_time > 0 && this_litigation.litigation_status == LitigationStatus.initiated);
+ 		require(this_litigation.litigation_start_time > 0 && this_litigation.litigation_status == LitigationStatus.initiated);
 
-			if(block.timestamp > this_litigation.litigation_start_time + 30 minutes){
-				this_litigation.litigation_status = LitigationStatus.completed;
-				this_escrow.escrow_status = EscrowStatus.completed;
-				//TODO Transfer remaining escrow tokens
-				reading.removeReadData(import_id, msg.sender);
-				bidding.increaseBalance(this_escrow.DC_wallet, this_escrow.stake_amount);
-				this_escrow.stake_amount = 0;
-				emit LitigationTimedOut(import_id, msg.sender);
-				return false;
-			}
-			else {
-				this_litigation.requested_data = keccak256(requested_data, this_litigation.requested_data_index);
-				// this_litigation.requested_data = keccak256(abi.encodePacked(requested_data, this_litigation.requested_data_index));
-				emit LitigationAnswered(import_id, msg.sender);
-				return true;
-			}
-		}
+ 		if(block.timestamp > this_litigation.litigation_start_time + 30 minutes){
+ 			this_litigation.litigation_status = LitigationStatus.completed;
+ 			this_escrow.escrow_status = EscrowStatus.completed;
+ 			//TODO Transfer remaining escrow tokens
+ 			reading.removeReadData(import_id, msg.sender);
+ 			bidding.increaseBalance(this_escrow.DC_wallet, this_escrow.stake_amount);
+ 			this_escrow.stake_amount = 0;
+ 			emit LitigationTimedOut(import_id, msg.sender);
+ 			return false;
+ 		}
+ 		else {
+ 			this_litigation.requested_data = keccak256(requested_data, this_litigation.requested_data_index);
+ 			// this_litigation.requested_data = keccak256(abi.encodePacked(requested_data, this_litigation.requested_data_index));
+ 			emit LitigationAnswered(import_id, msg.sender);
+ 			return true;
+ 		}
+ 	}
 
-		function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
-		public returns (bool DH_was_penalized){
-			LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
-			EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+ 	function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
+ 	public returns (bool DH_was_penalized){
+ 		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
+ 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-			require(this_escrow.DC_wallet == msg.sender && this_litigation.litigation_start_time > 0 && this_litigation.litigation_status != LitigationStatus.completed);
+ 		require(this_escrow.DC_wallet == msg.sender && this_litigation.litigation_start_time > 0 && this_litigation.litigation_status != LitigationStatus.completed);
 
-			if (block.timestamp > this_litigation.litigation_start_time + 30 minutes && this_litigation.litigation_status == LitigationStatus.initiated){
-				this_litigation.litigation_status = LitigationStatus.completed;
-				this_escrow.escrow_status = EscrowStatus.completed;
+ 		if (block.timestamp > this_litigation.litigation_start_time + 30 minutes && this_litigation.litigation_status == LitigationStatus.initiated){
+ 			this_litigation.litigation_status = LitigationStatus.completed;
+ 			this_escrow.escrow_status = EscrowStatus.completed;
 
-				reading.removeReadData(import_id, DH_wallet);
+ 			reading.removeReadData(import_id, DH_wallet);
 
-				bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-				this_escrow.stake_amount = 0;
-				// send tokens to DC
-			}
+ 			bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
+ 			this_escrow.stake_amount = 0;
+ 			// send tokens to DC
+ 		}
 
-			uint256 i = 0;
-			uint256 one = 1;
-			bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);	
-			// bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));	
-			bytes32 answer_hash = this_litigation.requested_data;
+ 		uint256 i = 0;
+ 		uint256 one = 1;
+ 		bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);	
+ 		// bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));	
+ 		bytes32 answer_hash = this_litigation.requested_data;
 
-			// ako je bit 1 on je levo
-			while (i < this_litigation.hash_array.length){
+ 		// ako je bit 1 on je levo
+ 		while (i < this_litigation.hash_array.length){
 
-				if( ((one << i) & this_litigation.requested_data_index) != 0 ){
-					proof_hash = keccak256(this_litigation.hash_array[i], proof_hash);
-					answer_hash = keccak256(this_litigation.hash_array[i], answer_hash);
-					// proof_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], proof_hash));
-					// answer_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], answer_hash));
-				}
-				else {
-					proof_hash = keccak256(proof_hash, this_litigation.hash_array[i]);
-					answer_hash = keccak256(answer_hash, this_litigation.hash_array[i]);
-					// proof_hash = keccak256(abi.encodePacked(proof_hash, this_litigation.hash_array[i]));
-					// answer_hash = keccak256(abi.encodePacked(answer_hash, this_litigation.hash_array[i]));
-				}
-				i++;
-			}
+ 			if( ((one << i) & this_litigation.requested_data_index) != 0 ){
+ 				proof_hash = keccak256(this_litigation.hash_array[i], proof_hash);
+ 				answer_hash = keccak256(this_litigation.hash_array[i], answer_hash);
+ 				// proof_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], proof_hash));
+ 				// answer_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], answer_hash));
+ 			}
+ 			else {
+ 				proof_hash = keccak256(proof_hash, this_litigation.hash_array[i]);
+ 				answer_hash = keccak256(answer_hash, this_litigation.hash_array[i]);
+ 				// proof_hash = keccak256(abi.encodePacked(proof_hash, this_litigation.hash_array[i]));
+ 				// answer_hash = keccak256(abi.encodePacked(answer_hash, this_litigation.hash_array[i]));
+ 			}
+ 			i++;
+ 		}
 
-			if(answer_hash == this_escrow.data_root_hash){
-				this_litigation.litigation_status = LitigationStatus.completed;
-				emit LitigationCompleted(import_id, DH_wallet, false);
-				return false;
-			}
-			else {
-				if(proof_hash == this_escrow.data_root_hash){
-					bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-					this_escrow.stake_amount = 0;
- 					reading.removeReadData(import_id, DH_wallet);
+ 		if(answer_hash == this_escrow.data_root_hash){
+ 			this_litigation.litigation_status = LitigationStatus.completed;
+ 			emit LitigationCompleted(import_id, DH_wallet, false);
+ 			return false;
+ 		}
+ 		else {
+ 			if(proof_hash == this_escrow.data_root_hash){
+ 				bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
+ 				this_escrow.stake_amount = 0;
+ 				reading.removeReadData(import_id, DH_wallet);
 
-					this_litigation.litigation_status = LitigationStatus.completed;
-					emit LitigationCompleted(import_id, DH_wallet, false);
-				}
-				this_litigation.litigation_status = LitigationStatus.completed;
-				emit LitigationCompleted(import_id, DH_wallet, false);
-				return false;
-			}
-		}
+ 				this_litigation.litigation_status = LitigationStatus.completed;
+ 				emit LitigationCompleted(import_id, DH_wallet, false);
+ 			}
+ 			this_litigation.litigation_status = LitigationStatus.completed;
+ 			emit LitigationCompleted(import_id, DH_wallet, false);
+ 			return false;
+ 		}
+ 	}
 
 
  }
