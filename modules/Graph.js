@@ -130,7 +130,9 @@ class Graph {
     static encryptVerticesWithKeys(vertices, privateKey, publicKey) {
         for (const id in vertices) {
             const vertex = vertices[id];
-            vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            if (vertex.data) {
+                vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            }
             vertex.decryption_key = publicKey;
         }
     }
@@ -143,7 +145,9 @@ class Graph {
      */
     static decryptVertices(vertices, public_key) {
         for (const id in vertices) {
-            vertices[id].data = Encryption.decryptObject(vertices[id].data, public_key);
+            if (vertices[id].data) {
+                vertices[id].data = Encryption.decryptObject(vertices[id].data, public_key);
+            }
         }
         return vertices;
     }

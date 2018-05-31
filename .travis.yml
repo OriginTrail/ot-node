@@ -8,13 +8,11 @@ env:
 sudo: enabled
 before_script:
   - cp .env.example .env
-  - touch modules/Database/system.db
-  - ./node_modules/.bin/sequelize db:migrate
-  - ./node_modules/.bin/sequelize db:seed:all
+  - npm run config
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
-  - ./setup_arangodb.sh
+  - ./setup_arangodb.sh &> /dev/null
   - rm -rf ArangoDB-3.2.2.tar.gz
   - npm install -g ganache-cli
   - npm install -g truffle
@@ -22,12 +20,28 @@ script:
   - which java && java -version
   - which neo4j && neo4j version
   - npm run lint
+  # checks for angangodb based solution
   - npm test
-  - npm start &>start.log &
-  - sleep 12
+  - npm start &>arangodb.log &
+  - sleep 10
   - jobs
   - kill %1
-  - node isStartHealthy.js
+  # make sure previous deamon is really terminated
+  - jobs
+  - kill $(lsof -t -i:8900)
+  - node isStartHealthy.js arangodb
+  # switches graph database in .env
+  - node switchDatabase.js
+  # checks for neo4j based solution
+  - npm run config
+  # TODO investigate why running npm test second time results in stuck on travis
+  # - npm test
+  - npm start &>neo4jdb.log &
+  - sleep 10
+  - jobs
+  - kill %1
+  - node isStartHealthy.js neo4jdb
+  # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 &>ganache.log &
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
   # - truffle test --network ganache
@@ -35,8 +49,10 @@ script:
   - jobs
   - kill %1
 after_script:
-  - cat start.log
-  - rm -f start.log
+  - cat arangodb.log
+  - rm -f arangodb.log
+  - cat neo4jdb.log
+  - rm -f neo4jdb.log
   - cat ganache.log
   - rm -f ganache.log
   - kill -9 $(pgrep arangod)
