@@ -422,7 +422,7 @@ contract('Bidding testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    /*it('Should wait a 30 seconds, then pay all DHs', async () => {
+    /* it('Should wait a 30 seconds, then pay all DHs', async () => {
         // Get instances of contracts used in the test
         const escrow = await EscrowHolder.deployed();
         const bidding = await Bidding.deployed();
