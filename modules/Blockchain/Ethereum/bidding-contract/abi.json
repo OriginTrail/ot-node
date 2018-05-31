@@ -3,7 +3,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_space",
+        "name": "new_space_in_bytes",
         "type": "uint256"
       }
     ],
@@ -17,23 +17,74 @@
     "constant": false,
     "inputs": [
       {
-        "name": "data_id",
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "addBid",
+    "outputs": [
+      {
+        "name": "this_bid_index",
         "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_stake_per_byte_minute",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStake",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawToken",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "name": "DC_node_id",
         "type": "bytes32"
       },
       {
-        "name": "total_escrow_time",
+        "name": "total_escrow_time_in_minutes",
         "type": "uint256"
       },
       {
-        "name": "max_token_amount",
+        "name": "max_token_amount_per_DH",
         "type": "uint256"
       },
       {
-        "name": "min_stake_amount",
+        "name": "min_stake_amount_per_DH",
         "type": "uint256"
       },
       {
@@ -45,7 +96,7 @@
         "type": "bytes32"
       },
       {
-        "name": "data_size",
+        "name": "data_size_in_bytes",
         "type": "uint256"
       },
       {
@@ -67,34 +118,15 @@
     "constant": false,
     "inputs": [
       {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "addBid",
-    "outputs": [
-      {
-        "name": "",
+        "name": "bid_index",
         "type": "uint256"
       }
     ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "new_stake",
-        "type": "uint256"
-      }
-    ],
-    "name": "setStake",
+    "name": "cancelBid",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -104,19 +136,9 @@
     "constant": false,
     "inputs": [
       {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "decreaseBalance",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
+        "name": "wallet",
+        "type": "address"
+      },
       {
         "name": "amount",
         "type": "uint256"
@@ -132,51 +154,19 @@
     "constant": true,
     "inputs": [
       {
-        "name": "wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       }
     ],
-    "name": "getPrice",
+    "name": "getOfferStatus",
     "outputs": [
       {
-        "name": "",
-        "type": "uint256"
+        "name": "isOfferFinal",
+        "type": "bool"
       }
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "withdrawToken",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offer_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "bid_index",
-        "type": "uint256"
-      }
-    ],
-    "name": "cancelBid",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -197,11 +187,15 @@
     "constant": true,
     "inputs": [
       {
-        "name": "wallet",
-        "type": "address"
+        "name": "a",
+        "type": "uint256"
+      },
+      {
+        "name": "b",
+        "type": "uint256"
       }
     ],
-    "name": "getStake",
+    "name": "absoluteDifference",
     "outputs": [
       {
         "name": "",
@@ -209,14 +203,14 @@
       }
     ],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "pure",
     "type": "function"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -238,7 +232,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_price",
+        "name": "new_price_per_byte_minute",
         "type": "uint256"
       }
     ],
@@ -252,7 +246,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_max_time",
+        "name": "new_max_time_in_minutes",
         "type": "uint256"
       }
     ],
@@ -273,11 +267,15 @@
     "name": "profile",
     "outputs": [
       {
-        "name": "token_amount",
+        "name": "token_amount_per_byte_minute",
         "type": "uint256"
       },
       {
-        "name": "stake_amount",
+        "name": "stake_amount_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "read_stake_factor",
         "type": "uint256"
       },
       {
@@ -289,11 +287,11 @@
         "type": "uint256"
       },
       {
-        "name": "max_escrow_time",
+        "name": "max_escrow_time_in_minutes",
         "type": "uint256"
       },
       {
-        "name": "size_available",
+        "name": "size_available_in_bytes",
         "type": "uint256"
       },
       {
@@ -306,10 +304,44 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "node_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "price_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "stake_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "read_stake_factor",
+        "type": "uint256"
+      },
+      {
+        "name": "max_time_in_minutes",
+        "type": "uint256"
+      },
+      {
+        "name": "max_size_in_bytes",
+        "type": "uint256"
+      }
+    ],
+    "name": "createProfile",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [
       {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -320,7 +352,7 @@
     "name": "isBidChosen",
     "outputs": [
       {
-        "name": "",
+        "name": "_isBidChosen",
         "type": "bool"
       }
     ],
@@ -332,7 +364,7 @@
     "constant": true,
     "inputs": [
       {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -355,37 +387,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "node_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "name": "stake",
-        "type": "uint256"
-      },
-      {
-        "name": "max_time",
-        "type": "uint256"
-      },
-      {
-        "name": "max_size",
-        "type": "uint256"
-      }
-    ],
-    "name": "createProfile",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       }
     ],
@@ -415,11 +417,11 @@
         "type": "address"
       },
       {
-        "name": "max_token_amount",
+        "name": "max_token_amount_per_DH",
         "type": "uint256"
       },
       {
-        "name": "min_stake_amount",
+        "name": "min_stake_amount_per_DH",
         "type": "uint256"
       },
       {
@@ -427,11 +429,11 @@
         "type": "uint256"
       },
       {
-        "name": "total_escrow_time",
+        "name": "total_escrow_time_in_minutes",
         "type": "uint256"
       },
       {
-        "name": "data_size",
+        "name": "data_size_in_bytes",
         "type": "uint256"
       },
       {
@@ -492,29 +494,10 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "wallet",
-        "type": "address"
-      }
-    ],
-    "name": "getBalance",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       }
     ],
@@ -539,13 +522,49 @@
     "type": "function"
   },
   {
+    "constant": false,
     "inputs": [
       {
-        "name": "tokenAddress",
+        "name": "wallet",
         "type": "address"
       },
       {
-        "name": "escrowAddress",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "decreaseBalance",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "reading",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "token_address",
+        "type": "address"
+      },
+      {
+        "name": "escrow_address",
+        "type": "address"
+      },
+      {
+        "name": "reading_address",
         "type": "address"
       }
     ],
@@ -558,7 +577,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -568,17 +587,17 @@
       },
       {
         "indexed": false,
-        "name": "total_escrow_time",
+        "name": "total_escrow_time_in_minutes",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "max_token_amount",
+        "name": "max_token_amount_per_DH",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "min_stake_amount",
+        "name": "min_stake_amount_per_DH",
         "type": "uint256"
       },
       {
@@ -588,7 +607,7 @@
       },
       {
         "indexed": false,
-        "name": "data_size",
+        "name": "data_size_in_bytes",
         "type": "uint256"
       },
       {
@@ -605,7 +624,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       }
     ],
@@ -617,7 +636,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -644,7 +663,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -664,22 +683,22 @@
       },
       {
         "indexed": false,
-        "name": "total_escrow_time",
+        "name": "total_escrow_time_in_minutes",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "max_token_amount",
+        "name": "max_token_amount_per_DH",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "min_stake_amount",
+        "name": "min_stake_amount_per_DH",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "data_size",
+        "name": "data_size_in_bytes",
         "type": "uint256"
       }
     ],
@@ -691,7 +710,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       }
     ],
@@ -703,7 +722,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       },
       {
@@ -720,7 +739,7 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "offer_hash",
+        "name": "import_id",
         "type": "bytes32"
       }
     ],

@@ -185,8 +185,8 @@ library SafeMath {
  	public {
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
- 		require(this_escrow.DC_wallet == msg.sender
- 			&& this_escrow.escrow_status == EscrowStatus.confirmed);
+ 		// require(this_escrow.DC_wallet == msg.sender
+ 		// 	&& this_escrow.escrow_status == EscrowStatus.confirmed);
 
  		this_escrow.last_confirmation_time = block.timestamp;
  		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time_in_seconds);

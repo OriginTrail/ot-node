@@ -154,7 +154,7 @@ contract('Bidding testing', async (accounts) => {
         for (i = 0; i < DH_balance.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.profile.call(accounts[i]);
-            var actual_balance = response[2].toNumber();
+            var actual_balance = response[3].toNumber();
             assert.equal(actual_balance, DH_balance[i], 'The proper amount was not deposited');
             DH_balance[i] = 0;
             DH_credit[i] = actual_balance;
@@ -298,7 +298,7 @@ contract('Bidding testing', async (accounts) => {
         });
         for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line
-            var response = await escrow.escrow.call(DC_wallet, accounts[chosen_bids[i]], import_id);
+            var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
@@ -357,6 +357,12 @@ contract('Bidding testing', async (accounts) => {
             );
         }
         await Promise.all(promises);
+
+        for (i = 0; i < chosen_bids.length; i += 1) {
+            // eslint-disable-next-line
+            var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
+            console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
+        }
     });
 
     // eslint-disable-next-line no-undef
@@ -367,6 +373,7 @@ contract('Bidding testing', async (accounts) => {
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
+            console.log('2');
             promises[i] = escrow.verifyEscrow(
                 import_id,
                 accounts[chosen_bids[i]],
@@ -376,14 +383,16 @@ contract('Bidding testing', async (accounts) => {
         await Promise.all(promises);
 
         // Get block timestamp
+        console.log('3');
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
         console.log(`\t Escrow start time: ${response}, Escrow end time: ${response + (60 * total_escrow_time)}`);
 
         for (i = 1; i < 10; i += 1) {
+            console.log('4');
             // eslint-disable-next-line no-await-in-loop
-            response = await escrow.escrow.call(DC_wallet, accounts[i], import_id);
-            let status = response[6];
+            response = await escrow.escrow.call(import_id, accounts[i]);
+            let status = response[9];
             status = status.toNumber();
             switch (status) {
             case 0:
@@ -393,10 +402,10 @@ contract('Bidding testing', async (accounts) => {
                 status = 'initiated';
                 break;
             case 2:
-                status = 'active';
+                status = 'confirmed';
                 break;
             case 3:
-                status = 'canceled';
+                status = 'active';
                 break;
             case 4:
                 status = 'completed';

@@ -1,0 +1,351 @@
+[
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes32"
+			},
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "purchased_data",
+		"outputs": [
+			{
+				"name": "DC_wallet",
+				"type": "address"
+			},
+			{
+				"name": "data_root_hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "checksum",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "verifyPurchase",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			}
+		],
+		"name": "confirmPurchase",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"name": "token_amount",
+				"type": "uint256"
+			},
+			{
+				"name": "stake_factor",
+				"type": "uint256"
+			}
+		],
+		"name": "initiatePurchase",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			}
+		],
+		"name": "removeReadData",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"name": "commitment",
+				"type": "bytes32"
+			}
+		],
+		"name": "sendCommitment",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "address"
+			},
+			{
+				"name": "",
+				"type": "address"
+			},
+			{
+				"name": "",
+				"type": "bytes32"
+			}
+		],
+		"name": "reading",
+		"outputs": [
+			{
+				"name": "token_amount",
+				"type": "uint256"
+			},
+			{
+				"name": "stake_factor",
+				"type": "uint256"
+			},
+			{
+				"name": "commitment",
+				"type": "bytes32"
+			},
+			{
+				"name": "encrypted_block",
+				"type": "bytes32"
+			},
+			{
+				"name": "reading_status",
+				"type": "uint8"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"name": "DC_wallet",
+				"type": "address"
+			},
+			{
+				"name": "data_root_hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "checksum",
+				"type": "uint256"
+			}
+		],
+		"name": "addReadData",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"name": "encrypted_block",
+				"type": "bytes32"
+			}
+		],
+		"name": "sendEncryptedBlock",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"name": "escrow_address",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "PurchaseInitiated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "PurchaseVerified",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "CommitmentSent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "PurchaseConfirmed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "EncryptedBlockSent",
+		"type": "event"
+	}
+]

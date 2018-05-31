@@ -97,24 +97,28 @@ module.exports = (deployer, network, accounts) => {
                                                 await escrow.setBidding(bidding.address, { from: accounts[0] })
                                                     .then(async () => {
                                                         // eslint-disable-next-line max-len
-                                                        await escrow.transferOwnership(bidding.address, { from: accounts[0] })
+                                                        await escrow.setReading(reading.address, { from: accounts[0] })
                                                             .then(async () => {
-                                                                var amounts = [];
-                                                                var recepients = [];
-                                                                for (let i = 0; i < 10; i += 1) {
-                                                                    amounts.push(amountToMint); // eslint-disable-line max-len
-                                                                    recepients.push(accounts[i]);
-                                                                }
-                                                                await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                                // eslint-disable-next-line max-len
+                                                                await escrow.transferOwnership(bidding.address, { from: accounts[0] })
                                                                     .then(async () => {
-                                                                        await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
-                                                                            .then(() => {
-                                                                                console.log('\n\n \t Contract adressess on ganache:');
-                                                                                console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-                                                                                console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-                                                                                console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-                                                                                console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-                                                                                console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
+                                                                        var amounts = [];
+                                                                        var recepients = [];
+                                                                        for (let i = 0; i < 10; i += 1) { // eslint-disable-line max-len
+                                                                            amounts.push(amountToMint); // eslint-disable-line max-len
+                                                                            recepients.push(accounts[i]); // eslint-disable-line max-len
+                                                                        }
+                                                                        await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                                            .then(async () => {
+                                                                                await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                                                    .then(() => {
+                                                                                        console.log('\n\n \t Contract adressess on ganache:');
+                                                                                        console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+                                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+                                                                                        console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
+                                                                                    });
                                                                             });
                                                                     });
                                                             });
@@ -151,23 +155,27 @@ module.exports = (deployer, network, accounts) => {
                                                 await escrow.setBidding(bidding.address, { from: accounts[0] })
                                                     .then(async () => {
                                                         // eslint-disable-next-line max-len
-                                                        await escrow.transferOwnership(bidding.address, { from: accounts[0] })
+                                                        await escrow.setReading(reading.address, { from: accounts[0] })
                                                             .then(async () => {
-                                                                var amounts = [];
-                                                                var recepients = [];
-                                                                for (let i = 0; i < 10; i += 1) {
-                                                                    amounts.push(amountToMint); // eslint-disable-line max-len
-                                                                    recepients.push(accounts[i]);
-                                                                }
-                                                                await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                                // eslint-disable-next-line max-len
+                                                                await escrow.transferOwnership(bidding.address, { from: accounts[0] })
                                                                     .then(async () => {
-                                                                        await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
-                                                                            .then(() => {
-                                                                                console.log('\n\n \t Contract adressess on ganache (for testing):');
-                                                                                console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-                                                                                console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-                                                                                console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-                                                                                console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
+                                                                        var amounts = [];
+                                                                        var recepients = [];
+                                                                        for (let i = 0; i < 10; i += 1) { // eslint-disable-line max-len
+                                                                            amounts.push(amountToMint); // eslint-disable-line max-len
+                                                                            recepients.push(accounts[i]); // eslint-disable-line max-len
+                                                                        }
+                                                                        await token.mintMany(recepients, amounts, { from: accounts[0] }) // eslint-disable-line max-len
+                                                                            .then(async () => {
+                                                                                await token.finishMinting({ from: accounts[0] }) // eslint-disable-line max-len
+                                                                                    .then(() => {
+                                                                                        console.log('\n\n \t Contract adressess on ganache (for testing):');
+                                                                                        console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
+                                                                                        console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+                                                                                        console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+                                                                                        console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
+                                                                                    });
                                                                             });
                                                                     });
                                                             });
