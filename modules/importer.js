@@ -1,7 +1,7 @@
 // External modules
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
-const Mtree = require('./mtree')();
+const MerkleTree = require('./Merkle');
 
 const log = utilities.getLogger();
 
@@ -68,7 +68,7 @@ class Importer {
                 hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
             }
 
-            const tree = new Mtree(hash_pairs);
+            const tree = new MerkleTree(hash_pairs);
             const root_hash = tree.root();
 
             log.info(`Import id: ${data_id}`);
@@ -81,6 +81,11 @@ class Importer {
         });
     }
 
+    /**
+     * Process successfull import
+     * @param result  Import result
+     * @return {Promise<>}
+     */
     async afterImport(result) {
         log.info('[DC] Import complete');
 
@@ -91,22 +96,36 @@ class Importer {
         const leaves = [];
         const hash_pairs = [];
 
+        // process vertices
         for (const i in vertices) {
-            leaves.push(utilities.sha3(utilities.sortObject({
+            const hash = utilities.sha3(utilities.sortObject({
                 identifiers: vertices[i].identifiers,
                 data: vertices[i].data,
-            })));
+            }));
+            leaves.push(hash);
             hash_pairs.push({
                 key: vertices[i]._key,
-                hash: utilities.sha3({
-                    identifiers: vertices[i].identifiers,
-                    data: vertices[i].data,
-                }),
+                hash,
             });
         }
 
-        const tree = new Mtree(hash_pairs);
-        const root_hash = utilities.sha3(tree.root());
+        for (const edge of edges) {
+            const hash = utilities.sha3(utilities.sortObject({
+                identifiers: edge.identifiers,
+                _from: edge._from,
+                _to: edge._to,
+                edge_type: edge.edge_type,
+            }));
+            leaves.push(hash);
+            hash_pairs.push({
+                key: edge._key,
+                hash,
+            });
+        }
+
+        leaves.sort();
+        const tree = new MerkleTree(leaves);
+        const root_hash = utilities.sha3(tree.getRoot());
 
         log.info(`Import id: ${import_id}`);
         log.info(`Import hash: ${root_hash}`);
