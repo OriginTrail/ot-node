@@ -239,6 +239,10 @@ class Blockchain {
     async depositToken(amount) {
         return this.blockchain.depositToken(amount);
     }
+
+    async getRootHash(dcWallet, dataId) {
+        return this.blockchain.getRootHash(dcWallet, dataId);
+    }
 }
 
 module.exports = Blockchain;

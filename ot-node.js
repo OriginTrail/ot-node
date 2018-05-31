@@ -10,6 +10,7 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
+const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 
@@ -154,9 +155,12 @@ class OTNode {
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
+            remoteControl: awilix.asClass(RemoteControl).singleton(),
+            challenger: awilix.asClass(Challenger).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
+        const remoteControl = container.resolve('remoteControl');
         emitter.initialize();
 
         // Connecting to graph database
@@ -187,7 +191,7 @@ class OTNode {
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
-            await RemoteControl.connect();
+            await remoteControl.connect();
         }
 
         // Starting event listener on Blockchain
@@ -407,6 +411,14 @@ class OTNode {
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get('/api/get_root_hash', (req, res) => {
+            const queryObject = req.query;
+            emitter.emit('get_root_hash', {
                 query: queryObject,
                 response: res,
             });

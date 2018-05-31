@@ -1,11 +1,18 @@
 const Challenge = require('./Challenge');
 const config = require('./Config');
-const challenger = require('./Challenger');
-const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
 class DataReplication {
+    /**
+     * Default constructor
+     * @param ctx  IoC container context
+     */
+    constructor(ctx) {
+        this.network = ctx.network;
+        this.challenger = ctx.challenger;
+    }
+
     /**
      * Sends data to DH for replication
      *
@@ -34,7 +41,7 @@ class DataReplication {
         );
 
         Challenge.addTests(tests).then(() => {
-            challenger.startChallenging();
+            this.challenger.startChallenging();
         }, () => {
             log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
@@ -51,7 +58,7 @@ class DataReplication {
         };
 
         // send payload to DH
-        node.ot.payloadRequest(payload, data.contact, () => {
+        this.network.kademlia().payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
     }

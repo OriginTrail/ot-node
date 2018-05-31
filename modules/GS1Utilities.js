@@ -1,5 +1,7 @@
 const md5 = require('md5');
+const crypto = require('crypto');
 const validator = require('validator');
+const Utilities = require('./Utilities');
 
 const ZK = require('./ZK');
 
@@ -96,6 +98,40 @@ class GS1Utilities {
     }
 
     /**
+     * Handle private data
+     * @private
+     */
+    static handlePrivate(_private, data, privateData) {
+        data.private = {};
+        const salt = crypto.randomBytes(16).toString('base64');
+        for (const key in _private) {
+            const value = _private[key];
+            privateData[key] = value;
+
+            const sorted = Utilities.sortObject(value);
+            data.private[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+        }
+        privateData._salt = salt;
+    }
+
+    /**
+     * Check hidden data
+     * @param hashed
+     * @param original
+     * @param salt
+     * @return {*}
+     */
+    static checkPrivate(hashed, original, salt) {
+        const result = {};
+        for (const key in original) {
+            const value = original[key];
+            const sorted = Utilities.sortObject(value);
+            result[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+        }
+        return Utilities.objectDistance(hashed, result);
+    }
+
+    /**
      * Zero knowledge processing
      * @param senderId
      * @param event
@@ -104,6 +140,7 @@ class GS1Utilities {
      * @param importId
      * @param globalR
      * @param batchVertices
+     * @param db
      * @return {Promise<void>}
      */
     static async zeroKnowledge(

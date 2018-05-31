@@ -1,7 +1,6 @@
 const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
-const challenger = require('./Challenger');
 const Utilities = require('./Utilities');
 const BN = require('bn.js');
 const config = require('./Config');
@@ -28,7 +27,13 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dataReplication, importer,
+            dcService,
+            dhService,
+            dataReplication,
+            importer,
+            challenger,
+            blockchain,
+            product,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -38,10 +43,21 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('trail', (data) => {
-            this.product.p.getTrailByQuery(data.query).then((res) => {
+            product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);
             }).catch(() => {
                 log.error(`Failed to get trail for query ${data.query}`);
+                data.response.send(500); // TODO rethink about status codes
+            });
+        });
+
+        this.globalEmitter.on('get_root_hash', (data) => {
+            const dcWallet = data.query.dc_wallet;
+            const importId = data.query.import_id;
+            blockchain.getRootHash(dcWallet, importId).then((res) => {
+                data.response.send(res);
+            }).catch((err) => {
+                log.error(`Failed to get root hash for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -63,8 +79,10 @@ class EventEmitter {
             } = response;
 
             try {
-                await Storage.connect();
-                await Storage.runSystemQuery('INSERT INTO data_info (data_id, root_hash, import_timestamp, total_documents) values(?, ? , ? , ?)', [data_id, root_hash, total_documents]);
+                await Models.data_info
+                    .create({
+                        data_id, root_hash, import_timestamp: new Date(), total_documents,
+                    }).catch(e => console.log(e));
                 await dcService.createOffer(data_id, root_hash, total_documents, vertices);
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);

@@ -106,21 +106,21 @@ class WOTImporter {
             const ooVertex = await this.db.findVertexWithMaxVersion(sender, ooId);
             if (ooVertex) {
                 thingEdges.push({
-                    _key: md5(`event_batch_${sender}_${event._key}_${ooVertex._key}`),
+                    _key: md5(`event_object_${sender}_${event._key}_${ooVertex._key}`),
                     _from: `ot_vertices/${event._key}`,
                     _to: `ot_vertices/${ooVertex._key}`,
-                    edge_type: 'EVENT_BATCH',
+                    edge_type: 'EVENT_OBJECT',
                     identifiers: {
-                        uid: `event_batch_${event.identifiers.id}_${ooVertex.identifiers.id}`,
+                        uid: `event_object_${event.identifiers.id}_${ooVertex.identifiers.id}`,
                     },
                 });
                 thingEdges.push({
-                    _key: md5(`event_batch_${sender}_${ooVertex._key}_${event._key}`),
+                    _key: md5(`event_object_${sender}_${ooVertex._key}_${event._key}`),
                     _from: `ot_vertices/${ooVertex._key}`,
                     _to: `ot_vertices/${event._key}`,
-                    edge_type: 'EVENT_BATCH',
+                    edge_type: 'EVENT_OBJECT',
                     identifiers: {
-                        uid: `event_batch_${ooVertex.identifiers.id}_${event.identifiers.id}`,
+                        uid: `event_object_${ooVertex.identifiers.id}_${event.identifiers.id}`,
                     },
                 });
             }

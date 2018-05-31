@@ -440,6 +440,9 @@ class Utilities {
      * @return object
      */
     static sortObject(object) {
+        if (typeof object !== 'object') {
+            return object;
+        }
         const sortedObj = {};
         const keys = Object.keys(object);
 
