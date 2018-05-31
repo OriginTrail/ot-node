@@ -382,7 +382,7 @@ class DHService {
         const { nodeId, wallet, imports } = message;
 
         // TODO: Only one import ID used. Later we'll support replication from multiple imports.
-        const import_id = imports[0];
+        const import_id = JSON.parse(imports)[0];
 
         const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
         const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);

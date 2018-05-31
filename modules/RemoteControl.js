@@ -6,9 +6,11 @@ const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
 
+
 class RemoteControl {
     constructor(ctx) {
         this.network = ctx.network;
+        this.graphStorage = ctx.graphStorage;
     }
 
     async connect() {
@@ -16,7 +18,7 @@ class RemoteControl {
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
             this.socket = socket;
-            RemoteControl.getProtocolInfo().then((res) => {
+            this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
                 Models.node_config.findAll()
@@ -26,6 +28,8 @@ class RemoteControl {
                         });
                         socket.emit('config', config);
                     });
+            }).then((res) => {
+                this.updateImports();
             });
 
             this.socket.on('config-update', (data) => {
@@ -49,14 +53,22 @@ class RemoteControl {
                     });
                 }
             });
+
+            this.socket.on('get-imports', () => {
+                this.updateImports();
+            });
+
+            this.socket.on('get-visual-graph', (import_id) => {
+                this.getImport(import_id);
+            });
         });
     }
 
     /**
-     * Returns basic informations about the running node
+     * Returns basic information about the running node
      * @param {Control~getProtocolInfoCallback} callback
      */
-    static getProtocolInfo() {
+    getProtocolInfo() {
         return new Promise((resolve, reject) => {
             const peers = [];
             const dump = this.node.router.getClosestContactsToKey(
@@ -73,6 +85,66 @@ class RemoteControl {
                 identity: this.node.identity.toString('hex'),
                 contact: this.node.contact,
                 peers,
+            });
+        });
+    }
+
+    /**
+     * Update imports table from data_info
+     */
+    updateImports() {
+        return new Promise((resolve, reject) => {
+            Models.data_info.findAll()
+                .then((rows) => {
+                    this.socket.emit('imports', rows);
+                    resolve();
+                });
+        });
+    }
+
+    /**
+     * Get graph by import_id
+     * @import_id int
+     */
+    getImport(import_id) {
+        return new Promise((resolve, reject) => {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);
+
+            Promise.all([verticesPromise, edgesPromise]).then((values) => {
+                var nodes = [];
+                var edges = [];
+                values[0].forEach((vertex) => {
+                    const isRoot = !!((vertex._id === 'ot_vertices/Transport'
+                        || vertex._id === 'ot_vertices/Transformation'
+                        || vertex._id === 'ot_vertices/Product'
+                        || vertex._id === 'ot_vertices/Ownership'
+                        || vertex._id === 'ot_vertices/Observation'
+                        || vertex._id === 'ot_vertices/Location'
+                        || vertex._id === 'ot_vertices/Actor'
+                    ));
+                    const caption = (vertex.vertex_type === 'CLASS') ?
+                        vertex._key : vertex.identifiers.uid;
+                    nodes.push({
+                        id: vertex._id,
+                        type: caption,
+                        caption,
+                        root: isRoot,
+                        data: vertex,
+                    });
+                });
+                values[1].forEach((edge) => {
+                    edges.push({
+                        source: edge._from,
+                        target: edge._to,
+                        type: edge.edge_type,
+                        caption: edge.edge_type,
+                        github: edge,
+                    });
+                });
+
+                this.socket.emit('visualise', { nodes, edges });
+                resolve();
             });
         });
     }
