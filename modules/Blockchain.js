@@ -247,6 +247,15 @@ class Blockchain {
     async depositToken(amount) {
         return this.blockchain.depositToken(amount);
     }
+
+    async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
+        return this.blockchain.addRootHashAndChecksum(
+            importId,
+            litigationHash,
+            distributionHash,
+            checksum,
+        );
+    }
 }
 
 module.exports = Blockchain;

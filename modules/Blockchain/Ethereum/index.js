@@ -149,7 +149,7 @@ class Ethereum {
         log.trace(`Create profile for node ${nodeId}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
-            [this._normalizeNodeId(nodeId), pricePerByteMinute, stakePerByteMinute,
+            [this._normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
                 readStakeFactor, maxTimeMins, maxSizeBytes], options,
         );
     }
@@ -293,7 +293,7 @@ class Ethereum {
             this.biddingContractAbi, 'createOffer',
             [
                 dataId,
-                this._normalizeNodeId(nodeId),
+                this._normalizeHex(nodeId),
                 Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
                 MinStakeAmount,
@@ -301,7 +301,7 @@ class Ethereum {
                 dataHash,
                 dataSize,
                 predeterminedDhWallets,
-                predeterminedDhNodeIds.map(id => this._normalizeNodeId(id)),
+                predeterminedDhNodeIds.map(id => this._normalizeHex(id)),
             ],
             options,
         );
@@ -471,7 +471,7 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [offerHash, this._normalizeNodeId(dhNodeId)], options,
+            [offerHash, this._normalizeHex(dhNodeId)], options,
         );
     }
 
@@ -567,16 +567,6 @@ class Ethereum {
         });
     }
 
-    /**
-     * Normalizes Kademlia node ID
-     * @param nodeId     Kademlia node ID
-     * @returns {string} Normalized node ID
-     * @private
-     */
-    _normalizeNodeId(nodeId) {
-        return `0x${nodeId}`;
-    }
-
     async depositToken(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -589,6 +579,33 @@ class Ethereum {
             this.biddingContractAbi, 'depositToken',
             [amount], options,
         );
+    }
+
+    async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContract,
+        };
+
+        log.trace(`addRootHashAndChecksum (${importId}, ${litigationHash}, ${distributionHash}, ${checksum})`);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi, 'addRootHashAndChecksum',
+            [importId, litigationHash, distributionHash, this._normalizeHex(checksum)], options,
+        );
+    }
+
+    /**
+     * Normalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     * @private
+     */
+    _normalizeHex(number) {
+        if (!number.lowerCase().startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
     }
 }
 
