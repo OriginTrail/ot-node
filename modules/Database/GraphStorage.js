@@ -275,9 +275,9 @@ class GraphStorage {
     static getVerticesFromVirtualGraph(graph) {
         const virtualGraph = Utilities.copyObject(graph);
         const vertices = [];
-        for (const key in virtualGraph['data']) {
-            delete virtualGraph['data'][key].outbound;
-            vertices.push(virtualGraph['data'][key]);
+        for (const key in virtualGraph.data) {
+            delete virtualGraph.data[key].outbound;
+            vertices.push(virtualGraph.data[key]);
         }
         return vertices;
     }
@@ -290,11 +290,11 @@ class GraphStorage {
     static getEdgesFromVirtualGraph(graph) {
         const virtualGraph = Utilities.copyObject(graph);
         const edges = [];
-        for (const key in virtualGraph['data']) {
-            for (const edge in virtualGraph['data'][key].outbound) {
-                virtualGraph['data'][key].outbound[edge]._from = `ot_vertices/${virtualGraph['data'][key].outbound[edge]._from}`;
-                virtualGraph['data'][key].outbound[edge]._to = `ot_vertices/${virtualGraph['data'][key].outbound[edge]._to}`;
-                edges.push(virtualGraph['data'][key].outbound[edge]);
+        for (const key in virtualGraph.data) {
+            for (const edge in virtualGraph.data[key].outbound) {
+                virtualGraph.data[key].outbound[edge]._from = `ot_vertices/${virtualGraph.data[key].outbound[edge]._from}`;
+                virtualGraph.data[key].outbound[edge]._to = `ot_vertices/${virtualGraph.data[key].outbound[edge]._to}`;
+                edges.push(virtualGraph.data[key].outbound[edge]);
             }
         }
         return edges;
