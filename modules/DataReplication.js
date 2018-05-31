@@ -1,3 +1,4 @@
+const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
 
@@ -32,7 +33,7 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data = this._sortEncryptedVertices(data);
+        data.encryptedVertices.vertices = Graph.sortVertices(data.encryptedVertices.vertices);
 
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
@@ -61,24 +62,6 @@ class DataReplication {
         this.network.kademlia().payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
-    }
-
-    /**
-     * Sort encypted vertices according to their keys
-     * @param data
-     * @return {*}
-     * @private
-     */
-    _sortEncryptedVertices(data) {
-        data.encryptedVertices.vertices.sort((a, b) => {
-            if (a._key < b._key) {
-                return -1;
-            } else if (a._key > b._key) {
-                return 1;
-            }
-            return 0;
-        });
-        return data;
     }
 }
 

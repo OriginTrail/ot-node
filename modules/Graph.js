@@ -151,6 +151,23 @@ class Graph {
         }
         return vertices;
     }
+
+    /**
+     * Sort vertices according to their keys
+     * @param vertices
+     * @return {*}
+     */
+    static sortVertices(vertices) {
+        vertices.sort((a, b) => {
+            if (a._key < b._key) {
+                return -1;
+            } else if (a._key > b._key) {
+                return 1;
+            }
+            return 0;
+        });
+        return vertices;
+    }
 }
 
 module.exports = Graph;

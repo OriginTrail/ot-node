@@ -2,6 +2,7 @@
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
+const Graph = require('./Graph');
 
 const log = utilities.getLogger();
 
@@ -89,12 +90,19 @@ class Importer {
     async afterImport(result) {
         log.info('[DC] Import complete');
 
+        let {
+            vertices, edges,
+        } = result;
+
         const {
-            vertices, edges, import_id, wallet,
+            import_id, wallet,
         } = result;
 
         const leaves = [];
         const hash_pairs = [];
+
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
         await this.merkleStructure(vertices, edges, leaves, hash_pairs);
 
         leaves.sort();

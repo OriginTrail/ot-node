@@ -57,9 +57,6 @@ class DHService {
                 return;
             }
 
-            const minPrice = new BN(config.dh_min_price, 10);
-            const maxPrice = new BN(config.dh_max_price, 10);
-            const maxStakeAmount = new BN(config.dh_max_stake, 10);
             const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
             const profile = await this.blockchain.getProfile(config.node_wallet);
@@ -206,7 +203,6 @@ class DHService {
             },
          */
         const bidModel = await Models.bids.findOne({ where: { offer_hash: data.offer_hash } });
-
         if (!bidModel) {
             log.warn(`Couldn't find bid for offer hash ${data.offer_hash}.`);
             return;
@@ -220,6 +216,9 @@ class DHService {
             log.warn(`Failed to import JSON successfully. ${err}.`);
             return;
         }
+
+        data.edges = Graph.sortVertices(data.edges);
+        data.encryptedVertices.vertices = Graph.sortVertices(data.encryptedVertices.vertices);
 
         const leaves = [];
         const hash_pairs = [];
