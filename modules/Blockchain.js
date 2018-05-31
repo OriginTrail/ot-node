@@ -43,14 +43,21 @@ class Blockchain {
     /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
-     * @param price         Price (byte per min)
-     * @param stakeFactor   Stake factor
+     * @param pricePerByteMinute Price for byte per minute
+     * @param stakePerByteMinute Stake for byte per minute
+     * @param readStakeFactor Read stake factor
      * @param maxTimeMins   Max time in minutes
      * @param maxSizeBytes  Max size in bytes
      * @return {Promise<any>}
      */
-    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
-        return this.blockchain.createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes);
+    createProfile(
+        nodeId, pricePerByteMinute, stakePerByteMinute,
+        readStakeFactor, maxTimeMins, maxSizeBytes,
+    ) {
+        return this.blockchain.createProfile(
+            nodeId, pricePerByteMinute, stakePerByteMinute,
+            readStakeFactor, maxTimeMins, maxSizeBytes,
+        );
     }
 
     /**

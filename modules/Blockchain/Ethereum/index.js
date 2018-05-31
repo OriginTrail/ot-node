@@ -129,13 +129,17 @@ class Ethereum {
     /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
-     * @param price         Price (byte per min)
-     * @param stakeFactor   Stake factor
+     * @param pricePerByteMinute Price for byte per minute
+     * @param stakePerByteMinute Stake for byte per minute
+     * @param readStakeFactor Read stake factor
      * @param maxTimeMins   Max time in minutes
      * @param maxSizeBytes  Max size in bytes
      * @return {Promise<any>}
      */
-    createProfile(nodeId, price, stakeFactor, maxTimeMins, maxSizeBytes) {
+    createProfile(
+        nodeId, pricePerByteMinute, stakePerByteMinute,
+        readStakeFactor, maxTimeMins, maxSizeBytes,
+    ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -145,9 +149,8 @@ class Ethereum {
         log.trace(`Create profile for node ${nodeId}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
-            [this._normalizeNodeId(nodeId), price,
-                stakeFactor, maxTimeMins,
-                maxSizeBytes], options,
+            [this._normalizeNodeId(nodeId), pricePerByteMinute, stakePerByteMinute,
+                readStakeFactor, maxTimeMins, maxSizeBytes], options,
         );
     }
 
