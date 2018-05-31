@@ -28,7 +28,7 @@ const edges = [
     }];
 
 const myUsername = 'neo4j';
-const myPassword = 'pass';
+const myPassword = 'neo4j';
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';
