@@ -55,7 +55,7 @@ contract Bidding {
 		_;
 	}
 	
-	function Bidding(address tokenAddress, address escrowAddress)
+	function constructor(address tokenAddress, address escrowAddress)
 	public{
 		require ( tokenAddress != address(0) && escrowAddress != address(0));
 		token = ERC20(tokenAddress);
