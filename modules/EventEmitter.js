@@ -2,9 +2,9 @@ const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const BN = require('bn.js');
 const config = require('./Config');
 const Models = require('../models');
+const Encryption = require('./Encryption');
 
 const log = Utilities.getLogger();
 
@@ -75,13 +75,23 @@ class EventEmitter {
                 root_hash,
                 total_documents,
                 vertices,
+                wallet,
             } = response;
 
             try {
                 await Models.data_info
                     .create({
                         data_id, root_hash, import_timestamp: new Date(), total_documents,
-                    }).catch(e => console.log(e));
+                    }).catch(e => log.error(e));
+                // Store holding information and generate keys for eventual
+                // data replication.
+                const keyPair = Encryption.generateKeyPair(512);
+                await Models.holding_data.create({
+                    id: data_id,
+                    source_wallet: wallet,
+                    data_public_key: keyPair.privateKey,
+                    data_private_key: keyPair.privateKey,
+                }).catch(e => log.error(e));
                 await dcService.createOffer(data_id, root_hash, total_documents, vertices);
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);

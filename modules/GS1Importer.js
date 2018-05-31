@@ -27,6 +27,7 @@ class GS1Importer {
         const vocabularyListElement =
             epcisDocumentElement.EPCISHeader.extension.EPCISMasterData.VocabularyList;
         const eventListElement = epcisDocumentElement.EPCISBody.EventList;
+        let senderWallet;
 
         // Outputs.
         let locations = [];
@@ -191,6 +192,11 @@ class GS1Importer {
         }
 
         for (const actor of actors) {
+            // Check for sender's wallet
+            if (!senderWallet && actor.id === senderId) {
+                senderWallet = actor.attributes.wallet;
+            }
+
             const identifiers = {
                 id: actor.id,
                 uid: actor.id,
@@ -770,7 +776,12 @@ class GS1Importer {
             delete vertex.private;
             return vertex;
         });
-        return { vertices: verticesPerImport, edges: edgesPerImport, import_id: importId };
+        return {
+            vertices: verticesPerImport,
+            edges: edgesPerImport,
+            import_id: importId,
+            wallet: senderWallet,
+        };
     }
 
     async parseGS1(gs1XmlFile) {

@@ -89,9 +89,9 @@ class Importer {
     async afterImport(result) {
         log.info('[DC] Import complete');
 
-        const { vertices } = result;
-        const { edges } = result;
-        const { import_id } = result;
+        const {
+            vertices, edges, import_id, wallet,
+        } = result;
 
         const leaves = [];
         const hash_pairs = [];
@@ -109,6 +109,7 @@ class Importer {
             total_documents: hash_pairs.length,
             vertices,
             edges,
+            wallet,
         };
     }
 
