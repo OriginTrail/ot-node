@@ -438,7 +438,16 @@ class DHService {
         const replicationPrivateKey = holdingData.data_private_key;
         const replicationPublicKey = holdingData.data_public_key;
 
-        Utilities.encryptVerticesWithKeys(
+        const encryptVerticesWithKeys = (vertices, privateKey, publicKey) => {
+            for (const id in vertices) {
+                const vertex = vertices[id];
+                if (vertex.data) {
+                    vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+                }
+            }
+        };
+
+        encryptVerticesWithKeys(
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
             replicationPrivateKey,
             replicationPublicKey,
