@@ -518,12 +518,11 @@ class Neo4jDB {
     async updateVertexImportsByUID(senderId, uid, importNumber) {
         const result = await this.findVertexWithMaxVersion(senderId, uid);
         const session = this.driver.session();
-        let imports;
-        if (typeof result.imports === 'undefined') {
-            imports = [importNumber];
-        } else {
-            imports = result.imports;
+        let { imports } = result;
+        if (imports) {
             imports.push(importNumber);
+        } else {
+            imports = [importNumber];
         }
         const response = await session.run('MATCH (n) WHERE n._key = $_key SET n.imports = $imports return n', {
             _key: result._key,
@@ -543,12 +542,11 @@ class Neo4jDB {
     async updateEdgeImportsByUID(senderId, uid, importNumber) {
         const result = await this.findEdgeWithMaxVersion(senderId, uid);
         const session = this.driver.session();
-        let imports;
-        if (typeof result.imports === 'undefined') {
-            imports = [importNumber];
-        } else {
-            imports = result.imports;
+        let { imports } = result;
+        if (imports) {
             imports.push(importNumber);
+        } else {
+            imports = [importNumber];
         }
         const response = await session.run('MATCH ()-[r]->() WHERE r._key = $_key SET r.imports = $imports return r', {
             _key: result._key,
