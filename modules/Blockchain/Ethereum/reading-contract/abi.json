@@ -38,24 +38,6 @@
 				"type": "bytes32"
 			},
 			{
-				"name": "DV_wallet",
-				"type": "address"
-			}
-		],
-		"name": "verifyPurchase",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
 				"name": "DH_wallet",
 				"type": "address"
 			}
@@ -87,6 +69,42 @@
 			}
 		],
 		"name": "initiatePurchase",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "payOut",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			}
+		],
+		"name": "initiateDispute",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -134,6 +152,46 @@
 	},
 	{
 		"constant": true,
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"name": "checksum_left",
+				"type": "uint256"
+			},
+			{
+				"name": "checksum_right",
+				"type": "uint256"
+			}
+		],
+		"name": "sendProofData",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
 		"inputs": [
 			{
 				"name": "",
@@ -148,7 +206,7 @@
 				"type": "bytes32"
 			}
 		],
-		"name": "reading",
+		"name": "purchase",
 		"outputs": [
 			{
 				"name": "token_amount",
@@ -167,12 +225,30 @@
 				"type": "bytes32"
 			},
 			{
-				"name": "reading_status",
+				"name": "time_of_sending",
+				"type": "uint256"
+			},
+			{
+				"name": "purchase_status",
 				"type": "uint8"
 			}
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "bidding_address",
+				"type": "address"
+			}
+		],
+		"name": "setBidding",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -200,6 +276,20 @@
 			}
 		],
 		"name": "addReadData",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -279,28 +369,6 @@
 				"type": "address"
 			}
 		],
-		"name": "PurchaseVerified",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "DV_wallet",
-				"type": "address"
-			}
-		],
 		"name": "CommitmentSent",
 		"type": "event"
 	},
@@ -346,6 +414,45 @@
 			}
 		],
 		"name": "EncryptedBlockSent",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
+		"name": "PurchaseDisputed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
 		"type": "event"
 	}
 ]

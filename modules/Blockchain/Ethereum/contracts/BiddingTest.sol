@@ -457,4 +457,9 @@ contract BiddingTest {
 		if (a > b) return a-b;
 		else return b-a;
 	}
+
+	function getBalance(address wallet)
+	public view returns (uint256) {
+		return profile[wallet].balance;
+	}
 }
