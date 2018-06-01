@@ -248,7 +248,6 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 log.warn(errorMessage);
-                return;
             }
         });
 
