@@ -499,22 +499,12 @@ class ArangoJS {
 
     async findVerticesByImportId(import_id) {
         const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-        if (typeof import_id !== 'number') {
-            import_id = parseInt(import_id, 10);
-        }
-
         const params = { importId: import_id };
         return this.runQuery(queryString, params);
     }
 
     async findEdgesByImportId(import_id) {
         const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-        if (typeof import_id !== 'number') {
-            import_id = parseInt(import_id, 10);
-        }
-
         const params = { importId: import_id };
         return this.runQuery(queryString, params);
     }
