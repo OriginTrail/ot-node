@@ -1,4 +1,3 @@
-const config = require('./Config');
 const BN = require('bn.js');
 
 const Utilities = require('./Utilities');
@@ -20,6 +19,7 @@ class DHService {
      * @param ctx IoC context
      */
     constructor(ctx) {
+        this.config = ctx.config;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.network = ctx.network;
@@ -58,9 +58,9 @@ class DHService {
                 return;
             }
 
-            const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
+            const maxDataSizeBytes = new BN(this.config.dh_max_data_size_bytes, 10);
 
-            const profile = await this.blockchain.getProfile(config.node_wallet);
+            const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
             maxTokenAmount = new BN(maxTokenAmount);
             minStakeAmount = new BN(minStakeAmount);
@@ -108,7 +108,7 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            await this.blockchain.addBid(importId, config.identity);
+            await this.blockchain.addBid(importId, this.config.identity);
             // await blockchainc.increaseBiddingApproval(myStake);
             const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
             const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
@@ -142,7 +142,7 @@ class DHService {
             const eventBid = eventModelBid.get({ plain: true });
             const eventBidData = JSON.parse(eventBid.data);
 
-            if (eventBidData.DH_wallet !== config.node_wallet) {
+            if (eventBidData.DH_wallet !== this.config.node_wallet) {
                 log.info(`Bid not taken for offer ${importId}.`);
                 return;
             }
@@ -152,7 +152,7 @@ class DHService {
             this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
-                    wallet: config.node_wallet,
+                    wallet: this.config.node_wallet,
                 },
                 bid.dc_id, (err) => {
                     if (err) {
@@ -314,8 +314,8 @@ class DHService {
          */
 
         // Check if mine publish.
-        if (message.nodeId === config.identity &&
-            message.wallet === config.node_wallet) {
+        if (message.nodeId === this.config.identity &&
+            message.wallet === this.config.node_wallet) {
             log.trace('Received mine publish. Ignoring.');
             return;
         }
@@ -350,8 +350,8 @@ class DHService {
                 }
             }
          */
-        const wallet = config.node_wallet;
-        const nodeId = config.identity;
+        const wallet = this.config.node_wallet;
+        const nodeId = this.config.identity;
         const dataSize = 500; // TODO
         const dataPrice = 100000; // TODO
         const stakeFactor = 1000; // TODO
@@ -388,7 +388,7 @@ class DHService {
             Utilities.generateRsvSignature(
                 JSON.stringify(messageResponse),
                 this.web3,
-                config.node_private_key,
+                this.config.node_private_key,
             );
 
         const dataLocationResponseObject = {
@@ -489,7 +489,7 @@ class DHService {
          */
 
         const replyMessage = {
-            wallet: this.config.wallet,
+            wallet: this.config.node_wallet,
             nodeId: this.config.identity,
             agreementStatus: 'CONFIRMED',
             purchaseId: 'PURCHASE_ID',
