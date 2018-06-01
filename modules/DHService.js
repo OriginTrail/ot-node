@@ -218,10 +218,10 @@ class DHService {
         }
 
         data.edges = Graph.sortVertices(data.edges);
-        data.encryptedVertices.vertices = Graph.sortVertices(data.encryptedVertices.vertices);
+        data.vertices = Graph.sortVertices(data.vertices);
 
         const merkle = await ImportUtilities.merkleStructure(
-            data.encryptedVertices.vertices,
+            data.vertices,
             data.edges,
         );
 
@@ -240,7 +240,7 @@ class DHService {
                 bid.total_escrow_time,
             );
 
-            let encryptedVertices = data.encryptedVertices.vertices;
+            let encryptedVertices = data.vertices;
             // sort vertices
             encryptedVertices.sort(((a, b) => {
                 if (a._key < b._key) {
@@ -258,7 +258,7 @@ class DHService {
 
             const keyPair = Encryption.generateKeyPair(512);
             const decryptedVertices = encryptedVertices.map((encVertex) => {
-                const key = data.encryptedVertices.public_key;
+                const key = data.public_key;
                 encVertex.data = Encryption.decryptObject(encVertex.data, key);
                 return encVertex;
             });
