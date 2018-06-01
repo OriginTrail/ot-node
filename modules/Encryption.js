@@ -2,6 +2,7 @@ var RSA = require('node-rsa');
 const crypto = require('crypto');
 const BN = require('bn.js');
 const xor = require('buffer-xor');
+const abi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
 
 class Encryption {
@@ -205,12 +206,17 @@ class Encryption {
 
         const blockHex = Buffer.from(block).toString('hex');
         const red = BN.red((new BN(2)).pow(new BN(128)));
-        const g = (new BN(11)).toRed(red);
+        // const g = (new BN(11)).toRed(red);
         const r1Bn = new BN(r1);
-        const bi = g.redPow((new BN(blockHex).mul(new BN(blockNumber + offset))));
-        const blockChecksum = Utilities.sha3(bi);
+        const bi = (new BN(blockHex, 16).mul(new BN(blockNumber + offset)));
 
-        return (new BN(blockChecksum.substring(2)).add(r1Bn)).toRed(red).toString('hex');
+        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'], [bi]).toString('hex').substring(2), 16);
+        blockChecksum.add(r1Bn);
+
+        blockChecksum = abi.soliditySHA3(['bytes32'], [blockChecksum]).toString('hex');
+
+
+        return (new BN(blockChecksum.substring(2), 16).add(r1Bn)).toRed(red).toString('hex');
     }
 
     /**
@@ -230,18 +236,18 @@ class Encryption {
         let blockNum = 1;
 
         const red = BN.red((new BN(2)).pow(new BN(128)));
-        let checksum = (new BN(0)).toRed(red);
+        let checksum = new BN(0);
 
         while (i < data.length) {
             const dataBlock = data.substring(i, i + 32);
             const blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
-            checksum = checksum.redAdd((new BN(blockChecksum, 'hex')).toRed(red));
+            checksum = checksum.add((new BN(blockChecksum, 'hex')).toRed(red));
 
             i += 32;
             blockNum += 1;
         }
 
-        checksum = checksum.redAdd((new BN(r2)).toRed(red));
+        checksum = checksum.add(new BN(r2));
 
         return checksum.toString('hex');
     }
@@ -272,24 +278,22 @@ class Encryption {
      * @returns {boolean}
      */
     static verifyDataChecksum(M1, missing, missingBlockNumber, M2, sd, spdHash, r1, r2) {
-        const red = BN.red((new BN(2)).pow(new BN(128)));
-
-        let M1C = (new BN(Encryption.calculateDataChecksum(M1, 0, 0), 'hex')).toRed(red);
-        let missingC = new BN(Encryption.calculateDataChecksum(missing, 0, 0, missingBlockNumber), 'hex').toRed(red);
-        let M2C = (new BN(Encryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex')).toRed(red);
+        let M1C = (new BN(Encryption.calculateDataChecksum(M1, 0, 0), 'hex'));
+        let missingC = new BN(Encryption.calculateDataChecksum(missing, 0, 0, missingBlockNumber), 'hex');
+        let M2C = (new BN(Encryption.calculateDataChecksum(M2, 0, 0, missingBlockNumber + 1), 'hex'));
 
 
-        if (M1C.redAdd(missingC).redAdd(M2C).toString('hex') !== sd) {
+        if (M1C.add(missingC).add(M2C).toString('hex') !== sd) {
             return false;
         }
 
-        M1C = (new BN(Encryption.calculateDataChecksum(M1, r1, r2), 'hex')).toRed(red);
-        missingC = new BN(Encryption.calculateDataChecksum(missing, r1, r2, missingBlockNumber), 'hex').toRed(red);
-        M2C = (new BN(Encryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex')).toRed(red);
+        M1C = (new BN(Encryption.calculateDataChecksum(M1, r1, r2), 'hex'));
+        missingC = new BN(Encryption.calculateDataChecksum(missing, r1, r2, missingBlockNumber), 'hex');
+        M2C = (new BN(Encryption.calculateDataChecksum(M2, r1, r2, missingBlockNumber + 1), 'hex'));
 
-        const spd = M1C.redAdd(missingC).redAdd(M2C);
+        const spd = M1C.add(missingC).add(M2C);
 
-        if (Utilities.sha3(spd.toString('hex')) !== spdHash) {
+        if (abi.soliditySHA3(['bytes32'], [spd.toString('hex')]).toString('hex') !== spdHash.toString('hex')) {
             return false;
         }
 
