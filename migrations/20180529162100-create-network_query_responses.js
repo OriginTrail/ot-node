@@ -35,6 +35,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        reply_id: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('network_query_responses'),
 };

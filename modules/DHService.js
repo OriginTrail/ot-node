@@ -289,7 +289,7 @@ class DHService {
         }
     }
 
-    async handleDataLocationRequest(dataLocationRequestObject) {
+    async handleDataLocationRequest(message) {
         /*
             dataLocationRequestObject = {
                 message: {
@@ -313,17 +313,11 @@ class DHService {
              }
          */
 
-        const { message, messageSignature } = dataLocationRequestObject;
-
         // Check if mine publish.
         if (message.nodeId === config.identity &&
             message.wallet === config.node_wallet) {
             log.trace('Received mine publish. Ignoring.');
             return;
-        }
-
-        if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-            log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
         }
 
         // Handle query here.
@@ -356,15 +350,38 @@ class DHService {
                 }
             }
          */
+        const wallet = config.node_wallet;
+        const nodeId = config.identity;
+        const dataSize = 500; // TODO
+        const dataPrice = 100000; // TODO
+        const stakeFactor = 1000; // TODO
+
+        const networkReplyModel = await Models.network_replies.create({
+            data: JSON.stringify({
+                id: message.id,
+                imports,
+                dataSize,
+                dataPrice,
+                stakeFactor,
+            }),
+            receiver_wallet: message.wallet,
+            receiver_identity: message.nodeId,
+        });
+
+        if (!networkReplyModel) {
+            log.error('Failed to create new network reply model.');
+            throw Error('Internal error.');
+        }
 
         const messageResponse = {
             id: message.id,
-            wallet: config.node_wallet,
-            nodeId: config.identity,
+            replyID: networkReplyModel.id,
+            wallet,
+            nodeId,
             imports,
-            dataSize: 500,
-            dataPrice: 100000,
-            stakeFactor: 1000,
+            dataSize,
+            dataPrice,
+            stakeFactor,
         };
 
         const messageResponseSignature =
@@ -390,24 +407,31 @@ class DHService {
     async handleDataReadRequest(message) {
         /*
         message: {
+            id: REPLY_ID
             wallet: DH_WALLET,
-            nodeId: KAD_ID,
-            imports: [
-                         importId: …
-                    ],
-            dataSize: DATA_BYTE_SIZE,
-            stakeFactor: X
+            nodeId: KAD_ID
         }
         */
 
-        // TODO: Data read request should have own ID created by DH when placed the offer.
-        // TODO: No need to send imports. Should be stored in request
         // TODO in order to avoid getting a different import.
 
-        const { nodeId, wallet, imports } = message;
+        const { nodeId, wallet, id } = message;
+
+        // Check is it mine offer.
+        const networkReplyModel = await Models.network_replies.find({ where: { id } });
+
+        if (!networkReplyModel) {
+            throw Error(`Couldn't find reply with ID ${id}.`);
+        }
+
+        const offer = JSON.parse(networkReplyModel.data);
+
+        if (offer.receiver_wallet !== wallet && offer.receiver_identity) {
+            throw Error('Sorry not your read request');
+        }
 
         // TODO: Only one import ID used. Later we'll support replication from multiple imports.
-        const import_id = JSON.parse(imports)[0];
+        const import_id = offer.imports[0];
 
         const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
         const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);

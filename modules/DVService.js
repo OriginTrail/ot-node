@@ -119,16 +119,9 @@ class DVService {
         /*
             dataReadRequestObject = {
             message: {
+                id: REPLY_ID
                 wallet: DV_WALLET,
-                nodeId: KAD_ID
-                agreedPrice: …,
-                imports: [
-                    {sender_id: …,
-                     importId: …
-                          }, …
-                        ],
-                dataPrice: TOKEN_AMOUNT,
-                stakeFactor: X
+                nodeId: KAD_ID,
             },
             messageSignature: {
                 c: …,
@@ -138,11 +131,9 @@ class DVService {
             }
          */
         const message = {
+            id: offer.reply_id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
-            agreedPrice: offer.data_price,
-            imports: offer.imports,
-            stakeFactor: offer.stake_factor,
         };
 
         const dataReadRequestObject = {
@@ -182,6 +173,7 @@ class DVService {
             data_size: message.dataSize,
             data_price: message.dataPrice,
             stake_factor: message.stakeFactor,
+            reply_id: message.replyId,
         });
 
         if (!networkQueryResponse) {
