@@ -155,7 +155,7 @@ class EventEmitter {
                 Graph.encryptVertices(
                     wallet,
                     request.contact[0],
-                    vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                    vertices,
                     Storage,
                 ).then((encryptedVertices) => {
                     log.info('[DC] Preparing to enter sendPayload');
