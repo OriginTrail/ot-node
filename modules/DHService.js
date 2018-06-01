@@ -375,7 +375,7 @@ class DHService {
 
         const messageResponse = {
             id: message.id,
-            replyID: networkReplyModel.id,
+            replyId: networkReplyModel.id,
             wallet,
             nodeId,
             imports,
