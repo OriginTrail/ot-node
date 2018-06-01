@@ -238,43 +238,36 @@ library SafeMath {
  		}
  	}
 
- 	function cancelEscrow(bytes32 import_id, address DH_wallet)
- 	public {
- 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+ 	function cancelEscrow(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
+     public {
+          address DH_wallet;
+          address DC_wallet;
+
+          if (sender_is_DH  == true) {
+               DH_wallet = msg.sender;
+               DC_wallet = correspondent_wallet;
+          }
+          else{
+               DH_wallet = correspondent_wallet;
+               DC_wallet = msg.sender;
+          }
+
+          EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
  		require(msg.sender == DH_wallet || msg.sender == this_escrow.DC_wallet);
 
- 		require(this_escrow.escrow_status != EscrowStatus.completed);
+ 		require(this_escrow.escrow_status == EscrowStatus.initiated
+               || this_escrow.escrow_status == EscrowStatus.confirmed);
 
- 		uint256 amount_to_send;
- 		if(this_escrow.escrow_status == EscrowStatus.active){
+          uint256 amount_to_send = this_escrow.token_amount;
+          this_escrow.token_amount = 0;
+          if(amount_to_send > 0) bidding.increaseBalance(DC_wallet, amount_to_send);
 
- 			uint cancelation_time = block.timestamp;
- 			if(this_escrow.end_time < block.timestamp) cancelation_time = this_escrow.end_time;
-
- 			amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
- 		}
- 		else {
- 			amount_to_send = this_escrow.token_amount;
- 			this_escrow.escrow_status = EscrowStatus.completed;
- 		}
-
- 		//Transfer the amount_to_send to DC 
- 		if(amount_to_send > 0) {
- 			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
- 			bidding.increaseBalance(msg.sender, amount_to_send);
- 		}
-
- 		//Calculate the amount to send back to DH and transfer the money back
- 		amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
- 		if(amount_to_send > 0) {
- 			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
- 			bidding.increaseBalance(DH_wallet, amount_to_send);
- 		}
-
- 		uint stake_to_send = this_escrow.stake_amount;
- 		this_escrow.stake_amount = 0;
- 		if(stake_to_send > 0) bidding.increaseBalance(DH_wallet, amount_to_send);
+          if(this_escrow.escrow_status == EscrowStatus.confirmed){
+               amount_to_send = this_escrow.stake_amount;
+               this_escrow.stake_amount = 0;
+               if(amount_to_send > 0) bidding.increaseBalance(DH_wallet, amount_to_send);
+          }
 
  		this_escrow.escrow_status = EscrowStatus.completed;
  		emit EscrowCanceled(import_id, DH_wallet);

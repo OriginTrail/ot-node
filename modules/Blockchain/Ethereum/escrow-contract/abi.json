@@ -3,24 +3,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_wallet",
-        "type": "address"
-      }
-    ],
-    "name": "cancelEscrow",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "DC_wallet",
         "type": "address"
       },
@@ -170,6 +152,28 @@
       }
     ],
     "name": "addRootHashAndChecksum",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "correspondent_wallet",
+        "type": "address"
+      },
+      {
+        "name": "sender_is_DH",
+        "type": "bool"
+      }
+    ],
+    "name": "cancelEscrow",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
