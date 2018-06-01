@@ -430,7 +430,7 @@ contract('Bidding testing', async (accounts) => {
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
             promises[i] = escrow.payOut(
-                DC_wallet, import_id,
+                import_id,
                 { from: accounts[chosen_bids[i]], gas: 100000 },
             );
         }
