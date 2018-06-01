@@ -258,18 +258,20 @@ class Challenge {
 
         for (let i = 0; i < vertexData.length; i += 1) {
             const { data } = vertexData[i];
-            for (let j = 0; j < data.length;) {
-                bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
+            if (data != null) {
+                for (let j = 0; j < data.length;) {
+                    bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
 
-                const substring = data.substring(j, j + bytesToCopy);
-                block += substring;
-                byteIndex += substring.length; // May be less than wanted bytesToCopy.
-                j += substring.length;
+                    const substring = data.substring(j, j + bytesToCopy);
+                    block += substring;
+                    byteIndex += substring.length; // May be less than wanted bytesToCopy.
+                    j += substring.length;
 
-                if (byteIndex === blockSizeBytes) {
-                    blocks.push(block);
-                    block = String();
-                    byteIndex = 0;
+                    if (byteIndex === blockSizeBytes) {
+                        blocks.push(block);
+                        block = String();
+                        byteIndex = 0;
+                    }
                 }
             }
         }
