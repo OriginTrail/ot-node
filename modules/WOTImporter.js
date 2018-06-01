@@ -1,6 +1,6 @@
 const fs = require('fs');
 const md5 = require('md5');
-const Utilities = require('./Utilities')
+const Utilities = require('./Utilities');
 
 /**
  * Web Of Things model importer
@@ -65,7 +65,7 @@ class WOTImporter {
             thing, model, properties, actions, observedObjects, readPoint,
         } = thingDesc;
         const { id } = thing;
-        const senderId = sender.id
+        const senderId = sender.id;
 
         const actor = {
             identifiers: {
