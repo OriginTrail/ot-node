@@ -460,7 +460,7 @@ class EventEmitter {
             }
 
             try {
-                await dhService.handleDataReadResponse(message);
+                await dvService.handleDataReadResponse(message);
             } catch (error) {
                 const errorMessage = `Failed to process data read response. ${error}.`;
                 log.warn(errorMessage);
