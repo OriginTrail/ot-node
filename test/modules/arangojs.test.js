@@ -363,7 +363,7 @@ describe('Arangojs module ', async () => {
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
 
-        await testDb.findVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
+        await testDb.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
@@ -378,7 +378,7 @@ describe('Arangojs module ', async () => {
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
 
-        await testDb.findEdgesByImportId(edgeOne.imports[0].toString()).then((response) => {
+        await testDb.findEdgesByImportId(edgeOne.imports[0]).then((response) => {
             assert.deepEqual(response[0]._key, edgeOne._key);
             assert.deepEqual(response[0].edge_type, edgeOne.edge_type);
             assert.deepEqual(response[0].data_provider, edgeOne.data_provider);
