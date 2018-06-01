@@ -503,6 +503,11 @@ class ArangoJS {
         return this.runQuery(queryString, params);
     }
 
+    async findObjectClassVertices() {
+        const queryString = 'FOR v IN ot_vertices FILTER v.data == null SORT v._key RETURN v';
+        return this.runQuery(queryString, {});
+    }
+
     async findEdgesByImportId(import_id) {
         const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
         const params = { importId: import_id };

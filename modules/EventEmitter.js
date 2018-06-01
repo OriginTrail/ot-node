@@ -145,12 +145,16 @@ class EventEmitter {
 
             const offer = offerModel.get({ plain: true });
 
+            const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
 
-            Promise.all([verticesPromise, edgesPromise]).then((values) => {
-                const vertices = values[0];
+            Promise.all([verticesPromise, edgesPromise, objectClassesPromise]).then((values) => {
+                let vertices = values[0];
                 const edges = values[1];
+                const objectClassVertices = values[2];
+
+                vertices = vertices.concat(...objectClassVertices);
 
                 Graph.encryptVertices(
                     wallet,

@@ -269,6 +269,14 @@ class GraphStorage {
     }
 
     /**
+     * Finds all object classes
+     * @return {Promise<*>}
+     */
+    findObjectClassVertices() {
+        return this.db.findObjectClassVertices();
+    }
+
+    /**
      * Get list of vertices by import ID
      * @param importId   Import ID
      * @return {Promise}
