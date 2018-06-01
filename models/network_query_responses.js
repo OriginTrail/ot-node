@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         data_size: DataTypes.STRING,
         data_price: DataTypes.STRING,
         stake_factor: DataTypes.STRING,
+        reply_id: DataTypes.INTEGER,
     }, {});
     network_query_responses.associate = function (models) {
         // associations can be defined here

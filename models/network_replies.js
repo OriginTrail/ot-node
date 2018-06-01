@@ -1,7 +1,9 @@
 
 module.exports = (sequelize, DataTypes) => {
     const network_replies = sequelize.define('network_replies', {
-        query: DataTypes.STRING,
+        data: DataTypes.STRING,
+        receiver_wallet: DataTypes.STRING,
+        receiver_identity: DataTypes.STRING,
         timestamp: {
             type: DataTypes.INTEGER,
             defaultValue: Date.now(),

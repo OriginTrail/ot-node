@@ -228,11 +228,24 @@ class EventEmitter {
         /**
          * Handles bidding-broadcast on the DH side
          */
-        this.globalEmitter.on('kad-data-location-request', async (message) => {
+        this.globalEmitter.on('kad-data-location-request', async (kadMessage) => {
             log.info('kad-data-location-request received');
 
-            dhService.handleDataLocationRequest(message)
-                .catch(error => log.error(`Failed to handle location request. ${error}`));
+            const dataLocationRequestObject = kadMessage;
+            const { message, messageSignature } = dataLocationRequestObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                return;
+            }
+
+            try {
+                await dhService.handleDataLocationRequest(message);
+            } catch (error) {
+                const errorMessage = `Failed to process data location request. ${error}.`;
+                log.warn(errorMessage);
+                return;
+            }
         });
 
         this.globalEmitter.on('offer-ended', (message) => {

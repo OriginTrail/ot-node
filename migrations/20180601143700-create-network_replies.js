@@ -7,7 +7,15 @@ module.exports = {
             autoIncrement: true,
             type: Sequelize.INTEGER,
         },
-        query: {
+        data: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        receiver_wallet: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        receiver_identity: {
             allowNull: false,
             type: Sequelize.STRING,
         },
