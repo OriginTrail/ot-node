@@ -62,3 +62,5 @@ class ImportUtilities {
         };
     }
 }
+
+module.exports = ImportUtilities;
