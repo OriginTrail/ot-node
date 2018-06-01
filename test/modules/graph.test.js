@@ -286,7 +286,9 @@ describe('graph module ', () => {
     });
 
     it('decryptVertices() of encryptVertices() should give back original data', async () => {
-        const vertexData = 1;
+        const vertexData = {
+            x: 1,
+        };
 
         const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
         assert.isNotNull(encryptedVertices);
@@ -295,7 +297,7 @@ describe('graph module ', () => {
 
         // eslint-disable-next-line max-len
         const decryptedVertices = await Graph.decryptVertices(encryptedVertices.vertices, encryptedVertices.vertices[0].decryption_key);
-        assert.isTrue(decryptedVertices[0].data === vertexData);
+        assert.deepEqual(decryptedVertices[0].data, vertexData);
     });
 
     // TODO
