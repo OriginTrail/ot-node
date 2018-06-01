@@ -101,7 +101,7 @@ class Importer {
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
-        const merkle = ImportUtilities.merkleStructure(vertices, edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
         log.info(`Import id: ${import_id}`);
         log.info(`Import hash: ${merkle.tree.getRoot()}`);
