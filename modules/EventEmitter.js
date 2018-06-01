@@ -164,7 +164,7 @@ class EventEmitter {
                     data.contact = request.contact[0];
                     data.vertices = vertices;
                     data.edges = edges;
-                    data.import_id = offer.import_id;
+                    data.import_id = offer.id;
                     data.encryptedVertices = encryptedVertices;
                     data.total_escrow_time = offer.total_escrow_time;
                     dataReplication.sendPayload(data).then(() => {
