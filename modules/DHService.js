@@ -7,6 +7,7 @@ const Encryption = require('./Encryption');
 const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
+const ImportUtilities = require('./ImportUtilities');
 
 const log = Utilities.getLogger();
 
@@ -219,16 +220,12 @@ class DHService {
         data.edges = Graph.sortVertices(data.edges);
         data.encryptedVertices.vertices = Graph.sortVertices(data.encryptedVertices.vertices);
 
-        const leaves = [];
-        const hash_pairs = [];
-        await this.importer.merkleStructure(
-            data.encryptedVertices.vertices, data.edges,
-            leaves, hash_pairs,
+        const merkle = await ImportUtilities.merkleStructure(
+            data.encryptedVertices.vertices,
+            data.edges,
         );
 
-        leaves.sort();
-        const tree = new MerkleTree(leaves);
-        const rootHash = Utilities.sha3(tree.getRoot());
+        const rootHash = Utilities.sha3(merkle.tree.getRoot());
         log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
 
         log.trace('[DH] Replication finished');
@@ -267,13 +264,7 @@ class DHService {
             });
             Graph.encryptVerticesWithKeys(decryptedVertices, keyPair.privateKey, keyPair.publicKey);
 
-            const encLeaves = [];
-            const encHashPairs = [];
-            await this.importer.merkleStructure(
-                decryptedVertices, data.edges,
-                encLeaves, encHashPairs,
-            );
-            const distributionMerkleTree = new MerkleTree(leaves);
+            const encMerkle = await ImportUtilities.merkleStructure(decryptedVertices, data.edges);
 
             const epk = Encryption.packEPK(keyPair.publicKey);
             const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);

@@ -3,6 +3,7 @@ const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
+const ImportUtilities = require('./ImportUtilities');
 
 const log = utilities.getLogger();
 
@@ -98,56 +99,20 @@ class Importer {
             import_id, wallet,
         } = result;
 
-        const leaves = [];
-        const hash_pairs = [];
-
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
-        await this.merkleStructure(vertices, edges, leaves, hash_pairs);
-
-        leaves.sort();
-        const tree = new MerkleTree(leaves);
-        const root_hash = utilities.sha3(tree.getRoot());
+        const merkle = ImportUtilities.merkleStructure(vertices, edges);
 
         log.info(`Import id: ${import_id}`);
-        log.info(`Import hash: ${root_hash}`);
+        log.info(`Import hash: ${merkle.tree.getRoot()}`);
         return {
             import_id,
-            root_hash,
-            total_documents: hash_pairs.length,
+            root_hash: merkle.tree.getRoot(),
+            total_documents: merkle.hashPairs.length,
             vertices,
             edges,
             wallet,
         };
-    }
-
-    async merkleStructure(vertices, edges, leaves, hash_pairs) {
-        // process vertices
-        for (const i in vertices) {
-            const hash = utilities.sha3(utilities.sortObject({
-                identifiers: vertices[i].identifiers,
-                data: vertices[i].data,
-            }));
-            leaves.push(hash);
-            hash_pairs.push({
-                key: vertices[i]._key,
-                hash,
-            });
-        }
-
-        for (const edge of edges) {
-            const hash = utilities.sha3(utilities.sortObject({
-                identifiers: edge.identifiers,
-                _from: edge._from,
-                _to: edge._to,
-                edge_type: edge.edge_type,
-            }));
-            leaves.push(hash);
-            hash_pairs.push({
-                key: edge._key,
-                hash,
-            });
-        }
     }
 
     async importWOT(document) {

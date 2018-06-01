@@ -1,8 +1,12 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
+const MerkleTree = require('./Merkle');
+const Utilities = require('./Utilities');
+const Encryption = require('./Encryption');
+const ImportUtilities = require('./ImportUtilities');
 
-const log = require('./Utilities').getLogger();
+const log = Utilities.getLogger();
 
 class DataReplication {
     /**
@@ -12,6 +16,9 @@ class DataReplication {
     constructor(ctx) {
         this.network = ctx.network;
         this.challenger = ctx.challenger;
+        this.graphStorage = ctx.graphStorage;
+        this.importer = ctx.importer;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -60,6 +67,31 @@ class DataReplication {
         this.network.kademlia().payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
+    }
+
+    async verifyReplication(importId, epk, encryptionKey) {
+        const edges = await this.graphStorage.findEdgesByImportId(importId);
+        let vertices = await this.graphStorage.findVerticesByImportId(importId);
+        const encryptedVertices = vertices.map((vertex) => {
+            vertex.data = Encryption.encryptObject(vertex.data, encryptionKey);
+            return vertex;
+        });
+
+        const merkle = await ImportUtilities.merkleStructure(encryptedVertices, edges);
+
+        const distributionRootHash = merkle.tree.getRoot();
+        const epkHash = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+        const decryptionKey = Encryption.unpackEPK(Encryption.globalDecrypt(epk));
+
+        let decryptedVertices = encryptedVertices.map((vertex) => {
+            vertex.data = Encryption.decryptObject(vertex.data, decryptionKey);
+            return vertex;
+        });
+
+        vertices = Graph.sortVertices(vertices);
+        decryptedVertices = Graph.sortVertices(decryptedVertices);
+
+        // compare these two
     }
 }
 
