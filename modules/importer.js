@@ -18,10 +18,6 @@ class Importer {
         log.info('Entering importJSON');
         const { vertices, edges, import_id } = json_document;
 
-        if (typeof import_id !== 'number') {
-            throw Error(`Invalid import ID. ${import_id}.`);
-        }
-
         log.trace('Vertex importing');
 
         // TODO: Use transaction here.
