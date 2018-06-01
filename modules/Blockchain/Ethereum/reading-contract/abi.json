@@ -182,9 +182,51 @@
 			{
 				"name": "checksum_right",
 				"type": "uint256"
+			},
+			{
+				"name": "checksum_hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "random_number_1",
+				"type": "uint256"
+			},
+			{
+				"name": "random_number_2",
+				"type": "uint256"
+			},
+			{
+				"name": "decryption_key",
+				"type": "uint256"
+			},
+			{
+				"name": "block_index",
+				"type": "uint256"
 			}
 		],
 		"name": "sendProofData",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "correspondent_wallet",
+				"type": "address"
+			},
+			{
+				"name": "sender_is_DH",
+				"type": "bool"
+			}
+		],
+		"name": "cancelPurchase",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -413,6 +455,28 @@
 				"type": "address"
 			}
 		],
+		"name": "PurchaseCancelled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			}
+		],
 		"name": "EncryptedBlockSent",
 		"type": "event"
 	},
@@ -436,6 +500,33 @@
 			}
 		],
 		"name": "PurchaseDisputed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "proof_was_correct",
+				"type": "bool"
+			}
+		],
+		"name": "PurchaseDisputeCompleted",
 		"type": "event"
 	},
 	{

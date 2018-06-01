@@ -76,7 +76,7 @@ contract Reading is Ownable{
 	Bidding bidding;
 	address escrow;
 
- 	enum PurchaseStatus {inactive, initiated, verified, commited, confirmed, sent, paid, disputed}
+ 	enum PurchaseStatus {inactive, initiated, commited, confirmed, sent, paid, disputed, cancelled, completed}
 
 	struct PurchaseDefinition{
  		uint token_amount;
@@ -102,8 +102,10 @@ contract Reading is Ownable{
 	event PurchaseInitiated(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event CommitmentSent(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseConfirmed(bytes32 import_id, address DH_wallet, address DV_wallet);
+	event PurchaseCancelled(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event EncryptedBlockSent(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseDisputed(bytes32 import_id, address DH_wallet, address DV_wallet);
+	event PurchaseDisputeCompleted(bytes32 import_id, address DH_wallet, address DV_wallet, bool proof_was_correct);
 
 	function Reading(address escrow_address) 
 	public {
@@ -140,6 +142,13 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.inactive);
 
+		uint256 DH_balance = bidding.getBalance(DH_wallet);
+		uint256 DV_balance = bidding.getBalance(msg.sender);
+		uint256 stake_amount = token_amount.mul(stake_factor);
+		require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+
+		bidding.decreaseBalance(msg.sender, token_amount.add(stake_amount));
+
 		this_purchase.token_amount = token_amount;
 		this_purchase.stake_factor = stake_factor;
 
@@ -152,6 +161,10 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.initiated);
 
+		uint256 DH_balance = bidding.getBalance(msg.sender);
+		require(DH_balance > this_purchase.token_amount.mul(this_purchase.stake_factor));
+		bidding.decreaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor));
+
 		this_purchase.commitment = commitment;
 		this_purchase.purchase_status = PurchaseStatus.commited;
 
@@ -161,14 +174,38 @@ contract Reading is Ownable{
 	function confirmPurchase(bytes32 import_id, address DH_wallet)
 	public {
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
-		uint256 DV_balance = bidding.getBalance(msg.sender);
-		require(this_purchase.purchase_status == PurchaseStatus.commited
-			&& DV_balance > this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount, this_purchase.stake_factor)));
-
-
+		require(this_purchase.purchase_status == PurchaseStatus.commited);
 
 		this_purchase.purchase_status = PurchaseStatus.confirmed;
 		emit PurchaseConfirmed(import_id, DH_wallet, msg.sender);
+	}
+
+	function cancelPurchase(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
+	public {
+		address DH_wallet;
+		address DV_wallet;
+
+		if (sender_is_DH  == true) {
+			DH_wallet = msg.sender;
+			DV_wallet = correspondent_wallet;
+		}
+		else{
+			DH_wallet = correspondent_wallet;
+			DV_wallet = msg.sender;
+		}
+		PurchaseDefinition storage this_purchase = purchase[DH_wallet][DV_wallet][import_id];
+
+		require(this_purchase.purchase_status == PurchaseStatus.initiated
+			||  this_purchase.purchase_status == PurchaseStatus.commited
+			||  this_purchase.purchase_status == PurchaseStatus.confirmed);
+
+		this_purchase.purchase_status = PurchaseStatus.cancelled;
+
+		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.add(this_purchase.token_amount.mul(this_purchase.stake_factor)));
+		if(this_purchase.purchase_status != PurchaseStatus.initiated){
+			bidding.increaseBalance(DH_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
+		}
+		emit PurchaseCancelled(import_id, DH_wallet, DV_wallet);
 	}
 
 	function sendEncryptedBlock(bytes32 import_id, address DV_wallet, bytes32 encrypted_block)
@@ -215,9 +252,25 @@ contract Reading is Ownable{
 		emit PurchaseDisputed(import_id, DH_wallet, msg.sender);
 	}
 
-	function sendProofData(bytes32 import_id, address DV_wallet, uint256 checksum_left, uint256 checksum_right)
+	function sendProofData(bytes32 import_id, address DV_wallet, 
+			uint256 checksum_left, uint256 checksum_right, bytes32 checksum_hash,
+			uint256 random_number_1, uint256 random_number_2,
+			uint256 decryption_key, uint256 block_index)
 	public {
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
+		bool commitment_proof = this_purchase.commitment == keccak256(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index);
+		bool checksum_hash_proof = 
+			checksum_hash == keccak256(checksum_left + (uint256(keccak256((block_index * uint256(keccak256(decryption_key ^ uint(this_purchase.encrypted_block)))) + random_number_1)) % (2**128)) + checksum_right);
+
+		if(commitment_proof == true && checksum_hash_proof == true) {
+			bidding.increaseBalance(msg.sender, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
+			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, true);		
+		}
+		else {
+			bidding.increaseBalance(DV_wallet, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
+			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);		
+		}
+		this_purchase.purchase_status = PurchaseStatus.completed;
 	}
 }
