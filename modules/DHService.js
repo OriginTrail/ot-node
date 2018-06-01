@@ -66,10 +66,10 @@ class DHService {
             minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
             const totalEscrowTimePerMinute = Math.round(totalEscrowTime / 60000);
-            const myPrice = new BN(profile.token_amount)
+            const myPrice = new BN(profile.token_amount_per_byte_minute)
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
-            const myStake = new BN(profile.stake_amount)
+            const myStake = new BN(profile.stake_amount_per_byte_minute)
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
 

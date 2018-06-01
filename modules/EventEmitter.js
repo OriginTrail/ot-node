@@ -255,22 +255,22 @@ class EventEmitter {
             const {
                 import_id,
                 DC_node_id,
-                total_escrow_time,
-                max_token_amount,
-                min_stake_amount,
+                total_escrow_time_in_minutes,
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
                 min_reputation,
                 data_hash,
-                data_size,
+                data_size_in_bytes,
             } = eventData;
 
             await dhService.handleOffer(
                 import_id,
                 DC_node_id,
-                total_escrow_time * 60000, // In ms.
-                max_token_amount,
-                min_stake_amount,
+                total_escrow_time_in_minutes * 60000, // In ms.
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
                 min_reputation,
-                data_size,
+                data_size_in_bytes,
                 data_hash,
                 false,
             );
@@ -283,10 +283,10 @@ class EventEmitter {
                 import_id,
                 DH_wallet,
                 DH_node_id,
-                total_escrow_time,
-                max_token_amount,
-                min_stake_amount,
-                data_size,
+                total_escrow_time_in_minutes,
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
+                data_size_in_bytes,
             } = eventData;
 
             if (DH_wallet !== config.node_wallet
@@ -316,11 +316,11 @@ class EventEmitter {
                 await dhService.handleOffer(
                     import_id,
                     createOfferEventData.DC_node_id.substring(2, 42),
-                    total_escrow_time * 60000, // In ms.
-                    max_token_amount,
-                    min_stake_amount,
+                    total_escrow_time_in_minutes * 60000, // In ms.
+                    max_token_amount_per_DH,
+                    min_stake_amount_per_DH,
                     createOfferEventData.min_reputation,
-                    data_size,
+                    data_size_in_bytes,
                     createOfferEventData.data_hash,
                     true,
                 );
