@@ -145,8 +145,8 @@ class EventEmitter {
 
             const offer = offerModel.get({ plain: true });
 
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
 
             Promise.all([verticesPromise, edgesPromise]).then((values) => {
                 const vertices = values[0];
@@ -155,7 +155,7 @@ class EventEmitter {
                 Graph.encryptVertices(
                     wallet,
                     request.contact[0],
-                    vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                    vertices,
                     Storage,
                 ).then((encryptedVertices) => {
                     log.info('[DC] Preparing to enter sendPayload');
@@ -460,7 +460,7 @@ class EventEmitter {
             }
 
             try {
-                await dhService.handleDataReadResponse(message);
+                await dvService.handleDataReadResponse(message);
             } catch (error) {
                 const errorMessage = `Failed to process data read response. ${error}.`;
                 log.warn(errorMessage);
