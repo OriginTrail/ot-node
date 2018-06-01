@@ -101,6 +101,7 @@ contract BiddingTest {
 
 		uint balance;
 		uint reputation;
+		uint number_of_escrows;
 
 		uint max_escrow_time_in_minutes;
 		uint size_available_in_bytes;
@@ -451,6 +452,10 @@ contract BiddingTest {
 	function increaseReputation(address wallet, uint amount) public onlyContracts {
 		profile[wallet].reputation = profile[wallet].reputation.add(amount);
 		emit ReputationModified(wallet, profile[wallet].reputation);
+	}
+
+	function addEscrow(address wallet) public onlyContracts {
+		profile[wallet].number_of_escrows = profile[wallet].number_of_escrows.add(1);
 	}
 
 	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {

@@ -39,9 +39,9 @@ library SafeMath {
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-    function Ownable () public {
+     function Ownable () public {
      	owner = msg.sender;
-    }
+     }
 
 	/**
      * @dev Throws if called by any account other than the owner.
@@ -81,6 +81,7 @@ library SafeMath {
  	function increaseBalance(address wallet, uint amount) public;
  	function decreaseBalance(address wallet, uint amount) public;
  	function increaseReputation(address wallet, uint amount) public;
+ 	function addEscrow(address wallet) public;
  }
 
  contract Reading {
@@ -147,7 +148,7 @@ library SafeMath {
  	event EscrowCanceled(bytes32 import_id, address DH_wallet);
  	event EscrowCompleted(bytes32 import_id, address DH_wallet);
 
-	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
+ 	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
  	public onlyOwner{
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
  		require(this_escrow.escrow_status == EscrowStatus.completed
@@ -190,6 +191,9 @@ library SafeMath {
  		require(this_escrow.DC_wallet == msg.sender
  			&& this_escrow.escrow_status == EscrowStatus.confirmed);
 
+ 		bidding.addEscrow(msg.sender);
+ 		bidding.addEscrow(DH_wallet);
+ 		
  		this_escrow.last_confirmation_time = block.timestamp;
  		this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time_in_seconds);
 
@@ -202,8 +206,11 @@ library SafeMath {
  	function payOut(bytes32 import_id)
  	public{
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
+ 		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
  		require(this_escrow.escrow_status == EscrowStatus.active);
+ 		require(this_litigation.litigation_status == LitigationStatus.inactive
+ 			||  this_litigation.litigation_status == LitigationStatus.completed);
 
  		uint256 amount_to_send;
 
@@ -283,18 +290,14 @@ library SafeMath {
  	// 	2. DH sends the requested data -> answer
  	// 		The answer is stored in the SC, and it will be checked once the DH sends their answer and starts the proof
  	// 	3. DC sends the correct data -> proof. It and the answer get checked if they are correct
- 	// 		a. If the answer is correct, DH gets +rep 
- 	// 		b. If the proof is correct, any party can call the completion function (step 4a)
- 	// 	4. The lititigation completion function is called
- 	// 		a. If the answer was correct, or the proof was incorrect, DH gets refunded for the transaction costs and his reputation gets increased
- 	// 		b. If DH didn't send the answer, or it was incorrect and the proof was correct, DC receives a proportional amount of token to the DH stake commited
-
+ 	// 		a. If the answer is correct, or the proof is incorrect, escrow continues as if nothing happened
+ 	// 		b. If the answer is incorrect, and proof is correct DC receives a proportional amount of token to the DH stake commited
 
  	// Answer/Proof verifiation:
- 	// 	1. The data sent gets hashed
+ 	// 	1. The data sent gets hashed with the block index
  	// 	2. The hash is hashed with the first hash in the array which DC sent. (Ordering of the hashes is determined by the index of the requested data)
- 	// 	3. For the entire hash array the next item gets hashed together with the result of the previous iteration (with the ordering determined by the proper bit in hash_order_identification)
- 	// 	4. At the end the result should be the root hash of the merkle tree of the entire data, hence it gets compared to the total_data_hash defined in the escrow
+ 	// 	3. For the entire hash array the next item gets hashed together with the result of the previous iteration (with the ordering determined by the proper bit in the requested data index)
+ 	// 	4. At the end the result should be equal to the root hash of the merkle tree of the entire data, hence it gets compared to the litigation_root_hash defined in the escrow
  	// 	5. If the hashes are equal the Answer/Proof is correct. Otherwise, it fails.
 
  	enum LitigationStatus {inactive, initiated, answered, timed_out, completed}
@@ -304,6 +307,7 @@ library SafeMath {
  		bytes32 requested_data;
  		bytes32[] hash_array;
  		uint litigation_start_time;
+ 		uint answer_timestamp;
  		LitigationStatus litigation_status;
  	}
 
@@ -338,7 +342,7 @@ library SafeMath {
 
  		require(this_litigation.litigation_start_time > 0 && this_litigation.litigation_status == LitigationStatus.initiated);
 
- 		if(block.timestamp > this_litigation.litigation_start_time + 30 minutes){
+ 		if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
  			this_litigation.litigation_status = LitigationStatus.completed;
  			this_escrow.escrow_status = EscrowStatus.completed;
  			//TODO Transfer remaining escrow tokens
@@ -350,73 +354,132 @@ library SafeMath {
  		}
  		else {
  			this_litigation.requested_data = keccak256(requested_data, this_litigation.requested_data_index);
+ 			this_litigation.answer_timestamp = block.timestamp;
+ 			this_litigation.litigation_status = LitigationStatus.answered;
  			// this_litigation.requested_data = keccak256(abi.encodePacked(requested_data, this_litigation.requested_data_index));
  			emit LitigationAnswered(import_id, msg.sender);
  			return true;
  		}
  	}
 
- 	function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
- 	public returns (bool DH_was_penalized){
- 		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
- 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+ 	/**
+     * @dev Allows the DH to mark a litigation as completed in order to call payOut. 
+     * Used only when DC is inactive after DH sent litigation answer.
+     */
+     function cancelInactiveLitigation(bytes32 import_id)
+     public {
+     	LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
- 		require(this_escrow.DC_wallet == msg.sender && this_litigation.litigation_start_time > 0 && this_litigation.litigation_status != LitigationStatus.completed);
+     	require(this_litigation.litigation_status == LitigationStatus.answered
+     		&& 	this_litigation.answer_timestamp + 15 minutes < block.timestamp);
 
- 		if (block.timestamp > this_litigation.litigation_start_time + 30 minutes && this_litigation.litigation_status == LitigationStatus.initiated){
- 			this_litigation.litigation_status = LitigationStatus.completed;
- 			this_escrow.escrow_status = EscrowStatus.completed;
+     	this_litigation.litigation_status = LitigationStatus.completed;
+     	emit LitigationCompleted(import_id, msg.sender, false);
 
- 			reading.removeReadData(import_id, DH_wallet);
+     }
 
- 			bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
- 			this_escrow.stake_amount = 0;
- 			// send tokens to DC
- 		}
+     function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
+     public returns (bool DH_was_penalized){
+     	LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
+     	EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
- 		uint256 i = 0;
- 		uint256 one = 1;
- 		bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);	
- 		// bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));	
- 		bytes32 answer_hash = this_litigation.requested_data;
+     	require(this_escrow.DC_wallet == msg.sender && 
+     		(this_litigation.litigation_status == LitigationStatus.initiated 
+     			|| this_litigation.litigation_status == LitigationStatus.answered));
 
- 		// ako je bit 1 on je levo
- 		while (i < this_litigation.hash_array.length){
+     	if (this_litigation.litigation_status == LitigationStatus.initiated){
+     		require(this_litigation.litigation_start_time + 15 minutes < block.timestamp);
 
- 			if( ((one << i) & this_litigation.requested_data_index) != 0 ){
- 				proof_hash = keccak256(this_litigation.hash_array[i], proof_hash);
- 				answer_hash = keccak256(this_litigation.hash_array[i], answer_hash);
- 				// proof_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], proof_hash));
- 				// answer_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], answer_hash));
- 			}
- 			else {
- 				proof_hash = keccak256(proof_hash, this_litigation.hash_array[i]);
- 				answer_hash = keccak256(answer_hash, this_litigation.hash_array[i]);
- 				// proof_hash = keccak256(abi.encodePacked(proof_hash, this_litigation.hash_array[i]));
- 				// answer_hash = keccak256(abi.encodePacked(answer_hash, this_litigation.hash_array[i]));
- 			}
- 			i++;
- 		}
+     		uint256 amount_to_send;
 
- 		if(answer_hash == this_escrow.litigation_root_hash){
- 			this_litigation.litigation_status = LitigationStatus.completed;
- 			emit LitigationCompleted(import_id, DH_wallet, false);
- 			return false;
- 		}
- 		else {
- 			if(proof_hash == this_escrow.litigation_root_hash){
- 				bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
- 				this_escrow.stake_amount = 0;
- 				reading.removeReadData(import_id, DH_wallet);
+     		uint cancelation_time = this_litigation.litigation_start_time;
+     		amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
 
- 				this_litigation.litigation_status = LitigationStatus.completed;
- 				emit LitigationCompleted(import_id, DH_wallet, false);
- 			}
- 			this_litigation.litigation_status = LitigationStatus.completed;
- 			emit LitigationCompleted(import_id, DH_wallet, false);
- 			return false;
- 		}
- 	}
+     		//Transfer the amount_to_send to DC 
+     		if(amount_to_send > 0) {
+     			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+     			bidding.increaseBalance(msg.sender, amount_to_send);
+     		}
+     		//Calculate the amount to send back to DH and transfer the money back
+     		amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
+     		if(amount_to_send > 0) {
+     			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+     			bidding.increaseBalance(DH_wallet, amount_to_send);
+     		}
 
+     		uint stake_to_send = this_escrow.stake_amount;
+     		this_escrow.stake_amount = 0;
+     		if(stake_to_send > 0) bidding.increaseBalance(msg.sender, amount_to_send);
 
+     		this_litigation.litigation_status = LitigationStatus.completed;
+     		this_escrow.escrow_status = EscrowStatus.completed;
+
+     		reading.removeReadData(import_id, DH_wallet);
+
+     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
+     		this_escrow.stake_amount = 0;
+     	}
+
+     	uint256 i = 0;
+     	uint256 one = 1;
+     	bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);	
+     	// bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));	
+     	bytes32 answer_hash = this_litigation.requested_data;
+
+     	// ako je bit 1 on je levo
+     	while (i < this_litigation.hash_array.length){
+
+     		if( ((one << i) & this_litigation.requested_data_index) != 0 ){
+     			proof_hash = keccak256(this_litigation.hash_array[i], proof_hash);
+     			answer_hash = keccak256(this_litigation.hash_array[i], answer_hash);
+     			// proof_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], proof_hash));
+     			// answer_hash = keccak256(abi.encodePacked(this_litigation.hash_array[i], answer_hash));
+     		}
+     		else {
+     			proof_hash = keccak256(proof_hash, this_litigation.hash_array[i]);
+     			answer_hash = keccak256(answer_hash, this_litigation.hash_array[i]);
+     			// proof_hash = keccak256(abi.encodePacked(proof_hash, this_litigation.hash_array[i]));
+     			// answer_hash = keccak256(abi.encodePacked(answer_hash, this_litigation.hash_array[i]));
+     		}
+     		i++;
+     	}
+
+     	if(answer_hash == this_escrow.litigation_root_hash || proof_hash != this_escrow.litigation_root_hash){
+     		// DH has the requested data -> Set litigation as completed, no transfer of tokens
+     		this_litigation.litigation_status = LitigationStatus.completed;
+     		emit LitigationCompleted(import_id, DH_wallet, false);
+     		return false;
+     	}
+     	else {
+     		// DH didn't have the requested data, and the litigation was valid
+     		//		-> Distribute tokens and send stake to DC
+
+     		cancelation_time = this_litigation.litigation_start_time;
+     		amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
+
+     		//Transfer the amount_to_send to DC 
+     		if(amount_to_send > 0) {
+     			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+     			bidding.increaseBalance(msg.sender, amount_to_send);
+     		}
+     		//Calculate the amount to send back to DH and transfer the money back
+     		amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
+     		if(amount_to_send > 0) {
+     			this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+     			bidding.increaseBalance(DH_wallet, amount_to_send);
+     		}
+
+     		stake_to_send = this_escrow.stake_amount;
+     		this_escrow.stake_amount = 0;
+     		if(stake_to_send > 0) bidding.increaseBalance(msg.sender, amount_to_send);
+
+     		this_litigation.litigation_status = LitigationStatus.completed;
+     		this_escrow.escrow_status = EscrowStatus.completed;
+
+     		reading.removeReadData(import_id, DH_wallet);
+
+     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
+     		this_escrow.stake_amount = 0;
+     	}
+     }
  }

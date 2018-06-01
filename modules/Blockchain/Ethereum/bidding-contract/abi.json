@@ -287,6 +287,10 @@
         "type": "uint256"
       },
       {
+        "name": "number_of_escrows",
+        "type": "uint256"
+      },
+      {
         "name": "max_escrow_time_in_minutes",
         "type": "uint256"
       },
@@ -381,6 +385,20 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "address"
+      }
+    ],
+    "name": "addEscrow",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

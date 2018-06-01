@@ -123,6 +123,10 @@
         "type": "uint256"
       },
       {
+        "name": "answer_timestamp",
+        "type": "uint256"
+      },
+      {
         "name": "litigation_status",
         "type": "uint8"
       }
@@ -166,6 +170,20 @@
       }
     ],
     "name": "addRootHashAndChecksum",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "cancelInactiveLitigation",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
