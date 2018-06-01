@@ -145,8 +145,8 @@ class EventEmitter {
 
             const offer = offerModel.get({ plain: true });
 
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
 
             Promise.all([verticesPromise, edgesPromise]).then((values) => {
                 const vertices = values[0];
