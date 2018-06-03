@@ -27,14 +27,14 @@ class WOTImporter {
     async parse(payloadFile) {
         const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
         const importId = Date.now();
-        const things = payload.data;
+        const { things, sender } = payload.data;
 
         const edges = [];
         const vertices = [];
 
         for (const thingDesc of things) {
             // eslint-disable-next-line
-            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc);
+            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc, sender, importId);
             edges.push(...thingEdges);
             vertices.push(...thingVertices);
         }
@@ -47,17 +47,18 @@ class WOTImporter {
     /**
      * Parse single thing description (thing, model, properties, actions, etc.)
      * @param thingDesc
+     * @param sender
      * @param importId
      * @return {Promise<{thingEdges: Array, thingVertices: Array}>}
      */
-    async parseThingDesc(thingDesc, importId) {
+    async parseThingDesc(thingDesc, sender, importId) {
         const thingEdges = [];
         const thingVertices = [];
 
         const {
             thing, model, properties, actions, observedObjects, readPoint,
         } = thingDesc;
-        const { id, sender } = thing;
+        const { id } = thing;
 
         const actor = {
             identifiers: {
@@ -74,17 +75,18 @@ class WOTImporter {
         WOTImporter.copyProperties(model, actor.data.model);
         delete actor.data.id;
 
-        actor._key = md5(`actor_${sender}_${JSON.stringify(actor.identifiers)}_${md5(JSON.stringify(actor.data))}`);
+        actor._key = md5(`actor_${sender.id}_${JSON.stringify(actor.identifiers)}_${md5(JSON.stringify(actor.data))}`);
         thingVertices.push(actor);
 
         thingEdges.push({
-            _key: md5(`is_${sender}_${actor._key}_ACTOR`),
+            _key: md5(`is_${sender.id}_${actor._key}_ACTOR`),
             _from: `ot_vertices/${actor._key}`,
             _to: 'ot_vertices/ACTOR',
             edge_type: 'IS',
         });
 
-        const eventId = `${sender}:${importId}`; // TODO change event ID
+        const date = new Date(importId);
+        const eventId = `${sender.id}:${date.toUTCString()}`.replace(/ /g, '_').replace(/,/g, '');
         const event = {
             identifiers: {
                 id: eventId,
@@ -98,15 +100,15 @@ class WOTImporter {
             },
             vertex_type: 'EVENT',
         };
-        event._key = md5(`event_${sender}_${JSON.stringify(event.identifiers)}_${md5(JSON.stringify(event.data))}`);
+        event._key = md5(`event_${sender.id}_${JSON.stringify(event.identifiers)}_${md5(JSON.stringify(event.data))}`);
         thingVertices.push(event);
 
         for (const ooId of observedObjects) {
             // eslint-disable-next-line
-            const ooVertex = await this.db.findVertexWithMaxVersion(sender, ooId);
+            const ooVertex = await this.db.findVertexWithMaxVersion(sender.id, ooId);
             if (ooVertex) {
                 thingEdges.push({
-                    _key: md5(`event_object_${sender}_${event._key}_${ooVertex._key}`),
+                    _key: md5(`event_object_${sender.id}_${event._key}_${ooVertex._key}`),
                     _from: `ot_vertices/${event._key}`,
                     _to: `ot_vertices/${ooVertex._key}`,
                     edge_type: 'EVENT_OBJECT',
@@ -115,7 +117,7 @@ class WOTImporter {
                     },
                 });
                 thingEdges.push({
-                    _key: md5(`event_object_${sender}_${ooVertex._key}_${event._key}`),
+                    _key: md5(`event_object_${sender.id}_${ooVertex._key}_${event._key}`),
                     _from: `ot_vertices/${ooVertex._key}`,
                     _to: `ot_vertices/${event._key}`,
                     edge_type: 'EVENT_OBJECT',
@@ -127,20 +129,22 @@ class WOTImporter {
         }
 
         if (readPoint) {
-            const rpVertex = await this.db.findVertexWithMaxVersion(sender, readPoint.id);
-            thingEdges.push({
-                _key: md5(`read_point_${sender}_${event._key}_${rpVertex._key}`),
-                _from: `ot_vertices/${event._key}`,
-                _to: `ot_vertices/${rpVertex._key}`,
-                edge_type: 'READ_POINT',
-                identifiers: {
-                    uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
-                },
-            });
+            const rpVertex = await this.db.findVertexWithMaxVersion(sender.id, readPoint.id);
+            if (rpVertex) {
+                thingEdges.push({
+                    _key: md5(`read_point_${sender.id}_${event._key}_${rpVertex._key}`),
+                    _from: `ot_vertices/${event._key}`,
+                    _to: `ot_vertices/${rpVertex._key}`,
+                    edge_type: 'READ_POINT',
+                    identifiers: {
+                        uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
+                    },
+                });
+            }
         }
 
         thingEdges.push({
-            _key: md5(`observed_by_${sender}_${event._key}_${actor._key}`),
+            _key: md5(`observed_by_${sender.id}_${event._key}_${actor._key}`),
             _from: `ot_vertices/${event._key}`,
             _to: `ot_vertices/${actor._key}`,
             edge_type: 'OBSERVED_BY',
@@ -150,7 +154,7 @@ class WOTImporter {
         });
 
         thingEdges.push({
-            _key: md5(`observed_${sender}_${actor._key}_${event._key}`),
+            _key: md5(`observed_${sender.id}_${actor._key}_${event._key}`),
             _from: `ot_vertices/${actor._key}`,
             _to: `ot_vertices/${event._key}`,
             edge_type: 'OBSERVED',
@@ -160,7 +164,7 @@ class WOTImporter {
         });
 
         const addProperties = (elem) => {
-            elem.sender_id = sender;
+            elem.sender_id = sender.id;
             if (elem.imports) {
                 elem.imports.push(importId);
             } else {
