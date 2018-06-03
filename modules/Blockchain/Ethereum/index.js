@@ -29,6 +29,7 @@ class Ethereum {
         this.tokenContractAddress = blockchainConfig.token_contract_address;
         this.escrowContractAddress = blockchainConfig.escrow_contract_address;
         this.biddingContractAddress = blockchainConfig.bidding_contract_address;
+        this.readingContractAddress = blockchainConfig.reading_contract_address;
 
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
@@ -51,12 +52,22 @@ class Ethereum {
             this.escrowContractAddress,
         );
 
+        // Bidding contract data
         const biddingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/bidding-contract/abi.json');
         this.biddingContractAbi = JSON.parse(biddingAbiFile);
         this.biddingContract = new this.web3.eth.Contract(
             this.biddingContractAbi,
             this.biddingContractAddress,
         );
+
+        // Reading contract data
+        const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/reading-contract/abi.json');
+        this.readingContractAbi = JSON.parse(readingAbiFile);
+        this.readingContract = new this.web3.eth.Contract(
+            this.readingContractAbi,
+            this.readingContractAddress,
+        );
+
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,
