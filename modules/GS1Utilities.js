@@ -1,14 +1,15 @@
 const md5 = require('md5');
+const crypto = require('crypto');
 const validator = require('validator');
+const Utilities = require('./Utilities');
 
 const ZK = require('./ZK');
 
-class GS1Helper {
-    // validate
-
+class GS1Utilities {
+    // validation
     static validateSender(sender) {
         if (sender.EmailAddress) {
-            GS1Helper.emailValidation(sender.EmailAddress);
+            GS1Utilities.emailValidation(sender.EmailAddress);
         }
     }
 
@@ -25,7 +26,7 @@ class GS1Helper {
 
     static parseAttributes(attributes, ignorePattern) {
         const output = {};
-        const inputAttributeArray = GS1Helper.arrayze(attributes);
+        const inputAttributeArray = GS1Utilities.arrayze(attributes);
 
         for (const inputElement of inputAttributeArray) {
             output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
@@ -45,7 +46,7 @@ class GS1Helper {
             for (const i in patterns) {
                 new_key = new_key.replace(patterns[i], '');
             }
-            new_obj[new_key] = GS1Helper.sanitize(old_obj[key], {}, patterns);
+            new_obj[new_key] = GS1Utilities.sanitize(old_obj[key], {}, patterns);
         }
         return new_obj;
     }
@@ -63,19 +64,19 @@ class GS1Helper {
     }
 
     static getEventId(senderId, event) {
-        if (GS1Helper.arrayze(event.eventTime).length === 0) {
+        if (GS1Utilities.arrayze(event.eventTime).length === 0) {
             throw Error('Missing eventTime element for event!');
         }
         const event_time = event.eventTime;
 
-        const event_time_validation = GS1Helper.dateTimeValidation(event_time);
+        const event_time_validation = GS1Utilities.dateTimeValidation(event_time);
         if (!event_time_validation) {
             throw Error('Invalid date and time format for event time!');
         }
         if (typeof event_time !== 'string') {
             throw Error('Multiple eventTime elements found!');
         }
-        if (GS1Helper.arrayze(event.eventTimeZoneOffset).length === 0) {
+        if (GS1Utilities.arrayze(event.eventTimeZoneOffset).length === 0) {
             throw Error('Missing event_time_zone_offset element for event!');
         }
 
@@ -85,15 +86,49 @@ class GS1Helper {
         }
 
         let eventId = `${senderId}:${event_time}Z${event_time_zone_offset}`;
-        if (GS1Helper.arrayze(event.baseExtension).length > 0) {
+        if (GS1Utilities.arrayze(event.baseExtension).length > 0) {
             const baseExtension_element = event.baseExtension;
 
-            if (GS1Helper.arrayze(baseExtension_element.eventID).length === 0) {
+            if (GS1Utilities.arrayze(baseExtension_element.eventID).length === 0) {
                 throw Error('Missing eventID in baseExtension!');
             }
             eventId = baseExtension_element.eventID;
         }
         return eventId;
+    }
+
+    /**
+     * Handle private data
+     * @private
+     */
+    static handlePrivate(_private, data, privateData) {
+        data.private = {};
+        const salt = crypto.randomBytes(16).toString('base64');
+        for (const key in _private) {
+            const value = _private[key];
+            privateData[key] = value;
+
+            const sorted = Utilities.sortObject(value);
+            data.private[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+        }
+        privateData._salt = salt;
+    }
+
+    /**
+     * Check hidden data
+     * @param hashed
+     * @param original
+     * @param salt
+     * @return {*}
+     */
+    static checkPrivate(hashed, original, salt) {
+        const result = {};
+        for (const key in original) {
+            const value = original[key];
+            const sorted = Utilities.sortObject(value);
+            result[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+        }
+        return Utilities.objectDistance(hashed, result);
     }
 
     /**
@@ -105,6 +140,7 @@ class GS1Helper {
      * @param importId
      * @param globalR
      * @param batchVertices
+     * @param db
      * @return {Promise<void>}
      */
     static async zeroKnowledge(
@@ -116,20 +152,20 @@ class GS1Helper {
         const { extension } = event;
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
-            const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const bizStep = GS1Utilities.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
             if (bizStep === 'shipping') {
                 // sending input
                 if (categories.includes('Ownership')) {
-                    outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
+                    outputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
                             r: globalR,
                         }));
                 } else {
-                    outputQuantities = GS1Helper.arrayze(quantityList.quantityElement)
+                    outputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
@@ -158,16 +194,18 @@ class GS1Helper {
             } else {
                 // receiving output
                 if (categories.includes('Ownership')) {
-                    inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
-                    }));
+                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                            r: globalR,
+                        }));
                 } else {
-                    inputQuantities = GS1Helper.arrayze(quantityList.quantityElement).map(elem => ({
-                        object: elem.epcClass,
-                        quantity: parseInt(elem.quantity, 10),
-                    }));
+                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                        }));
                 }
 
                 for (const inputQ of inputQuantities) {
@@ -193,7 +231,7 @@ class GS1Helper {
             // Transformation
             const { inputQuantityList, outputQuantityList } = event;
             if (inputQuantityList) {
-                const tmpInputQuantities = GS1Helper.arrayze(inputQuantityList.quantityElement)
+                const tmpInputQuantities = GS1Utilities.arrayze(inputQuantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
@@ -220,7 +258,7 @@ class GS1Helper {
                 }
             }
             if (outputQuantityList) {
-                const tmpOutputQuantities = GS1Helper.arrayze(outputQuantityList.quantityElement)
+                const tmpOutputQuantities = GS1Utilities.arrayze(outputQuantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
@@ -270,4 +308,4 @@ class GS1Helper {
     }
 }
 
-module.exports = GS1Helper;
+module.exports = GS1Utilities;

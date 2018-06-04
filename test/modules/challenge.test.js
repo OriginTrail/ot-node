@@ -1,9 +1,12 @@
 'use-strict';
 
+const models = require('../../models');
+const Storage = require('../../modules/Storage');
+
 const {
-    describe, before, beforeEach, after, afterEach, it,
+    describe, before, beforeEach, it,
 } = require('mocha');
-var { expect } = require('chai');
+const { expect } = require('chai');
 const assert = require('assert').strict;
 const Challenge = require('../../modules/Challenge');
 const SystemStorage = require('../../modules/Database/SystemStorage');
@@ -189,6 +192,11 @@ describe('Challenge tests', () => {
         const myStartTime = new Date('January 1, 2019 03:24:00').getTime();
         const myEndTime = new Date('January 1, 2020 00:24:00').getTime();
 
+        before('Sync models', async () => {
+            Storage.models = (await models.sequelize.sync()).models;
+            Storage.db = models.sequelize;
+        });
+
         beforeEach('cleanup db and populate db with generated challenges', async () => {
             try {
                 await SystemStorage.connect();
@@ -244,13 +252,31 @@ describe('Challenge tests', () => {
         });
 
         it('failTest() should mark corresponding entry as incorrectly answered', async () => {
+            // next line only for debuging of flacky test purposes
+            const dbStateBefore = await Challenge.getCurrentDbState();
             const unansweredTests = await Challenge.getUnansweredTest(myStartTime, myEndTime);
             const randomIndex = Utilities.getRandomInt(unansweredTests.length - 1);
             await Challenge.failTest(unansweredTests[randomIndex].id);
+            // next line only for debuging of flacky test purposes
+            const dbStateAfterFailingSingleChallenge = await Challenge.getCurrentDbState();
             const unansweredTestsAfterFail =
                 await Challenge.getUnansweredTest(myStartTime, myEndTime);
-            // eslint-disable-next-line max-len
-            expect(unansweredTestsAfterFail.length).to.be.equal(unansweredTests.length - 1);
+            try {
+                expect(unansweredTestsAfterFail.length).to.be.equal(unansweredTests.length - 1);
+            } catch (error) {
+                console.log('DB State in the begining of time');
+                console.log(dbStateBefore);
+                console.log('---------------------');
+                console.log(`Random id of challenge to be failed = ${unansweredTests[randomIndex].id}`);
+                console.log('DB State in the after failing single challange');
+                console.log(dbStateAfterFailingSingleChallenge);
+                console.log('---------------------');
+                console.log('unansweredTestsAfterFail');
+                console.log(unansweredTestsAfterFail);
+                console.log('---------------------');
+                console.log(`${unansweredTestsAfterFail.length} should be one less then ${unansweredTests.length}`);
+                console.log(error);
+            }
         });
 
         it('answerTestQuestion() should return correct block chunk', () => {

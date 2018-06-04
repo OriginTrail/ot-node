@@ -3,11 +3,11 @@ const {
     describe, beforeEach, afterEach, it,
 } = require('mocha');
 const { expect } = require('chai');
-const gs1 = require('../../modules/gs1-importer')();
 const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
-const GSInstance = require('../../modules/GraphStorageInstance');
+const GS1Importer = require('../../modules/GS1Importer');
+const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
     return {
@@ -23,6 +23,8 @@ function buildSelectedDatabaseParam(databaseName) {
 describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let systemDb;
+    let gs1;
+
     const inputXmlFiles = [
         { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
         { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
@@ -45,9 +47,18 @@ describe('GS1 Importer tests', () => {
             [{ username: process.env.DB_USERNAME, passwd: process.env.DB_PASSWORD, active: true }],
         );
 
-        // Setup signletons.
-        GSInstance.db = new GraphStorage(buildSelectedDatabaseParam(databaseName));
-        await GSInstance.db.connect();
+        // Create the container and set the injectionMode to PROXY (which is also the default).
+        const container = awilix.createContainer({
+            injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        const graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        container.register({
+            gs1Importer: awilix.asClass(GS1Importer),
+            graphStorage: awilix.asValue(graphStorage),
+        });
+        await graphStorage.connect();
+        gs1 = container.resolve('gs1Importer');
     });
 
     describe('Parse XML', () => {
@@ -79,14 +90,29 @@ describe('GS1 Importer tests', () => {
                 .equal(import2Result.edges.length);
 
             import1Result.vertices.forEach((vertex) => {
-                const vertex2 = import2Result.vertices
-                    .find(element => vertex._key === element._key);
+                let vertex2;
+                if (vertex.identifiers) {
+                    // private data is changing the _key
+                    vertex2 = import2Result.vertices.find((element) => {
+                        if (element.identifiers &&
+                            vertex.identifiers.id === element.identifiers.id) {
+                            return element;
+                        }
+                        return null;
+                    });
+                } else {
+                    // find by _key
+                    vertex2 = import2Result.vertices.find(element => vertex._key === element._key);
+                }
+
                 expect(vertex2).not.to.be.equal(undefined);
 
                 if (vertex.identifiers) {
                     expect(vertex.identifiers).to.deep.equal(vertex2.identifiers);
                 }
                 if (vertex.data) {
+                    delete vertex.data.private;
+                    delete vertex2.data.private;
                     expect(vertex.data).to.deep.equal(vertex2.data);
                 }
                 if (vertex.vertex_type) {

@@ -4,14 +4,11 @@ const {
 const { assert } = require('chai');
 const sinon = require('sinon');
 const Graph = require('../../modules/Graph');
-const GraphInstance = require('../../modules/GraphInstance');
 const models = require('../../models');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 const Storage = require('../../modules/Storage');
 const Utilities = require('../../modules/Utilities');
-const GraphStorage = require('../../modules/Database/GraphStorage');
-const GSInstance = require('../../modules/GraphStorageInstance');
 const deasync = require('deasync-promise');
 
 let selectedDatabase;
@@ -22,9 +19,6 @@ describe('graph module ', () => {
         selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
         assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
-
-        GSInstance.db = new GraphStorage(selectedDatabase);
-        GraphInstance.g = new Graph();
     });
 
     after('drop myDatabaseName db', async () => {

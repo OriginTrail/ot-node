@@ -8,7 +8,6 @@ const Utilities = require('../../modules/Utilities');
 const Storage = require('../../modules/Storage');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
-const ArangoJs = require('../../modules/Database/Arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const databaseData = require('./test_data/arangodb-data.js');
 
@@ -16,7 +15,6 @@ const myUserName = 'otuser';
 const myPassword = 'otpass';
 const myDatabaseName = 'test_origintrail';
 
-const documentCollectionName = 'ot_vertices';
 const edgeCollectionName = 'ot_edges';
 const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
@@ -150,6 +148,40 @@ describe('GraphStorage module', () => {
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Not connected to graph database') >= 0);
         }
+    });
+
+    it('test virtualGraph', async () => {
+        // precondition
+        const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
+        const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);
+        const responseEdgeOne = await myGraphStorage.addEdge(edgeOne);
+
+        assert.equal(responseVertexOne._key, vertexOne._key);
+        assert.equal(responseVertexTwo._key, vertexTwo._key);
+        assert.equal(responseEdgeOne._key, edgeOne._key);
+
+        const path = await myGraphStorage.findTraversalPath(vertexOne, 1000);
+
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return 1;
+            }
+            if (a._key > b._key) {
+                return -1;
+            }
+            return 0;
+        }
+
+        const objectVertices = [vertexOne, vertexTwo];
+        const objectEdges = [edgeOne];
+        assert.deepEqual(
+            GraphStorage.getEdgesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectEdges).sort(sortByKey),
+        );
+        assert.deepEqual(
+            GraphStorage.getVerticesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectVertices).sort(sortByKey),
+        );
     });
 
     after('drop myGraphStorage db', async () => {

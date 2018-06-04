@@ -1,8 +1,6 @@
-const node = require('./Node');
 const config = require('./Config');
 const Encryption = require('./Encryption');
 const Graph = require('./Graph');
-const Blockchain = require('./BlockChainInstance');
 const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
@@ -14,14 +12,22 @@ const log = Utilities.getLogger();
 const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
 const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('100000');
+const maxTokenAmount = new BN('1000000');
 const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
 class DCService {
-    static async createOffer(dataId, rootHash, totalDocuments, vertices) {
-        Blockchain.bc.writeRootHash(dataId, rootHash).then((res) => {
+    /**
+     * Default constructor
+     * @param ctx IoC context
+     */
+    constructor(ctx) {
+        this.blockchain = ctx.blockchain;
+    }
+
+    async createOffer(dataId, rootHash, totalDocuments, vertices) {
+        this.blockchain.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
             console.log('Error: ', e);
@@ -69,15 +75,15 @@ class DCService {
         // max_token_amount.mul(predetermined_DH_wallet.length.mul(2).add(1)));
         // Check for balance.
         const profileBalance =
-            new BN((await Blockchain.bc.getProfile(config.node_wallet)).balance, 10);
+            new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
         const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
-        if (profileBalance < condition) {
-            await Blockchain.bc.increaseBiddingApproval(condition - profileBalance);
-            await Blockchain.bc.depositToken(condition - profileBalance);
+        if (profileBalance.lt(condition)) {
+            await this.blockchain.increaseBiddingApproval(condition - profileBalance);
+            await this.blockchain.depositToken(condition - profileBalance);
         }
 
-        Blockchain.bc.createOffer(
+        this.blockchain.createOffer(
             dataId,
             config.identity,
             totalEscrowTime,
@@ -104,13 +110,13 @@ class DCService {
                 });
             };
 
-            Blockchain.bc.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
                 log.trace('Started choosing phase.');
 
                 offer.status = 'FINALIZING';
                 offer.save({ fields: ['status'] });
-                DCService.chooseBids(offer.id, totalEscrowTime).then(() => {
-                    Blockchain.bc.subscribeToEvent('OfferFinalized', offer.id)
+                this.chooseBids(offer.id, totalEscrowTime).then(() => {
+                    this.blockchain.subscribeToEvent('OfferFinalized', offer.id)
                         .then(() => {
                             offer.status = 'FINALIZED';
                             offer.save({ fields: ['status'] });
@@ -135,7 +141,7 @@ class DCService {
      * @returns {number} Size in bytes
      * @private
      */
-    static _calculateImportSize(vertices) {
+    _calculateImportSize(vertices) {
         const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
         Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
         return bytes(JSON.stringify(vertices));
@@ -146,14 +152,14 @@ class DCService {
      * @param offerHash Offer identifier
      * @param totalEscrowTime   Total escrow time
      */
-    static chooseBids(offerHash, totalEscrowTime) {
+    chooseBids(offerHash, totalEscrowTime) {
         return new Promise((resolve, reject) => {
             Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
                 log.info(`Choose bids for offer ${offerHash}`);
-                Blockchain.bc.increaseApproval(offer.max_token_amount * offer.replication_number)
+                this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        Blockchain.bc.chooseBids(offerHash)
+                        this.blockchain.chooseBids(offerHash)
                             .then(() => {
                                 log.info(`Bids chosen for data ${offerHash}`);
                                 resolve();
