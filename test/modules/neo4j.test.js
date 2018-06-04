@@ -13,10 +13,10 @@ const vertices = [
     { data: 'D', _key: '103', sender_id: 'a' }];
 const edges = [
     {
-        edgeType: 'IS', _from: '100', _to: '101', sender_id: 'a',
+        edgeType: 'IS', _from: '100', _to: '101', sender_id: 'a', uid: '190', _key: '6eb743d84a605b2ab6be67a373b883d4', imports: [1520345631],
     },
     {
-        edgeType: 'IS', _from: '101', _to: '102', sender_id: 'b',
+        edgeType: 'IS', _from: '101', _to: '102', sender_id: 'b', uid: '200', _key: '6eb743d84a605b2ab6be67a373b883d5',
     },
     {
         edgeType: 'IS', _from: '102', _to: '103', sender_id: 'c',
@@ -26,7 +26,7 @@ const edges = [
     }];
 
 const myUsername = 'neo4j';
-const myPassword = 'pass';
+const myPassword = 'neo4j';
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';
@@ -236,6 +236,33 @@ describe('Neo4j module ', async () => {
         assert.deepEqual(response[0].imports, [vertexOne.imports[0], 101100]);
         assert.deepEqual(response[0].data_provider, vertexOne.data_provider);
     });
+
+    it('.updateVertexImportsByUID()', async () => {
+        await testDb.addVertex(vertexOne);
+
+        await testDb.updateVertexImportsByUID('myID', vertexOne.identifiers.uid, 11000);
+        const response = await testDb.findVerticesByImportId(11000);
+
+        assert.deepEqual(response[0].imports, [vertexOne.imports[0], 11000]);
+    });
+
+    it('.updateEdgeImportsByUID()', async () => {
+        await testDb.addVertex(vertices[0]);
+        await testDb.addVertex(vertices[1]);
+        await testDb.addVertex(vertices[2]);
+        await testDb.addEdge(edges[0]);
+        await testDb.addEdge(edges[1]);
+
+        await testDb.updateEdgeImportsByUID('a', '190', 20080);
+        await testDb.updateEdgeImportsByUID('b', '200', 10050);
+
+        const responseOne = await testDb.findEdgesByImportId(20080);
+        const responseTwo = await testDb.findEdgesByImportId(10050);
+
+        assert.deepEqual(responseOne[0].imports, [edges[0].imports[0], 20080]);
+        assert.deepEqual(responseTwo[0].imports, [10050]);
+    });
+
     afterEach('clear testDb', async () => {
         await testDb.clear();
     });

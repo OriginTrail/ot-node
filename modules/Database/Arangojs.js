@@ -226,27 +226,6 @@ class ArangoJS {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param _key      Vertex _key
-     * @return {Promise<void>}
-     */
-    async findMaxVersion(senderId, uid, _key) {
-        const queryString = 'FOR v IN ot_vertices ' +
-            'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
-            'SORT v.version DESC ' +
-            'LIMIT 1 ' +
-            'RETURN v.version';
-        const params = {
-            uid,
-            _key,
-            senderId,
-        };
-        return this.runQuery(queryString, params);
-    }
-
-    /**
      * Gets max where uid is the same and has the max version
      * @param senderId  Sender ID
      * @param uid       Vertex uid

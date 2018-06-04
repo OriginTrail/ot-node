@@ -332,23 +332,6 @@ class Neo4jDB {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param key       Key
-     * @return {Promise<void>}
-     */
-    async findMaxVersion(senderId, uid, key) {
-        const session = this.driver.session();
-        const result = await session.readTransaction(tx => tx.run(
-            'MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n._key <> $key AND n.sender_id = $senderId return MAX(n.version)',
-            { uid, senderId, key },
-        ));
-        session.close();
-        return result.records[0]._fields[0];
-    }
-
-    /**
      * Gets max where uid is the same and has the max version
      * @param senderId  Sender ID
      * @param uid       Vertex uid
@@ -360,6 +343,22 @@ class Neo4jDB {
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
+        }
+        return null;
+    }
+
+    /**
+     * Gets max where id is the same and has the max version
+     * @param senderId  Sender ID
+     * @param uid       Edge uid
+     * @return {Promise<void>}
+     */
+    async findEdgeWithMaxVersion(senderId, uid) {
+        const session = this.driver.session();
+        const result = await session.readTransaction(tx => tx.run('MATCH ()-[r]->() WHERE r.uid = $uid AND r.sender_id = $senderId RETURN r ORDER BY r.version DESC LIMIT 1', { uid, senderId }));
+        session.close();
+        if (result.records.length > 0) {
+            return result.records[0]._fields[0].properties;
         }
         return null;
     }
@@ -520,6 +519,54 @@ class Neo4jDB {
             imports,
         }));
         session.close();
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateVertexImportsByUID(senderId, uid, importNumber) {
+        const result = await this.findVertexWithMaxVersion(senderId, uid);
+        const session = this.driver.session();
+        let { imports } = result;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        const response = await session.writeTransaction(tx => tx.run('MATCH (n) WHERE n._key = $_key SET n.imports = $imports return n', {
+            _key: result._key,
+            imports,
+        }));
+        session.close();
+        return response;
+    }
+
+    /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateEdgeImportsByUID(senderId, uid, importNumber) {
+        const result = await this.findEdgeWithMaxVersion(senderId, uid);
+        const session = this.driver.session();
+        let { imports } = result;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        const response = await session.writeTransaction(tx => tx.run('MATCH ()-[r]->() WHERE r._key = $_key SET r.imports = $imports return r', {
+            _key: result._key,
+            imports,
+        }));
+        session.close();
+        return response;
     }
 
     /**

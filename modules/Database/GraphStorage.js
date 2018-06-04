@@ -100,27 +100,6 @@ class GraphStorage {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param _key      Vertex _key
-     * @return {Promise<void>}
-     */
-    findMaxVersion(senderId, uid, _key) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.findMaxVersion(senderId, uid, _key).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Gets max vertex_key where uid is the same and has the max version
      * @param senderId  Sender ID
      * @param uid       Vertex uid
