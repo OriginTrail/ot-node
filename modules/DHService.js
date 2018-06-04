@@ -1,8 +1,5 @@
-const node = require('./Node');
 const config = require('./Config');
 const BN = require('bn.js');
-const Blockchain = require('./BlockChainInstance');
-const importer = require('./importer')();
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -14,10 +11,20 @@ const log = Utilities.getLogger();
  */
 class DHService {
     /**
+     * Default constructor
+     * @param ctx IoC context
+     */
+    constructor(ctx) {
+        this.importer = ctx.importer;
+        this.blockchain = ctx.blockchain;
+        this.network = ctx.network;
+    }
+
+    /**
      * Handles new offer
      *
      */
-    static async handleOffer(
+    async handleOffer(
         offerHash,
         dcNodeId,
         totalEscrowTime,
@@ -49,7 +56,7 @@ class DHService {
             const maxStakeAmount = new BN(config.dh_max_stake, 10);
             const maxDataSizeBytes = new BN(config.dh_max_data_size_bytes, 10);
 
-            const profile = await Blockchain.bc.getProfile(config.node_wallet);
+            const profile = await this.blockchain.getProfile(config.node_wallet);
 
             maxTokenAmount = new BN(maxTokenAmount);
             minStakeAmount = new BN(minStakeAmount);
@@ -93,14 +100,14 @@ class DHService {
             const condition = myStake;
 
             if (profileBalance.lt(condition)) {
-                await Blockchain.bc.increaseBiddingApproval(condition.sub(profileBalance));
-                await Blockchain.bc.depositToken(condition.sub(profileBalance));
+                await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+                await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            await Blockchain.bc.addBid(offerHash, config.identity);
-            // await Blockchain.bc.increaseBiddingApproval(myStake);
-            const addedBidEvent = await Blockchain.bc.subscribeToEvent('AddedBid', offerHash);
-            const dcWallet = await Blockchain.bc.getDcWalletFromOffer(offerHash);
+            await this.blockchain.addBid(offerHash, config.identity);
+            // await blockchainc.increaseBiddingApproval(myStake);
+            const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', offerHash);
+            const dcWallet = await this.blockchain.getDcWalletFromOffer(offerHash);
             this._saveBidToStorage(
                 addedBidEvent,
                 dcNodeId.substring(2, 42),
@@ -112,7 +119,7 @@ class DHService {
                 offerHash,
             );
 
-            await Blockchain.bc.subscribeToEvent('OfferFinalized', offerHash);
+            await this.blockchain.subscribeToEvent('OfferFinalized', offerHash);
             // Now check if bid taken.
             // emit BidTaken(offer_hash, this_bid.DH_wallet);
             const eventModelBid = await Models.events.findOne({
@@ -138,7 +145,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { offer_hash: offerHash } });
             const bid = bidModel.get({ plain: true });
-            node.ot.replicationRequest(
+            this.network.kademlia().replicationRequest(
                 {
                     offer_hash: offerHash,
                     wallet: config.node_wallet,
@@ -155,7 +162,7 @@ class DHService {
         }
     }
 
-    static _saveBidToStorage(
+    _saveBidToStorage(
         event,
         dcNodeId,
         dcWallet,
@@ -181,7 +188,7 @@ class DHService {
         });
     }
 
-    static async handleImport(data) {
+    async handleImport(data) {
         /*
             payload: {
                 offer_hash: data.offer_hash,
@@ -202,7 +209,7 @@ class DHService {
         const bid = bidModel.get({ plain: true });
 
         try {
-            await importer.importJSON(data);
+            await this.importer.importJSON(data);
         } catch (err) {
             log.warn(`Failed to import JSON successfully. ${err}.`);
             return;
@@ -210,8 +217,8 @@ class DHService {
         log.trace('[DH] Replication finished');
 
         try {
-            await Blockchain.bc.increaseApproval(bid.stake);
-            await Blockchain.bc.verifyEscrow(
+            await this.blockchain.increaseApproval(bid.stake);
+            await this.blockchain.verifyEscrow(
                 bid.dc_wallet,
                 bid.offer_hash,
                 bid.price,
@@ -220,14 +227,14 @@ class DHService {
             );
 
             log.important('Finished negotiation. Job starting. Waiting for challenges.');
-            node.ot.replicationFinished({ status: 'success' }, bid.dc_id);
+            this.network.kademlia().replicationFinished({ status: 'success' }, bid.dc_id);
         } catch (error) {
             log.error(`Failed to verify escrow. ${error}.`);
         }
     }
 
-    static listenToOffers() {
-        Blockchain.bc.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
+    listenToOffers() {
+        this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
     }
 }
 

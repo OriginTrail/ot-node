@@ -22,26 +22,35 @@ class GraphStorage {
             } else {
                 switch (this.selectedDatabase.database_system) {
                 case 'arango_db':
-                    this.db = new ArangoJS(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
+                    try {
+                        this.db = new ArangoJS(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                    } catch (error) {
+                        console.log(error);
+                        reject(Error('Unable to connect to graph database'));
+                    }
                     break;
                 case 'neo4j':
-                    this.db = new Neo4j(
-                        this.selectedDatabase.username,
-                        this.selectedDatabase.password,
-                        this.selectedDatabase.database,
-                        this.selectedDatabase.host,
-                        this.selectedDatabase.port,
-                    );
-                    await this.__initDatabase__();
-                    resolve(this.db);
+                    try {
+                        this.db = new Neo4j(
+                            this.selectedDatabase.username,
+                            this.selectedDatabase.password,
+                            this.selectedDatabase.database,
+                            this.selectedDatabase.host,
+                            this.selectedDatabase.port,
+                        );
+                        await this.__initDatabase__();
+                        resolve(this.db);
+                    } catch (error) {
+                        reject(Error('Unable to connect to graph database'));
+                    }
                     break;
                 default:
                     log.error(this.selectedDatabase);
@@ -82,27 +91,6 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findTraversalPath(startVertex, depth).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param _key      Vertex _key
-     * @return {Promise<void>}
-     */
-    findMaxVersion(senderId, uid, _key) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.findMaxVersion(senderId, uid, _key).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -178,6 +166,22 @@ class GraphStorage {
     }
 
     /**
+    * Get version of selected graph database
+    * @returns {Promise<any>}
+    */
+    async version() {
+        try {
+            const result = await this.db.version(
+                this.selectedDatabase.host, this.selectedDatabase.port,
+                this.selectedDatabase.username, this.selectedDatabase.password,
+            );
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
      * Gets underlying database information
      * @returns database info
      */
@@ -193,6 +197,28 @@ class GraphStorage {
      */
     updateImports(collectionName, document, importNumber) {
         return this.db.updateImports(collectionName, document, importNumber);
+    }
+
+    /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    updateEdgeImportsByUID(senderId, uid, importNumber) {
+        return this.db.updateEdgeImportsByUID(senderId, uid, importNumber);
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    updateVertexImportsByUID(senderId, uid, importNumber) {
+        return this.db.updateVertexImportsByUID(senderId, uid, importNumber);
     }
 
     /**
@@ -265,6 +291,61 @@ class GraphStorage {
         const id = this._allowedClasses.find(element => element.toLocaleLowerCase() ===
             className.toLocaleLowerCase());
         return id;
+    }
+
+    /**
+     * Extract vertices from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const vertices = [];
+        for (const key in virtualGraph.data) {
+            delete virtualGraph.data[key].outbound;
+            vertices.push(virtualGraph.data[key]);
+        }
+        return vertices;
+    }
+
+    /**
+     * Extracts edges from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const edges = [];
+        for (const key in virtualGraph.data) {
+            for (const edge in virtualGraph.data[key].outbound) {
+                virtualGraph.data[key].outbound[edge]._from = `ot_vertices/${virtualGraph.data[key].outbound[edge]._from}`;
+                virtualGraph.data[key].outbound[edge]._to = `ot_vertices/${virtualGraph.data[key].outbound[edge]._to}`;
+                edges.push(virtualGraph.data[key].outbound[edge]);
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Imports virtual graph to database
+     * @param virtual graph
+     * @returns
+     */
+    async importVirtualGraph(virtualGraph) {
+        const virtualEdges = GraphStorage.getEdgesFromVirtualGraph(virtualGraph);
+        const virtualVertices = GraphStorage.getVerticesFromVirtualGraph(virtualGraph);
+
+        const vertices = [];
+        for (const i in virtualVertices) {
+            vertices.push(this.db.addVertex(virtualVertices[i]));
+        }
+        await Promise.all(vertices);
+
+        const edges = [];
+        for (const i in virtualEdges) {
+            edges.push(this.db.addEdge(virtualEdges[i]));
+        }
+        return Promise.all(edges);
     }
 
     /**

@@ -2,22 +2,20 @@ const Web3 = require('web3');
 const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
-const globalEvents = require('../../GlobalEvents');
-const SystemStorage = require('../../Database/SystemStorage');
 const Storage = require('../../Storage');
 const Op = require('sequelize/lib/operators');
-
-const { globalEmitter } = globalEvents;
 
 const log = Utilities.getLogger();
 
 class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
-     * @param {object} - blockchainConfig
+     * @param blockchainConfig
+     * @param emitter
      */
-    constructor(blockchainConfig) {
+    constructor(blockchainConfig, emitter) {
         // Loading Web3
+        this.emitter = emitter;
         this.web3 = new Web3(new Web3.providers.HttpProvider(`${blockchainConfig.rpc_node_host}:${blockchainConfig.rpc_node_port}`));
         this.transactions = new Transactions(
             this.web3,
@@ -69,21 +67,21 @@ class Ethereum {
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
-                globalEmitter.emit('eth-offer-created', event);
+                emitter.emit('eth-offer-created', event);
             })
             .on('error', log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
-                globalEmitter.emit('eth-offer-canceled', event);
+                emitter.emit('eth-offer-canceled', event);
             })
             .on('error', log.warn);
 
         this.biddingContract.events.BidTaken()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
-                globalEmitter.emit('eth-bid-taken', event);
+                emitter.emit('eth-bid-taken', event);
             })
             .on('error', log.warn);
 
@@ -104,10 +102,22 @@ class Ethereum {
             to: this.otContractAddress,
         };
 
-        const dataIdHash = Utilities.sha3(dataId);
+        const dataIdHash = Utilities.sha3(dataId.toString());
 
         log.warn('Writing root hash');
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [dataId, dataIdHash, rootHash], options);
+    }
+
+    /**
+     * Gets root hash for import
+     * @param dcWallet DC wallet
+     * @param dataId   Import ID
+     * @return {Promise<any>}
+     */
+    async getRootHash(dcWallet, dataId) {
+        const dataIdHash = Utilities.sha3(dataId.toString());
+        log.trace('Fetching root hash for: ', dcWallet, dataIdHash);
+        return this.otContract.methods.getFingerprintByBatchHash(dcWallet, dataIdHash).call();
     }
 
     /**
@@ -394,7 +404,7 @@ class Ethereum {
                     where,
                 }).then((eventData) => {
                     if (eventData) {
-                        globalEmitter.emit(event, eventData.dataValues);
+                        this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
                         eventData.save().then(() => {
                             clearInterval(token);
@@ -438,7 +448,7 @@ class Ethereum {
             const eventData = await Storage.models.events.findAll({ where });
             if (eventData) {
                 eventData.forEach(async (data) => {
-                    globalEmitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
+                    this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
                     data.finished = true;
                     await data.save();
                 });

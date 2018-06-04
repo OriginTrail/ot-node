@@ -45,6 +45,6 @@
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2018 OriginTrail</string>
     <key>AsarIntegrity</key>
-    <string>{"checksums":{"app.asar":"wCO1xSdLUnxOke8yjwzue5qxT8Al4s9Lo1k2oxC57X5z9m6+kXzCWS7W6uopwv6mtTeVFQApupGcEv+yf//4Mw==","electron.asar":"ofPEIsT8YhpsxiPf8+uWXh3sWH9KDicszx4MKtBhAgJuX7ruQJNNByfh7Wo07tgoK3tb46ChQdJkdtdJLU1znA=="}}</string>
+    <string>{"checksums":{"app.asar":"5L27KgbG+OgdYrRyP7wO5bs/4tk0uw5NqTbaN6LIRr88lFYRvgU4e7ZioxPqNkWxROtJ7V35k+cDJqRNZcgEBw==","electron.asar":"ofPEIsT8YhpsxiPf8+uWXh3sWH9KDicszx4MKtBhAgJuX7ruQJNNByfh7Wo07tgoK3tb46ChQdJkdtdJLU1znA=="}}</string>
   </dict>
 </plist>

@@ -1,5 +1,5 @@
 const {
-    describe, it, after, before,
+    describe, it, after, before, beforeEach,
 } = require('mocha');
 const { assert, expect } = require('chai');
 var models = require('../../models');
@@ -8,15 +8,13 @@ const Utilities = require('../../modules/Utilities');
 const Storage = require('../../modules/Storage');
 // eslint-disable-next-line  prefer-destructuring
 const Database = require('arangojs').Database;
-const ArangoJs = require('../../modules/Database/Arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
-const databaseData = require('./test_data/database-data.js');
+const databaseData = require('./test_data/arangodb-data.js');
 
 const myUserName = 'otuser';
 const myPassword = 'otpass';
 const myDatabaseName = 'test_origintrail';
 
-const documentCollectionName = 'ot_vertices';
 const edgeCollectionName = 'ot_edges';
 const vertexOne = databaseData.vertices[0];
 const vertexTwo = databaseData.vertices[1];
@@ -38,34 +36,59 @@ describe('GraphStorage module', () => {
             'host', 'port', 'max_path_length', 'database']);
         selectedDatabase.database = myDatabaseName;
 
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.createDatabase(
-            myDatabaseName,
-            [{ username: myUserName, passwd: myPassword, active: true }],
-        );
+        if (selectedDatabase.database_system === 'arango_db') {
+            systemDb = new Database();
+            systemDb.useBasicAuth('root', 'root');
+            await systemDb.createDatabase(
+                myDatabaseName,
+                [{ username: myUserName, passwd: myPassword, active: true }],
+            );
+        } else if (selectedDatabase.database_system === 'neo4j') {
+            // TODO Implement me
+        }
 
         myGraphStorage = new GraphStorage(selectedDatabase);
         expect(myGraphStorage).to.be.an.instanceof(GraphStorage);
+        myGraphStorageConnection = await myGraphStorage.connect();
+
+        myInvalidGraphStorage = new GraphStorage();
     });
 
-    it('connect() and identify()', async () => {
-        myGraphStorageConnection = await myGraphStorage.connect();
-        // TODO meaningful checks for connect()
+    beforeEach('reset ot_vertices and ot_edges collections', async () => {
+        if (selectedDatabase.database_system === 'arango_db') {
+            try {
+                await myGraphStorage.db.dropCollection('ot_vertices');
+                await myGraphStorage.db.dropCollection('ot_edges');
+            } catch (err) {
+                console.log('Ooops, there was no collection to drop!!!!');
+            }
+            try {
+                await myGraphStorage.db.createCollection('ot_vertices');
+                await myGraphStorage.db.createEdgeCollection('ot_edges');
+            } catch (err) {
+                console.log('Oops, having difficulties creating collections');
+            }
+        } else if (selectedDatabase.database_system === 'neo4j') {
+            // TODO Implement me
+        }
+    });
 
-        assert.equal(myGraphStorage.identify(), 'ArangoJS');
-        assert.equal(myGraphStorage.db.identify(), 'ArangoJS');
+    it('identify()', async () => {
+        if (selectedDatabase.database_system === 'arango_db') {
+            assert.equal(myGraphStorage.identify(), 'ArangoJS');
+            assert.equal(myGraphStorage.db.identify(), 'ArangoJS');
+        } else if (selectedDatabase.database_system === 'neo4j') {
+            // TODO Implement me
+        }
     });
 
     it('Unable to connect to graph database scenario', async () => {
-        myInvalidGraphStorage = new GraphStorage();
         try {
             myInvalidGraphConnection = await myInvalidGraphStorage.connect();
         } catch (error) {
             assert.isTrue(error.toString().indexOf('Unable to connect to graph database') >= 0);
         }
     });
-
 
     it('getDatabaseInfo() ', () => {
         const result = myGraphStorage.getDatabaseInfo();
@@ -90,8 +113,7 @@ describe('GraphStorage module', () => {
         });
     });
 
-
-    it('adding 2nd vertex from invalid storage should fail', async () => {
+    it('adding vertex from invalid storage should fail', async () => {
         try {
             const result =
                 await myInvalidGraphStorage.addVertex(vertexTwo);
@@ -107,6 +129,9 @@ describe('GraphStorage module', () => {
     });
 
     it('findVerticesByImportId() ', async () => {
+        // precondition
+        await myGraphStorage.addVertex(vertexOne);
+
         await myGraphStorage.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
@@ -125,9 +150,47 @@ describe('GraphStorage module', () => {
         }
     });
 
+    it('test virtualGraph', async () => {
+        // precondition
+        const responseVertexOne = await myGraphStorage.addVertex(vertexOne);
+        const responseVertexTwo = await myGraphStorage.addVertex(vertexTwo);
+        const responseEdgeOne = await myGraphStorage.addEdge(edgeOne);
+
+        assert.equal(responseVertexOne._key, vertexOne._key);
+        assert.equal(responseVertexTwo._key, vertexTwo._key);
+        assert.equal(responseEdgeOne._key, edgeOne._key);
+
+        const path = await myGraphStorage.findTraversalPath(vertexOne, 1000);
+
+        function sortByKey(a, b) {
+            if (a._key < b._key) {
+                return 1;
+            }
+            if (a._key > b._key) {
+                return -1;
+            }
+            return 0;
+        }
+
+        const objectVertices = [vertexOne, vertexTwo];
+        const objectEdges = [edgeOne];
+        assert.deepEqual(
+            GraphStorage.getEdgesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectEdges).sort(sortByKey),
+        );
+        assert.deepEqual(
+            GraphStorage.getVerticesFromVirtualGraph(path).sort(sortByKey),
+            Utilities.copyObject(objectVertices).sort(sortByKey),
+        );
+    });
+
     after('drop myGraphStorage db', async () => {
-        systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
-        await systemDb.dropDatabase(myDatabaseName);
+        if (selectedDatabase.database_system === 'arango_db') {
+            systemDb = new Database();
+            systemDb.useBasicAuth('root', 'root');
+            await systemDb.dropDatabase(myDatabaseName);
+        } else if (selectedDatabase.database_system === 'neo4j') {
+            // TODO implement me
+        }
     });
 });

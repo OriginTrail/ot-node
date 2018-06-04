@@ -1,5 +1,6 @@
 const { Database } = require('arangojs');
 const Utilities = require('./../Utilities');
+const request = require('superagent');
 
 const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
@@ -36,7 +37,7 @@ class ArangoJS {
     }
 
     /**
-     * Find set of vertices
+     * Find set of vertices with _key, vertex_type and identifiers values
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
      */
@@ -76,16 +77,17 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async findTraversalPath(startVertex, depth) {
-        if (startVertex === undefined || startVertex._id === undefined) {
+        if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        const queryString = `FOR vertex, edge, path IN 1 .. ${depth}
-            OUTBOUND '${startVertex._id}'
-            GRAPH 'origintrail_graph'
+        const queryString = `FOR vertex, edge, path
+            IN 1 .. ${depth}
+            OUTBOUND 'ot_vertices/${startVertex._key}'
+            ot_edges
             RETURN path`;
 
-        const result = await this.runQuery(queryString);
-        return ArangoJS.convertToVirtualGraph(result);
+        const rawGraph = await this.runQuery(queryString);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
     /**
@@ -108,20 +110,16 @@ class ArangoJS {
             for (const edgeId in graph.edges) {
                 const edge = graph.edges[edgeId];
                 if (edge !== null) {
-                    edge.key = edge._key;
                     // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge.from = edge._from.split('/')[1];
+                    edge._from = edge._from.split('/')[1];
                     // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge.to = edge._to.split('/')[1];
+                    edge._to = edge._to.split('/')[1];
 
-                    delete edge._key;
                     delete edge._id;
                     delete edge._rev;
-                    delete edge._to;
-                    delete edge._from;
 
                     // eslint-disable-next-line  prefer-destructuring
-                    const key = edge.key;
+                    const key = edge._key;
                     if (resultEdges[key] === undefined) {
                         resultEdges[key] = edge;
                     }
@@ -132,15 +130,13 @@ class ArangoJS {
                 for (const vertexId in graph.vertices) {
                     const vertex = graph.vertices[vertexId];
                     if (vertex !== null) {
-                        vertex.key = vertex._key;
                         vertex.outbound = [];
 
-                        delete vertex._key;
                         delete vertex._id;
                         delete vertex._rev;
 
                         // eslint-disable-next-line  prefer-destructuring
-                        const key = vertex.key;
+                        const key = vertex._key;
                         if (resultVertices[key] === undefined) {
                             resultVertices[key] = vertex;
                         }
@@ -150,10 +146,10 @@ class ArangoJS {
         }
 
         for (const vertexId in resultVertices) {
-            resultList[resultVertices[vertexId].key] = resultVertices[vertexId];
+            resultList[resultVertices[vertexId]._key] = resultVertices[vertexId];
         }
         for (const edgeId in resultEdges) {
-            resultList[resultEdges[edgeId].from].outbound.push(resultEdges[edgeId]);
+            resultList[resultEdges[edgeId]._from].outbound.push(resultEdges[edgeId]);
         }
         return {
             data: resultList,
@@ -178,24 +174,50 @@ class ArangoJS {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param _key      Vertex _key
-     * @return {Promise<void>}
+     * Updates document imports by ID
+     * @param collectionName
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
      */
-    async findMaxVersion(senderId, uid, _key) {
-        const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND AND v._key != @_key AND v.sender_id == @senderId ' +
-                'SORT v.version DESC ' +
-                'LIMIT 1 ' +
-                'RETURN v.version';
-        const params = {
-            uid,
-            _key,
-            senderId,
-        };
-        return this.runQuery(queryString, params);
+    async updateDocumentImportsByUID(collectionName, senderId, uid, importNumber) {
+        const result = await this.findDocumentWithMaxVersion(collectionName, senderId, uid);
+        let new_imports = [];
+        if (result.imports !== undefined) {
+            new_imports = result.imports;
+
+            if (new_imports.includes(importNumber)) {
+                return result;
+            }
+        }
+
+        new_imports.push(importNumber);
+
+        result.imports = new_imports;
+        return this.updateDocument(collectionName, result);
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateVertexImportsByUID(senderId, uid, importNumber) {
+        return this.updateDocumentImportsByUID('ot_vertices', senderId, uid, importNumber);
+    }
+
+    /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateEdgeImportsByUID(senderId, uid, importNumber) {
+        return this.updateDocumentImportsByUID('ot_edges', senderId, uid, importNumber);
     }
 
     /**
@@ -205,11 +227,32 @@ class ArangoJS {
      * @return {Promise<void>}
      */
     async findVertexWithMaxVersion(senderId, uid) {
-        const queryString = 'FOR v IN ot_vertices ' +
-                'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
-                'SORT v.version DESC ' +
-                'LIMIT 1 ' +
-                'RETURN v';
+        return this.findDocumentWithMaxVersion('ot_vertices', senderId, uid);
+    }
+
+    /**
+     * Gets max where uid is the same and has the max version
+     * @param senderId  Sender ID
+     * @param uid       Vertex uid
+     * @return {Promise<void>}
+     */
+    async findEdgeWithMaxVersion(senderId, uid) {
+        return this.findDocumentWithMaxVersion('ot_edges', senderId, uid);
+    }
+
+    /**
+     * Gets max where uid is the same and has the max version
+     * @param senderId   Sender ID
+     * @param uid        Vertex uid
+     * @param collection Collection name
+     * @return {Promise<void>}
+     */
+    async findDocumentWithMaxVersion(collection, senderId, uid) {
+        const queryString = `FOR v IN  ${collection} ` +
+            'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
+            'SORT v.version DESC ' +
+            'LIMIT 1 ' +
+            'RETURN v';
         const params = {
             uid,
             senderId,
@@ -264,7 +307,8 @@ class ArangoJS {
         const collection = this.db.collection(collectionName);
         if (document.sender_id && document.identifiers && document.identifiers.uid) {
             const maxVersionDoc =
-                await this.findVertexWithMaxVersion(
+                await this.findDocumentWithMaxVersion(
+                    collectionName,
                     document.sender_id,
                     document.identifiers.uid,
                 );
@@ -322,6 +366,28 @@ class ArangoJS {
     }
 
     /**
+    * Get ArangoDB version
+    * @param {string} - host
+    * @param {string} - port
+    * @param {string} - username
+    * @param {string} - password
+    * @returns {Promise<any>}
+    */
+    async version(host, port, username, password) {
+        const result = await request
+            .get(`http://${host}:${port}/_api/version`)
+            .auth(username, password);
+
+        try {
+            if (result.status === 200) {
+                return result.body.version;
+            }
+        } catch (error) {
+            throw Error(`Failed to contact arangodb${error}`);
+        }
+    }
+
+    /**
      * Create document collection, if collection does not exist
      * @param collectionName
      */
@@ -335,6 +401,21 @@ class ArangoJS {
             if (errorCode === 409 && IGNORE_DOUBLE_INSERT) {
                 return 'Double insert';
             }
+            throw err;
+        }
+    }
+
+    /**
+     * Deletes the collection in the database.
+     * @param collectionName
+     */
+    async dropCollection(collectionName) {
+        if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
+        const collection = this.db.collection(collectionName);
+        try {
+            await collection.drop();
+            return 'Collection is now deleted';
+        } catch (err) {
             throw err;
         }
     }
@@ -365,7 +446,7 @@ class ArangoJS {
     }
 
     async findEdgesByImportId(data_id) {
-        const queryString = 'FOR v IN ot_edges FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
         if (typeof data_id !== 'number') {
             data_id = parseInt(data_id, 10);

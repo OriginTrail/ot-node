@@ -1,20 +1,25 @@
 const Challenge = require('./Challenge');
 const config = require('./Config');
-const Blockchain = require('./BlockChainInstance');
-const challenger = require('./Challenger');
-const node = require('./Node');
 
 const log = require('./Utilities').getLogger();
 
-
 class DataReplication {
     /**
-   * Sends data to DH for replication
-   *
-   * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
-   * @return object response
-   */
-    static async sendPayload(data) {
+     * Default constructor
+     * @param ctx  IoC container context
+     */
+    constructor(ctx) {
+        this.network = ctx.network;
+        this.challenger = ctx.challenger;
+    }
+
+    /**
+     * Sends data to DH for replication
+     *
+     * @param data object {VERTICES, EDGES, IMPORT_ID} This is the payload to be sent
+     * @return object response
+     */
+    async sendPayload(data) {
         log.info('Entering sendPayload');
 
         const currentUnixTime = Date.now();
@@ -27,7 +32,7 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data = this.sortEncryptedVertices(data);
+        data = this._sortEncryptedVertices(data);
 
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
@@ -36,7 +41,7 @@ class DataReplication {
         );
 
         Challenge.addTests(tests).then(() => {
-            challenger.startChallenging();
+            this.challenger.startChallenging();
         }, () => {
             log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
@@ -53,12 +58,18 @@ class DataReplication {
         };
 
         // send payload to DH
-        node.ot.payloadRequest(payload, data.contact, () => {
+        this.network.kademlia().payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
     }
 
-    static sortEncryptedVertices(data) {
+    /**
+     * Sort encypted vertices according to their keys
+     * @param data
+     * @return {*}
+     * @private
+     */
+    _sortEncryptedVertices(data) {
         data.encryptedVertices.vertices.sort((a, b) => {
             if (a._key < b._key) {
                 return -1;
