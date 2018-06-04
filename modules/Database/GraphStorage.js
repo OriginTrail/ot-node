@@ -366,9 +366,7 @@ class GraphStorage {
         for (const i in virtualEdges) {
             edges.push(this.db.addEdge(virtualEdges[i]));
         }
-        await Promise.all(edges);
-
-        return 0;
+        return Promise.all(edges);
     }
 
     /**
