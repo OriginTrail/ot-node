@@ -1,3 +1,5 @@
+const Utilities = require('../../modules/Utilities');
+
 const {
     describe, before, after, afterEach, it,
 } = require('mocha');
@@ -87,7 +89,7 @@ describe('Neo4j module ', async () => {
         await testDb.addEdge(edgeOne);
 
         const path = await testDb.findTraversalPath(vertexOne, 1);
-        assert.equal(path.length, 2);
+        assert.equal(Object.keys(path.data).length, 2);
     });
 
     it('.findTraversalPath() with non existing starting vertex', async () => {
@@ -96,7 +98,7 @@ describe('Neo4j module ', async () => {
         };
 
         const path = await testDb.findTraversalPath(startVertex, 1);
-        assert.equal(path, '');
+        assert.isEmpty(path.data);
     });
 
     it('.findTraversalPath() with depth less than max length', async () => {
@@ -110,7 +112,7 @@ describe('Neo4j module ', async () => {
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 2);
         console.log(path);
-        assert.equal(path.length, 3);
+        assert.equal(Object.keys(path.data).length, 3);
     });
 
     it('.findTraversalPath() with max length', async () => {
@@ -127,7 +129,7 @@ describe('Neo4j module ', async () => {
         await testDb.addEdge(edges[2]);
 
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
-        assert.equal(path.length, 4);
+        assert.equal(Object.keys(path.data).length, 4);
     });
 
     it('traversal path with interconnected vertices', async () => {
@@ -148,6 +150,7 @@ describe('Neo4j module ', async () => {
         const path = await testDb.findTraversalPath({ _key: '100' }, 1000);
 
         console.log(JSON.stringify(path));
+        // TODO assert.deepEqual
     });
 
     it('findVertexWithMaxVersion', async () => {

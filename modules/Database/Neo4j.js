@@ -248,13 +248,7 @@ class Neo4jDB {
         if (Array.isArray(property)) {
             const newArray = [];
             for (const item of property) {
-                let deserialized = item;
-                try {
-                    deserialized = JSON.parse(item);
-                } catch (e) {
-                    // skip
-                }
-                newArray.push(Neo4jDB._transformProperty(deserialized));
+                newArray.push(Neo4jDB._transformProperty(item));
             }
             return newArray;
         }
@@ -447,11 +441,19 @@ class Neo4jDB {
         const key = '_key';
         const value = startVertex._key;
         const session = this.driver.session();
-        const result = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
+        const rawGraph = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
         session.close();
+        return this.convertToVirtualGraph(rawGraph);
+    }
 
+    /**
+     * Transforms raw graph data to virtual one (without
+     * @param rawGraph  Raw graph structure
+     * @returns {{}}
+     */
+    async convertToVirtualGraph(rawGraph) {
         const vertices = {};
-        for (const r of result.records) {
+        for (const r of rawGraph.records) {
             const leftNode = r.get('n');
             const rightNode = r.get('k');
 
@@ -462,36 +464,28 @@ class Neo4jDB {
             if (!first) {
                 // eslint-disable-next-line
                 first = await this._fetchVertex('_key', leftNode.properties._key);
-                first.key = first._key;
-                delete first._key;
-                vertices[first.key] = first;
-                vertices[first.key].edges = [];
+                vertices[first._key] = first;
+                vertices[first._key].outbound = [];
             }
 
             let second = vertices[rightNode.properties._key];
             if (!second) {
                 // eslint-disable-next-line
                 second = await this._fetchVertex('_key', rightNode.properties._key);
-                second.key = second._key;
-                delete second._key;
-                vertices[second.key] = second;
-                vertices[second.key].edges = [];
+                vertices[second._key] = second;
+                vertices[second._key].outbound = [];
             }
 
             const fromNode = vertices[relation.properties._from];
-            Object.assign(relation, relation.properties);
-            delete relation.properties;
-            delete relation.identity;
-            delete relation.start;
-            delete relation.end;
-            fromNode.edges.push(relation);
+            const transformedRelation = {};
+            for (const key in relation.properties) {
+                transformedRelation[key] = Neo4jDB._transformProperty(relation.properties[key]);
+            }
+            fromNode.outbound.push(transformedRelation);
         }
-
-        const res = [];
-        for (const k in vertices) {
-            res.push(vertices[k]);
-        }
-        return res;
+        return {
+            data: vertices,
+        };
     }
 
     /**
@@ -649,7 +643,6 @@ class Neo4jDB {
     identify() {
         return 'Neo4j';
     }
-
     /**
      * Get Neo4j
      * @param {string} - host

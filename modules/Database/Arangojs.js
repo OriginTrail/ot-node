@@ -37,7 +37,7 @@ class ArangoJS {
     }
 
     /**
-     * Find set of vertices
+     * Find set of vertices with _key, vertex_type and identifiers values
      * @param queryObject       Query for getting vertices
      * @returns {Promise<any>}
      */
@@ -77,16 +77,17 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async findTraversalPath(startVertex, depth) {
-        if (startVertex === undefined || startVertex._id === undefined) {
+        if (startVertex === undefined || startVertex._key === undefined) {
             return [];
         }
-        const queryString = `FOR vertex, edge, path IN 1 .. ${depth}
-            OUTBOUND '${startVertex._id}'
-            GRAPH 'origintrail_graph'
+        const queryString = `FOR vertex, edge, path
+            IN 1 .. ${depth}
+            OUTBOUND 'ot_vertices/${startVertex._key}'
+            ot_edges
             RETURN path`;
 
-        const result = await this.runQuery(queryString);
-        return ArangoJS.convertToVirtualGraph(result);
+        const rawGraph = await this.runQuery(queryString);
+        return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
     /**
@@ -109,20 +110,16 @@ class ArangoJS {
             for (const edgeId in graph.edges) {
                 const edge = graph.edges[edgeId];
                 if (edge !== null) {
-                    edge.key = edge._key;
                     // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge.from = edge._from.split('/')[1];
+                    edge._from = edge._from.split('/')[1];
                     // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge.to = edge._to.split('/')[1];
+                    edge._to = edge._to.split('/')[1];
 
-                    delete edge._key;
                     delete edge._id;
                     delete edge._rev;
-                    delete edge._to;
-                    delete edge._from;
 
                     // eslint-disable-next-line  prefer-destructuring
-                    const key = edge.key;
+                    const key = edge._key;
                     if (resultEdges[key] === undefined) {
                         resultEdges[key] = edge;
                     }
@@ -133,15 +130,13 @@ class ArangoJS {
                 for (const vertexId in graph.vertices) {
                     const vertex = graph.vertices[vertexId];
                     if (vertex !== null) {
-                        vertex.key = vertex._key;
                         vertex.outbound = [];
 
-                        delete vertex._key;
                         delete vertex._id;
                         delete vertex._rev;
 
                         // eslint-disable-next-line  prefer-destructuring
-                        const key = vertex.key;
+                        const key = vertex._key;
                         if (resultVertices[key] === undefined) {
                             resultVertices[key] = vertex;
                         }
@@ -151,10 +146,10 @@ class ArangoJS {
         }
 
         for (const vertexId in resultVertices) {
-            resultList[resultVertices[vertexId].key] = resultVertices[vertexId];
+            resultList[resultVertices[vertexId]._key] = resultVertices[vertexId];
         }
         for (const edgeId in resultEdges) {
-            resultList[resultEdges[edgeId].from].outbound.push(resultEdges[edgeId]);
+            resultList[resultEdges[edgeId]._from].outbound.push(resultEdges[edgeId]);
         }
         return {
             data: resultList,
