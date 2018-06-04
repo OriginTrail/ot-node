@@ -1,0 +1,287 @@
+{
+  "data": {
+    "sender": {
+      "id": "urn:ot:mda:actor:id:Company_1",
+      "wallet": "0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0"
+    },
+    "things": [
+      {
+        "thing": {
+          "id": "VITALSENSOR1",
+          "sender": "urn:ot:mda:actor:id:Hospital1",
+          "name": "OTVS1",
+          "description": "Patient vital functions system sensor",
+          "tags": [
+            "sensor",
+            "vital",
+            "patient"
+          ]
+        },
+        "model": {
+          "links": {
+            "product": {
+              "link": "https://examplesensors.net/vitalfunctions",
+              "title": "Product this Web Thing is based on"
+            },
+            "properties": {
+              "link": "/properties",
+              "title": "List of Properties",
+              "resources": {
+                "heartbeat": {
+                  "name": "Heartbeat sensor",
+                  "description": "Patient heartbeat sensor",
+                  "tags": [
+                    "sensor",
+                    "private"
+                  ]
+                },
+                "temperature": {
+                  "name": "Temperature sensor",
+                  "description": "Patient temperature sensor",
+                  "tags": [
+                    "sensor",
+                    "private"
+                  ]
+                }
+              }
+            },
+            "actions": {
+              "link": "/actions",
+              "title": "Actions of this Web Thing",
+              "resources": {
+                "turnedOn": {
+                  "values": {
+                    "deviceTurnedOn": {
+                      "type": "boolean",
+                      "required": true
+                    }
+                  }
+                },
+                "heartbeat": {
+                  "getMeasurement": {
+                    "values": {
+                      "type": "integer",
+                      "required": true
+                    }
+                  }
+                },
+                "temperature": {
+                  "getMeasurement": {
+                    "values": {
+                      "type": "float",
+                      "required": true
+                    }
+                  }
+                },
+                "dataExport": {
+                  "dataExport": {
+                    "values": {
+                      "type": "string",
+                      "required": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "properties": [
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 100,
+              "timestamp": "2018-05-01T13:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 39.2,
+              "timestamp": "2018-05-01T13:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 90,
+              "timestamp": "2018-05-01T14:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 38.7,
+              "timestamp": "2018-05-01T14:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 77,
+              "timestamp": "2018-05-01T15:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.6,
+              "timestamp": "2018-05-01T15:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 67,
+              "timestamp": "2018-05-01T16:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.1,
+              "timestamp": "2018-05-01T16:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 72,
+              "timestamp": "2018-05-01T17:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 36.9,
+              "timestamp": "2018-05-01T17:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 90,
+              "timestamp": "2018-05-01T17:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.0,
+              "timestamp": "2018-05-01T18:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 80,
+              "timestamp": "2018-05-01T19:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.2,
+              "timestamp": "2018-05-01T19:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 65,
+              "timestamp": "2018-05-01T20:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.1,
+              "timestamp": "2018-05-01T20:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 63,
+              "timestamp": "2018-05-01T21:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 37.0,
+              "timestamp": "2018-05-01T21:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 67,
+              "timestamp": "2018-05-01T22:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 36.8,
+              "timestamp": "2018-05-01T22:00:00.000Z"
+            }
+          },
+          {
+            "id": "heartbeat",
+            "name": "Patient Heartbeat Sensor",
+            "values": {
+              "heartbeat": 60,
+              "timestamp": "2018-05-01T23:00:00.000Z"
+            }
+          },
+          {
+            "id": "temperature",
+            "name": "Patient Temperature Sensor",
+            "values": {
+              "temp": 36.7,
+              "timestamp": "2018-05-01T23:00:00.000Z"
+            }
+          }
+        ],
+        "actions": [
+          {
+            "id": "deviceTurnedOn",
+            "name": "Device online",
+            "timestamp": "2018-05-01T12:00:00.000Z"
+          },
+          {
+            "id": "dataExport",
+            "name": "Patient data exported for OriginTrail",
+            "timestamp": "2018-05-01T23:59:00.000Z"
+          }
+        ],
+        "readPoint": {
+          "id": "urn:epc:id:sgln:HospitalBuilding1.Room1048"
+        },
+        "observedObjects": [
+          "urn:ot:mda:actor:id:PatientP1408"
+        ]
+      }
+    ]
+  }
+}

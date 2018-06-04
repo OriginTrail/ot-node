@@ -248,13 +248,7 @@ class Neo4jDB {
         if (Array.isArray(property)) {
             const newArray = [];
             for (const item of property) {
-                let deserialized = item;
-                try {
-                    deserialized = JSON.parse(item);
-                } catch (e) {
-                    // skip
-                }
-                newArray.push(Neo4jDB._transformProperty(deserialized));
+                newArray.push(Neo4jDB._transformProperty(item));
             }
             return newArray;
         }
@@ -332,23 +326,6 @@ class Neo4jDB {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param key       Key
-     * @return {Promise<void>}
-     */
-    async findMaxVersion(senderId, uid, key) {
-        const session = this.driver.session();
-        const result = await session.readTransaction(tx => tx.run(
-            'MATCH (n)-[:CONTAINS]->(i) WHERE i.uid = $uid AND n._key <> $key AND n.sender_id = $senderId return MAX(n.version)',
-            { uid, senderId, key },
-        ));
-        session.close();
-        return result.records[0]._fields[0];
-    }
-
-    /**
      * Gets max where uid is the same and has the max version
      * @param senderId  Sender ID
      * @param uid       Vertex uid
@@ -360,6 +337,22 @@ class Neo4jDB {
         session.close();
         if (result.records.length > 0) {
             return this._fetchVertex('_key', result.records[0]._fields[0].properties._key);
+        }
+        return null;
+    }
+
+    /**
+     * Gets max where id is the same and has the max version
+     * @param senderId  Sender ID
+     * @param uid       Edge uid
+     * @return {Promise<void>}
+     */
+    async findEdgeWithMaxVersion(senderId, uid) {
+        const session = this.driver.session();
+        const result = await session.readTransaction(tx => tx.run('MATCH ()-[r]->() WHERE r.uid = $uid AND r.sender_id = $senderId RETURN r ORDER BY r.version DESC LIMIT 1', { uid, senderId }));
+        session.close();
+        if (result.records.length > 0) {
+            return result.records[0]._fields[0].properties;
         }
         return null;
     }
@@ -448,11 +441,19 @@ class Neo4jDB {
         const key = '_key';
         const value = startVertex._key;
         const session = this.driver.session();
-        const result = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
+        const rawGraph = await session.readTransaction(tx => tx.run(`MATCH (n {${key}: ${JSON.stringify(value)}})-[r* 1..${depth}]->(k) WHERE NONE(rel in r WHERE type(rel)="CONTAINS") RETURN n,r,k ORDER BY length(r)`));
         session.close();
+        return this.convertToVirtualGraph(rawGraph);
+    }
 
+    /**
+     * Transforms raw graph data to virtual one (without
+     * @param rawGraph  Raw graph structure
+     * @returns {{}}
+     */
+    async convertToVirtualGraph(rawGraph) {
         const vertices = {};
-        for (const r of result.records) {
+        for (const r of rawGraph.records) {
             const leftNode = r.get('n');
             const rightNode = r.get('k');
 
@@ -463,36 +464,28 @@ class Neo4jDB {
             if (!first) {
                 // eslint-disable-next-line
                 first = await this._fetchVertex('_key', leftNode.properties._key);
-                first.key = first._key;
-                delete first._key;
-                vertices[first.key] = first;
-                vertices[first.key].edges = [];
+                vertices[first._key] = first;
+                vertices[first._key].outbound = [];
             }
 
             let second = vertices[rightNode.properties._key];
             if (!second) {
                 // eslint-disable-next-line
                 second = await this._fetchVertex('_key', rightNode.properties._key);
-                second.key = second._key;
-                delete second._key;
-                vertices[second.key] = second;
-                vertices[second.key].edges = [];
+                vertices[second._key] = second;
+                vertices[second._key].outbound = [];
             }
 
             const fromNode = vertices[relation.properties._from];
-            Object.assign(relation, relation.properties);
-            delete relation.properties;
-            delete relation.identity;
-            delete relation.start;
-            delete relation.end;
-            fromNode.edges.push(relation);
+            const transformedRelation = {};
+            for (const key in relation.properties) {
+                transformedRelation[key] = Neo4jDB._transformProperty(relation.properties[key]);
+            }
+            fromNode.outbound.push(transformedRelation);
         }
-
-        const res = [];
-        for (const k in vertices) {
-            res.push(vertices[k]);
-        }
-        return res;
+        return {
+            data: vertices,
+        };
     }
 
     /**
@@ -520,6 +513,54 @@ class Neo4jDB {
             imports,
         }));
         session.close();
+    }
+
+    /**
+     * Updates vertex imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateVertexImportsByUID(senderId, uid, importNumber) {
+        const result = await this.findVertexWithMaxVersion(senderId, uid);
+        const session = this.driver.session();
+        let { imports } = result;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        const response = await session.writeTransaction(tx => tx.run('MATCH (n) WHERE n._key = $_key SET n.imports = $imports return n', {
+            _key: result._key,
+            imports,
+        }));
+        session.close();
+        return response;
+    }
+
+    /**
+     * Updates edge imports by ID
+     * @param senderId
+     * @param uid
+     * @param importNumber
+     * @return {Promise<*>}
+     */
+    async updateEdgeImportsByUID(senderId, uid, importNumber) {
+        const result = await this.findEdgeWithMaxVersion(senderId, uid);
+        const session = this.driver.session();
+        let { imports } = result;
+        if (imports) {
+            imports.push(importNumber);
+        } else {
+            imports = [importNumber];
+        }
+        const response = await session.writeTransaction(tx => tx.run('MATCH ()-[r]->() WHERE r._key = $_key SET r.imports = $imports return r', {
+            _key: result._key,
+            imports,
+        }));
+        session.close();
+        return response;
     }
 
     /**
@@ -602,7 +643,6 @@ class Neo4jDB {
     identify() {
         return 'Neo4j';
     }
-
     /**
      * Get Neo4j
      * @param {string} - host
