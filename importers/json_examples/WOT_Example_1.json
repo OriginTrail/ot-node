@@ -1,194 +1,199 @@
 {
-  "data": [
-    {
-      "thing": {
-        "id": "pi",
-        "sender": "urn:ot:mda:actor:id:Company_1",
-        "name": "My WoT Raspberry PI",
-        "description": "A simple WoT-connected Raspberry PI for the WoT Label.",
-        "tags": [
-          "raspberry",
-          "pi",
-          "WoT"
-        ],
-        "customFields": {
-          "port": 8484
-        }
-      },
-      "model": {
-        "links": {
-          "product": {
-            "link": "https://www.raspberrypi.org/products/raspberry-pi-2-model-b/",
-            "title": "Product this Web Thing is based on"
-          },
-          "properties": {
-            "link": "/properties",
-            "title": "List of Properties",
-            "resources": {
-              "temperature": {
-                "name": "Temperature Sensor",
-                "description": "An ambient temperature sensor.",
-                "values": {
-                  "temp": {
-                    "name": "Temperature sensor",
-                    "description": "The temperature in celsius",
-                    "unit": "celsius",
-                    "customFields": {
-                      "gpio": 21
-                    }
-                  }
-                },
-                "tags": [
-                  "sensor",
-                  "public",
-                  "indoors"
-                ]
-              },
-              "humidity": {
-                "name": "Humidity Sensor",
-                "description": "An ambient humidity sensor.",
-                "values": {
-                  "h": {
-                    "name": "Humidity",
-                    "description": "Percentage of Humidity",
-                    "unit": "percent",
-                    "customFields": {
-                      "gpio": 21
-                    }
-                  }
-                },
-                "tags": [
-                  "sensor",
-                  "public"
-                ]
-              },
-              "pir": {
-                "name": "Passive Infrared",
-                "description": "A passive infrared sensor.",
-                "values": {
-                  "p": {
-                    "name": "Presence",
-                    "description": "Current sensor value (true=motion detected)",
-                    "type": "boolean",
-                    "customFields": {
-                      "gpio": 20
-                    }
-                  }
-                },
-                "tags": [
-                  "sensor",
-                  "public"
-                ]
-              },
-              "leds": {
-                "name": "LEDs",
-                "description": "The LEDs of this device.",
-                "values": {
-                  "1": {
-                    "name": "LED 1",
-                    "customFields": {
-                      "gpio": 17
+  "data": {
+    "sender": {
+      "id": "urn:ot:mda:actor:id:Company_1",
+      "wallet": "0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0"
+    },
+    "things": [
+      {
+        "thing": {
+          "id": "pi",
+          "name": "My WoT Raspberry PI",
+          "description": "A simple WoT-connected Raspberry PI for the WoT Label.",
+          "tags": [
+            "raspberry",
+            "pi",
+            "WoT"
+          ],
+          "customFields": {
+            "port": 8484
+          }
+        },
+        "model": {
+          "links": {
+            "product": {
+              "link": "https://www.raspberrypi.org/products/raspberry-pi-2-model-b/",
+              "title": "Product this Web Thing is based on"
+            },
+            "properties": {
+              "link": "/properties",
+              "title": "List of Properties",
+              "resources": {
+                "temperature": {
+                  "name": "Temperature Sensor",
+                  "description": "An ambient temperature sensor.",
+                  "values": {
+                    "temp": {
+                      "name": "Temperature sensor",
+                      "description": "The temperature in celsius",
+                      "unit": "celsius",
+                      "customFields": {
+                        "gpio": 21
+                      }
                     }
                   },
-                  "2": {
-                    "name": "LED 2",
-                    "customFields": {
-                      "gpio": 19
-                    }
-                  }
+                  "tags": [
+                    "sensor",
+                    "public",
+                    "indoors"
+                  ]
                 },
-                "tags": [
-                  "sensor",
-                  "public"
-                ]
+                "humidity": {
+                  "name": "Humidity Sensor",
+                  "description": "An ambient humidity sensor.",
+                  "values": {
+                    "h": {
+                      "name": "Humidity",
+                      "description": "Percentage of Humidity",
+                      "unit": "percent",
+                      "customFields": {
+                        "gpio": 21
+                      }
+                    }
+                  },
+                  "tags": [
+                    "sensor",
+                    "public"
+                  ]
+                },
+                "pir": {
+                  "name": "Passive Infrared",
+                  "description": "A passive infrared sensor.",
+                  "values": {
+                    "p": {
+                      "name": "Presence",
+                      "description": "Current sensor value (true=motion detected)",
+                      "type": "boolean",
+                      "customFields": {
+                        "gpio": 20
+                      }
+                    }
+                  },
+                  "tags": [
+                    "sensor",
+                    "public"
+                  ]
+                },
+                "leds": {
+                  "name": "LEDs",
+                  "description": "The LEDs of this device.",
+                  "values": {
+                    "1": {
+                      "name": "LED 1",
+                      "customFields": {
+                        "gpio": 17
+                      }
+                    },
+                    "2": {
+                      "name": "LED 2",
+                      "customFields": {
+                        "gpio": 19
+                      }
+                    }
+                  },
+                  "tags": [
+                    "sensor",
+                    "public"
+                  ]
+                }
               }
-            }
-          },
-          "actions": {
-            "link": "/actions",
-            "title": "Actions of this Web Thing",
-            "resources": {
-              "ledState": {
-                "values": {
-                  "ledId": {
-                    "type": "string",
-                    "required": true
-                  },
-                  "state": {
-                    "type": "boolean",
-                    "required": true
+            },
+            "actions": {
+              "link": "/actions",
+              "title": "Actions of this Web Thing",
+              "resources": {
+                "ledState": {
+                  "values": {
+                    "ledId": {
+                      "type": "string",
+                      "required": true
+                    },
+                    "state": {
+                      "type": "boolean",
+                      "required": true
+                    }
                   }
                 }
               }
+            },
+            "type": {
+              "link": "http://w3c.org/schemas/webthing/",
+              "title": "Instance type of the Pi"
+            },
+            "help": {
+              "link": "http://webofthings.org/docs/pi/",
+              "title": "Documentation"
+            },
+            "ui": {
+              "link": "/ui",
+              "title": "User Interface"
+            }
+          }
+        },
+        "properties": [
+          {
+            "id": "temperature",
+            "name": "Kitchen Temperature Sensor",
+            "values": {
+              "temp": 22,
+              "timestamp": "2015-06-14T14:30:00.000Z"
             }
           },
-          "type": {
-            "link": "http://w3c.org/schemas/webthing/",
-            "title": "Instance type of the Pi"
+          {
+            "id": "status",
+            "name": "Device Status",
+            "values": {
+              "status": "OK",
+              "timestamp": "2015-06-14T14:30:00.000Z"
+            }
           },
-          "help": {
-            "link": "http://webofthings.org/docs/pi/",
-            "title": "Documentation"
+          {
+            "id": "acceleration",
+            "name": "Acceleration",
+            "values": {
+              "x": 22,
+              "y": 22.56,
+              "z": 1.4,
+              "timestamp": "2015-06-14T14:30:00.000Z"
+            }
           },
-          "ui": {
-            "link": "/ui",
-            "title": "User Interface"
+          {
+            "id": "engineAngle",
+            "name": "Engine Angle",
+            "values": {
+              "theta": 2,
+              "rho": -0.1,
+              "timestamp": "2015-06-14T14:30:00.000Z"
+            }
           }
-        }
-      },
-      "properties": [
-        {
-          "id": "temperature",
-          "name": "Kitchen Temperature Sensor",
-          "values": {
-            "temp": 22,
-            "timestamp": "2015-06-14T14:30:00.000Z"
+        ],
+        "actions": [
+          {
+            "id": "upgradeFirmware",
+            "name": "Upgrade Device Firmware"
+          },
+          {
+            "id": "reboot",
+            "name": "Reboot"
           }
+        ],
+        "readPoint": {
+          "id": "urn:epc:id:sgln:Building_1"
         },
-        {
-          "id": "status",
-          "name": "Device Status",
-          "values": {
-            "status": "OK",
-            "timestamp": "2015-06-14T14:30:00.000Z"
-          }
-        },
-        {
-          "id": "acceleration",
-          "name": "Acceleration",
-          "values": {
-            "x": 22,
-            "y": 22.56,
-            "z": 1.4,
-            "timestamp": "2015-06-14T14:30:00.000Z"
-          }
-        },
-        {
-          "id": "engineAngle",
-          "name": "Engine Angle",
-          "values": {
-            "theta": 2,
-            "rho": -0.1,
-            "timestamp": "2015-06-14T14:30:00.000Z"
-          }
-        }
-      ],
-      "actions": [
-        {
-          "id": "upgradeFirmware",
-          "name": "Upgrade Device Firmware"
-        },
-        {
-          "id": "reboot",
-          "name": "Reboot"
-        }
-      ],
-      "readPoint": {
-        "id": "urn:epc:id:sgln:Building_1"
-      },
-      "observedObjects": [
-        "urn:epc:id:sgtin:Batch_1"
-      ]
-    }
-  ]
+        "observedObjects": [
+          "urn:epc:id:sgtin:Batch_1"
+        ]
+      }
+    ]
+  }
 }
