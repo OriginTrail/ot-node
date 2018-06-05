@@ -284,6 +284,11 @@ class Network {
             this.emitter.emit('kad-data-read-response', request, response);
         });
 
+        this.node.use('kad-verify-key-request', (request, response, next) => {
+            log.info('kad-verify-key-request received');
+            this.emitter.emit('kad-verify-key-request', request, response);
+        });
+
         // add challenge-request route
         this.node.use('challenge-request', (request, response, next) => {
             log.info('challenge-request received');
@@ -419,6 +424,11 @@ class Network {
             node.sendDataReadResponse = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('kad-data-read-response', { message }, [contactId, contact], callback);
+            };
+
+            node.verifyKey = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-verify-key-request', { message }, [contactId, contact], callback);
             };
         });
         // Define a global custom error handler rule

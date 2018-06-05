@@ -73,7 +73,6 @@ class DHService {
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
 
-
             if (maxTokenAmount.lt(myPrice)) {
                 log.info(`Offer ${importId} too expensive for me.`);
                 return;
@@ -231,30 +230,11 @@ class DHService {
         log.trace('[DH] Replication finished');
 
         try {
-            await this.blockchain.increaseApproval(bid.stake);
-            await this.blockchain.verifyEscrow(
-                bid.dc_wallet,
-                bid.import_id,
-                bid.price,
-                bid.stake,
-                bid.total_escrow_time,
-            );
-
-            let encryptedVertices = data.vertices;
-            // sort vertices
-            encryptedVertices.sort(((a, b) => {
-                if (a._key < b._key) {
-                    return -1;
-                } else if (a._key > b._key) {
-                    return 1;
-                }
-                return 0;
-            }));
-            // filter CLASS vertices
-            encryptedVertices = encryptedVertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
-
+            const encryptedVertices = data.vertices;
+            ImportUtilities.sort(encryptedVertices);
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+            const litigationRootHash = litigationBlocksMerkleTree.getRoot();
 
             const keyPair = Encryption.generateKeyPair(512);
             const decryptedVertices = encryptedVertices.map((encVertex) => {
@@ -264,10 +244,20 @@ class DHService {
             });
             Graph.encryptVerticesWithKeys(decryptedVertices, keyPair.privateKey, keyPair.publicKey);
 
-            const encMerkle = await ImportUtilities.merkleStructure(decryptedVertices, data.edges);
+            const distributionMerkle = await ImportUtilities.merkleStructure(
+                decryptedVertices,
+                data.edges,
+            );
+            const distributionHash = distributionMerkle.tree.getRoot();
 
             const epk = Encryption.packEPK(keyPair.publicKey);
             const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+
+            log.important('Send root hashes and checksum to blockchain.');
+            await this.blockchain.addRootHashAndChecksum(
+                data.import_id,
+                litigationRootHash, distributionHash, epkChecksum,
+            );
 
             // Store holding information and generate keys for eventual
             // data replication.
@@ -282,8 +272,14 @@ class DHService {
                 log.warn('Failed to store holding data info.');
             }
 
-            log.important('Finished negotiation. Job starting. Waiting for challenges.');
+            log.important('Replication finished. Send key to DC for verification.');
             this.network.kademlia().replicationFinished({ status: 'success' }, bid.dc_id);
+
+            this.network.kademlia().verifyKey({
+                epk,
+                importId: data.import_id,
+                encryptionKey: keyPair.privateKey,
+            }, bid.dc_id);
         } catch (error) {
             log.error(`Failed to verify escrow. ${error}.`);
         }

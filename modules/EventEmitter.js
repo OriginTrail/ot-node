@@ -478,6 +478,19 @@ class EventEmitter {
                 message: 'Successfully imported data.',
             });
         });
+
+        this.globalEmitter.on('kad-verify-key-request', async (request, response) => {
+            log.info('kad-verify-key-request');
+
+            const { epk, importId, encryptionKey } = request.params.message;
+
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+
+            await Promise.all(edgesPromise, verticesPromise).then((edge, vertices) => {
+
+            });
+        });
     }
 
     emit(event, ...args) {

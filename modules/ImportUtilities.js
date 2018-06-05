@@ -12,16 +12,8 @@ class ImportUtilities {
      * @return {Promise<{tree: MerkleTree, leaves: Array, hashPairs: Array}>}
      */
     static async merkleStructure(vertices, edges) {
-        const sort = (a, b) => {
-            if (a._key < b._key) {
-                return -1;
-            } else if (a._key > b._key) {
-                return 1;
-            }
-            return 0;
-        };
-        edges.sort(sort);
-        vertices.sort(sort);
+        ImportUtilities.sort(edges);
+        ImportUtilities.sort(vertices);
 
         const leaves = [];
         const hashPairs = [];
@@ -60,6 +52,18 @@ class ImportUtilities {
             leaves,
             hashPairs,
         };
+    }
+
+    static sort(documents) {
+        const sort = (a, b) => {
+            if (a._key < b._key) {
+                return -1;
+            } else if (a._key > b._key) {
+                return 1;
+            }
+            return 0;
+        };
+        documents.sort(sort);
     }
 }
 
