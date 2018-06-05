@@ -579,10 +579,12 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
+                        console.log('1:', error);
                         reject(error);
                     });
             }).catch((error) => {
-                reject(error);
+                console.log(error)
+                reject('2:', error);
             });
         });
     }

@@ -141,7 +141,7 @@ class Importer {
         try {
             await lock.acquire();
             const result = await this.gs1Importer.parseGS1(ot_xml_document);
-            lock.release()
+            lock.release();
             return await this.afterImport(result);
         } catch (error) {
             log.error(`Failed to parse XML. Error ${error}.`);
