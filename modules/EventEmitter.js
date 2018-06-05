@@ -5,6 +5,8 @@ const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
+const MerkleTree = require('./Merkle');
+const ImportUtilities = require('./ImportUtilities');
 
 const log = Utilities.getLogger();
 
@@ -28,7 +30,7 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dvService, dataReplication, importer, challenger,
+            dcService, dhService, dvService, dataReplication, importer, challenger, blockchain,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -479,16 +481,71 @@ class EventEmitter {
             });
         });
 
-        this.globalEmitter.on('kad-verify-key-request', async (request, response) => {
-            log.info('kad-verify-key-request');
+        this.globalEmitter.on('kad-verify-import-request', async (request, response) => {
+            log.info('kad-verify-import-request');
 
             const { epk, importId, encryptionKey } = request.params.message;
+
+            const { wallet: kadWallet } = request.contact[1];
+            const dataHolder = await Models.data_holders.findOne({
+                where: { dh_wallet: kadWallet },
+            });
 
             const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
             const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
 
-            await Promise.all(edgesPromise, verticesPromise).then((edge, vertices) => {
+            await Promise.all([edgesPromise, verticesPromise]).then(async (values) => {
+                const edges = values[0];
+                const vertices = values[1];
 
+                const clonedVertices = Utilities.copyObject(vertices);
+                Graph.encryptVerticesWithKeys(clonedVertices, dataHolder.data_private_key);
+
+                const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
+                const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+                const litigationRootHash = litigationBlocksMerkleTree.getRoot();
+
+                Graph.encryptVerticesWithKeys(vertices, encryptionKey);
+                const distributionMerkle = await ImportUtilities.merkleStructure(
+                    vertices,
+                    edges,
+                );
+                const distributionHash = distributionMerkle.tree.getRoot();
+                const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+
+                console.log(`litigation ${litigationRootHash}, distribution ${distributionHash} and checksum ${epkChecksum}`);
+
+                const escrow = await blockchain.getEscrow(importId, kadWallet);
+
+                let failed = false;
+                if (escrow.distribution_root_hash !== distributionHash) {
+                    log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                    failed = true;
+                }
+
+                if (escrow.litigation_root_hash !== litigationRootHash) {
+                    log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                    failed = true;
+                }
+
+                if (escrow.checksum !== epk) {
+                    log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                    failed = true;
+                }
+                if (failed) {
+                    response.send({
+                        status: 'Failed',
+                        message: 'Verification failed',
+                    });
+                    // TODO handle failed situation
+                } else {
+                    response.send({
+                        status: 'OK',
+                        message: 'Data successfully verified',
+                    });
+                    log.warn('Data successfully verified, preparing to start challenges');
+                    challenger.startChallenging();
+                }
             });
         });
     }

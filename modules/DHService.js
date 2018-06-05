@@ -272,10 +272,8 @@ class DHService {
                 log.warn('Failed to store holding data info.');
             }
 
-            log.important('Replication finished. Send key to DC for verification.');
-            this.network.kademlia().replicationFinished({ status: 'success' }, bid.dc_id);
-
-            this.network.kademlia().verifyKey({
+            log.important('Replication finished. Send data to DC for verification.');
+            this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,

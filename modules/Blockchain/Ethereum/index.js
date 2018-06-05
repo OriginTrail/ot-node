@@ -422,8 +422,6 @@ class Ethereum {
             setTimeout(() => {
                 if (endCallback) {
                     endCallback();
-                } else {
-                    log.warn(`Tried to call undefined endCallback for event: ${event}`);
                 }
                 clearInterval(token);
             }, endMs);
@@ -605,6 +603,17 @@ class Ethereum {
             this.escrowContractAbi, 'addRootHashAndChecksum',
             [importId, litigationHash, distributionHash, checksum], options,
         );
+    }
+
+    /**
+     * Gets Escrow
+     * @param dhWallet
+     * @param importId
+     * @return {Promise<any>}
+     */
+    async getEscrow(importId, dhWallet) {
+        log.trace(`Asking for import ${importId} and dh ${dhWallet} escrow`);
+        return this.escrowContract.methods.escrow(importId, dhWallet).call();
     }
 
     /**

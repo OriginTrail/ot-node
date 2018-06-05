@@ -259,6 +259,10 @@ class Blockchain {
             checksum,
         );
     }
+
+    async getEscrow(importId, dhWallet) {
+        return this.blockchain.getEscrow(importId, dhWallet);
+    }
 }
 
 module.exports = Blockchain;
