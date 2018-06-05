@@ -243,42 +243,8 @@ contract BiddingTest {
 		this_bid_index = this_offer.bid.length;
 		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount_per_byte_minute * scope, this_DH.stake_amount_per_byte_minute * scope, 0, uint(-1), true, false);
 
-		// distance = | hash(wallet, node_id) + token_amount - data_hash - stake_amount |
 
-		/*
-		COM = 2^10 %// Korektivni faktor, zbog celobrojnog deljenja
-		hp = 5000000 %// DH hash
-		h  = 5000000 %// Hash podatka (escrow-a ?)
-		s  = 100000 %// MIN stake
-		sp = 1000000000 %// DH stake
-		p  = 1000000 %// MAX cena
-		pp = 10000 %// DH cena
-		r = 10 %// MIN reputacija (od 100)
-		dhAvgStake = 10000000 %// Prosecan DH stake na uspesnim poslovima
-		rp = (log2(dhAvgStake) * COM / 115) / (COM / 100)
-		%// ----------- MATEMATIKA -------------
-		dh = abs(h - hp)
-		MAXTOKEN = 5 * 10^26
-		H = (h * 2^128) / (dh + h)
-		P = COM - (COM * (pp - p) / p)
-		S = ((COM - (s * COM / sp)) * h) / (dh + h)
-		R = (COM - (r * COM / rp))
-		F = (H * (P + S + R) / 3) / COM 
-		*/
-		uint256 corrective_factor = 2**10;
-		uint256 min_stake_amount_per_DH;
-		if(this_offer.min_stake_amount_per_DH == 0)	min_stake_amount_per_DH = 1;
-		else min_stake_amount_per_DH = this_offer.min_stake_amount_per_DH;
-		uint256 DH_average_stake;
-		if(this_DH.number_of_escrows = 0) DH_average_stake = 0;
-		else DH_average_stake = this_DH.reputation / this_DH.number_of_escrows;
-		uint256 MAXTOKEN = 5 * 10**26;
-		uint256 base_distance = absoluteDifference(this_offer.data_hash, uint256(keccak256(msg.sender, DH_node_id)));
-		uint256 H = (this_offer.data_hash * 2**128) / (base_distance + this_offer.data_hash);
-		uint256 P = corrective_factor - (corrective_factor * ())
-
-
-		new_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(new_bid.token_amount_for_escrow),uint256(this_offer.data_hash).add(new_bid.stake_amount_for_escrow));
+		new_bid.distance = calculateDistance(msg.sender, DH_node_id, import_id);
 
 
 		//Insert the bid in the proper place in the list
@@ -531,6 +497,54 @@ contract BiddingTest {
 			let a := div(mul(x, magic), shift)
 			y := div(mload(add(m,sub(255,a))), shift)
 			y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
-		}  
+		}
+	}
+
+	/*
+		corf = 2^10 %// Korektivni faktor, zbog celobrojnog deljenja
+		keccak256(DH_wallet, DH_node_id) = 5000000 %// DH hash
+		data_hash  = 5000000 %// Hash podatka (escrow-a ?)
+		min_stake_per_dh  = 100000 %// MIN stake
+		stake_amount = 1000000000 %// DH stake
+		max_token_amount  = 1000000 %// MAX cena
+		pp = 10000 %// DH cena
+		r = 10 %// MIN reputacija (od 100)
+		dhAvgStake = 10000000 %// Prosecan DH stake na uspesnim poslovima
+		reputation = (log2(dhAvgStake) * corf / 115) / (corf / 100)
+		%// ----------- MATEMATIKA -------------
+		dh = abs(data_hash - keccak256(DH_wallet, DH_node_id))
+		MAXTOKEN = 5 * 10^26
+		H = (data_hash * 2^128) / (dh + data_hash)
+		P = ((corf * (max_token_amount - pp)) / max_token_amount)
+		S = ((corf - (min_stake_per_dh * corf / stake_amount)) * data_hash) / (dh + data_hash)
+		R = (corf - (r * corf / reputation))
+		F = (H * (P + S + R) / 3) / corf 
+	
+	*/
+
+	// Constant values used for distance calculation
+	uint256 corrective_factor = 2**10;
+	uint256 token_supply = 5* 10**26;
+
+	function calculateDistance(address DH_wallet, bytes32 DH_node_id, bytes32 import_id)
+	internal view returns (uint256 distance) {
+		OfferDefinition storage this_offer = offer[import_id];
+		ProfileDefinition storage this_DH = profile[DH_wallet];
+
+		uint256 scope = this_offer.total_escrow_time_in_minutes.mul(this_offer.data_size_in_bytes);
+		uint256 stake_amount;
+		if (this_DH.stake_amount_per_byte_minute == 0) stake_amount = 1;
+		else stake_amount = this_DH.stake_amount_per_byte_minute * scope;
+		uint256 token_amount = this_DH.stake_amount_per_byte_minute * scope;
+		uint256 average_stake;
+		if (this_DH.number_of_escrows == 0) average_stake = 1;
+		else average_stake = this_DH.reputation / this_DH.number_of_escrows;
+		uint256 reputation = (log2(average_stake) * corrective_factor / 115) / (corrective_factor / 100);
+		if(reputation == 0) reputation = 1;
+		uint256 base_distance = absoluteDifference(uint256(this_offer.data_hash), uint256(keccak256(DH_wallet, DH_node_id)));
+		distance = (((uint256(this_offer.data_hash) * 2**128) / (reputation + uint256(this_offer.data_hash))) * (
+		((corrective_factor * (this_offer.max_token_amount_per_DH - token_amount)) / this_offer.max_token_amount_per_DH) +
+		(((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(this_offer.data_hash)) / (base_distance + uint256(this_offer.data_hash))) +
+		(corrective_factor - (this_offer.min_reputation * corrective_factor / reputation)) ) / 3 ) /corrective_factor;
 	}
 }
