@@ -7,7 +7,6 @@ const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
 const async = require('async');
-const deasync = require('deasync-promise');
 const fs = require('fs');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
@@ -24,8 +23,6 @@ class Network {
     constructor(ctx) {
         this.emitter = ctx.emitter;
 
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
-        kadence.constants.K = 20;
         if (parseInt(config.test_network, 10)) {
             kadence.constants.IDENTITY_DIFFICULTY = 2;
             kadence.constants.SOLUTION_DIFFICULTY = 2;
@@ -46,7 +43,7 @@ class Network {
         networkUtilities.verifyConfiguration(config);
 
         log.info('Checking SSL certificate');
-        deasync(networkUtilities.setSelfSignedCertificate(config));
+        await networkUtilities.setSelfSignedCertificate(config);
 
         log.info('Getting the identity');
         this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
@@ -100,6 +97,7 @@ class Network {
 
         // Enable Quasar plugin used for publish/subscribe mechanism
         this.node.quasar = this.node.plugin(kadence.quasar());
+        this.node.rolodex = this.node.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
@@ -184,41 +182,36 @@ class Network {
     }
 
     /**
-     * Join network if there are some of the bootstrap nodes
+     * Try to join network
+     * Note: this method tries to find possible bootstrap nodes from cache as well
      */
     _joinNetwork(callback) {
         const bootstrapNodes = config.network_bootstrap_nodes;
-        if (bootstrapNodes.length === 0) {
-            log.warn('No bootstrap seeds provided and no known profiles');
-            log.trace('Running in seed mode (waiting for connections)');
-            return this.node.router.events.once('add', (identity) => {
-                config.network_bootstrap_nodes = [
-                    kadence.utils.getContactURL([
-                        identity,
-                        this.node.router.getContactByNodeId(identity),
-                    ]),
-                ];
-                this._joinNetwork(callback);
-            });
-        }
 
-        log.info(`Joining network from ${bootstrapNodes.length} seeds`);
-        async.detectSeries(bootstrapNodes, (url, done) => {
-            const contact = kadence.utils.parseContactURL(url);
-            this.node.join(contact, (err) => {
-                done(null, (!err) && this.node.router.size >= 1);
+        const plugin = this.node.rolodex;
+        setTimeout(() => {
+            plugin.getBootstrapCandidates().then((peers) => {
+                log.info(`Found ${peers.length} possible bootstrap candidates from cache.`);
+                const nodes = peers.concat(bootstrapNodes);
+
+                log.info(`Joining network from ${nodes.length} seeds`);
+                async.detectSeries(nodes, (url, done) => {
+                    const contact = kadence.utils.parseContactURL(url);
+                    this.node.join(contact, (err) => {
+                        done(null, (!err) && this.node.router.size >= 1);
+                    });
+                }, (err, result) => {
+                    if (!result) {
+                        log.error('Failed to join network, will retry in 1 minute. Bootstrap node is probably not online.');
+                        callback(new Error('Failed to join network'));
+                    } else {
+                        log.important('Joined the network');
+                        const contact = kadence.utils.parseContactURL(result);
+                        callback(null, contact);
+                    }
+                });
             });
-        }, (err, result) => {
-            if (!result) {
-                log.error('Failed to join network, will retry in 1 minute. Bootstrap node is probably not online.');
-                callback(new Error('Failed to join network'));
-            } else {
-                log.important('Joined the network');
-                const contact = kadence.utils.parseContactURL(result);
-                config.dh = contact;
-                callback(null, contact);
-            }
-        });
+        }, 500); // this delay is needed because of the peercache
     }
 
     /**
