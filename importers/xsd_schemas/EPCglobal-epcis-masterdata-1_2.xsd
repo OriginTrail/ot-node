@@ -11,8 +11,8 @@ GS1 retains the right to make changes to this document at any time, without noti
       <epcglobal:specification>EPC INFORMATION SERVICE (EPCIS) Version 1.2</epcglobal:specification>
     </xsd:documentation>
   </xsd:annotation>
-  <xsd:import namespace="urn:epcglobal:xsd:1" schemaLocation="./importers/EPCglobal.xsd"/>
-  <xsd:import namespace="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaLocation="./importers/StandardBusinessDocumentHeader.xsd"/>
+  <xsd:import namespace="urn:epcglobal:xsd:1" schemaLocation="./importers/xsd_schemas/EPCglobal.xsd"/>
+  <xsd:import namespace="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaLocation="./importers/xsd_schemas/StandardBusinessDocumentHeader.xsd"/>
   <!-- EPCIS CORE ELEMENTS -->
   <xsd:element name="EPCISDocument" type="epcis:EPCISDocumentType"/>
   <xsd:complexType name="EPCISDocumentType">
