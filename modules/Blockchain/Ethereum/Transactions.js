@@ -3,6 +3,9 @@ const EventEmitter = require('events');
 const Utilities = require('../../Utilities');
 const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
+const { Lock } = require('semaphore-async-await');
+
+const lock = new Lock();
 
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
@@ -29,7 +32,10 @@ class Transactions {
     async sendTransaction(newTransaction) {
         await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
+            console.log('getting nonce');
         });
+
+        console.log('Nonce is ', newTransaction.options.nonce);
 
         const rawTx = txutils.functionTx(
             newTransaction.contractAbi,
@@ -49,11 +55,8 @@ class Transactions {
      * Signal that queue is ready for next transaction
      */
     signalNextInQueue() {
-        this.transactionQueue.shift();
-        if (this.transactionQueue.length > 0) {
-            const nextTransaction = String(this.transactionQueue[0]);
-            this.transactionEventEmmiter.emit(nextTransaction);
-        }
+        // this.transactionQueue.shift();
+        lock.release();
     }
 
     /**
@@ -84,9 +87,11 @@ class Transactions {
             const newTransaction = {
                 contractAbi, method, args, options,
             };
-            this.transactionQueue.push(newTransaction);
-            if (this.transactionQueue.length > 1) await this.readyFor(newTransaction);
-            this.transactionPending = true;
+
+            // console.log('ovde', this.transactionQueue.length);
+            // this.transactionQueue.push(newTransaction);
+            await lock.acquire();
+            // this.transactionPending = true;
             this.sendTransaction(newTransaction)
                 .then((response) => {
                     // log.info('Transaction: ', response);
