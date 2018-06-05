@@ -599,10 +599,11 @@ class Ethereum {
             to: this.escrowContract,
         };
 
+        checksum = this._normalizeHex(checksum);
         log.trace(`addRootHashAndChecksum (${importId}, ${litigationHash}, ${distributionHash}, ${checksum})`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi, 'addRootHashAndChecksum',
-            [importId, litigationHash, distributionHash, this._normalizeHex(checksum)], options,
+            [importId, litigationHash, distributionHash, checksum], options,
         );
     }
 

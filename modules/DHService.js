@@ -206,9 +206,7 @@ class DHService {
             log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
             return;
         }
-        // TODO: Check data before signing escrow.
         const bid = bidModel.get({ plain: true });
-
         try {
             await this.importer.importJSON(data);
         } catch (err) {
@@ -224,7 +222,7 @@ class DHService {
             data.edges,
         );
 
-        const rootHash = Utilities.sha3(merkle.tree.getRoot());
+        const rootHash = merkle.tree.getRoot();
         log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
 
         log.trace('[DH] Replication finished');
@@ -238,8 +236,10 @@ class DHService {
 
             const keyPair = Encryption.generateKeyPair(512);
             const decryptedVertices = encryptedVertices.map((encVertex) => {
-                const key = data.public_key;
-                encVertex.data = Encryption.decryptObject(encVertex.data, key);
+                if (encVertex.data) {
+                    const key = data.public_key;
+                    encVertex.data = Encryption.decryptObject(encVertex.data, key);
+                }
                 return encVertex;
             });
             Graph.encryptVerticesWithKeys(decryptedVertices, keyPair.privateKey, keyPair.publicKey);
