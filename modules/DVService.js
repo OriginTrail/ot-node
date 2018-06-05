@@ -77,10 +77,6 @@ class DVService {
             dataLocationRequestObject,
             {},
             async () => {
-                // const networkQuery = await Models.network_queries.create({
-                //     query: JSON.stringify(dataLocationRequestObject.message.query),
-                //     timestamp: Date.now(),
-                // });
                 log.info(`Published query to the network. Query ID ${networkQueryModel.id}.`);
             },
         );
@@ -195,10 +191,24 @@ class DVService {
             throw Error('Read not confirmed');
         }
 
-        // TODO: check is it mine request based on ID and remove redundant data.
-        const { importId } = message;
+        // Is it the chosen one?
+        const replyId = message.id;
 
-        // TODO: Calculate root hash and check is it the same on the SC.
+        // Find the particular reply.
+        const networkQueryResponse = await Models.network_query_responses.findOne({
+            where: { id: replyId },
+        });
+
+        if (!networkQueryResponse) {
+            throw Error(`Didn't find query reply with ID ${replyId}.`);
+        }
+
+        const importId = JSON.parse(networkQueryResponse.imports)[0];
+
+        // Calculate root hash and check is it the same on the SC.
+        const { vertices, edges } = message.encryptedData;
+
+        // this.blockchain.getDistributionHash()
 
         try {
             await this.importer.importJSON({

@@ -483,6 +483,7 @@ class DHService {
          */
 
         const replyMessage = {
+            id,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
             agreementStatus: 'CONFIRMED',
