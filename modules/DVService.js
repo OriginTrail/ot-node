@@ -54,10 +54,7 @@ class DVService {
              }
          */
 
-        const networkQueryModel = await Models.network_queries.create({
-            query: JSON.stringify(query),
-            timestamp: Date.now(),
-        });
+        const networkQueryModel = await Models.network_queries.create({ query });
 
         const dataLocationRequestObject = {
             message: {
@@ -80,11 +77,11 @@ class DVService {
             dataLocationRequestObject,
             {},
             async () => {
-                const networkQuery = await Models.network_queries.create({
-                    query: JSON.stringify(dataLocationRequestObject.message.query),
-                    timestamp: Date.now(),
-                });
-                log.info(`Published query to the network. Query ID ${networkQuery.id}.`);
+                // const networkQuery = await Models.network_queries.create({
+                //     query: JSON.stringify(dataLocationRequestObject.message.query),
+                //     timestamp: Date.now(),
+                // });
+                log.info(`Published query to the network. Query ID ${networkQueryModel.id}.`);
             },
         );
 
@@ -92,10 +89,10 @@ class DVService {
             setTimeout(async () => {
                 // Check for all offers.
                 const responseModels = await Models.network_query_responses.findAll({
-                    where: { query_id: networkQueryModel.dataValues.id },
+                    where: { query_id: networkQueryModel.id },
                 });
 
-                log.trace(`Finalizing query ID ${networkQueryModel.dataValues.id}. Got ${responseModels.length} offer(s).`);
+                log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
 
                 // TODO: Get some choose logic here.
                 let lowestOffer;

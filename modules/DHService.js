@@ -353,13 +353,13 @@ class DHService {
         const stakeFactor = 1000; // TODO
 
         const networkReplyModel = await Models.network_replies.create({
-            data: JSON.stringify({
+            data: {
                 id: message.id,
                 imports,
                 dataSize,
                 dataPrice,
                 stakeFactor,
-            }),
+            },
             receiver_wallet: message.wallet,
             receiver_identity: message.nodeId,
         });
@@ -420,7 +420,7 @@ class DHService {
             throw Error(`Couldn't find reply with ID ${id}.`);
         }
 
-        const offer = JSON.parse(networkReplyModel.data);
+        const offer = networkReplyModel.data;
 
         if (offer.receiver_wallet !== wallet && offer.receiver_identity) {
             throw Error('Sorry not your read request');

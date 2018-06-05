@@ -9,7 +9,7 @@ module.exports = {
         },
         query_id: {
             allowNull: false,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         wallet: {
             allowNull: false,
@@ -37,7 +37,7 @@ module.exports = {
         },
         reply_id: {
             allowNull: false,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('network_query_responses'),

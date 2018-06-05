@@ -4,12 +4,11 @@ module.exports = {
         id: {
             allowNull: false,
             primaryKey: true,
-            autoIncrement: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         data: {
             allowNull: false,
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
         },
         receiver_wallet: {
             allowNull: false,

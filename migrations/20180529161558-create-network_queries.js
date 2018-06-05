@@ -3,13 +3,12 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('network_queries', {
         id: {
             allowNull: false,
-            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         query: {
             allowNull: false,
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
         },
         timestamp: {
             allowNull: false,

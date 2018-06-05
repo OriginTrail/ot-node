@@ -1,7 +1,13 @@
+const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
     const network_replies = sequelize.define('network_replies', {
-        data: DataTypes.STRING,
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: uuidv4(),
+            primaryKey: true,
+        },
+        data: DataTypes.JSON,
         receiver_wallet: DataTypes.STRING,
         receiver_identity: DataTypes.STRING,
         timestamp: {
