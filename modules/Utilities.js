@@ -757,6 +757,18 @@ class Utilities {
 
         return signedAddress === message.wallet;
     }
+
+    /**
+     * Normalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static normalizeHex(number) {
+        if (!number.toLowerCase().startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
+    }
 }
 
 module.exports = Utilities;

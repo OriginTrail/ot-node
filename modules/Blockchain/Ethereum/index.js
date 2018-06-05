@@ -160,7 +160,7 @@ class Ethereum {
         log.trace(`Create profile for node ${nodeId}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
-            [this._normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
+            [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
                 readStakeFactor, maxTimeMins, maxSizeBytes], options,
         );
     }
@@ -304,7 +304,7 @@ class Ethereum {
             this.biddingContractAbi, 'createOffer',
             [
                 importId,
-                this._normalizeHex(nodeId),
+                Utilities.normalizeHex(nodeId),
                 Math.round(totalEscrowTime / 1000 / 60), // In minutes
                 maxTokenAmount,
                 MinStakeAmount,
@@ -312,7 +312,7 @@ class Ethereum {
                 dataHash,
                 dataSize,
                 predeterminedDhWallets,
-                predeterminedDhNodeIds.map(id => this._normalizeHex(id)),
+                predeterminedDhNodeIds.map(id => Utilities.normalizeHex(id)),
             ],
             options,
         );
@@ -480,7 +480,7 @@ class Ethereum {
         log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
-            [importId, this._normalizeHex(dhNodeId)], options,
+            [importId, Utilities.normalizeHex(dhNodeId)], options,
         );
     }
 
@@ -597,7 +597,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        checksum = this._normalizeHex(checksum);
+        checksum = Utilities.normalizeHex(checksum);
         log.trace(`addRootHashAndChecksum (${importId}, ${litigationHash}, ${distributionHash}, ${checksum})`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi, 'addRootHashAndChecksum',
@@ -614,19 +614,6 @@ class Ethereum {
     async getEscrow(importId, dhWallet) {
         log.trace(`Asking for import ${importId} and dh ${dhWallet} escrow`);
         return this.escrowContract.methods.escrow(importId, dhWallet).call();
-    }
-
-    /**
-     * Normalizes hex number
-     * @param number     Hex number
-     * @returns {string} Normalized hex number
-     * @private
-     */
-    _normalizeHex(number) {
-        if (!number.toLowerCase().startsWith('0x')) {
-            return `0x${number}`;
-        }
-        return number;
     }
 }
 

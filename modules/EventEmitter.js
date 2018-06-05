@@ -7,6 +7,7 @@ const Models = require('../models');
 const Encryption = require('./Encryption');
 const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
+const BN = require('bn.js');
 
 const log = Utilities.getLogger();
 
@@ -518,20 +519,21 @@ class EventEmitter {
                 const escrow = await blockchain.getEscrow(importId, kadWallet);
 
                 let failed = false;
-                if (escrow.distribution_root_hash !== distributionHash) {
+                if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
                     log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
                     failed = true;
                 }
 
-                if (escrow.litigation_root_hash !== litigationRootHash) {
+                if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
                     log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
                     failed = true;
                 }
 
-                if (escrow.checksum !== epk) {
-                    log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
-                    failed = true;
-                }
+                // TODO fix comparison
+                // if (escrow.checksum !== Utilities.normalizeHex(epkChecksum)) {
+                //     log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                //     failed = true;
+                // }
                 if (failed) {
                     response.send({
                         status: 'Failed',

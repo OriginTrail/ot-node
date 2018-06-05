@@ -48,7 +48,7 @@ class DataReplication {
         );
 
         Challenge.addTests(tests).then(() => {
-            this.challenger.startChallenging();
+            log.trace(`Tests generated for DH ${tests[0].dhId}`);
         }, () => {
             log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
@@ -67,31 +67,6 @@ class DataReplication {
         this.network.kademlia().payloadRequest(payload, data.contact, () => {
             log.info('Payload request sent');
         });
-    }
-
-    async verifyReplication(importId, epk, encryptionKey) {
-        const edges = await this.graphStorage.findEdgesByImportId(importId);
-        let vertices = await this.graphStorage.findVerticesByImportId(importId);
-        const encryptedVertices = vertices.map((vertex) => {
-            vertex.data = Encryption.encryptObject(vertex.data, encryptionKey);
-            return vertex;
-        });
-
-        const merkle = await ImportUtilities.merkleStructure(encryptedVertices, edges);
-
-        const distributionRootHash = merkle.tree.getRoot();
-        const epkHash = Encryption.calculateDataChecksum(epk, 0, 0, 0);
-        const decryptionKey = Encryption.unpackEPK(Encryption.globalDecrypt(epk));
-
-        let decryptedVertices = encryptedVertices.map((vertex) => {
-            vertex.data = Encryption.decryptObject(vertex.data, decryptionKey);
-            return vertex;
-        });
-
-        vertices = Graph.sortVertices(vertices);
-        decryptedVertices = Graph.sortVertices(decryptedVertices);
-
-        // compare these two
     }
 }
 
