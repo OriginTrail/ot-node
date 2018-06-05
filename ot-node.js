@@ -225,6 +225,7 @@ class OTNode {
             config.identity,
             config.dh_price,
             config.dh_stake_factor,
+            config.read_stake_factor,
             config.dh_max_time_mins,
             config.dh_max_data_size_bytes,
         );

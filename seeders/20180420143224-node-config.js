@@ -30,6 +30,10 @@ module.exports = {
         value: '1',
     },
     {
+        key: 'read_stake_factor',
+        value: '1',
+    },
+    {
         key: 'dh_max_time_mins',
         value: '100000',
     },
