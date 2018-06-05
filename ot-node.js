@@ -195,12 +195,28 @@ class OTNode {
         }
 
         // Starting event listener on Blockchain
-        log.info('Starting blockchain event listener');
-        setInterval(() => {
-            blockchain.getAllPastEvents('BIDDING_CONTRACT');
-        }, 3000);
-
+        this.listenBlockchainEvents(blockchain);
         dhService.listenToOffers();
+    }
+
+    /**
+     * Listen to all Bidding events
+     * @param blockchain
+     */
+    listenBlockchainEvents(blockchain) {
+        log.info('Starting blockchain event listener');
+
+        const delay = 3000;
+        let working = false;
+        let deadline = Date.now();
+        setInterval(() => {
+            if (!working && Date.now() > deadline) {
+                working = true;
+                blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                deadline = Date.now() + delay;
+                working = false;
+            }
+        }, 1000);
     }
 
     /**
