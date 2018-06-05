@@ -596,7 +596,7 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContract,
+            to: this.escrowContractAddress,
         };
 
         checksum = this._normalizeHex(checksum);

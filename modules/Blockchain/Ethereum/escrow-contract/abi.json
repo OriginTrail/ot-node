@@ -148,7 +148,7 @@
       },
       {
         "name": "checksum",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
     "name": "addRootHashAndChecksum",
