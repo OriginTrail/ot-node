@@ -55,7 +55,6 @@ class Transactions {
      * Signal that queue is ready for next transaction
      */
     signalNextInQueue() {
-        // this.transactionQueue.shift();
         lock.release();
     }
 
@@ -88,13 +87,9 @@ class Transactions {
                 contractAbi, method, args, options,
             };
 
-            // console.log('ovde', this.transactionQueue.length);
-            // this.transactionQueue.push(newTransaction);
             await lock.acquire();
-            // this.transactionPending = true;
             this.sendTransaction(newTransaction)
                 .then((response) => {
-                    // log.info('Transaction: ', response);
                     this.signalNextInQueue();
                     if (response.status === '0x0') {
                         reject(response);
