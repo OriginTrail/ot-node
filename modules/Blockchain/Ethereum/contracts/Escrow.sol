@@ -167,7 +167,7 @@ library SafeMath {
  		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
  	}
 
- 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint checksum)
+ 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, bytes32 checksum)
  	public {
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
@@ -175,7 +175,7 @@ library SafeMath {
 
  		this_escrow.litigation_root_hash = litigation_root_hash;
  		this_escrow.distribution_root_hash = distribution_root_hash;
- 		this_escrow.checksum = checksum;
+ 		this_escrow.checksum = uint256(checksum);
 
  		//Transfer the stake_amount to the escrow
  		bidding.decreaseBalance(msg.sender, this_escrow.stake_amount);
