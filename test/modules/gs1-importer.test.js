@@ -26,10 +26,10 @@ describe('GS1 Importer tests', () => {
     let gs1;
 
     const inputXmlFiles = [
-        { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {

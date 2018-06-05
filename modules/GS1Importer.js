@@ -758,7 +758,7 @@ class GS1Importer {
 
     async parseGS1(gs1XmlFile) {
         const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
-        const xsdFileBuffer = fs.readFileSync('./importers/EPCglobal-epcis-masterdata-1_2.xsd');
+        const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
         const validationResult = schema.validate(gs1XmlFileBuffer.toString());
