@@ -225,7 +225,7 @@ contract BiddingTest {
 	}
 
 	function addBid(bytes32 import_id, bytes32 DH_node_id)
-	public returns (uint this_bid_index){
+	public returns (uint distance){
 		require(offer[import_id].active && !offer[import_id].finalized);
 
 		OfferDefinition storage this_offer = offer[import_id];
@@ -240,12 +240,12 @@ contract BiddingTest {
 		require(this_offer.data_size_in_bytes		 <= this_DH.size_available_in_bytes);
 
 		//Create new bid in the list
-		this_bid_index = this_offer.bid.length;
+		uint this_bid_index = this_offer.bid.length;
 		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount_per_byte_minute * scope, this_DH.stake_amount_per_byte_minute * scope, 0, uint(-1), true, false);
 
 
 		new_bid.distance = calculateDistance(msg.sender, DH_node_id, import_id);
-
+		distance = new_bid.distance;
 
 		//Insert the bid in the proper place in the list
 		if(this_offer.first_bid_index == uint(-1)){
@@ -278,7 +278,7 @@ contract BiddingTest {
 		if(this_offer.bid.length >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(import_id);
 
 		emit AddedBid(import_id, msg.sender, DH_node_id, this_bid_index);
-		return this_bid_index;
+		// return this_bid_index;
 	}
 
 	function getBidIndex(bytes32 import_id, bytes32 DH_node_id) public view returns(uint){
