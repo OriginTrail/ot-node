@@ -65,6 +65,19 @@ class ImportUtilities {
         };
         documents.sort(sort);
     }
+
+    static compareDocuments(documents1, documents2) {
+        ImportUtilities.sort(documents1);
+        ImportUtilities.sort(documents2);
+
+        for (const index in documents1) {
+            const distance = utilities.objectDistance(documents1[index], documents2[index]);
+            if (distance !== 100) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
 
 module.exports = ImportUtilities;

@@ -499,6 +499,7 @@ class EventEmitter {
                 const edges = values[0];
                 const vertices = values[1];
 
+                const originalVertices = Utilities.copyObject(vertices);
                 const clonedVertices = Utilities.copyObject(vertices);
                 Graph.encryptVerticesWithKeys(clonedVertices, dataHolder.data_private_key);
 
@@ -513,8 +514,6 @@ class EventEmitter {
                 );
                 const distributionHash = distributionMerkle.tree.getRoot();
                 const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
-
-                console.log(`litigation ${litigationRootHash}, distribution ${distributionHash} and checksum ${epkChecksum}`);
 
                 const escrow = await blockchain.getEscrow(importId, kadWallet);
 
@@ -534,6 +533,14 @@ class EventEmitter {
                 //     log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
                 //     failed = true;
                 // }
+
+                const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
+                const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
+                if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
+                    log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
+                    failed = true;
+                }
+
                 if (failed) {
                     response.send({
                         status: 'Failed',
