@@ -241,13 +241,14 @@ class DCService {
                 );
                 // TODO handle failed situation
                 return false;
+            } else {
+                await this.blockchain.verifyEscrow(
+                    importId,
+                    kadWallet,
+                );
+                log.warn('Data successfully verified, preparing to start challenges');
+                this.challenger.startChallenging();
             }
-            await this.blockchain.verifyEscrow(
-                importId,
-                kadWallet,
-            );
-            log.warn('Data successfully verified, preparing to start challenges');
-            this.challenger.startChallenging();
             return true;
         });
     }
