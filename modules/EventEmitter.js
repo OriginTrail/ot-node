@@ -62,11 +62,12 @@ class EventEmitter {
             });
         });
 
-        const processImport = async (response, data) => {
+        const processImport = async (response, error, data) => {
             if (response === null) {
+                data.response.status(error.status);
                 data.response.send({
-                    status: 500,
-                    message: 'Failed to parse XML.',
+                    status: error.status,
+                    message: error.message,
                 });
                 return;
             }
@@ -82,31 +83,59 @@ class EventEmitter {
                 await Models.data_info
                     .create({
                         data_id, root_hash, import_timestamp: new Date(), total_documents,
-                    }).catch(e => console.log(e));
+                    }).catch((error) => {
+                        log.error(error);
+                        data.response.send({
+                            status: 500,
+                            message: error,
+                        });
+                    });
+
+                data.response.send({
+                    status: 200,
+                    message: 'Ok.',
+                });
+
                 await dcService.createOffer(data_id, root_hash, total_documents, vertices);
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);
                 data.response.send({
                     status: 500,
-                    message: 'Failed to parse XML.',
+                    message: error,
                 });
-                return;
             }
-
-            data.response.send({
-                status: 200,
-                message: 'Ok.',
-            });
         };
 
         this.globalEmitter.on('gs1-import-request', async (data) => {
-            const response = await importer.importXMLgs1(data.filepath);
-            await processImport(response, data);
+            try {
+                const responseObject = await importer.importXMLgs1(data.filepath);
+                const { error } = responseObject;
+                const { response } = responseObject;
+
+                if (response === null) {
+                    await processImport(null, error, data);
+                } else {
+                    await processImport(response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
         });
 
         this.globalEmitter.on('wot-import-request', async (data) => {
-            const response = await importer.importWOT(data.filepath);
-            await processImport(response, data);
+            try {
+                const responseObject = await importer.importWOT(data.filepath);
+                const { error } = responseObject;
+                const { response } = responseObject;
+
+                if (response === null) {
+                    await processImport(null, error, data);
+                } else {
+                    await processImport(response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
         });
 
         this.globalEmitter.on('replication-request', async (request, response) => {
