@@ -311,7 +311,7 @@ library SafeMath {
 
  	mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
 
- 	function initateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
+ 	function initiateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
  	public returns (bool newLitigationInitiated){
  		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];

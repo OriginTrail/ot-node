@@ -153,8 +153,8 @@ contract Bidding {
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
 	public {
-	    OfferDefinition storage this_offer = offer[import_id];
-	    
+		OfferDefinition storage this_offer = offer[import_id];
+
 		require(max_token_amount_per_DH > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
 		require(this_offer.active == false);
 
@@ -169,7 +169,7 @@ contract Bidding {
 		this_offer.min_stake_amount_per_DH = min_stake_amount_per_DH;
 		this_offer.min_reputation = min_reputation;
 
-		this_offer.data_hash = data_hash;
+		this_offer.data_hash = bytes32(uint256(data_hash) & (2**128-1));
 		this_offer.data_size_in_bytes = data_size_in_bytes;
 
 		this_offer.replication_factor = predetermined_DH_wallet.length;
@@ -225,7 +225,7 @@ contract Bidding {
 	}
 
 	function addBid(bytes32 import_id, bytes32 DH_node_id)
-	public returns (uint this_bid_index){
+	public returns (uint distance){
 		require(offer[import_id].active && !offer[import_id].finalized);
 
 		OfferDefinition storage this_offer = offer[import_id];
@@ -240,12 +240,11 @@ contract Bidding {
 		require(this_offer.data_size_in_bytes		 <= this_DH.size_available_in_bytes);
 
 		//Create new bid in the list
-		this_bid_index = this_offer.bid.length;
+		uint this_bid_index = this_offer.bid.length;
 		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount_per_byte_minute * scope, this_DH.stake_amount_per_byte_minute * scope, 0, uint(-1), true, false);
+		new_bid.distance = calculateDistance(import_id, msg.sender, DH_node_id);
 
-		// distance = | hash(wallet, node_id) + token_amount - data_hash - stake_amount |
-		new_bid.distance = absoluteDifference(uint256(keccak256(msg.sender, DH_node_id)).add(new_bid.token_amount_for_escrow),uint256(this_offer.data_hash).add(new_bid.stake_amount_for_escrow));
-
+		distance = new_bid.distance;
 
 		//Insert the bid in the proper place in the list
 		if(this_offer.first_bid_index == uint(-1)){
@@ -260,7 +259,7 @@ contract Bidding {
 				this_offer.bid.push(new_bid);
 			}
 			else {
-				while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance <= new_bid.distance){
+				while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance >= new_bid.distance){
 					current_index = this_offer.bid[current_index].next_bid;
 				}
 				if(this_offer.bid[current_index].next_bid == uint(-1)){
@@ -278,7 +277,7 @@ contract Bidding {
 		if(this_offer.bid.length >= this_offer.replication_factor.mul(3).add(1)) emit FinalizeOfferReady(import_id);
 
 		emit AddedBid(import_id, msg.sender, DH_node_id, this_bid_index);
-		return this_bid_index;
+		// return this_bid_index;
 	}
 
 	function getBidIndex(bytes32 import_id, bytes32 DH_node_id) public view returns(uint){
@@ -458,13 +457,94 @@ contract Bidding {
 		profile[wallet].number_of_escrows = profile[wallet].number_of_escrows.add(1);
 	}
 
+	function getBalance(address wallet)
+	public view returns (uint256) {
+		return profile[wallet].balance;
+	}
+
 	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {
 		if (a > b) return a-b;
 		else return b-a;
 	}
 
-	function getBalance(address wallet)
-	public view returns (uint256) {
-		return profile[wallet].balance;
+	function log2(uint x) internal pure returns (uint y){
+		require(x > 0);
+		assembly {
+			let arg := x
+			x := sub(x,1)
+			x := or(x, div(x, 0x02))
+			x := or(x, div(x, 0x04))
+			x := or(x, div(x, 0x10))
+			x := or(x, div(x, 0x100))
+			x := or(x, div(x, 0x10000))
+			x := or(x, div(x, 0x100000000))
+			x := or(x, div(x, 0x10000000000000000))
+			x := or(x, div(x, 0x100000000000000000000000000000000))
+			x := add(x, 1)
+			let m := mload(0x40)
+			mstore(m,           0xf8f9cbfae6cc78fbefe7cdc3a1793dfcf4f0e8bbd8cec470b6a28a7a5a3e1efd)
+			mstore(add(m,0x20), 0xf5ecf1b3e9debc68e1d9cfabc5997135bfb7a7a3938b7b606b5b4b3f2f1f0ffe)
+			mstore(add(m,0x40), 0xf6e4ed9ff2d6b458eadcdf97bd91692de2d4da8fd2d0ac50c6ae9a8272523616)
+			mstore(add(m,0x60), 0xc8c0b887b0a8a4489c948c7f847c6125746c645c544c444038302820181008ff)
+			mstore(add(m,0x80), 0xf7cae577eec2a03cf3bad76fb589591debb2dd67e0aa9834bea6925f6a4a2e0e)
+			mstore(add(m,0xa0), 0xe39ed557db96902cd38ed14fad815115c786af479b7e83247363534337271707)
+			mstore(add(m,0xc0), 0xc976c13bb96e881cb166a933a55e490d9d56952b8d4e801485467d2362422606)
+			mstore(add(m,0xe0), 0x753a6d1b65325d0c552a4d1345224105391a310b29122104190a110309020100)
+			mstore(0x40, add(m, 0x100))
+			let magic := 0x818283848586878898a8b8c8d8e8f929395969799a9b9d9e9faaeb6bedeeff
+			let shift := 0x100000000000000000000000000000000000000000000000000000000000000
+			let a := div(mul(x, magic), shift)
+			y := div(mload(add(m,sub(255,a))), shift)
+			y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
+		}
+	}
+
+	/*
+		corf = 2^10 %// Korektivni faktor, zbog celobrojnog deljenja
+		DH_hashes = 5000000 %// DH hash
+		data_hash  = 5000000 %// Hash podatka (escrow-a ?)
+		min_stake_per_dh  = 100000 %// MIN stake
+		stake_amount = 1000000000 %// DH stake
+		max_token_amount_per_DH  = 1000000 %// MAX cena
+		pp = 10000 %// DH cena
+		r = 10 %// MIN reputacija (od 100)
+		dhAvgStake = 10000000 %// Prosecan DH stake na uspesnim poslovima
+		reputation = (log2(dhAvgStake) * corf / 115) / (corf / 100)
+		%// ----------- MATEMATIKA -------------
+		hash_difference = abs(data_hash - DH_hashes)
+		MAXTOKEN = 5 * 10^26
+		H = (data_hash * 2^128) / (hash_difference + data_hash)
+		P = ((corf * (max_token_amount - pp)) / max_token_amount_per_DH)
+		S = ((corf - (min_stake_per_dh * corf / stake_amount)) * data_hash) / (dh + data_hash)
+		R = (corf - (r * corf / reputation))
+		F = (H * (P + S + R) / 3) / corf 
+	
+	*/
+
+	// Constant values used for distance calculation
+	uint256 corrective_factor = 2**10;
+
+	function calculateDistance(bytes32 import_id, address DH_wallet, bytes32 DH_node_id)
+	public view returns (uint256 distance) {
+		OfferDefinition storage this_offer = offer[import_id];
+		ProfileDefinition storage this_DH = profile[DH_wallet];
+
+		uint256 stake_amount;
+		if (this_DH.stake_amount_per_byte_minute == 0) stake_amount = 1;
+		else stake_amount = this_DH.stake_amount_per_byte_minute * this_offer.total_escrow_time_in_minutes.mul(this_offer.data_size_in_bytes);
+		uint256 token_amount = this_DH.stake_amount_per_byte_minute * this_offer.total_escrow_time_in_minutes.mul(this_offer.data_size_in_bytes);
+		
+		uint256 reputation;
+		if(this_DH.number_of_escrows == 0 || this_DH.reputation == 0) reputation = 1;
+		else reputation = (log2(this_DH.reputation / this_DH.number_of_escrows) * corrective_factor / 115) / (corrective_factor / 100);
+		if(reputation == 0) reputation = 1;
+
+		uint256 hash_difference = absoluteDifference(uint256(this_offer.data_hash), (2**128 - 1) & uint256(keccak256(DH_wallet, DH_node_id)));
+
+		uint256 hash_f = ((uint256(this_offer.data_hash) * (2**128)) / (hash_difference + uint256(this_offer.data_hash)));
+		uint256 price_f = ((corrective_factor * (this_offer.max_token_amount_per_DH - token_amount)) / this_offer.max_token_amount_per_DH);
+		uint256 stake_f =  (((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(this_offer.data_hash)) / (hash_difference + uint256(this_offer.data_hash)));
+		uint256 rep_f = (corrective_factor - (this_offer.min_reputation * corrective_factor / reputation));
+		distance = ((hash_f * (price_f + stake_f + rep_f)) / 3) / corrective_factor;
 	}
 }
