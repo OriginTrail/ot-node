@@ -606,8 +606,41 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getEscrow(importId, dhWallet) {
-        log.trace(`Asking for import ${importId} and dh ${dhWallet} escrow`);
+        log.trace(`Asking escrow for import ${importId} and dh ${dhWallet}.`);
         return this.escrowContract.methods.escrow(importId, dhWallet).call();
+    }
+
+    getPurchase(dhWallet, dvWallet, importId) {
+        log.trace(`Asking purchase for import ${importId}, DH ${dhWallet} and DV ${dvWallet}.`);
+        return this.readingContract.methods.purchase(importId, dhWallet).call();
+    }
+
+    initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace(`initiatePurchase (${importId}, ${dhWallet}, ${tokenAmount}, ${stakeFactor})`);
+        return this.transactions.queueTransaction(
+            this.readingContract, 'initiatePurchase',
+            [importId, dhWallet, tokenAmount, stakeFactor], options,
+        );
+    }
+
+    sendCommitment(importId, dvWallet, commitment) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
+        return this.transactions.queueTransaction(
+            this.readingContract, 'sendCommitment',
+            [importId, dvWallet, commitment], options,
+        );
     }
 }
 

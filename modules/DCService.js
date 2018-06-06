@@ -74,8 +74,8 @@ class DCService {
         const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
         if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition - profileBalance);
-            await this.blockchain.depositToken(condition - profileBalance);
+            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+            await this.blockchain.depositToken(condition.sub(profileBalance));
         }
 
         this.blockchain.createOffer(

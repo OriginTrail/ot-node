@@ -257,6 +257,18 @@ class Blockchain {
     async getEscrow(importId, dhWallet) {
         return this.blockchain.getEscrow(importId, dhWallet);
     }
+
+    async getPurchase(dhWallet, dvWallet, importId) {
+        return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
+    }
+
+    async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
+        return this.blockchain.initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor);
+    }
+
+    async sendCommitment(importId, dvWallet, commitment) {
+        return this.blockchain.sendCommitment(importId, dvWallet, commitment);
+    }
 }
 
 module.exports = Blockchain;

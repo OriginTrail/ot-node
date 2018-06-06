@@ -15,7 +15,15 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_private_key: {
+        distribution_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        epk: {
             allowNull: false,
             type: Sequelize.STRING,
         },

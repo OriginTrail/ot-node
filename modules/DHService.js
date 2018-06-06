@@ -2,11 +2,13 @@ const BN = require('bn.js');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
+const Op = require('sequelize/lib/operators');
 const Encryption = require('./Encryption');
 const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
+const ethAbi = require('ethereumjs-abi');
 
 const log = Utilities.getLogger();
 
@@ -265,8 +267,10 @@ class DHService {
             const holdingData = await Models.holding_data.create({
                 id: data.import_id,
                 source_wallet: bid.dc_wallet,
-                data_public_key: keyPair.privateKey,
-                data_private_key: keyPair.privateKey,
+                data_public_key: data.pub_key,
+                distribution_public_key: keyPair.privateKey,
+                distribution_private_key: keyPair.privateKey,
+                epk,
             });
 
             if (!holdingData) {
@@ -321,6 +325,29 @@ class DHService {
         if (imports.length === 0) {
             // I don't want to participate
             log.trace(`No imports found for request ${message.id}`);
+            return;
+        }
+
+        // Check if the import came from network. In more details I can only
+        // distribute data gotten from someone else.
+        const replicatedImportIds = [];
+        // Then check if I bought replication from another DH.
+        const data_holders = await Models.data_holders.findAll({
+            where: {
+                id: {
+                    [Op.in]: imports,
+                },
+            },
+        });
+
+        if (data_holders) {
+            data_holders.forEach((data_holder) => {
+                replicatedImportIds.push(data_holder.id);
+            });
+        }
+
+        if (imports.length !== replicatedImportIds.length) {
+            log.info(`Some of the imports aren't redistributable for query ${message.id}`);
             return;
         }
 
@@ -395,8 +422,6 @@ class DHService {
             dataLocationResponseObject,
             message.nodeId,
         );
-
-        // Store message in DB to know later prices.
     }
 
     async handleDataReadRequest(message) {
@@ -443,8 +468,8 @@ class DHService {
         }
 
         const holdingData = holdingDataModel.get({ plain: true });
-        const replicationPrivateKey = holdingData.data_private_key;
-        const replicationPublicKey = holdingData.data_public_key;
+        const replicationPrivateKey = holdingData.distribution_private_key;
+        const replicationPublicKey = holdingData.distribution_public_key;
 
         const encryptVerticesWithKeys = (vertices, privateKey, publicKey) => {
             for (const id in vertices) {
@@ -460,6 +485,18 @@ class DHService {
             replicationPrivateKey,
             replicationPublicKey,
         );
+
+        // Make sure we have enough token balance before DV makes a purchase.
+        // From smart contract:
+        // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+        const condition = new BN(offer.dataPrice).mul(new BN(offer.stake_factor)).add(new BN(1));
+        const profileBalance =
+            new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+
+        if (profileBalance.lt(condition)) {
+            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+            await this.blockchain.depositToken(condition.sub(profileBalance));
+        }
 
         // TODO: Sign escrow here.
 
@@ -505,6 +542,87 @@ class DHService {
         };
 
         this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+
+        // Wait for event from blockchain.
+        await this.blockchain.subscribeToEvent('PurchaseInitiated', import_id, 20 * 60 * 1000);
+
+        // purchase[DH_wallet][msg.sender][import_id]
+        const purchase = await this.blockchain.getPurchase(
+            this.config.node_wallet,
+            networkReplyModel.receiver_wallet,
+            import_id,
+        );
+
+        if (!purchase) {
+            const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${import_id}.`;
+            log.error(errorMessage);
+            throw errorMessage;
+        }
+
+        // Check the conditions.
+        const purchaseTokenAmount = new BN(purchase.token_amount);
+        const purchaseStakeFactor = new BN(purchase.stake_factor);
+        const myPrice = new BN(offer.dataPrice);
+        const myStakeFactor = new BN(offer.stake_factor);
+
+        if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
+            const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
+            log.error(errorMessage);
+            throw errorMessage;
+        }
+
+        log.info(`Purchase for import ${import_id} seems just fine. Sending comm to contract.`);
+
+        // bool commitment_proof = this_purchase.commitment ==
+        // keccak256(checksum_left, checksum_right, checksum_hash,
+        //          random_number_1, random_number_2, decryption_key, block_index);
+
+        // Fetch epk from db.
+        if (!holdingData) {
+            log.error(`Cannot find holding data info for import ID ${import_id}`);
+            throw Error('Internal error');
+        }
+        const { epk } = holdingData;
+
+        const {
+            M1,
+            M2,
+            selectedBlockNumber,
+            selectedBlock,
+        } = Encryption.randomDataSplit(epk);
+
+        const r1 = Utilities.getRandomInt(100000);
+        const r2 = Utilities.getRandomInt(100000);
+
+        const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(M1, r1, r2));
+        const m2Checksum = Utilities.normalizeHex(
+            Encryption.calculateDataChecksum(M2, r1, r2, selectedBlockNumber + 1));
+        const epkChecksum = Utilities.normalizeHex(
+            ethAbi.soliditySHA3(
+                ['uint256'],
+                [Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2))],
+            ),
+        );
+        const keyChecksum = Utilities.normalizeHex(
+            ethAbi.soliditySHA3(
+                ['string'],
+                [replicationPublicKey],
+            ),
+        );
+
+        // From smart contract:
+        // keccak256(checksum_left, checksum_right, checksum_hash,
+        //          random_number_1, random_number_2, decryption_key, block_index);
+        const commitmentHash = Utilities.normalizeHex(
+            ethAbi.soliditySHA3(
+                ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [m1Checksum, m2Checksum, epkChecksum, r1, r2, keyChecksum, selectedBlockNumber],
+            ),
+        );
+
+        // store block number and block in db because of litigation.
+
+        await this.blockchain.sendCommitment(import_id, commitmentHash);
     }
 
     listenToOffers() {

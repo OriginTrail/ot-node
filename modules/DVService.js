@@ -1,6 +1,7 @@
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const BN = require('bn.js');
+const ImportUtilities = require('./ImportUtilities');
 
 const log = Utilities.getLogger();
 
@@ -207,8 +208,24 @@ class DVService {
 
         // Calculate root hash and check is it the same on the SC.
         const { vertices, edges } = message.encryptedData;
+        const dhFirstDHWallet = vertices.filter(vertex => vertex.vertex_typ = 'CLASS')[0].dh_wallet; // TODO: every vertex should have this.
 
-        // this.blockchain.getDistributionHash()
+        const escrow = await this.blockchain.getEscrow(importId, dhFirstDHWallet);
+
+        if (!escrow) {
+            const errorMessage = `Couldn't not find escrow for DH ${dhFirstDHWallet} and import ID ${importId}`;
+            log.warn(errorMessage);
+            throw errorMessage;
+        }
+
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
+        const rootHash = merkle.tree.getRoot()
+
+        if (escrow.distribution_root_hash !== rootHash) {
+            const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhFirstDHWallet}, import ID ${importId}`;
+            log.warn(errorMessage);
+            throw errorMessage;
+        }
 
         try {
             await this.importer.importJSON({
@@ -222,6 +239,48 @@ class DVService {
         }
 
         log.info(`Import ID ${importId} imported successfully.`);
+
+        // TODO: Maybe separate table is needed.
+        Models.data_info.create({
+            import_id: importId,
+            total_documents: vertices.length,
+            root_hash: rootHash,
+            import_timestamp: new Date(),
+        });
+
+        // Check if enough tokens. From smart contract:
+        // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+        const stakeAmount =
+            new BN(networkQueryResponse.data_price)
+                .mul(new BN(networkQueryResponse.stake_factor));
+        // Check for DH first.
+        const dhBalance =
+            new BN((await this.blockchain.getProfile(networkQueryResponse.wallet)).balance, 10);
+
+        if (dhBalance.lt(stakeAmount)) {
+            const errorMessage = `DH doesn't have enough tokens to sign purchase. Required ${stakeAmount.toString()}, have ${dhBalance.toString()}`;
+            log.warn(errorMessage);
+            throw errorMessage;
+        }
+
+        // Check for balance.
+        const profileBalance =
+            new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+        const condition = new BN(networkQueryResponse.data_price)
+            .add(stakeAmount).add(new BN(1)); // Thanks Cookie.
+
+        if (profileBalance.lt(condition)) {
+            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+            await this.blockchain.depositToken(condition.sub(profileBalance));
+        }
+
+        // Sign escrow.
+        await this.blockchain.initiatePurchase(
+            importId,
+            this.config.node_wallet,
+            new BN(networkQueryResponse.data_price),
+            new BN(networkQueryResponse.stake_factor),
+        );
     }
 }
 
