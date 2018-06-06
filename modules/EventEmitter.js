@@ -528,11 +528,10 @@ class EventEmitter {
                     failed = true;
                 }
 
-                // TODO fix comparison
-                // if (escrow.checksum !== Utilities.normalizeHex(epkChecksum)) {
-                //     log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
-                //     failed = true;
-                // }
+                if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
+                    log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                    failed = true;
+                }
 
                 const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
                 const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
