@@ -541,6 +541,10 @@ class EventEmitter {
                 }
 
                 if (failed) {
+                    await blockchain.cancelEscrow(
+                        kadWallet,
+                        importId,
+                    );
                     response.send({
                         status: 'Failed',
                         message: 'Verification failed',
