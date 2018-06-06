@@ -28,7 +28,7 @@
     "name": "addBid",
     "outputs": [
       {
-        "name": "this_bid_index",
+        "name": "distance",
         "type": "uint256"
       }
     ],
@@ -358,6 +358,33 @@
       {
         "name": "_isBidChosen",
         "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "calculateDistance",
+    "outputs": [
+      {
+        "name": "distance",
+        "type": "uint256"
       }
     ],
     "payable": false,

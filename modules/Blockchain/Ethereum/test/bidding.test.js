@@ -263,20 +263,20 @@ contract('Bidding testing', async (accounts) => {
         for (var i = 3; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.addBid.call(import_id, node_id[i], { from: accounts[i] });
-            console.log(response.toNumber());
+            console.log(`\t distance[${i}] = ${response.toNumber()}`);
         }
 
-        var promises = [];
+        // var promises = [];
         for (i = 3; i < 10; i += 1) {
-            promises[i] = bidding.addBid(import_id, node_id[i], { from: accounts[i] });
-        }
-        await Promise.all(promises);
-        for (i = 3; i < 10; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await bidding.addBid(import_id, node_id[i], { from: accounts[i] });
             // eslint-disable-next-line no-await-in-loop
             response = await bidding.offer.call(import_id);
             const first_bid_index = response[7].toNumber();
             console.log(`\t first_bid_index =  ${first_bid_index}`);
         }
+        // await Promise.all(promises);
+
         // assert.equal(first_bid_index, 8, 'Something wrong');
     });
 
@@ -422,8 +422,6 @@ contract('Bidding testing', async (accounts) => {
         }
     });
 
-    /*
-
     // eslint-disable-next-line no-undef
     it('Should create 2 litigations about data no 6', async () => {
         // Get instances of contracts used in the test
@@ -436,14 +434,23 @@ contract('Bidding testing', async (accounts) => {
         hash_array.push(hash_GH);
         hash_array.push(hash_ABCD);
 
-        await escrow.initateLitigation(
+        await escrow.initiateLitigation(
             import_id,
+            accounts[chosen_bids[1]],
             requested_data_index,
             hash_array,
             { from: DC_wallet },
         );
-        await escrow.initateLitigation(import_id, requested_data_index, hash_array);
+        await escrow.initiateLitigation(
+            import_id,
+            accounts[chosen_bids[2]],
+            requested_data_index,
+            hash_array,
+            { from: DC_wallet },
+        );
     });
+
+    /*
 
     // eslint-disable-next-line no-undef
     it('Should answer litigations, one correctly, one incorrectly', async () => {

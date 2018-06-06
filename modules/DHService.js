@@ -216,6 +216,7 @@ class DHService {
 
         data.edges = Graph.sortVertices(data.edges);
         data.vertices = Graph.sortVertices(data.vertices);
+        data.vertices = data.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
 
         const merkle = await ImportUtilities.merkleStructure(
             data.vertices,

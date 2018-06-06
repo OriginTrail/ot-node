@@ -48,37 +48,6 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "name": "requested_data_index",
-        "type": "uint256"
-      },
-      {
-        "name": "hash_array",
-        "type": "bytes32[]"
-      }
-    ],
-    "name": "initateLitigation",
-    "outputs": [
-      {
-        "name": "newLitigationInitiated",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
@@ -155,6 +124,37 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "name": "requested_data_index",
+        "type": "uint256"
+      },
+      {
+        "name": "hash_array",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "initiateLitigation",
+    "outputs": [
+      {
+        "name": "newLitigationInitiated",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
