@@ -154,53 +154,76 @@ describe('GS1 Importer tests', () => {
     });
 
     describe('Random vertices content check', async () => {
+        let specificVertice;
+
+        async function checkTransformationXmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:mda:product:id:123AB');
+            assert.equal(specificVertice.data.category, 'Engine');
+            assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
+            assert.equal(specificVertice.data.object_class_id, 'Product');
+            assert.equal(specificVertice.vertex_type, 'PRODUCT');
+            assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:product:id:123AB');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:product:id:123AB');
+        }
+
+        async function checkGraphExample1XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_1', 'urn:epc:id:sgln:Building_2');
+            assert.equal(specificVertice.data.category, 'Building _2');
+            assert.equal(specificVertice.data.description, 'Description of building _2');
+            assert.equal(specificVertice.data.object_class_id, 'Location');
+            assert.equal(specificVertice.vertex_type, 'LOCATION');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_1');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:Building_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:Building_2');
+        }
+
+        async function checkGraphExample2XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
+            assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
+            assert.equal(specificVertice.data.parent_id, 'urn:ot:mda:product:id:Product_1');
+            assert.equal(specificVertice.data.productid, 'urn:ot:mda:product:id:Product_1');
+            assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
+            assert.equal(specificVertice.vertex_type, 'BATCH');
+            assert.equal(specificVertice.sender_id, 'SENDER_ID');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgtin:Batch_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgtin:Batch_2');
+        }
+
+        async function checkGraphExample3XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_2', 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.data.category, 'Company');
+            assert.exists(specificVertice.data.node_id);
+            assert.equal(specificVertice.data.object_class_id, 'Actor');
+            // assert.equal(specificVertice.data.person:id:name, "Company _2");
+            assert.equal(specificVertice.vertex_type, 'ACTOR');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:actor:id:Company_2');
+        }
+
+        async function checkGraphExample4XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Hospital1', 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+            assert.equal(specificVertice.data.parent_id, 'urn:epc:id:sgln:HospitalBuilding1');
+            assert.equal(specificVertice.vertex_type, 'CHILD_BUSINESS_LOCATION');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Hospital1');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+        }
+
         async function checkSpecificVerticeContent(xml) {
-            let specificVertice;
             if (xml === 'Transformation.xml') {
-                specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:mda:product:id:123AB');
-                assert.equal(specificVertice.data.category, 'Engine');
-                assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
-                assert.equal(specificVertice.data.object_class_id, 'Product');
-                assert.equal(specificVertice.vertex_type, 'PRODUCT');
-                assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
-                assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:product:id:123AB');
-                assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:product:id:123AB');
+                await checkTransformationXmlVerticeContent();
             } else if (xml === 'GraphExample_1.xml') {
-                specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_1', 'urn:epc:id:sgln:Building_2');
-                assert.equal(specificVertice.data.category, 'Building _2');
-                assert.equal(specificVertice.data.description, 'Description of building _2');
-                assert.equal(specificVertice.data.object_class_id, 'Location');
-                assert.equal(specificVertice.vertex_type, 'LOCATION');
-                assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_1');
-                assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:Building_2');
-                assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:Building_2');
+                await checkGraphExample1XmlVerticeContent();
             } else if (xml === 'GraphExample_2.xml') {
-                specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
-                assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
-                assert.equal(specificVertice.data.parent_id, 'urn:ot:mda:product:id:Product_1');
-                assert.equal(specificVertice.data.productid, 'urn:ot:mda:product:id:Product_1');
-                assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
-                assert.equal(specificVertice.vertex_type, 'BATCH');
-                assert.equal(specificVertice.sender_id, 'SENDER_ID');
-                assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgtin:Batch_2');
-                assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgtin:Batch_2');
+                await checkGraphExample2XmlVerticeContent();
             } else if (xml === 'GraphExample_3.xml') {
-                specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_2', 'urn:ot:mda:actor:id:Company_2');
-                assert.equal(specificVertice.data.category, 'Company');
-                assert.exists(specificVertice.data.node_id);
-                assert.equal(specificVertice.data.object_class_id, 'Actor');
-                // assert.equal(specificVertice.data.person:id:name, "Company _2");
-                assert.equal(specificVertice.vertex_type, 'ACTOR');
-                assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_2');
-                assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:actor:id:Company_2');
-                assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:actor:id:Company_2');
+                await checkGraphExample3XmlVerticeContent();
             } else if (xml === 'GraphExample_4.xml') {
-                specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Hospital1', 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
-                assert.equal(specificVertice.data.parent_id, 'urn:epc:id:sgln:HospitalBuilding1');
-                assert.equal(specificVertice.vertex_type, 'CHILD_BUSINESS_LOCATION');
-                assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Hospital1');
-                assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
-                assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+                await checkGraphExample4XmlVerticeContent();
+            } else {
+                // TODO write random content check if you add new .xml files
             }
         }
 
