@@ -52,6 +52,7 @@ class Transactions {
      */
     signalNextInQueue() {
         this.lock.release();
+
     }
 
     /**
@@ -84,6 +85,7 @@ class Transactions {
             };
 
             await this.lock.acquire();
+
             this.sendTransaction(newTransaction)
                 .then((response) => {
                     this.signalNextInQueue();
