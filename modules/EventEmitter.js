@@ -497,7 +497,7 @@ class EventEmitter {
 
             await Promise.all([edgesPromise, verticesPromise]).then(async (values) => {
                 const edges = values[0];
-                const vertices = values[1];
+                const vertices = values[1].filter(vertex => vertex.vertex_type !== 'CLASS');
 
                 const originalVertices = Utilities.copyObject(vertices);
                 const clonedVertices = Utilities.copyObject(vertices);
