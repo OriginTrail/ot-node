@@ -79,19 +79,13 @@ class Blockchain {
     }
 
     /**
-     * Verify escrow contract contract data and start data holding process
-     * @param {string} - dcWallet
-     * @param {number} - importId
-     * @param {number} - tokenAmount
-     * @param {number} - stakeAmount
-     * @param {number} - totalTime
+     * Verify escrow contract
+     * @param importId
+     * @param dhWallet
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, importId, tokenAmount, stakeAmount, totalTime) {
-        return this.blockchain.verifyEscrow(
-            dcWallet, importId, tokenAmount,
-            stakeAmount, totalTime,
-        );
+    verifyEscrow(importId, dhWallet) {
+        return this.blockchain.verifyEscrow(importId, dhWallet);
     }
 
     /**

@@ -547,6 +547,11 @@ class EventEmitter {
                     });
                     // TODO handle failed situation
                 } else {
+                    await blockchain.verifyEscrow(
+                        importId,
+                        kadWallet,
+                    );
+
                     response.send({
                         status: 'OK',
                         message: 'Data successfully verified',

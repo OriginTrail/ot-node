@@ -197,30 +197,24 @@ class Ethereum {
 
     /**
      * Verify escrow contract contract data and start data holding process on Ethereum blockchain
-     * @param {string} - dcWallet
-     * @param {number} - importId
-     * @param {number} - tokenAmount
-     * @param {number} - stakeAmount
-     * @param {number} - totalTime
+     * @param importId
+     * @param dhWallet
      * @returns {Promise}
      */
-    verifyEscrow(dcWallet, importId, tokenAmount, stakeAmount, totalTime) {
+    verifyEscrow(importId, dhWallet) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
 
-        log.warn('Verifying escrow');
+        log.warn(`Verifying escrow for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'verifyEscrow',
             [
-                dcWallet,
                 importId,
-                tokenAmount,
-                stakeAmount,
-                Math.round(totalTime / 1000 / 60),
+                dhWallet,
             ],
             options,
         );
