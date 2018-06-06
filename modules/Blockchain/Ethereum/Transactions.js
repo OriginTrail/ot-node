@@ -52,7 +52,6 @@ class Transactions {
      */
     signalNextInQueue() {
         this.lock.release();
-
     }
 
     /**
