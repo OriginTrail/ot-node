@@ -86,7 +86,7 @@ library SafeMath {
 
  contract Reading {
  	function addReadData(bytes32 import_id, address DH_wallet, address DC_wallet,
- 		bytes32 distribution_root_hash, uint checksum) public;
+ 		bytes32 distribution_root_hash, bytes32 checksum) public;
  	function removeReadData(bytes32 import_id, address DH_wallet) public;
  }
 
@@ -135,7 +135,7 @@ library SafeMath {
 
  		bytes32 litigation_root_hash;
  		bytes32 distribution_root_hash;
- 		uint checksum;
+ 		bytes32 checksum;
 
  		EscrowStatus escrow_status;
  	}
@@ -175,7 +175,7 @@ library SafeMath {
 
  		this_escrow.litigation_root_hash = litigation_root_hash;
  		this_escrow.distribution_root_hash = distribution_root_hash;
- 		this_escrow.checksum = uint256(checksum);
+ 		this_escrow.checksum = checksum;
 
  		//Transfer the stake_amount to the escrow
  		bidding.decreaseBalance(msg.sender, this_escrow.stake_amount);

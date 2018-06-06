@@ -93,7 +93,7 @@ contract Reading is Ownable{
  	struct PurchasedDataDefinition {
  		address DC_wallet;
  		bytes32 distribution_root_hash;
- 		uint256 checksum;
+ 		bytes32 checksum;
  	}
 
  	mapping(bytes32 => mapping(address => PurchasedDataDefinition)) public purchased_data;
@@ -119,7 +119,7 @@ contract Reading is Ownable{
 		bidding = Bidding(bidding_address);
 	}
 
-	function addReadData (bytes32 import_id, address DH_wallet, address DC_wallet, bytes32 distribution_root_hash, uint checksum)
+	function addReadData (bytes32 import_id, address DH_wallet, address DC_wallet, bytes32 distribution_root_hash, bytes32 checksum)
 	public onlyOwner {
 		PurchasedDataDefinition storage this_purchased_data = purchased_data[import_id][DH_wallet];
 
