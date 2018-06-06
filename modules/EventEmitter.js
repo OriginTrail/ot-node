@@ -485,85 +485,21 @@ class EventEmitter {
         this.globalEmitter.on('kad-verify-import-request', async (request, response) => {
             log.info('kad-verify-import-request');
 
+            const { wallet: kadWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
-            const { wallet: kadWallet } = request.contact[1];
-            const dataHolder = await Models.data_holders.findOne({
-                where: { dh_wallet: kadWallet },
-            });
-
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-
-            await Promise.all([edgesPromise, verticesPromise]).then(async (values) => {
-                const edges = values[0];
-                const vertices = values[1].filter(vertex => vertex.vertex_type !== 'CLASS');
-
-                const originalVertices = Utilities.copyObject(vertices);
-                const clonedVertices = Utilities.copyObject(vertices);
-                Graph.encryptVerticesWithKeys(clonedVertices, dataHolder.data_private_key);
-
-                const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
-                const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-                const litigationRootHash = litigationBlocksMerkleTree.getRoot();
-
-                Graph.encryptVerticesWithKeys(vertices, encryptionKey);
-                const distributionMerkle = await ImportUtilities.merkleStructure(
-                    vertices,
-                    edges,
-                );
-                const distributionHash = distributionMerkle.tree.getRoot();
-                const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
-
-                const escrow = await blockchain.getEscrow(importId, kadWallet);
-
-                let failed = false;
-                if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
-                    log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
-                    failed = true;
-                }
-
-                if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
-                    log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
-                    failed = true;
-                }
-
-                if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
-                    log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
-                    failed = true;
-                }
-
-                const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
-                const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
-                if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
-                    log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
-                    failed = true;
-                }
-
-                if (failed) {
-                    await blockchain.cancelEscrow(
-                        kadWallet,
-                        importId,
-                    );
-                    response.send({
-                        status: 'Failed',
-                        message: 'Verification failed',
-                    });
-                    // TODO handle failed situation
-                } else {
-                    await blockchain.verifyEscrow(
-                        importId,
-                        kadWallet,
-                    );
-
-                    response.send({
-                        status: 'OK',
-                        message: 'Data successfully verified',
-                    });
-                    log.warn('Data successfully verified, preparing to start challenges');
-                    challenger.startChallenging();
-                }
-            });
+            const success = await dcService.verifyImport(epk, importId, encryptionKey, kadWallet);
+            if (success) {
+                response.send({
+                    status: 'OK',
+                    message: 'Data successfully verified',
+                });
+            } else {
+                response.send({
+                    status: 'Failed',
+                    message: 'Verification failed',
+                });
+            }
         });
     }
 

@@ -6,6 +6,9 @@ const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const abi = require('ethereumjs-abi');
+const Challenge = require('./Challenge');
+const MerkleTree = require('./Merkle');
+const ImportUtilities = require('./ImportUtilities');
 
 const log = Utilities.getLogger();
 
@@ -24,6 +27,7 @@ class DCService {
      */
     constructor(ctx) {
         this.blockchain = ctx.blockchain;
+        this.challenger = ctx.challenger;
     }
 
     async createOffer(importId, rootHash, totalDocuments, vertices) {
@@ -166,6 +170,85 @@ class DCService {
                 log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
                 reject(err);
             });
+        });
+    }
+
+    /**
+     * Verifies DH import and distribution key
+     * @param epk
+     * @param importId
+     * @param encryptionKey
+     * @param kadWallet
+     * @return {Promise<void>}
+     */
+    async verifyImport(epk, importId, encryptionKey, kadWallet) {
+        const dataHolder = await Models.data_holders.findOne({
+            where: { dh_wallet: kadWallet },
+        });
+
+        const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+        const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+
+        await Promise.all([edgesPromise, verticesPromise]).then(async (values) => {
+            const edges = values[0];
+            const vertices = values[1].filter(vertex => vertex.vertex_type !== 'CLASS');
+
+            const originalVertices = Utilities.copyObject(vertices);
+            const clonedVertices = Utilities.copyObject(vertices);
+            Graph.encryptVerticesWithKeys(clonedVertices, dataHolder.data_private_key);
+
+            const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
+            const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+            const litigationRootHash = litigationBlocksMerkleTree.getRoot();
+
+            Graph.encryptVerticesWithKeys(vertices, encryptionKey);
+            const distributionMerkle = await ImportUtilities.merkleStructure(
+                vertices,
+                edges,
+            );
+            const distributionHash = distributionMerkle.tree.getRoot();
+            const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+
+            const escrow = await this.blockchain.getEscrow(importId, kadWallet);
+
+            let failed = false;
+            if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
+                log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
+                log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
+                log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
+            const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
+            if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
+                log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (failed) {
+                await this.blockchain.cancelEscrow(
+                    kadWallet,
+                    importId,
+                );
+                // TODO handle failed situation
+                return false;
+            }
+            await this.blockchain.verifyEscrow(
+                importId,
+                kadWallet,
+            );
+            log.warn('Data successfully verified, preparing to start challenges');
+            this.challenger.startChallenging();
+            return true;
         });
     }
 }
