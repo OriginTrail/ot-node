@@ -284,6 +284,11 @@ class Network {
             this.emitter.emit('kad-data-read-response', request, response);
         });
 
+        this.node.use('kad-send-encrypted-key', (request, response, next) => {
+            log.info('kad-send-encrypted-key received');
+            this.emitter.emit('kad-send-encrypted-key', request, response);
+        });
+
         this.node.use('kad-verify-import-request', (request, response, next) => {
             log.info('kad-verify-import-request received');
             this.emitter.emit('kad-verify-import-request', request, response);
@@ -424,6 +429,11 @@ class Network {
             node.sendDataReadResponse = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('kad-data-read-response', { message }, [contactId, contact], callback);
+            };
+
+            node.sendEncryptedKey = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-send-encrypted-key', { message }, [contactId, contact], callback);
             };
 
             node.verifyImport = (message, contactId, callback) => {

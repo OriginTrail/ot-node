@@ -20,7 +20,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         distribution_private_key: {
-            allowNull: false,
+            allowNull: true, // Only DH who got data from DC have it.
             type: Sequelize.STRING,
         },
         epk: {

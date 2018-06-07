@@ -262,12 +262,37 @@ class Blockchain {
         return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
     }
 
+    async getPurchaseData(wallet, importId) {
+        return this.blockchain.getPurchaseData(wallet, importId);
+    }
+
     async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
         return this.blockchain.initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor);
     }
 
     async sendCommitment(importId, dvWallet, commitment) {
         return this.blockchain.sendCommitment(importId, dvWallet, commitment);
+    }
+
+    async initiateDispute(importId, dhWallet) {
+        return this.blockchain.initiateDispute(importId, dhWallet);
+    }
+
+    async confirmPurchase(importId, dhWallet) {
+        return this.blockchain.confirmPurchase(importId, dhWallet);
+    }
+    async cancelPurchase(importId, correspondentWallet, senderIsDh) {
+        return this.blockchain.cancelPurchase(importId, correspondentWallet, senderIsDh);
+    }
+
+    async sendProofData(
+        importId, dvWallet, checksumLeft, checksumRight, checksumHash,
+        randomNumber1, randomNumber2, decryptionKey, blockIndex,
+    ) {
+        return this.blockchain.sendProofData(
+            importId, dvWallet, checksumLeft, checksumRight, checksumHash,
+            randomNumber1, randomNumber2, decryptionKey, blockIndex,
+        );
     }
 }
 

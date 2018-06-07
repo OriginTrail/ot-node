@@ -498,6 +498,39 @@ class EventEmitter {
             });
         });
 
+        this.globalEmitter.on('kad-send-encrypted-key', async (request, response) => {
+            log.info('kad-send-encrypted-key');
+
+            const encryptedPaddedKeyObject = request.params.message;
+            const { message, messageSignature } = encryptedPaddedKeyObject;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                log.warn(returnMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: returnMessage,
+                });
+                return;
+            }
+
+            try {
+                await dvService.handleEncryptedPaddedKey(message);
+            } catch (error) {
+                const errorMessage = `Failed to process encrypted key response. ${error}.`;
+                log.warn(errorMessage);
+                response.send({
+                    status: 'FAIL',
+                    message: errorMessage,
+                });
+                return;
+            }
+            response.send({
+                status: 'OK',
+                message: 'Verified data.',
+            });
+        });
+
         this.globalEmitter.on('kad-verify-import-request', async (request, response) => {
             log.info('kad-verify-import-request');
 

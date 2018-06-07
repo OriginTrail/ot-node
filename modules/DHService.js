@@ -586,26 +586,26 @@ class DHService {
         const r2 = Utilities.getRandomInt(100000);
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
-        const m2Checksum = Utilities.normalizeHex(
-            Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1));
-        const epkChecksum = Utilities.normalizeHex(
-            ethAbi.soliditySHA3(
+        const m2Checksum =
+            Utilities.normalizeHex(
+                Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1),
+            );
+        const epkChecksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2));
+        const epkChecksumHash =
+            Utilities.normalizeHex(ethAbi.soliditySHA3(
                 ['uint256'],
-                [Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2))],
-            ),
-        );
+                [epkChecksum],
+            ));
         const e = crypto.randomBytes(16); // 128bits.
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
         // From smart contract:
         // keccak256(checksum_left, checksum_right, checksum_hash,
         //          random_number_1, random_number_2, decryption_key, block_index);
-        const commitmentHash = Utilities.normalizeHex(
-            ethAbi.soliditySHA3(
-                ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-                [m1Checksum, m2Checksum, epkChecksum, r1, r2, e, selectedBlockNumber],
-            ),
-        );
+        const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
+            ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, selectedBlockNumber],
+        ));
 
         // store block number and block in db because of litigation.
 
@@ -621,7 +621,48 @@ class DHService {
             sd: epkChecksum,
             r1,
             r2,
+            block_number: selectedBlockNumber,
         });
+
+        // Send data to DV.
+        const encryptedPaddedKeyObject = {
+            message: {
+                id,
+                wallet: this.config.node_wallet,
+                nodeId: this.config.identifiers,
+                m1,
+                m2,
+                e,
+                r1,
+                r2,
+                sd: epkChecksumHash,
+                blockNumber: selectedBlockNumber,
+            },
+        };
+        encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
+            JSON.stringify(encryptedPaddedKeyObject.message),
+            this.web3,
+            this.config.node_private_key,
+        );
+
+        // Monitor for litigation event. Just in case.
+        // TODO: Create permanent event filter for this.
+        this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000).then(async (eventData) => {
+            if (!eventData) {
+                // Everything is ok.
+                log.info(`No litigation process initiated for purchase for ${importId}.`);
+                return;
+            }
+
+            await this.blockchain.sendProofData(importId, wallet, m1Checksum,
+                m2Checksum, epkChecksumHash, r1, r2,
+                Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
+            );
+
+            // TODO: Here we should wait for litigation result.
+        });
+
+        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
     }
 
     listenToOffers() {

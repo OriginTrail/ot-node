@@ -418,6 +418,7 @@ class Ethereum {
                     endCallback();
                 }
                 clearInterval(token);
+                resolve(null);
             }, endMs);
         });
     }
@@ -610,9 +611,14 @@ class Ethereum {
         return this.escrowContract.methods.escrow(importId, dhWallet).call();
     }
 
-    getPurchase(dhWallet, dvWallet, importId) {
+    async getPurchase(dhWallet, dvWallet, importId) {
         log.trace(`Asking purchase for import ${importId}, DH ${dhWallet} and DV ${dvWallet}.`);
         return this.readingContract.methods.purchase(importId, dhWallet).call();
+    }
+
+    async getPurchaseData(wallet, importId) {
+        log.trace(`Asking purchase for import ${importId} and wallet ${wallet}.`);
+        return this.readingContract.methods.purchase_data(wallet, importId).call();
     }
 
     initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
@@ -640,6 +646,68 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.readingContract, 'sendCommitment',
             [importId, dvWallet, commitment], options,
+        );
+    }
+
+    initiateDispute(importId, dhWallet) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace(`initiateDispute (${importId}, ${dhWallet})`);
+        return this.transactions.queueTransaction(
+            this.readingContract, 'initiateDispute',
+            [importId, dhWallet], options,
+        );
+    }
+
+    confirmPurchase(importId, dhWallet) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace(`confirmPurchase (${importId}, ${dhWallet})`);
+        return this.transactions.queueTransaction(
+            this.readingContract, 'confirmPurchase',
+            [importId, dhWallet], options,
+        );
+    }
+
+    cancelPurchase(importId, correspondentWallet, senderIsDh) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
+        return this.transactions.queueTransaction(
+            this.readingContract, 'confirmPurchase',
+            [importId, correspondentWallet, senderIsDh], options,
+        );
+    }
+
+    sendProofData(
+        importId, dvWallet, checksumLeft, checksumRight, checksumHash,
+        randomNumber1, randomNumber2, decryptionKey, blockIndex,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContract,
+        };
+
+        log.trace('sendProofData ()');
+        return this.transactions.queueTransaction(
+            this.readingContract, 'sendProofData',
+            [
+                importId, dvWallet, checksumLeft, checksumRight, checksumHash,
+                randomNumber1, randomNumber2, decryptionKey, blockIndex,
+            ], options,
         );
     }
 }

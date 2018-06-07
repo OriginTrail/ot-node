@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         sd: DataTypes.STRING,
         r1: DataTypes.STRING,
         r2: DataTypes.STRING,
+        block_number: DataTypes.INTEGER,
     }, {});
     data_holders.associate = function (models) {
     // associations can be defined here

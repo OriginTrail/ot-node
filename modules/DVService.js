@@ -1,7 +1,11 @@
+const BN = require('bn.js');
+const ethAbi = require('ethereumjs-abi');
+const crypto = require('crypto');
+
 const Utilities = require('./Utilities');
 const Models = require('../models');
-const BN = require('bn.js');
 const ImportUtilities = require('./ImportUtilities');
+const Encryption = require('./Encryption');
 
 const log = Utilities.getLogger();
 
@@ -281,6 +285,146 @@ class DVService {
             new BN(networkQueryResponse.data_price),
             new BN(networkQueryResponse.stake_factor),
         );
+
+        // Wait for event from blockchain.
+        // event: CommitmentSent(import_id, msg.sender, DV_wallet);
+        await this.blockchain.subscribeToEvent('CommitmentSent', importId, 20 * 60 * 1000);
+
+        // TODO: Commitment happened.
+    }
+
+    async handleEncryptedPaddedKey(message) {
+        /*
+            message: {
+                id,
+                wallet,
+                nodeId,
+                m1,
+                m2,
+                e,
+                r1,
+                r2,
+                sd, // epkChecksum
+                blockNumber,
+            }
+         */
+
+        const {
+            id, wallet, nodeId, m1, m2, e, r1, r2, sd, blockNumber,
+        } = message;
+
+        // Check if mine request.
+
+        // Find the particular reply.
+        const networkQueryResponse = await Models.network_query_responses.findOne({
+            where: { id },
+        });
+
+        if (!networkQueryResponse) {
+            throw Error(`Didn't find query reply with ID ${id}.`);
+        }
+
+        const { importId: import_id } = networkQueryResponse;
+
+        const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
+        const m2Checksum =
+            Utilities.normalizeHex(Encryption.calculateDataChecksum(m2, r1, r2, blockNumber + 1));
+        const epkChecksumHash =
+            Utilities.normalizeHex(ethAbi.soliditySHA3(
+                ['uint256'],
+                [sd],
+            ));
+
+        // Get checksum from blockchain.
+        const purchaseData =
+            await this.blockchain.getPurchaseData(wallet, import_id);
+        const blockchainChecksum = purchaseData.checksum.substring(2, 42);
+
+        const testNumber = new BN(blockchainChecksum, 16);
+        const r1Bn = new BN(r1);
+        const r2Bn = new BN(r2);
+        testNumber.add(r2Bn).add(r1Bn.mul(new BN(3)));
+
+        if (!testNumber.eq(new BN(sd, 16))) {
+            log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${import_id}.`);
+            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+            throw Error('Commitment test failed.');
+        }
+
+        const commitmentHash = Utilities.normalizeHex(
+            ethAbi.soliditySHA3(
+                ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, blockNumber],
+            ),
+        );
+
+        const blockchainCommitmentHash =
+            await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id)
+                .commitment;
+
+        if (commitmentHash !== blockchainCommitmentHash) {
+            const errorMessage = `Blockchain commitment hash ${blockchainCommitmentHash} differs from mine ${commitmentHash}.`;
+            log.warn(errorMessage);
+            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+            throw Error(errorMessage);
+        }
+
+        await this.blockchain.confirmPurchase(import_id, wallet);
+
+        const encryptedBlockEvent =
+            await this.blockchain.subscribeToEvent('EncryptedBlockSent', import_id, 60 * 60 * 1000);
+
+        if (encryptedBlockEvent) {
+            // DH signed the escrow. Yay!
+            const purchase =
+                await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id);
+            const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
+            const publicKey = Encryption.unpackEPK(epk);
+
+            const holdingData = await Models.holding_data.create({
+                id: import_id,
+                source_wallet: wallet,
+                data_public_key: publicKey,
+                epk,
+            });
+        } else {
+            // Didn't sign escrow. Cancel it.
+            log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${import_id}.`);
+            await this.blockchain.cancelPurchase(import_id, wallet, false);
+            log.info(`Purchase for import ID ${import_id} canceled.`);
+        }
+    }
+
+    async _litigatePurchase(importId, wallet, nodeId, m1, m2, e) {
+        // Initiate despute here.
+        await this.blockchain.initiateDispute(importId, wallet);
+
+        // Wait for event.
+        // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, true);
+
+        const purchaseDisputeCompleted =
+            await this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 60 * 60 * 1000);
+
+        if (purchaseDisputeCompleted.proof_was_correct) {
+            // Ups, should never happened.
+            log.warn(`Contract claims litigation was unfortunate for me. Import ID ${importId}`);
+
+            // Proceed like nothing happened.
+            const purchase =
+                await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId);
+            const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
+            const publicKey = Encryption.unpackEPK(epk);
+
+            const holdingData = await Models.holding_data.create({
+                id: importId,
+                source_wallet: wallet,
+                data_public_key: publicKey,
+                epk,
+            });
+        } else {
+            log.warn(`Contract claims litigation was fortune for me. Import ID ${importId}`);
+            // TODO: data should be removed from DB here.
+        }
     }
 }
 
