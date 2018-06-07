@@ -44,7 +44,7 @@ contract EscrowHolder {
 	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes) public;
 }
 
-contract Bidding {
+contract Bidding{
 	using SafeMath for uint256;
 
 	ERC20 public token;

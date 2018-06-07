@@ -422,6 +422,8 @@ contract('Bidding testing', async (accounts) => {
         }
     });
 
+    var litigators = [];
+
     // eslint-disable-next-line no-undef
     it('Should create 2 litigations about data no 6', async () => {
         // Get instances of contracts used in the test
@@ -434,23 +436,24 @@ contract('Bidding testing', async (accounts) => {
         hash_array.push(hash_GH);
         hash_array.push(hash_ABCD);
 
+        litigators.push(chosen_bids[0]);
+        litigators.push(chosen_bids[1]);
+
         await escrow.initiateLitigation(
             import_id,
-            accounts[chosen_bids[1]],
+            accounts[litigators[0]],
             requested_data_index,
             hash_array,
             { from: DC_wallet },
         );
         await escrow.initiateLitigation(
             import_id,
-            accounts[chosen_bids[2]],
+            accounts[litigators[1]],
             requested_data_index,
             hash_array,
             { from: DC_wallet },
         );
     });
-
-    /*
 
     // eslint-disable-next-line no-undef
     it('Should answer litigations, one correctly, one incorrectly', async () => {
@@ -460,20 +463,21 @@ contract('Bidding testing', async (accounts) => {
         await escrow.answerLitigation(
             import_id,
             requested_data[requested_data_index],
-            { from: accounts[chosen_bids[0]] },
+            { from: accounts[litigators[0]] },
         );
         await escrow.answerLitigation(
             import_id,
             requested_data[requested_data_index + 1],
-            { from: accounts[chosen_bids[1]] },
+            { from: accounts[litigators[1]] },
         );
 
-        for (var i = 0; i < chosen_bids.length; i += 1) {
+        for (var i = 0; i < litigators.length; i += 1) {
             // eslint-disable-next-line
-            var response = await escrow.litigation.call(import_id);
-            console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
+            var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
+            console.log(`\t litigation for profile ${litigators[i]}: ${JSON.stringify(response)}`);
         }
     });
+
 
     // eslint-disable-next-line no-undef
     it('Should prove litigations, both correctly', async () => {
@@ -481,24 +485,23 @@ contract('Bidding testing', async (accounts) => {
         const escrow = await EscrowHolder.deployed();
         const util = await TestingUtilities.deployed();
 
-        await escrow.proveLitigaiton(
-            import_id,
-            requested_data[requested_data_index],
-            { from: DC_wallet },
-        );
-        await escrow.proveLitigaiton(
-            import_id,
-            requested_data[requested_data_index],
-            { from: DC_wallet },
-        );
+        var promises = [];
+        for (var i = 0; i < litigators.length; i += 1) {
+            promises[i] = escrow.proveLitigaiton(
+                import_id,
+                accounts[litigators[i]],
+                requested_data[requested_data_index],
+                { from: DC_wallet },
+            );
+        }
+        await Promise.all(promises);
 
-        for (var i = 0; i < chosen_bids.length; i += 1) {
+        for (i = 0; i < litigators.length; i += 1) {
             // eslint-disable-next-line
-            var response = await escrow.litigation.call(import_id);
+            var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
             console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
-
 
     // eslint-disable-next-line no-undef
     it('Should wait a 30 seconds, then pay all DHs', async () => {
@@ -538,14 +541,14 @@ contract('Bidding testing', async (accounts) => {
         const util = await TestingUtilities.deployed();
 
         // Await for 35 seconds, just to be on the safe side
-        await new Promise(resolve => setTimeout(resolve, 35000));
+        await new Promise(resolve => setTimeout(resolve, 40000));
 
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
         console.log(`\t Escrow finish time: ${response}`);
 
         var promises = [];
-        for (var i = 2; i < chosen_bids.length; i += 1) {
+        for (var i = 0; i < chosen_bids.length; i += 1) {
             promises[i] = escrow.payOut(
                 import_id,
                 { from: accounts[chosen_bids[i]], gas: 1000000 },
@@ -568,10 +571,10 @@ contract('Bidding testing', async (accounts) => {
             // );
         }
 
-        for (i = 2; i < chosen_bids.length; i += 1) {
+        for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            response = await escrow.escrow.call(import_id);
-            let status = response[9];
+            response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
+            let status = response[10];
             status = status.toNumber();
             switch (status) {
             case 0:
@@ -581,10 +584,10 @@ contract('Bidding testing', async (accounts) => {
                 status = 'initiated';
                 break;
             case 2:
-                status = 'active';
+                status = 'confirmed';
                 break;
             case 3:
-                status = 'canceled';
+                status = 'active';
                 break;
             case 4:
                 status = 'completed';
@@ -598,8 +601,8 @@ contract('Bidding testing', async (accounts) => {
         }
         for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line
-            var response = await escrow.escrow.call(import_id);
+            var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
-    }); */
+    });
 });
