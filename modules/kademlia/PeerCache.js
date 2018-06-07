@@ -59,6 +59,7 @@ class PeerCache {
                 if (err) {
                     reject(err);
                 } else {
+                    docs.sort((d1, d2) => d2.contact.timestamp - d1.contact.timestamp);
                     resolve(docs.map(doc => KadenceUtils.getContactURL([
                         doc._id,
                         doc.contact,

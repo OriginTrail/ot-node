@@ -98,7 +98,7 @@ class Network {
 
         // Enable Quasar plugin used for publish/subscribe mechanism
         this.node.quasar = this.node.plugin(kadence.quasar());
-        this.node.rolodex = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
@@ -189,9 +189,9 @@ class Network {
     _joinNetwork(callback) {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
-        const plugin = this.node.rolodex;
+        const peercachePlugin = this.node.peercache;
         setTimeout(() => {
-            plugin.getBootstrapCandidates().then((peers) => {
+            peercachePlugin.getBootstrapCandidates().then((peers) => {
                 log.info(`Found ${peers.length} possible bootstrap candidates from cache.`);
                 const nodes = peers.concat(bootstrapNodes);
 
