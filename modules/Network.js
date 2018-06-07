@@ -10,6 +10,7 @@ const async = require('async');
 const fs = require('fs');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
+const PeerCache = require('./kademlia/PeerCache');
 
 let networkUtilities = {};
 
@@ -97,7 +98,7 @@ class Network {
 
         // Enable Quasar plugin used for publish/subscribe mechanism
         this.node.quasar = this.node.plugin(kadence.quasar());
-        this.node.rolodex = this.node.plugin(kadence.rolodex(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        this.node.rolodex = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
 
         // We use Hashcash for relaying messages to prevent abuse and make large scale
         // DoS and spam attacks cost prohibitive
