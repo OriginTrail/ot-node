@@ -272,7 +272,8 @@ describe('graph module ', () => {
         this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
 
         const vertexData = 1;
-        const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
+        const encryptedVertices =
+            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.calledOnce(sysdb.runSystemUpdate);
@@ -289,14 +290,15 @@ describe('graph module ', () => {
         const vertexData = {
             x: 1,
         };
-
-        const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
+        const keyPair = Encryption.generateKeyPair();
+        const encryptedVertices =
+            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
         assert.isNotNull(encryptedVertices);
         const encryptedVertex = encryptedVertices.vertices[0];
         assert.isNotNull(encryptedVertex);
 
-        // eslint-disable-next-line max-len
-        const decryptedVertices = await Graph.decryptVertices(encryptedVertices.vertices, encryptedVertices.vertices[0].decryption_key);
+        const decryptedVertices =
+            await Graph.decryptVertices(encryptedVertices.vertices, keyPair.publicKey);
         assert.deepEqual(decryptedVertices[0].data, vertexData);
     });
 
@@ -317,7 +319,8 @@ describe('graph module ', () => {
         this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
 
         const vertexData = 1;
-        const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
+        const encryptedVertices =
+            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.notCalled(sysdb.runSystemUpdate);

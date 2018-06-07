@@ -39,12 +39,13 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data.encryptedVertices.vertices = Graph.sortVertices(data.encryptedVertices.vertices);
+        data.vertices = Graph.sortVertices(data.vertices);
 
+        // TODO: Move test generation outside sendPayload(.
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
             options.start_time, options.start_time + options.total_time,
-            32, data.encryptedVertices.vertices,
+            32, data.vertices,
         );
 
         Challenge.addTests(tests).then(() => {
@@ -58,8 +59,8 @@ class DataReplication {
                 edges: data.edges,
                 import_id: data.import_id,
                 dc_wallet: config.blockchain.wallet_address,
-                public_key: data.encryptedVertices.public_key,
-                vertices: data.encryptedVertices.vertices,
+                public_key: data.public_key,
+                vertices: data.vertices,
             },
         };
 

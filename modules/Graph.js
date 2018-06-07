@@ -1,7 +1,5 @@
 const Encryption = require('./Encryption');
 
-const sysdb = require('./Database/SystemStorage');
-
 /**
  * Graph class encapsulates every operation related to
  * graph manipulation such as traversing, transforming, etc.
@@ -76,64 +74,18 @@ class Graph {
     }
 
     /**
-     * Encrypts vertices with stored keys if they exist or with new created ones otherwise
-     * @param dhWallet      DH node wallet
-     * @param dhKademliaId  DH node Kademlia ID
-     * @param vertices      Vertices to be encrypted
+     * Encrypt vertices data with specified private key.
+     *
+     * All vertices that has data property will be encrypted with given private key.
+     * @param vertices Vertices to encrypt
+     * @param privateKey Encryption key
      */
-    static encryptVertices(dhWallet, dhKademliaId, vertices) {
-        return new Promise((resolve, reject) => {
-            sysdb.connect().then(() => {
-                const selectQuerySQL = 'SELECT dh.data_private_key, dh.data_public_key from data_holders as dh where dh.dh_wallet=? and dh.dh_kademlia_id=?';
-
-                sysdb.runSystemQuery(selectQuerySQL, [dhWallet, dhKademliaId]).then((rows) => {
-                    if (rows.length > 0) {
-                        const privateKey = rows[0].data_private_key;
-                        const publicKey = rows[0].data_public_key;
-
-                        Graph.encryptVerticesWithKeys(vertices, privateKey, publicKey);
-                        resolve({ vertices, public_key: publicKey });
-                    } else {
-                        const keyPair = Encryption.generateKeyPair();
-                        const updateKeysSQL = 'INSERT INTO data_holders (data_private_key, data_public_key, dh_wallet, dh_kademlia_id)VALUES (?, ?, ?, ?)';
-                        const updateQueryParams = [
-                            keyPair.privateKey,
-                            keyPair.publicKey,
-                            dhWallet,
-                            dhKademliaId];
-
-                        sysdb.runSystemUpdate(updateKeysSQL, updateQueryParams).then(() => {
-                            Graph.encryptVerticesWithKeys(
-                                vertices, keyPair.privateKey,
-                                keyPair.publicKey,
-                            );
-                            resolve({ vertices, public_key: keyPair.publicKey });
-                        }).catch((err) => {
-                            reject(err);
-                        });
-                    }
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        });
-    }
-
-    /**
-     * Encrypt vertices data with specified public and private keys
-     * @param vertices    Vertices to be encrypted
-     * @param privateKey  Private key used for encryption
-     * @param publicKey   Public key used for decryption
-     */
-    static encryptVerticesWithKeys(vertices, privateKey, publicKey) {
+    static encryptVertices(vertices, privateKey) {
         for (const id in vertices) {
             const vertex = vertices[id];
             if (vertex.data) {
                 vertex.data = Encryption.encryptObject(vertex.data, privateKey);
             }
-            vertex.decryption_key = publicKey;
         }
     }
 

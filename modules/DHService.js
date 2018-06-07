@@ -9,6 +9,7 @@ const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
+const crypto = require('crypto');
 
 const log = Utilities.getLogger();
 
@@ -245,7 +246,7 @@ class DHService {
                 }
                 return encVertex;
             });
-            Graph.encryptVerticesWithKeys(decryptedVertices, keyPair.privateKey, keyPair.publicKey);
+            Graph.encryptVertices(decryptedVertices, keyPair.privateKey);
 
             const distributionMerkle = await ImportUtilities.merkleStructure(
                 decryptedVertices,
@@ -451,39 +452,29 @@ class DHService {
         }
 
         // TODO: Only one import ID used. Later we'll support replication from multiple imports.
-        const import_id = offer.imports[0];
+        const importId = offer.imports[0];
 
-        const verticesPromise = this.graphStorage.findVerticesByImportId(import_id);
-        const edgesPromise = this.graphStorage.findEdgesByImportId(import_id);
+        const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+        const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
 
         const values = await Promise.all([verticesPromise, edgesPromise]);
         const vertices = values[0];
         const edges = values[1];
 
         // Get replication key and then encrypt data.
-        const holdingDataModel = await Models.holding_data.find({ where: { id: import_id } });
+        const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
 
         if (!holdingDataModel) {
-            throw Error(`Didn't find import with ID. ${import_id}`);
+            throw Error(`Didn't find import with ID. ${importId}`);
         }
 
         const holdingData = holdingDataModel.get({ plain: true });
         const replicationPrivateKey = holdingData.distribution_private_key;
         const replicationPublicKey = holdingData.distribution_public_key;
 
-        const encryptVerticesWithKeys = (vertices, privateKey, publicKey) => {
-            for (const id in vertices) {
-                const vertex = vertices[id];
-                if (vertex.data) {
-                    vertex.data = Encryption.encryptObject(vertex.data, privateKey);
-                }
-            }
-        };
-
-        encryptVerticesWithKeys(
+        Graph.encryptVertices(
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
             replicationPrivateKey,
-            replicationPublicKey,
         );
 
         // Make sure we have enough token balance before DV makes a purchase.
@@ -530,7 +521,7 @@ class DHService {
                 vertices,
                 edges,
             },
-            importId: import_id, // TODO: Temporal. Remove it.
+            importId, // TODO: Temporal. Remove it.
         };
         const dataReadResponseObject = {
             message: replyMessage,
@@ -544,17 +535,17 @@ class DHService {
         this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
 
         // Wait for event from blockchain.
-        await this.blockchain.subscribeToEvent('PurchaseInitiated', import_id, 20 * 60 * 1000);
+        await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
 
         // purchase[DH_wallet][msg.sender][import_id]
         const purchase = await this.blockchain.getPurchase(
             this.config.node_wallet,
             networkReplyModel.receiver_wallet,
-            import_id,
+            importId,
         );
 
         if (!purchase) {
-            const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${import_id}.`;
+            const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
             log.error(errorMessage);
             throw errorMessage;
         }
@@ -571,7 +562,7 @@ class DHService {
             throw errorMessage;
         }
 
-        log.info(`Purchase for import ${import_id} seems just fine. Sending comm to contract.`);
+        log.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
 
         // bool commitment_proof = this_purchase.commitment ==
         // keccak256(checksum_left, checksum_right, checksum_hash,
@@ -579,14 +570,14 @@ class DHService {
 
         // Fetch epk from db.
         if (!holdingData) {
-            log.error(`Cannot find holding data info for import ID ${import_id}`);
+            log.error(`Cannot find holding data info for import ID ${importId}`);
             throw Error('Internal error');
         }
         const { epk } = holdingData;
 
         const {
-            M1,
-            M2,
+            m1,
+            m2,
             selectedBlockNumber,
             selectedBlock,
         } = Encryption.randomDataSplit(epk);
@@ -594,21 +585,17 @@ class DHService {
         const r1 = Utilities.getRandomInt(100000);
         const r2 = Utilities.getRandomInt(100000);
 
-        const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(M1, r1, r2));
+        const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum = Utilities.normalizeHex(
-            Encryption.calculateDataChecksum(M2, r1, r2, selectedBlockNumber + 1));
+            Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1));
         const epkChecksum = Utilities.normalizeHex(
             ethAbi.soliditySHA3(
                 ['uint256'],
                 [Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2))],
             ),
         );
-        const keyChecksum = Utilities.normalizeHex(
-            ethAbi.soliditySHA3(
-                ['string'],
-                [replicationPublicKey],
-            ),
-        );
+        const e = crypto.randomBytes(16); // 128bits.
+        // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
         // From smart contract:
         // keccak256(checksum_left, checksum_right, checksum_hash,
@@ -616,13 +603,25 @@ class DHService {
         const commitmentHash = Utilities.normalizeHex(
             ethAbi.soliditySHA3(
                 ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-                [m1Checksum, m2Checksum, epkChecksum, r1, r2, keyChecksum, selectedBlockNumber],
+                [m1Checksum, m2Checksum, epkChecksum, r1, r2, e, selectedBlockNumber],
             ),
         );
 
         // store block number and block in db because of litigation.
 
-        await this.blockchain.sendCommitment(import_id, commitmentHash);
+        await this.blockchain.sendCommitment(importId, commitmentHash);
+
+        Models.data_holders.create({
+            import_id: importId,
+            dh_wallet: this.config.node_wallet,
+            dh_kademlia_id: this.config.identity,
+            m1,
+            m2,
+            e,
+            sd: epkChecksum,
+            r1,
+            r2,
+        });
     }
 
     listenToOffers() {

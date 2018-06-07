@@ -322,12 +322,12 @@ class Encryption {
 
         const selectedBlockNumber = Utilities.getRandomIntRange(1, dataBlocks.length - 2);
         const selectedBlock = dataBlocks[selectedBlockNumber];
-        const M1 = dataBlocks.slice(0, selectedBlockNumber).join('');
-        const M2 = dataBlocks.slice(selectedBlockNumber + 1).join('');
+        const m1 = dataBlocks.slice(0, selectedBlockNumber).join('');
+        const m2 = dataBlocks.slice(selectedBlockNumber + 1).join('');
 
         return {
-            M1,
-            M2,
+            m1,
+            m2,
             selectedBlockNumber,
             selectedBlock,
         };

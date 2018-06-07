@@ -8,25 +8,24 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         dh_id: {
-            type: Sequelize.INTEGER,
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        data_id: {
-            type: Sequelize.INTEGER,
+        import_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        start_time: {
-            type: Sequelize.DATE,
+        offer_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        end_time: {
-            type: Sequelize.DATE,
+        data_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
-        total_amount: {
-            type: Sequelize.REAL,
-        },
-        dh_stake: {
-            type: Sequelize.REAL,
-        },
-        my_stake: {
-            type: Sequelize.REAL,
+        data_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('replicated_data'),

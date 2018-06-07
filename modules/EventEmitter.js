@@ -126,6 +126,7 @@ class EventEmitter {
 
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
+            const kadIdentity = request.contact[0];
 
             if (!import_id || !wallet) {
                 const errorMessage = 'Asked replication without providing import ID or wallet.';
@@ -148,38 +149,53 @@ class EventEmitter {
 
             const offer = offerModel.get({ plain: true });
 
+            // Check is it valid ID of replicator.
+            const offerDhIds = JSON.parse(offer.dh_ids);
+            const offerWallets = JSON.parse(offer.dh_wallets);
+
+            if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
+                const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
+                log.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+                response.send({ status: 'fail', error: errorMessage });
+                return;
+            }
+
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
 
-            Promise.all([verticesPromise, edgesPromise, objectClassesPromise]).then((values) => {
-                let vertices = values[0];
-                const edges = values[1];
-                const objectClassVertices = values[2];
+            const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
+            let vertices = values[0];
+            const edges = values[1];
+            const objectClassVertices = values[2];
 
-                vertices = vertices.concat(...objectClassVertices);
+            vertices = vertices.concat(...objectClassVertices);
 
-                Graph.encryptVertices(
-                    wallet,
-                    request.contact[0],
-                    vertices,
-                    Storage,
-                ).then((encryptedVertices) => {
-                    log.info('[DC] Preparing to enter sendPayload');
-                    const data = {};
-                    // eslint-disable-next-line
-                    data.contact = request.contact[0];
-                    data.vertices = vertices;
-                    data.edges = edges;
-                    data.import_id = offer.id;
-                    data.encryptedVertices = encryptedVertices;
-                    data.total_escrow_time = offer.total_escrow_time;
-                    dataReplication.sendPayload(data).then(() => {
-                        log.info('[DC] Payload sent');
-                    });
-                }).catch((e) => {
-                    console.log(e);
-                });
+            const keyPair = Encryption.generateKeyPair();
+            Graph.encryptVertices(vertices, keyPair.privateKey);
+
+            const replicatedData = await Models.replicated_data.create({
+                dh_id: kadIdentity,
+                import_id,
+                offer_id: offer.id,
+                data_private_key: keyPair.privateKey,
+                data_public_key: keyPair.publicKey,
+            });
+
+            log.info('[DC] Preparing to enter sendPayload');
+            const data = {
+                contact: kadIdentity,
+                vertices,
+                edges,
+                import_id,
+                public_key: keyPair.publicKey,
+                total_escrow_time: offer.total_escrow_time,
+            };
+
+            dataReplication.sendPayload(data).then(() => {
+                log.info(`[DC] Payload sent. Replication ID ${replicatedData.id}.`);
+            }).catch((error) => {
+                log.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });
 
             response.send({ status: 'success' });

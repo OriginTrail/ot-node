@@ -138,7 +138,7 @@ class DCService {
      */
     _calculateImportSize(vertices) {
         const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
-        Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
+        Graph.encryptVertices(vertices, keyPair.privateKey);
         return bytes(JSON.stringify(vertices));
     }
 
@@ -182,8 +182,8 @@ class DCService {
      * @return {Promise<void>}
      */
     async verifyImport(epk, importId, encryptionKey, kadWallet) {
-        const dataHolder = await Models.data_holders.findOne({
-            where: { dh_wallet: kadWallet },
+        const replicatedData = await Models.replicated_data.findOne({
+            where: { dh_id: kadWallet, import_id: importId },
         });
 
         const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
@@ -195,13 +195,13 @@ class DCService {
 
             const originalVertices = Utilities.copyObject(vertices);
             const clonedVertices = Utilities.copyObject(vertices);
-            Graph.encryptVerticesWithKeys(clonedVertices, dataHolder.data_private_key);
+            Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
 
             const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
 
-            Graph.encryptVerticesWithKeys(vertices, encryptionKey);
+            Graph.encryptVertices(vertices, encryptionKey);
             const distributionMerkle = await ImportUtilities.merkleStructure(
                 vertices,
                 edges,
