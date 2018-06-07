@@ -42,9 +42,9 @@ script:
   - kill %1
   - node isStartHealthy.js neo4jdb
   # compile and check Smart Contracts
-  - ganache-cli -i 5777 -p 7545 &>ganache.log &
+  - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
+  - truffle test --network test
   - cd modules/Blockchain/Ethereum && rm -rf build && truffle migrate --reset --compile-all --network ganache
-  # - truffle test --network ganache
   - cd ../../../
   - jobs
   - kill %1
