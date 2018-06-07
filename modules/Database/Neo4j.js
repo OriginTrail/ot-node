@@ -191,6 +191,10 @@ class Neo4jDB {
 
             for (const objectProp of Neo4jDB._getNestedObjects(value)) {
                 const { edge, subvalue } = objectProp;
+                if (Utilities.isEmptyObject(subvalue)) {
+                    // eslint-disable-next-line
+                    continue;
+                }
                 // eslint-disable-next-line
                 const subnodeId = await this._addVertex(subvalue, tx);
                 // eslint-disable-next-line
@@ -226,7 +230,6 @@ class Neo4jDB {
             paramString = `{${paramString}}`;
         }
         const session = this.driver.session();
-        console.log(paramString);
         const r = await session.writeTransaction(tx => tx.run(`MATCH (a),(b) WHERE a._key='${from}' AND b._key='${to}' CREATE (a)-[r:${edgeType} ${paramString}]->(b) return r`));
         session.close();
         return r;
