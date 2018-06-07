@@ -223,7 +223,7 @@ describe('GS1 Importer tests', () => {
             } else if (xml === 'GraphExample_4.xml') {
                 await checkGraphExample4XmlVerticeContent();
             } else {
-                // TODO write random content check if you add new .xml files
+                throw Error(`Not Implemented for ${xml}.`);
             }
         }
 
