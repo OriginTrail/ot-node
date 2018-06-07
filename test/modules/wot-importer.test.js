@@ -20,7 +20,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('WOT Importer tests', () => {
+describe('WOT Importer tests', () => {
     const databaseName = 'wot-test';
     let graphStorage;
     let systemDb;
