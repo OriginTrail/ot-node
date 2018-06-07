@@ -61,7 +61,7 @@ sudo pip3 install python-dotenv
 
 sudo apt-get install git
 
-git clone -b master https://github.com/OriginTrail/ot-node.git
+git clone -b develop https://github.com/OriginTrail/ot-node.git
 cd ot-node
 mkdir keys data &> /dev/null
 cp .env.example .env
