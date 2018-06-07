@@ -579,9 +579,11 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
+                        this.logger.error(error);
                         reject(error);
                     });
             }).catch((error) => {
+                this.logger.error(error);
                 reject(error);
             });
         });

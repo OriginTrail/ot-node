@@ -2,6 +2,7 @@
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 const Mtree = require('./mtree')();
+const { Lock } = require('semaphore-async-await');
 
 const log = utilities.getLogger();
 
@@ -10,6 +11,7 @@ class Importer {
         this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
         this.graphStorage = ctx.graphStorage;
+        this.lock = new Lock();
     }
 
     async importJSON(json_document) {
@@ -22,11 +24,14 @@ class Importer {
 
         log.trace('Vertex importing');
 
+        await this.lock.acquire();
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
             .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
         await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, import_id))
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
+
+        this.lock.release();
 
         log.info('JSON import complete');
     }
@@ -121,21 +126,39 @@ class Importer {
 
     async importWOT(document) {
         try {
+            await this.lock.acquire();
             const result = await this.wotImporter.parse(document);
+            this.lock.release();
             return await this.afterImport(result);
         } catch (error) {
-            log.error(`Failed to parse XML. Error ${error}.`);
-            return null;
+            log.error(`Import error: ${error}.`);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        } finally {
+            this.lock.release();
         }
     }
 
     async importXMLgs1(ot_xml_document) {
         try {
+            await this.lock.acquire();
             const result = await this.gs1Importer.parseGS1(ot_xml_document);
-            return await this.afterImport(result);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
         } catch (error) {
-            log.error(`Failed to parse XML. Error ${error}.`);
-            return null;
+            log.error(`Import error: ${error}.`);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        } finally {
+            this.lock.release();
         }
     }
 }

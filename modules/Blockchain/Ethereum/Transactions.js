@@ -5,8 +5,6 @@ const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
 const { Lock } = require('semaphore-async-await');
 
-const lock = new Lock();
-
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
 
@@ -22,6 +20,7 @@ class Transactions {
         this.transactionEventEmmiter = new EventEmitter();
         this.privateKey = Buffer.from(config.node_private_key, 'hex');
         this.walletAddress = config.node_wallet;
+        this.lock = new Lock();
     }
     /**
      * Send transaction to Ethereum blockchain
@@ -32,10 +31,7 @@ class Transactions {
     async sendTransaction(newTransaction) {
         await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
-            console.log('getting nonce');
         });
-
-        console.log('Nonce is ', newTransaction.options.nonce);
 
         const rawTx = txutils.functionTx(
             newTransaction.contractAbi,
@@ -55,7 +51,7 @@ class Transactions {
      * Signal that queue is ready for next transaction
      */
     signalNextInQueue() {
-        lock.release();
+        this.lock.release();
     }
 
     /**
@@ -87,7 +83,8 @@ class Transactions {
                 contractAbi, method, args, options,
             };
 
-            await lock.acquire();
+            await this.lock.acquire();
+
             this.sendTransaction(newTransaction)
                 .then((response) => {
                     this.signalNextInQueue();

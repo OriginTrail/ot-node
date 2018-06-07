@@ -79,7 +79,7 @@ class GS1Importer {
                     .concat(GS1Importer._parseLocations(vocabularyElement.VocabularyElementList));
                 break;
             default:
-                throw Error(`Unimplemented or unknown type: ${vocabularyElement.type}.`);
+                GS1Helper.handleError(`Unimplemented or unknown type: ${vocabularyElement.type}.`, 400);
             }
         }
 
@@ -763,7 +763,7 @@ class GS1Importer {
 
         const validationResult = schema.validate(gs1XmlFileBuffer.toString());
         if (validationResult !== null) {
-            throw Error(`Failed to validate schema. ${validationResult}`);
+            GS1Helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
         }
 
         return new Promise(resolve =>
