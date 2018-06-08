@@ -28,6 +28,7 @@ class DCService {
     constructor(ctx) {
         this.blockchain = ctx.blockchain;
         this.challenger = ctx.challenger;
+        this.graphStorage = ctx.graphStorage;
     }
 
     async createOffer(importId, rootHash, totalDocuments, vertices) {
@@ -181,9 +182,9 @@ class DCService {
      * @param kadWallet
      * @return {Promise<void>}
      */
-    async verifyImport(epk, importId, encryptionKey, kadWallet) {
+    async verifyImport(epk, importId, encryptionKey, kadWallet, nodeId) {
         const replicatedData = await Models.replicated_data.findOne({
-            where: { dh_id: kadWallet, import_id: importId },
+            where: { dh_id: nodeId, import_id: importId },
         });
 
         const edgesPromise = this.graphStorage.findEdgesByImportId(importId);

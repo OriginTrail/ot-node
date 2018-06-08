@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     const network_replies = sequelize.define('network_replies', {
         id: {
             type: DataTypes.UUID,
-            defaultValue: uuidv4(),
+            defaultValue: () => uuidv4(),
             primaryKey: true,
         },
         data: DataTypes.JSON,
@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         receiver_identity: DataTypes.STRING,
         timestamp: {
             type: DataTypes.INTEGER,
-            defaultValue: Date.now(),
+            defaultValue: () => Date.now(),
         },
     }, {});
     network_replies.associate = function (models) {

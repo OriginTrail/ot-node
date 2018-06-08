@@ -201,7 +201,7 @@ class DVService {
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
-            where: { id: replyId },
+            where: { reply_id: replyId },
         });
 
         if (!networkQueryResponse) {
@@ -212,21 +212,22 @@ class DVService {
 
         // Calculate root hash and check is it the same on the SC.
         const { vertices, edges } = message.encryptedData;
-        const dhFirstDHWallet = vertices.filter(vertex => vertex.vertex_typ = 'CLASS')[0].dh_wallet; // TODO: every vertex should have this.
+        const dhWallet = message.wallet;
 
-        const escrow = await this.blockchain.getEscrow(importId, dhFirstDHWallet);
+        const escrow = await this.blockchain.getEscrow(importId, message.wallet);
 
         if (!escrow) {
-            const errorMessage = `Couldn't not find escrow for DH ${dhFirstDHWallet} and import ID ${importId}`;
+            const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
             log.warn(errorMessage);
             throw errorMessage;
         }
 
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
+        const merkle = await ImportUtilities.merkleStructure(
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'), edges);
         const rootHash = merkle.tree.getRoot()
 
         if (escrow.distribution_root_hash !== rootHash) {
-            const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhFirstDHWallet}, import ID ${importId}`;
+            const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
             log.warn(errorMessage);
             throw errorMessage;
         }

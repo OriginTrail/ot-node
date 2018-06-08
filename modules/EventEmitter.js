@@ -33,6 +33,7 @@ class EventEmitter {
         const {
             dcService,
             dhService,
+            dvService,
             dataReplication,
             importer,
             challenger,
@@ -190,7 +191,7 @@ class EventEmitter {
             const offerDhIds = JSON.parse(offer.dh_ids);
             const offerWallets = JSON.parse(offer.dh_wallets);
 
-            // TODO: Bids should be stored for all predetermined and others and then checked here.
+            // TODO: Bids should -be stored for all predetermined and others and then checked here.
             // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
             //     const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
             //     log.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
@@ -575,7 +576,8 @@ class EventEmitter {
             const { wallet: kadWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
-            const success = await dcService.verifyImport(epk, importId, encryptionKey, kadWallet);
+            // TODO: Add guard for fake replations.
+            const success = await dcService.verifyImport(epk, importId, encryptionKey, kadWallet, request.contact[0]);
             if (success) {
                 response.send({
                     status: 'OK',

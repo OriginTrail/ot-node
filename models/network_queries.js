@@ -5,12 +5,12 @@ module.exports = (sequelize, DataTypes) => {
         id: {
             type: DataTypes.UUID,
             primaryKey: true,
-            defaultValue: uuidv4(),
+            defaultValue: () => uuidv4(),
         },
         query: DataTypes.JSON,
         timestamp: {
             type: DataTypes.INTEGER,
-            defaultValue: Date.now(),
+            defaultValue: () => Date.now(),
         },
     }, {});
     network_queries.associate = function (models) {
