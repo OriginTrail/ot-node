@@ -190,12 +190,13 @@ class EventEmitter {
             const offerDhIds = JSON.parse(offer.dh_ids);
             const offerWallets = JSON.parse(offer.dh_wallets);
 
-            if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
-                const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
-                log.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
-                response.send({ status: 'fail', error: errorMessage });
-                return;
-            }
+            // TODO: Bids should be stored for all predetermined and others and then checked here.
+            // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
+            //     const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
+            //     log.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+            //     response.send({ status: 'fail', error: errorMessage });
+            //     return;
+            // }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
