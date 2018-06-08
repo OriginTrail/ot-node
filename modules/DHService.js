@@ -225,11 +225,11 @@ class DHService {
     async handleImport(data) {
         /*
             payload: {
-                edges: data.edges,
-                import_id: data.import_id,
-                dc_wallet: config.blockchain.wallet_address,
-                public_key: data.encryptedVertices.public_key,
-                vertices: data.encryptedVertices.vertices,
+                edges,
+                import_id
+                dc_wallet,
+                public_key,
+                vertices,
             },
          */
         const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
@@ -296,7 +296,7 @@ class DHService {
             const holdingData = await Models.holding_data.create({
                 id: data.import_id,
                 source_wallet: bid.dc_wallet,
-                data_public_key: data.pub_key,
+                data_public_key: data.public_key,
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
                 epk,
@@ -313,7 +313,7 @@ class DHService {
                 encryptionKey: keyPair.privateKey,
             }, bid.dc_id);
         } catch (error) {
-            log.error(`Failed to verify escrow. ${error}.`);
+            log.error(`Failed to import data. ${error}.`);
         }
     }
 
@@ -361,7 +361,7 @@ class DHService {
         // distribute data gotten from someone else.
         const replicatedImportIds = [];
         // Then check if I bought replication from another DH.
-        const data_holders = await Models.data_holders.findAll({
+        const data_holders = await Models.holding_data.findAll({
             where: {
                 id: {
                     [Op.in]: imports,
@@ -497,8 +497,13 @@ class DHService {
         }
 
         const holdingData = holdingDataModel.get({ plain: true });
+        const dataPublicKey = holdingData.data_public_key;
         const replicationPrivateKey = holdingData.distribution_private_key;
-        const replicationPublicKey = holdingData.distribution_public_key;
+
+        Graph.decryptVertices(
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+            dataPublicKey,
+        );
 
         Graph.encryptVertices(
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
@@ -508,7 +513,7 @@ class DHService {
         // Make sure we have enough token balance before DV makes a purchase.
         // From smart contract:
         // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
-        const condition = new BN(offer.dataPrice).mul(new BN(offer.stake_factor)).add(new BN(1));
+        const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
         const profileBalance =
             new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 
@@ -615,9 +620,7 @@ class DHService {
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
-            Utilities.normalizeHex(
-                Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1),
-            );
+            Utilities.normalizeHex(Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1));
         const epkChecksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2));
         const epkChecksumHash =
             Utilities.normalizeHex(ethAbi.soliditySHA3(
@@ -682,7 +685,8 @@ class DHService {
                 return;
             }
 
-            await this.blockchain.sendProofData(importId, wallet, m1Checksum,
+            await this.blockchain.sendProofData(
+                importId, wallet, m1Checksum,
                 m2Checksum, epkChecksumHash, r1, r2,
                 Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
             );
