@@ -60,7 +60,7 @@ class DHService {
                 // If event is in the table event will be handled on different call.
                 const eventModels = await Models.events.findAll({
                     where: {
-                        offer_hash: offerHash,
+                        import_id: importId,
                         event: 'AddedPredeterminedBid',
                     },
                 });
@@ -69,8 +69,8 @@ class DHService {
                     let found = false;
                     eventModels.forEach((eventModel) => {
                         const data = JSON.parse(eventModel.data);
-                        if (data.DH_node_id.substring(2, 42) === config.identity &&
-                            data.DH_wallet === config.node_wallet) {
+                        if (data.DH_node_id.substring(2, 42) === this.config.identity &&
+                            data.DH_wallet === this.config.node_wallet) {
                             // I'm chosen for predetermined bid.
                             found = true;
                         }
