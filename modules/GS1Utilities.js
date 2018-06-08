@@ -2,11 +2,24 @@ const md5 = require('md5');
 const crypto = require('crypto');
 const validator = require('validator');
 const Utilities = require('./Utilities');
+const stringify = require('json-stable-stringify');
 
 const ZK = require('./ZK');
 
 class GS1Utilities {
-    // validation
+    /**
+     * Creates key for the document
+     * @param args
+     * @return {*}
+     */
+    static createKey(...args) {
+        const params = [];
+        for (const argument of args) {
+            params.push(`${stringify(argument)}`);
+        }
+        return md5(`${params.join('_')}`);
+    }
+
     static handleError(message, status) {
         const err = new Error(message);
         err.status = status;
