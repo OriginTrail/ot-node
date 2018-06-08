@@ -53,7 +53,7 @@
 
 					<Vocabulary type="urn:ot:object:location">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:epc:id:sgln:Building_Green_1">
+							<VocabularyElement id="urn:epc:id:sgln:Building_Green">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
                                 <children>
@@ -64,7 +64,7 @@
                                     <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
                                 </extension>
 							</VocabularyElement>
-							<VocabularyElement id="urn:epc:id:sgln:Building_Pink_1">
+							<VocabularyElement id="urn:epc:id:sgln:Building_Pink">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
 								<extension>
@@ -112,7 +112,7 @@
 					<id>urn:epc:id:sgln:Building_Green_V2</id>
 				</readPoint>
 				<bizLocation> <!-- Optional -->
-					<id>urn:epc:id:sgln:Building_Green_1</id>
+					<id>urn:epc:id:sgln:Building_Green</id>
 				</bizLocation>
 				<extension>
 					<quantityList> <!-- Optional -->
@@ -128,10 +128,10 @@
 						<OTEventClass>urn:ot:event:Ownership</OTEventClass>
 						<OTEventType>Sales</OTEventType>
 						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green_1</source>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
 						</sourceList>
 						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink_1</destination>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
 						</destinationList>
 					</extension>
 				</extension>
