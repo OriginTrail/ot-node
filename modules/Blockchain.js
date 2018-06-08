@@ -245,6 +245,10 @@ class Blockchain {
         return this.blockchain.depositToken(amount);
     }
 
+    async getRootHash(dcWallet, dataId) {
+        return this.blockchain.getRootHash(dcWallet, dataId);
+    }
+
     async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
         return this.blockchain.addRootHashAndChecksum(
             importId,

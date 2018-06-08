@@ -91,8 +91,8 @@ class WOTImporter {
             _to: 'ot_vertices/ACTOR',
             edge_type: 'IS',
         });
-
-        const eventId = `${senderId}:${importId}`; // TODO change event ID
+        const date = new Date(importId);
+        const eventId = `${senderId}:${date.toUTCString()}`.replace(/ /g, '_').replace(/,/g, '');
         const event = {
             identifiers: {
                 id: eventId,
@@ -114,21 +114,21 @@ class WOTImporter {
             const ooVertex = await this.db.findVertexWithMaxVersion(senderId, ooId);
             if (ooVertex) {
                 thingEdges.push({
-                    _key: md5(`event_batch_${senderId}_${event._key}_${ooVertex._key}`),
+                    _key: md5(`event_object_${senderId}_${event._key}_${ooVertex._key}`),
                     _from: `ot_vertices/${event._key}`,
                     _to: `ot_vertices/${ooVertex._key}`,
-                    edge_type: 'EVENT_BATCH',
+                    edge_type: 'EVENT_OBJECT',
                     identifiers: {
-                        uid: `event_batch_${event.identifiers.id}_${ooVertex.identifiers.id}`,
+                        uid: `event_object_${event.identifiers.id}_${ooVertex.identifiers.id}`,
                     },
                 });
                 thingEdges.push({
-                    _key: md5(`event_batch_${senderId}_${ooVertex._key}_${event._key}`),
+                    _key: md5(`event_object_${senderId}_${ooVertex._key}_${event._key}`),
                     _from: `ot_vertices/${ooVertex._key}`,
                     _to: `ot_vertices/${event._key}`,
-                    edge_type: 'EVENT_BATCH',
+                    edge_type: 'EVENT_OBJECT',
                     identifiers: {
-                        uid: `event_batch_${ooVertex.identifiers.id}_${event.identifiers.id}`,
+                        uid: `event_object_${ooVertex.identifiers.id}_${event.identifiers.id}`,
                     },
                 });
             }
@@ -136,15 +136,17 @@ class WOTImporter {
 
         if (readPoint) {
             const rpVertex = await this.db.findVertexWithMaxVersion(senderId, readPoint.id);
-            thingEdges.push({
-                _key: md5(`read_point_${senderId}_${event._key}_${rpVertex._key}`),
-                _from: `ot_vertices/${event._key}`,
-                _to: `ot_vertices/${rpVertex._key}`,
-                edge_type: 'READ_POINT',
-                identifiers: {
-                    uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
-                },
-            });
+            if (rpVertex) {
+                thingEdges.push({
+                    _key: md5(`read_point_${senderId}_${event._key}_${rpVertex._key}`),
+                    _from: `ot_vertices/${event._key}`,
+                    _to: `ot_vertices/${rpVertex._key}`,
+                    edge_type: 'READ_POINT',
+                    identifiers: {
+                        uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
+                    },
+                });
+            }
         }
 
         thingEdges.push({

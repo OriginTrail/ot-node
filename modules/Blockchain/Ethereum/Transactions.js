@@ -3,6 +3,7 @@ const EventEmitter = require('events');
 const Utilities = require('../../Utilities');
 const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
+const { Lock } = require('semaphore-async-await');
 
 const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
@@ -19,6 +20,7 @@ class Transactions {
         this.transactionEventEmmiter = new EventEmitter();
         this.privateKey = Buffer.from(config.node_private_key, 'hex');
         this.walletAddress = config.node_wallet;
+        this.lock = new Lock();
     }
     /**
      * Send transaction to Ethereum blockchain
@@ -49,11 +51,7 @@ class Transactions {
      * Signal that queue is ready for next transaction
      */
     signalNextInQueue() {
-        this.transactionQueue.shift();
-        if (this.transactionQueue.length > 0) {
-            const nextTransaction = String(this.transactionQueue[0]);
-            this.transactionEventEmmiter.emit(nextTransaction);
-        }
+        this.lock.release();
     }
 
     /**
@@ -84,12 +82,11 @@ class Transactions {
             const newTransaction = {
                 contractAbi, method, args, options,
             };
-            this.transactionQueue.push(newTransaction);
-            if (this.transactionQueue.length > 1) await this.readyFor(newTransaction);
-            this.transactionPending = true;
+
+            await this.lock.acquire();
+
             this.sendTransaction(newTransaction)
                 .then((response) => {
-                    // log.info('Transaction: ', response);
                     this.signalNextInQueue();
                     if (response.status === '0x0') {
                         reject(response);

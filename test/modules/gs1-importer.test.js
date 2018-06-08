@@ -2,7 +2,7 @@ require('dotenv').config();
 const {
     describe, beforeEach, afterEach, it,
 } = require('mocha');
-const { expect } = require('chai');
+const { assert, expect } = require('chai');
 const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
@@ -24,15 +24,17 @@ function buildSelectedDatabaseParam(databaseName) {
 
 describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
+    let graphStorage;
     let systemDb;
     let gs1;
     let importer;
 
     const inputXmlFiles = [
-        { args: [path.join(__dirname, '../../importers/Transformation.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../../importers/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -55,7 +57,7 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        const graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
         container.register({
             gs1Importer: awilix.asClass(GS1Importer),
             graphStorage: awilix.asValue(graphStorage),
@@ -96,14 +98,29 @@ describe('GS1 Importer tests', () => {
                 .equal(import2Result.edges.length);
 
             import1Result.vertices.forEach((vertex) => {
-                const vertex2 = import2Result.vertices
-                    .find(element => vertex._key === element._key);
+                let vertex2;
+                if (vertex.identifiers) {
+                    // private data is changing the _key
+                    vertex2 = import2Result.vertices.find((element) => {
+                        if (element.identifiers &&
+                            vertex.identifiers.id === element.identifiers.id) {
+                            return element;
+                        }
+                        return null;
+                    });
+                } else {
+                    // find by _key
+                    vertex2 = import2Result.vertices.find(element => vertex._key === element._key);
+                }
+
                 expect(vertex2).not.to.be.equal(undefined);
 
                 if (vertex.identifiers) {
                     expect(vertex.identifiers).to.deep.equal(vertex2.identifiers);
                 }
                 if (vertex.data) {
+                    delete vertex.data.private;
+                    delete vertex2.data.private;
                     expect(vertex.data).to.deep.equal(vertex2.data);
                 }
                 if (vertex.vertex_type) {
@@ -147,6 +164,88 @@ describe('GS1 Importer tests', () => {
             for (let i = 0; i < inputXmlFiles.length; i += 1) {
                 checkImportResults(importResults[i], importResults[i + inputXmlFiles.length]);
             }
+        });
+    });
+
+    describe('Random vertices content check', async () => {
+        let specificVertice;
+
+        async function checkTransformationXmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:mda:product:id:123AB');
+            assert.equal(specificVertice.data.category, 'Engine');
+            assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
+            assert.equal(specificVertice.data.object_class_id, 'Product');
+            assert.equal(specificVertice.vertex_type, 'PRODUCT');
+            assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:product:id:123AB');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:product:id:123AB');
+        }
+
+        async function checkGraphExample1XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_1', 'urn:epc:id:sgln:Building_2');
+            assert.equal(specificVertice.data.category, 'Building _2');
+            assert.equal(specificVertice.data.description, 'Description of building _2');
+            assert.equal(specificVertice.data.object_class_id, 'Location');
+            assert.equal(specificVertice.vertex_type, 'LOCATION');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_1');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:Building_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:Building_2');
+        }
+
+        async function checkGraphExample2XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
+            assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
+            assert.equal(specificVertice.data.parent_id, 'urn:ot:mda:product:id:Product_1');
+            assert.equal(specificVertice.data.productid, 'urn:ot:mda:product:id:Product_1');
+            assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
+            assert.equal(specificVertice.vertex_type, 'BATCH');
+            assert.equal(specificVertice.sender_id, 'SENDER_ID');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgtin:Batch_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgtin:Batch_2');
+        }
+
+        async function checkGraphExample3XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_2', 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.data.category, 'Company');
+            assert.exists(specificVertice.data.node_id);
+            assert.equal(specificVertice.data.object_class_id, 'Actor');
+            // assert.equal(specificVertice.data.person:id:name, "Company _2");
+            assert.equal(specificVertice.vertex_type, 'ACTOR');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:actor:id:Company_2');
+        }
+
+        async function checkGraphExample4XmlVerticeContent() {
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Hospital1', 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+            assert.equal(specificVertice.data.parent_id, 'urn:epc:id:sgln:HospitalBuilding1');
+            assert.equal(specificVertice.vertex_type, 'CHILD_BUSINESS_LOCATION');
+            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Hospital1');
+            assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+            assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+        }
+
+        async function checkSpecificVerticeContent(xml) {
+            if (xml === 'Transformation.xml') {
+                await checkTransformationXmlVerticeContent();
+            } else if (xml === 'GraphExample_1.xml') {
+                await checkGraphExample1XmlVerticeContent();
+            } else if (xml === 'GraphExample_2.xml') {
+                await checkGraphExample2XmlVerticeContent();
+            } else if (xml === 'GraphExample_3.xml') {
+                await checkGraphExample3XmlVerticeContent();
+            } else if (xml === 'GraphExample_4.xml') {
+                await checkGraphExample4XmlVerticeContent();
+            } else {
+                throw Error(`Not Implemented for ${xml}.`);
+            }
+        }
+
+        inputXmlFiles.forEach((test) => {
+            it(`content check for ${path.basename(test.args[0])}`, async () => {
+                const importResult = await gs1.parseGS1(test.args[0]);
+                await checkSpecificVerticeContent(`${path.basename(test.args[0])}`);
+            });
         });
     });
 

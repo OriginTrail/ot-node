@@ -31,7 +31,13 @@ class EventEmitter {
      */
     initialize() {
         const {
-            dcService, dhService, dvService, dataReplication, importer, challenger, blockchain,
+            dcService,
+            dhService,
+            dataReplication,
+            importer,
+            challenger,
+            blockchain,
+            product,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -41,10 +47,21 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('trail', (data) => {
-            this.product.p.getTrailByQuery(data.query).then((res) => {
+            product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);
             }).catch(() => {
                 log.error(`Failed to get trail for query ${data.query}`);
+                data.response.send(500); // TODO rethink about status codes
+            });
+        });
+
+        this.globalEmitter.on('get_root_hash', (data) => {
+            const dcWallet = data.query.dc_wallet;
+            const importId = data.query.import_id;
+            blockchain.getRootHash(dcWallet, importId).then((res) => {
+                data.response.send(res);
+            }).catch((err) => {
+                log.error(`Failed to get root hash for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -64,11 +81,12 @@ class EventEmitter {
             data.response.send(200);
         });
 
-        const processImport = async (response, data) => {
+        const processImport = async (response, error, data) => {
             if (response === null) {
+                data.response.status(error.status);
                 data.response.send({
-                    status: 500,
-                    message: 'Failed to parse XML.',
+                    status: error.status,
+                    message: error.message,
                 });
                 return;
             }
@@ -85,7 +103,13 @@ class EventEmitter {
                 await Models.data_info
                     .create({
                         import_id, root_hash, import_timestamp: new Date(), total_documents,
-                    }).catch(e => log.error(e));
+                    }).catch((error) => {
+                        log.error(error);
+                        data.response.send({
+                            status: 500,
+                            message: error,
+                        });
+                    });
                 await dcService.createOffer(import_id, root_hash, total_documents, vertices);
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);
@@ -103,13 +127,35 @@ class EventEmitter {
         };
 
         this.globalEmitter.on('gs1-import-request', async (data) => {
-            const response = await importer.importXMLgs1(data.filepath);
-            await processImport(response, data);
+            try {
+                const responseObject = await importer.importXMLgs1(data.filepath);
+                const { error } = responseObject;
+                const { response } = responseObject;
+
+                if (response === null) {
+                    await processImport(null, error, data);
+                } else {
+                    await processImport(response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
         });
 
         this.globalEmitter.on('wot-import-request', async (data) => {
-            const response = await importer.importWOT(data.filepath);
-            await processImport(response, data);
+            try {
+                const responseObject = await importer.importWOT(data.filepath);
+                const { error } = responseObject;
+                const { response } = responseObject;
+
+                if (response === null) {
+                    await processImport(null, error, data);
+                } else {
+                    await processImport(response, null, data);
+                }
+            } catch (error) {
+                await processImport(null, error, data);
+            }
         });
 
         this.globalEmitter.on('replication-request', async (request, response) => {

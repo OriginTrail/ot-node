@@ -1,3 +1,5 @@
+const Utilities = require('../../modules/Utilities');
+
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');

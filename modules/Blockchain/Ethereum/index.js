@@ -121,6 +121,18 @@ class Ethereum {
     }
 
     /**
+     * Gets root hash for import
+     * @param dcWallet DC wallet
+     * @param dataId   Import ID
+     * @return {Promise<any>}
+     */
+    async getRootHash(dcWallet, dataId) {
+        const dataIdHash = Utilities.sha3(dataId.toString());
+        log.trace('Fetching root hash for: ', dcWallet, dataIdHash);
+        return this.otContract.methods.getFingerprintByBatchHash(dcWallet, dataIdHash).call();
+    }
+
+    /**
      * Gets profile by wallet
      * @param wallet
      */

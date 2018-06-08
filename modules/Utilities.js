@@ -6,6 +6,7 @@ const winston = require('winston');
 const Storage = require('./Storage');
 const config = require('./Config');
 const _ = require('lodash');
+const _u = require('underscore');
 const randomString = require('randomstring');
 const Web3 = require('web3');
 const request = require('superagent');
@@ -13,6 +14,7 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
+var numberToBN = require('number-to-bn');
 
 require('dotenv').config();
 
@@ -448,6 +450,9 @@ class Utilities {
      * @return object
      */
     static sortObject(object) {
+        if (typeof object !== 'object') {
+            return object;
+        }
         const sortedObj = {};
         const keys = Object.keys(object);
 
@@ -582,9 +587,11 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
+                        this.logger.error(error);
                         reject(error);
                     });
             }).catch((error) => {
+                this.logger.error(error);
                 reject(error);
             });
         });
@@ -596,8 +603,25 @@ class Utilities {
      * @returns {number}
      */
     static hexToNumber(hex) {
-        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-        return web3.utils.hexToNumber(hex);
+        if (!hex) {
+            return hex;
+        }
+
+        return Utilities.toBN(hex).toNumber();
+    }
+
+    /**
+     * Takes an input and transforms it into an BN
+     * @param number
+     * @returns {Object}
+     */
+    static toBN(number) {
+        try {
+            /* eslint-disable prefer-rest-params */
+            return numberToBN(...arguments);
+        } catch (e) {
+            throw new Error(`${e} Given value: "${number}"`);
+        }
     }
 
     /**
@@ -606,8 +630,28 @@ class Utilities {
      * @returns {string}
      */
     static numberToHex(num) {
-        const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-        return web3.utils.numberToHex(num);
+        if (_u.isNull(num) || _u.isUndefined(num)) {
+            return num;
+        }
+        // eslint-disable-next-line no-restricted-globals
+        if (!isFinite(num) && !Utilities.isHexStrict(num)) {
+            throw new Error(`Given input "${num}" is not a number.`);
+        }
+
+        var number = Utilities.toBN(num);
+        var result = number.toString(16);
+
+        return number.lt(new BN(0)) ? `-0x${result.substr(1)}` : `0x${result}`;
+    }
+
+
+    /**
+     * Check if string is HEX, requires a 0x in front
+     * @param hex
+     * @returns {*|boolean}
+     */
+    static isHexStrict(hex) {
+        return ((_u.isString(hex) || _u.isNumber(hex)) && /^(-)?0x[0-9a-f]*$/i.test(hex));
     }
 
     /**

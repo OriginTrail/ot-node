@@ -126,27 +126,6 @@ class GraphStorage {
     }
 
     /**
-     * Gets max version where uid is the same but not the _key
-     * @param senderId  Sender ID
-     * @param uid       Vertex uid
-     * @param _key      Vertex _key
-     * @return {Promise<void>}
-     */
-    findMaxVersion(senderId, uid, _key) {
-        return new Promise((resolve, reject) => {
-            if (!this.db) {
-                reject(Error('Not connected to graph database'));
-            } else {
-                this.db.findMaxVersion(senderId, uid, _key).then((result) => {
-                    resolve(result);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }
-        });
-    }
-
-    /**
      * Gets max vertex_key where uid is the same and has the max version
      * @param senderId  Sender ID
      * @param uid       Vertex uid
@@ -346,6 +325,61 @@ class GraphStorage {
         const id = this._allowedClasses.find(element => element.toLocaleLowerCase() ===
             className.toLocaleLowerCase());
         return id;
+    }
+
+    /**
+     * Extract vertices from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getVerticesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const vertices = [];
+        for (const key in virtualGraph.data) {
+            delete virtualGraph.data[key].outbound;
+            vertices.push(virtualGraph.data[key]);
+        }
+        return vertices;
+    }
+
+    /**
+     * Extracts edges from virtual graph
+     * @param virtual graph
+     * @returns {JSON}
+     */
+    static getEdgesFromVirtualGraph(graph) {
+        const virtualGraph = Utilities.copyObject(graph);
+        const edges = [];
+        for (const key in virtualGraph.data) {
+            for (const edge in virtualGraph.data[key].outbound) {
+                virtualGraph.data[key].outbound[edge]._from = `ot_vertices/${virtualGraph.data[key].outbound[edge]._from}`;
+                virtualGraph.data[key].outbound[edge]._to = `ot_vertices/${virtualGraph.data[key].outbound[edge]._to}`;
+                edges.push(virtualGraph.data[key].outbound[edge]);
+            }
+        }
+        return edges;
+    }
+
+    /**
+     * Imports virtual graph to database
+     * @param virtual graph
+     * @returns
+     */
+    async importVirtualGraph(virtualGraph) {
+        const virtualEdges = GraphStorage.getEdgesFromVirtualGraph(virtualGraph);
+        const virtualVertices = GraphStorage.getVerticesFromVirtualGraph(virtualGraph);
+
+        const vertices = [];
+        for (const i in virtualVertices) {
+            vertices.push(this.db.addVertex(virtualVertices[i]));
+        }
+        await Promise.all(vertices);
+
+        const edges = [];
+        for (const i in virtualEdges) {
+            edges.push(this.db.addEdge(virtualEdges[i]));
+        }
+        return Promise.all(edges);
     }
 
     /**

@@ -54,6 +54,34 @@ class DHService {
                 return;
             }
 
+            // Check if predetermined bid was already added for me.
+            // Possible race condition here.
+            if (!predeterminedBid) {
+                // If event is in the table event will be handled on different call.
+                const eventModels = await Models.events.findAll({
+                    where: {
+                        offer_hash: offerHash,
+                        event: 'AddedPredeterminedBid',
+                    },
+                });
+
+                if (eventModels) {
+                    let found = false;
+                    eventModels.forEach((eventModel) => {
+                        const data = JSON.parse(eventModel.data);
+                        if (data.DH_node_id.substring(2, 42) === config.identity &&
+                            data.DH_wallet === config.node_wallet) {
+                            // I'm chosen for predetermined bid.
+                            found = true;
+                        }
+                    });
+
+                    if (found) {
+                        return;
+                    }
+                }
+            }
+
             // Check if already applied.
             let bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             if (bidModel) {

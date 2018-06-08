@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--Sample XML file for GS1 OriginTrail importer with Header with master data and ObjectEvent-->
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:n1="http://www.altova.com/samplexml/other-namespace" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis-masterdata:xsd:1 ../xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd">
+	<EPCISHeader>
+		<sbdh:StandardBusinessDocumentHeader>
+			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+			<sbdh:Sender><!-- Mandatory -->
+				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
+				<sbdh:Identifier Authority="OriginTrail">SENDER_PROVIDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:ContactInformation> <!-- Mandatory-->
+					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
+					<sbdh:EmailAddress>Mary_Smith@wines.com</sbdh:EmailAddress>	<!-- Optional -->				
+				</sbdh:ContactInformation>
+			</sbdh:Sender>
+			<sbdh:Receiver> <!-- Mandatory -->
+				<sbdh:Identifier Authority="OriginTrail">RECEIVER_PROVIDER_ID</sbdh:Identifier>  <!-- Mandatory-->
+				<sbdh:ContactInformation> <!-- Mandatory-->
+					<sbdh:Contact>John Doe</sbdh:Contact> <!-- Mandatory -->
+					<sbdh:EmailAddress>John_Doe@purchasing.XYZretailer.com</sbdh:EmailAddress> <!-- Optional -->
+				</sbdh:ContactInformation>
+			</sbdh:Receiver>
+			<sbdh:DocumentIdentification> <!-- Mandatory-->
+				<sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
+				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
+				<sbdh:InstanceIdentifier>100003</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
+				<sbdh:Type>Ordering</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
+				<sbdh:CreationDateAndTime>2003-05-09T00:31:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+			</sbdh:DocumentIdentification>
+			<sbdh:BusinessScope> <!-- Optional -->
+				<sbdh:Scope>
+					<sbdh:Type>BusinessProcess</sbdh:Type>
+					<sbdh:InstanceIdentifier>Order-Sell/version2-251</sbdh:InstanceIdentifier>
+					<sbdh:Identifier>EDI-Order-Sell</sbdh:Identifier>
+				</sbdh:Scope>
+			</sbdh:BusinessScope>			
+		</sbdh:StandardBusinessDocumentHeader>
+		<extension>
+			<EPCISMasterData>
+				<VocabularyList>
+					<!-- GS1 standard -->	
+					<Vocabulary type="urn:epcglobal:epcis:vtype:BusinessLocation">				
+						<VocabularyElementList>										
+							<VocabularyElement id="urn:epc:id:sgln:6104898.16234.1">																
+								<attribute id="urn:ts:location:name">XYZ Retail</attribute>				
+								<attribute id="urn:ts:location:street1">Via Ignatia 768</attribute>				
+								<attribute id="urn:ts:location:city">Bari</attribute>				
+								<attribute id="urn:ts:location:stateOrRegion">Puglia</attribute>				
+								<attribute id="urn:ts:location:postalCode">98852</attribute>
+								<attribute id="urn:ts:location:country">IT</attribute>
+								<children>
+									<id>urn:epc:id:sgln:6104898.16234.1</id>
+									<id>urn:epc:id:sgln:6104898.16234.2</id>
+									<id>urn:epc:id:sgln:6104898.16234.3</id>
+								</children>
+								<extension>
+									<attribute id="urn:ot:location:participantId">urn:ot:mda:participant:SC34254.F0003</attribute>
+								</extension>
+						    </VocabularyElement>		
+						    <VocabularyElement id="urn:epc:id:sgln:8635411.16763.2">				
+								<attribute id="urn:ts:location:partnerId">8635411167632</attribute>				
+								<attribute id="urn:ts:location:name">Mary Salads</attribute>				
+								<attribute id="urn:ts:location:street1">Oak Street 21</attribute>				
+								<attribute id="urn:ts:location:city">Liverpool</attribute>				
+								<attribute id="urn:ts:location:stateOrRegion">England</attribute>				
+								<attribute id="urn:ts:location:postalCode">453674</attribute>
+								<attribute id="urn:ts:location:country">GB</attribute>
+								<children>
+									<id>urn:epc:id:sgln:8635411.16763.22</id>
+									<id>urn:epc:id:sgln:8635411.16763.23</id>
+								</children>
+								<extension>
+									<attribute id="urn:ot:location:participantId">urn:ot:mda:participant:SC34254.F0003</attribute>
+								</extension>
+							</VocabularyElement>			
+						</VocabularyElementList>				
+					</Vocabulary>				
+					<!-- OT custom standard -->
+					<Vocabulary type="urn:ot:mda:participant">
+						<extension>						
+							<OTVocabularyElement id="urn:ot:mda:participant:SC34254.F0003">
+								<attribute id="urn:ot:mda:participant:name">XYZ Retail</attribute>								
+								<attribute id="urn:ot:mda:participant:location">urn:epc:id:sgln:6104898.16234.0</attribute>														
+							</OTVocabularyElement>
+						</extension>						
+					</Vocabulary>					
+					<!-- OT custom standard -->
+					<Vocabulary type="urn:ot:mda:object">
+						<extension>
+							<OTVocabularyElement id="urn:epc:id:sgtin:8635411.000333">								
+								<attribute id="urn:ot:mda:object:name">Winter sallad mix</attribute>
+							    <attribute id="urn:ot:mda:object:type">Sallad</attribute>
+								<attribute id="urn:ot:mda:object:category">Fresh salad</attribute>
+								<attribute id="urn:ot:mda:object:ean13">501234567890</attribute>
+							</OTVocabularyElement>
+						</extension>
+					</Vocabulary>					
+					<!-- OT custom standard -->
+					<Vocabulary type="urn:ot:mda:batch">
+						<extension>	
+							<OTVocabularyElement id="urn:epc:id:sgtin:8635411.000333.00001">
+								<attribute id="urn:ot:mda:batch:objectid">urn:epc:id:sgtin:8635411.000333</attribute>
+							    <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
+								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
+							</OTVocabularyElement>
+							<OTVocabularyElement id="urn:epc:id:sgtin:8635411.000333.00002">
+								<attribute id="urn:ot:mda:batch:objectid">urn:epc:id:sgtin:8635411.000333</attribute>
+							    <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:02:54Z</attribute>
+								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
+							</OTVocabularyElement>						
+							<OTVocabularyElement id="urn:epc:id:sgtin:8635411.000333.00003">
+								<attribute id="urn:ot:mda:batch:objectid">urn:epc:id:sgtin:8635411.000333</attribute>
+							    <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:03:54Z</attribute>
+								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
+							</OTVocabularyElement>																
+						</extension>
+					</Vocabulary>
+				</VocabularyList>
+			</EPCISMasterData>
+		</extension>
+	</EPCISHeader>
+	<EPCISBody>
+		 <EventList>
+			 <ObjectEvent>
+				 <eventTime>2017-07-15T10:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				 <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->
+				 <baseExtension> <!-- Optional -->
+					 <eventID>ID12345670001</eventID>
+				 </baseExtension>
+    			 <epcList> <!-- Mandatory-->
+					 <epc>urn:epc:id:sgtin:8635411.00333.00001</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00002</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00003</epc>
+				 </epcList>				 
+				 <action>OBSERVE</action> <!-- Mandatory-->
+				 <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				 <disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+				 <readPoint> <!-- Optional -->
+					 <id>urn:epc:id:sgln:8635411.16763.22</id>
+				 </readPoint>
+				 <bizLocation> <!-- Optional -->
+					 <id>urn:epc:id:sgln:8635411.16763.2</id>
+				 </bizLocation>
+				 <extension>
+					 <quantityList> <!-- Optional -->
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00001</epcClass>
+							 <quantity>10</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00002</epcClass>
+							 <quantity>20</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00003</epcClass>
+							 <quantity>30</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+					 </quantityList>
+					 <sourceList> <!-- Optional -->
+						 <source type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:8635411.16763.2</source>
+					 </sourceList>
+					 <destinationList> <!-- Optional -->
+						 <destination type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:6104898.16234.0</destination>
+					 </destinationList>
+					 <extension>  <!-- Optional -->
+						 <TemperatureC>15</TemperatureC>  <!-- Optional -->
+						 <RelativeHumidity>80</RelativeHumidity>  <!-- Optional -->
+					 </extension>					 
+				</extension>
+			 </ObjectEvent>
+			 <ObjectEvent>
+				 <eventTime>2017-07-16T10:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				 <eventTimeZoneOffset>-05:12</eventTimeZoneOffset> <!-- Mandatory-->
+				 <baseExtension> <!-- Optional -->
+					 <eventID>ID12345670002</eventID>
+				 </baseExtension>
+    			 <epcList> <!-- Mandatory-->
+					 <epc>urn:epc:id:sgtin:8635411.00333.00001</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00002</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00003</epc>
+				 </epcList>				 
+				 <action>OBSERVE</action> <!-- Mandatory-->
+				 <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				 <readPoint> <!-- Optional -->
+					 <id>urn:epc:id:sgln:6104898.16234.1</id>
+				 </readPoint>
+				 <extension>
+					 <quantityList> <!-- Optional -->
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00001</epcClass>
+							 <quantity>10</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00002</epcClass>
+							 <quantity>20</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00003</epcClass>
+							 <quantity>30</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+					 </quantityList>
+					 <sourceList> <!-- Optional -->
+						 <source type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:8635411.16763.2</source>
+					 </sourceList>
+					 <destinationList> <!-- Optional -->
+						 <destination type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:6104898.16234.0</destination>
+					 </destinationList>
+					 <extension>  <!-- Optional -->
+						 <TemperatureC>22</TemperatureC>  <!-- Optional -->
+						 <RelativeHumidity>17</RelativeHumidity>  <!-- Optional -->
+					 </extension>					 
+				</extension>
+			 </ObjectEvent>
+			 <ObjectEvent>
+				 <eventTime>2017-07-18T10:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				 <eventTimeZoneOffset>-11:12</eventTimeZoneOffset> <!-- Mandatory-->
+				 <baseExtension> <!-- Optional -->
+					 <eventID>ID12345670003</eventID>
+				 </baseExtension>
+    			 <epcList> <!-- Mandatory-->
+					 <epc>urn:epc:id:sgtin:8635411.00333.00001</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00002</epc>
+					 <epc>urn:epc:id:sgtin:8635411.00333.00003</epc>
+				 </epcList>				 
+				 <action>OBSERVE</action> <!-- Mandatory-->
+				 <bizStep>urn:epcglobal:cbv:bizstep:receving</bizStep> <!-- Optional -->
+				 <readPoint> <!-- Optional -->
+					 <id>urn:epc:id:sgln:6104898.16234.22</id>
+				 </readPoint>
+				 <bizLocation> <!-- Optional -->
+					 <id>urn:epc:id:sgln:6104898.16234.2</id>
+				 </bizLocation>
+				 <extension>
+					 <quantityList> <!-- Optional -->
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00001</epcClass>
+							 <quantity>10</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00002</epcClass>
+							 <quantity>20</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.00333.00003</epcClass>
+							 <quantity>30</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+					 </quantityList>
+					 <sourceList> <!-- Optional -->
+						 <source type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:8635411.16763.2</source>
+					 </sourceList>
+					 <destinationList> <!-- Optional -->
+						 <destination type="urn:epcglobal:cbv:sdt:location">urn:epc:id:sgln:6104898.16234.0</destination>
+					 </destinationList>
+					 <extension>  <!-- Optional -->
+						 <TemperatureC>11</TemperatureC>  <!-- Optional -->
+						 <RelativeHumidity>76</RelativeHumidity>  <!-- Optional -->
+					 </extension>					 
+				</extension>
+			 </ObjectEvent>
+			 <AggregationEvent>
+				<eventTime>2013-06-08T14:58:56.591Z</eventTime>
+				<eventTimeZoneOffset>+02:00</eventTimeZoneOffset>
+				<parentID>urn:epc:id:sgtin:0614141.1234567890</parentID>
+				<childEPCs>
+					<epc>urn:epc:id:sgtin:8635411.000333.00001</epc>
+					<epc>urn:epc:id:sgtin:8635411.000333.00002</epc>
+					<epc>urn:epc:id:sgtin:8635411.000333.00003</epc>
+				</childEPCs>
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+				<readPoint>
+					<id>urn:epc:id:sgln:6104898.16234.2</id>
+				</readPoint>
+				<bizLocation>
+					<id>urn:epc:id:sgln:6104898.16234.1</id>
+				</bizLocation>
+				<extension>
+					<childQuantityList>
+						<quantityElement>
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+							<quantity>10</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+						<quantityElement>
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00002</epcClass>
+							<quantity>20</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+						<quantityElement>
+							<epcClass>urn:epc:id:sgtin:8635411.000333.00003</epcClass>
+							<quantity>30</quantity>
+							<uom>KGM</uom>
+						</quantityElement>
+					</childQuantityList>
+				</extension>
+			</AggregationEvent>
+			<extension>
+				  <TransformationEvent>
+					 <eventTime>2015-03-15T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
+					 <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+					 <inputEPCList>
+						 <epc>urn:epc:id:sgtin:8635411.000111.00001</epc>
+						 <epc>urn:epc:id:sgtin:8635411.000222.00002</epc>
+					 </inputEPCList>
+					 <inputQuantityList>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:0104531.000111.00001</epcClass>
+							 <quantity>10.0</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+						 <quantityElement>
+							 <epcClass>urn:epc:idpat:sgtin:8635411.000333.00001</epcClass>
+							 <quantity>20.0</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+					 </inputQuantityList>
+					 <outputEPCList>
+						<epc>urn:epc:id:sgtin:8635411.000333.00003</epc>
+					 </outputEPCList>
+					 <outputQuantityList>
+						 <quantityElement>
+							 <epcClass>urn:epc:id:sgtin:8635411.000333.00003</epcClass>
+							 <quantity>30.0</quantity>
+							 <uom>KG</uom>
+						 </quantityElement>
+					 </outputQuantityList>					 
+					 <transformationID>BOM12345PO987</transformationID> <!-- Mandatory-->
+					 <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep> <!-- Optional -->						 				 
+				 </TransformationEvent>
+			</extension>
+		</EventList>
+	 </EPCISBody>
+</epcis:EPCISDocument>
