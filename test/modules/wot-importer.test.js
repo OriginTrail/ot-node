@@ -60,19 +60,16 @@ describe('WOT Importer tests', () => {
         wot = container.resolve('wotImporter');
     });
 
-    describe('Parse and Import JSON', () => {
+    describe('Parse and Import JSON for n repetitive times', () => {
+        const repetition = 10;
         inputJsonFiles.forEach((test) => {
-            it(
-                `should correctly parse and import ${path.basename(test.args[0])} file`,
-                async () => wot.parse(test.args[0]),
-            );
-        });
-
-        inputJsonFiles.forEach((test) => {
-            it(
-                `should correctly parse and import ${path.basename(test.args[0])} file 2nd time`,
-                async () => wot.parse(test.args[0]),
-            );
+            for (const i in Array.from({ length: repetition })) {
+                it(
+                    `should correctly parse and import ${path.basename(test.args[0])} file ${i}th time`,
+                    // eslint-disable-next-line no-loop-func
+                    async () => wot.parse(test.args[0]),
+                );
+            }
         });
     });
 
