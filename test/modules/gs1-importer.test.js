@@ -63,19 +63,16 @@ describe('GS1 Importer tests', () => {
         gs1 = container.resolve('gs1Importer');
     });
 
-    describe('Parse XML', () => {
+    describe('Parse and import XML file for n times', () => {
+        const repetition = 10;
         inputXmlFiles.forEach((test) => {
-            it(
-                `should correctly parse and import ${path.basename(test.args[0])} file`,
-                async () => gs1.parseGS1(test.args[0]),
-            );
-        });
-
-        inputXmlFiles.forEach((test) => {
-            it(
-                `should correctly parse and import ${path.basename(test.args[0])} file 2nd time`,
-                async () => gs1.parseGS1(test.args[0]),
-            );
+            for (const i in Array.from({ length: repetition })) {
+                it(
+                    `should correctly parse and import ${path.basename(test.args[0])} file ${i}th time`,
+                    // eslint-disable-next-line no-loop-func
+                    async () => gs1.parseGS1(test.args[0]),
+                );
+            }
         });
     });
 
