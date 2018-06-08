@@ -659,7 +659,7 @@ class GS1Importer {
             for (const category of vertex.data.categories) {
                 eventVertices.forEach((vertex) => {
                     classObjectEdges.push({
-                        _key: md5(`is_${senderId}_${vertex.id}_${category}`),
+                        _key: md5(`is_${senderId}_${vertex._key}_${category}`),
                         _from: `ot_vertices/${vertex._key}`,
                         _to: `ot_vertices/${category}`,
                         edge_type: 'IS',
