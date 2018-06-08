@@ -56,16 +56,20 @@
 							<VocabularyElement id="urn:epc:id:sgln:Building_Green_1">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
-								<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
 								<children>
 									<id>urn:epc:id:sgln:Building_Pink_V3</id>
 									<id>urn:epc:id:sgln:Building_Pink_V4</id>
 								</children>
+								<extension>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
+								</extension>
 							</VocabularyElement>
 							<VocabularyElement id="urn:epc:id:sgln:Building_Pink_1">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
-								<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+								<extension>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>

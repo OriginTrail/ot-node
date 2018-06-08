@@ -5,14 +5,14 @@
 		<sbdh:StandardBusinessDocumentHeader>
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender><!-- Mandatory -->	
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:mda:actor:id:Company_Pink</sbdh:Identifier>  <!-- Mandatory-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>  <!-- Mandatory-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Betty Johnson</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress> <!-- Optional -->
 				</sbdh:ContactInformation>
 			</sbdh:Sender>
 			<sbdh:Receiver> <!-- Mandatory -->
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:mda:actor:id:Company_Orange</sbdh:Identifier>  <!-- Mandatory-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Orange</sbdh:Identifier>  <!-- Mandatory-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Carter Novitzki</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>c.novitzki@orange.com</sbdh:EmailAddress> <!-- Optional -->
@@ -36,56 +36,58 @@
 		<extension>
 			<EPCISMasterData>
 				<VocabularyList>
-					<Vocabulary type="urn:ot:mda:actor">
+					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:mda:actor:id:Company_Orange">
-								<attribute id="urn:ot:mda:actor:person:id:name">Green</attribute>
-								<attribute id="urn:ot:mda:actor:category">Company Retail</attribute>
-								<attribute id="urn:ot:mda:actor:wallet">0xCcAB7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-								<attribute id="urn:ot:mda:actor:node_id">a12341d2cca3b0a79720670e5b3da7054751245a</attribute>
+							<VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
+								<attribute id="urn:ot:object:actor:person:id:name">Green</attribute>
+								<attribute id="urn:ot:object:actor:category">Company Retail</attribute>
+								<attribute id="urn:ot:object:actor:wallet">0xCcAB7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>
-							<VocabularyElement id="urn:ot:mda:actor:id:Company_Pink">
-								<attribute id="urn:ot:mda:actor:person:id:name">Pink</attribute>
-								<attribute id="urn:ot:mda:actor:category">Company</attribute>
-								<attribute id="urn:ot:mda:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-								<attribute id="urn:ot:mda:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
+							<VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
+								<attribute id="urn:ot:object:actor:person:id:name">Pink</attribute>
+								<attribute id="urn:ot:object:actor:category">Company</attribute>
+								<attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>
-					<Vocabulary type="urn:ot:mda:location">
+					<Vocabulary type="urn:ot:object:location">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:epc:id:sgln:Building_Orange_1">
-								<attribute id="urn:ot:mda:location:category">Building</attribute>
-								<attribute id="urn:ot:mda:location:description">Retail Store Orange</attribute>
-								<attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_Orange</attribute>
+								<attribute id="urn:ot:object:location:category">Building</attribute>
+								<attribute id="urn:ot:object:location:description">Retail Store Orange</attribute>
 								<children>
 									<id>urn:epc:id:sgln:Building_Pink_V3</id>
 									<id>urn:epc:id:sgln:Building_Pink_V4</id>
 								</children>
+								<extension>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Orange</attribute>
+								</extension>
 							</VocabularyElement>
 							<VocabularyElement id="urn:epc:id:sgln:Building_Pink_1">
-								<attribute id="urn:ot:mda:location:category">Building</attribute>
-								<attribute id="urn:ot:mda:location:description">Pink distributor warehouse</attribute>
-								<attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_Pink</attribute>
+								<attribute id="urn:ot:object:location:category">Building</attribute>
+								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
+                                <extension>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+                                </extension>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>
 
-					<Vocabulary type="urn:ot:mda:product">
+					<Vocabulary type="urn:ot:object:product">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:mda:product:id:Product_1">
-								<attribute id="urn:ot:mda:product:category">Wine Pallet</attribute>
-								<attribute id="urn:ot:mda:product:description">WinePallet</attribute>
+							<VocabularyElement id="urn:ot:object:product:id:Product_1">
+								<attribute id="urn:ot:object:product:category">Wine Pallet</attribute>
+								<attribute id="urn:ot:object:product:description">WinePallet</attribute>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>
 
-					<Vocabulary type="urn:ot:mda:batch">
+					<Vocabulary type="urn:ot:object:batch">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:epc:id:sgtin:Batch_1">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product_1</attribute>
-								<attribute id="urn:ot:mda:batch:productiondate">2017-31-12T00:01:54Z</attribute>
-								<attribute id="urn:ot:mda:batch:expirationdate">2020-31-12T00:01:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
+								<attribute id="urn:ot:object:product:batch:productionDate">2017-31-12T00:01:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:expirationDate">2020-31-12T00:01:54Z</attribute>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>
@@ -121,46 +123,8 @@
 					</quantityList>
 					<extension>
 						<documentId>1</documentId>
-						<OTEventClass>ot:events:Transport</OTEventClass>
-						<OTEventClass>ot:events:Ownership</OTEventClass>
-						<OTEventType>Sales</OTEventType>
-						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink_1</source>
-						</sourceList>
-						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Orange_1</destination>
-						</destinationList>
-					</extension>
-				</extension>
-			</ObjectEvent>
-			<ObjectEvent>
-				<!-- Transport Shipment-->
-				<eventTime>2018-03-03T06:00:00.000-04:00</eventTime> <!-- Mandatory-->
-				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->
-				<epcList>
-					<epc>urn:epc:id:sgtin:Batch_1</epc>
-				</epcList>
-				<action>OBSERVE</action> <!-- Mandatory-->
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
-				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
-				<readPoint> <!-- Optional -->
-					<id>urn:epc:id:sgln:Building_Pink_V4</id>
-				</readPoint>
-				<bizLocation> <!-- Optional -->
-					<id>urn:epc:id:sgln:Building_Pink_1</id>
-				</bizLocation>
-				<extension>
-					<quantityList> <!-- Optional -->
-						<quantityElement>
-							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
-							<quantity>7</quantity>
-							<uom>KG</uom>
-						</quantityElement>
-					</quantityList>
-					<extension>
-						<documentId>1</documentId>
-						<OTEventClass>ot:events:Transport</OTEventClass>
-						<OTEventClass>ot:events:Ownership</OTEventClass>
+						<OTEventClass>urn:ot:events:Transport</OTEventClass>
+						<OTEventClass>urn:ot:events:Ownership</OTEventClass>
 						<OTEventType>Sales</OTEventType>
 						<sourceList>
 							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink_1</source>
