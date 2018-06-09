@@ -54,7 +54,6 @@ class DCService {
         log.info(`Offer hash is ${offerHash}.`);
 
         const newOfferRow = {
-            id: offerHash,
             import_id: dataId,
             total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
@@ -67,7 +66,7 @@ class DCService {
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
         };
-
+        var localOfferId;
         const offer = await Models.offers.create(newOfferRow);
 
         // From smart contract:
@@ -100,7 +99,7 @@ class DCService {
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                Models.offers.findOne({ where: { id: offer.id } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
                         log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 

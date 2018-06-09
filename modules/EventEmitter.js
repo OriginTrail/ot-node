@@ -62,6 +62,7 @@ class EventEmitter {
             });
         });
 
+        // TODO: move this from this class
         const processImport = async (response, error, data) => {
             if (response === null) {
                 data.response.status(error.status);
@@ -76,7 +77,6 @@ class EventEmitter {
                 data_id,
                 root_hash,
                 total_documents,
-                vertices,
             } = response;
 
             try {
@@ -95,8 +95,41 @@ class EventEmitter {
                     status: 200,
                     message: 'Ok.',
                 });
+            } catch (error) {
+                log.error(`Failed to register import. Error ${error}.`);
+                data.response.send({
+                    status: 500,
+                    message: error,
+                });
+            }
+        };
 
-                await dcService.createOffer(data_id, root_hash, total_documents, vertices);
+        this.globalEmitter.on('create-offer', async (data) => {
+            const { data_id } = data;
+
+            try {
+                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
+                vertices = vertices.map((vertex, index) => {
+                    delete vertex.private;
+                    return vertex;
+                });
+
+                await Models.data_info.findOne({ where: { data_id } })
+                    .then(async (dataimport) => {
+                        await dcService
+                            .createOffer(
+                                data_id,
+                                dataimport.root_hash,
+                                dataimport.total_documents,
+                                vertices,
+                            );
+                    }).catch((error) => {
+                        log.error(error);
+                        data.response.send({
+                            status: 500,
+                            message: error,
+                        });
+                    });
             } catch (error) {
                 log.error(`Failed to start offer. Error ${error}.`);
                 data.response.send({
@@ -104,7 +137,7 @@ class EventEmitter {
                     message: error,
                 });
             }
-        };
+        });
 
         this.globalEmitter.on('gs1-import-request', async (data) => {
             try {
