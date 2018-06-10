@@ -191,14 +191,16 @@ class Network {
         const peercachePlugin = this.node.peercache;
         setTimeout(() => {
             peercachePlugin.getBootstrapCandidates().then((peers) => {
-                log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node (waiting for some peers).`);
-                log.info(`Found additional ${peers.length} peers in peer cache.`);
-
                 const isBootstrap = bootstrapNodes.length === 0;
                 const nodes = _.uniq(bootstrapNodes.concat(peers));
+
                 if (isBootstrap) {
+                    log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node (waiting for some peers).`);
+                    log.info(`Found additional ${peers.length} peers in peer cache.`);
                     log.info(`Trying to contact ${nodes.length} peers from peer cache.`);
                 } else {
+                    log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s).`);
+                    log.info(`Found additional ${peers.length} peers in peer cache.`);
                     log.info(`Trying to join the network from ${nodes.length} unique seeds`);
                 }
 
