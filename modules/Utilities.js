@@ -147,17 +147,21 @@ class Utilities {
             winston.addColors(customColors);
 
             // Extend logger object to properly log 'Error' types
-            var origLog = logger.log;
-
-            logger.log = function (level, msg) {
+            const origLog = logger.log;
+            logger.log = (level, msg) => {
+                if (msg.startsWith('connect econnrefused')) {
+                    level = 'debug';
+                    const address = msg.substr(21);
+                    msg = `Failed to connect to ${address}`;
+                }
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
-                    var args = Array.prototype.slice.call(arguments);
+                    const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
                     // eslint-disable-next-line prefer-rest-params
-                    origLog.apply(logger, arguments);
+                    origLog.apply(logger, [level, msg]);
                 }
             };
             return logger;
