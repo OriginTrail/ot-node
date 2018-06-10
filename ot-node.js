@@ -225,7 +225,7 @@ class OTNode {
     async createProfile(blockchain) {
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.trace(`Profile has already been created for ${config.identity}`);
+            log.info(`Profile has already been created for ${config.identity}`);
             return;
         }
 

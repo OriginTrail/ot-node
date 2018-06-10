@@ -82,7 +82,7 @@ class Network {
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
-            log,
+            logger: log,
             transport,
             identity: Buffer.from(this.identity, 'hex'),
             contact,
