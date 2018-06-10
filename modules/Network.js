@@ -11,6 +11,7 @@ const fs = require('fs');
 const NetworkUtilities = require('./NetworkUtilities');
 const utilities = require('./Utilities');
 const PeerCache = require('./kademlia/PeerCache');
+const _ = require('lodash');
 
 let networkUtilities = {};
 
@@ -193,7 +194,13 @@ class Network {
         setTimeout(() => {
             peercachePlugin.getBootstrapCandidates().then((peers) => {
                 log.info(`Found ${peers.length} possible bootstrap candidates from cache.`);
-                const nodes = peers.concat(bootstrapNodes);
+                const nodes = _.uniq(bootstrapNodes.concat(peers));
+
+                if (nodes.length === 0 && bootstrapNodes.length === 0) {
+                    log.warn('No bootstrap seeds provided and no known profiles');
+                    log.trace('Running in seed mode (waiting for connections)');
+                    return;
+                }
 
                 log.info(`Joining network from ${nodes.length} seeds`);
                 async.detectSeries(nodes, (url, done) => {
