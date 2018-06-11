@@ -221,6 +221,13 @@ class DVService {
             throw errorMessage;
         }
 
+        // Poor mans choice to check if escrow is ok.
+        if (escrow.escrow_status === 0) {
+            const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
+            this.log.warn(errorMessage);
+            throw errorMessage;
+        }
+
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
         const rootHash = merkle.tree.getRoot();
@@ -281,14 +288,16 @@ class DVService {
         // Sign escrow.
         await this.blockchain.initiatePurchase(
             importId,
-            this.config.node_wallet,
+            dhWallet,
             new BN(networkQueryResponse.data_price),
             new BN(networkQueryResponse.stake_factor),
         );
 
+        this.log.info(`[DV] - Purchase initiated for import ID ${importId}.`);
+
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
-        await this.blockchain.subscribeToEvent('CommitmentSent', importId, 20 * 60 * 1000);
+        // await this.blockchain.subscribeToEvent('CommitmentSent', importId, 20 * 60 * 1000);
 
         // TODO: Commitment happened.
     }
