@@ -371,7 +371,7 @@ class OTNode {
             }
 
             if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body.importfile !== undefined) {
+                if (req.body !== undefined && req.body.importfile !== undefined) {
                     const fileData = req.body.importfile;
 
                     fs.writeFile('tmp/import.xml', fileData, (err) => {
@@ -390,6 +390,7 @@ class OTNode {
                         emitter.emit('gs1-import-request', queryObject);
                     });
                 } else {
+                    log.error('Invalid request. Input file not provided.');
                     res.send({
                         status: 400,
                         message: 'Input file not provided!',
