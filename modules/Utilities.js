@@ -156,8 +156,11 @@ class Utilities {
             // Extend logger object to properly log 'Error' types
             const origLog = logger.log;
             logger.log = (level, msg) => {
+                if (msg.startsWith('updating peer profile')) {
+                    return;
+                }
                 if (msg.startsWith('connect econnrefused')) {
-                    level = 'debug';
+                    level = 'trace';
                     const address = msg.substr(21);
                     msg = `Failed to connect to ${address}`;
                 }
