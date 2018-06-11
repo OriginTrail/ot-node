@@ -35,57 +35,6 @@ class Importer {
 
         log.info('JSON import complete');
     }
-
-    // eslint-disable-next-line no-shadow
-    async importXML(ot_xml_document, callback) {
-        const options = {
-            mode: 'text',
-            pythonPath: 'python3',
-            scriptPath: 'importers/',
-            args: [ot_xml_document],
-        };
-
-        PythonShell.run('v1.5.py', options, (stderr, stdout) => {
-            if (stderr) {
-                log.info(stderr);
-                utilities.executeCallback(callback, {
-                    message: 'Import failure',
-                    data: [],
-                });
-                return;
-            }
-            log.info('[DC] Import complete');
-            const result = JSON.parse(stdout);
-            // eslint-disable-next-line  prefer-destructuring
-            const vertices = result.vertices;
-
-            // eslint-disable-next-line  prefer-destructuring
-            const edges = result.edges;
-            const data_id = result.import_id;
-
-            const leaves = [];
-            const hash_pairs = [];
-
-            for (const i in vertices) {
-                // eslint-disable-next-line max-len
-                leaves.push(utilities.sha3(utilities.sortObject({ identifiers: vertices[i].identifiers, data: vertices[i].data })));
-                // eslint-disable-next-line no-underscore-dangle
-                hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
-            }
-
-            const tree = new Mtree(hash_pairs);
-            const root_hash = tree.root();
-
-            log.info(`Import id: ${data_id}`);
-            log.info(`Import hash: ${root_hash}`);
-
-            utilities.executeCallback(callback, {
-                message: 'Import success',
-                data: [],
-            });
-        });
-    }
-
     async afterImport(result) {
         log.info('[DC] Import complete');
 
