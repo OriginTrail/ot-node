@@ -205,6 +205,11 @@ class EventEmitter {
 
             vertices = vertices.concat(...objectClassVertices);
 
+            for (const vertex of vertices) {
+                delete vertex.imports;
+                delete vertex.private;
+            }
+
             const keyPair = Encryption.generateKeyPair();
             Graph.encryptVertices(vertices, keyPair.privateKey);
 
