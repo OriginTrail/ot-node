@@ -637,12 +637,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace(`initiatePurchase (${importId}, ${dhWallet}, ${tokenAmount}, ${stakeFactor})`);
         return this.transactions.queueTransaction(
-            this.readingContract, 'initiatePurchase',
+            this.readingContractAbi, 'initiatePurchase',
             [importId, dhWallet, tokenAmount, stakeFactor], options,
         );
     }
@@ -651,12 +651,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
         return this.transactions.queueTransaction(
-            this.readingContract, 'sendCommitment',
+            this.readingContractAbi, 'sendCommitment',
             [importId, dvWallet, commitment], options,
         );
     }
@@ -665,12 +665,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace(`initiateDispute (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
-            this.readingContract, 'initiateDispute',
+            this.readingContractAbi, 'initiateDispute',
             [importId, dhWallet], options,
         );
     }
@@ -679,12 +679,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace(`confirmPurchase (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
-            this.readingContract, 'confirmPurchase',
+            this.readingContractAbi, 'confirmPurchase',
             [importId, dhWallet], options,
         );
     }
@@ -693,12 +693,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
         return this.transactions.queueTransaction(
-            this.readingContract, 'confirmPurchase',
+            this.readingContractAbi, 'confirmPurchase',
             [importId, correspondentWallet, senderIsDh], options,
         );
     }
@@ -710,12 +710,12 @@ class Ethereum {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.readingContract,
+            to: this.readingContractAddress,
         };
 
         log.trace('sendProofData ()');
         return this.transactions.queueTransaction(
-            this.readingContract, 'sendProofData',
+            this.readingContractAbi, 'sendProofData',
             [
                 importId, dvWallet, checksumLeft, checksumRight, checksumHash,
                 randomNumber1, randomNumber2, decryptionKey, blockIndex,
