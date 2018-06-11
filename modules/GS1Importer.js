@@ -319,6 +319,9 @@ class GS1Importer {
                 classId = objectEventTransformationId; // TODO map to class ID
             }
 
+            // TODO implement ADD and DELETE if event type is aggregation
+            // TODO kill parent pallet <childEPCs/ >
+
             const data = {
                 object_class_id: classId,
                 categories: eventCategories,
