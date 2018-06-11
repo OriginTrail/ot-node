@@ -291,14 +291,15 @@ describe('graph module ', () => {
             x: 1,
         };
         const keyPair = Encryption.generateKeyPair();
-        const encryptedVertices =
-            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
+        const vertices =[{ data: vertexData }];
+        Graph.encryptVertices(vertices, keyPair.privateKey);
+        const encryptedVertices = vertices;
         assert.isNotNull(encryptedVertices);
-        const encryptedVertex = encryptedVertices.vertices[0];
+        const encryptedVertex = encryptedVertices[0];
         assert.isNotNull(encryptedVertex);
 
         const decryptedVertices =
-            await Graph.decryptVertices(encryptedVertices.vertices, keyPair.publicKey);
+            await Graph.decryptVertices(encryptedVertices, keyPair.publicKey);
         assert.deepEqual(decryptedVertices[0].data, vertexData);
     });
 
