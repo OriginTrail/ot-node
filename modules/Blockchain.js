@@ -13,7 +13,7 @@ class Blockchain {
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':
-            this.blockchain = new Ethereum(this.config, this.emitter, this.web3);
+            this.blockchain = new Ethereum(this.config, this.emitter, this.web3, this.log);
             break;
         default:
             this.log.error('Unsupported blockchain', this.config.blockchain_title);
