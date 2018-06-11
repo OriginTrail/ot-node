@@ -10,6 +10,7 @@ class Ethereum {
      * @param blockchainConfig
      * @param emitter
      * @param web3
+     * @param log
      */
     constructor(blockchainConfig, emitter, web3, log) {
         // Loading Web3

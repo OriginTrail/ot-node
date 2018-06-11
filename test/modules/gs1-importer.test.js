@@ -9,6 +9,7 @@ const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Importer = require('../../modules/GS1Importer');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
+const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -57,7 +58,8 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        const logger = Utilities.getLogger();
+        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
             gs1Importer: awilix.asClass(GS1Importer),
             graphStorage: awilix.asValue(graphStorage),

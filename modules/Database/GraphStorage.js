@@ -2,14 +2,14 @@ const Utilities = require('../Utilities');
 const ArangoJS = require('./Arangojs');
 const Neo4j = require('./Neo4j');
 
-const log = Utilities.getLogger();
-
 class GraphStorage {
     /**
      * Default constructor
+     * @param logger
      * @param selectedDatabase Selected graph database
      */
-    constructor(selectedDatabase) {
+    constructor(selectedDatabase, logger) {
+        this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
@@ -57,7 +57,7 @@ class GraphStorage {
                     }
                     break;
                 default:
-                    log.error(this.selectedDatabase);
+                    this.logger.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
             }
