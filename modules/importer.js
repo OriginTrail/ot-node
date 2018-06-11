@@ -16,7 +16,7 @@ class Importer {
     }
 
     async importJSON(json_document) {
-        this.this.log.info('Entering importJSON');
+        this.log.info('Entering importJSON');
         const { vertices, edges, import_id } = json_document;
 
         this.log.trace('Vertex importing');
