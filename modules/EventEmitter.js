@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
+const ImportUtilities = require('./ImportUtilities');
 
 const events = require('events');
 
@@ -257,15 +258,7 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
-                // sort vertices
-                vertices.sort(((a, b) => {
-                    if (a._key < b._key) {
-                        return -1;
-                    } else if (a._key > b._key) {
-                        return 1;
-                    }
-                    return 0;
-                }));
+                ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
