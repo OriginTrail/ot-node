@@ -3,32 +3,32 @@
 	<EPCISHeader>
 		<sbdh:StandardBusinessDocumentHeader>
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
-			<sbdh:Sender><!-- Mandatory -->	
+			<sbdh:Sender> <!-- Mandatory -->
 				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>  <!-- Mandatory-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Betty Johnson</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress> <!-- Optional -->
 				</sbdh:ContactInformation>
 			</sbdh:Sender>
-			<sbdh:Receiver> <!-- Mandatory -->
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Orange</sbdh:Identifier>  <!-- Mandatory-->
+			<sbdh:Receiver><!-- Mandatory -->				
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
-					<sbdh:Contact>Carter Novitzki</sbdh:Contact> <!-- Mandatory -->
-					<sbdh:EmailAddress>c.novitzki@orange.com</sbdh:EmailAddress> <!-- Optional -->
+					<sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
+					<sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>	<!-- Optional -->				
 				</sbdh:ContactInformation>
 			</sbdh:Receiver>
 			<sbdh:DocumentIdentification> <!-- Mandatory-->
 				<sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
 				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
-				<sbdh:InstanceIdentifier>200002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
+				<sbdh:InstanceIdentifier>100002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
 				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-				<sbdh:CreationDateAndTime>2018-03-03T00:31:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+				<sbdh:CreationDateAndTime>2018-01-02T11:32:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
 			</sbdh:DocumentIdentification>
 			<sbdh:BusinessScope> <!-- Optional -->
 				<sbdh:Scope>
 					<sbdh:Type>BusinessProcess</sbdh:Type>
-					<sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
-					<sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+					<sbdh:InstanceIdentifier>Receipt/version2-251</sbdh:InstanceIdentifier>
+					<sbdh:Identifier>EDI-Receipt</sbdh:Identifier>
 				</sbdh:Scope>
 			</sbdh:BusinessScope>			
 		</sbdh:StandardBusinessDocumentHeader>
@@ -37,10 +37,10 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
+							<VocabularyElement id="urn:ot:object:actor:id:Company_Green">
 								<attribute id="urn:ot:object:actor:person:id:name">Green</attribute>
-								<attribute id="urn:ot:object:actor:category">Company Retail</attribute>
-								<attribute id="urn:ot:object:actor:wallet">0xCcAB7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+								<attribute id="urn:ot:object:actor:category">Company producer</attribute>
+								<attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>	
 							<VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
 								<attribute id="urn:ot:object:actor:person:id:name">Pink</attribute>
@@ -48,25 +48,26 @@
 								<attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>																								
 						</VocabularyElementList>				
-					</Vocabulary>							
+					</Vocabulary>		
+					
 					<Vocabulary type="urn:ot:object:location">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:epc:id:sgln:Building_Orange">
+							<VocabularyElement id="urn:epc:id:sgln:Building_Green">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
-								<attribute id="urn:ot:object:location:description">Retail Store Orange</attribute>
-								<extension>
-									<attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_Orange</attribute>
-								</extension>
-							</VocabularyElement>
-							<VocabularyElement id="urn:epc:id:sgln:Building_Pink">
-								<attribute id="urn:ot:object:location:category">Building</attribute>
-								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
+								<attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
 								<children>
 									<id>urn:epc:id:sgln:Building_Pink_V3</id>
 									<id>urn:epc:id:sgln:Building_Pink_V4</id>
 								</children>
 								<extension>
-									<attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
+								</extension>
+							</VocabularyElement>
+							<VocabularyElement id="urn:epc:id:sgln:Building_Pink">
+								<attribute id="urn:ot:object:location:category">Building</attribute>
+								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
+								<extension>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
 								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>
@@ -76,7 +77,7 @@
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:object:product:id:Product_1">
 								<attribute id="urn:ot:object:product:category">Beverage</attribute>
-								<attribute id="urn:ot:object:product:description">WinePallet</attribute>
+								<attribute id="urn:ot:object:product:description">Wine Pallet</attribute>
 							</VocabularyElement>						
 						</VocabularyElementList>
 					</Vocabulary>
@@ -98,16 +99,16 @@
 		<EventList>	
 			<ObjectEvent>
 				<!-- Transport Shipment-->
-				<eventTime>2018-03-03T06:00:00.000-04:00</eventTime> <!-- Mandatory-->
+				<eventTime>2018-01-02T11:00:00.000-04:00</eventTime> <!-- Mandatory-->
 				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
 				<epcList>
 					<epc>urn:epc:id:sgtin:Batch_1</epc>
 				</epcList>
 				<action>OBSERVE</action> <!-- Mandatory-->
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
+				<bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep> <!-- Optional -->
 				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
 				<readPoint> <!-- Optional -->
-					<id>urn:epc:id:sgln:Building_Pink_V4</id>
+					<id>urn:epc:id:sgln:Building_Pink_V3</id>
 				</readPoint>
 				<bizLocation> <!-- Optional -->
 					<id>urn:epc:id:sgln:Building_Pink</id>
@@ -116,7 +117,7 @@
 					<quantityList> <!-- Optional -->
 						<quantityElement>			 
 							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
-							<quantity>7</quantity>
+							<quantity>10</quantity>
 							<uom>KG</uom>
 						</quantityElement>
 					</quantityList>
@@ -126,10 +127,10 @@
 						<OTEventClass>urn:ot:events:Ownership</OTEventClass>
 						<OTEventType>Sales</OTEventType>
 						<sourceList>
-							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</source>
+							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
 						</sourceList>
 						<destinationList>
-							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Orange</destination>
+							<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
 						</destinationList>
 					</extension>
 				</extension>

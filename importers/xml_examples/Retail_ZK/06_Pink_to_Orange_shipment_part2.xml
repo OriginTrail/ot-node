@@ -83,7 +83,7 @@
 					
 					<Vocabulary type="urn:ot:object:batch">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:epc:id:sgtin:Batch_1">
+							<VocabularyElement id="urn:epc:id:sgtin:Batch_1_PINKSHIP2">
 								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
 								<attribute id="urn:ot:object:product:batch:productionDate">2017-31-12T00:01:54Z</attribute>
 								<attribute id="urn:ot:object:product:batch:expirationDate">2020-31-12T00:01:54Z</attribute>
@@ -101,7 +101,7 @@
 				<eventTime>2018-03-03T06:00:00.000-04:00</eventTime> <!-- Mandatory-->
 				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
 				<epcList>
-					<epc>urn:epc:id:sgtin:Batch_1</epc>
+					<epc>urn:epc:id:sgtin:Batch_1_PINKSHIP2</epc>
 				</epcList>
 				<action>OBSERVE</action> <!-- Mandatory-->
 				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
@@ -115,8 +115,8 @@
 				<extension>
 					<quantityList> <!-- Optional -->
 						<quantityElement>			 
-							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
-							<quantity>7</quantity>
+							<epcClass>urn:epc:id:sgtin:Batch_1_PINKSHIP2</epcClass>
+							<quantity>6</quantity>
 							<uom>KG</uom>
 						</quantityElement>
 					</quantityList>
