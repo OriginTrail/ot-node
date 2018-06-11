@@ -193,7 +193,7 @@ class ArangoJS {
             new_imports = result.imports;
 
             if (new_imports.includes(importNumber)) {
-                return result;
+                return ArangoJS._normalize(result);
             }
         }
 
@@ -299,7 +299,8 @@ class ArangoJS {
      */
     async runQuery(queryString, params) {
         const result = await this.db.query(queryString, params);
-        return result.all();
+        const all = await result.all();
+        return ArangoJS._normalize(all);
     }
 
     /**
@@ -345,18 +346,21 @@ class ArangoJS {
                 }
 
                 document.version = maxVersionDoc.version + 1;
-                return collection.save(document);
+                const response = await collection.save(document);
+                return ArangoJS._normalize(response);
             }
 
             document.version = 1;
-            return collection.save(document);
+            const response = await collection.save(document);
+            return ArangoJS._normalize(response);
         }
         try {
             // First check if already exist.
             const dbVertex = await this.getDocument(collectionName, document);
             return dbVertex;
         } catch (ignore) {
-            return collection.save(document);
+            const response = await collection.save(document);
+            return ArangoJS._normalize(response);
         }
     }
 
@@ -368,7 +372,8 @@ class ArangoJS {
      */
     async updateDocument(collectionName, document) {
         const collection = this.db.collection(collectionName);
-        return collection.update(document._key, document);
+        const response = await collection.update(document._key, document);
+        return ArangoJS._normalize(response);
     }
 
     /**
@@ -379,7 +384,8 @@ class ArangoJS {
      */
     async getDocument(collectionName, documentKey) {
         const collection = this.db.collection(collectionName);
-        return collection.document(documentKey);
+        const response = await collection.document(documentKey);
+        return ArangoJS._normalize(response);
     }
 
 
@@ -502,6 +508,25 @@ class ArangoJS {
         };
         const result = await this.runQuery(queryString, params);
         return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
+    }
+
+    /**
+     * Normalize properties returned from Arango
+     * @param document
+     * @returns {*}
+     * @private
+     */
+    static _normalize(data) {
+        if (typeof data === 'object') {
+            delete data._id;
+            delete data._rev;
+            delete data._oldRev;
+        } else {
+            for (const k of data) {
+                ArangoJS._normalize(k);
+            }
+        }
+        return data;
     }
 }
 

@@ -143,7 +143,7 @@ describe('Arangojs module ', async () => {
         await testDb.createCollection(documentCollectionName);
 
         const response = await testDb.addVertex(vertexOne);
-        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        assert.containsAllKeys(response, ['_key']);
 
         // now lets check that we\'ve really saved vertex data
         const myCollection = testDb.db.collection(documentCollectionName);
@@ -185,7 +185,7 @@ describe('Arangojs module ', async () => {
         await testDb.createEdgeCollection(edgeCollectionName);
 
         const response = await testDb.addEdge(edgeOne);
-        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        assert.containsAllKeys(response, ['_key']);
 
         // now lets check that we\'ve saved edge correctly
         const myCollection = testDb.db.edgeCollection(edgeCollectionName);
@@ -213,7 +213,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -227,7 +227,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue + 1,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -308,7 +308,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -474,7 +474,7 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId',
         };
         const response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
     });
 
@@ -491,14 +491,14 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId2',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
 
         // Change key
         dummyVertex._key = 'dummyChangedKey';
 
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 2);
     });
 
@@ -515,11 +515,11 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId3',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
 
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
     });
 
@@ -535,7 +535,7 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId4',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
 
         dummyVertex = {
@@ -546,7 +546,7 @@ describe('Arangojs module ', async () => {
             },
         };
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
 
         dummyVertex = {
@@ -556,7 +556,7 @@ describe('Arangojs module ', async () => {
             },
         };
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
     });
 
