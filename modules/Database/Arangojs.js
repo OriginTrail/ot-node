@@ -2,7 +2,6 @@ const { Database } = require('arangojs');
 const Utilities = require('./../Utilities');
 const request = require('superagent');
 
-const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
 
 class ArangoJS {

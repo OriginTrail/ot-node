@@ -1,15 +1,9 @@
-const Storage = require('./Database/SystemStorage');
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
-const MerkleTree = require('./Merkle');
-const ImportUtilities = require('./ImportUtilities');
-const BN = require('bn.js');
-
-const log = Utilities.getLogger();
 
 const events = require('events');
 
@@ -39,6 +33,7 @@ class EventEmitter {
             challenger,
             blockchain,
             product,
+            logger,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -51,7 +46,7 @@ class EventEmitter {
             product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);
             }).catch(() => {
-                log.error(`Failed to get trail for query ${data.query}`);
+                logger.error(`Failed to get trail for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -62,7 +57,7 @@ class EventEmitter {
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
-                log.error(`Failed to get root hash for query ${data.query}`);
+                logger.error(`Failed to get root hash for query ${data.query}`);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -72,13 +67,13 @@ class EventEmitter {
                 .then((offer) => {
                     if (offer) {
                         dvService.handleReadOffer(offer).then(() => {
-                            log.trace('Read offer handled');
+                            logger.trace('Read offer handled');
                         }).catch((err) => {
-                            log.warn(`Failed to handle offer. ${err}`);
+                            logger.warn(`Failed to handle offer. ${err}`);
                         });
                     }
                 })
-                .catch(error => log.error(`Failed to query network. ${error}.`));
+                .catch(error => logger.error(`Failed to query network. ${error}.`));
             data.response.send(200);
         });
 
@@ -105,7 +100,7 @@ class EventEmitter {
                     .create({
                         import_id, root_hash, import_timestamp: new Date(), total_documents,
                     }).catch((error) => {
-                        log.error(error);
+                        logger.error(error);
                         data.response.send({
                             status: 500,
                             message: error,
@@ -113,7 +108,7 @@ class EventEmitter {
                     });
                 await dcService.createOffer(import_id, root_hash, total_documents, vertices);
             } catch (error) {
-                log.error(`Failed to start offer. Error ${error}.`);
+                logger.error(`Failed to start offer. Error ${error}.`);
                 data.response.send({
                     status: 500,
                     message: 'Failed to parse XML.',
@@ -160,7 +155,7 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('replication-request', async (request, response) => {
-            log.trace('replication-request received');
+            logger.trace('replication-request received');
 
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
@@ -168,19 +163,19 @@ class EventEmitter {
 
             if (!import_id || !wallet) {
                 const errorMessage = 'Asked replication without providing import ID or wallet.';
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
                 response.send({ status: 'fail', error: errorMessage });
                 return;
             }
 
             if (kadWallet !== wallet) {
-                log.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
+                logger.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
             }
 
             const offerModel = await Models.offers.findOne({ where: { id: import_id } });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
                 response.send({ status: 'fail', error: errorMessage });
                 return;
             }
@@ -194,7 +189,7 @@ class EventEmitter {
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
             // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
             //     const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
-            //     log.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+            //     logger.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
             //     response.send({ status: 'fail', error: errorMessage });
             //     return;
             // }
@@ -221,7 +216,7 @@ class EventEmitter {
                 data_public_key: keyPair.publicKey,
             });
 
-            log.info('[DC] Preparing to enter sendPayload');
+            logger.info('[DC] Preparing to enter sendPayload');
             const data = {
                 contact: kadIdentity,
                 vertices,
@@ -232,28 +227,28 @@ class EventEmitter {
             };
 
             dataReplication.sendPayload(data).then(() => {
-                log.info(`[DC] Payload sent. Replication ID ${replicatedData.id}.`);
+                logger.info(`[DC] Payload sent. Replication ID ${replicatedData.id}.`);
             }).catch((error) => {
-                log.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
+                logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });
 
             response.send({ status: 'success' });
         });
 
         this.globalEmitter.on('payload-request', async (request) => {
-            log.trace(`payload-request arrived from ${request.contact[0]}`);
+            logger.trace(`payload-request arrived from ${request.contact[0]}`);
             await dhService.handleImport(request.params.message.payload);
 
             // TODO doktor: send fail in case of fail.
         });
 
         this.globalEmitter.on('replication-finished', (status) => {
-            log.warn('Notified of finished replication, preparing to start challenges');
+            logger.warn('Notified of finished replication, preparing to start challenges');
             challenger.startChallenging();
         });
 
         this.globalEmitter.on('kad-challenge-request', (request, response) => {
-            log.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
+            logger.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
@@ -269,20 +264,20 @@ class EventEmitter {
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                log.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
+                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
                 response.send({
                     status: 'success',
                     answer,
                 }, (error) => {
-                    log.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
+                    logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
                 });
             }).catch((error) => {
-                log.error(`Failed to get data. ${error}.`);
+                logger.error(`Failed to get data. ${error}.`);
 
                 response.send({
                     status: 'fail',
                 }, (error) => {
-                    log.error(`Failed to send 'fail' status.v Error: ${error}.`);
+                    logger.error(`Failed to send 'fail' status.v Error: ${error}.`);
                 });
             });
         });
@@ -291,13 +286,13 @@ class EventEmitter {
          * Handles bidding-broadcast on the DH side
          */
         this.globalEmitter.on('kad-data-location-request', async (kadMessage) => {
-            log.info('kad-data-location-request received');
+            logger.info('kad-data-location-request received');
 
             const dataLocationRequestObject = kadMessage;
             const { message, messageSignature } = dataLocationRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                log.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
                 return;
             }
 
@@ -305,14 +300,14 @@ class EventEmitter {
                 await dhService.handleDataLocationRequest(message);
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
             }
         });
 
         this.globalEmitter.on('offer-ended', (message) => {
             const { scId } = message;
 
-            log.info(`Offer ${scId} has ended.`);
+            logger.info(`Offer ${scId} has ended.`);
         });
 
         this.globalEmitter.on('AddedBid', (message) => {
@@ -320,11 +315,11 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-bidding-won', (message) => {
-            log.info('Wow I won bidding. Let\'s get into it.');
+            logger.info('Wow I won bidding. Let\'s get into it.');
         });
 
         this.globalEmitter.on('eth-OfferCreated', async (eventData) => {
-            log.info('eth-OfferCreated');
+            logger.info('eth-OfferCreated');
 
             const {
                 import_id,
@@ -351,7 +346,7 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
-            log.info('eth-AddedPredeterminedBid');
+            logger.info('eth-AddedPredeterminedBid');
 
             const {
                 import_id,
@@ -379,7 +374,7 @@ class EventEmitter {
             });
 
             if (!createOfferEventEventModel) {
-                log.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
+                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
                 return;
             }
 
@@ -399,16 +394,16 @@ class EventEmitter {
                     true,
                 );
             } catch (error) {
-                log.error(`Failed to handle predetermined bid. ${error}.`);
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
             }
         });
 
         this.globalEmitter.on('eth-offer-canceled', (event) => {
-            log.info('eth-offer-canceled');
+            logger.info('eth-offer-canceled');
         });
 
         this.globalEmitter.on('eth-bid-taken', (event) => {
-            log.info('eth-bid-taken');
+            logger.info('eth-bid-taken');
 
             const {
                 DC_wallet,
@@ -421,7 +416,7 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-data-location-response', async (request, response) => {
-            log.info('kad-data-location-response');
+            logger.info('kad-data-location-response');
 
             /*
                 dataLocationResponseObject = {
@@ -447,7 +442,7 @@ class EventEmitter {
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                     const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                    log.warn(returnMessage);
+                    logger.warn(returnMessage);
                     response.send({
                         status: 'FAIL',
                         message: returnMessage,
@@ -457,7 +452,7 @@ class EventEmitter {
 
                 await dvService.handleDataLocationResponse(message);
             } catch (error) {
-                log.error(`Failed to process location response. ${error}.`);
+                logger.error(`Failed to process location response. ${error}.`);
                 response.send({
                     status: 'FAIL',
                     message: error,
@@ -472,14 +467,14 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-data-read-request', async (request, response) => {
-            log.info('kad-data-read-request');
+            logger.info('kad-data-read-request');
 
             const dataReadRequestObject = request.params.message;
             const { message, messageSignature } = dataReadRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                log.warn(returnMessage);
+                logger.warn(returnMessage);
                 response.send({
                     status: 'FAIL',
                     message: returnMessage,
@@ -491,7 +486,7 @@ class EventEmitter {
                 await dhService.handleDataReadRequest(message);
             } catch (error) {
                 const errorMessage = `Failed to process data read request. ${error}.`;
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
                 response.send({
                     status: 'FAIL',
                     message: errorMessage,
@@ -505,14 +500,14 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-data-read-response', async (request, response) => {
-            log.info('kad-data-read-response');
+            logger.info('kad-data-read-response');
 
             const dataReadResponseObject = request.params.message;
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                log.warn(returnMessage);
+                logger.warn(returnMessage);
                 response.send({
                     status: 'FAIL',
                     message: returnMessage,
@@ -524,7 +519,7 @@ class EventEmitter {
                 await dvService.handleDataReadResponse(message);
             } catch (error) {
                 const errorMessage = `Failed to process data read response. ${error}.`;
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
                 response.send({
                     status: 'FAIL',
                     message: errorMessage,
@@ -538,14 +533,14 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-send-encrypted-key', async (request, response) => {
-            log.info('kad-send-encrypted-key');
+            logger.info('kad-send-encrypted-key');
 
             const encryptedPaddedKeyObject = request.params.message;
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                log.warn(returnMessage);
+                logger.warn(returnMessage);
                 response.send({
                     status: 'FAIL',
                     message: returnMessage,
@@ -557,7 +552,7 @@ class EventEmitter {
                 await dvService.handleEncryptedPaddedKey(message);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
-                log.warn(errorMessage);
+                logger.warn(errorMessage);
                 response.send({
                     status: 'FAIL',
                     message: errorMessage,
@@ -571,7 +566,7 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('kad-verify-import-request', async (request, response) => {
-            log.info('kad-verify-import-request');
+            logger.info('kad-verify-import-request');
 
             const { wallet: kadWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;

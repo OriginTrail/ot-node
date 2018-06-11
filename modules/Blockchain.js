@@ -1,7 +1,4 @@
-const Utilities = require('./Utilities');
 const Ethereum = require('./Blockchain/Ethereum/index.js');
-
-const log = Utilities.getLogger();
 
 class Blockchain {
     /**
@@ -12,13 +9,14 @@ class Blockchain {
         this.config = ctx.config.blockchain;
         this.emitter = ctx.emitter;
         this.web3 = ctx.web3;
+        this.log = ctx.logger;
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':
             this.blockchain = new Ethereum(this.config, this.emitter, this.web3);
             break;
         default:
-            log.error('Unsupported blockchain', this.config.blockchain_title);
+            this.log.error('Unsupported blockchain', this.config.blockchain_title);
         }
     }
 

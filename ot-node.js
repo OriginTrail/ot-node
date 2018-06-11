@@ -1,4 +1,5 @@
 const Network = require('./modules/Network');
+const NetworkUtilities = require('./modules/NetworkUtilities');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -164,6 +165,8 @@ class OTNode {
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
+            logger: awilix.asValue(log),
+            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

@@ -118,9 +118,9 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        var logLevel = 'trace';
+        const logLevel = 'trace';
 
-        var customColors = {
+        const customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'blue',
@@ -130,9 +130,8 @@ class Utilities {
             error: 'red',
         };
 
-
         try {
-            var logger = new (winston.Logger)({
+            const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {

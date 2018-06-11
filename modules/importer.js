@@ -6,21 +6,20 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const { Lock } = require('semaphore-async-await');
 
-const log = utilities.getLogger();
-
 class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
         this.graphStorage = ctx.graphStorage;
+        this.log = ctx.logger;
         this.lock = new Lock();
     }
 
     async importJSON(json_document) {
-        log.info('Entering importJSON');
+        this.this.log.info('Entering importJSON');
         const { vertices, edges, import_id } = json_document;
 
-        log.trace('Vertex importing');
+        this.log.trace('Vertex importing');
 
         await this.lock.acquire();
         // TODO: Use transaction here.
@@ -31,7 +30,7 @@ class Importer {
 
         this.lock.release();
 
-        log.info('JSON import complete');
+        this.log.info('JSON import complete');
     }
 
     // eslint-disable-next-line no-shadow
@@ -45,14 +44,14 @@ class Importer {
 
         PythonShell.run('v1.5.py', options, (stderr, stdout) => {
             if (stderr) {
-                log.info(stderr);
+                this.log.info(stderr);
                 utilities.executeCallback(callback, {
                     message: 'Import failure',
                     data: [],
                 });
                 return;
             }
-            log.info('[DC] Import complete');
+            this.log.info('[DC] Import complete');
             const result = JSON.parse(stdout);
             // eslint-disable-next-line  prefer-destructuring
             const vertices = result.vertices;
@@ -74,8 +73,8 @@ class Importer {
             const tree = new MerkleTree(hash_pairs);
             const root_hash = tree.root();
 
-            log.info(`Import id: ${import_id}`);
-            log.info(`Import hash: ${root_hash}`);
+            this.log.info(`Import id: ${import_id}`);
+            this.log.info(`Import hash: ${root_hash}`);
 
             utilities.executeCallback(callback, {
                 message: 'Import success',
@@ -90,7 +89,7 @@ class Importer {
      * @return {Promise<>}
      */
     async afterImport(result) {
-        log.info('[DC] Import complete');
+        this.log.info('[DC] Import complete');
 
         let {
             vertices, edges,
@@ -104,8 +103,8 @@ class Importer {
         vertices = Graph.sortVertices(vertices);
         const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
-        log.info(`Import id: ${import_id}`);
-        log.info(`Import hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Import id: ${import_id}`);
+        this.log.info(`Import hash: ${merkle.tree.getRoot()}`);
         return {
             import_id,
             root_hash: merkle.tree.getRoot(),
@@ -123,7 +122,7 @@ class Importer {
             this.lock.release();
             return await this.afterImport(result);
         } catch (error) {
-            log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -143,7 +142,7 @@ class Importer {
                 error: null,
             };
         } catch (error) {
-            log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,

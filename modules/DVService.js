@@ -7,8 +7,6 @@ const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const Encryption = require('./Encryption');
 
-const log = Utilities.getLogger();
-
 /**
  * DV operations (querying network, etc.)
  */
@@ -18,7 +16,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer,
+        network, blockchain, web3, config, graphStorage, importer, logger,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -26,6 +24,7 @@ class DVService {
         this.config = config;
         this.graphStorage = graphStorage;
         this.importer = importer;
+        this.log = logger;
     }
 
     /**
@@ -82,7 +81,7 @@ class DVService {
             dataLocationRequestObject,
             {},
             async () => {
-                log.info(`Published query to the network. Query ID ${networkQueryModel.id}.`);
+                this.log.info(`Published query to the network. Query ID ${networkQueryModel.id}.`);
             },
         );
 
@@ -93,7 +92,7 @@ class DVService {
                     where: { query_id: networkQueryModel.id },
                 });
 
-                log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
+                this.log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
 
                 // TODO: Get some choose logic here.
                 let lowestOffer;
@@ -105,7 +104,7 @@ class DVService {
                 });
 
                 if (lowestOffer === undefined) {
-                    log.info('Didn\'t find answer or no one replied.');
+                    this.log.info('Didn\'t find answer or no one replied.');
                 }
 
                 resolve(lowestOffer);
@@ -175,7 +174,7 @@ class DVService {
         });
 
         if (!networkQueryResponse) {
-            log.error(`Failed to add query response. ${message}.`);
+            this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
         }
     }
@@ -218,17 +217,17 @@ class DVService {
 
         if (!escrow) {
             const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
-            log.warn(errorMessage);
+            this.log.warn(errorMessage);
             throw errorMessage;
         }
 
-        const merkle = await ImportUtilities.merkleStructure(
-            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'), edges);
-        const rootHash = merkle.tree.getRoot()
+        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
+            vertex.vertex_type !== 'CLASS'), edges);
+        const rootHash = merkle.tree.getRoot();
 
         if (escrow.distribution_root_hash !== rootHash) {
             const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
-            log.warn(errorMessage);
+            this.log.warn(errorMessage);
             throw errorMessage;
         }
 
@@ -239,11 +238,11 @@ class DVService {
                 import_id: importId,
             });
         } catch (error) {
-            log.warn(`Failed to import JSON. ${error}.`);
+            this.log.warn(`Failed to import JSON. ${error}.`);
             return;
         }
 
-        log.info(`Import ID ${importId} imported successfully.`);
+        this.log.info(`Import ID ${importId} imported successfully.`);
 
         // TODO: Maybe separate table is needed.
         Models.data_info.create({
@@ -264,7 +263,7 @@ class DVService {
 
         if (dhBalance.lt(stakeAmount)) {
             const errorMessage = `DH doesn't have enough tokens to sign purchase. Required ${stakeAmount.toString()}, have ${dhBalance.toString()}`;
-            log.warn(errorMessage);
+            this.log.warn(errorMessage);
             throw errorMessage;
         }
 
@@ -347,17 +346,15 @@ class DVService {
         testNumber.add(r2Bn).add(r1Bn.mul(new BN(3)));
 
         if (!testNumber.eq(new BN(sd, 16))) {
-            log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${import_id}.`);
+            this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${import_id}.`);
             this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
             throw Error('Commitment test failed.');
         }
 
-        const commitmentHash = Utilities.normalizeHex(
-            ethAbi.soliditySHA3(
-                ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-                [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, blockNumber],
-            ),
-        );
+        const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
+            ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, blockNumber],
+        ));
 
         const blockchainCommitmentHash =
             await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id)
@@ -365,7 +362,7 @@ class DVService {
 
         if (commitmentHash !== blockchainCommitmentHash) {
             const errorMessage = `Blockchain commitment hash ${blockchainCommitmentHash} differs from mine ${commitmentHash}.`;
-            log.warn(errorMessage);
+            this.log.warn(errorMessage);
             this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
             throw Error(errorMessage);
         }
@@ -390,9 +387,9 @@ class DVService {
             });
         } else {
             // Didn't sign escrow. Cancel it.
-            log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${import_id}.`);
+            this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${import_id}.`);
             await this.blockchain.cancelPurchase(import_id, wallet, false);
-            log.info(`Purchase for import ID ${import_id} canceled.`);
+            this.log.info(`Purchase for import ID ${import_id} canceled.`);
         }
     }
 
@@ -408,7 +405,7 @@ class DVService {
 
         if (purchaseDisputeCompleted.proof_was_correct) {
             // Ups, should never happened.
-            log.warn(`Contract claims litigation was unfortunate for me. Import ID ${importId}`);
+            this.log.warn(`Contract claims litigation was unfortunate for me. Import ID ${importId}`);
 
             // Proceed like nothing happened.
             const purchase =
@@ -423,7 +420,7 @@ class DVService {
                 epk,
             });
         } else {
-            log.warn(`Contract claims litigation was fortune for me. Import ID ${importId}`);
+            this.log.warn(`Contract claims litigation was fortune for me. Import ID ${importId}`);
             // TODO: data should be removed from DB here.
         }
     }

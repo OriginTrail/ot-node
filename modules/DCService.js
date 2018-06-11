@@ -5,12 +5,9 @@ const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
-const abi = require('ethereumjs-abi');
 const Challenge = require('./Challenge');
 const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
-
-const log = Utilities.getLogger();
 
 const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
@@ -29,11 +26,12 @@ class DCService {
         this.blockchain = ctx.blockchain;
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
+        this.log = ctx.logger;
     }
 
     async createOffer(importId, rootHash, totalDocuments, vertices) {
         this.blockchain.writeRootHash(importId, rootHash).then((res) => {
-            log.info('Fingerprint written on blockchain');
+            this.log.info('Fingerprint written on blockchain');
         }).catch((e) => {
             console.log('Error: ', e);
         });
@@ -91,14 +89,14 @@ class DCService {
             dhWallets,
             dhIds,
         ).then(() => {
-            log.info('Offer written to blockchain. Started bidding phase.');
+            this.log.info('Offer written to blockchain. Started bidding phase.');
             offer.status = 'STARTED';
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
                 Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
-                        log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+                        this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
@@ -107,7 +105,7 @@ class DCService {
             };
 
             this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
-                log.trace('Started choosing phase.');
+                this.log.trace('Started choosing phase.');
 
                 offer.status = 'FINALIZING';
                 offer.save({ fields: ['status'] });
@@ -117,9 +115,9 @@ class DCService {
                             offer.status = 'FINALIZED';
                             offer.save({ fields: ['status'] });
 
-                            log.info(`Offer for ${offer.id} finalized`);
+                            this.log.info(`Offer for ${offer.id} finalized`);
                         }).catch((error) => {
-                            log.error(`Failed to get offer ${offer.id}). ${error}.`);
+                            this.log.error(`Failed to get offer ${offer.id}). ${error}.`);
                         });
                 }).catch(() => {
                     offer.status = 'FAILED';
@@ -127,7 +125,7 @@ class DCService {
                 });
             });
         }).catch((err) => {
-            log.warn(`Failed to create offer. ${err}`);
+            this.log.warn(`Failed to create offer. ${err}`);
         });
     }
 
@@ -152,23 +150,23 @@ class DCService {
         return new Promise((resolve, reject) => {
             Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                log.info(`Choose bids for offer ${importId}`);
+                this.log.info(`Choose bids for offer ${importId}`);
                 this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
                         this.blockchain.chooseBids(importId)
                             .then(() => {
-                                log.info(`Bids chosen for data ${importId}`);
+                                this.log.info(`Bids chosen for data ${importId}`);
                                 resolve();
                             }).catch((err) => {
-                                log.warn(`Failed call choose bids for data ${importId}. ${err}`);
+                                this.log.warn(`Failed call choose bids for data ${importId}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
-                        log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        this.log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
                         reject(err);
                     });
             }).catch((err) => {
-                log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
+                this.log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
                 reject(err);
             });
         });
@@ -214,24 +212,24 @@ class DCService {
 
             let failed = false;
             if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
-                log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                this.log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }
 
             if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
-                log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                this.log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }
 
             if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
-                log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                this.log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }
 
             const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
             const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
             if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
-                log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
+                this.log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }
 
@@ -242,14 +240,14 @@ class DCService {
                 );
                 // TODO handle failed situation
                 return false;
-            } else {
-                await this.blockchain.verifyEscrow(
-                    importId,
-                    kadWallet,
-                );
-                log.warn('Data successfully verified, preparing to start challenges');
-                this.challenger.startChallenging();
             }
+            await this.blockchain.verifyEscrow(
+                importId,
+                kadWallet,
+            );
+            this.log.warn('Data successfully verified, preparing to start challenges');
+            this.challenger.startChallenging();
+
             return true;
         });
     }

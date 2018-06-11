@@ -11,8 +11,6 @@ const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
 
-const log = Utilities.getLogger();
-
 /**
  * DH operations (handling new offers, etc.)
  */
@@ -28,6 +26,7 @@ class DHService {
         this.network = ctx.network;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.log = ctx.logger;
     }
 
     /**
@@ -50,7 +49,7 @@ class DHService {
             const offerModel = await Models.offers.findOne({ where: { id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-                log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
                 return;
             }
 
@@ -85,7 +84,7 @@ class DHService {
             // Check if already applied.
             let bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             if (bidModel) {
-                log.info(`I already sent my bid for offer: ${importId}.`);
+                this.log.info(`I already sent my bid for offer: ${importId}.`);
                 return;
             }
 
@@ -105,26 +104,26 @@ class DHService {
                 .mul(new BN(totalEscrowTimePerMinute));
 
             if (maxTokenAmount.lt(myPrice)) {
-                log.info(`Offer ${importId} too expensive for me.`);
+                this.log.info(`Offer ${importId} too expensive for me.`);
                 return;
             }
 
             if (minStakeAmount.gt(myStake)) {
-                log.info(`Skipping offer ${importId}. Stake too high.`);
+                this.log.info(`Skipping offer ${importId}. Stake too high.`);
                 return;
             }
 
             if (maxDataSizeBytes.lt(dataSizeBytes)) {
-                log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
+                this.log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
                 return;
             }
 
             if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
-                log.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
+                this.log.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
                 return;
             }
 
-            log.trace(`Adding a bid for offer ${importId}.`);
+            this.log.trace(`Adding a bid for offer ${importId}.`);
 
             // From smart contract:
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
@@ -165,7 +164,7 @@ class DHService {
             });
             if (!eventModelBid) {
                 // Probably contract failed since no event fired.
-                log.info(`BidTaken not received for offer ${importId}.`);
+                this.log.info(`BidTaken not received for offer ${importId}.`);
                 return;
             }
 
@@ -173,7 +172,7 @@ class DHService {
             const eventBidData = JSON.parse(eventBid.data);
 
             if (eventBidData.DH_wallet !== this.config.node_wallet) {
-                log.info(`Bid not taken for offer ${importId}.`);
+                this.log.info(`Bid not taken for offer ${importId}.`);
                 return;
             }
 
@@ -186,13 +185,13 @@ class DHService {
                 },
                 bid.dc_id, (err) => {
                     if (err) {
-                        log.warn(`Failed to send replication request ${err}`);
+                        this.log.warn(`Failed to send replication request ${err}`);
                         // TODO Cancel bid here.
                     }
                 },
             );
         } catch (error) {
-            log.error(`Failed to handle offer. ${error}`);
+            this.log.error(`Failed to handle offer. ${error}`);
         }
     }
 
@@ -216,9 +215,9 @@ class DHService {
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
         }).then((bid) => {
-            log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
+            this.log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
         }).catch((err) => {
-            log.error(`Failed to insert new bid. ${err}`);
+            this.log.error(`Failed to insert new bid. ${err}`);
         });
     }
 
@@ -234,14 +233,14 @@ class DHService {
          */
         const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
         if (!bidModel) {
-            log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
+            this.log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
             return;
         }
         const bid = bidModel.get({ plain: true });
         try {
             await this.importer.importJSON(data);
         } catch (err) {
-            log.warn(`Failed to import JSON successfully. ${err}.`);
+            this.log.warn(`Failed to import JSON successfully. ${err}.`);
             return;
         }
 
@@ -255,9 +254,9 @@ class DHService {
         );
 
         const rootHash = merkle.tree.getRoot();
-        log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
+        this.log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
 
-        log.trace('[DH] Replication finished');
+        this.log.trace('[DH] Replication finished');
 
         try {
             const encryptedVertices = data.vertices;
@@ -285,7 +284,7 @@ class DHService {
             const epk = Encryption.packEPK(keyPair.publicKey);
             const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
-            log.important('Send root hashes and checksum to blockchain.');
+            this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
                 data.import_id,
                 litigationRootHash, distributionHash, epkChecksum,
@@ -303,17 +302,17 @@ class DHService {
             });
 
             if (!holdingData) {
-                log.warn('Failed to store holding data info.');
+                this.log.warn('Failed to store holding data info.');
             }
 
-            log.important('Replication finished. Send data to DC for verification.');
+            this.log.important('Replication finished. Send data to DC for verification.');
             this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,
             }, bid.dc_id);
         } catch (error) {
-            log.error(`Failed to import data. ${error}.`);
+            this.log.error(`Failed to import data. ${error}.`);
         }
     }
 
@@ -344,7 +343,7 @@ class DHService {
         // Check if mine publish.
         if (message.nodeId === this.config.identity &&
             message.wallet === this.config.node_wallet) {
-            log.trace('Received mine publish. Ignoring.');
+            this.log.trace('Received mine publish. Ignoring.');
             return;
         }
 
@@ -353,7 +352,7 @@ class DHService {
         const imports = await this.graphStorage.findImportIds(query);
         if (imports.length === 0) {
             // I don't want to participate
-            log.trace(`No imports found for request ${message.id}`);
+            this.log.trace(`No imports found for request ${message.id}`);
             return;
         }
 
@@ -376,7 +375,7 @@ class DHService {
         }
 
         if (imports.length !== replicatedImportIds.length) {
-            log.info(`Some of the imports aren't redistributable for query ${message.id}`);
+            this.log.info(`Some of the imports aren't redistributable for query ${message.id}`);
             return;
         }
 
@@ -420,7 +419,7 @@ class DHService {
         });
 
         if (!networkReplyModel) {
-            log.error('Failed to create new network reply model.');
+            this.log.error('Failed to create new network reply model.');
             throw Error('Internal error.');
         }
 
@@ -579,7 +578,7 @@ class DHService {
 
         if (!purchase) {
             const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
-            log.error(errorMessage);
+            this.log.error(errorMessage);
             throw errorMessage;
         }
 
@@ -591,11 +590,11 @@ class DHService {
 
         if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
             const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
-            log.error(errorMessage);
+            this.log.error(errorMessage);
             throw errorMessage;
         }
 
-        log.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
+        this.log.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
 
         // bool commitment_proof = this_purchase.commitment ==
         // keccak256(checksum_left, checksum_right, checksum_hash,
@@ -603,7 +602,7 @@ class DHService {
 
         // Fetch epk from db.
         if (!holdingData) {
-            log.error(`Cannot find holding data info for import ID ${importId}`);
+            this.log.error(`Cannot find holding data info for import ID ${importId}`);
             throw Error('Internal error');
         }
         const { epk } = holdingData;
@@ -619,8 +618,10 @@ class DHService {
         const r2 = Utilities.getRandomInt(100000);
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
-        const m2Checksum =
-            Utilities.normalizeHex(Encryption.calculateDataChecksum(m2, r1, r2, selectedBlockNumber + 1));
+        const m2Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(
+            m2,
+            r1, r2, selectedBlockNumber + 1,
+        ));
         const epkChecksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(epk, r1, r2));
         const epkChecksumHash =
             Utilities.normalizeHex(ethAbi.soliditySHA3(
@@ -681,7 +682,7 @@ class DHService {
         this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000).then(async (eventData) => {
             if (!eventData) {
                 // Everything is ok.
-                log.info(`No litigation process initiated for purchase for ${importId}.`);
+                this.log.info(`No litigation process initiated for purchase for ${importId}.`);
                 return;
             }
 

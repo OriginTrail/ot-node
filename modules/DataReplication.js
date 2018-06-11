@@ -1,12 +1,6 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
-const MerkleTree = require('./Merkle');
-const Utilities = require('./Utilities');
-const Encryption = require('./Encryption');
-const ImportUtilities = require('./ImportUtilities');
-
-const log = Utilities.getLogger();
 
 class DataReplication {
     /**
@@ -19,6 +13,7 @@ class DataReplication {
         this.graphStorage = ctx.graphStorage;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
+        this.log = ctx.logger;
     }
 
     /**
@@ -28,7 +23,7 @@ class DataReplication {
      * @return object response
      */
     async sendPayload(data) {
-        log.info('Entering sendPayload');
+        this.log.info('Entering sendPayload');
 
         const currentUnixTime = Date.now();
         const options = {
@@ -49,9 +44,9 @@ class DataReplication {
         );
 
         Challenge.addTests(tests).then(() => {
-            log.trace(`Tests generated for DH ${tests[0].dhId}`);
+            this.log.trace(`Tests generated for DH ${tests[0].dhId}`);
         }, () => {
-            log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
 
         const payload = {
@@ -66,7 +61,7 @@ class DataReplication {
 
         // send payload to DH
         this.network.kademlia().payloadRequest(payload, data.contact, () => {
-            log.info('Payload request sent');
+            this.log.info('Payload request sent');
         });
     }
 }
