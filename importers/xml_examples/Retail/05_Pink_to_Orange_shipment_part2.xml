@@ -76,7 +76,7 @@
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:object:product:id:Product_1">
 								<attribute id="urn:ot:object:product:category">Beverage</attribute>
-								<attribute id="urn:ot:object:product:description">WinePallet</attribute>
+								<attribute id="urn:ot:object:product:description">Wine Pallet</attribute>
 							</VocabularyElement>						
 						</VocabularyElementList>
 					</Vocabulary>
@@ -121,7 +121,7 @@
 						</quantityElement>
 					</quantityList>
 					<extension>
-						<documentId>1</documentId>
+						<documentId>PINKSHIP2</documentId>
 						<OTEventClass>urn:ot:events:Transport</OTEventClass>
 						<OTEventClass>urn:ot:events:Ownership</OTEventClass>
 						<OTEventType>Sales</OTEventType>
