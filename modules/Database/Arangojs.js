@@ -350,6 +350,13 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async updateDocument(collectionName, document) {
+        if (typeof document._from === 'string' && document._from.indexOf('ot_vertices/') === -1) {
+            document._from = `ot_vertices/${document._from}`;
+        }
+        if (typeof document._to === 'string' && document._to.indexOf('ot_vertices/') === -1) {
+            document._to = `ot_vertices/${document._to}`;
+        }
+
         const collection = this.db.collection(collectionName);
         const response = await collection.update(document._key, document);
         return ArangoJS._normalize(response);
