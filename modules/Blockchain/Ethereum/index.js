@@ -625,8 +625,8 @@ class Ethereum {
     }
 
     async getPurchase(dhWallet, dvWallet, importId) {
-        this.log.trace(`Asking purchase for import ${importId}, DH ${dhWallet} and DV ${dvWallet}.`);
-        return this.readingContract.methods.purchase(dvWallet, dhWallet, importId).call();
+        this.log.trace(`Asking purchase for import (purchase[${dhWallet}][${dvWallet}][${importId}].`);
+        return this.readingContract.methods.purchase(dhWallet, dvWallet, importId).call();
     }
 
     async getPurchaseData(wallet, importId) {
