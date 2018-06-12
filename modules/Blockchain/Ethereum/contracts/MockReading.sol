@@ -70,7 +70,7 @@ contract Ownable {
 
  }
 
-contract Reading is Ownable{
+contract MockReading is Ownable{
 	using SafeMath for uint256;
 
 	Bidding bidding;
@@ -107,7 +107,7 @@ contract Reading is Ownable{
 	event PurchaseDisputed(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseDisputeCompleted(bytes32 import_id, address DH_wallet, address DV_wallet, bool proof_was_correct);
 
-	function Reading(address escrow_address) 
+	function MockReading(address escrow_address) 
 	public {
 		require(escrow_address != address(0));
 		escrow = escrow_address;
@@ -233,7 +233,7 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		//require(this_purchase.purchase_status == PurchaseStatus.sent
-			&&  this_purchase.time_of_sending + 5 minutes < block.timestamp);
+			//&&  this_purchase.time_of_sending + 5 minutes < block.timestamp);
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount);
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
@@ -246,7 +246,7 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 
 		//require(this_purchase.purchase_status == PurchaseStatus.sent
-			&&  this_purchase.time_of_sending + 5 minutes > block.timestamp);
+		//	&&  this_purchase.time_of_sending + 5 minutes > block.timestamp);
 
 		this_purchase.purchase_status = PurchaseStatus.disputed;
 		emit PurchaseDisputed(import_id, DH_wallet, msg.sender);
