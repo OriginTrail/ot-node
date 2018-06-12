@@ -7,12 +7,16 @@ const stringify = require('json-stable-stringify');
 const ZK = require('./ZK');
 
 class GS1Utilities {
+    constructor(ctx) {
+        this.db = ctx.graphStorage;
+    }
+
     /**
      * Creates key for the document
      * @param args
      * @return {*}
      */
-    static createKey(...args) {
+    createKey(...args) {
         const params = [];
         for (const argument of args) {
             params.push(`${stringify(argument)}`);
@@ -20,32 +24,32 @@ class GS1Utilities {
         return md5(`${params.join('_')}`);
     }
 
-    static handleError(message, status) {
+    handleError(message, status) {
         const err = new Error(message);
         err.status = status;
         throw err;
     }
 
-    static validateSender(sender) {
+    validateSender(sender) {
         if (sender.EmailAddress) {
-            GS1Utilities.emailValidation(sender.EmailAddress);
+            this.emailValidation(sender.EmailAddress);
         }
     }
 
-    static emailValidation(email) {
+    emailValidation(email) {
         const result = validator.isEmail(email);
         return !!result;
     }
 
-    static copyProperties(from, to) {
+    copyProperties(from, to) {
         for (const property in from) {
             to[property] = from[property];
         }
     }
 
-    static parseAttributes(attributes, ignorePattern) {
+    parseAttributes(attributes, ignorePattern) {
         const output = {};
-        const inputAttributeArray = GS1Utilities.arrayze(attributes);
+        const inputAttributeArray = this.arrayze(attributes);
 
         for (const inputElement of inputAttributeArray) {
             output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
@@ -53,11 +57,11 @@ class GS1Utilities {
         return output;
     }
 
-    static ignorePattern(attribute, ignorePattern) {
+    ignorePattern(attribute, ignorePattern) {
         return attribute.replace(ignorePattern, '');
     }
 
-    static sanitize(old_obj, new_obj, patterns) {
+    sanitize(old_obj, new_obj, patterns) {
         if (typeof old_obj !== 'object') { return old_obj; }
 
         for (const key in old_obj) {
@@ -65,37 +69,37 @@ class GS1Utilities {
             for (const i in patterns) {
                 new_key = new_key.replace(patterns[i], '');
             }
-            new_obj[new_key] = GS1Utilities.sanitize(old_obj[key], {}, patterns);
+            new_obj[new_key] = this.sanitize(old_obj[key], {}, patterns);
         }
         return new_obj;
     }
 
-    static dateTimeValidation(date) {
+    dateTimeValidation(date) {
         const result = validator.isISO8601(date);
         return !!result;
     }
 
-    static arrayze(value) {
+    arrayze(value) {
         if (value) {
             return [].concat(value);
         }
         return [];
     }
 
-    static getEventId(senderId, event) {
-        if (GS1Utilities.arrayze(event.eventTime).length === 0) {
+    getEventId(senderId, event) {
+        if (this.arrayze(event.eventTime).length === 0) {
             this.handleError('Missing eventTime element for event!', 400);
         }
         const event_time = event.eventTime;
 
-        const event_time_validation = GS1Utilities.dateTimeValidation(event_time);
+        const event_time_validation = this.dateTimeValidation(event_time);
         if (!event_time_validation) {
             this.handleError('Invalid date and time format for event time!', 400);
         }
         if (typeof event_time !== 'string') {
             this.handleError('Multiple eventTime elements found!', 400);
         }
-        if (GS1Utilities.arrayze(event.eventTimeZoneOffset).length === 0) {
+        if (this.arrayze(event.eventTimeZoneOffset).length === 0) {
             this.handleError('Missing event_time_zone_offset element for event!', 400);
         }
 
@@ -105,10 +109,10 @@ class GS1Utilities {
         }
 
         let eventId = `${senderId}:${event_time}Z${event_time_zone_offset}`;
-        if (GS1Utilities.arrayze(event.baseExtension).length > 0) {
+        if (this.arrayze(event.baseExtension).length > 0) {
             const baseExtension_element = event.baseExtension;
 
-            if (GS1Utilities.arrayze(baseExtension_element.eventID).length === 0) {
+            if (this.arrayze(baseExtension_element.eventID).length === 0) {
                 this.handleError('Missing eventID in baseExtension!', 400);
             }
             eventId = baseExtension_element.eventID;
@@ -120,9 +124,17 @@ class GS1Utilities {
      * Handle private data
      * @private
      */
-    static handlePrivate(_private, data, privateData) {
+    async handlePrivate(senderId, uid, _private, data, privateData) {
         data.private = {};
-        const salt = crypto.randomBytes(16).toString('base64');
+
+        const existingVertex = await this.db.findVertexWithMaxVersion(senderId, uid);
+        let salt = null;
+        if (existingVertex && existingVertex.private) {
+            salt = existingVertex.private._salt;
+        }
+        if (salt == null) {
+            salt = crypto.randomBytes(16).toString('base64');
+        }
         for (const key in _private) {
             const value = _private[key];
             privateData[key] = value;
@@ -140,7 +152,7 @@ class GS1Utilities {
      * @param salt
      * @return {*}
      */
-    static checkPrivate(hashed, original, salt) {
+    checkPrivate(hashed, original, salt) {
         const result = {};
         for (const key in original) {
             const value = original[key];
@@ -162,29 +174,29 @@ class GS1Utilities {
      * @param db
      * @return {Promise<void>}
      */
-    static async zeroKnowledge(
+    async zeroKnowledge(
         senderId, event, eventId, categories,
-        importId, globalR, batchVertices, db,
+        importId, globalR, batchVertices,
     ) {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
-            const bizStep = GS1Utilities.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+            const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
             if (bizStep === 'shipping') {
                 // sending input
                 if (categories.includes('Ownership')) {
-                    outputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                    outputQuantities = this.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
                             r: globalR,
                         }));
                 } else {
-                    outputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                    outputQuantities = this.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
@@ -193,7 +205,7 @@ class GS1Utilities {
 
                 for (const outputQ of outputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await db.findVertexWithMaxVersion(senderId, outputQ.object);
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, outputQ.object);
                     if (vertex) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
@@ -213,14 +225,14 @@ class GS1Utilities {
             } else {
                 // receiving output
                 if (categories.includes('Ownership')) {
-                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                    inputQuantities = this.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
                             r: globalR,
                         }));
                 } else {
-                    inputQuantities = GS1Utilities.arrayze(quantityList.quantityElement)
+                    inputQuantities = this.arrayze(quantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
@@ -229,7 +241,7 @@ class GS1Utilities {
 
                 for (const inputQ of inputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await db.findVertexWithMaxVersion(senderId, inputQ.object);
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, inputQ.object);
                     if (vertex) {
                         const quantities = vertex.data.quantities.private;
                         outputQuantities.push({
@@ -250,7 +262,7 @@ class GS1Utilities {
             // Transformation
             const { inputQuantityList, outputQuantityList } = event;
             if (inputQuantityList) {
-                const tmpInputQuantities = GS1Utilities.arrayze(inputQuantityList.quantityElement)
+                const tmpInputQuantities = this.arrayze(inputQuantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
@@ -258,7 +270,7 @@ class GS1Utilities {
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await db.findVertexWithMaxVersion(senderId, inputQuantity.object);
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, inputQuantity.object);
                     if (vertex) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
@@ -277,7 +289,7 @@ class GS1Utilities {
                 }
             }
             if (outputQuantityList) {
-                const tmpOutputQuantities = GS1Utilities.arrayze(outputQuantityList.quantityElement)
+                const tmpOutputQuantities = this.arrayze(outputQuantityList.quantityElement)
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
@@ -285,7 +297,7 @@ class GS1Utilities {
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await db.findVertexWithMaxVersion(senderId, outputQuantity.object);
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, outputQuantity.object);
                     if (vertex) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
