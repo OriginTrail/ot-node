@@ -429,14 +429,22 @@ class OTNode {
                 return;
             }
 
-            const input_file = req.files.importfile.path;
-            const queryObject = {
-                filepath: input_file,
-                contact: req.contact,
-                response: res,
-            };
+            if (req.files !== undefined) {
+                const input_file = req.files.importfile.path;
+                const queryObject = {
+                    filepath: input_file,
+                    contact: req.contact,
+                    response: res,
+                };
 
-            emitter.emit('wot-import-request', queryObject);
+                emitter.emit('wot-import-request', queryObject);
+            } else {
+                log.error('Invalid request. Input file not provided.');
+                res.send({
+                    status: 400,
+                    message: 'Input file not provided!',
+                });
+            }
         });
 
         server.post('/replication', (req, res) => {

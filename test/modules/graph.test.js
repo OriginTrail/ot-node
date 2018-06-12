@@ -291,7 +291,7 @@ describe('graph module ', () => {
             x: 1,
         };
         const keyPair = Encryption.generateKeyPair();
-        const vertices =[{ data: vertexData }];
+        const vertices = [{ data: vertexData }];
         Graph.encryptVertices(vertices, keyPair.privateKey);
         const encryptedVertices = vertices;
         assert.isNotNull(encryptedVertices);
