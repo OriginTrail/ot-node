@@ -1,4 +1,3 @@
-const Graph = require('./Graph');
 const Utilities = require('./Utilities');
 const ZK = require('./ZK');
 
@@ -33,32 +32,7 @@ class Product {
                     .then((virtualGraph) => {
                         virtualGraph = this.consensusCheck(virtualGraph);
                         virtualGraph = this.zeroKnowledge(virtualGraph);
-                        const returnBFS = Utilities.copyObject(virtualGraph);
-
-                        const BFSt = Graph.bfs(
-                            Utilities.copyObject(returnBFS.data),
-                            start_vertex.identifiers.uid,
-                            true,
-                        );
-
-                        for (const i in BFSt) {
-                            if (BFSt[i].outbound !== undefined) {
-                                delete BFSt[i].outbound;
-                            }
-                        }
-
-                        // Sorting keys in object for uniform response
-                        // eslint-disable-next-line no-redeclare
-                        for (const i in BFSt) {
-                            BFSt[i] = Utilities.sortObject(BFSt[i]);
-                        }
-
-                        const responseObject = {
-                            graph: virtualGraph.data,
-                            traversal: BFSt,
-                            sha3: Utilities.sha3(JSON.stringify(BFSt)),
-                        };
-                        resolve(responseObject);
+                        resolve(virtualGraph.data);
                     }).catch((err) => {
                         reject(err);
                     });
