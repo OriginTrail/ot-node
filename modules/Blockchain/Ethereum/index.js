@@ -71,6 +71,7 @@ class Ethereum {
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,
+            READING_CONTRACT: this.readingContract,
         };
 
         // Storing config data
