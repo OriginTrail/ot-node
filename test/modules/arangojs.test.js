@@ -600,15 +600,15 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId',
         };
         let response = await testDb.addVertex(dummyVertex1);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex1).to.not.have.property('version');
 
         response = await testDb.addVertex(dummyVertex2);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex2).to.not.have.property('version');
 
         response = await testDb.addVertex(dummyVertex3);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex3).to.not.have.property('version');
 
         let dataLocationQuery = [{
