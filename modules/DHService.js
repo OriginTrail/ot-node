@@ -629,6 +629,7 @@ class DHService {
                 [epkChecksum],
             ).toString('hex'));
         const e = crypto.randomBytes(16); // 128bits.
+        const eHex = Utilities.normalizeHex(e.toString('hex'));
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
         // From smart contract:
@@ -636,7 +637,7 @@ class DHService {
         //          random_number_1, random_number_2, decryption_key, block_index);
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, selectedBlockNumber],
+            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, eHex, selectedBlockNumber],
         ).toString('hex'));
 
         // store block number and block in db because of litigation.
@@ -649,7 +650,7 @@ class DHService {
             dh_kademlia_id: this.config.identity,
             m1,
             m2,
-            e,
+            eHex,
             sd: epkChecksum,
             r1,
             r2,
@@ -664,7 +665,7 @@ class DHService {
                 nodeId: this.config.identifiers,
                 m1,
                 m2,
-                e,
+                e: eHex,
                 r1,
                 r2,
                 sd: epkChecksumHash,
