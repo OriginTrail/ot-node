@@ -291,6 +291,8 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async addEdge(edge) {
+        edge._from = `ot_vertices/${edge._from}`;
+        edge._to = `ot_vertices/${edge._to}`;
         return this.addDocument('ot_edges', edge);
     }
 
