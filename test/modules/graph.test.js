@@ -272,7 +272,8 @@ describe('graph module ', () => {
         this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
 
         const vertexData = 1;
-        const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
+        const encryptedVertices =
+            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.calledOnce(sysdb.runSystemUpdate);
@@ -286,16 +287,20 @@ describe('graph module ', () => {
     });
 
     it('decryptVertices() of encryptVertices() should give back original data', async () => {
-        const vertexData = 1;
-
-        const encryptedVertices = await Graph.encryptVertices('wallet_1', 'kademlia_1', [{ data: vertexData }]);
+        const vertexData = {
+            x: 1,
+        };
+        const keyPair = Encryption.generateKeyPair();
+        const vertices =[{ data: vertexData }];
+        Graph.encryptVertices(vertices, keyPair.privateKey);
+        const encryptedVertices = vertices;
         assert.isNotNull(encryptedVertices);
-        const encryptedVertex = encryptedVertices.vertices[0];
+        const encryptedVertex = encryptedVertices[0];
         assert.isNotNull(encryptedVertex);
 
-        // eslint-disable-next-line max-len
-        const decryptedVertices = await Graph.decryptVertices(encryptedVertices.vertices, encryptedVertices.vertices[0].decryption_key);
-        assert.isTrue(decryptedVertices[0].data === vertexData);
+        const decryptedVertices =
+            await Graph.decryptVertices(encryptedVertices, keyPair.publicKey);
+        assert.deepEqual(decryptedVertices[0].data, vertexData);
     });
 
     // TODO
@@ -315,7 +320,8 @@ describe('graph module ', () => {
         this.encrytionMock = sinon.stub(Encryption, 'generateKeyPair').returns(keyPair);
 
         const vertexData = 1;
-        const encryptedVertices = deasync(graph.encryptVertices('wallet_1', 'kademila_1', [{ data: vertexData }]));
+        const encryptedVertices =
+            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.notCalled(sysdb.runSystemUpdate);

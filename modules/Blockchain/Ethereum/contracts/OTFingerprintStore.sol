@@ -6,7 +6,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() { owner = msg.sender; }
+  function constructor () public { owner = msg.sender; }
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -17,7 +17,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 }
@@ -41,7 +41,7 @@ contract OTFingerprintStore is Ownable{
     event Agreed(address indexed dataCreator, address indexed dataHolder, bytes32 indexed batch_id_hash, bytes32 graph_hash, uint256 startTime, uint256 endTime);
     
     
-    function OTHashStore(uint256 version){
+    function OTHashStore(uint256 version) public {
         _version = version;
     }
     function getVersion() public constant returns (uint256){
@@ -54,7 +54,7 @@ contract OTFingerprintStore is Ownable{
         require(batch_id_hash!=0x0);
         require(graph_hash!=0x0);
         DHFS[msg.sender][batch_id_hash].push(graph_hash);
-        Fingerprint(msg.sender,batch_id,batch_id_hash,graph_hash);      
+        emit Fingerprint(msg.sender,batch_id,batch_id_hash,graph_hash);      
     }
     function getFingerprintByBatchHash(address dataHolder, bytes32 batch_id_hash) public constant returns (bytes32 fingerprint){
         require(dataHolder!=address(0));
@@ -74,7 +74,7 @@ contract OTFingerprintStore is Ownable{
             });
         agreementPartiesList[msg.sender].push(dataHolder);
         agreements[msg.sender][dataHolder].push(newAgreement);
-        Agreed(msg.sender, dataHolder,batch_id_hash, data_hash, startTime,endTime);
+        emit Agreed(msg.sender, dataHolder,batch_id_hash, data_hash, startTime,endTime);
     }
     
     function getAgreementPartiesCount() public constant returns(uint partiesCount) {

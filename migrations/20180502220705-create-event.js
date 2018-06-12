@@ -18,7 +18,8 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
 
-        offer_hash: {
+        import_id: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
         finished: {

@@ -1,7 +1,8 @@
 
 module.exports = (sequelize, DataTypes) => {
     var data_info = sequelize.define('data_info', {
-        data_id: DataTypes.INTEGER,
+        import_id: DataTypes.STRING,
+        data_provider_wallet: DataTypes.STRING(42),
         total_documents: DataTypes.INTEGER,
         total_data_blocks: DataTypes.INTEGER,
         root_hash: DataTypes.STRING(40),

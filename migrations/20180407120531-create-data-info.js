@@ -7,8 +7,11 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        data_id: {
-            type: Sequelize.INTEGER,
+        import_id: {
+            type: Sequelize.STRING,
+        },
+        data_provider_wallet: {
+            type: Sequelize.STRING,
         },
         total_documents: {
             type: Sequelize.INTEGER,

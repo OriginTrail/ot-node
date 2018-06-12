@@ -1,4 +1,5 @@
 const Network = require('./modules/Network');
+const NetworkUtilities = require('./modules/NetworkUtilities');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -22,11 +23,13 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
+const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
+const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -109,10 +112,14 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
                 const etherBalance = await Utilities.getBalanceInEthers();
+
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
@@ -148,18 +155,23 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
             dcService: awilix.asClass(DCService).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
+            web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
+            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
+            logger: awilix.asValue(log),
+            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
+        const dvService = container.resolve('dvService');
         const remoteControl = container.resolve('remoteControl');
         emitter.initialize();
 
@@ -225,7 +237,7 @@ class OTNode {
     async createProfile(blockchain) {
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.trace(`Profile has already been created for ${config.identity}`);
+            log.info(`Profile has already been created for ${config.identity}`);
             return;
         }
 
@@ -233,6 +245,7 @@ class OTNode {
             config.identity,
             config.dh_price,
             config.dh_stake_factor,
+            config.read_stake_factor,
             config.dh_max_time_mins,
             config.dh_max_data_size_bytes,
         );
@@ -297,7 +310,7 @@ class OTNode {
         server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
-            log.notify('%s exposed at %s', server.name, server.url);
+            log.notify(`${server.name} exposed at ${server.url}`);
         });
 
         this.exposeAPIRoutes(server, emitter);
@@ -391,7 +404,7 @@ class OTNode {
                         emitter.emit('gs1-import-request', queryObject);
                     });
                 } else {
-                    log.error('Invalid request. Input file not provided!');
+                    log.error('Invalid request. Input file not provided.');
                     res.send({
                         status: 400,
                         message: 'Input file not provided!',
@@ -463,6 +476,31 @@ class OTNode {
             const queryObject = req.query;
             emitter.emit('get_root_hash', {
                 query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get('/api/network/query_by_id', (req, res) => {
+            log.info('Query by ID received!');
+
+            const queryObject = req.query;
+            const query = [{
+                path: 'identifiers.id',
+                value: queryObject.id,
+                opcode: 'EQ',
+            }];
+            emitter.emit('network-query', {
+                query,
+                response: res,
+            });
+        });
+
+        server.post('/api/network/query', (req, res) => {
+            log.important('Query received!');
+
+            const { query } = req.body;
+            emitter.emit('network-query', {
+                query,
                 response: res,
             });
         });

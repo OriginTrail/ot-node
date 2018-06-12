@@ -3,14 +3,19 @@ pragma solidity ^0.4.19;
 contract TestingUtilities{
 	bool internalData;
 
-	function keccak2(bytes32 a, bytes32 b)
+	function keccak2hashes(bytes32 a, bytes32 b)
 	public pure returns (bytes32){
 		return keccak256(a,b);
 	}
 
-	function keccakString(string a, string i)
+	function keccakString(string a)
 	public pure returns (bytes32){
-		return keccak256(a, i);
+		return keccak256(a);
+	}
+
+	function keccakIndex(bytes32 a, uint b)
+	public pure returns (bytes32){
+		return keccak256(a,b);
 	}
 
 	function keccakSender()
@@ -23,7 +28,7 @@ contract TestingUtilities{
 		return keccak256(adr, byt);
 	}
 
-	function keccak3(address adr, bytes32 nod_id, uint data_id)
+	function keccakOffer(address adr, bytes32 nod_id, uint data_id)
 	public pure returns (bytes32){
 		return keccak256(adr, nod_id, data_id);
 	}
@@ -42,6 +47,11 @@ contract TestingUtilities{
 	public{
 		internalData = !internalData;
 	}
+
+	function escrowHash(bytes32 offer_hash, address DH_wallet, bytes32 DH_node_id)
+	public pure returns (bytes32){
+		return keccak256(offer_hash, DH_wallet, DH_node_id);
+	} 
 
 	event PreIPosle(uint a);
 

@@ -1,7 +1,5 @@
 const { parseString } = require('xml2js');
 const fs = require('fs');
-const md5 = require('md5');
-const crypto = require('crypto');
 const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
 
@@ -18,7 +16,7 @@ class GS1Importer {
 
     async processXML(err, result) {
         const GLOBAL_R = 131317;
-        const importId = Date.now();
+        const importId = Utilities.createImportId();
 
         const epcisDocumentElement = result['epcis:EPCISDocument'];
 
@@ -28,6 +26,7 @@ class GS1Importer {
         const vocabularyListElement =
             epcisDocumentElement.EPCISHeader.extension.EPCISMasterData.VocabularyList;
         const eventListElement = epcisDocumentElement.EPCISBody.EventList;
+        let senderWallet;
 
         // Outputs.
         let locations = [];
@@ -128,14 +127,14 @@ class GS1Importer {
                 if (location.extension.private) {
                     GS1Helper.handlePrivate(location.extension.private, data, privateData);
                 }
-                locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+                locationKey = GS1Helper.createKey('business_location', senderId, identifiers, data);
                 const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
                 for (const attr of GS1Helper.arrayze(attrs)) {
                     if (attr.participantId) {
                         location.participant_id = attr.participantId;
 
                         locationEdges.push({
-                            _key: md5(`owned_by_${senderId}_${locationKey}_${attr.participantId}`),
+                            _key: GS1Helper.createKey('owned_by', senderId, locationKey, attr.participantId),
                             _from: `ot_vertices/${locationKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
                             edge_type: 'OWNED_BY',
@@ -147,7 +146,7 @@ class GS1Importer {
                 }
             }
             if (!locationKey) {
-                locationKey = md5(`business_location_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+                locationKey = GS1Helper.createKey('business_location', senderId, identifiers, data);
             }
 
             locationVertices.push({
@@ -168,7 +167,7 @@ class GS1Importer {
                     parent_id: location.id,
                 };
 
-                const childLocationKey = md5(`child_business_location_${senderId}_${md5(JSON.stringify(identifiers))}_${md5(JSON.stringify(data))}`);
+                const childLocationKey = GS1Helper.createKey('child_business_location', senderId, identifiers, data);
                 locationVertices.push({
                     _key: childLocationKey,
                     identifiers,
@@ -177,7 +176,7 @@ class GS1Importer {
                 });
 
                 locationEdges.push({
-                    _key: md5(`child_business_location_${senderId}_${location.id}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+                    _key: GS1Helper.createKey('child_business_location', senderId, location.id, identifiers, data),
                     _from: `ot_vertices/${childLocationKey}`,
                     _to: `ot_vertices/${locationKey}`,
                     edge_type: 'CHILD_BUSINESS_LOCATION',
@@ -189,6 +188,11 @@ class GS1Importer {
         }
 
         for (const actor of actors) {
+            // Check for sender's wallet
+            if (!senderWallet && actor.id === senderId) {
+                senderWallet = actor.attributes.wallet;
+            }
+
             const identifiers = {
                 id: actor.id,
                 uid: actor.id,
@@ -208,7 +212,7 @@ class GS1Importer {
             }
 
             actorsVertices.push({
-                _key: md5(`actor_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+                _key: GS1Helper.createKey('actor', senderId, identifiers, data),
                 _id: actor.id,
                 identifiers,
                 data,
@@ -237,7 +241,7 @@ class GS1Importer {
             }
 
             productVertices.push({
-                _key: md5(`product_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`),
+                _key: GS1Helper.createKey('product', senderId, identifiers, data),
                 _id: product.id,
                 data,
                 identifiers,
@@ -267,7 +271,7 @@ class GS1Importer {
                 }
             }
 
-            const key = md5(`batch_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+            const key = GS1Helper.createKey('batch', senderId, identifiers, data);
             batchesVertices.push({
                 _key: key,
                 identifiers: {
@@ -330,7 +334,7 @@ class GS1Importer {
                 if (extension.extension.private) {
                     GS1Helper.handlePrivate(extension.extension.private, data, privateData);
                 }
-                eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+                eventKey = GS1Helper.createKey('event', senderId, identifiers, data);
 
                 const { documentId } = extension.extension;
                 if (documentId) {
@@ -344,7 +348,7 @@ class GS1Importer {
                     const sources = GS1Helper.arrayze(extension.extension.sourceList.source._);
                     for (const source of sources) {
                         tmpEventEdges.push({
-                            _key: md5(`source_${senderId}_${eventKey}_${source}`),
+                            _key: GS1Helper.createKey('source', senderId, eventKey, source),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + source}`,
                             edge_type: 'SOURCE',
@@ -364,7 +368,7 @@ class GS1Importer {
                             const shippingEventVertex = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
                             if (shippingEventVertex.length > 0) {
                                 tmpEventEdges.push({
-                                    _key: md5(`event_connection_${senderId}_${shippingEventVertex[0]._key}_${eventKey}`),
+                                    _key: GS1Helper.createKey('event_connection', senderId, shippingEventVertex[0]._key, eventKey),
                                     _from: `ot_vertices/${shippingEventVertex[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -374,7 +378,7 @@ class GS1Importer {
                                     },
                                 });
                                 tmpEventEdges.push({
-                                    _key: md5(`event_connection_${senderId}_${eventKey}_${shippingEventVertex[0]._key}`),
+                                    _key: GS1Helper.createKey('event_connection', senderId, eventKey, shippingEventVertex[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${shippingEventVertex[0]._key}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -393,7 +397,7 @@ class GS1Importer {
                     destinations = GS1Helper.arrayze(destinations);
                     for (const destination of destinations) {
                         tmpEventEdges.push({
-                            _key: md5(`destination_${senderId}_${eventKey}_${destination}`),
+                            _key: GS1Helper.createKey('destination', senderId, eventKey, destination),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + destination}`,
                             edge_type: 'DESTINATION',
@@ -414,7 +418,7 @@ class GS1Importer {
                             const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                             if (receivingEventVertices.length > 0) {
                                 tmpEventEdges.push({
-                                    _key: md5(`event_connection_${senderId}_${receivingEventVertices[0]._key}_${eventKey}`),
+                                    _key: GS1Helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
                                     _from: `ot_vertices/${receivingEventVertices[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -424,7 +428,7 @@ class GS1Importer {
                                     },
                                 });
                                 tmpEventEdges.push({
-                                    _key: md5(`event_connection_${senderId}_${eventKey}_${receivingEventVertices[0]._key}`),
+                                    _key: GS1Helper.createKey('event_connection', senderId, eventKey, receivingEventVertices[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${receivingEventVertices[0]._key}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -439,7 +443,7 @@ class GS1Importer {
                 }
             }
             if (!eventKey) {
-                eventKey = md5(`event_${senderId}_${JSON.stringify(identifiers)}_${md5(JSON.stringify(data))}`);
+                eventKey = GS1Helper.createKey('event', senderId, identifiers, data);
             }
 
             const eventVertex = {
@@ -456,7 +460,7 @@ class GS1Importer {
             if (bizLocation) {
                 const bizLocationId = bizLocation.id;
                 tmpEventEdges.push({
-                    _key: md5(`at_${senderId}_${eventKey}_${bizLocationId}`),
+                    _key: GS1Helper.createKey('at', senderId, eventKey, bizLocationId),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
                     edge_type: 'AT',
@@ -469,7 +473,7 @@ class GS1Importer {
             if (event.readPoint) {
                 const locationReadPoint = event.readPoint.id;
                 tmpEventEdges.push({
-                    _key: md5(`read_point_${senderId}_${eventKey}_${locationReadPoint}`),
+                    _key: GS1Helper.createKey('read_point', senderId, eventKey, locationReadPoint),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
                     edge_type: 'READ_POINT',
@@ -484,7 +488,7 @@ class GS1Importer {
                     const batchId = inputEpc;
 
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'INPUT_BATCH',
@@ -501,7 +505,7 @@ class GS1Importer {
                     const batchId = inputEpc;
 
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'EVENT_BATCH',
@@ -510,7 +514,7 @@ class GS1Importer {
                         },
                     });
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
                         edge_type: 'EVENT_BATCH',
@@ -527,7 +531,7 @@ class GS1Importer {
                     const batchId = inputEpc.epc;
 
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'CHILD_BATCH',
@@ -544,7 +548,7 @@ class GS1Importer {
                     const batchId = outputEpc;
 
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${eventKey}_${batchId}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'OUTPUT_BATCH',
@@ -553,7 +557,7 @@ class GS1Importer {
                         },
                     });
                     tmpEventEdges.push({
-                        _key: md5(`event_batch_${senderId}_${batchId}_${eventKey}`),
+                        _key: GS1Helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
                         edge_type: 'OUTPUT_BATCH',
@@ -629,7 +633,7 @@ class GS1Importer {
             const productId = batch.data.parent_id;
 
             batchEdges.push({
-                _key: md5(`batch_product_${senderId}_${batch._key}_${productId}`),
+                _key: GS1Helper.createKey('batch_product', senderId, batch._key, productId),
                 _from: `ot_vertices/${batch._key}`,
                 _to: `${EDGE_KEY_TEMPLATE + productId}`,
                 edge_type: 'IS',
@@ -659,7 +663,7 @@ class GS1Importer {
             for (const category of vertex.data.categories) {
                 eventVertices.forEach((vertex) => {
                     classObjectEdges.push({
-                        _key: md5(`is_${senderId}_${vertex.id}_${category}`),
+                        _key: GS1Helper.createKey('is', senderId, vertex._key, category),
                         _from: `ot_vertices/${vertex._key}`,
                         _to: `ot_vertices/${category}`,
                         edge_type: 'IS',
@@ -673,7 +677,7 @@ class GS1Importer {
 
         locationVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: md5(`is_${senderId}_${vertex._key}_${objectClassLocationId}`),
+                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassLocationId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassLocationId}`,
                 edge_type: 'IS',
@@ -682,7 +686,7 @@ class GS1Importer {
 
         actorsVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: md5(`is_${senderId}_${vertex._key}_${objectClassActorId}`),
+                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassActorId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassActorId}`,
                 edge_type: 'IS',
@@ -691,7 +695,7 @@ class GS1Importer {
 
         productVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: md5(`is_${senderId}_${vertex._key}_${objectClassProductId}`),
+                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassProductId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassProductId}`,
                 edge_type: 'IS',
@@ -702,7 +706,7 @@ class GS1Importer {
             vertex.data.categories.forEach(async (category) => {
                 const classKey = await this.db.getClassId(category);
                 classObjectEdges.push({
-                    _key: md5(`is_${senderId}_${vertex._key}_${classKey}`),
+                    _key: GS1Helper.createKey('is', senderId, vertex._key, classKey),
                     _from: `ot_vertices/${vertex._key}`,
                     _to: `ot_vertices/${classKey}`,
                     edge_type: 'IS',
@@ -753,7 +757,12 @@ class GS1Importer {
             delete vertex.private;
             return vertex;
         });
-        return { vertices: verticesPerImport, edges: edgesPerImport, import_id: importId };
+        return {
+            vertices: verticesPerImport,
+            edges: edgesPerImport,
+            import_id: importId,
+            wallet: senderWallet,
+        };
     }
 
     async parseGS1(gs1XmlFile) {

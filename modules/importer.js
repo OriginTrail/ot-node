@@ -1,28 +1,25 @@
 // External modules
 const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
-const Mtree = require('./mtree')();
+const MerkleTree = require('./Merkle');
+const Graph = require('./Graph');
+const ImportUtilities = require('./ImportUtilities');
 const { Lock } = require('semaphore-async-await');
-
-const log = utilities.getLogger();
 
 class Importer {
     constructor(ctx) {
         this.gs1Importer = ctx.gs1Importer;
         this.wotImporter = ctx.wotImporter;
         this.graphStorage = ctx.graphStorage;
+        this.log = ctx.logger;
         this.lock = new Lock();
     }
 
     async importJSON(json_document) {
-        log.info('Entering importJSON');
+        this.log.info('Entering importJSON');
         const { vertices, edges, import_id } = json_document;
 
-        if (typeof import_id !== 'number') {
-            throw Error(`Invalid import ID. ${import_id}.`);
-        }
-
-        log.trace('Vertex importing');
+        this.log.trace('Vertex importing');
 
         await this.lock.acquire();
         // TODO: Use transaction here.
@@ -33,7 +30,7 @@ class Importer {
 
         this.lock.release();
 
-        log.info('JSON import complete');
+        this.log.info('JSON import complete');
     }
 
     // eslint-disable-next-line no-shadow
@@ -47,21 +44,21 @@ class Importer {
 
         PythonShell.run('v1.5.py', options, (stderr, stdout) => {
             if (stderr) {
-                log.info(stderr);
+                this.log.info(stderr);
                 utilities.executeCallback(callback, {
                     message: 'Import failure',
                     data: [],
                 });
                 return;
             }
-            log.info('[DC] Import complete');
+            this.log.info('[DC] Import complete');
             const result = JSON.parse(stdout);
             // eslint-disable-next-line  prefer-destructuring
             const vertices = result.vertices;
 
             // eslint-disable-next-line  prefer-destructuring
             const edges = result.edges;
-            const data_id = result.import_id;
+            const { import_id } = result;
 
             const leaves = [];
             const hash_pairs = [];
@@ -73,11 +70,11 @@ class Importer {
                 hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
             }
 
-            const tree = new Mtree(hash_pairs);
+            const tree = new MerkleTree(hash_pairs);
             const root_hash = tree.root();
 
-            log.info(`Import id: ${data_id}`);
-            log.info(`Import hash: ${root_hash}`);
+            this.log.info(`Import id: ${import_id}`);
+            this.log.info(`Import hash: ${root_hash}`);
 
             utilities.executeCallback(callback, {
                 message: 'Import success',
@@ -86,41 +83,35 @@ class Importer {
         });
     }
 
+    /**
+     * Process successfull import
+     * @param result  Import result
+     * @return {Promise<>}
+     */
     async afterImport(result) {
-        log.info('[DC] Import complete');
+        this.log.info('[DC] Import complete');
 
-        const { vertices } = result;
-        const { edges } = result;
-        const { import_id } = result;
+        let {
+            vertices, edges,
+        } = result;
 
-        const leaves = [];
-        const hash_pairs = [];
+        const {
+            import_id, wallet,
+        } = result;
 
-        for (const i in vertices) {
-            leaves.push(utilities.sha3(utilities.sortObject({
-                identifiers: vertices[i].identifiers,
-                data: vertices[i].data,
-            })));
-            hash_pairs.push({
-                key: vertices[i]._key,
-                hash: utilities.sha3({
-                    identifiers: vertices[i].identifiers,
-                    data: vertices[i].data,
-                }),
-            });
-        }
+        edges = Graph.sortVertices(edges);
+        vertices = Graph.sortVertices(vertices);
+        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
 
-        const tree = new Mtree(hash_pairs);
-        const root_hash = utilities.sha3(tree.root());
-
-        log.info(`Import id: ${import_id}`);
-        log.info(`Import hash: ${root_hash}`);
+        this.log.info(`Import id: ${import_id}`);
+        this.log.info(`Import hash: ${merkle.tree.getRoot()}`);
         return {
-            data_id: import_id,
-            root_hash,
-            total_documents: hash_pairs.length,
+            import_id,
+            root_hash: merkle.tree.getRoot(),
+            total_documents: merkle.hashPairs.length,
             vertices,
             edges,
+            wallet,
         };
     }
 
@@ -131,7 +122,7 @@ class Importer {
             this.lock.release();
             return await this.afterImport(result);
         } catch (error) {
-            log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -151,7 +142,7 @@ class Importer {
                 error: null,
             };
         } catch (error) {
-            log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
