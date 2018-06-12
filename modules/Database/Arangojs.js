@@ -110,10 +110,12 @@ class ArangoJS {
             for (const edgeId in graph.edges) {
                 const edge = graph.edges[edgeId];
                 if (edge !== null) {
-                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge._from = edge._from.split('/')[1];
-                    // eslint-disable-next-line no-underscore-dangle,prefer-destructuring
-                    edge._to = edge._to.split('/')[1];
+                    if (edge._from.indexOf('ot_vertices/') > -1) {
+                        edge._from = edge._from.substring('ot_vertices/'.length);
+                    }
+                    if (edge._to.indexOf('ot_vertices/') > -1) {
+                        edge._to = edge._to.substring('ot_vertices/'.length);
+                    }
 
                     delete edge._id;
                     delete edge._rev;
