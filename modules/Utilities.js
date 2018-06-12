@@ -16,7 +16,7 @@ const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 var numberToBN = require('number-to-bn');
 
-require('dotenv').config();
+const env = require('dotenv').config();
 
 
 class Utilities {
@@ -118,9 +118,22 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
-
-        const customColors = {
+        var logLevel = '';
+        const environment = env.parsed.NODE_ENV;
+        switch (environment) {
+        case 'development':
+            logLevel = 'trace';
+            break;
+        case 'test':
+            logLevel = 'debug';
+            break;
+        case 'production':
+            logLevel = 'info';
+            break;
+        default:
+            logLevel = 'trace';
+        }
+        var customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'blue',
@@ -129,9 +142,8 @@ class Utilities {
             important: 'magenta',
             error: 'red',
         };
-
         try {
-            const logger = new (winston.Logger)({
+            var logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {
@@ -152,26 +164,17 @@ class Utilities {
                 ],
             });
             winston.addColors(customColors);
-
             // Extend logger object to properly log 'Error' types
-            const origLog = logger.log;
-            logger.log = (level, msg) => {
-                if (msg.startsWith('updating peer profile')) {
-                    return;
-                }
-                if (msg.startsWith('connect econnrefused')) {
-                    level = 'trace';
-                    const address = msg.substr(21);
-                    msg = `Failed to connect to ${address}`;
-                }
+            var origLog = logger.log;
+            logger.log = function (level, msg) {
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
-                    const args = Array.prototype.slice.call(arguments);
+                    var args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
                     // eslint-disable-next-line prefer-rest-params
-                    origLog.apply(logger, [level, msg]);
+                    origLog.apply(logger, arguments);
                 }
             };
             return logger;
@@ -232,7 +235,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
-                    console.log('Please make sure Arango server is up and running');
+                    this.getLogger.notify('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }

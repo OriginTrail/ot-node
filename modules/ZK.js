@@ -1,6 +1,7 @@
 const sha3 = require('solidity-sha3').default;
 const BN = require('bn.js');
 const crypto = require('crypto');
+const Utilities = require('./Utilities');
 
 class ZK {
     constructor() {
@@ -13,6 +14,7 @@ class ZK {
         this.red = BN.red(this.n);
         this.redSquare = BN.red(this.nSquare);
         this.g = this.n.add(this.one).toRed(this.redSquare);
+        this.log = Utilities.getLogger();
     }
 
     encrypt(m, r) {
@@ -152,9 +154,9 @@ class ZK {
 
         // return res;
         if (res) {
-            console.log('ZK proof successfully created and validated for event: ', eventId);
+            this.log.notify('ZK proof successfully created and validated for event: ', eventId);
         } else {
-            console.log('ZK proof failed for event: ', eventId);
+            this.log.warn('ZK proof failed for event: ', eventId);
         }
         return zkObject;
     }
