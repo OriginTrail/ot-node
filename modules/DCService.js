@@ -27,6 +27,15 @@ class DCService {
     }
 
     async createOffer(dataId, rootHash, totalDocuments, vertices) {
+        /**
+         * check if offer is already created
+         */
+        this.blockchain.getOffer(dataId).then((res) => {
+            console.log(res);
+        }).catch((err) => {
+            console.log(err);
+        });
+
         this.blockchain.writeRootHash(dataId, rootHash).then((res) => {
             log.info('Fingerprint written on blockchain');
         }).catch((e) => {
@@ -130,7 +139,7 @@ class DCService {
                 });
             });
         }).catch((err) => {
-            log.warn(`Failed to create offer. ${err}`);
+            log.log('error', 'Failed to create offer. %j', err);
         });
     }
 

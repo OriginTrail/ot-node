@@ -40,6 +40,15 @@ class Blockchain {
     }
 
     /**
+     * Get offer by dataId
+     * @param dataId
+     * @returns {Promise}
+     */
+    getOffer(dataId) {
+        return this.blockchain.getOffer(dataId);
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
      * @param price         Price (byte per min)
