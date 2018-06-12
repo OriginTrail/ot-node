@@ -129,7 +129,10 @@ class Importer {
             await this.lock.acquire();
             const result = await this.wotImporter.parse(document);
             this.lock.release();
-            return await this.afterImport(result);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
         } catch (error) {
             log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };
