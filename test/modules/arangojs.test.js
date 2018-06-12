@@ -192,7 +192,8 @@ describe('Arangojs module ', async () => {
         // now lets check that we\'ve saved edge correctly
         const myCollection = testDb.db.edgeCollection(edgeCollectionName);
         // eslint-disable-next-line no-underscore-dangle
-        const retrievedEdge = await myCollection.edge(edgeOne._key);
+        let retrievedEdge = await myCollection.edge(edgeOne._key);
+        retrievedEdge = ArangoJs._normalize(retrievedEdge);
         // eslint-disable-next-line no-underscore-dangle
         assert.deepEqual(retrievedEdge._key, edgeOne._key);
         assert.deepEqual(retrievedEdge.edge_type, edgeOne.edge_type);

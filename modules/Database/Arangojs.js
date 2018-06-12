@@ -509,13 +509,19 @@ class ArangoJS {
      * @private
      */
     static _normalize(data) {
-        if (typeof data === 'object') {
+        if (Array.isArray(data)) {
+            for (const k of data) {
+                ArangoJS._normalize(k);
+            }
+        } else {
             delete data._id;
             delete data._rev;
             delete data._oldRev;
-        } else {
-            for (const k of data) {
-                ArangoJS._normalize(k);
+            if (typeof data._from === 'string' && data._from.indexOf('ot_vertices/') > -1) {
+                data._from = data._from.substring('ot_vertices/'.length);
+            }
+            if (typeof data._to === 'string' && data._to.indexOf('ot_vertices/') > -1) {
+                data._to = data._to.substring('ot_vertices/'.length);
             }
         }
         return data;
