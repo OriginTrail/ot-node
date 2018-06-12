@@ -61,6 +61,7 @@ describe('GS1 Importer tests', () => {
         const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
+            logger: awilix.asValue(Utilities.getLogger()),
             gs1Importer: awilix.asClass(GS1Importer),
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),

@@ -15,7 +15,8 @@ class ArangoJS {
      * @param {string} - host
      * @param {number} - port
      */
-    constructor(username, password, database, host, port) {
+    constructor(username, password, database, host, port, log) {
+        this.log = log;
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
