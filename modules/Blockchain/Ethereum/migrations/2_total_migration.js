@@ -155,7 +155,7 @@ module.exports = (deployer, network, accounts) => {
                                                             .then(async () => {
                                                                 await reading.setBidding(bidding.address, { from: accounts[0] })
                                                                     .then(async () => {
-                                                                        await reading.transferOwnership(bidding.address, { from: accounts[0] })
+                                                                        await reading.transferOwnership(escrow.address, { from: accounts[0] })
                                                                             .then(async () => {
                                                                                 await escrow.transferOwnership(bidding.address, { from: accounts[0] })
                                                                                     .then(async () => {
