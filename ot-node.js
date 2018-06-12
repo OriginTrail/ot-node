@@ -9,6 +9,7 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
+const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
@@ -161,6 +162,7 @@ class OTNode {
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
