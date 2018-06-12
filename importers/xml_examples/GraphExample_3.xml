@@ -9,7 +9,7 @@
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
             <sbdh:Sender><!-- Mandatory -->
                 <!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-                <sbdh:Identifier Authority="OriginTrail">urn:ot:mda:actor:id:Company_2</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_2</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
                     <sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>    <!-- Optional -->
@@ -41,57 +41,57 @@
         <extension>
             <EPCISMasterData>
                 <VocabularyList>
-                    <Vocabulary type="urn:ot:mda:actor">
+                    <Vocabulary type="urn:ot:object:actor">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Company_1">
-                                <attribute id="urn:ot:mda:actor:person:id:name">Company _1</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Company</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">f69cab041fe493065f77c893592316fad42330cc</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_1">
+                                <attribute id="urn:ot:object:actor:name">Company _1</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0x1a2C6214dD5A52f73Cb5C8F82ba513DA1a0C8fcE</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">f69cab041fe493065f77c893592316fad42330cc</attribute>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Company_2">
-                                <attribute id="urn:ot:mda:actor:person:id:name">Company _2</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Company</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0xE1E9c5379C5df627a8De3a951fA493028394A050</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">e6e0f07f313aff380b17e8983c55933dae064928</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_2">
+                                <attribute id="urn:ot:object:actor:name">Company _2</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xE1E9c5379C5df627a8De3a951fA493028394A050</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">e6e0f07f313aff380b17e8983c55933dae064928</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
 
-                    <Vocabulary type="urn:ot:mda:location">
+                    <Vocabulary type="urn:ot:object:location">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgln:Building_1">
-                                <attribute id="urn:ot:mda:location:category">Building _1b</attribute>
-                                <attribute id="urn:ot:mda:location:description">Description of building _1b</attribute>
+                                <attribute id="urn:ot:object:location:category">Building _1b</attribute>
+                                <attribute id="urn:ot:object:location:description">Description of building _1b</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_1</attribute>
+                                    <attribute id="urn:ot:object:location:participantId">urn:ot:object:actor:id:Company_1</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_2">
-                                <attribute id="urn:ot:mda:location:category">Building _2b</attribute>
-                                <attribute id="urn:ot:mda:location:description">Description of building _2b</attribute>
+                                <attribute id="urn:ot:object:location:category">Building _2b</attribute>
+                                <attribute id="urn:ot:object:location:description">Description of building _2b</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_2</attribute>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_2</attribute>
                                 </extension>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
 
-                    <Vocabulary type="urn:ot:mda:product">
+                    <Vocabulary type="urn:ot:object:product">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:mda:product:id:Product_1">
-                                <attribute id="urn:ot:mda:product:category">Product _1 Pallet</attribute>
-                                <attribute id="urn:ot:mda:product:description">Pallet</attribute>
+                            <VocabularyElement id="urn:ot:object:product:id:Product_1">
+                                <attribute id="urn:ot:object:product:category">Product _1 Pallet</attribute>
+                                <attribute id="urn:ot:object:product:description">Pallet</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
 
-                    <Vocabulary type="urn:ot:mda:batch">
+                    <Vocabulary type="urn:ot:object:batch">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgtin:Batch_1">
-                                <attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:Product_1</attribute>
-                                <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
-                                <attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:Product_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
@@ -127,8 +127,8 @@
                     </quantityList>
                     <extension>
                         <documentId>1</documentId>
-                        <OTEventClass>ot:events:Transport</OTEventClass>
-                        <OTEventClass>ot:events:Ownership</OTEventClass>
+                        <OTEventClass>urn:ot:events:Transport</OTEventClass>
+                        <OTEventClass>urn:ot:events:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1</source>

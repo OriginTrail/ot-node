@@ -37,7 +37,7 @@
 		<extension>
 			<EPCISMasterData>
 				<VocabularyList>
-					<Vocabulary type="urn:ot:mda:actor">				
+					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:actor:id:Employee.Bob">																
 								<attribute id="urn:ot:actor:person:id:name">Bob Johnson</attribute>				
@@ -45,46 +45,46 @@
 						    </VocabularyElement>													
 						</VocabularyElementList>				
 					</Vocabulary>				
-					<Vocabulary type="urn:ot:mda:product">	
+					<Vocabulary type="urn:ot:object:product">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:mda:product:id:123AB">
-								<attribute id="urn:ot:mda:product:category">Engine</attribute>								
-								<attribute id="urn:ot:mda:product:description">Airplane Engine for Boing</attribute>								
+							<VocabularyElement id="urn:ot:object:product:id:123AB">
+								<attribute id="urn:ot:object:product:category">Engine</attribute>
+								<attribute id="urn:ot:object:product:description">Airplane Engine for Boing</attribute>
 							</VocabularyElement>
-							<VocabularyElement id="urn:ot:mda:product:id:#1A">
-								<attribute id="urn:ot:mda:product:category">Transport Pallet</attribute>								
-								<attribute id="urn:ot:mda:product:description">Pallet</attribute>								
+							<VocabularyElement id="urn:ot:object:product:id:#1A">
+								<attribute id="urn:ot:object:product:category">Transport Pallet</attribute>
+								<attribute id="urn:ot:object:product:description">Pallet</attribute>
 							</VocabularyElement>						
 						</VocabularyElementList>
 					</Vocabulary>	
-					<Vocabulary type="urn:ot:mda:batch">	
+					<Vocabulary type="urn:ot:object:batch">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00001">                            
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:#1A</attribute>
-								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
-								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:01:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
 							</VocabularyElement>
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00002">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:#1A</attribute>
-								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:02:54Z</attribute>
-								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
+								<attribute id="urn:ot:object:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:batch:productiondate">2018-03-03T00:02:54Z</attribute>
+								<attribute id="urn:ot:object:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
 							</VocabularyElement>						
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00003">
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:#1A</attribute>
-								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:03:54Z</attribute>
-								<attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
+								<attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
 							</VocabularyElement>	                            
 							<VocabularyElement id="urn:epc:id:sgtin:8635.737">                                
-								<attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:123AB</attribute>
-								<attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:03:54Z</attribute>							
+								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:123AB</attribute>
+								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
 							</VocabularyElement>						
 						</VocabularyElementList>
 					</Vocabulary>
-					<Vocabulary type="urn:ot:mda:location">
+					<Vocabulary type="urn:ot:object:location">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:mda:location:Storage.F12">								
-								<attribute id="urn:ot:mda:location:category">Physical location</attribute>
-								<attribute id="urn:ot:mda:location:description">Storage F12</attribute>								
+							<VocabularyElement id="urn:ot:object:location:Storage.F12">
+								<attribute id="urn:ot:object:location:category">Physical location</attribute>
+								<attribute id="urn:ot:object:location:description">Storage F12</attribute>
 							</VocabularyElement>
 						</VocabularyElementList>
 					</Vocabulary>					
@@ -133,7 +133,7 @@
 					 <transformationID>BOM12345PO987</transformationID> <!-- Mandatory-->
 					 <bizStep>urn:epcglobal:cbv:bizstep:creating_class_instance</bizStep> <!-- Optional -->						 				 
 					 <extension>
-						<OTEventClass>ot:event:Transformation</OTEventClass>
+						<OTEventClass>urn:ot:event:Transformation</OTEventClass>
 					 	<OTEventType>Packaging</OTEventType>
 					 </extension>
 				 </TransformationEvent>

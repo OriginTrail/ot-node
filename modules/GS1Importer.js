@@ -280,8 +280,6 @@ class GS1Importer {
             });
         }
 
-        console.log(events);
-
         // Handle events
         const batchesToRemove = [];
         for (const event of events) {
