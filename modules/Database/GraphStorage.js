@@ -33,6 +33,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -49,6 +50,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
