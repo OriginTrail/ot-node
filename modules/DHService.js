@@ -586,7 +586,7 @@ class DHService {
         const purchaseTokenAmount = new BN(purchase.token_amount);
         const purchaseStakeFactor = new BN(purchase.stake_factor);
         const myPrice = new BN(offer.dataPrice);
-        const myStakeFactor = new BN(offer.stake_factor);
+        const myStakeFactor = new BN(offer.stakeFactor);
 
         if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
             const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
@@ -627,7 +627,7 @@ class DHService {
             Utilities.normalizeHex(ethAbi.soliditySHA3(
                 ['uint256'],
                 [epkChecksum],
-            ));
+            ).toString('hex'));
         const e = crypto.randomBytes(16); // 128bits.
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
@@ -637,7 +637,7 @@ class DHService {
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
             [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, selectedBlockNumber],
-        ));
+        ).toString('hex'));
 
         // store block number and block in db because of litigation.
 
