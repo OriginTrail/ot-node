@@ -326,14 +326,14 @@ class DVService {
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
-            where: { id },
+            where: { reply_id: id },
         });
 
         if (!networkQueryResponse) {
             throw Error(`Didn't find query reply with ID ${id}.`);
         }
 
-        const { importId: import_id } = networkQueryResponse;
+        const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
@@ -342,12 +342,12 @@ class DVService {
             Utilities.normalizeHex(ethAbi.soliditySHA3(
                 ['uint256'],
                 [sd],
-            ));
+            ).toString('hex'));
 
         // Get checksum from blockchain.
         const purchaseData =
-            await this.blockchain.getPurchaseData(wallet, import_id);
-        const blockchainChecksum = purchaseData.checksum.substring(2, 42);
+            await this.blockchain.getPurchasedData(importId, wallet);
+        const blockchainChecksum = purchaseData.checksum.substring(2);
 
         const testNumber = new BN(blockchainChecksum, 16);
         const r1Bn = new BN(r1);
@@ -355,8 +355,8 @@ class DVService {
         testNumber.add(r2Bn).add(r1Bn.mul(new BN(3)));
 
         if (!testNumber.eq(new BN(sd, 16))) {
-            this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${import_id}.`);
-            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+            this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${importId}.`);
+            this._litigatePurchase(importId, wallet, nodeId, m1, m2, e);
             throw Error('Commitment test failed.');
         }
 
@@ -366,39 +366,39 @@ class DVService {
         ));
 
         const blockchainCommitmentHash =
-            await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id)
+            await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId)
                 .commitment;
 
         if (commitmentHash !== blockchainCommitmentHash) {
             const errorMessage = `Blockchain commitment hash ${blockchainCommitmentHash} differs from mine ${commitmentHash}.`;
             this.log.warn(errorMessage);
-            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+            this._litigatePurchase(importId, wallet, nodeId, m1, m2, e);
             throw Error(errorMessage);
         }
 
-        await this.blockchain.confirmPurchase(import_id, wallet);
+        await this.blockchain.confirmPurchase(importId, wallet);
 
         const encryptedBlockEvent =
-            await this.blockchain.subscribeToEvent('EncryptedBlockSent', import_id, 60 * 60 * 1000);
+            await this.blockchain.subscribeToEvent('EncryptedBlockSent', importId, 60 * 60 * 1000);
 
         if (encryptedBlockEvent) {
             // DH signed the escrow. Yay!
             const purchase =
-                await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id);
+                await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId);
             const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
             const publicKey = Encryption.unpackEPK(epk);
 
             const holdingData = await Models.holding_data.create({
-                id: import_id,
+                id: importId,
                 source_wallet: wallet,
                 data_public_key: publicKey,
                 epk,
             });
         } else {
             // Didn't sign escrow. Cancel it.
-            this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${import_id}.`);
-            await this.blockchain.cancelPurchase(import_id, wallet, false);
-            this.log.info(`Purchase for import ID ${import_id} canceled.`);
+            this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+            await this.blockchain.cancelPurchase(importId, wallet, false);
+            this.log.info(`Purchase for import ID ${importId} canceled.`);
         }
     }
 

@@ -229,7 +229,7 @@ class Encryption {
      */
     static calculateDataChecksum(data, r1, r2, offset = 0) {
         if (data.length % 32 !== 0) {
-            return false;
+            throw Error('data.length % 32 !== 0');
         }
 
         let i = 0;

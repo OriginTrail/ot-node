@@ -642,7 +642,11 @@ class DHService {
 
         // store block number and block in db because of litigation.
 
-        await this.blockchain.sendCommitment(importId, commitmentHash);
+        await this.blockchain.sendCommitment(
+            importId,
+            networkReplyModel.receiver_wallet,
+            commitmentHash,
+        );
 
         Models.data_holders.create({
             import_id: importId,
@@ -650,7 +654,7 @@ class DHService {
             dh_kademlia_id: this.config.identity,
             m1,
             m2,
-            eHex,
+            e: eHex,
             sd: epkChecksum,
             r1,
             r2,

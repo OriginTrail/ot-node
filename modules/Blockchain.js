@@ -264,8 +264,8 @@ class Blockchain {
         return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
     }
 
-    async getPurchaseData(wallet, importId) {
-        return this.blockchain.getPurchaseData(wallet, importId);
+    async getPurchasedData(importId, wallet) {
+        return this.blockchain.getPurchasedData(importId, wallet);
     }
 
     async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
