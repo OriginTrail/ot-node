@@ -80,8 +80,8 @@ class WOTImporter {
 
         thingEdges.push({
             _key: md5(`is_${sender.id}_${actor._key}_ACTOR`),
-            _from: `ot_vertices/${actor._key}`,
-            _to: 'ot_vertices/ACTOR',
+            _from: `${actor._key}`,
+            _to: 'ACTOR',
             edge_type: 'IS',
         });
 
@@ -109,8 +109,8 @@ class WOTImporter {
             if (ooVertex) {
                 thingEdges.push({
                     _key: md5(`event_object_${sender.id}_${event._key}_${ooVertex._key}`),
-                    _from: `ot_vertices/${event._key}`,
-                    _to: `ot_vertices/${ooVertex._key}`,
+                    _from: `${event._key}`,
+                    _to: `${ooVertex._key}`,
                     edge_type: 'EVENT_OBJECT',
                     identifiers: {
                         uid: `event_object_${event.identifiers.id}_${ooVertex.identifiers.id}`,
@@ -118,8 +118,8 @@ class WOTImporter {
                 });
                 thingEdges.push({
                     _key: md5(`event_object_${sender.id}_${ooVertex._key}_${event._key}`),
-                    _from: `ot_vertices/${ooVertex._key}`,
-                    _to: `ot_vertices/${event._key}`,
+                    _from: `${ooVertex._key}`,
+                    _to: `${event._key}`,
                     edge_type: 'EVENT_OBJECT',
                     identifiers: {
                         uid: `event_object_${ooVertex.identifiers.id}_${event.identifiers.id}`,
@@ -133,8 +133,8 @@ class WOTImporter {
             if (rpVertex) {
                 thingEdges.push({
                     _key: md5(`read_point_${sender.id}_${event._key}_${rpVertex._key}`),
-                    _from: `ot_vertices/${event._key}`,
-                    _to: `ot_vertices/${rpVertex._key}`,
+                    _from: `${event._key}`,
+                    _to: `${rpVertex._key}`,
                     edge_type: 'READ_POINT',
                     identifiers: {
                         uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
@@ -145,8 +145,8 @@ class WOTImporter {
 
         thingEdges.push({
             _key: md5(`observed_by_${sender.id}_${event._key}_${actor._key}`),
-            _from: `ot_vertices/${event._key}`,
-            _to: `ot_vertices/${actor._key}`,
+            _from: `${event._key}`,
+            _to: `${actor._key}`,
             edge_type: 'OBSERVED_BY',
             identifiers: {
                 uid: `observed_by_${event.identifiers.id}_${actor.identifiers.id}`,
@@ -155,8 +155,8 @@ class WOTImporter {
 
         thingEdges.push({
             _key: md5(`observed_${sender.id}_${actor._key}_${event._key}`),
-            _from: `ot_vertices/${actor._key}`,
-            _to: `ot_vertices/${event._key}`,
+            _from: `${actor._key}`,
+            _to: `${event._key}`,
             edge_type: 'OBSERVED',
             identifiers: {
                 uid: `observed_${actor.identifiers.id}_${event.identifiers.id}`,
