@@ -32,7 +32,7 @@ const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
 
@@ -120,7 +120,7 @@ class OTNode {
             try {
                 const etherBalance = await Utilities.getBalanceInEthers();
                 if (etherBalance <= 0) {
-                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    log.warn('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
                 } else {
                     (
@@ -130,7 +130,7 @@ class OTNode {
 
                 const atracBalance = await Utilities.getAlphaTracTokenBalance();
                 if (atracBalance <= 0) {
-                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    log.warn('Please get some ATRAC in the node wallet before running ot-node');
                     process.exit(1);
                 } else {
                     (
@@ -348,7 +348,7 @@ class OTNode {
                         if (err) {
                             return console.log(err);
                         }
-                        console.log('The file was saved!');
+                        log.info('The file was saved!');
 
                         const input_file = '/tmp/import.xml';
                         const queryObject = {
@@ -390,7 +390,7 @@ class OTNode {
                         if (err) {
                             return console.log(err);
                         }
-                        console.log('The file was saved!');
+                        log.info('The file was saved!');
 
                         const input_file = '/tmp/import.xml';
                         const queryObject = {
