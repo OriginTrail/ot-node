@@ -264,7 +264,7 @@
 			},
 			{
 				"name": "encrypted_block",
-				"type": "bytes32"
+				"type": "uint256"
 			},
 			{
 				"name": "time_of_sending",
@@ -277,6 +277,28 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"name": "encrypted_block",
+				"type": "uint256"
+			}
+		],
+		"name": "sendEncryptedBlock",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -332,28 +354,6 @@
 			}
 		],
 		"name": "transferOwnership",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
-				"name": "DV_wallet",
-				"type": "address"
-			},
-			{
-				"name": "encrypted_block",
-				"type": "bytes32"
-			}
-		],
-		"name": "sendEncryptedBlock",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
