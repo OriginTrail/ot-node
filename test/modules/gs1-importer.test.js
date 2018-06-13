@@ -154,23 +154,23 @@ describe('GS1 Importer tests', () => {
         let specificVertice;
 
         async function checkTransformationXmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:mda:product:id:123AB');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:object:product:id:123AB');
             assert.equal(specificVertice.data.category, 'Engine');
             assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
             assert.equal(specificVertice.data.object_class_id, 'Product');
             assert.equal(specificVertice.vertex_type, 'PRODUCT');
             assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
-            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:product:id:123AB');
-            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:product:id:123AB');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:object:product:id:123AB');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:object:product:id:123AB');
         }
 
         async function checkGraphExample1XmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_1', 'urn:epc:id:sgln:Building_2');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Company_1', 'urn:epc:id:sgln:Building_2');
             assert.equal(specificVertice.data.category, 'Building _2');
             assert.equal(specificVertice.data.description, 'Description of building _2');
             assert.equal(specificVertice.data.object_class_id, 'Location');
             assert.equal(specificVertice.vertex_type, 'LOCATION');
-            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_1');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Company_1');
             assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:Building_2');
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:Building_2');
         }
@@ -178,15 +178,15 @@ describe('GS1 Importer tests', () => {
         async function checkGraphExample1XmlTraversalPath() {
             // getting keys of all 12 nodes that should be in Batch_1 traversal data
             let myKey;
-            const sender_id = 'urn:ot:mda:actor:id:Company_1';
+            const sender_id = 'urn:ot:object:actor:id:Company_1';
             const expectedKeys = [];
             const Batch_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgtin:Batch_1');
             const Location_Building_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_1');
             const Location_Building_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_2');
-            const Actor_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1');
-            const Actor_Company_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2');
-            const Event_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1:2015-04-17T00:00:00.000-04:00Z-04:00');
-            const Product_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:product:id:Product_1');
+            const Actor_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:object:actor:id:Company_1');
+            const Actor_Company_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:object:actor:id:Company_2');
+            const Event_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:object:actor:id:Company_1:2015-04-17T00:00:00.000-04:00Z-04:00');
+            const Product_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:object:product:id:Product_1');
             const nodes = [Product_1, Batch_1, Location_Building_1,
                 Location_Building_2, Actor_Company_1, Actor_Company_2, Event_Company_1];
 
@@ -213,8 +213,8 @@ describe('GS1 Importer tests', () => {
         async function checkGraphExample2XmlVerticeContent() {
             specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
-            assert.equal(specificVertice.data.parent_id, 'urn:ot:mda:product:id:Product_1');
-            assert.equal(specificVertice.data.productid, 'urn:ot:mda:product:id:Product_1');
+            assert.equal(specificVertice.data.parent_id, 'urn:ot:object:product:id:Product_1');
+            assert.equal(specificVertice.data.productid, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
             assert.equal(specificVertice.vertex_type, 'BATCH');
             assert.equal(specificVertice.sender_id, 'SENDER_ID');
@@ -223,22 +223,22 @@ describe('GS1 Importer tests', () => {
         }
 
         async function checkGraphExample3XmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Company_2', 'urn:ot:mda:actor:id:Company_2');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Company_2', 'urn:ot:object:actor:id:Company_2');
             assert.equal(specificVertice.data.category, 'Company');
             assert.exists(specificVertice.data.node_id);
             assert.equal(specificVertice.data.object_class_id, 'Actor');
-            // assert.equal(specificVertice.data.person:id:name, "Company _2");
+            // assert.equal(specificVertice.data.name, "Company _2");
             assert.equal(specificVertice.vertex_type, 'ACTOR');
-            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_2');
-            assert.equal(specificVertice.identifiers.id, 'urn:ot:mda:actor:id:Company_2');
-            assert.equal(specificVertice.identifiers.uid, 'urn:ot:mda:actor:id:Company_2');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.id, 'urn:ot:object:actor:id:Company_2');
+            assert.equal(specificVertice.identifiers.uid, 'urn:ot:object:actor:id:Company_2');
         }
 
         async function checkGraphExample4XmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:mda:actor:id:Hospital1', 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Hospital1', 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
             assert.equal(specificVertice.data.parent_id, 'urn:epc:id:sgln:HospitalBuilding1');
-            assert.equal(specificVertice.vertex_type, 'CHILD_BUSINESS_LOCATION');
-            assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Hospital1');
+            assert.equal(specificVertice.vertex_type, 'CHILD_LOCATION');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Hospital1');
             assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
         }
