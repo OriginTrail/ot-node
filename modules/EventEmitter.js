@@ -222,6 +222,7 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
+                status: 'ACTIVE',
             });
 
             logger.info('[DC] Preparing to enter sendPayload');
@@ -264,7 +265,7 @@ class EventEmitter {
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
+                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
                 response.send({
                     status: 'success',
                     answer,
@@ -586,6 +587,37 @@ class EventEmitter {
                     status: 'Failed',
                     message: 'Verification failed',
                 });
+            }
+        });
+
+        this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                requested_data_index,
+            } = eventData;
+
+            try {
+                await dhService.litigationInitiated(
+                    import_id,
+                    DH_wallet,
+                    requested_data_index,
+                );
+            } catch (error) {
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
+            }
+        });
+
+        this.globalEmitter.on('eth-LitigationCompleted', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                DH_was_penalized,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // the node is DH
+                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
     }

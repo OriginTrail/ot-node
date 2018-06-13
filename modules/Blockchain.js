@@ -87,6 +87,39 @@ class Blockchain {
     }
 
     /**
+     * DC initiates litigation on DH wrong challenge answer
+     * @param importId
+     * @param dhWallet
+     * @param blockId
+     * @param merkleProof
+     * @return {Promise<any>}
+     */
+    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
+        return this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+    }
+
+    /**
+     * Answers litigation from DH side
+     * @param importId
+     * @param requestedData
+     * @return {Promise<any>}
+     */
+    answerLitigation(importId, requestedData) {
+        return this.blockchain.answerLitigation(importId, requestedData);
+    }
+
+    /**
+     * Prooves litigation for particular DH
+     * @param importId
+     * @param dhWallet
+     * @param proofData
+     * @return {Promise<any>}
+     */
+    proveLitigation(importId, dhWallet, proofData) {
+        return this.blockchain.proveLitigation(importId, dhWallet, proofData);
+    }
+
+    /**
      * Cancel data holding escrow process
      * @param {string} - dhWallet
      * @param {number} - importId
