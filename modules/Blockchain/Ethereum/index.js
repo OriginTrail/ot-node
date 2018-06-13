@@ -234,6 +234,84 @@ class Ethereum {
     }
 
     /**
+     * DC initiates litigation on DH wrong challenge answer
+     * @param importId
+     * @param dhWallet
+     * @param blockId
+     * @param merkleProof
+     * @return {Promise<any>}
+     */
+    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+        this.log.warn(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'initiateLitigation',
+            [
+                importId,
+                dhWallet,
+                blockId,
+                merkleProof,
+            ],
+            options,
+        );
+    }
+
+    /**
+     * Answers litigation from DH side
+     * @param importId
+     * @param requestedData
+     * @return {Promise<any>}
+     */
+    answerLitigation(importId, requestedData) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+        this.log.warn(`Answer litigation for import ${importId}`);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'answerLitigation',
+            [
+                importId,
+                requestedData,
+            ],
+            options,
+        );
+    }
+
+    /**
+     * Prooves litigation for particular DH
+     * @param importId
+     * @param dhWallet
+     * @param proofData
+     * @return {Promise<any>}
+     */
+    proveLitigation(importId, dhWallet, proofData) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.escrowContractAddress,
+        };
+        this.log.warn(`Prove litigation for import ${importId} and DH ${dhWallet}`);
+        return this.transactions.queueTransaction(
+            this.escrowContractAbi,
+            'proveLitigaiton',
+            [
+                importId,
+                dhWallet,
+                proofData,
+            ],
+            options,
+        );
+    }
+
+    /**
      * Cancel data holding escrow process on Ethereum blockchain
      * @param {string} - dhWallet
      * @param {number} - importId

@@ -209,7 +209,7 @@ class OTNode {
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
-        dhService.listenToOffers();
+        dhService.listenToBlockchainEvents();
     }
 
     /**

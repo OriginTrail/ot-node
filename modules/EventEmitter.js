@@ -588,6 +588,36 @@ class EventEmitter {
                 });
             }
         });
+
+        this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                requested_data_index,
+            } = eventData;
+
+            try {
+                await dhService.litigationInitiated(
+                    import_id,
+                    DH_wallet,
+                    requested_data_index,
+                );
+            } catch (error) {
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
+            }
+        });
+
+        this.globalEmitter.on('eth-LitigationCompleted', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                status,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                logger.info(`Litigation has completed for import ${import_id}. Litigation has ${status ? ' completed successfully' : 'failed'}`);
+            }
+        });
     }
 
     emit(event, ...args) {

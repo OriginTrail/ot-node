@@ -8,6 +8,7 @@ class Challenger {
     constructor(ctx) {
         this.log = ctx.logger;
         this.network = ctx.network;
+        this.dcService = ctx.dcService;
     }
 
     startChallenging() {
@@ -58,12 +59,26 @@ class Challenger {
                 this.log.trace('Successfully answered to challenge.');
                 // TODO doktor: Handle promise.
                 Challenge.completeTest(challenge.id);
+                this.startLitigation(challenge);
             } else {
                 this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
                 // TODO doktor: Handle promise.
                 Challenge.failTest(challenge.id);
+                this.startLitigation(challenge);
             }
         });
+    }
+
+    /**
+     * Starts litigation for failed answer
+     * @param challenge
+     */
+    startLitigation(challenge) {
+        const contact = this.network.kademlia().getContact(challenge.dh_id);
+        this.dcService.initiateLitigation(
+            challenge.import_id,
+            contact.wallet, challenge.dh_id, challenge.id,
+        );
     }
 
     intervalFunc(challenger, log) {

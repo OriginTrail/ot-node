@@ -251,6 +251,33 @@ class DCService {
             return true;
         });
     }
+
+    /**
+     * Handles litigation for DH failed test
+     * @return {Promise<void>}
+     */
+    async initiateLitigation(importId, dhId, dhWallet, blockId) {
+        const tests = await Models.data_challenges.find({
+            where:
+                { dh_id: dhId, import_id: importId },
+        });
+        if (!tests) {
+            throw new Error(`Failed to find tests for import ${importId} and DH ${dhId}`);
+        }
+        tests.sort((x, y) => x.block_id - y.block_id);
+        const litigationBlocks = tests.map(t => t.answer);
+
+        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+        const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
+
+        await this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+
+        const waitForLitigation = 15 * 60 * 1000;
+        await this.blockchain.subscribeToEvent('LitigationAnswered', importId, waitForLitigation);
+
+        const block = tests.filter(t => t.block_id === blockId)[0];
+        await this.blockchain.proveLitigation(importId, dhWallet, block);
+    }
 }
 
 module.exports = DCService;

@@ -221,16 +221,12 @@ class DHService {
         });
     }
 
+    /**
+     * Handles import received from DC
+     * @param data
+     * @return {Promise<void>}
+     */
     async handleImport(data) {
-        /*
-            payload: {
-                edges,
-                import_id
-                dc_wallet,
-                public_key,
-                vertices,
-            },
-         */
         const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
         if (!bidModel) {
             this.log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
@@ -703,8 +699,30 @@ class DHService {
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
     }
 
-    listenToOffers() {
-        this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated']);
+    /**
+     * Handles litigation initiation from DC side
+     * @param importId
+     * @param dhWallet
+     * @param blockId
+     * @return {Promise<void>}
+     */
+    async litigationInitiated(importId, dhWallet, blockId) {
+        if (dhWallet !== this.config.node_wallet) {
+            return;
+        }
+        this.log.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
+
+        let vertices = this.graphStorage.findVerticesByImportId(importId);
+        ImportUtilities.sort(vertices);
+        // filter CLASS vertices
+        vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
+        const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
+
+        await this.blockchain.answerLitigation(importId, answer);
+    }
+
+    listenToBlockchainEvents() {
+        this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated', 'LitigationInitiated', 'LitigationCompleted']);
     }
 }
 
