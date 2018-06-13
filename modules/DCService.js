@@ -178,6 +178,7 @@ class DCService {
      * @param importId
      * @param encryptionKey
      * @param kadWallet
+     * @param nodeId
      * @return {Promise<void>}
      */
     async verifyImport(epk, importId, encryptionKey, kadWallet, nodeId) {

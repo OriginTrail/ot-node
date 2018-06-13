@@ -3,6 +3,7 @@
 const Models = require('../models');
 const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
+const Graph = require('./Graph');
 
 const intervalMs = 1500;
 
@@ -10,6 +11,8 @@ class Challenger {
     constructor(ctx) {
         this.log = ctx.logger;
         this.network = ctx.network;
+        this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
     }
 
     startChallenging() {
@@ -32,40 +35,53 @@ class Challenger {
     }
 
     sendChallenge(challenge) {
-        this.log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
+        Models.replicated_data.findOne({
+            where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
+        }).then((replicatedData) => {
+            if (replicatedData.status === 'ACTIVE') {
+                replicatedData.status = 'TESTING';
+                replicatedData.save({ fields: ['status'] });
 
-        const payload = {
-            payload: {
-                block_id: challenge.block_id,
-                import_id: challenge.import_id,
-            },
-        };
+                this.log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
 
-        this.network.kademlia().challengeRequest(payload, challenge.dh_id, (error, response) => {
-            if (error) {
-                this.log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
-                return;
-            }
+                const payload = {
+                    payload: {
+                        block_id: challenge.block_id,
+                        import_id: challenge.import_id,
+                    },
+                };
+                this.network.kademlia().challengeRequest(
+                    payload, challenge.dh_id,
+                    (error, response) => {
+                        if (error) {
+                            this.log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
+                            return;
+                        }
 
-            if (typeof response.status === 'undefined') {
-                this.log.warn('challenge-request: Missing status');
-                return;
-            }
+                        if (typeof response.status === 'undefined') {
+                            this.log.warn('challenge-request: Missing status');
+                            return;
+                        }
 
-            if (response.status !== 'success') {
-                this.log.trace('challenge-request: Response not successful.');
-            }
+                        if (response.status !== 'success') {
+                            this.log.trace('challenge-request: Response not successful.');
+                        }
 
-            if (response.answer === challenge.answer) {
-                this.log.trace('Successfully answered to challenge.');
-                // TODO doktor: Handle promise.
-                Challenge.completeTest(challenge.id);
-                this.initiateLitigation(challenge);
-            } else {
-                this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                // TODO doktor: Handle promise.
-                Challenge.failTest(challenge.id);
-                this.initiateLitigation(challenge);
+                        if (response.answer === challenge.answer) {
+                            this.log.trace('Successfully answered to challenge.');
+
+                            replicatedData.status = 'ACTIVE';
+                            replicatedData.save({ fields: ['status'] });
+
+                            Challenge.completeTest(challenge.id);
+                        } else {
+                            this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                            // TODO doktor: Handle promise.
+                            Challenge.failTest(challenge.id);
+                            this.initiateLitigation(challenge);
+                        }
+                    },
+                );
             }
         });
     }
@@ -79,29 +95,50 @@ class Challenger {
 
         const dhId = challenge.dh_id;
         const dhWallet = contact.wallet;
-        const blockId = challenge.id;
+        const blockId = challenge.block_id;
         const importId = challenge.import_id;
 
-        const tests = await Models.data_challenges.find({
-            where:
-                { dh_id: dhId, import_id: importId },
+        const replicatedData = await Models.replicated_data.findOne({
+            where: { dh_id: dhId, import_id: importId },
         });
-        if (!tests) {
-            throw new Error(`Failed to find tests for import ${importId} and DH ${dhId}`);
-        }
-        tests.sort((x, y) => x.block_id - y.block_id);
-        const litigationBlocks = tests.map(t => t.answer);
 
+        const vertices = await this.graphStorage.findVerticesByImportId(importId);
+        Graph.encryptVertices(vertices, replicatedData.data_private_key);
+
+        const litigationBlocks = Challenge.getBlocks(vertices, 32);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
 
-        await this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+        try {
+            await this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+        } catch (e) {
+            this.log.error(`Failed to initiate litigation. ${e}`);
+            return;
+        }
 
         const waitForLitigation = 15 * 60 * 1000;
         await this.blockchain.subscribeToEvent('LitigationAnswered', importId, waitForLitigation);
 
-        const block = tests.filter(t => t.block_id === blockId)[0];
+        const block = litigationBlocks[blockId];
+        this.log.debug(`Sending proof for litigation, Import ${importId}. Answer for block ${blockId} is ${block}`);
         await this.blockchain.proveLitigation(importId, dhWallet, block);
+
+        const waitForLitigationEnd = 5 * 60 * 1000;
+        const eventData = await this.blockchain.subscribeToEvent('LitigationCompleted', importId, waitForLitigationEnd);
+        const {
+            DH_wallet,
+            DH_was_penalized,
+        } = eventData;
+
+        if (dhWallet === DH_wallet) {
+            if (DH_was_penalized) {
+                replicatedData.status = 'FAILED';
+                // TODO delete challenges
+            } else {
+                replicatedData.status = 'ACTIVE';
+            }
+        }
+        await replicatedData.save({ fields: ['status'] });
     }
 
     intervalFunc(challenger, log) {

@@ -227,6 +227,7 @@ class OTNode {
                 working = true;
                 blockchain.getAllPastEvents('BIDDING_CONTRACT');
                 blockchain.getAllPastEvents('READING_CONTRACT');
+                blockchain.getAllPastEvents('ESCROW_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         offer_id: DataTypes.STRING,
         data_private_key: DataTypes.STRING,
         data_public_key: DataTypes.STRING,
+        status: DataTypes.STRING,
     }, {});
     replicated_data.associate = function (models) {
     // associations can be defined here

@@ -222,6 +222,7 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
+                status: 'ACTIVE',
             });
 
             logger.info('[DC] Preparing to enter sendPayload');
@@ -264,7 +265,7 @@ class EventEmitter {
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
+                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
                 response.send({
                     status: 'success',
                     answer,
@@ -611,11 +612,12 @@ class EventEmitter {
             const {
                 import_id,
                 DH_wallet,
-                status,
+                DH_was_penalized,
             } = eventData;
 
             if (config.node_wallet === DH_wallet) {
-                logger.info(`Litigation has completed for import ${import_id}. Litigation has ${status ? ' completed successfully' : 'failed'}`);
+                // the node is DH
+                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
     }

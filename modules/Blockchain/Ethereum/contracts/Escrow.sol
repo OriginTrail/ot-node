@@ -473,6 +473,7 @@ library SafeMath {
 
      		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
      		this_escrow.stake_amount = 0;
+     		emit LitigationCompleted(import_id, DH_wallet, true);
      	}
      }
  }

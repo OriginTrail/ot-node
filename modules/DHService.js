@@ -712,12 +712,13 @@ class DHService {
         }
         this.log.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
 
-        let vertices = this.graphStorage.findVerticesByImportId(importId);
+        let vertices = await this.graphStorage.findVerticesByImportId(importId);
         ImportUtilities.sort(vertices);
         // filter CLASS vertices
         vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
         const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
 
+        this.log.debug(`Answer litigation for import ${importId}. Answer for block ${blockId} is ${answer}`);
         await this.blockchain.answerLitigation(importId, answer);
     }
 
