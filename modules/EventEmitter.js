@@ -189,8 +189,10 @@ class EventEmitter {
 
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
             // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
-            //     const errorMessage = `Replication request for offer you didn't apply: ${import_id}.`;
-            //     logger.warn(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+            //     const errorMessage = `Replication request for
+            // offer you didn't apply: ${import_id}.`;
+            //     logger.warn(`DH ${kadIdentity} requested data
+            // without offer for import ID ${import_id}.`);
             //     response.send({ status: 'fail', error: errorMessage });
             //     return;
             // }
@@ -570,7 +572,10 @@ class EventEmitter {
             const { epk, importId, encryptionKey } = request.params.message;
 
             // TODO: Add guard for fake replations.
-            const success = await dcService.verifyImport(epk, importId, encryptionKey, kadWallet, request.contact[0]);
+            const success = await dcService.verifyImport(
+                epk,
+                importId, encryptionKey, kadWallet, request.contact[0],
+            );
             if (success) {
                 response.send({
                     status: 'OK',

@@ -7,8 +7,10 @@ const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Importer = require('../../modules/GS1Importer');
+const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
+const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -57,9 +59,12 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        const logger = Utilities.getLogger();
+        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
+            logger: awilix.asValue(Utilities.getLogger()),
             gs1Importer: awilix.asClass(GS1Importer),
+            gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
@@ -164,7 +169,7 @@ describe('GS1 Importer tests', () => {
         });
     });
 
-    describe('Random vertices content check', async () => {
+    describe('Random vertices content and traversal path check', async () => {
         let specificVertice;
 
         async function checkTransformationXmlVerticeContent() {
@@ -187,6 +192,41 @@ describe('GS1 Importer tests', () => {
             assert.equal(specificVertice.sender_id, 'urn:ot:mda:actor:id:Company_1');
             assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgln:Building_2');
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:Building_2');
+        }
+
+        async function checkGraphExample1XmlTraversalPath() {
+            // getting keys of all 12 nodes that should be in Batch_1 traversal data
+            let myKey;
+            const sender_id = 'urn:ot:mda:actor:id:Company_1';
+            const expectedKeys = [];
+            const Batch_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgtin:Batch_1');
+            const Location_Building_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_1');
+            const Location_Building_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_2');
+            const Actor_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1');
+            const Actor_Company_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2');
+            const Event_Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1:2015-04-17T00:00:00.000-04:00Z-04:00');
+            const Product_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:product:id:Product_1');
+            const nodes = [Product_1, Batch_1, Location_Building_1,
+                Location_Building_2, Actor_Company_1, Actor_Company_2, Event_Company_1];
+
+            nodes.forEach((node) => {
+                myKey = node._key;
+                expectedKeys.push(myKey);
+            });
+            expectedKeys.push('Transport');
+            expectedKeys.push('Ownership');
+            expectedKeys.push('Product');
+            expectedKeys.push('Actor');
+            expectedKeys.push('Location');
+
+            const path = await graphStorage.findTraversalPath(Batch_1, 200);
+
+            // there should be 12 node in traversal for this start vertex
+            assert.equal(Object.keys(path.data).length, 12);
+
+            const keysFromTraversal = Object.keys(path.data);
+            // make sure that all _keys match
+            assert.sameMembers(keysFromTraversal, expectedKeys);
         }
 
         async function checkGraphExample2XmlVerticeContent() {
@@ -227,6 +267,7 @@ describe('GS1 Importer tests', () => {
                 await checkTransformationXmlVerticeContent();
             } else if (xml === 'GraphExample_1.xml') {
                 await checkGraphExample1XmlVerticeContent();
+                await checkGraphExample1XmlTraversalPath();
             } else if (xml === 'GraphExample_2.xml') {
                 await checkGraphExample2XmlVerticeContent();
             } else if (xml === 'GraphExample_3.xml') {
@@ -239,7 +280,7 @@ describe('GS1 Importer tests', () => {
         }
 
         inputXmlFiles.forEach((test) => {
-            it(`content check for ${path.basename(test.args[0])}`, async () => {
+            it(`content/traversal check for ${path.basename(test.args[0])}`, async () => {
                 const importResult = await gs1.parseGS1(test.args[0]);
                 await checkSpecificVerticeContent(`${path.basename(test.args[0])}`);
             });

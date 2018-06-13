@@ -2,14 +2,14 @@ const Utilities = require('../Utilities');
 const ArangoJS = require('./Arangojs');
 const Neo4j = require('./Neo4j');
 
-const log = Utilities.getLogger();
-
 class GraphStorage {
     /**
      * Default constructor
+     * @param logger
      * @param selectedDatabase Selected graph database
      */
-    constructor(selectedDatabase) {
+    constructor(selectedDatabase, logger) {
+        this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
@@ -33,6 +33,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -49,6 +50,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -57,7 +59,7 @@ class GraphStorage {
                     }
                     break;
                 default:
-                    log.error(this.selectedDatabase);
+                    this.logger.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
             }
@@ -380,6 +382,27 @@ class GraphStorage {
             edges.push(this.db.addEdge(virtualEdges[i]));
         }
         return Promise.all(edges);
+    }
+
+    /**
+     * Gets the count of documents in collection.
+     * @param collectionName
+     * @returns {Promise}
+     */
+    getDocumentsCount(collectionName) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else if (this.db.identify === 'Neo4j') {
+                reject(Error('Method not implemented for Neo4j database yet'));
+            } else {
+                this.db.getDocumentsCount(collectionName).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
     }
 
     /**

@@ -9,6 +9,7 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
+const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
@@ -161,8 +162,9 @@ class OTNode {
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
+            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
@@ -224,6 +226,7 @@ class OTNode {
             if (!working && Date.now() > deadline) {
                 working = true;
                 blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                blockchain.getAllPastEvents('READING_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -427,14 +430,22 @@ class OTNode {
                 return;
             }
 
-            const input_file = req.files.importfile.path;
-            const queryObject = {
-                filepath: input_file,
-                contact: req.contact,
-                response: res,
-            };
+            if (req.files !== undefined) {
+                const input_file = req.files.importfile.path;
+                const queryObject = {
+                    filepath: input_file,
+                    contact: req.contact,
+                    response: res,
+                };
 
-            emitter.emit('wot-import-request', queryObject);
+                emitter.emit('wot-import-request', queryObject);
+            } else {
+                log.error('Invalid request. Input file not provided.');
+                res.send({
+                    status: 400,
+                    message: 'Input file not provided!',
+                });
+            }
         });
 
         server.get('/api/trail', (req, res) => {

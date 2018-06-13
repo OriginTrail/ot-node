@@ -142,8 +142,9 @@ class Utilities {
             important: 'magenta',
             error: 'red',
         };
+
         try {
-            var logger = new (winston.Logger)({
+            const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {
@@ -164,17 +165,25 @@ class Utilities {
                 ],
             });
             winston.addColors(customColors);
+
             // Extend logger object to properly log 'Error' types
-            var origLog = logger.log;
-            logger.log = function (level, msg) {
+            const origLog = logger.log;
+            logger.log = (level, msg) => {
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
-                    var args = Array.prototype.slice.call(arguments);
+                    const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    // eslint-disable-next-line prefer-rest-params
-                    origLog.apply(logger, arguments);
+                    if (msg.startsWith('updating peer profile')) {
+                        return; // skip logging
+                    }
+                    if (msg.startsWith('connect econnrefused')) {
+                        level = 'trace';
+                        const address = msg.substr(21);
+                        msg = `Failed to connect to ${address}`;
+                    }
+                    origLog.apply(logger, [level, msg]);
                 }
             };
             return logger;
@@ -822,6 +831,19 @@ class Utilities {
         }
         return number;
     }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
 }
 
 module.exports = Utilities;

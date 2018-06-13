@@ -15,7 +15,7 @@ class Challenger {
             // TODO doktor: temp solution to delay.
             // Should be started after replication-finished received.
             setTimeout(() => {
-                setInterval(this.intervalFunc, intervalMs, this);
+                setInterval(this.intervalFunc, intervalMs, this, this.log);
             }, 30000);
             this.log.info(`Started challenging timer at ${intervalMs}ms.`);
         }
@@ -66,7 +66,7 @@ class Challenger {
         });
     }
 
-    intervalFunc(challenger) {
+    intervalFunc(challenger, log) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
             .then((challenges) => {
@@ -76,7 +76,7 @@ class Challenger {
                 //  log.trace('No challenges found.');
                 }
             }).catch((err) => {
-                this.log.error(`Failed to get unanswered challenges. Error: ${err}.`);
+                log.error(`Failed to get unanswered challenges. Error: ${err}.`);
             });
     }
 }

@@ -201,22 +201,21 @@ class Encryption {
      */
     static calculateBlockChecksum(block, blockNumber, r1, offset = 0) {
         if (block.length !== 32) {
-            return false;
+            throw Error('data.length % 32 !== 0');
         }
 
         const blockHex = Buffer.from(block).toString('hex');
-        const red = BN.red((new BN(2)).pow(new BN(128)));
         // const g = (new BN(11)).toRed(red);
         const r1Bn = new BN(r1);
         const bi = (new BN(blockHex, 16).mul(new BN(blockNumber + offset)));
 
-        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'], [bi]).toString('hex').substring(2), 16);
+        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'],[bi]).toString('hex').substring(2), 16);
         blockChecksum.add(r1Bn);
 
-        blockChecksum = abi.soliditySHA3(['bytes32'], [blockChecksum]).toString('hex');
+        blockChecksum = abi.soliditySHA3(['bytes32'],[blockChecksum]).toString('hex')
 
 
-        return (new BN(blockChecksum.substring(2), 16).add(r1Bn)).toRed(red).toString('hex');
+        return (new BN(blockChecksum.substring(2), 16).add(r1Bn)).toString('hex');
     }
 
     /**
@@ -229,19 +228,18 @@ class Encryption {
      */
     static calculateDataChecksum(data, r1, r2, offset = 0) {
         if (data.length % 32 !== 0) {
-            return false;
+            throw Error('data.length % 32 !== 0');
         }
 
         let i = 0;
         let blockNum = 1;
 
-        const red = BN.red((new BN(2)).pow(new BN(128)));
-        let checksum = new BN(0);
+        let checksum = new BN(0)
 
         while (i < data.length) {
             const dataBlock = data.substring(i, i + 32);
             const blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
-            checksum = checksum.add((new BN(blockChecksum, 'hex')).toRed(red));
+            checksum = checksum.add((new BN(blockChecksum, 'hex')));
 
             i += 32;
             blockNum += 1;

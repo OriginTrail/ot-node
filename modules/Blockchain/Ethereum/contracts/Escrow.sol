@@ -86,7 +86,7 @@ library SafeMath {
 
  contract Reading {
  	function addReadData(bytes32 import_id, address DH_wallet, address DC_wallet,
- 		bytes32 distribution_root_hash, bytes32 checksum) public;
+ 		bytes32 distribution_root_hash, uint256 checksum) public;
  	function removeReadData(bytes32 import_id, address DH_wallet) public;
  }
 
@@ -135,7 +135,7 @@ library SafeMath {
 
  		bytes32 litigation_root_hash;
  		bytes32 distribution_root_hash;
- 		bytes32 checksum;
+ 		uint256 checksum;
 
  		EscrowStatus escrow_status;
  	}
@@ -167,7 +167,7 @@ library SafeMath {
  		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
  	}
 
- 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, bytes32 checksum)
+ 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint256 checksum)
  	public {
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 

@@ -1,11 +1,8 @@
-const Web3 = require('web3');
 const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Storage = require('../../Storage');
 const Op = require('sequelize/lib/operators');
-
-const log = Utilities.getLogger();
 
 class Ethereum {
     /**
@@ -13,11 +10,14 @@ class Ethereum {
      * @param blockchainConfig
      * @param emitter
      * @param web3
+     * @param log
      */
-    constructor(blockchainConfig, emitter, web3) {
+    constructor(blockchainConfig, emitter, web3, log) {
         // Loading Web3
         this.emitter = emitter;
         this.web3 = web3;
+        this.log = log;
+
         this.transactions = new Transactions(
             this.web3,
             blockchainConfig.wallet_private_key,
@@ -71,6 +71,7 @@ class Ethereum {
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,
+            READING_CONTRACT: this.readingContract,
         };
 
         // Storing config data
@@ -88,17 +89,17 @@ class Ethereum {
                 console.log(event); // same results as the optional callback above
                 emitter.emit('eth-offer-canceled', event);
             })
-            .on('error', log.warn);
+            .on('error', this.log.warn);
 
         this.biddingContract.events.BidTaken()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
                 emitter.emit('eth-bid-taken', event);
             })
-            .on('error', log.warn);
+            .on('error', this.log.warn);
 
 
-        log.info('Selected blockchain: Ethereum');
+        this.log.info('Selected blockchain: Ethereum');
     }
 
     /**
@@ -116,7 +117,7 @@ class Ethereum {
 
         const importIdHash = Utilities.sha3(importId);
 
-        log.warn('Writing root hash');
+        this.log.warn('Writing root hash');
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
     }
 
@@ -128,7 +129,7 @@ class Ethereum {
      */
     async getRootHash(dcWallet, dataId) {
         const dataIdHash = Utilities.sha3(dataId.toString());
-        log.trace('Fetching root hash for: ', dcWallet, dataIdHash);
+        this.log.trace('Fetching root hash for: ', dcWallet, dataIdHash);
         return this.otContract.methods.getFingerprintByBatchHash(dcWallet, dataIdHash).call();
     }
 
@@ -138,7 +139,7 @@ class Ethereum {
      */
     getProfile(wallet) {
         return new Promise((resolve, reject) => {
-            log.trace(`Get profile by wallet ${wallet}`);
+            this.log.trace(`Get profile by wallet ${wallet}`);
             this.biddingContract.methods.profile(wallet).call({
                 from: wallet,
             }).then((res) => {
@@ -169,7 +170,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.trace(`Create profile for node ${nodeId}`);
+        this.log.trace(`Create profile for node ${nodeId}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
             [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
@@ -188,7 +189,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        log.warn('Increasing approval for escrow');
+        this.log.warn('Increasing approval for escrow');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
     }
 
@@ -203,7 +204,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        log.warn('Increasing bidding approval');
+        this.log.warn('Increasing bidding approval');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
     }
 
@@ -220,7 +221,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn(`Verifying escrow for import ${importId} and DH ${dhWallet}`);
+        this.log.warn(`Verifying escrow for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'verifyEscrow',
@@ -245,7 +246,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow');
+        this.log.warn('Initiating escrow');
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'cancelEscrow',
@@ -270,7 +271,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow - payOut');
+        this.log.warn('Initiating escrow - payOut');
         return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, importId], options);
     }
 
@@ -305,7 +306,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Calling - createOffer() on contract.');
+        this.log.warn('Calling - createOffer() on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
@@ -335,7 +336,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - cancelOffer');
+        this.log.warn('Initiating escrow - cancelOffer');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelOffer',
             [importId], options,
@@ -383,11 +384,11 @@ class Ethereum {
                     console.log(err);
                 });
             }).catch((err) => {
-                log.error('Failed to get past events');
+                this.log.error('Failed to get past events');
                 console.log(err);
             });
         }).catch((err) => {
-            log.error('Failed to get block number from the blockchain');
+            this.log.error('Failed to get block number from the blockchain');
             console.log(err);
         });
     }
@@ -419,7 +420,7 @@ class Ethereum {
                             clearInterval(token);
                             resolve(JSON.parse(eventData.dataValues.data));
                         }).catch((err) => {
-                            log.error(`Failed to update event ${event}. ${err}`);
+                            this.log.error(`Failed to update event ${event}. ${err}`);
                             reject(err);
                         });
                     }
@@ -484,7 +485,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - addBid');
+        this.log.warn('Initiating escrow - addBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [importId, Utilities.normalizeHex(dhNodeId)], options,
@@ -505,7 +506,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        log.warn('Initiating escrow - cancelBid');
+        this.log.warn('Initiating escrow - cancelBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelBid',
             [dcWallet, importId, bidIndex], options,
@@ -524,7 +525,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - chooseBid');
+        this.log.warn('Initiating escrow - chooseBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
             [importId], options,
@@ -545,7 +546,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn('Initiating escrow - getBid');
+        this.log.warn('Initiating escrow - getBid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'getBid',
             [dcWallet, importId, bidIndex], options,
@@ -560,7 +561,7 @@ class Ethereum {
     */
     getOfferStatus(dcWallet, importId) {
         return new Promise((resolve, reject) => {
-            log.trace(`Asking for ${importId} offer status`);
+            this.log.trace(`Asking for ${importId} offer status`);
             this.biddingContract.methods.getOfferStatus(dcWallet, importId).call({
                 from: dcWallet,
             }).then((res) => {
@@ -573,7 +574,7 @@ class Ethereum {
 
     getDcWalletFromOffer(importId) {
         return new Promise((resolve, reject) => {
-            log.trace(`Asking for offer's (${importId}) DC wallet.`);
+            this.log.trace(`Asking for offer's (${importId}) DC wallet.`);
             this.biddingContract.methods.offer(importId).call()
                 .then((res) => {
                     resolve(res[0]);
@@ -590,7 +591,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        log.warn(`Calling - depositToken(${amount.toString()})`);
+        this.log.warn(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'depositToken',
             [amount], options,
@@ -605,7 +606,7 @@ class Ethereum {
         };
 
         checksum = Utilities.normalizeHex(checksum);
-        log.trace(`addRootHashAndChecksum (${importId}, ${litigationHash}, ${distributionHash}, ${checksum})`);
+        this.log.trace(`addRootHashAndChecksum (${importId}, ${litigationHash}, ${distributionHash}, ${checksum})`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi, 'addRootHashAndChecksum',
             [importId, litigationHash, distributionHash, checksum], options,
@@ -619,18 +620,18 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getEscrow(importId, dhWallet) {
-        log.trace(`Asking escrow for import ${importId} and dh ${dhWallet}.`);
+        this.log.trace(`Asking escrow for import ${importId} and dh ${dhWallet}.`);
         return this.escrowContract.methods.escrow(importId, dhWallet).call();
     }
 
     async getPurchase(dhWallet, dvWallet, importId) {
-        log.trace(`Asking purchase for import ${importId}, DH ${dhWallet} and DV ${dvWallet}.`);
-        return this.readingContract.methods.purchase(importId, dhWallet).call();
+        this.log.trace(`Asking purchase for import (purchase[${dhWallet}][${dvWallet}][${importId}].`);
+        return this.readingContract.methods.purchase(dhWallet, dvWallet, importId).call();
     }
 
-    async getPurchaseData(wallet, importId) {
-        log.trace(`Asking purchase for import ${importId} and wallet ${wallet}.`);
-        return this.readingContract.methods.purchase_data(wallet, importId).call();
+    async getPurchasedData(importId, wallet) {
+        this.log.trace(`Asking purchased data for import ${importId} and wallet ${wallet}.`);
+        return this.readingContract.methods.purchased_data(importId, wallet).call();
     }
 
     initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
@@ -640,7 +641,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace(`initiatePurchase (${importId}, ${dhWallet}, ${tokenAmount}, ${stakeFactor})`);
+        this.log.trace(`initiatePurchase (${importId}, ${dhWallet}, ${tokenAmount}, ${stakeFactor})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'initiatePurchase',
             [importId, dhWallet, tokenAmount, stakeFactor], options,
@@ -654,7 +655,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
+        this.log.trace(`sendCommitment (${importId}, ${dvWallet}, ${commitment})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendCommitment',
             [importId, dvWallet, commitment], options,
@@ -668,7 +669,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace(`initiateDispute (${importId}, ${dhWallet})`);
+        this.log.trace(`initiateDispute (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'initiateDispute',
             [importId, dhWallet], options,
@@ -682,7 +683,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace(`confirmPurchase (${importId}, ${dhWallet})`);
+        this.log.trace(`confirmPurchase (${importId}, ${dhWallet})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'confirmPurchase',
             [importId, dhWallet], options,
@@ -696,7 +697,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
+        this.log.trace(`confirmPurchase (${importId}, ${correspondentWallet}, ${senderIsDh})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'confirmPurchase',
             [importId, correspondentWallet, senderIsDh], options,
@@ -713,13 +714,27 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        log.trace('sendProofData ()');
+        this.log.trace('sendProofData ()');
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendProofData',
             [
                 importId, dvWallet, checksumLeft, checksumRight, checksumHash,
                 randomNumber1, randomNumber2, decryptionKey, blockIndex,
             ], options,
+        );
+    }
+
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContractAddress,
+        };
+
+        this.log.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
+        return this.transactions.queueTransaction(
+            this.readingContractAbi, 'sendEncryptedBlock',
+            [importId, dvWallet, encryptedBlock], options,
         );
     }
 }

@@ -13,7 +13,7 @@ class Blockchain {
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':
-            this.blockchain = new Ethereum(this.config, this.emitter, this.web3);
+            this.blockchain = new Ethereum(this.config, this.emitter, this.web3, this.log);
             break;
         default:
             this.log.error('Unsupported blockchain', this.config.blockchain_title);
@@ -264,8 +264,8 @@ class Blockchain {
         return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
     }
 
-    async getPurchaseData(wallet, importId) {
-        return this.blockchain.getPurchaseData(wallet, importId);
+    async getPurchasedData(importId, wallet) {
+        return this.blockchain.getPurchasedData(importId, wallet);
     }
 
     async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
@@ -295,6 +295,10 @@ class Blockchain {
             importId, dvWallet, checksumLeft, checksumRight, checksumHash,
             randomNumber1, randomNumber2, decryptionKey, blockIndex,
         );
+    }
+
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock){
+        return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
 }
 

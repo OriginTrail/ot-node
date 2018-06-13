@@ -287,7 +287,9 @@ class DHService {
             this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
                 data.import_id,
-                litigationRootHash, distributionHash, epkChecksum,
+                litigationRootHash,
+                distributionHash,
+                Utilities.normalizeHex(epkChecksum),
             );
 
             // Store holding information and generate keys for eventual
@@ -474,7 +476,7 @@ class DHService {
 
         const offer = networkReplyModel.data;
 
-        if (offer.receiver_wallet !== wallet && offer.receiver_identity) {
+        if (networkReplyModel.receiver_wallet !== wallet && networkReplyModel.receiver_identity) {
             throw Error('Sorry not your read request');
         }
 
@@ -586,7 +588,7 @@ class DHService {
         const purchaseTokenAmount = new BN(purchase.token_amount);
         const purchaseStakeFactor = new BN(purchase.stake_factor);
         const myPrice = new BN(offer.dataPrice);
-        const myStakeFactor = new BN(offer.stake_factor);
+        const myStakeFactor = new BN(offer.stakeFactor);
 
         if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
             const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
@@ -627,8 +629,9 @@ class DHService {
             Utilities.normalizeHex(ethAbi.soliditySHA3(
                 ['uint256'],
                 [epkChecksum],
-            ));
+            ).toString('hex'));
         const e = crypto.randomBytes(16); // 128bits.
+        const eHex = Utilities.normalizeHex(e.toString('hex'));
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
         // From smart contract:
@@ -636,12 +639,16 @@ class DHService {
         //          random_number_1, random_number_2, decryption_key, block_index);
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
-            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, selectedBlockNumber],
-        ));
+            [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, eHex, selectedBlockNumber],
+        ).toString('hex'));
 
         // store block number and block in db because of litigation.
 
-        await this.blockchain.sendCommitment(importId, commitmentHash);
+        await this.blockchain.sendCommitment(
+            importId,
+            networkReplyModel.receiver_wallet,
+            commitmentHash,
+        );
 
         Models.data_holders.create({
             import_id: importId,
@@ -649,11 +656,12 @@ class DHService {
             dh_kademlia_id: this.config.identity,
             m1,
             m2,
-            e,
+            e: eHex,
             sd: epkChecksum,
             r1,
             r2,
             block_number: selectedBlockNumber,
+            block: selectedBlock,
         });
 
         // Send data to DV.
@@ -664,10 +672,10 @@ class DHService {
                 nodeId: this.config.identifiers,
                 m1,
                 m2,
-                e,
+                e: eHex,
                 r1,
                 r2,
-                sd: epkChecksumHash,
+                sd: epkChecksum,
                 blockNumber: selectedBlockNumber,
             },
         };
@@ -696,6 +704,24 @@ class DHService {
         });
 
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+
+        const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
+
+        if (!eventData) {
+            // Everything is ok.
+            this.log.warn(`Purchase not confirmed for ${importId}.`);
+            // TODO Initiate canceling purchase.
+            return;
+        }
+
+        this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
+
+        await this.blockchain.sendEncryptedBlock(
+            importId,
+            networkReplyModel.receiver_wallet,
+            Utilities.normalizeHex(Encryption.xor(selectedBlock, e)),
+        );
+        this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
     }
 
     listenToOffers() {

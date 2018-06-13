@@ -47,6 +47,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
+        block: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('data_holders'),
 };

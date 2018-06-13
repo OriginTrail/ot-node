@@ -1,4 +1,4 @@
-/* eslint max-len: 0 */
+/* eslint indent: 0 */
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var OTFingerprintStore = artifacts.require('OTFingerprintStore'); // eslint-disable-line no-undef
 
@@ -74,60 +74,60 @@ module.exports = (deployer, network, accounts) => {
         deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
             .then(() => giveMeTracToken())
             .then(async (result) => {
-                token = result;
-                await deployer.deploy(EscrowHolder, token.address, { gas: 8000000, from: accounts[0] })
-                    .then(() => giveMeEscrowHolder())
-                    .then(async (result) => {
-                        escrow = result;
-                        await deployer.deploy(Reading, escrow.address, { gas: 8000000, from: accounts[0] })
-                            .then(() => giveMeReading())
-                            .then(async (result) => {
-                                reading = result;
-                                await deployer.deploy(BiddingTest, token.address, escrow.address, reading.address)
-                                    .then(() => giveMeBiddingTest())
-                                    .then(async (result) => {
-                                        bidding = result;
-                                        await deployer.deploy(OTFingerprintStore)
-                                            .then(() => giveMeFingerprint())
-                                            .then(async (result) => {
-                                                fingerprint = result;
-                                                await escrow.setBidding(bidding.address, { from: accounts[0] })
-                                                    .then(async () => {
-                                                        await escrow.setReading(reading.address, { from: accounts[0] })
-                                                            .then(async () => {
-                                                                await reading.setBidding(bidding.address, { from: accounts[0] })
-                                                                    .then(async () => {
-                                                                        await reading.transferOwnership(escrow.address, { from: accounts[0] })
-                                                                            .then(async () => {
-                                                                                await escrow.transferOwnership(bidding.address, { from: accounts[0] })
-                                                                                    .then(async () => {
-                                                                                        var amounts = [];
-                                                                                        var recepients = [];
-                                                                                        for (let i = 0; i < 10; i += 1) {
-                                                                                            amounts.push(amountToMint);
-                                                                                            recepients.push(accounts[i]);
-                                                                                        }
-                                                                                        await token.mintMany(recepients, amounts, { from: accounts[0] })
-                                                                                            .then(async () => {
-                                                                                                await token.finishMinting({ from: accounts[0] })
-                                                                                                    .then(() => {
-                                                                                                        console.log('\n\n \t Contract adressess on ganache:');
-                                                                                                        console.log(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
-                                                                                                        console.log(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
-                                                                                                        console.log(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
-                                                                                                        console.log(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
-                                                                                                        console.log(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
-                                                                                                    });
-                                                                                            });
-                                                                                    });
-                                                                            });
-                                                                    });
-                                                            });
-                                                    });
-                                            });
-                                    });
-                            });
-                    });
+            token = result;
+            await deployer.deploy(EscrowHolder, token.address, { gas: 8000000, from: accounts[0] })
+            .then(() => giveMeEscrowHolder())
+            .then(async (result) => {
+            escrow = result;
+            await deployer.deploy(Reading, escrow.address, { gas: 8000000, from: accounts[0] })
+            .then(() => giveMeReading())
+            .then(async (result) => {
+            reading = result;
+            await deployer.deploy(BiddingTest, token.address, escrow.address, reading.address)
+            .then(() => giveMeBiddingTest())
+            .then(async (result) => {
+            bidding = result;
+            await deployer.deploy(OTFingerprintStore)
+            .then(() => giveMeFingerprint())
+            .then(async (result) => {
+            fingerprint = result;
+            await escrow.setBidding(bidding.address, { from: accounts[0] })
+            .then(async () => {
+            await escrow.setReading(reading.address, { from: accounts[0] })
+            .then(async () => {
+            await reading.setBidding(bidding.address, { from: accounts[0] })
+            .then(async () => {
+            await reading.transferOwnership(escrow.address, { from: accounts[0] })
+            .then(async () => {
+            await escrow.transferOwnership(bidding.address, { from: accounts[0] })
+            .then(async () => {
+            var amounts = [];
+            var recepients = [];
+            for (let i = 0; i < 10; i += 1) {
+                amounts.push(amountToMint);
+                recepients.push(accounts[i]);
+            }
+            await token.mintMany(recepients, amounts, { from: accounts[0] })
+            .then(async () => {
+            await token.finishMinting({ from: accounts[0] })
+            .then(() => {
+                console.log('\n\n \t Contract adressess on ganache:');
+                console.log(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
+                console.log(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
+                console.log(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
+                console.log(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
+                console.log(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
+            });
+            });
+            });
+            });
+            });
+            });
+            });
+            });
+            });
+            });
+            });
             });
         break;
     case 'test':

@@ -195,13 +195,30 @@ class Network {
                 const nodes = _.uniq(bootstrapNodes.concat(peers));
 
                 if (isBootstrap) {
-                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node (waiting for some peers).`);
-                    this.log.info(`Found additional ${peers.length} peers in peer cache.`);
-                    this.log.info(`Trying to contact ${nodes.length} peers from peer cache.`);
+                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
+                    this.log.info(`Found additional ${peers.length} peers in peer cache`);
+                    this.log.info(`Trying to contact ${nodes.length} peers from peer cache`);
                 } else {
-                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s).`);
-                    this.log.info(`Found additional ${peers.length} peers in peer cache.`);
+                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
+                    this.log.info(`Found additional ${peers.length} peers in peer cache`);
                     this.log.info(`Trying to join the network from ${nodes.length} unique seeds`);
+                }
+
+                if (nodes.length === 0) {
+                    this.log.info('No bootstrap seeds provided and no known profiles');
+                    this.log.info('Running in seed mode (waiting for connections)');
+
+                    this.node.router.events.once('add', (identity) => {
+                        config.NetworkBootstrapNodes = [
+                            kadence.utils.getContactURL([
+                                identity,
+                                this.node.router.getContactByNodeId(identity),
+                            ]),
+                        ];
+                        this._joinNetwork(callback, retryPeriod);
+                    });
+                    callback();
+                    return;
                 }
 
                 async.detectSeries(nodes, (url, done) => {
