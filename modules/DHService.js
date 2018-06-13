@@ -661,6 +661,7 @@ class DHService {
             r1,
             r2,
             block_number: selectedBlockNumber,
+            block: selectedBlock,
         });
 
         // Send data to DV.
@@ -674,7 +675,7 @@ class DHService {
                 e: eHex,
                 r1,
                 r2,
-                sd: epkChecksumHash,
+                sd: epkChecksum,
                 blockNumber: selectedBlockNumber,
             },
         };
@@ -703,6 +704,20 @@ class DHService {
         });
 
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+
+        const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
+
+        if (!eventData) {
+            // Everything is ok.
+            this.log.warn(`Purchase not confirmed for ${importId}.`);
+            // TODO Initiate canceling purchase.
+            return;
+        }
+
+        this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
+
+        await this.blockchain.sendEncryptedBlock(importId, offer.receiver_wallet, selectedBlock);
+        this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
     }
 
     listenToOffers() {

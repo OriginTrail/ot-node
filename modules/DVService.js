@@ -353,7 +353,7 @@ class DVService {
         const r2Bn = new BN(r2);
         testNumber = testNumber.add(r2Bn).add(r1Bn.mul(new BN(128)));
 
-        if (!testNumber.eq(new BN(sd, 16))) {
+        if (!testNumber.eq(new BN(Utilities.denormalizeHex(sd), 16))) {
             this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${importId}.`);
             this._litigatePurchase(importId, wallet, nodeId, m1, m2, e);
             throw Error('Commitment test failed.');
@@ -362,10 +362,10 @@ class DVService {
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
             [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, blockNumber],
-        ));
+        ).toString('hex'));
 
         const blockchainCommitmentHash =
-            await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId)
+            (await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId))
                 .commitment;
 
         if (commitmentHash !== blockchainCommitmentHash) {

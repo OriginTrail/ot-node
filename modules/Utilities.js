@@ -818,6 +818,19 @@ class Utilities {
         }
         return number;
     }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
 }
 
 module.exports = Utilities;

@@ -723,6 +723,20 @@ class Ethereum {
             ], options,
         );
     }
+
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContractAddress,
+        };
+
+        this.log.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
+        return this.transactions.queueTransaction(
+            this.readingContractAbi, 'confirmPurchase',
+            [importId, dvWallet, encryptedBlock], options,
+        );
+    }
 }
 
 module.exports = Ethereum;

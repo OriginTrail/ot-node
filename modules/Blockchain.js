@@ -296,6 +296,10 @@ class Blockchain {
             randomNumber1, randomNumber2, decryptionKey, blockIndex,
         );
     }
+
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock){
+        return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
+    }
 }
 
 module.exports = Blockchain;
