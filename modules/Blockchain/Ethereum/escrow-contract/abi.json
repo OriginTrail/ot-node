@@ -7,11 +7,27 @@
         "type": "address"
       },
       {
-        "name": "data_id",
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "token_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "stake_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "total_time_in_minutes",
         "type": "uint256"
       }
     ],
-    "name": "payOut",
+    "name": "initiateEscrow",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -21,15 +37,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "name": "data_id",
-        "type": "uint256"
+        "name": "import_id",
+        "type": "bytes32"
       }
     ],
-    "name": "cancelEscrow",
+    "name": "payOut",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -40,45 +52,33 @@
     "inputs": [
       {
         "name": "",
-        "type": "address"
+        "type": "bytes32"
       },
       {
         "name": "",
         "type": "address"
-      },
-      {
-        "name": "",
-        "type": "uint256"
       }
     ],
-    "name": "escrow",
+    "name": "litigation",
     "outputs": [
       {
-        "name": "token_amount",
+        "name": "requested_data_index",
         "type": "uint256"
       },
       {
-        "name": "tokens_sent",
+        "name": "requested_data",
+        "type": "bytes32"
+      },
+      {
+        "name": "litigation_start_time",
         "type": "uint256"
       },
       {
-        "name": "stake_amount",
+        "name": "answer_timestamp",
         "type": "uint256"
       },
       {
-        "name": "last_confirmation_time",
-        "type": "uint256"
-      },
-      {
-        "name": "end_time",
-        "type": "uint256"
-      },
-      {
-        "name": "total_time",
-        "type": "uint256"
-      },
-      {
-        "name": "escrow_status",
+        "name": "litigation_status",
         "type": "uint8"
       }
     ],
@@ -104,31 +104,54 @@
     "constant": false,
     "inputs": [
       {
-        "name": "DC_wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "name": "DH_wallet",
         "type": "address"
       },
       {
-        "name": "data_id",
+        "name": "requested_data_index",
         "type": "uint256"
       },
       {
-        "name": "token_amount",
-        "type": "uint256"
+        "name": "hash_array",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "initiateLitigation",
+    "outputs": [
+      {
+        "name": "newLitigationInitiated",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
-        "name": "stake_amount",
-        "type": "uint256"
+        "name": "litigation_root_hash",
+        "type": "bytes32"
       },
       {
-        "name": "total_time",
+        "name": "distribution_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "checksum",
         "type": "uint256"
       }
     ],
-    "name": "initiateEscrow",
+    "name": "addRootHashAndChecksum",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -138,15 +161,89 @@
     "constant": false,
     "inputs": [
       {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "correspondent_wallet",
+        "type": "address"
+      },
+      {
+        "name": "sender_is_DH",
+        "type": "bool"
+      }
+    ],
+    "name": "cancelEscrow",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "cancelInactiveLitigation",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "name": "proof_data",
+        "type": "bytes32"
+      }
+    ],
+    "name": "proveLitigaiton",
+    "outputs": [
+      {
+        "name": "DH_was_penalized",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "escrow",
+    "outputs": [
+      {
         "name": "DC_wallet",
         "type": "address"
       },
       {
-        "name": "data_id",
+        "name": "token_amount",
         "type": "uint256"
       },
       {
-        "name": "token_amount",
+        "name": "tokens_sent",
         "type": "uint256"
       },
       {
@@ -154,19 +251,36 @@
         "type": "uint256"
       },
       {
-        "name": "total_time",
+        "name": "last_confirmation_time",
         "type": "uint256"
-      }
-    ],
-    "name": "verifyEscrow",
-    "outputs": [
+      },
       {
-        "name": "isVerified",
-        "type": "bool"
+        "name": "end_time",
+        "type": "uint256"
+      },
+      {
+        "name": "total_time_in_seconds",
+        "type": "uint256"
+      },
+      {
+        "name": "litigation_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distribution_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "checksum",
+        "type": "uint256"
+      },
+      {
+        "name": "escrow_status",
+        "type": "uint8"
       }
     ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -201,6 +315,20 @@
     "constant": false,
     "inputs": [
       {
+        "name": "readingAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setReading",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "newOwner",
         "type": "address"
       }
@@ -212,9 +340,64 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "verifyEscrow",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [],
     "name": "token",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "requested_data",
+        "type": "bytes32"
+      }
+    ],
+    "name": "answerLitigation",
+    "outputs": [
+      {
+        "name": "answer_accepted",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "reading",
     "outputs": [
       {
         "name": "",
@@ -241,18 +424,13 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
         "name": "DH_wallet",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
       },
       {
         "indexed": false,
@@ -266,7 +444,7 @@
       },
       {
         "indexed": false,
-        "name": "total_time",
+        "name": "total_time_in_seconds",
         "type": "uint256"
       }
     ],
@@ -278,23 +456,30 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
         "name": "DH_wallet",
         "type": "address"
+      }
+    ],
+    "name": "EscrowConfirmed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "verification_successful",
-        "type": "bool"
+        "name": "DH_wallet",
+        "type": "address"
       }
     ],
     "name": "EscrowVerified",
@@ -305,18 +490,13 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "DC_wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
         "name": "DH_wallet",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "data_id",
-        "type": "uint256"
       }
     ],
     "name": "EscrowCanceled",
@@ -327,8 +507,25 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "DC_wallet",
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
         "type": "address"
+      }
+    ],
+    "name": "EscrowCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
@@ -337,11 +534,67 @@
       },
       {
         "indexed": false,
-        "name": "data_id",
+        "name": "requested_data_index",
         "type": "uint256"
       }
     ],
-    "name": "EscrowCompleted",
+    "name": "LitigationInitiated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "LitigationAnswered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "LitigationTimedOut",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "DH_was_penalized",
+        "type": "bool"
+      }
+    ],
+    "name": "LitigationCompleted",
     "type": "event"
   },
   {

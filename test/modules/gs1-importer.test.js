@@ -7,6 +7,10 @@ const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Importer = require('../../modules/GS1Importer');
+const GS1Utilities = require('../../modules/GS1Utilities');
+const WOTImporter = require('../../modules/WOTImporter');
+const Importer = require('../../modules/importer');
+const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -25,6 +29,7 @@ describe('GS1 Importer tests', () => {
     let graphStorage;
     let systemDb;
     let gs1;
+    let importer;
 
     const inputXmlFiles = [
         { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
@@ -54,13 +59,19 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        const logger = Utilities.getLogger();
+        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
+            logger: awilix.asValue(Utilities.getLogger()),
             gs1Importer: awilix.asClass(GS1Importer),
+            gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
+            importer: awilix.asClass(Importer),
+            wotImporter: awilix.asClass(WOTImporter),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
+        importer = container.resolve('importer');
     });
 
     describe('Parse and import XML file for n times', () => {
@@ -120,6 +131,10 @@ describe('GS1 Importer tests', () => {
             });
         }
 
+        function checkProcessedResults(processedResult1, processedResult2) {
+            expect(processedResult1.root_hash).to.be.equal(processedResult2.root_hash);
+        }
+
         inputXmlFiles.forEach((test) => {
             it(
                 `should generate the same graph for subsequent ${path.basename(test.args[0])} imports`,
@@ -127,6 +142,10 @@ describe('GS1 Importer tests', () => {
                     const import1Result = await gs1.parseGS1(test.args[0]);
                     const import2Result = await gs1.parseGS1(test.args[0]);
                     checkImportResults(import1Result, import2Result);
+
+                    const processedResult1 = await importer.afterImport(import1Result);
+                    const processedResult2 = await importer.afterImport(import2Result);
+                    checkProcessedResults(processedResult1, processedResult2);
                 },
             );
         });

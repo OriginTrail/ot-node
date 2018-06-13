@@ -16,12 +16,20 @@ const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 var numberToBN = require('number-to-bn');
 
-require('dotenv').config();
+const env = require('dotenv').config();
 
 
 class Utilities {
     constructor() {
         this.getLogger();
+    }
+
+    /**
+     * Creates new hash import ID.
+     * @returns {*}
+     */
+    static createImportId() {
+        return soliditySha3(Date.now().toString() + config.node_wallet);
     }
 
     /**
@@ -110,8 +118,21 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        var logLevel = 'trace';
-
+        var logLevel = '';
+        const environment = env.parsed.NODE_ENV;
+        switch (environment) {
+        case 'development':
+            logLevel = 'trace';
+            break;
+        case 'test':
+            logLevel = 'debug';
+            break;
+        case 'production':
+            logLevel = 'info';
+            break;
+        default:
+            logLevel = 'trace';
+        }
         var customColors = {
             trace: 'grey',
             notify: 'green',
@@ -122,9 +143,8 @@ class Utilities {
             error: 'red',
         };
 
-
         try {
-            var logger = new (winston.Logger)({
+            const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {
@@ -149,18 +169,20 @@ class Utilities {
             // Extend logger object to properly log 'Error' types
             const origLog = logger.log;
             logger.log = (level, msg) => {
-                if (msg.startsWith('connect econnrefused')) {
-                    level = 'debug';
-                    const address = msg.substr(21);
-                    msg = `Failed to connect to ${address}`;
-                }
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
                     const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    // eslint-disable-next-line prefer-rest-params
+                    if (msg.startsWith('updating peer profile')) {
+                        return; // skip logging
+                    }
+                    if (msg.startsWith('connect econnrefused')) {
+                        level = 'trace';
+                        const address = msg.substr(21);
+                        msg = `Failed to connect to ${address}`;
+                    }
                     origLog.apply(logger, [level, msg]);
                 }
             };
@@ -222,7 +244,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
-                    console.log('Please make sure Arango server is up and running');
+                    this.getLogger.notify('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }
@@ -583,11 +605,11 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
-                        this.logger.error(error);
+                        Utilities.getLogger().error(error);
                         reject(error);
                     });
             }).catch((error) => {
-                this.logger.error(error);
+                Utilities.getLogger().error(error);
                 reject(error);
             });
         });
@@ -776,6 +798,52 @@ class Utilities {
         const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
     }
+
+    static generateRsvSignature(message, web3, privateKey) {
+        const signature = web3.eth.accounts.sign(
+            message,
+            privateKey.toLowerCase().startsWith('0x') ?
+                privateKey : `0x${privateKey}`,
+        );
+
+        return { r: signature.r, s: signature.s, v: signature.v };
+    }
+
+    static isMessageSigned(web3, message, signature) {
+        const signedAddress = web3.eth.accounts.recover(
+            JSON.stringify(message),
+            signature.v,
+            signature.r,
+            signature.s,
+        );
+
+        return signedAddress === message.wallet;
+    }
+
+    /**
+     * Normalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static normalizeHex(number) {
+        if (!number.toLowerCase().startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
+    }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
 }
 
 module.exports = Utilities;

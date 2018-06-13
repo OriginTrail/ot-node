@@ -29,7 +29,7 @@ describe('Utilities module', () => {
                 'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
                 'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
                 'dh_min_price', 'dh_max_price', 'dh_max_data_size_bytes', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
-                'dh_max_time_mins', 'dh_price', 'dh_stake_factor'],
+                'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor'],
             'Some config items are missing in node_config',
         );
     });
@@ -64,7 +64,7 @@ describe('Utilities module', () => {
     it('loadSelectedBlockchainInfo()', async () => {
         const myResult = await Utilities.loadSelectedBlockchainInfo();
         assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
-            'gas_price', 'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
+            'gas_price', 'ot_contract_address', 'reading_contract_address', 'token_contract_address', 'escrow_contract_address',
             'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address']);
         assert.equal(myResult.blockchain_title, 'Ethereum');
     });

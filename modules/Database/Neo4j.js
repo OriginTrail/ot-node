@@ -2,7 +2,6 @@ const neo4j = require('neo4j-driver').v1;
 const Utilities = require('../Utilities');
 const request = require('superagent');
 
-const log = Utilities.getLogger();
 const BN = require('bn.js');
 
 /**
@@ -17,7 +16,8 @@ class Neo4jDB {
      * @param host      Database connection host
      * @param port      Database connection port
      */
-    constructor(username, password, database, host, port) {
+    constructor(username, password, database, host, port, log) {
+        this.log = log;
         this.driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(username, password));
     }
 
@@ -633,7 +633,7 @@ class Neo4jDB {
      * @return {Promise}
      */
     async clear() {
-        log.debug('Clear the database.');
+        this.log.debug('Clear the database.');
         const session = this.driver.session();
         await session.writeTransaction(tx => tx.run('match (n) detach delete n'));
         session.close();

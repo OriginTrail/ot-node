@@ -2,7 +2,6 @@ const { Database } = require('arangojs');
 const Utilities = require('./../Utilities');
 const request = require('superagent');
 
-const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
 
 class ArangoJS {
@@ -16,7 +15,8 @@ class ArangoJS {
      * @param {string} - host
      * @param {number} - port
      */
-    constructor(username, password, database, host, port) {
+    constructor(username, password, database, host, port, log) {
+        this.log = log;
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
@@ -68,6 +68,43 @@ class ArangoJS {
         }
         queryString += ' RETURN v';
         return this.runQuery(queryString, params);
+    }
+
+    /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param dataLocationQuery
+     */
+    async findImportIds(dataLocationQuery) {
+        const params = {};
+        const filters = [];
+
+        let count = 1;
+        let queryString = 'FOR v IN ot_vertices FILTER ';
+        for (const searchRequestPart of dataLocationQuery) {
+            const { path, value, opcode } = searchRequestPart;
+
+            switch (opcode) {
+            case 'EQ':
+                filters.push(`v.${path} == @param${count}`);
+                break;
+            case 'IN':
+                filters.push(`POSITION(v.${path}, @param${count}) == true`);
+                break;
+            default:
+                throw new Error(`OPCODE ${opcode} is not defined`);
+            }
+            params[`param${count}`] = value;
+            count += 1;
+        }
+        queryString += `${filters.join(' AND ')} RETURN v`;
+        const results = await this.runQuery(queryString, params);
+        const imports = results.reduce((prevVal, elem) => {
+            for (const importId of elem.imports) {
+                prevVal.add(importId);
+            }
+            return prevVal;
+        }, new Set([]));
+        return [...imports].sort();
     }
 
     /**
@@ -458,20 +495,17 @@ class ArangoJS {
     async findVerticesByImportId(data_id) {
         const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
-        if (typeof data_id !== 'number') {
-            data_id = parseInt(data_id, 10);
-        }
-
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
     }
 
+    async findObjectClassVertices() {
+        const queryString = 'FOR v IN ot_vertices FILTER v.data == null SORT v._key RETURN v';
+        return this.runQuery(queryString, {});
+    }
+
     async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-        if (typeof data_id !== 'number') {
-            data_id = parseInt(data_id, 10);
-        }
 
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
