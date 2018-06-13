@@ -2,11 +2,30 @@ const md5 = require('md5');
 const crypto = require('crypto');
 const validator = require('validator');
 const Utilities = require('./Utilities');
+const stringify = require('json-stable-stringify');
 
 const ZK = require('./ZK');
 
 class GS1Utilities {
-    // validation
+    /**
+     * Creates key for the document
+     * @param args
+     * @return {*}
+     */
+    static createKey(...args) {
+        const params = [];
+        for (const argument of args) {
+            params.push(`${stringify(argument)}`);
+        }
+        return md5(`${params.join('_')}`);
+    }
+
+    static handleError(message, status) {
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    }
+
     static validateSender(sender) {
         if (sender.EmailAddress) {
             GS1Utilities.emailValidation(sender.EmailAddress);
@@ -65,24 +84,24 @@ class GS1Utilities {
 
     static getEventId(senderId, event) {
         if (GS1Utilities.arrayze(event.eventTime).length === 0) {
-            throw Error('Missing eventTime element for event!');
+            this.handleError('Missing eventTime element for event!', 400);
         }
         const event_time = event.eventTime;
 
         const event_time_validation = GS1Utilities.dateTimeValidation(event_time);
         if (!event_time_validation) {
-            throw Error('Invalid date and time format for event time!');
+            this.handleError('Invalid date and time format for event time!', 400);
         }
         if (typeof event_time !== 'string') {
-            throw Error('Multiple eventTime elements found!');
+            this.handleError('Multiple eventTime elements found!', 400);
         }
         if (GS1Utilities.arrayze(event.eventTimeZoneOffset).length === 0) {
-            throw Error('Missing event_time_zone_offset element for event!');
+            this.handleError('Missing event_time_zone_offset element for event!', 400);
         }
 
         const event_time_zone_offset = event.eventTimeZoneOffset;
         if (typeof event_time_zone_offset !== 'string') {
-            throw Error('Multiple event_time_zone_offset elements found!');
+            this.handleError('Multiple event_time_zone_offset elements found!', 400);
         }
 
         let eventId = `${senderId}:${event_time}Z${event_time_zone_offset}`;
@@ -90,7 +109,7 @@ class GS1Utilities {
             const baseExtension_element = event.baseExtension;
 
             if (GS1Utilities.arrayze(baseExtension_element.eventID).length === 0) {
-                throw Error('Missing eventID in baseExtension!');
+                this.handleError('Missing eventID in baseExtension!', 400);
             }
             eventId = baseExtension_element.eventID;
         }
@@ -300,7 +319,7 @@ class GS1Utilities {
                     }
                 }
                 if (!batchFound) {
-                    throw new Error(`Invalid import! Batch ${quantity.object} not found.`);
+                    this.handleError(`Invalid import! Batch ${quantity.object} not found.`, 400);
                 }
             }
         }

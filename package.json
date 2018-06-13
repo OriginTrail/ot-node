@@ -5,9 +5,9 @@
   "main": ".eslintrc.js",
   "scripts": {
     "test": "nyc mocha --recursive test/modules/*.test.js",
-    "start": "node ot-node.js",
+    "start": "node node_version_check.js && node ot-node.js",
     "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
-    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js",
+    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &"
   },
   "devDependencies": {
@@ -66,6 +66,7 @@
     "lodash": "^4.17.5",
     "md5": "^2.2.1",
     "ms": "^2.1.1",
+    "nedb": "^1.8.0",
     "neo4j-driver": "^1.5.0",
     "node-rsa": "^0.4.2",
     "nodeify": "^1.0.1",
