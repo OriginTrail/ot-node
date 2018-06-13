@@ -476,7 +476,7 @@ class DHService {
 
         const offer = networkReplyModel.data;
 
-        if (offer.receiver_wallet !== wallet && offer.receiver_identity) {
+        if (networkReplyModel.receiver_wallet !== wallet && networkReplyModel.receiver_identity) {
             throw Error('Sorry not your read request');
         }
 
@@ -716,7 +716,11 @@ class DHService {
 
         this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
 
-        await this.blockchain.sendEncryptedBlock(importId, offer.receiver_wallet, selectedBlock);
+        await this.blockchain.sendEncryptedBlock(
+            importId,
+            networkReplyModel.receiver_wallet,
+            Utilities.normalizeHex(Encryption.xor(selectedBlock, e)),
+        );
         this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
     }
 

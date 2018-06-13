@@ -733,7 +733,7 @@ class Ethereum {
 
         this.log.trace(`sendEncryptedBlock (${importId}, ${dvWallet}, ${encryptedBlock})`);
         return this.transactions.queueTransaction(
-            this.readingContractAbi, 'confirmPurchase',
+            this.readingContractAbi, 'sendEncryptedBlock',
             [importId, dvWallet, encryptedBlock], options,
         );
     }
