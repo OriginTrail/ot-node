@@ -243,6 +243,35 @@ describe('GS1 Importer tests', () => {
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
         }
 
+        async function checkGraphExample4XmlTraversalPath() {
+            let myKey;
+            const expectedKeys = [];
+
+            const sender_id = 'urn:ot:mda:actor:id:Hospital1';
+            const Room1048 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:HospitalBuilding1.Room1048');
+            const HospitalBuilding1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:HospitalBuilding1');
+            const Hospital1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Hospital1');
+
+            const nodes = [Room1048, HospitalBuilding1, Hospital1];
+
+            nodes.forEach((node) => {
+                myKey = node._key;
+                expectedKeys.push(myKey);
+            });
+
+            expectedKeys.push('Actor');
+            expectedKeys.push('Location');
+
+            const path = await graphStorage.findTraversalPath(Room1048, 200);
+
+            // there should be 5 node in traversal for this start vertex
+            assert.equal(Object.keys(path.data).length, 5);
+
+            const keysFromTraversal = Object.keys(path.data);
+            // make sure that all _keys match
+            assert.sameMembers(keysFromTraversal, expectedKeys);
+        }
+
         async function checkSpecificVerticeContent(xml) {
             if (xml === 'Transformation.xml') {
                 await checkTransformationXmlVerticeContent();
@@ -255,6 +284,7 @@ describe('GS1 Importer tests', () => {
                 await checkGraphExample3XmlVerticeContent();
             } else if (xml === 'GraphExample_4.xml') {
                 await checkGraphExample4XmlVerticeContent();
+                await checkGraphExample4XmlTraversalPath();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }
