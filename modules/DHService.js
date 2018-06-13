@@ -719,7 +719,7 @@ class DHService {
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
-            Utilities.normalizeHex(Encryption.xor(selectedBlock, e)),
+            Utilities.normalizeHex(Encryption.xor(selectedBlock, eHex)),
         );
         this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
     }

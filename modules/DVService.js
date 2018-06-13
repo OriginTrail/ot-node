@@ -384,15 +384,25 @@ class DVService {
             // DH signed the escrow. Yay!
             const purchase =
                 await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId);
-            const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
+            const epk = m1 +
+                Buffer.from(
+                    Encryption.xor(
+                        Utilities.expandHex(new BN(purchase.encrypted_block).toString('hex'), 64),
+                        Utilities.denormalizeHex(e),
+                    ),
+                    'hex',
+                ).toString('ascii') + m2;
             const publicKey = Encryption.unpackEPK(epk);
 
             const holdingData = await Models.holding_data.create({
                 id: importId,
                 source_wallet: wallet,
                 data_public_key: publicKey,
+                distribution_public_key: publicKey,
                 epk,
             });
+
+            this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
         } else {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);

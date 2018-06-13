@@ -831,6 +831,22 @@ class Utilities {
         return number;
     }
 
+    /**
+     * Expands hex number to desired number of digits.
+     *
+     * For example expandHex('3', 4) or expandHex('0x3', 4) will return '0003'
+     * @param number
+     * @param digitCount
+     */
+    static expandHex(number, digitCount) {
+        const hex = this.denormalizeHex(number);
+
+        if (hex.length > digitCount) {
+            throw Error(`Number ${number} has more digits than required.`);
+        }
+
+        return new Array(digitCount - hex.length) + hex;
+    }
 }
 
 module.exports = Utilities;
