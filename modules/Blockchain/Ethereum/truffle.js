@@ -34,9 +34,11 @@ module.exports = {
         },
 
         rinkeby: {
-            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
-            network_id: 3,
-            gas: 4000000,
+            host: 'localhost', // Connect to geth on the specified
+            port: 8545,
+            from: '0xadcdb624b01692810fd00940c1b9dfa3dc47be4e', // default address to use for any transaction Truffle makes during migrations
+            network_id: 4,
+            gas: 4612388, // Gas limit used for deploys
         },
     },
 };
