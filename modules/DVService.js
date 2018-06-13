@@ -347,12 +347,11 @@ class DVService {
         // Get checksum from blockchain.
         const purchaseData =
             await this.blockchain.getPurchasedData(importId, wallet);
-        const blockchainChecksum = purchaseData.checksum.substring(2);
 
-        const testNumber = new BN(blockchainChecksum, 16);
+        let testNumber = new BN(purchaseData.checksum, 10);
         const r1Bn = new BN(r1);
         const r2Bn = new BN(r2);
-        testNumber.add(r2Bn).add(r1Bn.mul(new BN(3)));
+        testNumber = testNumber.add(r2Bn).add(r1Bn.mul(new BN(128)));
 
         if (!testNumber.eq(new BN(sd, 16))) {
             this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${importId}.`);

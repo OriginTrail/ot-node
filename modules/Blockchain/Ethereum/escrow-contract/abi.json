@@ -87,32 +87,6 @@
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "litigation_root_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "distribution_root_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "checksum",
-        "type": "bytes32"
-      }
-    ],
-    "name": "addRootHashAndChecksum",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [],
     "name": "owner",
@@ -153,6 +127,32 @@
         "type": "bool"
       }
     ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "litigation_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distribution_root_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "checksum",
+        "type": "uint256"
+      }
+    ],
+    "name": "addRootHashAndChecksum",
+    "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -272,7 +272,7 @@
       },
       {
         "name": "checksum",
-        "type": "bytes32"
+        "type": "uint256"
       },
       {
         "name": "escrow_status",

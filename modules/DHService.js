@@ -287,7 +287,9 @@ class DHService {
             this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
                 data.import_id,
-                litigationRootHash, distributionHash, epkChecksum,
+                litigationRootHash,
+                distributionHash,
+                Utilities.normalizeHex(epkChecksum),
             );
 
             // Store holding information and generate keys for eventual

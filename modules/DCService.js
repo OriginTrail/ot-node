@@ -221,7 +221,7 @@ class DCService {
                 failed = true;
             }
 
-            if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
+            if (!escrow.checksum === epkChecksum) {
                 this.log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }

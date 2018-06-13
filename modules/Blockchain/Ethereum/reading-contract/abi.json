@@ -23,7 +23,7 @@
 			},
 			{
 				"name": "checksum",
-				"type": "bytes32"
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -145,36 +145,6 @@
 			}
 		],
 		"name": "sendCommitment",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"name": "DC_wallet",
-				"type": "address"
-			},
-			{
-				"name": "distribution_root_hash",
-				"type": "bytes32"
-			},
-			{
-				"name": "checksum",
-				"type": "bytes32"
-			}
-		],
-		"name": "addReadData",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -318,6 +288,36 @@
 			}
 		],
 		"name": "setBidding",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"name": "DC_wallet",
+				"type": "address"
+			},
+			{
+				"name": "distribution_root_hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "checksum",
+				"type": "uint256"
+			}
+		],
+		"name": "addReadData",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
