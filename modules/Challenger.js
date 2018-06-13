@@ -1,5 +1,7 @@
 'use-strict';
 
+const Models = require('../models');
+const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 
 const intervalMs = 1500;
@@ -8,7 +10,6 @@ class Challenger {
     constructor(ctx) {
         this.log = ctx.logger;
         this.network = ctx.network;
-        this.dcService = ctx.dcService;
     }
 
     startChallenging() {
@@ -59,26 +60,48 @@ class Challenger {
                 this.log.trace('Successfully answered to challenge.');
                 // TODO doktor: Handle promise.
                 Challenge.completeTest(challenge.id);
-                this.startLitigation(challenge);
+                this.initiateLitigation(challenge);
             } else {
                 this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
                 // TODO doktor: Handle promise.
                 Challenge.failTest(challenge.id);
-                this.startLitigation(challenge);
+                this.initiateLitigation(challenge);
             }
         });
     }
 
     /**
-     * Starts litigation for failed answer
-     * @param challenge
+     * Handles litigation for DH failed test
+     * @return {Promise<void>}
      */
-    startLitigation(challenge) {
+    async initiateLitigation(challenge) {
         const contact = this.network.kademlia().getContact(challenge.dh_id);
-        this.dcService.initiateLitigation(
-            challenge.import_id,
-            contact.wallet, challenge.dh_id, challenge.id,
-        );
+
+        const dhId = challenge.dh_id;
+        const dhWallet = contact.wallet;
+        const blockId = challenge.id;
+        const importId = challenge.import_id;
+
+        const tests = await Models.data_challenges.find({
+            where:
+                { dh_id: dhId, import_id: importId },
+        });
+        if (!tests) {
+            throw new Error(`Failed to find tests for import ${importId} and DH ${dhId}`);
+        }
+        tests.sort((x, y) => x.block_id - y.block_id);
+        const litigationBlocks = tests.map(t => t.answer);
+
+        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+        const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
+
+        await this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+
+        const waitForLitigation = 15 * 60 * 1000;
+        await this.blockchain.subscribeToEvent('LitigationAnswered', importId, waitForLitigation);
+
+        const block = tests.filter(t => t.block_id === blockId)[0];
+        await this.blockchain.proveLitigation(importId, dhWallet, block);
     }
 
     intervalFunc(challenger, log) {
