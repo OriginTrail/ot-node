@@ -20,7 +20,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('GS1 Importer tests', () => {
+describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let graphStorage;
     let systemDb;
