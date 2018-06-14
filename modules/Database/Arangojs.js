@@ -534,10 +534,10 @@ class ArangoJS {
     }
 
     /**
-     * Remove garbage
+     * Removes elements in transaction
      * @return {Promise<void>}
      */
-    async compact() {
+    async rollback() {
         let queryString = 'FOR v IN ot_vertices FILTER v.inTransaction == true REMOVE v IN ot_vertices';
         await this.runQuery(queryString);
         queryString = 'FOR e IN ot_edges FILTER e.inTransaction == true REMOVE e IN ot_edges';

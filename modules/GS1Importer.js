@@ -755,7 +755,7 @@ class GS1Importer {
             await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
             await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
         } catch (e) {
-            await this.db.compact();
+            await this.db.rollback(); // delete elements in transaction
             throw e;
         }
 

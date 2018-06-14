@@ -406,11 +406,11 @@ class GraphStorage {
     }
 
     /**
-     * Remove garbage
+     * Removes elements in transaction
      * @return {Promise<void>}
      */
-    async compact() {
-        await this.db.compact();
+    async rollback() {
+        await this.db.rollback();
     }
 
     /**
