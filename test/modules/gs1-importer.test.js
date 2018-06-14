@@ -112,7 +112,7 @@ describe('GS1 Importer tests', () => {
         it('check keys immutability on GraphExample_3.xml', async () => {
             const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
 
-            const first = await gs1.parseGS1(myGraphExample3);
+            await gs1.parseGS1(myGraphExample3);
             const firstImportVerticesKeys = await getAllVerticesKeys();
             // re-import into same db instance
             await gs1.parseGS1(myGraphExample3);
