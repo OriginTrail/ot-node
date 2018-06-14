@@ -33,7 +33,7 @@ class DVService {
      * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(query, totalTime = 10000) {
+    async queryNetwork(query, totalTime = 60000) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -394,7 +394,9 @@ class DVService {
                 ).toString('ascii') + m2;
 
             try {
-                const publicKey = Encryption.unpackEPK('ABCD');
+                let badepk = epk;
+                badepk[0] = 'Q';
+                const publicKey = Encryption.unpackEPK(epk);
                 const holdingData = await Models.holding_data.create({
                     id: importId,
                     source_wallet: wallet,
