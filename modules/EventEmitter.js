@@ -38,7 +38,7 @@ class EventEmitter {
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
-            importer.importXML(data.filepath, (response) => {
+            importer._importXML(data.filepath, (response) => {
                 // emit response
             });
         });
@@ -125,7 +125,7 @@ class EventEmitter {
 
         this.globalEmitter.on('gs1-import-request', async (data) => {
             try {
-                const responseObject = await importer.importXMLgs1(data.filepath);
+                const responseObject = await importer._import('GS1_XML_FILE', data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
 
@@ -141,7 +141,7 @@ class EventEmitter {
 
         this.globalEmitter.on('wot-import-request', async (data) => {
             try {
-                const responseObject = await importer.importWOT(data.filepath);
+                const responseObject = await importer._import('WOT_JSON_FILE', data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
 

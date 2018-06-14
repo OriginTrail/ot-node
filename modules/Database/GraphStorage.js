@@ -406,6 +406,14 @@ class GraphStorage {
     }
 
     /**
+     * Remove garbage
+     * @return {Promise<void>}
+     */
+    async compact() {
+        await this.db.compact();
+    }
+
+    /**
      * Initializes database with predefined collections and vertices.
      * @returns {Promise<void>}
      * @private

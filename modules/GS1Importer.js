@@ -658,11 +658,7 @@ class GS1Importer {
                     return vertex;
                 });
 
-        const promises = allVertices.map(vertex => this.db.addVertex(vertex));
-        await Promise.all(promises);
-
         const classObjectEdges = [];
-
         eventVertices.forEach((vertex) => {
             for (const category of vertex.data.categories) {
                 eventVertices.forEach((vertex) => {
@@ -718,34 +714,50 @@ class GS1Importer {
             });
         });
 
-        const allEdges = locationEdges
-            .concat(eventEdges)
-            .concat(batchEdges)
-            .concat(classObjectEdges)
-            .map((edge) => {
-                edge.sender_id = senderId;
-                return edge;
+        try {
+            allVertices.map((v) => {
+                v.inTransaction = true;
+                return v;
+            });
+            await Promise.all(allVertices.map(vertex => this.db.addVertex(vertex)));
+
+            const allEdges = locationEdges
+                .concat(eventEdges)
+                .concat(batchEdges)
+                .concat(classObjectEdges)
+                .map((edge) => {
+                    edge.sender_id = senderId;
+                    return edge;
+                });
+
+            for (const edge of allEdges) {
+                const to = edge._to;
+                const from = edge._from;
+
+                if (to.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._to = `ot_vertices/${vertex._key}`;
+                }
+                if (from.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._from = `ot_vertices/${vertex._key}`;
+                }
+            }
+
+            allEdges.map((e) => {
+                e.inTransaction = true;
+                return e;
             });
 
-        for (const edge of allEdges) {
-            const to = edge._to;
-            const from = edge._from;
-
-            if (to.startsWith(EDGE_KEY_TEMPLATE)) {
-                // eslint-disable-next-line
-                const vertex = await this.db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
-                edge._to = `ot_vertices/${vertex._key}`;
-            }
-            if (from.startsWith(EDGE_KEY_TEMPLATE)) {
-                // eslint-disable-next-line
-                const vertex = await this.db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
-                edge._from = `ot_vertices/${vertex._key}`;
-            }
+            await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
+            await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
+            await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+        } catch (e) {
+            await this.db.compact();
+            throw e;
         }
-        await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
-
-        await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
-        await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
 
         console.log('Done parsing and importing.');
 

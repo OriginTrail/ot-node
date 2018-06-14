@@ -242,7 +242,7 @@ class DHService {
         }
         const bid = bidModel.get({ plain: true });
         try {
-            await this.importer.importJSON(data);
+            await this.importer._import('JSON', data);
         } catch (err) {
             this.log.warn(`Failed to import JSON successfully. ${err}.`);
             return;

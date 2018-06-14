@@ -534,6 +534,17 @@ class ArangoJS {
     }
 
     /**
+     * Remove garbage
+     * @return {Promise<void>}
+     */
+    async compact() {
+        let queryString = 'FOR v IN ot_vertices FILTER v.inTransaction == true REMOVE v IN ot_vertices';
+        await this.runQuery(queryString);
+        queryString = 'FOR e IN ot_edges FILTER e.inTransaction == true REMOVE e IN ot_edges';
+        await this.runQuery(queryString);
+    }
+
+    /**
      * Normalize properties returned from Arango
      * @param document
      * @returns {*}
