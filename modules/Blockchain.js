@@ -330,7 +330,7 @@ class Blockchain {
         );
     }
 
-    async sendEncryptedBlock(importId, dvWallet, encryptedBlock){
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
         return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
 }

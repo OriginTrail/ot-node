@@ -209,10 +209,10 @@ class Encryption {
         const r1Bn = new BN(r1);
         const bi = (new BN(blockHex, 16).mul(new BN(blockNumber + offset)));
 
-        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'],[bi]).toString('hex').substring(2), 16);
+        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'], [bi]).toString('hex').substring(2), 16);
         blockChecksum.add(r1Bn);
 
-        blockChecksum = abi.soliditySHA3(['bytes32'],[blockChecksum]).toString('hex')
+        blockChecksum = abi.soliditySHA3(['bytes32'], [blockChecksum]).toString('hex');
 
 
         return (new BN(blockChecksum.substring(2), 16).add(r1Bn)).toString('hex');
@@ -234,7 +234,7 @@ class Encryption {
         let i = 0;
         let blockNum = 1;
 
-        let checksum = new BN(0)
+        let checksum = new BN(0);
 
         while (i < data.length) {
             const dataBlock = data.substring(i, i + 32);
