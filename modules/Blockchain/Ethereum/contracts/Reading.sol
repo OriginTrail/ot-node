@@ -261,7 +261,10 @@ contract Reading is Ownable{
 
 		bool commitment_proof = this_purchase.commitment == keccak256(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index);
 		bool checksum_hash_proof = 
-			checksum_hash == keccak256(checksum_left + (uint256(keccak256((block_index * uint256(keccak256(decryption_key ^ this_purchase.encrypted_block))) + random_number_1))) + checksum_right - random_number_2);
+			checksum_hash == keccak256(checksum_left +
+								(uint256(keccak256((block_index * decryption_key ^ this_purchase.encrypted_block)
+												+ random_number_1)))
+											+ checksum_right - random_number_2);
 
 		if(commitment_proof == true && checksum_hash_proof == true) {
 			bidding.increaseBalance(msg.sender, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));

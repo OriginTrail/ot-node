@@ -725,7 +725,7 @@ class DHService {
             importId,
             networkReplyModel.receiver_wallet,
             Utilities.normalizeHex(Encryption.xor(
-                selectedBlock,
+                Buffer.from(selectedBlock, 'ascii').toString('hex'),
                 Utilities.denormalizeHex(eHex),
             )),
         );
