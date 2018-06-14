@@ -76,6 +76,52 @@ describe('GS1 Importer tests', () => {
         });
     });
 
+    describe('_keys should not be changing on re-imports', async () => {
+        async function getAllVerticesKeys() {
+            const verticesKeys = [];
+            let myKey;
+
+            const sender_id = 'urn:ot:mda:actor:id:Company_2';
+            const Company_2_timestamp = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2:2015-04-17T00:00:00.000-04:00Z-04:00');
+            const Building_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_1');
+            const Batch_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgtin:Batch_1');
+            const Product_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:product:id:Product_1');
+            const Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1');
+            const Company_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2');
+            const Building_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_2');
+
+            const nodes = [Company_2, Company_2_timestamp, Building_1, Batch_1,
+                Product_1, Company_1, Building_2];
+
+            nodes.forEach((node) => {
+                myKey = node._key;
+                verticesKeys.push(myKey);
+            });
+
+            verticesKeys.push('Ownership');
+            verticesKeys.push('Location');
+            verticesKeys.push('Product');
+            verticesKeys.push('Actor');
+            verticesKeys.push('Observation');
+            verticesKeys.push('Transport');
+            verticesKeys.push('Transformation');
+
+            return verticesKeys;
+        }
+
+        it('check keys immutability on GraphExample_3.xml', async () => {
+            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+
+            const first = await gs1.parseGS1(myGraphExample3);
+            const firstImportVerticesKeys = await getAllVerticesKeys();
+            // re-import into same db instance
+            await gs1.parseGS1(myGraphExample3);
+            const secondImportVerticesKeys = await getAllVerticesKeys();
+
+            assert.deepEqual(firstImportVerticesKeys, secondImportVerticesKeys, 'Keys should stay same after reimport');
+        });
+    });
+
     describe('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
             expect(import1Result.root_hash).to.be
