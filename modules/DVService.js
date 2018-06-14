@@ -33,7 +33,7 @@ class DVService {
      * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(query, totalTime = 60000) {
+    async queryNetwork(query, totalTime = 10000) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -392,15 +392,21 @@ class DVService {
                     ),
                     'hex',
                 ).toString('ascii') + m2;
-            const publicKey = Encryption.unpackEPK(epk);
 
-            const holdingData = await Models.holding_data.create({
-                id: importId,
-                source_wallet: wallet,
-                data_public_key: publicKey,
-                distribution_public_key: publicKey,
-                epk,
-            });
+            try {
+                const publicKey = Encryption.unpackEPK('ABCD');
+                const holdingData = await Models.holding_data.create({
+                    id: importId,
+                    source_wallet: wallet,
+                    data_public_key: publicKey,
+                    distribution_public_key: publicKey,
+                    epk,
+                });
+            } catch (err) {
+                this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+                await this._litigatePurchase(importId, wallet, null, m1, m2, e);
+                return;
+            }
 
             this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
         } else {
