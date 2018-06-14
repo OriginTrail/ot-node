@@ -213,7 +213,6 @@ class Encryption {
         blockChecksum.add(r1Bn);
 
         blockChecksum = abi.soliditySHA3(['bytes32'], [blockChecksum]).toString('hex');
-s
 
         return (new BN(blockChecksum, 16).add(r1Bn)).toString('hex');
     }
