@@ -635,7 +635,7 @@ class DHService {
                 ['uint256'],
                 [epkChecksum],
             ).toString('hex'));
-        const e = crypto.randomBytes(16); // 128bits.
+        const e = crypto.randomBytes(32); // 256bits.
         const eHex = Utilities.normalizeHex(e.toString('hex'));
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
