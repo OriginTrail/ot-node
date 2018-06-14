@@ -20,7 +20,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe('GS1 Importer tests', () => {
+describe.only('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let graphStorage;
     let systemDb;
@@ -113,11 +113,22 @@ describe('GS1 Importer tests', () => {
             const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
 
             await gs1.parseGS1(myGraphExample3);
+            const firstImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.equal(firstImportVerticesCount, 14, 'There should be 14 vertices');
+
             const firstImportVerticesKeys = await getAllVerticesKeys();
+            assert.equal(firstImportVerticesKeys.length, firstImportVerticesCount);
+
             // re-import into same db instance
             await gs1.parseGS1(myGraphExample3);
-            const secondImportVerticesKeys = await getAllVerticesKeys();
+            const secondImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.equal(secondImportVerticesCount, 14, 'There should be 14 vertices');
 
+            const secondImportVerticesKeys = await getAllVerticesKeys();
+            assert.equal(secondImportVerticesKeys.length, 14, 'There should be 14 vertices as well');
+            assert.equal(secondImportVerticesKeys.length, secondImportVerticesCount);
+
+            // make sure _keys stay identical
             assert.deepEqual(firstImportVerticesKeys, secondImportVerticesKeys, 'Keys should stay same after reimport');
         });
     });
