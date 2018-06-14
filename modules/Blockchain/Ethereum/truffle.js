@@ -2,7 +2,6 @@ const result = require('dotenv').config({ path: `${__dirname}/../../../.env` });
 var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
 
 var mnemonic = process.env.TRUFFLE_MNEMONIC;
-// var mnemonic = 'fantasy human fury pudding trouble much physical tray eagle treat cereal cry';
 
 module.exports = {
     networks: {
