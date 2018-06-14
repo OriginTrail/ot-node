@@ -56,6 +56,7 @@ class DataReplication {
                 dc_wallet: config.blockchain.wallet_address,
                 public_key: data.public_key,
                 vertices: data.vertices,
+                root_hash: data.root_hash,
             },
         };
 

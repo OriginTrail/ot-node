@@ -232,6 +232,7 @@ class EventEmitter {
                 edges,
                 import_id,
                 public_key: keyPair.publicKey,
+                root_hash: offer.data_hash,
                 total_escrow_time: offer.total_escrow_time,
             };
 

@@ -53,6 +53,14 @@ class DHService {
                 return;
             }
 
+            const holdingData = await Models.holding_data.findOne({
+                where: { root_hash: dataHash },
+            });
+            if (holdingData) {
+                this.log.trace(`I've already stored data for root hash ${dataHash}. Ignoring.`);
+                return;
+            }
+
             // Check if predetermined bid was already added for me.
             // Possible race condition here.
             if (!predeterminedBid) {
@@ -294,6 +302,7 @@ class DHService {
                 data_public_key: data.public_key,
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
+                root_hash: data.root_hash,
                 epk,
             });
 
