@@ -107,7 +107,7 @@ class DVService {
                 let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
-                    if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
+                    if (lowestOffer === null || price.lt(new BN(lowestOffer.data_price, 10))) {
                         lowestOffer = response.get({ plain: true });
                     }
                 });
@@ -412,7 +412,6 @@ class DVService {
                 ).toString('ascii') + m2;
 
             try {
-                epk[0] = 'X';
                 const publicKey = Encryption.unpackEPK(epk);
                 const holdingData = await Models.holding_data.create({
                     id: importId,
