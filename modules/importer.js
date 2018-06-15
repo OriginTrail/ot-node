@@ -158,7 +158,10 @@ class Importer {
     async _importWOT(document) {
         try {
             const result = await this.wotImporter.parse(document);
-            return await this.afterImport(result);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
             const errorObject = { message: error.toString(), status: error.status };

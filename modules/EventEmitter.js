@@ -54,7 +54,21 @@ class EventEmitter {
 
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
+            if (dcWallet == null) {
+                data.response.send({
+                    status: 400,
+                    message: 'dc_wallet parameter query is missing',
+                });
+                return;
+            }
             const importId = data.query.import_id;
+            if (importId == null) {
+                data.response.send({
+                    status: 400,
+                    message: 'import_id parameter query is missing',
+                });
+                return;
+            }
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
