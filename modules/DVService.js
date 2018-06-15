@@ -30,10 +30,9 @@ class DVService {
     /**
      * Sends query to the network
      * @param query
-     * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(query, totalTime = 60000) {
+    async queryNetwork(query) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -85,17 +84,27 @@ class DVService {
             },
         );
 
+        return networkQueryModel.id;
+    }
+
+    /**
+     * Handles network queries and chose lowest offer.
+     * @param queryId
+     * @param totalTime
+     * @returns {Promise} Lowest offer. May be null.
+     */
+    handleQuery(queryId, totalTime = 60000) {
         return new Promise((resolve, reject) => {
             setTimeout(async () => {
                 // Check for all offers.
                 const responseModels = await Models.network_query_responses.findAll({
-                    where: { query_id: networkQueryModel.id },
+                    where: { query_id: queryId },
                 });
 
-                this.log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
+                this.log.trace(`Finalizing query ID ${queryId}. Got ${responseModels.length} offer(s).`);
 
                 // TODO: Get some choose logic here.
-                let lowestOffer;
+                let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
                     if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
@@ -106,6 +115,11 @@ class DVService {
                 if (lowestOffer === undefined) {
                     this.log.info('Didn\'t find answer or no one replied.');
                 }
+
+                // Finish auction.
+                const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
+                networkQuery.status = 'PROCESSING';
+                await networkQuery.save({ fields: ['status'] })
 
                 resolve(lowestOffer);
             }, totalTime);
@@ -158,6 +172,10 @@ class DVService {
 
         if (!networkQuery) {
             throw Error(`Didn't find query with ID ${queryId}.`);
+        }
+
+        if (networkQuery.status !== 'OPEN') {
+            throw Error('Too late. Query closed.');
         }
 
         // Store the offer.

@@ -64,18 +64,40 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('network-query', (data) => {
+            const failFunction = (error) => {
+                logger.warn(error);
+                data.response.send({
+                    status: 'FAIL',
+                    message: 'Failed to handle query',
+                });
+            };
             dvService.queryNetwork(data.query)
-                .then((offer) => {
-                    if (offer) {
-                        dvService.handleReadOffer(offer).then(() => {
-                            logger.trace('Read offer handled');
-                        }).catch((err) => {
-                            logger.warn(`Failed to handle offer. ${err}`);
-                        });
-                    }
-                })
-                .catch(error => logger.error(`Failed to query network. ${error}.`));
-            data.response.send(200);
+                .then((queryId) => {
+                    dvService.handleQuery(queryId).then((offer) => {
+                        if (offer) {
+                            dvService.handleReadOffer(offer).then(() => {
+                                logger.trace(`Read offer ${offer.id} for query ${offer.query_id} handled.`);
+                            }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
+                        }
+                    }).catch(error => logger.error(`Failed handle query. ${error}.`));
+                }).catch(error => logger.error(`Failed query network. ${error}.`));
+        });
+
+        this.globalEmitter.on('network-query', (data) => {
+            const { id, response } = data;
+
+            Models.network_queries.find({ where: { id } }).then((networkQuery) => {
+                response.send({
+                    status: 'OK',
+                    message: `Query status: ${networkQuery.status}`,
+                });
+            }).catch((error) => {
+                logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                response.send({
+                    status: 'FAIL',
+                    error: 'Fail to process.',
+                });
+            });
         });
 
         const processImport = async (response, error, data) => {
