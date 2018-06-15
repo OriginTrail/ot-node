@@ -93,7 +93,7 @@ class DVService {
      * @param totalTime
      * @returns {Promise} Lowest offer. May be null.
      */
-    handleQuery(queryId, totalTime = 60000) {
+    handleQuery(queryId, totalTime = 10000) {
         return new Promise((resolve, reject) => {
             setTimeout(async () => {
                 // Check for all offers.
@@ -412,6 +412,7 @@ class DVService {
                 ).toString('ascii') + m2;
 
             try {
+                epk[0] = 'X';
                 const publicKey = Encryption.unpackEPK(epk);
                 const holdingData = await Models.holding_data.create({
                     id: importId,
