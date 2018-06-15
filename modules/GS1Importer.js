@@ -290,11 +290,11 @@ class GS1Importer {
         }
 
         // Handle events
-        const batchesToRemove = [];
+        const batchesToExclude = [];
         for (const event of events) {
-            const tmpEventEdges = [];
-            const tmpEventVertices = [];
-            const tmpBatchesToRemove = [];
+            const currentEventEdges = [];
+            const currentEventVertices = [];
+            const currentBatchesToRemove = [];
 
             const eventId = this.helper.getEventId(senderId, event);
 
@@ -353,7 +353,7 @@ class GS1Importer {
                 if (extension.extension.sourceList) {
                     const sources = this.helper.arrayze(extension.extension.sourceList.source._);
                     for (const source of sources) {
-                        tmpEventEdges.push({
+                        currentEventEdges.push({
                             _key: this.helper.createKey('source', senderId, eventKey, source),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + source}`,
@@ -373,7 +373,7 @@ class GS1Importer {
                             // eslint-disable-next-line
                             const shippingEventVertex = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
                             if (shippingEventVertex.length > 0) {
-                                tmpEventEdges.push({
+                                currentEventEdges.push({
                                     _key: this.helper.createKey('event_connection', senderId, shippingEventVertex[0]._key, eventKey),
                                     _from: `ot_vertices/${shippingEventVertex[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
@@ -383,7 +383,7 @@ class GS1Importer {
                                         uid: `event_connection_${shippingEventVertex[0].identifiers.id}_${eventId}`,
                                     },
                                 });
-                                tmpEventEdges.push({
+                                currentEventEdges.push({
                                     _key: this.helper.createKey('event_connection', senderId, eventKey, shippingEventVertex[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${shippingEventVertex[0]._key}`,
@@ -402,7 +402,7 @@ class GS1Importer {
                     let destinations = extension.extension.destinationList.destination._;
                     destinations = this.helper.arrayze(destinations);
                     for (const destination of destinations) {
-                        tmpEventEdges.push({
+                        currentEventEdges.push({
                             _key: this.helper.createKey('destination', senderId, eventKey, destination),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + destination}`,
@@ -423,7 +423,7 @@ class GS1Importer {
                             // eslint-disable-next-line
                             const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                             if (receivingEventVertices.length > 0) {
-                                tmpEventEdges.push({
+                                currentEventEdges.push({
                                     _key: this.helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
                                     _from: `ot_vertices/${receivingEventVertices[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
@@ -433,7 +433,7 @@ class GS1Importer {
                                         uid: `event_connection_${receivingEventVertices[0].identifiers.id}_${eventId}`,
                                     },
                                 });
-                                tmpEventEdges.push({
+                                currentEventEdges.push({
                                     _key: this.helper.createKey('event_connection', senderId, eventKey, receivingEventVertices[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${receivingEventVertices[0]._key}`,
@@ -460,12 +460,12 @@ class GS1Importer {
                 private: privateData,
                 vertex_type: 'EVENT',
             };
-            tmpEventVertices.push(eventVertex);
+            currentEventVertices.push(eventVertex);
 
             const { bizLocation } = event;
             if (bizLocation) {
                 const bizLocationId = bizLocation.id;
-                tmpEventEdges.push({
+                currentEventEdges.push({
                     _key: this.helper.createKey('at', senderId, eventKey, bizLocationId),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
@@ -478,7 +478,7 @@ class GS1Importer {
 
             if (event.readPoint) {
                 const locationReadPoint = event.readPoint.id;
-                tmpEventEdges.push({
+                currentEventEdges.push({
                     _key: this.helper.createKey('read_point', senderId, eventKey, locationReadPoint),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
@@ -493,7 +493,7 @@ class GS1Importer {
                 for (const inputEpc of this.helper.arrayze(event.inputEPCList.epc)) {
                     const batchId = inputEpc;
 
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
@@ -502,7 +502,7 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -510,7 +510,7 @@ class GS1Importer {
                 for (const inputEpc of this.helper.arrayze(event.epcList.epc)) {
                     const batchId = inputEpc;
 
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
@@ -519,7 +519,7 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
@@ -528,7 +528,7 @@ class GS1Importer {
                             uid: `event_batch_${batchId}_${eventId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -536,7 +536,7 @@ class GS1Importer {
                 for (const inputEpc of this.helper.arrayze(event.childEPCs)) {
                     const batchId = inputEpc.epc;
 
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
@@ -545,7 +545,7 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -553,7 +553,7 @@ class GS1Importer {
                 for (const outputEpc of this.helper.arrayze(event.outputEPCList.epc)) {
                     const batchId = outputEpc;
 
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
@@ -562,7 +562,7 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpEventEdges.push({
+                    currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
@@ -571,7 +571,7 @@ class GS1Importer {
                             uid: `event_batch_${batchId}_${eventId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -595,15 +595,15 @@ class GS1Importer {
                 add = true;
             }
             if (add) {
-                eventEdges.push(...tmpEventEdges);
-                eventVertices.push(...tmpEventVertices);
+                eventEdges.push(...currentEventEdges);
+                eventVertices.push(...currentEventVertices);
             } else {
                 for (const category of eventCategories) {
                     updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${eventId}_${category}`, importId));
                 }
 
                 // eslint-disable-next-line
-                await Promise.all(tmpEventEdges.map(async (edge) => {
+                await Promise.all(currentEventEdges.map(async (edge) => {
                     if (edge.edge_type !== 'EVENT_CONNECTION') {
                         updates.push(this.db.updateEdgeImportsByUID(
                             senderId,
@@ -612,32 +612,29 @@ class GS1Importer {
                     }
                 }));
                 // eslint-disable-next-line
-                tmpEventVertices.map(vertice => updates.push(this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
-                batchesToRemove.push(...tmpBatchesToRemove);
+                currentEventVertices.map(vertice => updates.push(this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
+                batchesToExclude.push(...currentBatchesToRemove);
             }
         }
 
-        const updateBatchImports = [];
-        const updateBatchProductImports = [];
-        for (const batchId of batchesToRemove) {
+        for (const batchId of batchesToExclude) {
             for (const index in batchesVertices) {
                 const batch = batchesVertices[index];
                 if (batch.identifiers.uid === batchId) {
                     batchesVertices.splice(index, 1);
-                    updateBatchImports.push(batch.identifiers.uid);
-                    updateBatchProductImports.push(`batch_product_${batch.identifiers.id}_${batch.data.parent_id}`);
+                    updates.push(updates.push(this.db.updateVertexImportsByUID(
+                        senderId,
+                        batch.identifiers.uid, importId,
+                    )));
+
+                    const edgeId = `batch_product_${batch.identifiers.id}_${batch.data.parent_id}`;
+                    updates.push(updates.push(this.db.updateEdgeImportsByUID(
+                        senderId,
+                        edgeId, importId,
+                    )));
                 }
             }
         }
-
-        updateBatchImports.each(vertexId => updates.push(this.db.updateVertexImportsByUID(
-            senderId,
-            vertexId, importId,
-        )));
-        updateBatchProductImports.each(edgeId => updates.push(this.db.updateEdgeImportsByUID(
-            senderId,
-            edgeId, importId,
-        )));
 
         for (const batch of batchesVertices) {
             const productId = batch.data.parent_id;
