@@ -764,7 +764,7 @@ class GS1Importer {
             await this.db.rollback(); // delete elements in transaction
             throw e;
         }
-
+        await this.db.commit();
         console.log('Done parsing and importing.');
 
         let edgesPerImport = await this.db.findEdgesByImportId(importId);
