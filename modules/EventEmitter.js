@@ -92,6 +92,7 @@ class EventEmitter {
                     dvService.handleQuery(queryId).then((offer) => {
                         if (offer) {
                             dvService.handleReadOffer(offer).then(() => {
+                                dhService.dataLocationQuery(queryId, data.response);
                                 logger.trace(`Read offer ${offer.id} for query ${offer.query_id} handled.`);
                             }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
                         }
@@ -102,91 +103,7 @@ class EventEmitter {
         this.globalEmitter.on('network-query-status', (data) => {
             const { id, response } = data;
 
-            Models.network_queries.find({ where: { id } }).then(async (networkQuery) => {
-                if (networkQuery.status === 'FINISHED') {
-                    // Fetch the results.
-                    const importIds = await graph.findImportIds(networkQuery.query.toString());
-                    const decryptKeys = {};
-
-                    // Get decode keys.
-                    const holdingData = await Models.holding_data.findAll({
-                        where: {
-                            id: {
-                                [Op.in]: importIds,
-                            },
-                        },
-                    });
-
-                    if (holdingData) {
-                        holdingData.forEach((data) => {
-                            decryptKeys[data.id] = data.data_public_key;
-                        });
-                    }
-
-                    const encodedVertices =
-                        await graph.dataLocationQuery(networkQuery.query.toString());
-                    const vertices = [];
-
-                    encodedVertices.forEach((encodedVertex) => {
-                        const foundIds =
-                            encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
-
-                        switch (foundIds.length) {
-                        case 1:
-                            // Decrypt vertex.
-                            {
-                                const decryptedVertex = Utilities.copyObject(encodedVertex);
-                                decryptedVertex.data =
-                                Encryption.decryptObject(
-                                    encodedVertex.data,
-                                    decryptKeys[foundIds[0]],
-                                );
-                                vertices.push(decryptedVertex);
-                            }
-                            break;
-                        case 0:
-                            // Vertex is not encrypted.
-                            vertices.push(Utilities.copyObject(encodedVertex));
-                            break;
-                        default:
-                            // Multiple keys founded. Temp solution.
-                            for (let i = 0; i < foundIds.length; i += 1) {
-                                try {
-                                    const decryptedVertex = Utilities.copyObject(encodedVertex);
-                                    decryptedVertex.data =
-                                        Encryption.decryptObject(
-                                            encodedVertex.data,
-                                            decryptKeys[foundIds[i]],
-                                        );
-                                    vertices.push(decryptedVertex);
-                                    break; // Found the right key.
-                                } catch (error) {
-                                    // ignore
-                                }
-                            }
-                            break;
-                        }
-                    });
-
-                    response.send({
-                        status: 'OK',
-                        message: `Query status: ${networkQuery.status}`,
-                        vertices,
-                    });
-                    return;
-                }
-
-                response.send({
-                    status: 'OK',
-                    message: `Query status: ${networkQuery.status}`,
-                });
-            }).catch((error) => {
-                logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
-                response.send({
-                    status: 'FAIL',
-                    error: 'Fail to process.',
-                });
-            });
+            dhService.dataLocationQuery(id, response);
         });
 
         const processImport = async (response, error, data) => {

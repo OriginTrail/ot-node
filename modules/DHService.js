@@ -748,6 +748,96 @@ class DHService {
         await this.blockchain.answerLitigation(importId, answer);
     }
 
+    async dataLocationQuery(queryId, response) {
+        try {
+            const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
+            if (networkQuery.status === 'FINISHED') {
+                // Fetch the results.
+                const importIds =
+                    await this.graphStorage.findImportIds(networkQuery.query.toString());
+                const decryptKeys = {};
+
+                // Get decode keys.
+                const holdingData = await Models.holding_data.findAll({
+                    where: {
+                        id: {
+                            [Op.in]: importIds,
+                        },
+                    },
+                });
+
+                if (holdingData) {
+                    holdingData.forEach((data) => {
+                        decryptKeys[data.id] = data.data_public_key;
+                    });
+                }
+
+                const encodedVertices =
+                    await this.graphStorage.dataLocationQuery(networkQuery.query.toString());
+                const vertices = [];
+
+                encodedVertices.forEach((encodedVertex) => {
+                    const foundIds =
+                        encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
+
+                    switch (foundIds.length) {
+                    case 1:
+                        // Decrypt vertex.
+                        {
+                            const decryptedVertex = Utilities.copyObject(encodedVertex);
+                            decryptedVertex.data =
+                                Encryption.decryptObject(
+                                    encodedVertex.data,
+                                    decryptKeys[foundIds[0]],
+                                );
+                            vertices.push(decryptedVertex);
+                        }
+                        break;
+                    case 0:
+                        // Vertex is not encrypted.
+                        vertices.push(Utilities.copyObject(encodedVertex));
+                        break;
+                    default:
+                        // Multiple keys founded. Temp solution.
+                        for (let i = 0; i < foundIds.length; i += 1) {
+                            try {
+                                const decryptedVertex = Utilities.copyObject(encodedVertex);
+                                decryptedVertex.data =
+                                        Encryption.decryptObject(
+                                            encodedVertex.data,
+                                            decryptKeys[foundIds[i]],
+                                        );
+                                vertices.push(decryptedVertex);
+                                break; // Found the right key.
+                            } catch (error) {
+                                // Ignore.
+                            }
+                        }
+                        break;
+                    }
+                });
+
+                response.send({
+                    status: 'OK',
+                    message: `Query status: ${networkQuery.status}`,
+                    vertices,
+                });
+                return;
+            }
+
+            response.send({
+                status: 'OK',
+                message: `Query status: ${networkQuery.status}`,
+            });
+        } catch (error) {
+            this.log.info(`Failed to process network query status for ID ${id}. ${error}.`);
+            response.send({
+                status: 'FAIL',
+                error: 'Fail to process.',
+            });
+        }
+    }
+
     listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated', 'LitigationInitiated', 'LitigationCompleted']);
     }
