@@ -479,8 +479,23 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/query/:query_param', (req, res) => {
+            log.info('GET Query received!');
+            if (!req.params.query_param) {
+                res.send({
+                    status: 'FAIL',
+                    error: 'Param required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-status', {
+                id: req.params.query_param,
+                response: res,
+            });
+        });
+
         server.post('/api/network/query', (req, res) => {
-            log.important('Query received!');
+            log.important('POST Query received!');
 
             const { query } = req.body;
             emitter.emit('network-query', {
