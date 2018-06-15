@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 require('dotenv').config();
 const {
     describe, beforeEach, afterEach, it,
@@ -32,6 +33,26 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/01_Green_packing.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/02_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/03_Green_to_pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/04_Pink_to_orange_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/05_Pink_to_orange_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/06_Orange_unpacking.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Pallet/07_Orange_unpacking_all.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/03_Pink_to_Orange_shipment_part1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/04_Pink_to_Orange_receipt_part1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/05_Pink_to_Orange_shipment_part2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/06_Pink_to_Orange_receipt_part2.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/01_Green_to_pink_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/02_Green_to_Pink_receipt.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/03_Pink_ZKN_Transform.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/04_Pink_to_Orange_shipment_part1.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/05_Pink_to_Orange_receipt_part1.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/06_Pink_to_Orange_shipment_part2.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_ZK/07_Pink_to_Orange_receipt_part2.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -255,6 +276,32 @@ describe('GS1 Importer tests', () => {
                 await checkGraphExample3XmlVerticeContent();
             } else if (xml === 'GraphExample_4.xml') {
                 await checkGraphExample4XmlVerticeContent();
+            } else if (xml === '01_Green_packing.xml') {
+                // TODO implement some checks
+            } else if (xml === '02_Green_to_pink_shipment.xml') {
+                // TODO implement some checks
+            } else if (xml === '03_Green_to_pink_receipt.xml') {
+                // TODO implement some checks
+            } else if (xml === '04_Pink_to_orange_shipment.xml') {
+                // TODO implement some checks
+            } else if (xml === '05_Pink_to_orange_receipt.xml') {
+                // TODO implement some checks
+            } else if (xml === '06_Orange_unpacking.xml') {
+                // TODO implement some checks
+            } else if (xml === '07_Orange_unpacking_all.xml') {
+                // TODO implement some checks
+            } else if (xml === '01_Green_to_pink_shipment.xml') {
+                // TODO implement some checks
+            } else if (xml === '02_Green_to_Pink_receipt.xml') {
+                // TODO implement some checks
+            } else if (xml === '03_Pink_to_Orange_shipment_part1.xml') {
+                // TODO implement some checks
+            } else if (xml === '04_Pink_to_Orange_receipt_part1.xml') {
+                // TODO implement some checks
+            } else if (xml === '05_Pink_to_Orange_shipment_part2.xml') {
+                // TODO implement some checks
+            } else if (xml === '06_Pink_to_Orange_receipt_part2.xml') {
+                // TODO implement some checks
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }

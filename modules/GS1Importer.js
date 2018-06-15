@@ -244,6 +244,7 @@ class GS1Importer {
         }
 
         for (const batch of batches) {
+            // eslint-disable-next-line prefer-destructuring
             const productId = batch.attributes.productId;
 
             const identifiers = {
