@@ -250,7 +250,6 @@ class OTNode {
             config.dh_stake_factor,
             config.read_stake_factor,
             config.dh_max_time_mins,
-            config.dh_max_data_size_bytes,
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(config.identity)) {
@@ -480,8 +479,23 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/query/:query_param', (req, res) => {
+            log.info('GET Query received!');
+            if (!req.params.query_param) {
+                res.send({
+                    status: 'FAIL',
+                    error: 'Param required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-status', {
+                id: req.params.query_param,
+                response: res,
+            });
+        });
+
         server.post('/api/network/query', (req, res) => {
-            log.important('Query received!');
+            log.important('POST Query received!');
 
             const { query } = req.body;
             emitter.emit('network-query', {
