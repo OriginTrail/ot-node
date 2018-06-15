@@ -158,12 +158,11 @@ class Ethereum {
      * @param stakePerByteMinute Stake for byte per minute
      * @param readStakeFactor Read stake factor
      * @param maxTimeMins   Max time in minutes
-     * @param maxSizeBytes  Max size in bytes
      * @return {Promise<any>}
      */
     createProfile(
         nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins, maxSizeBytes,
+        readStakeFactor, maxTimeMins,
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -171,11 +170,11 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.trace(`Create profile for node ${nodeId}`);
+        this.log.trace(`createProfile(${nodeId}, ${pricePerByteMinute} ${stakePerByteMinute}, ${readStakeFactor} ${maxTimeMins})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
             [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
-                readStakeFactor, maxTimeMins, maxSizeBytes], options,
+                readStakeFactor, maxTimeMins], options,
         );
     }
 
@@ -793,7 +792,7 @@ class Ethereum {
             to: this.readingContractAddress,
         };
 
-        this.log.trace('sendProofData ()');
+        this.log.trace(`sendProofData (${importId} ${dvWallet} ${checksumLeft} ${checksumRight} ${checksumHash}, ${randomNumber1}, ${randomNumber2} ${decryptionKey} ${blockIndex})`);
         return this.transactions.queueTransaction(
             this.readingContractAbi, 'sendProofData',
             [

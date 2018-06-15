@@ -45,16 +45,15 @@ class Blockchain {
      * @param stakePerByteMinute Stake for byte per minute
      * @param readStakeFactor Read stake factor
      * @param maxTimeMins   Max time in minutes
-     * @param maxSizeBytes  Max size in bytes
      * @return {Promise<any>}
      */
     createProfile(
         nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins, maxSizeBytes,
+        readStakeFactor, maxTimeMins,
     ) {
         return this.blockchain.createProfile(
             nodeId, pricePerByteMinute, stakePerByteMinute,
-            readStakeFactor, maxTimeMins, maxSizeBytes,
+            readStakeFactor, maxTimeMins,
         );
     }
 

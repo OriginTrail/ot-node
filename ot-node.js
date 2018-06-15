@@ -250,7 +250,6 @@ class OTNode {
             config.dh_stake_factor,
             config.read_stake_factor,
             config.dh_max_time_mins,
-            config.dh_max_data_size_bytes,
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(config.identity)) {

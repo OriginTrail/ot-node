@@ -10,10 +10,6 @@ module.exports = {
         value: '1000',
     },
     {
-        key: 'dh_max_data_size_bytes',
-        value: '1000000',
-    },
-    {
         key: 'dh_max_stake',
         value: '1000',
     },
