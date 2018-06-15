@@ -1,4 +1,4 @@
-require('dotenv').config();
+const result = require('dotenv').config({ path: `${__dirname}/../../../.env` });
 var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
 
 var mnemonic = process.env.TRUFFLE_MNEMONIC;
@@ -36,7 +36,7 @@ module.exports = {
         rinkeby: {
             host: 'localhost', // Connect to geth on the specified
             port: 8545,
-            from: '0xadcdb624b01692810fd00940c1b9dfa3dc47be4e', // default address to use for any transaction Truffle makes during migrations
+            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
             gas: 4612388, // Gas limit used for deploys
         },

@@ -106,7 +106,6 @@ contract('Bidding testing', async (accounts) => {
                 DH_stake[i],
                 DH_read_factor[i],
                 1000,
-                1000,
                 { from: accounts[i] },
             );
         }

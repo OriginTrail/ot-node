@@ -27,6 +27,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        status: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('replicated_data'),
 };

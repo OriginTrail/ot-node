@@ -635,7 +635,7 @@ class DHService {
                 ['uint256'],
                 [epkChecksum],
             ).toString('hex'));
-        const e = crypto.randomBytes(16); // 128bits.
+        const e = crypto.randomBytes(32); // 256bits.
         const eHex = Utilities.normalizeHex(e.toString('hex'));
         // For litigation we'll need: Encryption.xor(selectedBlock, e);
 
@@ -724,7 +724,10 @@ class DHService {
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
-            Utilities.normalizeHex(Encryption.xor(selectedBlock, eHex)),
+            Utilities.normalizeHex(Encryption.xor(
+                Buffer.from(selectedBlock, 'ascii').toString('hex'),
+                Utilities.denormalizeHex(eHex),
+            )),
         );
         this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
     }

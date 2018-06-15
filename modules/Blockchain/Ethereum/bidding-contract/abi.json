@@ -3,20 +3,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_space_in_bytes",
-        "type": "uint256"
-      }
-    ],
-    "name": "setFreeSpace",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "import_id",
         "type": "bytes32"
       },
@@ -295,50 +281,12 @@
         "type": "uint256"
       },
       {
-        "name": "size_available_in_bytes",
-        "type": "uint256"
-      },
-      {
         "name": "active",
         "type": "bool"
       }
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "node_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "price_per_byte_minute",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_per_byte_minute",
-        "type": "uint256"
-      },
-      {
-        "name": "read_stake_factor",
-        "type": "uint256"
-      },
-      {
-        "name": "max_time_in_minutes",
-        "type": "uint256"
-      },
-      {
-        "name": "max_size_in_bytes",
-        "type": "uint256"
-      }
-    ],
-    "name": "createProfile",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -412,6 +360,36 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "node_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "price_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "stake_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "read_stake_factor",
+        "type": "uint256"
+      },
+      {
+        "name": "max_time_in_minutes",
+        "type": "uint256"
+      }
+    ],
+    "name": "createProfile",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

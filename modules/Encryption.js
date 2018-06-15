@@ -207,6 +207,7 @@ class Encryption {
         const blockHex = Buffer.from(block).toString('hex');
         // const g = (new BN(11)).toRed(red);
         const r1Bn = new BN(r1);
+        const deg256 = (new BN(2)).pow(new BN(256));
         const bi = (new BN(blockHex, 16).mul(new BN(blockNumber + offset)));
 
         let blockChecksum = new BN(abi.soliditySHA3(['bytes32'], [bi]).toString('hex').substring(2), 16);
@@ -291,7 +292,7 @@ class Encryption {
 
         const spd = M1C.add(missingC).add(M2C);
 
-        if (abi.soliditySHA3(['bytes32'], [spd.toString('hex')]).toString('hex') !== spdHash.toString('hex')) {
+        if (abi.soliditySHA3(['uint256'], [spd.toString('hex')]).toString('hex') !== spdHash.toString('hex')) {
             return false;
         }
 

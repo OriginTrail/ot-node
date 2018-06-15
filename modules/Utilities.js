@@ -845,7 +845,7 @@ class Utilities {
             throw Error(`Number ${number} has more digits than required.`);
         }
 
-        return new Array(digitCount - hex.length) + hex;
+        return new Array(digitCount - hex.length).join('0') + hex;
     }
 }
 
