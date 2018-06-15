@@ -599,7 +599,8 @@ class GS1Importer {
                 eventVertices.push(...currentEventVertices);
             } else {
                 for (const category of eventCategories) {
-                    updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${eventId}_${category}`, importId));
+                    const key = this.helper.createKey('is', senderId, existingEventVertex._key, category);
+                    updates.push(this.db.updateImports('ot_edges', key, importId));
                 }
 
                 // eslint-disable-next-line
@@ -670,9 +671,6 @@ class GS1Importer {
                         _from: `ot_vertices/${vertex._key}`,
                         _to: `ot_vertices/${category}`,
                         edge_type: 'IS',
-                        identifiers: {
-                            uid: `event_batch_${vertex.identifiers.uid}_${category}`,
-                        },
                     });
                 });
             }
@@ -702,18 +700,6 @@ class GS1Importer {
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassProductId}`,
                 edge_type: 'IS',
-            });
-        });
-
-        eventVertices.forEach((vertex) => {
-            vertex.data.categories.forEach(async (category) => {
-                const classKey = await this.db.getClassId(category);
-                classObjectEdges.push({
-                    _key: this.helper.createKey('is', senderId, vertex._key, classKey),
-                    _from: `ot_vertices/${vertex._key}`,
-                    _to: `ot_vertices/${classKey}`,
-                    edge_type: 'IS',
-                });
             });
         });
 
@@ -765,6 +751,7 @@ class GS1Importer {
             throw e;
         }
         await this.db.commit();
+
         console.log('Done parsing and importing.');
 
         let edgesPerImport = await this.db.findEdgesByImportId(importId);
