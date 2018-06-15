@@ -78,7 +78,6 @@ class Encryption {
     static padKey(publicKey) {
         publicKey = publicKey.substring(27, 160);
         const randomBlock = crypto.randomBytes(1280);
-        console.log();
 
         const keyBuffer = Buffer.from(publicKey);
 
@@ -236,9 +235,6 @@ class Encryption {
         let blockNum = 1;
 
         let checksum = new BN(0);
-
-        console.log(data.length);
-
         while (i < data.length) {
             const dataBlock = data.substring(i, i + 32);
             const blockChecksum = this.calculateBlockChecksum(dataBlock, blockNum, r1, offset);
