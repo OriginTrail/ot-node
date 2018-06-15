@@ -108,6 +108,14 @@ class GraphStorage {
     }
 
     /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param inputQuery
+     */
+    async dataLocationQuery(inputQuery) {
+        return this.dataLocationQuery(inputQuery);
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param depth             Traversal depth
      * @param startVertex       Starting vertex

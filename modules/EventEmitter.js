@@ -3,6 +3,7 @@ const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
+const Op = require('sequelize/lib/operators');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 
@@ -35,6 +36,7 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            graph,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -97,10 +99,83 @@ class EventEmitter {
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
-        this.globalEmitter.on('network-query', (data) => {
+        this.globalEmitter.on('network-query-status', (data) => {
             const { id, response } = data;
 
-            Models.network_queries.find({ where: { id } }).then((networkQuery) => {
+            Models.network_queries.find({ where: { id } }).then(async (networkQuery) => {
+                if (networkQuery.status === 'FINISHED') {
+                    // Fetch the results.
+                    const importIds = await graph.findImportIds(networkQuery.query.toString());
+                    const decryptKeys = {};
+
+                    // Get decode keys.
+                    const holdingData = await Models.holding_data.findAll({
+                        where: {
+                            id: {
+                                [Op.in]: importIds,
+                            },
+                        },
+                    });
+
+                    if (holdingData) {
+                        holdingData.forEach((data) => {
+                            decryptKeys[data.id] = data.data_public_key;
+                        });
+                    }
+
+                    const encodedVertices =
+                        await graph.dataLocationQuery(networkQuery.query.toString());
+                    const vertices = [];
+
+                    encodedVertices.forEach((encodedVertex) => {
+                        const foundIds =
+                            encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
+
+                        switch (foundIds.length) {
+                        case 1:
+                            // Decrypt vertex.
+                            {
+                                const decryptedVertex = Utilities.copyObject(encodedVertex);
+                                decryptedVertex.data =
+                                Encryption.decryptObject(
+                                    encodedVertex.data,
+                                    decryptKeys[foundIds[0]],
+                                );
+                                vertices.push(decryptedVertex);
+                            }
+                            break;
+                        case 0:
+                            // Vertex is not encrypted.
+                            vertices.push(Utilities.copyObject(encodedVertex));
+                            break;
+                        default:
+                            // Multiple keys founded. Temp solution.
+                            for (let i = 0; i < foundIds.length; i += 1) {
+                                try {
+                                    const decryptedVertex = Utilities.copyObject(encodedVertex);
+                                    decryptedVertex.data =
+                                        Encryption.decryptObject(
+                                            encodedVertex.data,
+                                            decryptKeys[foundIds[i]],
+                                        );
+                                    vertices.push(decryptedVertex);
+                                    break; // Found the right key.
+                                } catch (error) {
+                                    ;
+                                }
+                            }
+                            break;
+                        }
+                    });
+
+                    response.send({
+                        status: 'OK',
+                        message: `Query status: ${networkQuery.status}`,
+                        vertices,
+                    });
+                    return;
+                }
+
                 response.send({
                     status: 'OK',
                     message: `Query status: ${networkQuery.status}`,
