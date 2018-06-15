@@ -107,7 +107,7 @@ contract Reading is Ownable{
 	event PurchaseDisputed(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseDisputeCompleted(bytes32 import_id, address DH_wallet, address DV_wallet, bool proof_was_correct);
 
-	function Reading(address escrow_address) 
+	function Reading(address escrow_address)
 	public {
 		require(escrow_address != address(0));
 		escrow = escrow_address;
@@ -135,7 +135,7 @@ contract Reading is Ownable{
 		this_purchased_data.DC_wallet = address(0);
 		this_purchased_data.distribution_root_hash = bytes32(0);
 		this_purchased_data.checksum = 0;
-	}	
+	}
 
 	function initiatePurchase(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_factor)
 	public {
@@ -252,7 +252,7 @@ contract Reading is Ownable{
 		emit PurchaseDisputed(import_id, DH_wallet, msg.sender);
 	}
 
-	function sendProofData(bytes32 import_id, address DV_wallet, 
+	function sendProofData(bytes32 import_id, address DV_wallet,
 			uint256 checksum_left, uint256 checksum_right, bytes32 checksum_hash,
 			uint256 random_number_1, uint256 random_number_2,
 			uint256 decryption_key, uint256 block_index)
@@ -260,19 +260,16 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		bool commitment_proof = this_purchase.commitment == keccak256(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index);
-		bool checksum_hash_proof = 
-			checksum_hash == keccak256(checksum_left +
-								(uint256(keccak256((block_index * decryption_key ^ this_purchase.encrypted_block)
-												+ random_number_1)))
-											+ checksum_right - random_number_2);
+		bool checksum_hash_proof =
+			checksum_hash == keccak256(bytes32(checksum_left + uint256(keccak256(uint256(uint256(keccak256(decryption_key ^ this_purchase.encrypted_block)) - block_index - 1))) % (2**128) + r1 + checksum_right - r2));
 
 		if(commitment_proof == true && checksum_hash_proof == true) {
 			bidding.increaseBalance(msg.sender, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
-			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, true);		
+			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, true);
 		}
 		else {
 			bidding.increaseBalance(DV_wallet, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
-			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);		
+			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
 		}
 		this_purchase.purchase_status = PurchaseStatus.completed;
 	}

@@ -204,19 +204,19 @@ class Encryption {
             throw Error('data.length % 32 !== 0');
         }
 
-        const blockHex = Buffer.from(block).toString('hex');
+        const blockHex = Buffer.from(block, 'ascii').toString('hex');
         // const g = (new BN(11)).toRed(red);
         const r1Bn = new BN(r1);
-        const deg256 = (new BN(2)).pow(new BN(256));
-        const bi = (new BN(blockHex, 16).mul(new BN(blockNumber + offset)));
 
-        let blockChecksum = new BN(abi.soliditySHA3(['bytes32'], [bi]).toString('hex').substring(2), 16);
-        blockChecksum.add(r1Bn);
+        let blockChecksum = abi.soliditySHA3(['uint256'], [new BN(blockHex, 16)]).toString('hex');
 
-        blockChecksum = abi.soliditySHA3(['bytes32'], [blockChecksum]).toString('hex');
+        blockChecksum = (new BN(blockChecksum, 16).sub(new BN(blockNumber + offset)));
 
+        const deg128 = new BN((new BN(2)).pow(new BN(128)));
 
-        return (new BN(blockChecksum.substring(2), 16).add(r1Bn)).toString('hex');
+        blockChecksum = abi.soliditySHA3(['uint256'], [blockChecksum]).toString('hex');
+
+        return (new BN(blockChecksum, 16).umod(deg128).add(r1Bn)).toString('hex');
     }
 
     /**
@@ -229,13 +229,15 @@ class Encryption {
      */
     static calculateDataChecksum(data, r1, r2, offset = 0) {
         if (data.length % 32 !== 0) {
-            throw Error('data.length % 32 !== 0');
+            return false;
         }
 
         let i = 0;
         let blockNum = 1;
 
         let checksum = new BN(0);
+
+        console.log(data.length);
 
         while (i < data.length) {
             const dataBlock = data.substring(i, i + 32);
