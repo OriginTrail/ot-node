@@ -59,7 +59,6 @@ class GS1Importer {
 
         // Check for vocabularies.
         const vocabularyElements = this.helper.arrayze(vocabularyListElement.Vocabulary);
-
         for (const vocabularyElement of vocabularyElements) {
             switch (vocabularyElement.type) {
             case 'urn:ot:mda:actor':
@@ -295,12 +294,10 @@ class GS1Importer {
             const currentEventEdges = [];
             const currentEventVertices = [];
             const currentBatchesToRemove = [];
-
             const eventId = this.helper.getEventId(senderId, event);
 
-            const { extension } = event;
-
             let eventCategories;
+            const { extension } = event;
             if (extension.extension) {
                 const eventClass = extension.extension.OTEventClass;
                 eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'ot:events:'));
