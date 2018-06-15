@@ -113,7 +113,6 @@ class ArangoJS {
         }
         queryString += `${filters.join(' AND ')} RETURN v`;
         return this.runQuery(queryString, params);
-
     }
 
     /**

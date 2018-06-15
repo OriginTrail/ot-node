@@ -161,7 +161,7 @@ class EventEmitter {
                                     vertices.push(decryptedVertex);
                                     break; // Found the right key.
                                 } catch (error) {
-                                    ;
+                                    // ignore
                                 }
                             }
                             break;
