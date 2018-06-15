@@ -96,8 +96,6 @@ class DHService {
                 return;
             }
 
-            const maxDataSizeBytes = new BN(this.config.dh_max_data_size_bytes, 10);
-
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
             maxTokenAmount = new BN(maxTokenAmount);
@@ -118,11 +116,6 @@ class DHService {
 
             if (minStakeAmount.gt(myStake)) {
                 this.log.info(`Skipping offer ${importId}. Stake too high.`);
-                return;
-            }
-
-            if (maxDataSizeBytes.lt(dataSizeBytes)) {
-                this.log.trace(`Skipping offer because of data size. Offer data size in bytes is ${dataSizeBytes}.`);
                 return;
             }
 
