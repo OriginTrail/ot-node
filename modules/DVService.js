@@ -394,7 +394,7 @@ class DVService {
                 ).toString('ascii') + m2;
 
             try {
-                let badepk = epk;
+                const badepk = epk;
                 badepk[0] = 'Q';
                 const publicKey = Encryption.unpackEPK(epk);
                 const holdingData = await Models.holding_data.create({

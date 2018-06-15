@@ -38,7 +38,7 @@ class EventEmitter {
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
-            importer.importXML(data.filepath, (response) => {
+            importer._importXML(data.filepath, (response) => {
                 // emit response
             });
         });

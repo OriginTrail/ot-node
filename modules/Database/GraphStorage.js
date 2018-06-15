@@ -406,6 +406,24 @@ class GraphStorage {
     }
 
     /**
+     * Mimics commit opertaion
+     * Removes inTransaction fields
+     * @return {Promise<void>}
+     */
+    async commit() {
+        await this.db.commit();
+    }
+
+    /**
+     * Mimics rollback opertaion
+     * Removes elements in transaction
+     * @return {Promise<void>}
+     */
+    async rollback() {
+        await this.db.rollback();
+    }
+
+    /**
      * Initializes database with predefined collections and vertices.
      * @returns {Promise<void>}
      * @private

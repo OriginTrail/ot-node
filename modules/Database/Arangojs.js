@@ -534,6 +534,34 @@ class ArangoJS {
     }
 
     /**
+     * Mimics commit opertaion
+     * Removes inTransaction fields
+     * @return {Promise<void>}
+     */
+    async commit() {
+        const queryUpdateTemplate = 'FOR v IN __COLLECTION__ ' +
+            'FILTER v.inTransaction == true ' +
+            'UPDATE v WITH { inTransaction: null } ' +
+            'IN __COLLECTION__ OPTIONS { keepNull: false } ' +
+            'RETURN NEW';
+
+        await this.runQuery(queryUpdateTemplate.replace(/__COLLECTION__/g, 'ot_vertices'));
+        await this.runQuery(queryUpdateTemplate.replace(/__COLLECTION__/g, 'ot_edges'));
+    }
+
+    /**
+     * Mimics rollback opertaion
+     * Removes elements in transaction
+     * @return {Promise<void>}
+     */
+    async rollback() {
+        let queryString = 'FOR v IN ot_vertices FILTER v.inTransaction == true REMOVE v IN ot_vertices';
+        await this.runQuery(queryString);
+        queryString = 'FOR e IN ot_edges FILTER e.inTransaction == true REMOVE e IN ot_edges';
+        await this.runQuery(queryString);
+    }
+
+    /**
      * Normalize properties returned from Arango
      * @param document
      * @returns {*}
