@@ -312,9 +312,8 @@ class OTNode {
         server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
-            log.notify('%s exposed at %s', server.name, server.url);
+            log.notify(`${server.name} exposed at ${server.url}`);
         });
-
         this.exposeAPIRoutes(server, emitter);
     }
 
