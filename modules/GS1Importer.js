@@ -11,6 +11,7 @@ class GS1Importer {
     constructor(ctx) {
         this.db = ctx.graphStorage;
         this.helper = ctx.gs1Utilities;
+        this.log = ctx.logger;
     }
 
     async processXML(err, result) {
@@ -41,6 +42,7 @@ class GS1Importer {
         const batchEdges = [];
         const batchesVertices = [];
         const eventVertices = [];
+        const updates = [];
 
         const EDGE_KEY_TEMPLATE = 'ot_vertices/OT_KEY_';
 
@@ -596,22 +598,21 @@ class GS1Importer {
                 eventEdges.push(...tmpEventEdges);
                 eventVertices.push(...tmpEventVertices);
             } else {
-                const updates = [];
                 for (const category of eventCategories) {
                     updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${eventId}_${category}`, importId));
                 }
-                // eslint-disable-next-line
-                await Promise.all(updates);
 
                 // eslint-disable-next-line
                 await Promise.all(tmpEventEdges.map(async (edge) => {
                     if (edge.edge_type !== 'EVENT_CONNECTION') {
-                        await this.db
-                            .updateEdgeImportsByUID(senderId, edge.identifiers.uid, importId);
+                        updates.push(this.db.updateEdgeImportsByUID(
+                            senderId,
+                            edge.identifiers.uid, importId,
+                        ));
                     }
                 }));
                 // eslint-disable-next-line
-                await Promise.all(tmpEventVertices.map(vertice => this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
+                tmpEventVertices.map(vertice => updates.push(this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
                 batchesToRemove.push(...tmpBatchesToRemove);
             }
         }
@@ -628,10 +629,15 @@ class GS1Importer {
                 }
             }
         }
-        await Promise.all(updateBatchImports.map(vertexId =>
-            this.db.updateVertexImportsByUID(senderId, vertexId, importId)));
-        await Promise.all(updateBatchProductImports.map(edgeId =>
-            this.db.updateEdgeImportsByUID(senderId, edgeId, importId)));
+
+        updateBatchImports.each(vertexId => updates.push(this.db.updateVertexImportsByUID(
+            senderId,
+            vertexId, importId,
+        )));
+        updateBatchProductImports.each(edgeId => updates.push(this.db.updateEdgeImportsByUID(
+            senderId,
+            edgeId, importId,
+        )));
 
         for (const batch of batchesVertices) {
             const productId = batch.data.parent_id;
@@ -750,11 +756,14 @@ class GS1Importer {
                 e.inTransaction = true;
                 return e;
             });
-
             await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
+
+            // updates
+            await Promise.all(updates);
             await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
             await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
         } catch (e) {
+            this.log.warn(`Failed to import data. ${e}`);
             await this.db.rollback(); // delete elements in transaction
             throw e;
         }
