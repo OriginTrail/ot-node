@@ -119,7 +119,7 @@ class DVService {
                 // Finish auction.
                 const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
                 networkQuery.status = 'PROCESSING';
-                await networkQuery.save({ fields: ['status'] })
+                await networkQuery.save({ fields: ['status'] });
 
                 resolve(lowestOffer);
             }, totalTime);
