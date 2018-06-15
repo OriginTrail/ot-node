@@ -273,18 +273,26 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t distance[${i}] = ${response.toNumber()}`);
         }
 
-        // var promises = [];
+        var first_bid_index;
         for (i = 3; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             await bidding.addBid(import_id, node_id[i], { from: accounts[i] });
             // eslint-disable-next-line no-await-in-loop
             response = await bidding.offer.call(import_id);
-            const first_bid_index = response[7].toNumber();
-            console.log(`\t first_bid_index =  ${first_bid_index}`);
+            first_bid_index = response[7].toNumber();
+            console.log(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
         }
-        // await Promise.all(promises);
 
-        // assert.equal(first_bid_index, 8, 'Something wrong');
+        for (i = 3; i < 10; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            response = await bidding.amICloseEnough.call(
+                import_id,
+                node_id[i],
+                { from: accounts[i] },
+            );
+        }
+
+        assert.equal(first_bid_index, 8, 'Something wrong');
     });
 
     // EscrowDefinition

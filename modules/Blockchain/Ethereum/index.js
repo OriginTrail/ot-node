@@ -549,6 +549,26 @@ class Ethereum {
         clearInterval(eventHandle);
     }
 
+    /**
+     * Checks if the node would rank in the top n + 1 network bids.
+     * @param importId Offer import id
+     * @param wallet DH wallet
+     * @param dhNodeId KADemplia ID of the DH node that wants to add bid
+     * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
+     */
+    amICloseEnough(importId, wallet, dhNodeId) {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Check if close enough for ${wallet}:${dhNodeId}`);
+            this.biddingContract.methods.amICloseEnough(importId, dhNodeId).call({
+                from: wallet,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
 
     /**
      * Adds bid to the offer on Ethereum blockchain

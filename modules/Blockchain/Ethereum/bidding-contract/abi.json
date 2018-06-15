@@ -142,6 +142,29 @@
       {
         "name": "import_id",
         "type": "bytes32"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "amICloseEnough",
+    "outputs": [
+      {
+        "name": "would_get_chosen",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
       }
     ],
     "name": "getOfferStatus",

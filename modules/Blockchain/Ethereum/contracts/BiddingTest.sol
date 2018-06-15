@@ -222,6 +222,32 @@ contract BiddingTest {
 		this_bid.active = true;
 	}
 
+	function amICloseEnough(bytes32 import_id, bytes32 DH_node_id)
+	public view returns (bool would_get_chosen){
+		OfferDefinition storage this_offer = offer[import_id];
+
+		if(this_offer.first_bid_index == uint(-1)){
+			return true;
+		}
+		else{
+			uint256 distance = calculateDistance(import_id, msg.sender, DH_node_id);
+			uint256 current_index = this_offer.first_bid_index;
+			uint256 i = 0;
+			if(this_offer.bid[current_index].distance < distance){
+				return true;
+			}
+			else {
+				while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance >= distance){
+					current_index = this_offer.bid[current_index].next_bid;
+					i++;
+				}
+				if( i < this_offer.replication_factor + 1) return true;
+				else return false;
+			}
+		}
+
+	}
+
 	function addBid(bytes32 import_id, bytes32 DH_node_id)
 	public returns (uint distance){
 		require(offer[import_id].active && !offer[import_id].finalized);
@@ -250,22 +276,24 @@ contract BiddingTest {
 		}
 		else{
 			uint256 current_index = this_offer.first_bid_index;
-			if(this_offer.bid[current_index].distance > new_bid.distance){
+			uint256 previous_index = uint(-1);
+			if(this_offer.bid[current_index].distance < new_bid.distance){
 				this_offer.first_bid_index = this_bid_index;
 				new_bid.next_bid = current_index;
 				this_offer.bid.push(new_bid);
 			}
 			else {
-				while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance >= new_bid.distance){
+				while(current_index != uint(-1) && this_offer.bid[current_index].distance >= new_bid.distance){
+					previous_index = current_index;
 					current_index = this_offer.bid[current_index].next_bid;
 				}
-				if(this_offer.bid[current_index].next_bid == uint(-1)){
-					this_offer.bid[current_index].next_bid = this_bid_index;
+				if(current_index == uint(-1)){
+					this_offer.bid[previous_index].next_bid = this_bid_index;
 					this_offer.bid.push(new_bid);
 				}
 				else{
-					new_bid.next_bid = this_offer.bid[current_index].next_bid;
-					this_offer.bid[current_index].next_bid = this_bid_index;
+					new_bid.next_bid = current_index;
+					this_offer.bid[previous_index].next_bid = this_bid_index;
 					this_offer.bid.push(new_bid);
 				}
 			}
