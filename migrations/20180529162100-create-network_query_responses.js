@@ -1,56 +1,44 @@
 
 module.exports = {
-    up: (queryInterface, Sequelize) => queryInterface.createTable('data_holders', {
+    up: (queryInterface, Sequelize) => queryInterface.createTable('network_query_responses', {
         id: {
             allowNull: false,
             autoIncrement: true,
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        import_id: {
+        query_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        dh_wallet: {
+        wallet: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        dh_kademlia_id: {
+        node_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        m1: {
+        imports: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        m2: {
+        data_size: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        e: {
+        data_price: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        sd: {
+        stake_factor: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        r1: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
-        r2: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
-        block_number: {
-            allowNull: false,
-            type: Sequelize.INTEGER,
-        },
-        block: {
+        reply_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('data_holders'),
+    down: (queryInterface, Sequelize) => queryInterface.dropTable('network_query_responses'),
 };

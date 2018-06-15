@@ -2,10 +2,14 @@ const Utilities = require('../Utilities');
 const ArangoJS = require('./Arangojs');
 const Neo4j = require('./Neo4j');
 
-const log = Utilities.getLogger();
-
 class GraphStorage {
-    constructor(selectedDatabase) {
+    /**
+     * Default constructor
+     * @param logger
+     * @param selectedDatabase Selected graph database
+     */
+    constructor(selectedDatabase, logger) {
+        this.logger = logger;
         this.selectedDatabase = selectedDatabase;
         this._allowedClasses = ['Location', 'Actor', 'Product', 'Transport',
             'Transformation', 'Observation', 'Ownership'];
@@ -29,6 +33,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -45,6 +50,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -53,7 +59,7 @@ class GraphStorage {
                     }
                     break;
                 default:
-                    log.error(this.selectedDatabase);
+                    this.logger.error(this.selectedDatabase);
                     reject(Error('Unsupported graph database system'));
                 }
             }
@@ -71,6 +77,28 @@ class GraphStorage {
                 reject(Error('Not connected to graph database'));
             } else {
                 this.db.findVertices(queryObject).then((result) => {
+                    resolve(result);
+                }).catch((err) => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
+    /**
+     * Finds imports IDs based on data location query
+     *
+     * DataLocationQuery structure: [[path, value, opcode]*]
+     *
+     * @param dataLocationQuery
+     * @return {Promise}
+     */
+    findImportIds(dataLocationQuery) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(Error('Not connected to graph database'));
+            } else {
+                this.db.findImportIds(dataLocationQuery).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -222,6 +250,14 @@ class GraphStorage {
     }
 
     /**
+     * Finds all object classes
+     * @return {Promise<*>}
+     */
+    findObjectClassVertices() {
+        return this.db.findObjectClassVertices();
+    }
+
+    /**
      * Get list of vertices by import ID
      * @param importId   Import ID
      * @return {Promise}
@@ -242,15 +278,15 @@ class GraphStorage {
 
     /**
      * Gets edges by import ID from the underlying database
-     * @param data_id       Import ID
+     * @param import_id       Import ID
      * @returns {Promise}
      */
-    findEdgesByImportId(data_id) {
+    findEdgesByImportId(import_id) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findEdgesByImportId(data_id).then((result) => {
+                this.db.findEdgesByImportId(import_id).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -367,6 +403,24 @@ class GraphStorage {
                 });
             }
         });
+    }
+
+    /**
+     * Mimics commit opertaion
+     * Removes inTransaction fields
+     * @return {Promise<void>}
+     */
+    async commit() {
+        await this.db.commit();
+    }
+
+    /**
+     * Mimics rollback opertaion
+     * Removes elements in transaction
+     * @return {Promise<void>}
+     */
+    async rollback() {
+        await this.db.rollback();
     }
 
     /**
