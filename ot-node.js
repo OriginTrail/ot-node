@@ -239,11 +239,11 @@ class OTNode {
         const { identity } = config;
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.warn(`Profile has already been created for ${identity}`);
+            log.info(`Profile has already been created for ${identity}`);
             return;
         }
 
-        log.warn(`Profile is being created for ${identity}. This could take a while...`);
+        log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
             config.dh_price,
@@ -253,7 +253,7 @@ class OTNode {
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(identity)) {
-            log.warn(`Profile created for node: ${identity}`);
+            log.notify(`Profile created for node: ${identity}`);
         }
     }
 
