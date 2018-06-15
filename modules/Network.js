@@ -34,10 +34,10 @@ class Network {
     }
 
     /**
-     * Starts the node
+     * Initializes keys
      * @return {Promise<void>}
      */
-    async start() {
+    async initialize() {
         // Check config
         this.networkUtilities.verifyConfiguration(config);
 
@@ -59,8 +59,16 @@ class Network {
 
         this.log.notify(`My identity: ${this.identity}`);
         config.identity = this.identity;
+    }
 
+    /**
+     * Starts the node
+     * @return {Promise<void>}
+     */
+    async start() {
         this.log.info('Initializing network');
+
+        const { _, parentkey } = this.networkUtilities.getIdentityKeys(this.xprivkey);
 
         // Initialize public contact data
         const contact = {
