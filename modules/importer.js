@@ -50,6 +50,10 @@ class Importer {
         });
     }
 
+    async importJSON(json_document) {
+        return this._import('JSON', json_document);
+    }
+
     async _importJSON(json_document) {
         this.log.info('Entering importJSON');
         const { vertices, edges, import_id } = json_document;
@@ -147,6 +151,10 @@ class Importer {
         };
     }
 
+    async importWOT(document) {
+        return this._import('WOT_JSON_FILE', document);
+    }
+
     async _importWOT(document) {
         try {
             const result = await this.wotImporter.parse(document);
@@ -159,6 +167,10 @@ class Importer {
                 error: errorObject,
             };
         }
+    }
+
+    async importXMLgs1(document) {
+        return this._import('GS1_XML_FILE', document);
     }
 
     async _importXMLgs1(ot_xml_document) {

@@ -239,7 +239,7 @@ class DVService {
         }
 
         try {
-            await this.importer._import('JSON', {
+            await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
