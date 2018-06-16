@@ -92,7 +92,7 @@ class DVService {
      * @param totalTime
      * @returns {Promise} Lowest offer. May be null.
      */
-    handleQuery(queryId, totalTime = 10000) {
+    handleQuery(queryId, totalTime = 60000) {
         return new Promise((resolve, reject) => {
             setTimeout(async () => {
                 // Check for all offers.
