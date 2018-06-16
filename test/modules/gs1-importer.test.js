@@ -311,7 +311,7 @@ describe('GS1 Importer tests', () => {
             specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
             assert.equal(specificVertice.data.parent_id, 'urn:ot:object:product:id:Product_1');
-            assert.equal(specificVertice.data.productid, 'urn:ot:object:product:id:Product_1');
+            assert.equal(specificVertice.data.productId, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
             assert.equal(specificVertice.vertex_type, 'BATCH');
             assert.equal(specificVertice.sender_id, 'SENDER_ID');
