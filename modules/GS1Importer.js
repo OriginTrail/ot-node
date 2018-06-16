@@ -132,7 +132,7 @@ class GS1Importer {
                 const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:object:location:');
                 for (const attr of this.helper.arrayze(attrs)) {
                     if (attr.actorId) {
-                        location.participant_id = attr.participantId;
+                        location.participant_id = attr.actorId;
 
                         locationEdges.push({
                             _key: this.helper.createKey('owned_by', senderId, locationKey,  attr.actorId),

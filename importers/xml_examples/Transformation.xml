@@ -40,8 +40,8 @@
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:actor:id:Employee.Bob">																
-								<attribute id="urn:ot:actor:person:id:name">Bob Johnson</attribute>				
-								<attribute id="urn:ot:actor:category">Person</attribute>				
+								<attribute id="urn:ot:object:actor:name">Bob Johnson</attribute>
+								<attribute id="urn:ot:object:actor:category">Person</attribute>
 						    </VocabularyElement>													
 						</VocabularyElementList>				
 					</Vocabulary>				
