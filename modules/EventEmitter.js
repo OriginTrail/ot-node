@@ -39,12 +39,6 @@ class EventEmitter {
             graph,
         } = this.ctx;
 
-        this.globalEmitter.on('import-request', (data) => {
-            importer._importXML(data.filepath, (response) => {
-                // emit response
-            });
-        });
-
         this.globalEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);

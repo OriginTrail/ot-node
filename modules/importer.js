@@ -1,5 +1,4 @@
 // External modules
-const PythonShell = require('python-shell');
 const utilities = require('./Utilities');
 const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
@@ -67,56 +66,6 @@ class Importer {
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
 
         this.log.info('JSON import complete');
-    }
-
-    // eslint-disable-next-line no-shadow
-    async _importXML(ot_xml_document, callback) {
-        const options = {
-            mode: 'text',
-            pythonPath: 'python3',
-            scriptPath: 'importers/',
-            args: [ot_xml_document],
-        };
-
-        PythonShell.run('v1.5.py', options, (stderr, stdout) => {
-            if (stderr) {
-                this.log.info(stderr);
-                utilities.executeCallback(callback, {
-                    message: 'Import failure',
-                    data: [],
-                });
-                return;
-            }
-            this.log.info('[DC] Import complete');
-            const result = JSON.parse(stdout);
-            // eslint-disable-next-line  prefer-destructuring
-            const vertices = result.vertices;
-
-            // eslint-disable-next-line  prefer-destructuring
-            const edges = result.edges;
-            const { import_id } = result;
-
-            const leaves = [];
-            const hash_pairs = [];
-
-            for (const i in vertices) {
-                // eslint-disable-next-line max-len
-                leaves.push(utilities.sha3(utilities.sortObject({ identifiers: vertices[i].identifiers, data: vertices[i].data })));
-                // eslint-disable-next-line no-underscore-dangle
-                hash_pairs.push({ key: vertices[i]._key, hash: utilities.sha3({ identifiers: vertices[i].identifiers, data: vertices[i].data }) }); // eslint-disable-line max-len
-            }
-
-            const tree = new MerkleTree(hash_pairs);
-            const root_hash = tree.root();
-
-            this.log.info(`Import id: ${import_id}`);
-            this.log.info(`Import hash: ${root_hash}`);
-
-            utilities.executeCallback(callback, {
-                message: 'Import success',
-                data: [],
-            });
-        });
     }
 
     /**
