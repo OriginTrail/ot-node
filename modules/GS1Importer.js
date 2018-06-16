@@ -135,7 +135,7 @@ class GS1Importer {
                         location.participant_id = attr.actorId;
 
                         locationEdges.push({
-                            _key: this.helper.createKey('owned_by', senderId, locationKey,  attr.actorId),
+                            _key: this.helper.createKey('owned_by', senderId, locationKey, attr.actorId),
                             _from: `ot_vertices/${locationKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + attr.actorId}`,
                             edge_type: 'OWNED_BY',
@@ -167,7 +167,7 @@ class GS1Importer {
                 const data = {
                     parent_id: location.id,
                 };
-                const childLocationKey = this.helper.createKey('child_business_location', senderId, identifiers, data);
+                const childLocationKey = this.helper.createKey('child_location', senderId, identifiers, data);
                 locationVertices.push({
                     _key: childLocationKey,
                     identifiers,
@@ -176,7 +176,7 @@ class GS1Importer {
                 });
 
                 locationEdges.push({
-                    _key: this.helper.createKey('child_business_location', senderId, location.id, identifiers, data),
+                    _key: this.helper.createKey('child_location', senderId, location.id, identifiers, data),
                     _from: `ot_vertices/${childLocationKey}`,
                     _to: `ot_vertices/${locationKey}`,
                     edge_type: 'CHILD_LOCATION',
