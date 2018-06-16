@@ -64,7 +64,7 @@
                                 <attribute id="urn:ot:object:location:category">Building _1b</attribute>
                                 <attribute id="urn:ot:object:location:description">Description of building _1b</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:object:location:participantId">urn:ot:object:actor:id:Company_1</attribute>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_1</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_2">
