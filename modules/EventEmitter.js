@@ -112,7 +112,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id);
 
                     response.send({
                         status: 'OK',
