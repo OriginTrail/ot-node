@@ -120,14 +120,14 @@ module.exports = function () {
             });
         },
 
-        createEscrow(DH_wallet, data_id, token_amount, start_time, total_time, callback) {
+        createEscrow(DH_wallet, import_id, token_amount, start_time, total_time, callback) {
             var txOptions = {
                 gasLimit: web3.utils.toHex(config.blockchain.settings.ethereum.gas_limit),
                 gasPrice: web3.utils.toHex(config.blockchain.settings.ethereum.gas_price),
                 to: escrow_address,
             };
 
-            return sendTransaction(escrow_abi, 'initiateEscrow', [DH_wallet, data_id, token_amount, start_time, total_time], txOptions);
+            return sendTransaction(escrow_abi, 'initiateEscrow', [DH_wallet, import_id, token_amount, start_time, total_time], txOptions);
         },
 
         createConfirmation(DH_wallet, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) {

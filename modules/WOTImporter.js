@@ -1,5 +1,6 @@
 const fs = require('fs');
 const md5 = require('md5');
+const Utilities = require('./Utilities');
 
 /**
  * Web Of Things model importer
@@ -26,7 +27,7 @@ class WOTImporter {
      */
     async parse(payloadFile) {
         const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
-        const importId = Date.now();
+        const importId = Utilities.createImportId();
         const { things, sender } = payload.data;
 
         const edges = [];
@@ -34,24 +35,29 @@ class WOTImporter {
 
         for (const thingDesc of things) {
             // eslint-disable-next-line
-            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc, sender, importId);
+            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc, importId, sender);
             edges.push(...thingEdges);
             vertices.push(...thingVertices);
         }
 
         await Promise.all(edges.map(edge => this.db.addEdge(edge)));
         await Promise.all(vertices.map(vertex => this.db.addVertex(vertex)));
-        return { vertices, edges, import_id: importId };
+        return {
+            vertices,
+            edges,
+            import_id: importId,
+            wallet: sender.wallet,
+        };
     }
 
     /**
      * Parse single thing description (thing, model, properties, actions, etc.)
      * @param thingDesc
-     * @param sender
      * @param importId
+     * @param sender
      * @return {Promise<{thingEdges: Array, thingVertices: Array}>}
      */
-    async parseThingDesc(thingDesc, sender, importId) {
+    async parseThingDesc(thingDesc, importId, sender) {
         const thingEdges = [];
         const thingVertices = [];
 
@@ -59,6 +65,7 @@ class WOTImporter {
             thing, model, properties, actions, observedObjects, readPoint,
         } = thingDesc;
         const { id } = thing;
+        const senderId = sender.id;
 
         const actor = {
             identifiers: {
@@ -75,18 +82,17 @@ class WOTImporter {
         WOTImporter.copyProperties(model, actor.data.model);
         delete actor.data.id;
 
-        actor._key = md5(`actor_${sender.id}_${JSON.stringify(actor.identifiers)}_${md5(JSON.stringify(actor.data))}`);
+        actor._key = md5(`actor_${senderId}_${JSON.stringify(actor.identifiers)}_${md5(JSON.stringify(actor.data))}`);
         thingVertices.push(actor);
 
         thingEdges.push({
-            _key: md5(`is_${sender.id}_${actor._key}_ACTOR`),
+            _key: md5(`is_${senderId}_${actor._key}_ACTOR`),
             _from: `ot_vertices/${actor._key}`,
             _to: 'ot_vertices/ACTOR',
             edge_type: 'IS',
         });
-
         const date = new Date(importId);
-        const eventId = `${sender.id}:${date.toUTCString()}`.replace(/ /g, '_').replace(/,/g, '');
+        const eventId = `${senderId}:${date.toUTCString()}`.replace(/ /g, '_').replace(/,/g, '');
         const event = {
             identifiers: {
                 id: eventId,
@@ -100,15 +106,15 @@ class WOTImporter {
             },
             vertex_type: 'EVENT',
         };
-        event._key = md5(`event_${sender.id}_${JSON.stringify(event.identifiers)}_${md5(JSON.stringify(event.data))}`);
+        event._key = md5(`event_${senderId}_${JSON.stringify(event.identifiers)}_${md5(JSON.stringify(event.data))}`);
         thingVertices.push(event);
 
         for (const ooId of observedObjects) {
             // eslint-disable-next-line
-            const ooVertex = await this.db.findVertexWithMaxVersion(sender.id, ooId);
+            const ooVertex = await this.db.findVertexWithMaxVersion(senderId, ooId);
             if (ooVertex) {
                 thingEdges.push({
-                    _key: md5(`event_object_${sender.id}_${event._key}_${ooVertex._key}`),
+                    _key: md5(`event_object_${senderId}_${event._key}_${ooVertex._key}`),
                     _from: `ot_vertices/${event._key}`,
                     _to: `ot_vertices/${ooVertex._key}`,
                     edge_type: 'EVENT_OBJECT',
@@ -117,7 +123,7 @@ class WOTImporter {
                     },
                 });
                 thingEdges.push({
-                    _key: md5(`event_object_${sender.id}_${ooVertex._key}_${event._key}`),
+                    _key: md5(`event_object_${senderId}_${ooVertex._key}_${event._key}`),
                     _from: `ot_vertices/${ooVertex._key}`,
                     _to: `ot_vertices/${event._key}`,
                     edge_type: 'EVENT_OBJECT',
@@ -129,10 +135,10 @@ class WOTImporter {
         }
 
         if (readPoint) {
-            const rpVertex = await this.db.findVertexWithMaxVersion(sender.id, readPoint.id);
+            const rpVertex = await this.db.findVertexWithMaxVersion(senderId, readPoint.id);
             if (rpVertex) {
                 thingEdges.push({
-                    _key: md5(`read_point_${sender.id}_${event._key}_${rpVertex._key}`),
+                    _key: md5(`read_point_${senderId}_${event._key}_${rpVertex._key}`),
                     _from: `ot_vertices/${event._key}`,
                     _to: `ot_vertices/${rpVertex._key}`,
                     edge_type: 'READ_POINT',
@@ -144,7 +150,7 @@ class WOTImporter {
         }
 
         thingEdges.push({
-            _key: md5(`observed_by_${sender.id}_${event._key}_${actor._key}`),
+            _key: md5(`observed_by_${senderId}_${event._key}_${actor._key}`),
             _from: `ot_vertices/${event._key}`,
             _to: `ot_vertices/${actor._key}`,
             edge_type: 'OBSERVED_BY',
@@ -154,7 +160,7 @@ class WOTImporter {
         });
 
         thingEdges.push({
-            _key: md5(`observed_${sender.id}_${actor._key}_${event._key}`),
+            _key: md5(`observed_${senderId}_${actor._key}_${event._key}`),
             _from: `ot_vertices/${actor._key}`,
             _to: `ot_vertices/${event._key}`,
             edge_type: 'OBSERVED',
@@ -164,7 +170,7 @@ class WOTImporter {
         });
 
         const addProperties = (elem) => {
-            elem.sender_id = sender.id;
+            elem.sender_id = senderId;
             if (elem.imports) {
                 elem.imports.push(importId);
             } else {

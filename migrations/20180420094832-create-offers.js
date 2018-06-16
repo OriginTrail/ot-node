@@ -6,10 +6,6 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.STRING,
         },
-        import_id: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-        },
         total_escrow_time: {
             type: Sequelize.INTEGER,
             allowNull: false,

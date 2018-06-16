@@ -1,4 +1,3 @@
-const Utilities = require('./Utilities');
 const abi = require('ethereumjs-abi');
 const BN = require('bn.js');
 
@@ -19,8 +18,8 @@ class MerkleTree {
 
         this.levels.push(leavesHashes);
 
-        var currentLevel = leavesHashes;
-        var nextLevel = [];
+        let nextLevel = [];
+        let currentLevel = leavesHashes;
         do {
             nextLevel = [];
             let i = 0;
