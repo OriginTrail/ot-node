@@ -5,7 +5,7 @@ const exec = require('child_process').exec;
 
 const d = new Date();
 const dN = new Date(2018, 6, 24);
-const todaysDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getMinutes()}`;
+const todaysDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
 // const testDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate() -8}`;
 // const pastDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate() - 7}`;
 
@@ -97,15 +97,15 @@ setTimeout(() => {
         const timeStamp = ctime.getTime();
 
 
-        if ((curTimestamp - (7 * 24 * 60 * 60 * 100)) > timeStamp) {
+        if ((curTimestamp - ((24 * 60 * 60 * 1000) * 7)) > timeStamp) {
             rimraf(`./db_backup/sqllite_db/${files[i]}`, () => {
-                console.log('Successfully deleted backup of sqlLite  database that is more than 6 days old ');
+                console.log('Successfully deleted backup of sqlLite  database that is more than 7 days old ');
             });
         } else {
             console.log('There is no backup of sqlLite  database that is more than 7 days old');
         }
     }
-}, 1000);
+}, 2000);
 
 setTimeout(() => {
     const files = fs.readdirSync('./db_backup/arango_db');
@@ -122,12 +122,12 @@ setTimeout(() => {
         const timeStamp = ctime.getTime();
 
 
-        if ((curTimestamp - (7 * 24 * 60 * 60 * 100)) > timeStamp) {
+        if ((curTimestamp - ((24 * 60 * 60 * 1000) * 7)) > timeStamp) {
             rimraf(`./db_backup/arango_db/${files[i]}`, () => {
-                console.log('Successfully deleted backup of arango  database that is more than 6 days old ');
+                console.log('Successfully deleted backup of arango  database that is more than 7 days old ');
             });
         } else {
             console.log('There is no backup of arango  database that is more than 7 days old ');
         }
     }
-}, 1000);
+}, 2000);
