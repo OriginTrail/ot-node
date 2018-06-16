@@ -32,7 +32,7 @@
     "ot-node"
   ],
   "author": "OriginTrail",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/OriginTrail/ot-node/issues"
   },
