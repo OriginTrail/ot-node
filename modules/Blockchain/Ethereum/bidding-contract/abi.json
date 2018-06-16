@@ -368,7 +368,15 @@
     "name": "getDistanceParameters",
     "outputs": [
       {
-        "name": "hash_difference",
+        "name": "node_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "data_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distance",
         "type": "uint256"
       },
       {

@@ -224,11 +224,14 @@ contract Bidding {
 	}
 
 	function getDistanceParameters(bytes32 import_id, bytes32 DH_node_id)
-	public view returns (uint256 hash_difference, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
+	public view returns (bytes32 node_hash, bytes32 data_hash, uint256 distance, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
 		OfferDefinition storage this_offer = offer[import_id];
 
-		hash_difference = absoluteDifference(uint256(this_offer.data_hash), (2**128 - 1) & uint256(keccak256(msg.sender, DH_node_id)));
+		node_hash = bytes32((2**128 - 1) & uint256(keccak256(msg.sender, DH_node_id)));
+		data_hash = this_offer.data_hash;
 
+
+		distance = calculateDistance(import_id, msg.sender, DH_node_id);
 		required_bid_amount = this_offer.replication_factor.mul(2).add(1);
 		active_nodes_ = active_nodes;
 
@@ -237,7 +240,6 @@ contract Bidding {
 		}
 		else{
 			uint256 current_index = this_offer.first_bid_index;
-			uint256 distance = calculateDistance(import_id, msg.sender, DH_node_id);
 			current_ranking = 0;
 			while(this_offer.bid[current_index].next_bid != uint(-1) && this_offer.bid[current_index].distance >= distance){
 				current_index = this_offer.bid[current_index].next_bid;
