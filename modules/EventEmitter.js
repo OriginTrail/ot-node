@@ -3,6 +3,7 @@ const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
+const Op = require('sequelize/lib/operators');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 
@@ -35,6 +36,7 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            graph,
         } = this.ctx;
 
         this.globalEmitter.on('import-request', (data) => {
@@ -54,7 +56,21 @@ class EventEmitter {
 
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
+            if (dcWallet == null) {
+                data.response.send({
+                    status: 400,
+                    message: 'dc_wallet parameter query is missing',
+                });
+                return;
+            }
             const importId = data.query.import_id;
+            if (importId == null) {
+                data.response.send({
+                    status: 400,
+                    message: 'import_id parameter query is missing',
+                });
+                return;
+            }
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
@@ -63,23 +79,64 @@ class EventEmitter {
             });
         });
 
-
         this.globalEmitter.on('network-query', (data) => {
+            const failFunction = (error) => {
+                logger.warn(error);
+                data.response.send({
+                    status: 'FAIL',
+                    message: 'Failed to handle query',
+                });
+            };
             dvService.queryNetwork(data.query)
-                .then((offer) => {
-                    if (offer) {
-                        dvService.handleReadOffer(offer).then(() => {
-                            logger.trace('Read offer handled');
-                        }).catch((err) => {
-                            logger.warn(`Failed to handle offer. ${err}`);
-                        });
-                    }
-                })
-                .catch(error => logger.error(`Failed to query network. ${error}.`));
-            data.response.send(200);
+                .then((queryId) => {
+                    data.response.send({
+                        status: 'OK',
+                        message: 'Query sent successfully.',
+                        query_id: queryId,
+                    });
+                    dvService.handleQuery(queryId).then((offer) => {
+                        if (offer) {
+                            dvService.handleReadOffer(offer).then(() => {
+                                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+                            }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
+                        } else {
+                            logger.info(`No offers for query ${offer.query_id} handled.`);
+                        }
+                    }).catch(error => logger.error(`Failed handle query. ${error}.`));
+                }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
-        // TODO: move this from this class
+        this.globalEmitter.on('network-query-status', async (data) => {
+            const { id, response } = data;
+
+            const networkQuery = await Models.network_queries.find({ where: { id } });
+            if (networkQuery.status === 'FINISHED') {
+                try {
+                    const vertices = await dhService.dataLocationQuery(id);
+
+                    response.send({
+                        status: 'OK',
+                        message: `Query status ${networkQuery.status}.`,
+                        query_id: networkQuery.id,
+                        vertices,
+                    });
+                } catch (error) {
+                    logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    response.send({
+                        status: 'FAIL',
+                        error: 'Fail to process.',
+                        query_id: networkQuery.id,
+                    });
+                }
+            } else {
+                response.send({
+                    status: 'OK',
+                    message: `Query status ${networkQuery.status}.`,
+                    query_id: networkQuery.id,
+                });
+            }
+        });
+
         const processImport = async (response, error, data) => {
             if (response === null) {
                 data.response.status(error.status);
@@ -94,6 +151,7 @@ class EventEmitter {
                 import_id,
                 root_hash,
                 total_documents,
+                vertices,
                 wallet,
             } = response;
 
@@ -231,10 +289,10 @@ class EventEmitter {
 
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
             // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
-            //     const errorMessage =
-            //      `Replication request for offer you didn't apply: ${import_id}.`;
-            //     logger.warn(
-            //      `DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+            //     const errorMessage = `Replication request for
+            // offer you didn't apply: ${import_id}.`;
+            //     logger.warn(`DH ${kadIdentity} requested data
+            // without offer for import ID ${import_id}.`);
             //     response.send({ status: 'fail', error: errorMessage });
             //     return;
             // }
@@ -264,6 +322,7 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
+                status: 'ACTIVE',
             });
 
             logger.info('[DC] Preparing to enter sendPayload');
@@ -273,6 +332,7 @@ class EventEmitter {
                 edges,
                 import_id,
                 public_key: keyPair.publicKey,
+                root_hash: offer.data_hash,
                 total_escrow_time: offer.total_escrow_time,
             };
 
@@ -306,7 +366,7 @@ class EventEmitter {
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}`);
+                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
                 response.send({
                     status: 'success',
                     answer,
@@ -616,10 +676,7 @@ class EventEmitter {
             // TODO: Add guard for fake replations.
             const success = await dcService.verifyImport(
                 epk,
-                importId,
-                encryptionKey,
-                kadWallet,
-                request.contact[0],
+                importId, encryptionKey, kadWallet, request.contact[0],
             );
             if (success) {
                 response.send({
@@ -631,6 +688,37 @@ class EventEmitter {
                     status: 'Failed',
                     message: 'Verification failed',
                 });
+            }
+        });
+
+        this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                requested_data_index,
+            } = eventData;
+
+            try {
+                await dhService.litigationInitiated(
+                    import_id,
+                    DH_wallet,
+                    requested_data_index,
+                );
+            } catch (error) {
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
+            }
+        });
+
+        this.globalEmitter.on('eth-LitigationCompleted', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                DH_was_penalized,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // the node is DH
+                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
     }

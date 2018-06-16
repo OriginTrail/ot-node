@@ -23,6 +23,9 @@ module.exports = {
             allowNull: true, // Only DH who got data from DC have it.
             type: Sequelize.STRING,
         },
+        root_hash: {
+            type: Sequelize.STRING,
+        },
         epk: {
             allowNull: false,
             type: Sequelize.STRING,

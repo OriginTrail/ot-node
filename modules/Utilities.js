@@ -157,21 +157,20 @@ class Utilities {
             // Extend logger object to properly log 'Error' types
             const origLog = logger.log;
             logger.log = (level, msg) => {
-                if (msg.startsWith('updating peer profile')) {
-                    return;
-                }
-                if (msg.startsWith('connect econnrefused')) {
-                    level = 'trace';
-                    const address = msg.substr(21);
-                    msg = `Failed to connect to ${address}`;
-                }
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
                     const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    // eslint-disable-next-line prefer-rest-params
+                    if (msg.startsWith('updating peer profile')) {
+                        return; // skip logging
+                    }
+                    if (msg.startsWith('connect econnrefused')) {
+                        level = 'trace';
+                        const address = msg.substr(21);
+                        msg = `Failed to connect to ${address}`;
+                    }
                     origLog.apply(logger, [level, msg]);
                 }
             };
@@ -819,6 +818,35 @@ class Utilities {
             return `0x${number}`;
         }
         return number;
+    }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
+    /**
+     * Expands hex number to desired number of digits.
+     *
+     * For example expandHex('3', 4) or expandHex('0x3', 4) will return '0003'
+     * @param number
+     * @param digitCount
+     */
+    static expandHex(number, digitCount) {
+        const hex = this.denormalizeHex(number);
+
+        if (hex.length > digitCount) {
+            throw Error(`Number ${number} has more digits than required.`);
+        }
+
+        return new Array(digitCount - hex.length).join('0') + hex;
     }
 }
 

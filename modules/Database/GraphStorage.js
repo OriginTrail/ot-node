@@ -33,6 +33,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -49,6 +50,7 @@ class GraphStorage {
                             this.selectedDatabase.database,
                             this.selectedDatabase.host,
                             this.selectedDatabase.port,
+                            this.logger,
                         );
                         await this.__initDatabase__();
                         resolve(this.db);
@@ -103,6 +105,14 @@ class GraphStorage {
                 });
             }
         });
+    }
+
+    /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param inputQuery
+     */
+    async dataLocationQuery(inputQuery) {
+        return this.db.dataLocationQuery(inputQuery);
     }
 
     /**
@@ -401,6 +411,24 @@ class GraphStorage {
                 });
             }
         });
+    }
+
+    /**
+     * Mimics commit opertaion
+     * Removes inTransaction fields
+     * @return {Promise<void>}
+     */
+    async commit() {
+        await this.db.commit();
+    }
+
+    /**
+     * Mimics rollback opertaion
+     * Removes elements in transaction
+     * @return {Promise<void>}
+     */
+    async rollback() {
+        await this.db.rollback();
     }
 
     /**

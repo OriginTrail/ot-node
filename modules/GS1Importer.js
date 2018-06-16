@@ -3,8 +3,6 @@ const fs = require('fs');
 const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
 
-const GS1Helper = require('./GS1Utilities');
-
 class GS1Importer {
     /**
      * Default constructor
@@ -12,6 +10,8 @@ class GS1Importer {
      */
     constructor(ctx) {
         this.db = ctx.graphStorage;
+        this.helper = ctx.gs1Utilities;
+        this.log = ctx.logger;
     }
 
     async processXML(err, result) {
@@ -42,6 +42,7 @@ class GS1Importer {
         const batchEdges = [];
         const batchesVertices = [];
         const eventVertices = [];
+        const updates = [];
 
         const EDGE_KEY_TEMPLATE = 'ot_vertices/OT_KEY_';
 
@@ -51,45 +52,44 @@ class GS1Importer {
                 id: senderId,
                 uid: senderElement['sbdh:Identifier']._,
             },
-            data: GS1Helper.sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
+            data: this.helper.sanitize(senderElement['sbdh:ContactInformation'], {}, ['sbdh:']),
             vertex_type: 'SENDER',
         };
-        GS1Helper.validateSender(sender.data);
+        this.helper.validateSender(sender.data);
 
         // Check for vocabularies.
-        const vocabularyElements = GS1Helper.arrayze(vocabularyListElement.Vocabulary);
-
+        const vocabularyElements = this.helper.arrayze(vocabularyListElement.Vocabulary);
         for (const vocabularyElement of vocabularyElements) {
             switch (vocabularyElement.type) {
             case 'urn:ot:mda:actor':
                 actors = actors
-                    .concat(GS1Importer._parseActors(vocabularyElement.VocabularyElementList));
+                    .concat(this._parseActors(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:product':
                 products = products
-                    .concat(GS1Importer._parseProducts(vocabularyElement.VocabularyElementList));
+                    .concat(this._parseProducts(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:batch':
                 batches = batches
-                    .concat(GS1Importer._parseBatches(vocabularyElement.VocabularyElementList));
+                    .concat(this._parseBatches(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:mda:location':
                 locations = locations
-                    .concat(GS1Importer._parseLocations(vocabularyElement.VocabularyElementList));
+                    .concat(this._parseLocations(vocabularyElement.VocabularyElementList));
                 break;
             default:
-                GS1Helper.handleError(`Unimplemented or unknown type: ${vocabularyElement.type}.`, 400);
+                this.helper.handleError(`Unimplemented or unknown type: ${vocabularyElement.type}.`, 400);
             }
         }
 
         // Check for events.
         // Types: Transport, Transformation, Observation and Ownership.
         if (eventListElement) {
-            for (const objectEvent of GS1Helper.arrayze(eventListElement.ObjectEvent)) {
+            for (const objectEvent of this.helper.arrayze(eventListElement.ObjectEvent)) {
                 events.push(objectEvent);
             }
             if (eventListElement.AggregationEvent) {
-                const aggregationEvents = GS1Helper.arrayze(eventListElement.AggregationEvent);
+                const aggregationEvents = this.helper.arrayze(eventListElement.AggregationEvent);
                 for (const aggregationEvent of aggregationEvents) {
                     events.push(aggregationEvent);
                 }
@@ -97,7 +97,7 @@ class GS1Importer {
 
             if (eventListElement.extension && eventListElement.extension.TransformationEvent) {
                 for (const transformationEvent of
-                    GS1Helper.arrayze(eventListElement.extension.TransformationEvent)) {
+                    this.helper.arrayze(eventListElement.extension.TransformationEvent)) {
                     events.push(transformationEvent);
                 }
             }
@@ -119,22 +119,23 @@ class GS1Importer {
                 object_class_id: objectClassLocationId,
             };
 
-            GS1Helper.copyProperties(location.attributes, data);
+            this.helper.copyProperties(location.attributes, data);
 
             let locationKey;
             const privateData = {};
             if (location.extension) {
                 if (location.extension.private) {
-                    GS1Helper.handlePrivate(location.extension.private, data, privateData);
+                    // eslint-disable-next-line
+                    await this.helper.handlePrivate(senderId, location.id, location.extension.private, data, privateData);
                 }
-                locationKey = GS1Helper.createKey('business_location', senderId, identifiers, data);
-                const attrs = GS1Helper.parseAttributes(GS1Helper.arrayze(location.extension.attribute), 'urn:ot:location:');
-                for (const attr of GS1Helper.arrayze(attrs)) {
+                locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:location:');
+                for (const attr of this.helper.arrayze(attrs)) {
                     if (attr.participantId) {
                         location.participant_id = attr.participantId;
 
                         locationEdges.push({
-                            _key: GS1Helper.createKey('owned_by', senderId, locationKey, attr.participantId),
+                            _key: this.helper.createKey('owned_by', senderId, locationKey, attr.participantId),
                             _from: `ot_vertices/${locationKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
                             edge_type: 'OWNED_BY',
@@ -146,7 +147,7 @@ class GS1Importer {
                 }
             }
             if (!locationKey) {
-                locationKey = GS1Helper.createKey('business_location', senderId, identifiers, data);
+                locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
             }
 
             locationVertices.push({
@@ -167,7 +168,7 @@ class GS1Importer {
                     parent_id: location.id,
                 };
 
-                const childLocationKey = GS1Helper.createKey('child_business_location', senderId, identifiers, data);
+                const childLocationKey = this.helper.createKey('child_business_location', senderId, identifiers, data);
                 locationVertices.push({
                     _key: childLocationKey,
                     identifiers,
@@ -176,7 +177,7 @@ class GS1Importer {
                 });
 
                 locationEdges.push({
-                    _key: GS1Helper.createKey('child_business_location', senderId, location.id, identifiers, data),
+                    _key: this.helper.createKey('child_business_location', senderId, location.id, identifiers, data),
                     _from: `ot_vertices/${childLocationKey}`,
                     _to: `ot_vertices/${locationKey}`,
                     edge_type: 'CHILD_BUSINESS_LOCATION',
@@ -202,17 +203,18 @@ class GS1Importer {
                 object_class_id: objectClassActorId,
             };
 
-            GS1Helper.copyProperties(actor.attributes, data);
+            this.helper.copyProperties(actor.attributes, data);
 
             const privateData = {};
             if (actor.extension) {
                 if (actor.extension.private) {
-                    GS1Helper.handlePrivate(actor.extension.private, data, privateData);
+                    // eslint-disable-next-line
+                    await this.helper.handlePrivate(senderId, actor.id, actor.extension.private, data, privateData);
                 }
             }
 
             actorsVertices.push({
-                _key: GS1Helper.createKey('actor', senderId, identifiers, data),
+                _key: this.helper.createKey('actor', senderId, identifiers, data),
                 _id: actor.id,
                 identifiers,
                 data,
@@ -231,17 +233,18 @@ class GS1Importer {
                 object_class_id: objectClassProductId,
             };
 
-            GS1Helper.copyProperties(product.attributes, data);
+            this.helper.copyProperties(product.attributes, data);
 
             const privateData = {};
             if (product.extension) {
                 if (product.extension.private) {
-                    GS1Helper.handlePrivate(product.extension.private, data, privateData);
+                    // eslint-disable-next-line
+                    await this.helper.handlePrivate(senderId, product.id, product.extension.private, data, privateData);
                 }
             }
 
             productVertices.push({
-                _key: GS1Helper.createKey('product', senderId, identifiers, data),
+                _key: this.helper.createKey('product', senderId, identifiers, data),
                 _id: product.id,
                 data,
                 identifiers,
@@ -262,16 +265,17 @@ class GS1Importer {
                 parent_id: productId,
             };
 
-            GS1Helper.copyProperties(batch.attributes, data);
+            this.helper.copyProperties(batch.attributes, data);
 
             const privateData = {};
             if (batch.extension) {
                 if (batch.extension.private) {
-                    GS1Helper.handlePrivate(batch.extension.private, data, privateData);
+                    // eslint-disable-next-line
+                    await this.helper.handlePrivate(senderId, batch.id, batch.extension.private, data, privateData);
                 }
             }
 
-            const key = GS1Helper.createKey('batch', senderId, identifiers, data);
+            const key = this.helper.createKey('batch', senderId, identifiers, data);
             batchesVertices.push({
                 _key: key,
                 identifiers: {
@@ -285,28 +289,26 @@ class GS1Importer {
         }
 
         // Handle events
-        const batchesToRemove = [];
+        const batchesToExclude = [];
         for (const event of events) {
-            const tmpEventEdges = [];
-            const tmpEventVertices = [];
-            const tmpBatchesToRemove = [];
-
-            const eventId = GS1Helper.getEventId(senderId, event);
-
-            const { extension } = event;
+            const currentEventEdges = [];
+            const currentEventVertices = [];
+            const currentBatchesToRemove = [];
+            const eventId = this.helper.getEventId(senderId, event);
 
             let eventCategories;
+            const { extension } = event;
             if (extension.extension) {
                 const eventClass = extension.extension.OTEventClass;
-                eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:events:'));
+                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'ot:events:'));
             } else {
                 const eventClass = extension.OTEventClass;
-                eventCategories = GS1Helper.arrayze(eventClass).map(obj => GS1Helper.ignorePattern(obj, 'ot:event:'));
+                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'ot:event:'));
             }
 
             // eslint-disable-next-line
-            await GS1Helper.zeroKnowledge(senderId, event, eventId, eventCategories,
-                importId, GLOBAL_R, batchesVertices, this.db,
+            await this.helper.zeroKnowledge(senderId, event, eventId, eventCategories,
+                importId, GLOBAL_R, batchesVertices,
             );
 
             const identifiers = {
@@ -325,30 +327,31 @@ class GS1Importer {
                 object_class_id: classId,
                 categories: eventCategories,
             };
-            GS1Helper.copyProperties(event, data);
+            this.helper.copyProperties(event, data);
             event.vertex_type = 'EVENT';
 
             let eventKey;
             const privateData = {};
             if (extension.extension) {
                 if (extension.extension.private) {
-                    GS1Helper.handlePrivate(extension.extension.private, data, privateData);
+                    // eslint-disable-next-line
+                    await this.helper.handlePrivate(senderId, eventId, extension.extension.private, data, privateData);
                 }
-                eventKey = GS1Helper.createKey('event', senderId, identifiers, data);
+                eventKey = this.helper.createKey('event', senderId, identifiers, data);
 
                 const { documentId } = extension.extension;
                 if (documentId) {
                     identifiers.document_id = documentId;
                 }
 
-                const bizStep = GS1Helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
+                const bizStep = this.helper.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
                 const isSender = bizStep === 'shipping';
 
                 if (extension.extension.sourceList) {
-                    const sources = GS1Helper.arrayze(extension.extension.sourceList.source._);
+                    const sources = this.helper.arrayze(extension.extension.sourceList.source._);
                     for (const source of sources) {
-                        tmpEventEdges.push({
-                            _key: GS1Helper.createKey('source', senderId, eventKey, source),
+                        currentEventEdges.push({
+                            _key: this.helper.createKey('source', senderId, eventKey, source),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + source}`,
                             edge_type: 'SOURCE',
@@ -367,8 +370,8 @@ class GS1Importer {
                             // eslint-disable-next-line
                             const shippingEventVertex = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
                             if (shippingEventVertex.length > 0) {
-                                tmpEventEdges.push({
-                                    _key: GS1Helper.createKey('event_connection', senderId, shippingEventVertex[0]._key, eventKey),
+                                currentEventEdges.push({
+                                    _key: this.helper.createKey('event_connection', senderId, shippingEventVertex[0]._key, eventKey),
                                     _from: `ot_vertices/${shippingEventVertex[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -377,8 +380,8 @@ class GS1Importer {
                                         uid: `event_connection_${shippingEventVertex[0].identifiers.id}_${eventId}`,
                                     },
                                 });
-                                tmpEventEdges.push({
-                                    _key: GS1Helper.createKey('event_connection', senderId, eventKey, shippingEventVertex[0]._key),
+                                currentEventEdges.push({
+                                    _key: this.helper.createKey('event_connection', senderId, eventKey, shippingEventVertex[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${shippingEventVertex[0]._key}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -394,10 +397,10 @@ class GS1Importer {
 
                 if (extension.extension.destinationList) {
                     let destinations = extension.extension.destinationList.destination._;
-                    destinations = GS1Helper.arrayze(destinations);
+                    destinations = this.helper.arrayze(destinations);
                     for (const destination of destinations) {
-                        tmpEventEdges.push({
-                            _key: GS1Helper.createKey('destination', senderId, eventKey, destination),
+                        currentEventEdges.push({
+                            _key: this.helper.createKey('destination', senderId, eventKey, destination),
                             _from: `ot_vertices/${eventKey}`,
                             _to: `${EDGE_KEY_TEMPLATE + destination}`,
                             edge_type: 'DESTINATION',
@@ -417,8 +420,8 @@ class GS1Importer {
                             // eslint-disable-next-line
                             const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                             if (receivingEventVertices.length > 0) {
-                                tmpEventEdges.push({
-                                    _key: GS1Helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
+                                currentEventEdges.push({
+                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
                                     _from: `ot_vertices/${receivingEventVertices[0]._key}`,
                                     _to: `ot_vertices/${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -427,8 +430,8 @@ class GS1Importer {
                                         uid: `event_connection_${receivingEventVertices[0].identifiers.id}_${eventId}`,
                                     },
                                 });
-                                tmpEventEdges.push({
-                                    _key: GS1Helper.createKey('event_connection', senderId, eventKey, receivingEventVertices[0]._key),
+                                currentEventEdges.push({
+                                    _key: this.helper.createKey('event_connection', senderId, eventKey, receivingEventVertices[0]._key),
                                     _from: `ot_vertices/${eventKey}`,
                                     _to: `ot_vertices/${receivingEventVertices[0]._key}`,
                                     edge_type: 'EVENT_CONNECTION',
@@ -443,7 +446,7 @@ class GS1Importer {
                 }
             }
             if (!eventKey) {
-                eventKey = GS1Helper.createKey('event', senderId, identifiers, data);
+                eventKey = this.helper.createKey('event', senderId, identifiers, data);
             }
 
             const eventVertex = {
@@ -454,13 +457,13 @@ class GS1Importer {
                 private: privateData,
                 vertex_type: 'EVENT',
             };
-            tmpEventVertices.push(eventVertex);
+            currentEventVertices.push(eventVertex);
 
             const { bizLocation } = event;
             if (bizLocation) {
                 const bizLocationId = bizLocation.id;
-                tmpEventEdges.push({
-                    _key: GS1Helper.createKey('at', senderId, eventKey, bizLocationId),
+                currentEventEdges.push({
+                    _key: this.helper.createKey('at', senderId, eventKey, bizLocationId),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + bizLocationId}`,
                     edge_type: 'AT',
@@ -472,8 +475,8 @@ class GS1Importer {
 
             if (event.readPoint) {
                 const locationReadPoint = event.readPoint.id;
-                tmpEventEdges.push({
-                    _key: GS1Helper.createKey('read_point', senderId, eventKey, locationReadPoint),
+                currentEventEdges.push({
+                    _key: this.helper.createKey('read_point', senderId, eventKey, locationReadPoint),
                     _from: `ot_vertices/${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + event.readPoint.id}`,
                     edge_type: 'READ_POINT',
@@ -484,11 +487,11 @@ class GS1Importer {
             }
 
             if (event.inputEPCList) {
-                for (const inputEpc of GS1Helper.arrayze(event.inputEPCList.epc)) {
+                for (const inputEpc of this.helper.arrayze(event.inputEPCList.epc)) {
                     const batchId = inputEpc;
 
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'INPUT_BATCH',
@@ -496,16 +499,16 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
             if (event.epcList) {
-                for (const inputEpc of GS1Helper.arrayze(event.epcList.epc)) {
+                for (const inputEpc of this.helper.arrayze(event.epcList.epc)) {
                     const batchId = inputEpc;
 
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'EVENT_BATCH',
@@ -513,8 +516,8 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, batchId, eventKey),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
                         edge_type: 'EVENT_BATCH',
@@ -522,16 +525,16 @@ class GS1Importer {
                             uid: `event_batch_${batchId}_${eventId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
             if (event.childEPCs) {
-                for (const inputEpc of GS1Helper.arrayze(event.childEPCs)) {
+                for (const inputEpc of this.helper.arrayze(event.childEPCs)) {
                     const batchId = inputEpc.epc;
 
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'CHILD_BATCH',
@@ -539,16 +542,16 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
             if (event.outputEPCList) {
-                for (const outputEpc of GS1Helper.arrayze(event.outputEPCList.epc)) {
+                for (const outputEpc of this.helper.arrayze(event.outputEPCList.epc)) {
                     const batchId = outputEpc;
 
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, eventKey, batchId),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'OUTPUT_BATCH',
@@ -556,8 +559,8 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    tmpEventEdges.push({
-                        _key: GS1Helper.createKey('event_batch', senderId, batchId, eventKey),
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
                         _from: `${EDGE_KEY_TEMPLATE + batchId}`,
                         _to: `ot_vertices/${eventKey}`,
                         edge_type: 'OUTPUT_BATCH',
@@ -565,7 +568,7 @@ class GS1Importer {
                             uid: `event_batch_${batchId}_${eventId}`,
                         },
                     });
-                    tmpBatchesToRemove.push(batchId);
+                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -589,51 +592,53 @@ class GS1Importer {
                 add = true;
             }
             if (add) {
-                eventEdges.push(...tmpEventEdges);
-                eventVertices.push(...tmpEventVertices);
+                eventEdges.push(...currentEventEdges);
+                eventVertices.push(...currentEventVertices);
             } else {
-                const updates = [];
                 for (const category of eventCategories) {
-                    updates.push(this.db.updateEdgeImportsByUID(senderId, `event_batch_${eventId}_${category}`, importId));
+                    const key = this.helper.createKey('is', senderId, existingEventVertex._key, category);
+                    updates.push(this.db.updateImports('ot_edges', key, importId));
                 }
-                // eslint-disable-next-line
-                await Promise.all(updates);
 
                 // eslint-disable-next-line
-                await Promise.all(tmpEventEdges.map(async (edge) => {
+                await Promise.all(currentEventEdges.map(async (edge) => {
                     if (edge.edge_type !== 'EVENT_CONNECTION') {
-                        await this.db
-                            .updateEdgeImportsByUID(senderId, edge.identifiers.uid, importId);
+                        updates.push(this.db.updateEdgeImportsByUID(
+                            senderId,
+                            edge.identifiers.uid, importId,
+                        ));
                     }
                 }));
                 // eslint-disable-next-line
-                await Promise.all(tmpEventVertices.map(vertice => this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
-                batchesToRemove.push(...tmpBatchesToRemove);
+                currentEventVertices.map(vertice => updates.push(this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
+                batchesToExclude.push(...currentBatchesToRemove);
             }
         }
 
-        const updateBatchImports = [];
-        const updateBatchProductImports = [];
-        for (const batchId of batchesToRemove) {
+        for (const batchId of batchesToExclude) {
             for (const index in batchesVertices) {
                 const batch = batchesVertices[index];
                 if (batch.identifiers.uid === batchId) {
                     batchesVertices.splice(index, 1);
-                    updateBatchImports.push(batch.identifiers.uid);
-                    updateBatchProductImports.push(`batch_product_${batch.identifiers.id}_${batch.data.parent_id}`);
+                    updates.push(updates.push(this.db.updateVertexImportsByUID(
+                        senderId,
+                        batch.identifiers.uid, importId,
+                    )));
+
+                    const edgeId = `batch_product_${batch.identifiers.id}_${batch.data.parent_id}`;
+                    updates.push(updates.push(this.db.updateEdgeImportsByUID(
+                        senderId,
+                        edgeId, importId,
+                    )));
                 }
             }
         }
-        await Promise.all(updateBatchImports.map(vertexId =>
-            this.db.updateVertexImportsByUID(senderId, vertexId, importId)));
-        await Promise.all(updateBatchProductImports.map(edgeId =>
-            this.db.updateEdgeImportsByUID(senderId, edgeId, importId)));
 
         for (const batch of batchesVertices) {
             const productId = batch.data.parent_id;
 
             batchEdges.push({
-                _key: GS1Helper.createKey('batch_product', senderId, batch._key, productId),
+                _key: this.helper.createKey('batch_product', senderId, batch._key, productId),
                 _from: `ot_vertices/${batch._key}`,
                 _to: `${EDGE_KEY_TEMPLATE + productId}`,
                 edge_type: 'IS',
@@ -654,30 +659,21 @@ class GS1Importer {
                     return vertex;
                 });
 
-        const promises = allVertices.map(vertex => this.db.addVertex(vertex));
-        await Promise.all(promises);
-
         const classObjectEdges = [];
-
         eventVertices.forEach((vertex) => {
             for (const category of vertex.data.categories) {
-                eventVertices.forEach((vertex) => {
-                    classObjectEdges.push({
-                        _key: GS1Helper.createKey('is', senderId, vertex._key, category),
-                        _from: `ot_vertices/${vertex._key}`,
-                        _to: `ot_vertices/${category}`,
-                        edge_type: 'IS',
-                        identifiers: {
-                            uid: `event_batch_${vertex.identifiers.uid}_${category}`,
-                        },
-                    });
+                classObjectEdges.push({
+                    _key: this.helper.createKey('is', senderId, vertex._key, category),
+                    _from: `ot_vertices/${vertex._key}`,
+                    _to: `ot_vertices/${category}`,
+                    edge_type: 'IS',
                 });
             }
         });
 
         locationVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassLocationId),
+                _key: this.helper.createKey('is', senderId, vertex._key, objectClassLocationId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassLocationId}`,
                 edge_type: 'IS',
@@ -686,7 +682,7 @@ class GS1Importer {
 
         actorsVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassActorId),
+                _key: this.helper.createKey('is', senderId, vertex._key, objectClassActorId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassActorId}`,
                 edge_type: 'IS',
@@ -695,53 +691,61 @@ class GS1Importer {
 
         productVertices.forEach((vertex) => {
             classObjectEdges.push({
-                _key: GS1Helper.createKey('is', senderId, vertex._key, objectClassProductId),
+                _key: this.helper.createKey('is', senderId, vertex._key, objectClassProductId),
                 _from: `ot_vertices/${vertex._key}`,
                 _to: `ot_vertices/${objectClassProductId}`,
                 edge_type: 'IS',
             });
         });
 
-        eventVertices.forEach((vertex) => {
-            vertex.data.categories.forEach(async (category) => {
-                const classKey = await this.db.getClassId(category);
-                classObjectEdges.push({
-                    _key: GS1Helper.createKey('is', senderId, vertex._key, classKey),
-                    _from: `ot_vertices/${vertex._key}`,
-                    _to: `ot_vertices/${classKey}`,
-                    edge_type: 'IS',
+        try {
+            allVertices.map((v) => {
+                v.inTransaction = true;
+                return v;
+            });
+            await Promise.all(allVertices.map(vertex => this.db.addVertex(vertex)));
+
+            const allEdges = locationEdges
+                .concat(eventEdges)
+                .concat(batchEdges)
+                .concat(classObjectEdges)
+                .map((edge) => {
+                    edge.sender_id = senderId;
+                    return edge;
                 });
-            });
-        });
 
-        const allEdges = locationEdges
-            .concat(eventEdges)
-            .concat(batchEdges)
-            .concat(classObjectEdges)
-            .map((edge) => {
-                edge.sender_id = senderId;
-                return edge;
-            });
+            for (const edge of allEdges) {
+                const to = edge._to;
+                const from = edge._from;
 
-        for (const edge of allEdges) {
-            const to = edge._to;
-            const from = edge._from;
-
-            if (to.startsWith(EDGE_KEY_TEMPLATE)) {
-                // eslint-disable-next-line
-                const vertex = await this.db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
-                edge._to = `ot_vertices/${vertex._key}`;
+                if (to.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._to = `ot_vertices/${vertex._key}`;
+                }
+                if (from.startsWith(EDGE_KEY_TEMPLATE)) {
+                    // eslint-disable-next-line
+                    const vertex = await this.db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
+                    edge._from = `ot_vertices/${vertex._key}`;
+                }
             }
-            if (from.startsWith(EDGE_KEY_TEMPLATE)) {
-                // eslint-disable-next-line
-                const vertex = await this.db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
-                edge._from = `ot_vertices/${vertex._key}`;
-            }
+
+            allEdges.map((e) => {
+                e.inTransaction = true;
+                return e;
+            });
+            await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
+
+            // updates
+            await Promise.all(updates);
+            await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
+            await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+        } catch (e) {
+            this.log.warn(`Failed to import data. ${e}`);
+            await this.db.rollback(); // delete elements in transaction
+            throw e;
         }
-        await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
-
-        await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
-        await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+        await this.db.commit();
 
         console.log('Done parsing and importing.');
 
@@ -772,7 +776,7 @@ class GS1Importer {
 
         const validationResult = schema.validate(gs1XmlFileBuffer.toString());
         if (validationResult !== null) {
-            GS1Helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
+            this.helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
         }
 
         return new Promise(resolve =>
@@ -797,32 +801,32 @@ class GS1Importer {
         const salt = existingEventVertex.private._salt;
 
         const existingPrivate = {};
-        GS1Helper.copyProperties(existingEventVertex.private, existingPrivate);
+        this.helper.copyProperties(existingEventVertex.private, existingPrivate);
         delete existingPrivate._salt;
 
         const newPrivate = {};
-        GS1Helper.copyProperties(eventVertex.private, newPrivate);
+        this.helper.copyProperties(eventVertex.private, newPrivate);
         delete newPrivate._salt;
-        return GS1Helper.checkPrivate(
+        return this.helper.checkPrivate(
             existingEventVertex.data.private,
             newPrivate, salt,
         );
     }
 
-    static _parseLocations(vocabularyElementList) {
+    _parseLocations(vocabularyElementList) {
         const locations = [];
 
         // May be an array in VocabularyElement.
         const vocabularyElementElements =
-            GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+            this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
-            const childLocations = GS1Helper.arrayze(element.children ? element.children.id : []);
+            const childLocations = this.helper.arrayze(element.children ? element.children.id : []);
 
             const location = {
                 type: 'location',
                 id: element.id,
-                attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
                 child_locations: childLocations,
                 extension: element.extension,
             };
@@ -831,18 +835,18 @@ class GS1Importer {
         return locations;
     }
 
-    static _parseActors(vocabularyElementList) {
+    _parseActors(vocabularyElementList) {
         const actors = [];
 
         // May be an array in VocabularyElement.
         const vocabularyElementElements =
-            GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+            this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
             const actor = {
                 type: 'actor',
                 id: element.id,
-                attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
                 extension: element.extension,
             };
             actors.push(actor);
@@ -850,18 +854,18 @@ class GS1Importer {
         return actors;
     }
 
-    static _parseProducts(vocabularyElementList) {
+    _parseProducts(vocabularyElementList) {
         const products = [];
 
         // May be an array in VocabularyElement.
         const vocabularyElementElements =
-            GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+            this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
             const product = {
                 type: 'product',
                 id: element.id,
-                attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
                 extension: element.extension,
             };
             products.push(product);
@@ -869,18 +873,18 @@ class GS1Importer {
         return products;
     }
 
-    static _parseBatches(vocabularyElementList) {
+    _parseBatches(vocabularyElementList) {
         const batches = [];
 
         // May be an array in VocabularyElement.
         const vocabularyElementElements =
-            GS1Helper.arrayze(vocabularyElementList.VocabularyElement);
+            this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
             const batch = {
                 type: 'batch',
                 id: element.id,
-                attributes: GS1Helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
                 extension: element.extension,
             };
             batches.push(batch);

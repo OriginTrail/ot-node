@@ -4,6 +4,7 @@ var TestingUtilities = artifacts.require('./TestingUtilities.sol'); // eslint-di
 var TracToken = artifacts.require('./TracToken.sol'); // eslint-disable-line no-undef
 var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-line no-undef
 var Bidding = artifacts.require('./BiddingTest.sol'); // eslint-disable-line no-undef
+var Reading = artifacts.require('./Reading.sol'); // eslint-disable-line no-undef
 
 var Web3 = require('web3');
 
@@ -48,6 +49,13 @@ contract('Bidding testing', async (accounts) => {
     it('Should get Bidding contract', async () => {
         await Bidding.deployed().then((res) => {
             console.log(`\t Bidding address: ${res.address}`);
+        }).catch(err => console.log(err));
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should get Reading contract', async () => {
+        await Reading.deployed().then((res) => {
+            console.log(`\t Reading address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
@@ -97,7 +105,6 @@ contract('Bidding testing', async (accounts) => {
                 DH_price[i],
                 DH_stake[i],
                 DH_read_factor[i],
-                1000,
                 1000,
                 { from: accounts[i] },
             );
@@ -266,18 +273,26 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t distance[${i}] = ${response.toNumber()}`);
         }
 
-        // var promises = [];
+        var first_bid_index;
         for (i = 3; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             await bidding.addBid(import_id, node_id[i], { from: accounts[i] });
             // eslint-disable-next-line no-await-in-loop
             response = await bidding.offer.call(import_id);
-            const first_bid_index = response[7].toNumber();
-            console.log(`\t first_bid_index =  ${first_bid_index}`);
+            first_bid_index = response[7].toNumber();
+            console.log(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
         }
-        // await Promise.all(promises);
 
-        // assert.equal(first_bid_index, 8, 'Something wrong');
+        for (i = 3; i < 10; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            response = await bidding.amICloseEnough.call(
+                import_id,
+                node_id[i],
+                { from: accounts[i] },
+            );
+        }
+
+        assert.equal(first_bid_index, 8, 'Something wrong');
     });
 
     // EscrowDefinition
@@ -328,6 +343,8 @@ contract('Bidding testing', async (accounts) => {
     var hash_EFGH;
     var root_hash;
 
+    const checksum = 0;
+
     // eslint-disable-next-line no-undef
     it('Should calculate and add all root hashes and checksums', async () => {
         // Get instances of contracts used in the test
@@ -350,7 +367,6 @@ contract('Bidding testing', async (accounts) => {
         root_hash = await util.keccak2hashes.call(hash_ABCD, hash_EFGH);
 
         var promises = [];
-        const checksum = 0;
         for (i = 0; i < chosen_bids.length; i += 1) {
             promises[i] = escrow.addRootHashAndChecksum(
                 import_id,
@@ -604,5 +620,62 @@ contract('Bidding testing', async (accounts) => {
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
+    });
+
+    var read_token_amount = 10e10;
+    var read_stake_factor = 2;
+
+    // eslint-disable-next-line no-undef
+    it('Should initiate reading between acc[2] and acc[1]', async () => {
+        // Get instances of contracts used in the test
+        const reading = await Reading.deployed();
+
+        var response = await reading.purchased_data.call(import_id, accounts[chosen_bids[0]]);
+        console.log(`${JSON.stringify(response)}`);
+
+        var actual_DC_wallet = response[0];
+        var actual_distribution_root_hash = response[1];
+        var actual_checksum = response[2];
+
+        assert.equal(actual_DC_wallet, DC_wallet, 'Purchased data - DC wallet not matching');
+        assert.equal(
+            actual_distribution_root_hash,
+            root_hash,
+            'Purchased data - distribution root hash not matching',
+        );
+        assert.equal(
+            actual_checksum,
+            checksum,
+            'Purchased data - checksum not matching',
+        );
+
+        await reading.initiatePurchase(
+            import_id,
+            accounts[chosen_bids[0]],
+            read_token_amount,
+            read_stake_factor,
+            { from: accounts[2] },
+        );
+
+        response = await reading.purchase.call(accounts[chosen_bids[0]], accounts[2], import_id);
+        var actual_token_amount = response[0];
+        var actual_stake_factor = response[1];
+        var actual_status = response[5].toNumber();
+
+        assert.equal(
+            actual_token_amount,
+            read_token_amount,
+            'Read token amount not matching',
+        );
+        assert.equal(
+            actual_stake_factor,
+            read_stake_factor,
+            'Read stake factor not matching',
+        );
+        assert.equal(
+            actual_status,
+            1,
+            'Read status not initiated',
+        );
     });
 });

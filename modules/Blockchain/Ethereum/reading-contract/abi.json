@@ -23,7 +23,7 @@
 			},
 			{
 				"name": "checksum",
-				"type": "bytes32"
+				"type": "uint256"
 			}
 		],
 		"payable": false,
@@ -151,36 +151,6 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
-				"name": "DH_wallet",
-				"type": "address"
-			},
-			{
-				"name": "DC_wallet",
-				"type": "address"
-			},
-			{
-				"name": "distribution_root_hash",
-				"type": "bytes32"
-			},
-			{
-				"name": "checksum",
-				"type": "bytes32"
-			}
-		],
-		"name": "addReadData",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [],
 		"name": "owner",
@@ -294,7 +264,7 @@
 			},
 			{
 				"name": "encrypted_block",
-				"type": "bytes32"
+				"type": "uint256"
 			},
 			{
 				"name": "time_of_sending",
@@ -307,6 +277,28 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"name": "encrypted_block",
+				"type": "uint256"
+			}
+		],
+		"name": "sendEncryptedBlock",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -327,11 +319,27 @@
 		"constant": false,
 		"inputs": [
 			{
-				"name": "newOwner",
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"name": "DH_wallet",
 				"type": "address"
+			},
+			{
+				"name": "DC_wallet",
+				"type": "address"
+			},
+			{
+				"name": "distribution_root_hash",
+				"type": "bytes32"
+			},
+			{
+				"name": "checksum",
+				"type": "uint256"
 			}
 		],
-		"name": "transferOwnership",
+		"name": "addReadData",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -341,19 +349,11 @@
 		"constant": false,
 		"inputs": [
 			{
-				"name": "import_id",
-				"type": "bytes32"
-			},
-			{
-				"name": "DV_wallet",
+				"name": "newOwner",
 				"type": "address"
-			},
-			{
-				"name": "encrypted_block",
-				"type": "bytes32"
 			}
 		],
-		"name": "sendEncryptedBlock",
+		"name": "transferOwnership",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",

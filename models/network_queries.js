@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             defaultValue: () => Date.now(),
         },
+        status: {
+            type: DataTypes.STRING,
+            defaultValue: 'OPEN',
+        },
     }, {});
     network_queries.associate = function (models) {
         // associations can be defined here

@@ -54,16 +54,15 @@ class Blockchain {
      * @param stakePerByteMinute Stake for byte per minute
      * @param readStakeFactor Read stake factor
      * @param maxTimeMins   Max time in minutes
-     * @param maxSizeBytes  Max size in bytes
      * @return {Promise<any>}
      */
     createProfile(
         nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins, maxSizeBytes,
+        readStakeFactor, maxTimeMins,
     ) {
         return this.blockchain.createProfile(
             nodeId, pricePerByteMinute, stakePerByteMinute,
-            readStakeFactor, maxTimeMins, maxSizeBytes,
+            readStakeFactor, maxTimeMins,
         );
     }
 
@@ -93,6 +92,39 @@ class Blockchain {
      */
     verifyEscrow(importId, dhWallet) {
         return this.blockchain.verifyEscrow(importId, dhWallet);
+    }
+
+    /**
+     * DC initiates litigation on DH wrong challenge answer
+     * @param importId
+     * @param dhWallet
+     * @param blockId
+     * @param merkleProof
+     * @return {Promise<any>}
+     */
+    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
+        return this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+    }
+
+    /**
+     * Answers litigation from DH side
+     * @param importId
+     * @param requestedData
+     * @return {Promise<any>}
+     */
+    answerLitigation(importId, requestedData) {
+        return this.blockchain.answerLitigation(importId, requestedData);
+    }
+
+    /**
+     * Prooves litigation for particular DH
+     * @param importId
+     * @param dhWallet
+     * @param proofData
+     * @return {Promise<any>}
+     */
+    proveLitigation(importId, dhWallet, proofData) {
+        return this.blockchain.proveLitigation(importId, dhWallet, proofData);
     }
 
     /**
@@ -273,8 +305,8 @@ class Blockchain {
         return this.blockchain.getPurchase(dhWallet, dvWallet, importId);
     }
 
-    async getPurchaseData(wallet, importId) {
-        return this.blockchain.getPurchaseData(wallet, importId);
+    async getPurchasedData(importId, wallet) {
+        return this.blockchain.getPurchasedData(importId, wallet);
     }
 
     async initiatePurchase(importId, dhWallet, tokenAmount, stakeFactor) {
@@ -304,6 +336,10 @@ class Blockchain {
             importId, dvWallet, checksumLeft, checksumRight, checksumHash,
             randomNumber1, randomNumber2, decryptionKey, blockIndex,
         );
+    }
+
+    async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
+        return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
 }
 

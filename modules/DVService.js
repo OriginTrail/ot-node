@@ -1,6 +1,5 @@
 const BN = require('bn.js');
 const ethAbi = require('ethereumjs-abi');
-const crypto = require('crypto');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -30,10 +29,9 @@ class DVService {
     /**
      * Sends query to the network
      * @param query
-     * @param totalTime
      * @returns {Promise<void>}
      */
-    async queryNetwork(query, totalTime = 60000) {
+    async queryNetwork(query) {
         /*
             Expected dataLocationRequestObject:
             dataLocationRequestObject = {
@@ -85,20 +83,29 @@ class DVService {
             },
         );
 
+        return networkQueryModel.id;
+    }
+
+    /**
+     * Handles network queries and chose lowest offer.
+     * @param queryId
+     * @param totalTime
+     * @returns {Promise} Lowest offer. May be null.
+     */
+    handleQuery(queryId, totalTime = 60000) {
         return new Promise((resolve, reject) => {
             setTimeout(async () => {
                 // Check for all offers.
                 const responseModels = await Models.network_query_responses.findAll({
-                    where: { query_id: networkQueryModel.id },
+                    where: { query_id: queryId },
                 });
 
-                this.log.trace(`Finalizing query ID ${networkQueryModel.id}. Got ${responseModels.length} offer(s).`);
+                this.log.trace(`Finalizing query ID ${queryId}. Got ${responseModels.length} offer(s).`);
 
-                // TODO: Get some choose logic here.
-                let lowestOffer;
+                let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
-                    if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
+                    if (lowestOffer === null || price.lt(new BN(lowestOffer.data_price, 10))) {
                         lowestOffer = response.get({ plain: true });
                     }
                 });
@@ -106,6 +113,11 @@ class DVService {
                 if (lowestOffer === undefined) {
                     this.log.info('Didn\'t find answer or no one replied.');
                 }
+
+                // Finish auction.
+                const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
+                networkQuery.status = 'PROCESSING';
+                await networkQuery.save({ fields: ['status'] });
 
                 resolve(lowestOffer);
             }, totalTime);
@@ -160,6 +172,10 @@ class DVService {
             throw Error(`Didn't find query with ID ${queryId}.`);
         }
 
+        if (networkQuery.status !== 'OPEN') {
+            throw Error('Too late. Query closed.');
+        }
+
         // Store the offer.
         const networkQueryResponse = await Models.network_query_responses.create({
             query: JSON.stringify(message.query),
@@ -186,14 +202,10 @@ class DVService {
                 wallet: DH_WALLET,
                 nodeId: KAD_ID
                 agreementStatus: CONFIRMED/REJECTED,
-                purchaseId: PURCHASE_ID,
                 encryptedData: { … }
                 importId: IMPORT_ID,        // Temporal. Remove it.
             },
          */
-        if (message.agreementStatus !== 'CONFIRMED') {
-            throw Error('Read not confirmed');
-        }
 
         // Is it the chosen one?
         const replyId = message.id;
@@ -207,6 +219,16 @@ class DVService {
             throw Error(`Didn't find query reply with ID ${replyId}.`);
         }
 
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: networkQueryResponse.query_id },
+        });
+
+        if (message.agreementStatus !== 'CONFIRMED') {
+            networkQuery.status = 'REJECTED';
+            await networkQuery.save({ fields: ['status'] });
+            throw Error('Read not confirmed');
+        }
+
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         // Calculate root hash and check is it the same on the SC.
@@ -218,6 +240,8 @@ class DVService {
         if (!escrow) {
             const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -225,6 +249,8 @@ class DVService {
         if (escrow.escrow_status === 0) {
             const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -235,6 +261,8 @@ class DVService {
         if (escrow.distribution_root_hash !== rootHash) {
             const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -246,6 +274,8 @@ class DVService {
             });
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             return;
         }
 
@@ -298,8 +328,16 @@ class DVService {
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
         // await this.blockchain.subscribeToEvent('CommitmentSent', importId, 20 * 60 * 1000);
-
-        // TODO: Commitment happened.
+        this.blockchain.subscribeToEvent('CommitmentSent', importId, 10 * 60 * 1000).then(async (eventData) => {
+            if (!eventData) {
+                // Everything is ok.
+                this.log.warn(`Commitment not sent for purchase ${importId}. Canceling it.`);
+                await this.blockchain.cancelPurchase(importId, dhWallet, false);
+                networkQuery.status = 'CANCELED';
+                await networkQuery.save({ fields: ['status'] });
+                this.log.info(`Purchase for import ${importId} canceled.`);
+            }
+        });
     }
 
     async handleEncryptedPaddedKey(message) {
@@ -326,14 +364,18 @@ class DVService {
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
-            where: { id },
+            where: { reply_id: id },
         });
 
         if (!networkQueryResponse) {
             throw Error(`Didn't find query reply with ID ${id}.`);
         }
 
-        const { importId: import_id } = networkQueryResponse;
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: networkQueryResponse.query_id },
+        });
+
+        const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
@@ -342,63 +384,100 @@ class DVService {
             Utilities.normalizeHex(ethAbi.soliditySHA3(
                 ['uint256'],
                 [sd],
-            ));
+            ).toString('hex'));
 
         // Get checksum from blockchain.
         const purchaseData =
-            await this.blockchain.getPurchaseData(wallet, import_id);
-        const blockchainChecksum = purchaseData.checksum.substring(2, 42);
+            await this.blockchain.getPurchasedData(importId, wallet);
 
-        const testNumber = new BN(blockchainChecksum, 16);
+        let testNumber = new BN(purchaseData.checksum, 10);
         const r1Bn = new BN(r1);
         const r2Bn = new BN(r2);
-        testNumber.add(r2Bn).add(r1Bn.mul(new BN(3)));
+        testNumber = testNumber.add(r2Bn).add(r1Bn.mul(new BN(128)));
 
-        if (!testNumber.eq(new BN(sd, 16))) {
-            this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${import_id}.`);
-            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+        if (!testNumber.eq(new BN(Utilities.denormalizeHex(sd), 16))) {
+            this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${importId}.`);
+            if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
+            } else {
+                networkQuery.status = 'FAILED';
+                await networkQuery.save({ fields: ['status'] });
+            }
             throw Error('Commitment test failed.');
         }
 
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
             [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, e, blockNumber],
-        ));
+        ).toString('hex'));
 
         const blockchainCommitmentHash =
-            await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id)
+            (await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId))
                 .commitment;
 
         if (commitmentHash !== blockchainCommitmentHash) {
             const errorMessage = `Blockchain commitment hash ${blockchainCommitmentHash} differs from mine ${commitmentHash}.`;
             this.log.warn(errorMessage);
-            this._litigatePurchase(import_id, wallet, nodeId, m1, m2, e);
+            if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
+            } else {
+                networkQuery.status = 'FAILED';
+                await networkQuery.save({ fields: ['status'] });
+            }
             throw Error(errorMessage);
         }
 
-        await this.blockchain.confirmPurchase(import_id, wallet);
+        await this.blockchain.confirmPurchase(importId, wallet);
 
         const encryptedBlockEvent =
-            await this.blockchain.subscribeToEvent('EncryptedBlockSent', import_id, 60 * 60 * 1000);
+            await this.blockchain.subscribeToEvent('EncryptedBlockSent', importId, 60 * 60 * 1000);
 
         if (encryptedBlockEvent) {
             // DH signed the escrow. Yay!
             const purchase =
-                await this.blockchain.getPurchase(wallet, this.config.node_wallet, import_id);
-            const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
-            const publicKey = Encryption.unpackEPK(epk);
+                await this.blockchain.getPurchase(wallet, this.config.node_wallet, importId);
+            const epk = m1 +
+                Buffer.from(
+                    Encryption.xor(
+                        Utilities.expandHex(new BN(purchase.encrypted_block).toString('hex'), 64),
+                        Utilities.denormalizeHex(e),
+                    ),
+                    'hex',
+                ).toString('ascii') + m2;
 
-            const holdingData = await Models.holding_data.create({
-                id: import_id,
-                source_wallet: wallet,
-                data_public_key: publicKey,
-                epk,
-            });
+            try {
+                const publicKey = Encryption.unpackEPK(epk);
+                const holdingData = await Models.holding_data.create({
+                    id: importId,
+                    source_wallet: wallet,
+                    data_public_key: publicKey,
+                    distribution_public_key: publicKey,
+                    epk,
+                });
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
+            } catch (err) {
+                this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+                if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                    networkQuery.status = 'FINISHED';
+                    await networkQuery.save({ fields: ['status'] });
+                } else {
+                    networkQuery.status = 'FAILED';
+                    await networkQuery.save({ fields: ['status'] });
+                }
+                return;
+            }
+
+            this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
         } else {
             // Didn't sign escrow. Cancel it.
-            this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${import_id}.`);
-            await this.blockchain.cancelPurchase(import_id, wallet, false);
-            this.log.info(`Purchase for import ID ${import_id} canceled.`);
+            this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+            await this.blockchain.cancelPurchase(importId, wallet, false);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
+            this.log.info(`Purchase for import ID ${importId} canceled.`);
         }
     }
 
@@ -428,10 +507,12 @@ class DVService {
                 data_public_key: publicKey,
                 epk,
             });
-        } else {
-            this.log.warn(`Contract claims litigation was fortune for me. Import ID ${importId}`);
-            // TODO: data should be removed from DB here.
+
+            return false;
         }
+
+        this.log.warn(`Contract claims litigation was fortunate for me. Import ID ${importId}`);
+        return true;
     }
 }
 

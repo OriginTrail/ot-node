@@ -1,7 +1,7 @@
 
 module.exports = (sequelize, DataTypes) => {
     var offers = sequelize.define('offers', {
-        import_id: DataTypes.STRING,
+        import_id: DataTypes.INTEGER,
         total_escrow_time: DataTypes.INTEGER,
         max_token_amount: DataTypes.STRING,
         min_stake_amount: DataTypes.STRING,

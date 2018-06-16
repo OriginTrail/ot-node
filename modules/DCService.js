@@ -111,7 +111,7 @@ class DCService {
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { id: offer.id } }).then((offerModel) => {
+                Models.offers.findOne({ where: { import_id: importId } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
                         this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
@@ -195,6 +195,7 @@ class DCService {
      * @param importId
      * @param encryptionKey
      * @param kadWallet
+     * @param nodeId
      * @return {Promise<void>}
      */
     async verifyImport(epk, importId, encryptionKey, kadWallet, nodeId) {
@@ -238,7 +239,7 @@ class DCService {
                 failed = true;
             }
 
-            if (!escrow.checksum.startsWith(Utilities.normalizeHex(epkChecksum))) {
+            if (!escrow.checksum === epkChecksum) {
                 this.log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
                 failed = true;
             }

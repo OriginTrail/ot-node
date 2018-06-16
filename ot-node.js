@@ -9,6 +9,7 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
+const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
@@ -119,7 +120,6 @@ class OTNode {
         if (process.env.NODE_ENV !== 'test') {
             try {
                 const etherBalance = await Utilities.getBalanceInEthers();
-
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
@@ -162,6 +162,7 @@ class OTNode {
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
             graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
@@ -208,7 +209,7 @@ class OTNode {
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
-        dhService.listenToOffers();
+        dhService.listenToBlockchainEvents();
     }
 
     /**
@@ -225,6 +226,8 @@ class OTNode {
             if (!working && Date.now() > deadline) {
                 working = true;
                 blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                blockchain.getAllPastEvents('READING_CONTRACT');
+                blockchain.getAllPastEvents('ESCROW_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -247,7 +250,6 @@ class OTNode {
             config.dh_stake_factor,
             config.read_stake_factor,
             config.dh_max_time_mins,
-            config.dh_max_data_size_bytes,
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(config.identity)) {
@@ -333,49 +335,6 @@ class OTNode {
             }
             return true;
         };
-
-        server.post('/import', (req, res) => {
-            log.important('Import request received!');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body.importfile !== undefined) {
-                    const fileData = req.body.importfile;
-
-                    fs.writeFile('tmp/import.xml', fileData, (err) => {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        console.log('The file was saved!');
-
-                        const input_file = '/tmp/import.xml';
-                        const queryObject = {
-                            filepath: input_file,
-                            contact: req.contact,
-                            response: res,
-                        };
-
-                        emitter.emit('gs1-import-request', queryObject);
-                    });
-                } else {
-                    res.send({
-                        status: 400,
-                        message: 'Input file not provided!',
-                    });
-                }
-            } else {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                };
-
-                emitter.emit('import-request', queryObject);
-            }
-        });
-
 
         server.post('/import_gs1', (req, res) => {
             log.important('Import request received!');
@@ -503,8 +462,23 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/query/:query_param', (req, res) => {
+            log.info('GET Query received!');
+            if (!req.params.query_param) {
+                res.send({
+                    status: 'FAIL',
+                    error: 'Param required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-status', {
+                id: req.params.query_param,
+                response: res,
+            });
+        });
+
         server.post('/api/network/query', (req, res) => {
-            log.important('Query received!');
+            log.important('POST Query received!');
 
             const { query } = req.body;
             emitter.emit('network-query', {
