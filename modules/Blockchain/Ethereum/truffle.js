@@ -1,6 +1,7 @@
+const result = require('dotenv').config({ path: `${__dirname}/../../../.env` });
 var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-line import/no-unresolved
 
-var mnemonic = 'shift exhibit talent click apology idle shed page giant catalog matter spare';
+var mnemonic = process.env.TRUFFLE_MNEMONIC;
 
 module.exports = {
     networks: {
@@ -33,9 +34,11 @@ module.exports = {
         },
 
         rinkeby: {
-            provider: () => new HDWalletProvider(mnemonic, 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'),
-            network_id: 3,
-            gas: 4000000,
+            host: 'localhost', // Connect to geth on the specified
+            port: 8545,
+            provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
+            network_id: 4,
+            gas: 4612388, // Gas limit used for deploys
         },
     },
 };

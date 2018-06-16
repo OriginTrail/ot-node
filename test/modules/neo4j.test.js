@@ -44,7 +44,8 @@ let testDb;
 
 describe('Neo4j module ', async () => {
     before('create and use testDb db', async () => {
-        testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port);
+        const log = Utilities.getLogger();
+        testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port, log);
     });
 
     it('.identify() should return correct name', () => {

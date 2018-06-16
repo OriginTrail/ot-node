@@ -145,7 +145,7 @@ describe('Arangojs module ', async () => {
         await testDb.createCollection(documentCollectionName);
 
         const response = await testDb.addVertex(vertexOne);
-        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        assert.containsAllKeys(response, ['_key']);
 
         // now lets check that we\'ve really saved vertex data
         const myCollection = testDb.db.collection(documentCollectionName);
@@ -187,7 +187,7 @@ describe('Arangojs module ', async () => {
         await testDb.createEdgeCollection(edgeCollectionName);
 
         const response = await testDb.addEdge(edgeOne);
-        assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+        assert.containsAllKeys(response, ['_key']);
 
         // now lets check that we\'ve saved edge correctly
         const myCollection = testDb.db.edgeCollection(edgeCollectionName);
@@ -215,7 +215,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -229,7 +229,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue + 1,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev', '_oldRev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -310,7 +310,7 @@ describe('Arangojs module ', async () => {
             // eslint-disable-next-line no-underscore-dangle
             edgeOne._key, newImportValue,
         ).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
         });
 
         // check value of imports
@@ -365,7 +365,7 @@ describe('Arangojs module ', async () => {
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
 
-        await testDb.findVerticesByImportId(vertexOne.imports[0].toString()).then((response) => {
+        await testDb.findVerticesByImportId(vertexOne.imports[0]).then((response) => {
             assert.deepEqual(response[0].data, vertexOne.data);
             assert.deepEqual(response[0].vertex_type, vertexOne.vertex_type);
             assert.deepEqual(response[0].identifiers, vertexOne.identifiers);
@@ -380,7 +380,7 @@ describe('Arangojs module ', async () => {
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
 
-        await testDb.findEdgesByImportId(edgeOne.imports[0].toString()).then((response) => {
+        await testDb.findEdgesByImportId(edgeOne.imports[0]).then((response) => {
             assert.deepEqual(response[0]._key, edgeOne._key);
             assert.deepEqual(response[0].edge_type, edgeOne.edge_type);
             assert.deepEqual(response[0].data_provider, edgeOne.data_provider);
@@ -476,7 +476,7 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId',
         };
         const response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
     });
 
@@ -493,14 +493,14 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId2',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
 
         // Change key
         dummyVertex._key = 'dummyChangedKey';
 
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 2);
     });
 
@@ -517,11 +517,11 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId3',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
 
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.have.property('version', 1);
     });
 
@@ -537,7 +537,7 @@ describe('Arangojs module ', async () => {
             sender_id: 'dummySenderId4',
         };
         let response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
 
         dummyVertex = {
@@ -548,7 +548,7 @@ describe('Arangojs module ', async () => {
             },
         };
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
 
         dummyVertex = {
@@ -558,8 +558,82 @@ describe('Arangojs module ', async () => {
             },
         };
         response = await testDb.addVertex(dummyVertex);
-        expect(response).to.include.all.keys('_id', '_key', '_rev');
+        expect(response).to.include.all.keys('_key');
         expect(dummyVertex).to.not.have.property('version');
+    });
+
+    it('should find imports', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex1 = {
+            _key: 'dummyKey1',
+            identifiers: {
+                id: 'dummyId1',
+            },
+            data: {
+                some_key: 'scalar',
+            },
+            imports: [1, 2, 3, 4],
+            sender_id: 'dummySenderId',
+        };
+        const dummyVertex2 = {
+            _key: 'dummyKey2',
+            data: {
+                some_key: ['some value 1', 'some value 2'],
+            },
+            identifiers: {
+                id: 'dummyId2',
+            },
+            imports: [7, 8],
+            sender_id: 'dummySenderId',
+        };
+        const dummyVertex3 = {
+            _key: 'dummyKey3',
+            data: {
+                some_key: [],
+            },
+            identifiers: {
+                id: 'dummyId3',
+            },
+            imports: [10, 11],
+            sender_id: 'dummySenderId',
+        };
+        let response = await testDb.addVertex(dummyVertex1);
+        expect(response).to.include.all.keys('_key');
+        expect(dummyVertex1).to.not.have.property('version');
+
+        response = await testDb.addVertex(dummyVertex2);
+        expect(response).to.include.all.keys('_key');
+        expect(dummyVertex2).to.not.have.property('version');
+
+        response = await testDb.addVertex(dummyVertex3);
+        expect(response).to.include.all.keys('_key');
+        expect(dummyVertex3).to.not.have.property('version');
+
+        let dataLocationQuery = [{
+            path: 'identifiers.id',
+            value: 'dummyId1',
+            opcode: 'EQ',
+        }];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([1, 2, 3, 4], response);
+
+        dataLocationQuery = [{
+            path: 'data.some_key',
+            value: 'some value 1',
+            opcode: 'IN',
+        }];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([7, 8], response);
+
+        dataLocationQuery = [{
+            path: 'sender_id',
+            value: 'dummySenderId',
+            opcode: 'EQ',
+        }];
+        response = await testDb.findImportIds(dataLocationQuery);
+        assert.deepEqual([1, 10, 11, 2, 3, 4, 7, 8], response);
     });
 
     after('drop testDb db', async () => {

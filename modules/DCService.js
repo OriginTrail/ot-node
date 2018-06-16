@@ -5,9 +5,9 @@ const bytes = require('utf8-length');
 const BN = require('bn.js');
 const Utilities = require('./Utilities');
 const Models = require('../models');
-const abi = require('ethereumjs-abi');
-
-const log = Utilities.getLogger();
+const Challenge = require('./Challenge');
+const MerkleTree = require('./Merkle');
+const ImportUtilities = require('./ImportUtilities');
 
 const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
@@ -24,11 +24,14 @@ class DCService {
      */
     constructor(ctx) {
         this.blockchain = ctx.blockchain;
+        this.challenger = ctx.challenger;
+        this.graphStorage = ctx.graphStorage;
+        this.log = ctx.logger;
     }
 
-    async createOffer(dataId, rootHash, totalDocuments, vertices) {
-        this.blockchain.writeRootHash(dataId, rootHash).then((res) => {
-            log.info('Fingerprint written on blockchain');
+    async createOffer(importId, rootHash, totalDocuments, vertices) {
+        this.blockchain.writeRootHash(importId, rootHash).then((res) => {
+            this.log.info('Fingerprint written on blockchain');
         }).catch((e) => {
             console.log('Error: ', e);
         });
@@ -45,17 +48,8 @@ class DCService {
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
-        // TODO: Store offer hash in DB.
-        const offerHash = `0x${abi.soliditySHA3(
-            ['address', 'bytes32', 'uint256'],
-            [config.node_wallet, `0x${config.identity}`, dataId],
-        ).toString('hex')}`;
-
-        log.info(`Offer hash is ${offerHash}.`);
-
         const newOfferRow = {
-            id: offerHash,
-            import_id: dataId,
+            id: importId,
             total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
@@ -79,12 +73,12 @@ class DCService {
         const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
         if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition - profileBalance);
-            await this.blockchain.depositToken(condition - profileBalance);
+            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+            await this.blockchain.depositToken(condition.sub(profileBalance));
         }
 
         this.blockchain.createOffer(
-            dataId,
+            importId,
             config.identity,
             totalEscrowTime,
             maxTokenAmount,
@@ -95,14 +89,14 @@ class DCService {
             dhWallets,
             dhIds,
         ).then(() => {
-            log.info('Offer written to blockchain. Started bidding phase.');
+            this.log.info('Offer written to blockchain. Started bidding phase.');
             offer.status = 'STARTED';
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+                Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
-                        log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
+                        this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
@@ -111,7 +105,7 @@ class DCService {
             };
 
             this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
-                log.trace('Started choosing phase.');
+                this.log.trace('Started choosing phase.');
 
                 offer.status = 'FINALIZING';
                 offer.save({ fields: ['status'] });
@@ -121,9 +115,9 @@ class DCService {
                             offer.status = 'FINALIZED';
                             offer.save({ fields: ['status'] });
 
-                            log.info(`Offer for ${offer.id} finalized`);
+                            this.log.info(`Offer for ${offer.id} finalized`);
                         }).catch((error) => {
-                            log.error(`Failed to get offer ${offer.id}). ${error}.`);
+                            this.log.error(`Failed to get offer ${offer.id}). ${error}.`);
                         });
                 }).catch(() => {
                     offer.status = 'FAILED';
@@ -131,7 +125,7 @@ class DCService {
                 });
             });
         }).catch((err) => {
-            log.warn(`Failed to create offer. ${err}`);
+            this.log.warn(`Failed to create offer. ${err}`);
         });
     }
 
@@ -143,38 +137,119 @@ class DCService {
      */
     _calculateImportSize(vertices) {
         const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
-        Graph.encryptVerticesWithKeys(vertices, keyPair.privateKey, keyPair.publicKey);
+        Graph.encryptVertices(vertices, keyPair.privateKey);
         return bytes(JSON.stringify(vertices));
     }
 
     /**
      * Chose DHs
-     * @param offerHash Offer identifier
+     * @param importId Offer identifier
      * @param totalEscrowTime   Total escrow time
      */
-    chooseBids(offerHash, totalEscrowTime) {
+    chooseBids(importId, totalEscrowTime) {
         return new Promise((resolve, reject) => {
-            Models.offers.findOne({ where: { id: offerHash } }).then((offerModel) => {
+            Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                log.info(`Choose bids for offer ${offerHash}`);
+                this.log.info(`Choose bids for offer ${importId}`);
                 this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        this.blockchain.chooseBids(offerHash)
+                        this.blockchain.chooseBids(importId)
                             .then(() => {
-                                log.info(`Bids chosen for data ${offerHash}`);
+                                this.log.info(`Bids chosen for data ${importId}`);
                                 resolve();
                             }).catch((err) => {
-                                log.warn(`Failed call choose bids for data ${offerHash}. ${err}`);
+                                this.log.warn(`Failed call choose bids for data ${importId}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
-                        log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        this.log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
                         reject(err);
                     });
             }).catch((err) => {
-                log.error(`Failed to get offer (data ID ${offerHash}). ${err}.`);
+                this.log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
                 reject(err);
             });
+        });
+    }
+
+    /**
+     * Verifies DH import and distribution key
+     * @param epk
+     * @param importId
+     * @param encryptionKey
+     * @param kadWallet
+     * @param nodeId
+     * @return {Promise<void>}
+     */
+    async verifyImport(epk, importId, encryptionKey, kadWallet, nodeId) {
+        const replicatedData = await Models.replicated_data.findOne({
+            where: { dh_id: nodeId, import_id: importId },
+        });
+
+        const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+        const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+
+        await Promise.all([edgesPromise, verticesPromise]).then(async (values) => {
+            const edges = values[0];
+            const vertices = values[1].filter(vertex => vertex.vertex_type !== 'CLASS');
+
+            const originalVertices = Utilities.copyObject(vertices);
+            const clonedVertices = Utilities.copyObject(vertices);
+            Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
+
+            const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
+            const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+            const litigationRootHash = litigationBlocksMerkleTree.getRoot();
+
+            Graph.encryptVertices(vertices, encryptionKey);
+            const distributionMerkle = await ImportUtilities.merkleStructure(
+                vertices,
+                edges,
+            );
+            const distributionHash = distributionMerkle.tree.getRoot();
+            const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
+
+            const escrow = await this.blockchain.getEscrow(importId, kadWallet);
+
+            let failed = false;
+            if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
+                this.log.warn(`Distribution hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
+                this.log.warn(`Litigation hash for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (!escrow.checksum === epkChecksum) {
+                this.log.warn(`Checksum for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            const decryptionKey = Encryption.unpadKey(Encryption.globalDecrypt(epk));
+            const decryptedVertices = Graph.decryptVertices(vertices, decryptionKey);
+            if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
+                this.log.warn(`Decryption key for import ${importId} and DH ${kadWallet} is incorrect`);
+                failed = true;
+            }
+
+            if (failed) {
+                await this.blockchain.cancelEscrow(
+                    kadWallet,
+                    importId,
+                );
+                // TODO handle failed situation
+                return false;
+            }
+            await this.blockchain.verifyEscrow(
+                importId,
+                kadWallet,
+            );
+            this.log.warn('Data successfully verified, preparing to start challenges');
+            this.challenger.startChallenging();
+
+            return true;
         });
     }
 }
