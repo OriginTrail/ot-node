@@ -1,6 +1,5 @@
 const fs = require('fs');
 const rimraf = require('rimraf');
-const Duration = require('duration-js');
 const exec = require('child_process').exec;
 
 const d = new Date();
