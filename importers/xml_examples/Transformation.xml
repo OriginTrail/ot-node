@@ -39,7 +39,7 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:actor:id:Employee.Bob">																
+							<VocabularyElement id="urn:ot:object:actor:id:Employee.Bob">
 								<attribute id="urn:ot:object:actor:name">Bob Johnson</attribute>
 								<attribute id="urn:ot:object:actor:category">Person</attribute>
 						    </VocabularyElement>													
@@ -60,22 +60,22 @@
 					<Vocabulary type="urn:ot:object:batch">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00001">                            
-								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:#1A</attribute>
 								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:01:54Z</attribute>
 								<attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
 							</VocabularyElement>
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00002">
-								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:#1A</attribute>
 								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:02:54Z</attribute>
 								<attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
 							</VocabularyElement>						
 							<VocabularyElement id="urn:epc:id:sgtin:8635411.000333.00003">
-								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:#1A</attribute>
+								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:#1A</attribute>
 								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
 								<attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
 							</VocabularyElement>	                            
 							<VocabularyElement id="urn:epc:id:sgtin:8635.737">                                
-								<attribute id="urn:ot:object:product:batch:productid">urn:ot:object:product:id:123AB</attribute>
+								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:123AB</attribute>
 								<attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
 							</VocabularyElement>						
 						</VocabularyElementList>
