@@ -4,7 +4,7 @@ node_js:
 services:
   - neo4j
 env:
-  - NODE_ENV=test
+  - NODE_ENV=development
 sudo: enabled
 before_script:
   - echo $NODE_WALLET
