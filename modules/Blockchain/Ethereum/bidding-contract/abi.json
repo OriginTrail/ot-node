@@ -142,29 +142,6 @@
       {
         "name": "import_id",
         "type": "bytes32"
-      },
-      {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "amICloseEnough",
-    "outputs": [
-      {
-        "name": "would_get_chosen",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
       }
     ],
     "name": "getOfferStatus",
@@ -314,6 +291,20 @@
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "active_nodes",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "import_id",
@@ -355,6 +346,41 @@
     "outputs": [
       {
         "name": "distance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDistanceParameters",
+    "outputs": [
+      {
+        "name": "hash_difference",
+        "type": "uint256"
+      },
+      {
+        "name": "current_ranking",
+        "type": "uint256"
+      },
+      {
+        "name": "required_bid_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "active_nodes_",
         "type": "uint256"
       }
     ],
