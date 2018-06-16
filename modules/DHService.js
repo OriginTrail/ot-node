@@ -757,7 +757,7 @@ class DHService {
 
         // Fetch the results.
         const importIds =
-            await this.graphStorage.findImportIds(networkQuery.query.toString());
+            await this.graphStorage.findImportIds(networkQuery.query);
         const decryptKeys = {};
 
         // Get decode keys.

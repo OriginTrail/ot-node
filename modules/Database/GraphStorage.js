@@ -112,7 +112,7 @@ class GraphStorage {
      * @param inputQuery
      */
     async dataLocationQuery(inputQuery) {
-        return this.dataLocationQuery(inputQuery);
+        return this.db.dataLocationQuery(inputQuery);
     }
 
     /**
