@@ -662,13 +662,11 @@ class GS1Importer {
         const classObjectEdges = [];
         eventVertices.forEach((vertex) => {
             for (const category of vertex.data.categories) {
-                eventVertices.forEach((vertex) => {
-                    classObjectEdges.push({
-                        _key: this.helper.createKey('is', senderId, vertex._key, category),
-                        _from: `ot_vertices/${vertex._key}`,
-                        _to: `ot_vertices/${category}`,
-                        edge_type: 'IS',
-                    });
+                classObjectEdges.push({
+                    _key: this.helper.createKey('is', senderId, vertex._key, category),
+                    _from: `ot_vertices/${vertex._key}`,
+                    _to: `ot_vertices/${category}`,
+                    edge_type: 'IS',
                 });
             }
         });
