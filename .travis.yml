@@ -5,8 +5,6 @@ services:
   - neo4j
 env:
   - NODE_ENV=test
-  - NODE_WALLET = $TRAVIS_NODE_WALLET
-  - NODE_PRIVATE_KEY = $TRAVIS_NODE_PRIVATE_KEY
 sudo: enabled
 before_script:
   - echo $NODE_WALLET
