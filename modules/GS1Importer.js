@@ -749,7 +749,7 @@ class GS1Importer {
         }
         await this.db.commit();
 
-        console.log('Done parsing and importing.');
+        this.logger.info('Done parsing and importing.');
 
         let edgesPerImport = await this.db.findEdgesByImportId(importId);
         edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');

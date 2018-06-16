@@ -16,7 +16,7 @@ const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 var numberToBN = require('number-to-bn');
 
-require('dotenv').config();
+const env = require('dotenv').config();
 
 
 class Utilities {
@@ -118,9 +118,22 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
-
-        const customColors = {
+        var logLevel = '';
+        const environment = env.parsed.NODE_ENV;
+        switch (environment) {
+        case 'development':
+            logLevel = 'trace';
+            break;
+        case 'test':
+            logLevel = 'debug';
+            break;
+        case 'production':
+            logLevel = 'info';
+            break;
+        default:
+            logLevel = 'trace';
+        }
+        var customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'blue',
@@ -231,7 +244,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
-                    console.log('Please make sure Arango server is up and running');
+                    this.getLogger.notify('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }
