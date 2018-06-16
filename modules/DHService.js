@@ -521,10 +521,6 @@ class DHService {
             await this.blockchain.depositToken(condition.sub(profileBalance));
         }
 
-        // TODO: Sign escrow here.
-
-        // TODO: dataReadResponseObject might be redundant
-        // TODO since same info can be gathered from escrow.
         /*
             dataReadResponseObject = {
                 message: {
@@ -532,7 +528,6 @@ class DHService {
                     wallet: DH_WALLET,
                     nodeId: KAD_ID
                     agreementStatus: CONFIRMED/REJECTED,
-                    purchaseId: PURCHASE_ID,
                     encryptedData: { … }
                 },
                 messageSignature: {
@@ -548,7 +543,6 @@ class DHService {
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
             agreementStatus: 'CONFIRMED',
-            purchaseId: 'PURCHASE_ID',
             encryptedData: {
                 vertices,
                 edges,
@@ -684,7 +678,6 @@ class DHService {
         );
 
         // Monitor for litigation event. Just in case.
-        // TODO: Create permanent event filter for this.
         this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000).then(async (eventData) => {
             if (!eventData) {
                 // Everything is ok.
@@ -698,7 +691,14 @@ class DHService {
                 Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
             );
 
-            // TODO: Here we should wait for litigation result.
+            // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
+            this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000).then(async (eventData) => {
+                if (eventData.proof_was_correct) {
+                    this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
+                } else {
+                    this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
+                }
+            });
         });
 
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
@@ -708,7 +708,8 @@ class DHService {
         if (!eventData) {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
-            // TODO Initiate canceling purchase.
+            await this.blockchain.cancelPurchase(importId, wallet, true);
+            this.log.info(`Purchase for import ${importId} canceled.`);
             return;
         }
 
@@ -748,94 +749,78 @@ class DHService {
         await this.blockchain.answerLitigation(importId, answer);
     }
 
-    async dataLocationQuery(queryId, response) {
-        try {
-            const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
-            if (networkQuery.status === 'FINISHED') {
-                // Fetch the results.
-                const importIds =
-                    await this.graphStorage.findImportIds(networkQuery.query.toString());
-                const decryptKeys = {};
+    async dataLocationQuery(queryId) {
+        const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
+        if (networkQuery.status !== 'FINISHED') {
+            throw Error('Query not finished.');
+        }
 
-                // Get decode keys.
-                const holdingData = await Models.holding_data.findAll({
-                    where: {
-                        id: {
-                            [Op.in]: importIds,
-                        },
-                    },
-                });
+        // Fetch the results.
+        const importIds =
+            await this.graphStorage.findImportIds(networkQuery.query.toString());
+        const decryptKeys = {};
 
-                if (holdingData) {
-                    holdingData.forEach((data) => {
-                        decryptKeys[data.id] = data.data_public_key;
-                    });
-                }
+        // Get decode keys.
+        const holdingData = await Models.holding_data.findAll({
+            where: {
+                id: {
+                    [Op.in]: importIds,
+                },
+            },
+        });
 
-                const encodedVertices =
-                    await this.graphStorage.dataLocationQuery(networkQuery.query.toString());
-                const vertices = [];
-
-                encodedVertices.forEach((encodedVertex) => {
-                    const foundIds =
-                        encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
-
-                    switch (foundIds.length) {
-                    case 1:
-                        // Decrypt vertex.
-                        {
-                            const decryptedVertex = Utilities.copyObject(encodedVertex);
-                            decryptedVertex.data =
-                                Encryption.decryptObject(
-                                    encodedVertex.data,
-                                    decryptKeys[foundIds[0]],
-                                );
-                            vertices.push(decryptedVertex);
-                        }
-                        break;
-                    case 0:
-                        // Vertex is not encrypted.
-                        vertices.push(Utilities.copyObject(encodedVertex));
-                        break;
-                    default:
-                        // Multiple keys founded. Temp solution.
-                        for (let i = 0; i < foundIds.length; i += 1) {
-                            try {
-                                const decryptedVertex = Utilities.copyObject(encodedVertex);
-                                decryptedVertex.data =
-                                        Encryption.decryptObject(
-                                            encodedVertex.data,
-                                            decryptKeys[foundIds[i]],
-                                        );
-                                vertices.push(decryptedVertex);
-                                break; // Found the right key.
-                            } catch (error) {
-                                // Ignore.
-                            }
-                        }
-                        break;
-                    }
-                });
-
-                response.send({
-                    status: 'OK',
-                    message: `Query status: ${networkQuery.status}`,
-                    vertices,
-                });
-                return;
-            }
-
-            response.send({
-                status: 'OK',
-                message: `Query status: ${networkQuery.status}`,
-            });
-        } catch (error) {
-            this.log.info(`Failed to process network query status for ID ${id}. ${error}.`);
-            response.send({
-                status: 'FAIL',
-                error: 'Fail to process.',
+        if (holdingData) {
+            holdingData.forEach((data) => {
+                decryptKeys[data.id] = data.data_public_key;
             });
         }
+
+        const encodedVertices =
+            await this.graphStorage.dataLocationQuery(networkQuery.query);
+        const vertices = [];
+
+        encodedVertices.forEach((encodedVertex) => {
+            const foundIds =
+                encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
+
+            switch (foundIds.length) {
+            case 1:
+                // Decrypt vertex.
+                {
+                    const decryptedVertex = Utilities.copyObject(encodedVertex);
+                    decryptedVertex.data =
+                        Encryption.decryptObject(
+                            encodedVertex.data,
+                            decryptKeys[foundIds[0]],
+                        );
+                    vertices.push(decryptedVertex);
+                }
+                break;
+            case 0:
+                // Vertex is not encrypted.
+                vertices.push(Utilities.copyObject(encodedVertex));
+                break;
+            default:
+                // Multiple keys founded. Temp solution.
+                for (let i = 0; i < foundIds.length; i += 1) {
+                    try {
+                        const decryptedVertex = Utilities.copyObject(encodedVertex);
+                        decryptedVertex.data =
+                                Encryption.decryptObject(
+                                    encodedVertex.data,
+                                    decryptKeys[foundIds[i]],
+                                );
+                        vertices.push(decryptedVertex);
+                        break; // Found the right key.
+                    } catch (error) {
+                        // Ignore.
+                    }
+                }
+                break;
+            }
+        });
+
+        return vertices;
     }
 
     listenToBlockchainEvents() {

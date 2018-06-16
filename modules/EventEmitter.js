@@ -89,21 +89,52 @@ class EventEmitter {
             };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
+                    data.response.send({
+                        status: 'OK',
+                        message: 'Query sent successfully.',
+                        query_id: queryId,
+                    });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (offer) {
                             dvService.handleReadOffer(offer).then(() => {
-                                dhService.dataLocationQuery(queryId, data.response);
-                                logger.trace(`Read offer ${offer.id} for query ${offer.query_id} handled.`);
+                                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                             }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
+                        } else {
+                            logger.info(`No offers for query ${offer.query_id} handled.`);
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
-        this.globalEmitter.on('network-query-status', (data) => {
+        this.globalEmitter.on('network-query-status', async (data) => {
             const { id, response } = data;
 
-            dhService.dataLocationQuery(id, response);
+            const networkQuery = await Models.network_queries.find({ where: { id } });
+            if (networkQuery.status === 'FINISHED') {
+                try {
+                    const vertices = dhService.dataLocationQuery(id);
+
+                    response.send({
+                        status: 'OK',
+                        message: `Query status ${networkQuery.status}.`,
+                        query_id: networkQuery.id,
+                        vertices,
+                    });
+                } catch (error) {
+                    logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    response.send({
+                        status: 'FAIL',
+                        error: 'Fail to process.',
+                        query_id: networkQuery.id,
+                    });
+                }
+            } else {
+                response.send({
+                    status: 'OK',
+                    message: `Query status ${networkQuery.status}.`,
+                    query_id: networkQuery.id,
+                });
+            }
         });
 
         const processImport = async (response, error, data) => {
