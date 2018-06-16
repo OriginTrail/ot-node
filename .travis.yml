@@ -5,8 +5,12 @@ services:
   - neo4j
 env:
   - NODE_ENV=test
+  - NODE_WALLET = $TRAVIS_NODE_WALLET
+  - NODE_PRIVATE_KEY = $TRAVIS_NODE_PRIVATE_KEY
 sudo: enabled
 before_script:
+  - echo $NODE_WALLET
+  - echo $NODE_PRIVATE_KEY
   - cp .env.travis .env
   - npm run config
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
