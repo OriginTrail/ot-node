@@ -7,7 +7,7 @@ env:
   - NODE_ENV=test
 sudo: enabled
 before_script:
-  - cp .env.example .env
+  - cp .env.travis .env
   - npm run config
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
