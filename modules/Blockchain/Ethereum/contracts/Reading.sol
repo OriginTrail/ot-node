@@ -145,7 +145,7 @@ contract Reading is Ownable{
 		uint256 DH_balance = bidding.getBalance(DH_wallet);
 		uint256 DV_balance = bidding.getBalance(msg.sender);
 		uint256 stake_amount = token_amount.mul(stake_factor);
-		require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+		require(DH_balance >= stake_amount && DV_balance >= token_amount.add(stake_amount));
 
 		bidding.decreaseBalance(msg.sender, token_amount.add(stake_amount));
 
@@ -162,7 +162,7 @@ contract Reading is Ownable{
 		require(this_purchase.purchase_status == PurchaseStatus.initiated);
 
 		uint256 DH_balance = bidding.getBalance(msg.sender);
-		require(DH_balance > this_purchase.token_amount.mul(this_purchase.stake_factor));
+		require(DH_balance >= this_purchase.token_amount.mul(this_purchase.stake_factor));
 		bidding.decreaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor));
 
 		this_purchase.commitment = commitment;
@@ -233,7 +233,7 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		require(this_purchase.purchase_status == PurchaseStatus.sent
-			&&  this_purchase.time_of_sending + 5 minutes < block.timestamp);
+			&&  this_purchase.time_of_sending + 5 minutes =< block.timestamp);
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount);
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
@@ -246,7 +246,7 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 
 		require(this_purchase.purchase_status == PurchaseStatus.sent
-			&&  this_purchase.time_of_sending + 5 minutes > block.timestamp);
+			&&  this_purchase.time_of_sending + 5 minutes >= block.timestamp);
 
 		this_purchase.purchase_status = PurchaseStatus.disputed;
 		emit PurchaseDisputed(import_id, DH_wallet, msg.sender);
