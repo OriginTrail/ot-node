@@ -63,7 +63,7 @@ describe('WOT Importer tests', () => {
     });
 
     describe('Parse and Import JSON for n repetitive times', () => {
-        const repetition = 10;
+        const repetition = 5;
         inputJsonFiles.forEach((test) => {
             for (const i in Array.from({ length: repetition })) {
                 it(
