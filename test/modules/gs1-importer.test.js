@@ -167,6 +167,32 @@ describe('GS1 Importer tests', () => {
         });
     });
 
+    describe('Total # of docs/edges after re-import of same file should remain constant', async () => {
+        it('check total graph nodes count in scenario of GraphExample_3.xml', async () => {
+            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+
+            await gs1.parseGS1(myGraphExample3);
+            const verticesCount1 = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.isNumber(verticesCount1);
+            assert.isTrue(verticesCount1 >= 0, 'we expect positive number of vertices');
+            const edgesCount1 = await graphStorage.getDocumentsCount('ot_edges');
+            assert.isNumber(edgesCount1);
+            assert.isTrue(edgesCount1 >= 0, 'we expect positive number of edges');
+
+            await gs1.parseGS1(myGraphExample3);
+            const verticesCount2 = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.isTrue(verticesCount2 >= 0, 'we expect positive number of vertices');
+            assert.isNumber(verticesCount2);
+            const edgesCount2 = await graphStorage.getDocumentsCount('ot_edges');
+            assert.isNumber(edgesCount1);
+            assert.isTrue(edgesCount2 >= 0, 'we expect positive number of edges');
+
+
+            assert.equal(verticesCount1, verticesCount2, '# of docs should remain constant after re-import');
+            assert.equal(edgesCount1, edgesCount2, '# of edges should remain constant after re-import');
+        });
+    });
+
     describe('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
             expect(import1Result.root_hash).to.be
