@@ -261,7 +261,7 @@ class OTNode {
         if (event.node_id.includes(identity)) {
             log.notify(`Profile created for node ${identity}`);
         } else {
-            log.error('Profile could not be created in timely manner. Please, try again later.');
+            log.error('Profile could not be confirmed in timely manner. Please, try again later.');
             process.exit(1);
         }
     }
