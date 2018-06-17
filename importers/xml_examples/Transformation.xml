@@ -115,7 +115,7 @@
 					 		<uom>PCS</uom>
 					 	</quantityElement>
 					 	<quantityElement>
-					 		<epcClass>urn:epc:id:sgtin:8635411.000333.00001</epcClass>
+					 		<epcClass>urn:epc:id:sgtin:8635411.000333.00003</epcClass>
 					 		<quantity>1.0</quantity>
 					 		<uom>PCS</uom>
 					 	</quantityElement>
@@ -126,7 +126,7 @@
 					 <outputQuantityList>
 						 <quantityElement>
 						 	<epcClass>urn:epc:id:sgtin:8635.737</epcClass>
-							 <quantity>1</quantity>
+							 <quantity>3</quantity>
 							 <uom>PCS</uom>
 						 </quantityElement>
 					 </outputQuantityList>					 
