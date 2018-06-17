@@ -7,14 +7,14 @@
                 <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
-                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>  <!-- Optional -->               
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>	<!-- Optional -->				
                 </sbdh:ContactInformation>
             </sbdh:Sender>
-            <sbdh:Receiver><!-- Mandatory -->               
+            <sbdh:Receiver><!-- Mandatory -->				
                 <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
-                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>  <!-- Optional -->               
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>	<!-- Optional -->				
                 </sbdh:ContactInformation>
             </sbdh:Receiver>
             <sbdh:DocumentIdentification> <!-- Mandatory-->
@@ -22,7 +22,7 @@
                 <sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
                 <sbdh:InstanceIdentifier>100002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
                 <sbdh:Type>Packing</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-                <sbdh:CreationDateAndTime>2018-01-01T11:11:52Z</sbdh:CreationDateAndTime> <!-- Optional -->     
+                <sbdh:CreationDateAndTime>2018-01-01T11:11:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
             </sbdh:DocumentIdentification>
         </sbdh:StandardBusinessDocumentHeader>
         <extension>
@@ -125,27 +125,49 @@
     </EPCISHeader>
     <EPCISBody>
         <EventList>
-            <AggregationEvent> <!-- Unpacking Event 1 Orange -->
-                <eventTime>2018-01-06T10:53:56.591Z</eventTime>
-                <eventTimeZoneOffset>-01:00</eventTimeZoneOffset>
-                <parentID>urn:epc:id:sscc:0614141.1234567890</parentID>		 		
+            <AggregationEvent> <!-- Packing Event Green -->
+                <eventTime>2018-01-01T00:30:00.000-04:00</eventTime> <!-- Mandatory-->
+                <eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->
+                <parentID>urn:epc:id:sgtin:Pallet_1</parentID>
                 <childEPCs>
+                    <epc>urn:epc:id:sgtin:Batch_1</epc>
                     <epc>urn:epc:id:sgtin:Batch_2</epc>
+                    <epc>urn:epc:id:sgtin:Batch_3</epc>
                 </childEPCs>
-                <action>DELETE</action>
-                <bizStep>urn:epcglobal:cbv:bizstep:unpacking</bizStep>
+                <action>ADD</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:packing</bizStep>
                 <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
                 <readPoint>
-                    <id>urn:epc:id:sgln:Building_Orange_V6</id>
+                    <id>urn:epc:id:sgln:Building_Green_V1</id>
                 </readPoint>
-                <bizLocation>
-                    <id>urn:epc:id:sgln:Building_Orange</id>
+                <bizLocation> <!-- Optional -->
+                    <id>urn:epc:id:sgln:Building_Green</id>
                 </bizLocation>
                 <extension>
+                    <childQuantityList>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
+                            <quantity>100</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:Batch_2</epcClass>
+                            <quantity>200</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:Batch_3</epcClass>
+                            <quantity>300</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </childQuantityList>                
                     <extension>
-                        <documentId>ORANGEUNPACK1</documentId>
+                        <documentId>PACK1</documentId>
                         <OTEventClass>urn:ot:event:Transform</OTEventClass>
-                        <OTEventType>Unpacking</OTEventType>
+                        <OTEventType>Packing</OTEventType>
+                        <sourceList>
+                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green_1</source>
+                        </sourceList>
                     </extension>
                 </extension>
             </AggregationEvent>
