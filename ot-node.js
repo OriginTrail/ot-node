@@ -197,7 +197,13 @@ class OTNode {
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
-        await this.createProfile(blockchain);
+        try {
+            await this.createProfile(blockchain);
+        } catch (e) {
+            log.error('Failed to create profile');
+            process.exit(1);
+        }
+
         await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
@@ -253,7 +259,10 @@ class OTNode {
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
         if (event.node_id.includes(identity)) {
-            log.notify(`Profile created for node: ${identity}`);
+            log.notify(`Profile created for node ${identity}`);
+        } else {
+            log.error('Profile could not be created in timely manner. Please, try again later.');
+            process.exit(1);
         }
     }
 
