@@ -835,6 +835,21 @@ class Ethereum {
             [importId, dvWallet, encryptedBlock], options,
         );
     }
+
+    payOutForReading(importId, dvWallet) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.readingContractAddress,
+        };
+
+        this.log.trace(`payOutForReading (${importId}, ${dvWallet})`);
+        return this.transactions.queueTransaction(
+            this.readingContractAbi, 'payOut',
+            [importId, dvWallet], options,
+        );
+
+    }
 }
 
 module.exports = Ethereum;

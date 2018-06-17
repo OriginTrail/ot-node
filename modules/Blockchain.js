@@ -332,6 +332,17 @@ class Blockchain {
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
         return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
+
+    /**
+     * Pay out tokens from reading contract
+     * @returns {Promise}
+     * @param importId
+     * @param dvWallet
+     */
+    async payOutForReading(importId, dvWallet) {
+        return this.blockchain.payOutForReading(importId, dvWallet);
+    }
+
 }
 
 module.exports = Blockchain;
