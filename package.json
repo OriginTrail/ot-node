@@ -40,7 +40,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^3.2.2",
+    "@kadenceproject/kadence": "^3.4.0",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
