@@ -38,6 +38,8 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/02_Green_to_pink_shipment.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/01_Green_packing.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/02_Green_to_pink_shipment.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/03_Green_to_pink_receipt.xml')] },
