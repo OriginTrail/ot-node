@@ -1,4 +1,4 @@
-dpragma solidity ^0.4.21;
+pragma solidity ^0.4.21;
 
 library SafeMath {
 	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -234,7 +234,7 @@ contract Reading is Ownable{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		require(this_purchase.purchase_status == PurchaseStatus.sent
-			&&  this_purchase.time_of_sending + 5 minutes =< block.timestamp);
+			&&  this_purchase.time_of_sending + 5 minutes <= block.timestamp);
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor).add(this_purchase.token_amount));
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
