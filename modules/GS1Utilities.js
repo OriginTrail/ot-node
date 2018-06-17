@@ -163,6 +163,25 @@ class GS1Utilities {
     }
 
     /**
+     * Helper function for finding batch either in memory or in db
+     * @param senderId
+     * @param batchVertices
+     * @param uid
+     * @return {Promise<void>}
+     * @private
+     */
+    async _findBatch(senderId, batchVertices, uid) {
+        // check in memory
+        for (const batchVertex of batchVertices) {
+            if (batchVertex.identifiers.uid === uid) {
+                return batchVertex;
+            }
+        }
+        // check in db
+        return this.db.findVertexWithMaxVersion(senderId, uid);
+    }
+
+    /**
      * Zero knowledge processing
      * @param senderId
      * @param event
@@ -171,7 +190,6 @@ class GS1Utilities {
      * @param importId
      * @param globalR
      * @param batchVertices
-     * @param db
      * @return {Promise<void>}
      */
     async zeroKnowledge(
@@ -205,8 +223,8 @@ class GS1Utilities {
 
                 for (const outputQ of outputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this.db.findVertexWithMaxVersion(senderId, outputQ.object);
-                    if (vertex) {
+                    const vertex = await this._findBatch(senderId, batchVertices, outputQ.object);
+                    if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
                             object: outputQ.object,
@@ -241,8 +259,8 @@ class GS1Utilities {
 
                 for (const inputQ of inputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this.db.findVertexWithMaxVersion(senderId, inputQ.object);
-                    if (vertex) {
+                    const vertex = await this._findBatch(senderId, batchVertices, inputQ.object);
+                    if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         outputQuantities.push({
                             object: inputQ.object,
@@ -270,8 +288,8 @@ class GS1Utilities {
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this.db.findVertexWithMaxVersion(senderId, inputQuantity.object);
-                    if (vertex) {
+                    const vertex = await this._findBatch(senderId, batchVertices, inputQuantity.object);
+                    if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
                             object: inputQuantity.object,
@@ -297,8 +315,8 @@ class GS1Utilities {
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this.db.findVertexWithMaxVersion(senderId, outputQuantity.object);
-                    if (vertex) {
+                    const vertex = await this._findBatch(senderId, batchVertices, outputQuantity.object);
+                    if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
                             object: outputQuantity.object,

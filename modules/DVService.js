@@ -1,6 +1,5 @@
 const BN = require('bn.js');
 const ethAbi = require('ethereumjs-abi');
-const crypto = require('crypto');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -103,11 +102,10 @@ class DVService {
 
                 this.log.trace(`Finalizing query ID ${queryId}. Got ${responseModels.length} offer(s).`);
 
-                // TODO: Get some choose logic here.
                 let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
-                    if (lowestOffer === undefined || price.lt(new BN(lowestOffer.data_price, 10))) {
+                    if (lowestOffer === null || price.lt(new BN(lowestOffer.data_price, 10))) {
                         lowestOffer = response.get({ plain: true });
                     }
                 });
@@ -204,14 +202,10 @@ class DVService {
                 wallet: DH_WALLET,
                 nodeId: KAD_ID
                 agreementStatus: CONFIRMED/REJECTED,
-                purchaseId: PURCHASE_ID,
                 encryptedData: { … }
                 importId: IMPORT_ID,        // Temporal. Remove it.
             },
          */
-        if (message.agreementStatus !== 'CONFIRMED') {
-            throw Error('Read not confirmed');
-        }
 
         // Is it the chosen one?
         const replyId = message.id;
@@ -225,6 +219,16 @@ class DVService {
             throw Error(`Didn't find query reply with ID ${replyId}.`);
         }
 
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: networkQueryResponse.query_id },
+        });
+
+        if (message.agreementStatus !== 'CONFIRMED') {
+            networkQuery.status = 'REJECTED';
+            await networkQuery.save({ fields: ['status'] });
+            throw Error('Read not confirmed');
+        }
+
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         // Calculate root hash and check is it the same on the SC.
@@ -236,6 +240,8 @@ class DVService {
         if (!escrow) {
             const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -243,6 +249,8 @@ class DVService {
         if (escrow.escrow_status === 0) {
             const errorMessage = `Couldn't not find escrow for DH ${dhWallet} and import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -253,6 +261,8 @@ class DVService {
         if (escrow.distribution_root_hash !== rootHash) {
             const errorMessage = `Distribution root hash doesn't match one in escrow. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
             this.log.warn(errorMessage);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
@@ -264,6 +274,8 @@ class DVService {
             });
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             return;
         }
 
@@ -316,8 +328,16 @@ class DVService {
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
         // await this.blockchain.subscribeToEvent('CommitmentSent', importId, 20 * 60 * 1000);
-
-        // TODO: Commitment happened.
+        this.blockchain.subscribeToEvent('CommitmentSent', importId, 10 * 60 * 1000).then(async (eventData) => {
+            if (!eventData) {
+                // Everything is ok.
+                this.log.warn(`Commitment not sent for purchase ${importId}. Canceling it.`);
+                await this.blockchain.cancelPurchase(importId, dhWallet, false);
+                networkQuery.status = 'CANCELED';
+                await networkQuery.save({ fields: ['status'] });
+                this.log.info(`Purchase for import ${importId} canceled.`);
+            }
+        });
     }
 
     async handleEncryptedPaddedKey(message) {
@@ -351,6 +371,10 @@ class DVService {
             throw Error(`Didn't find query reply with ID ${id}.`);
         }
 
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: networkQueryResponse.query_id },
+        });
+
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
@@ -373,7 +397,13 @@ class DVService {
 
         if (!testNumber.eq(new BN(Utilities.denormalizeHex(sd), 16))) {
             this.log.warn(`Commitment test failed for reply ID ${id}. Node wallet ${wallet}, import ID ${importId}.`);
-            this._litigatePurchase(importId, wallet, nodeId, m1, m2, e);
+            if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
+            } else {
+                networkQuery.status = 'FAILED';
+                await networkQuery.save({ fields: ['status'] });
+            }
             throw Error('Commitment test failed.');
         }
 
@@ -389,7 +419,13 @@ class DVService {
         if (commitmentHash !== blockchainCommitmentHash) {
             const errorMessage = `Blockchain commitment hash ${blockchainCommitmentHash} differs from mine ${commitmentHash}.`;
             this.log.warn(errorMessage);
-            this._litigatePurchase(importId, wallet, nodeId, m1, m2, e);
+            if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
+            } else {
+                networkQuery.status = 'FAILED';
+                await networkQuery.save({ fields: ['status'] });
+            }
             throw Error(errorMessage);
         }
 
@@ -412,8 +448,6 @@ class DVService {
                 ).toString('ascii') + m2;
 
             try {
-                const badepk = epk;
-                badepk[0] = 'Q';
                 const publicKey = Encryption.unpackEPK(epk);
                 const holdingData = await Models.holding_data.create({
                     id: importId,
@@ -422,9 +456,17 @@ class DVService {
                     distribution_public_key: publicKey,
                     epk,
                 });
+                networkQuery.status = 'FINISHED';
+                await networkQuery.save({ fields: ['status'] });
             } catch (err) {
                 this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
-                await this._litigatePurchase(importId, wallet, null, m1, m2, e);
+                if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
+                    networkQuery.status = 'FINISHED';
+                    await networkQuery.save({ fields: ['status'] });
+                } else {
+                    networkQuery.status = 'FAILED';
+                    await networkQuery.save({ fields: ['status'] });
+                }
                 return;
             }
 
@@ -433,6 +475,8 @@ class DVService {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
             await this.blockchain.cancelPurchase(importId, wallet, false);
+            networkQuery.status = 'FAILED';
+            await networkQuery.save({ fields: ['status'] });
             this.log.info(`Purchase for import ID ${importId} canceled.`);
         }
     }
@@ -463,10 +507,12 @@ class DVService {
                 data_public_key: publicKey,
                 epk,
             });
-        } else {
-            this.log.warn(`Contract claims litigation was fortune for me. Import ID ${importId}`);
-            // TODO: data should be removed from DB here.
+
+            return false;
         }
+
+        this.log.warn(`Contract claims litigation was fortunate for me. Import ID ${importId}`);
+        return true;
     }
 }
 

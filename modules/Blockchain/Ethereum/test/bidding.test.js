@@ -115,8 +115,7 @@ contract('Bidding testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.profile.call(accounts[i]);
 
-            console.log(`\t account price [${i}]: ${response[0].toNumber() / 1e18}`);
-            console.log(`\t account stake [${i}]: ${response[1].toNumber() / 1e18}`);
+            console.log(`\t account[${i}] price: ${response[0].toNumber() / 1e18} \t stake: ${response[1].toNumber() / 1e18}`);
 
             assert.equal(response[0].toNumber(), DH_price[i], 'Price not matching');
             assert.equal(response[1].toNumber(), DH_stake[i], 'Stake not matching');
@@ -184,7 +183,7 @@ contract('Bidding testing', async (accounts) => {
         // Data holding parameters
         const data_hash = await util.keccakAddressBytes(accounts[9], node_id[9]);
 
-        console.log(`\t Data hash ${data_hash}`);
+        console.log(`\t Data hash: ${data_hash}`);
 
         await bidding.createOffer(
             import_id,
@@ -316,9 +315,7 @@ contract('Bidding testing', async (accounts) => {
             chosen_bids[i] = chosen_bids[i].toNumber() + 1;
         }
 
-        await bidding.chooseBids(import_id).then((res) => {
-            console.log(res.tx);
-        });
+        await bidding.chooseBids(import_id);
     });
 
     // Merkle tree structure
@@ -483,12 +480,12 @@ contract('Bidding testing', async (accounts) => {
         );
         await escrow.answerLitigation(
             import_id,
-            requested_data[requested_data_index + 1],
+            '',
             { from: accounts[litigators[1]] },
         );
 
         for (var i = 0; i < litigators.length; i += 1) {
-            // eslint-disable-next-line
+            // eslint-disable-next-line no-await-in-loop
             var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
             console.log(`\t litigation for profile ${litigators[i]}: ${JSON.stringify(response)}`);
         }
@@ -534,10 +531,12 @@ contract('Bidding testing', async (accounts) => {
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
-            promises[i] = escrow.payOut(
-                import_id,
-                { from: accounts[chosen_bids[i]], gas: 100000 },
-            );
+            if (chosen_bids[i] !== litigators[1]) {
+                promises[i] = escrow.payOut(
+                    import_id,
+                    { from: accounts[chosen_bids[i]], gas: 1000000 },
+                );
+            }
         }
         await Promise.all(promises);
 
@@ -565,10 +564,12 @@ contract('Bidding testing', async (accounts) => {
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
-            promises[i] = escrow.payOut(
-                import_id,
-                { from: accounts[chosen_bids[i]], gas: 1000000 },
-            );
+            if (chosen_bids[i] !== litigators[1]) {
+                promises[i] = escrow.payOut(
+                    import_id,
+                    { from: accounts[chosen_bids[i]], gas: 1000000 },
+                );
+            }
         }
         await Promise.all(promises);
 

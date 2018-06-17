@@ -72,15 +72,30 @@ class ArangoJS {
 
     /**
      * Finds vertices by query defined in DataLocationRequestObject
-     * @param dataLocationQuery
+     * @param inputQuery
      */
-    async findImportIds(dataLocationQuery) {
+    async findImportIds(inputQuery) {
+        const results = await this.dataLocationQuery(inputQuery);
+        const imports = results.reduce((prevVal, elem) => {
+            for (const importId of elem.imports) {
+                prevVal.add(importId);
+            }
+            return prevVal;
+        }, new Set([]));
+        return [...imports].sort();
+    }
+
+    /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param inputQuery
+     */
+    async dataLocationQuery(inputQuery) {
         const params = {};
         const filters = [];
 
         let count = 1;
         let queryString = 'FOR v IN ot_vertices FILTER ';
-        for (const searchRequestPart of dataLocationQuery) {
+        for (const searchRequestPart of inputQuery) {
             const { path, value, opcode } = searchRequestPart;
 
             switch (opcode) {
@@ -97,14 +112,7 @@ class ArangoJS {
             count += 1;
         }
         queryString += `${filters.join(' AND ')} RETURN v`;
-        const results = await this.runQuery(queryString, params);
-        const imports = results.reduce((prevVal, elem) => {
-            for (const importId of elem.imports) {
-                prevVal.add(importId);
-            }
-            return prevVal;
-        }, new Set([]));
-        return [...imports].sort();
+        return this.runQuery(queryString, params);
     }
 
     /**

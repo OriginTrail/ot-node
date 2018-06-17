@@ -192,7 +192,8 @@ contract BiddingTest {
 	function cancelOffer(bytes32 import_id)
 	public{
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active && this_offer.DC_wallet == msg.sender);
+		require(this_offer.active && this_offer.DC_wallet == msg.sender
+			&& this_offer.finalized == false);
 		this_offer.active = false;
 		uint max_total_token_amount = this_offer.max_token_amount_per_DH.mul(this_offer.replication_factor.mul(2).add(1));
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);

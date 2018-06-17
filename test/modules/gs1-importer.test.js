@@ -87,6 +87,89 @@ describe('GS1 Importer tests', () => {
         });
     });
 
+    describe('_keys should not be changing on re-imports', async () => {
+        async function getAllVerticesKeys() {
+            const verticesKeys = [];
+            let myKey;
+
+            const sender_id = 'urn:ot:mda:actor:id:Company_2';
+            const Company_2_timestamp = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2:2015-04-17T00:00:00.000-04:00Z-04:00');
+            const Building_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_1');
+            const Batch_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgtin:Batch_1');
+            const Product_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:product:id:Product_1');
+            const Company_1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_1');
+            const Company_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Company_2');
+            const Building_2 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:Building_2');
+
+            const nodes = [Company_2, Company_2_timestamp, Building_1, Batch_1,
+                Product_1, Company_1, Building_2];
+
+            nodes.forEach((node) => {
+                myKey = node._key;
+                verticesKeys.push(myKey);
+            });
+
+            verticesKeys.push('Ownership');
+            verticesKeys.push('Location');
+            verticesKeys.push('Product');
+            verticesKeys.push('Actor');
+            verticesKeys.push('Observation');
+            verticesKeys.push('Transport');
+            verticesKeys.push('Transformation');
+
+            return verticesKeys;
+        }
+
+        it('check keys immutability on GraphExample_3.xml', async () => {
+            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+
+            await gs1.parseGS1(myGraphExample3);
+            const firstImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.equal(firstImportVerticesCount, 14, 'There should be 14 vertices');
+
+            const firstImportVerticesKeys = await getAllVerticesKeys();
+            assert.equal(firstImportVerticesKeys.length, firstImportVerticesCount);
+
+            // re-import into same db instance
+            await gs1.parseGS1(myGraphExample3);
+            const secondImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.equal(secondImportVerticesCount, 14, 'There should be 14 vertices');
+
+            const secondImportVerticesKeys = await getAllVerticesKeys();
+            assert.equal(secondImportVerticesKeys.length, 14, 'There should be 14 vertices as well');
+            assert.equal(secondImportVerticesKeys.length, secondImportVerticesCount);
+
+            // make sure _keys stay identical
+            assert.deepEqual(firstImportVerticesKeys, secondImportVerticesKeys, 'Keys should stay same after reimport');
+        });
+    });
+
+    describe('Total # of docs/edges after re-import of same file should remain constant', async () => {
+        it('check total graph nodes count in scenario of GraphExample_3.xml', async () => {
+            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+
+            await gs1.parseGS1(myGraphExample3);
+            const verticesCount1 = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.isNumber(verticesCount1);
+            assert.isTrue(verticesCount1 >= 0, 'we expect positive number of vertices');
+            const edgesCount1 = await graphStorage.getDocumentsCount('ot_edges');
+            assert.isNumber(edgesCount1);
+            assert.isTrue(edgesCount1 >= 0, 'we expect positive number of edges');
+
+            await gs1.parseGS1(myGraphExample3);
+            const verticesCount2 = await graphStorage.getDocumentsCount('ot_vertices');
+            assert.isTrue(verticesCount2 >= 0, 'we expect positive number of vertices');
+            assert.isNumber(verticesCount2);
+            const edgesCount2 = await graphStorage.getDocumentsCount('ot_edges');
+            assert.isNumber(edgesCount1);
+            assert.isTrue(edgesCount2 >= 0, 'we expect positive number of edges');
+
+
+            assert.equal(verticesCount1, verticesCount2, '# of docs should remain constant after re-import');
+            assert.equal(edgesCount1, edgesCount2, '# of edges should remain constant after re-import');
+        });
+    });
+
     describe('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
             expect(import1Result.root_hash).to.be
@@ -262,6 +345,35 @@ describe('GS1 Importer tests', () => {
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgln:HospitalBuilding1.Room1047');
         }
 
+        async function checkGraphExample4XmlTraversalPath() {
+            let myKey;
+            const expectedKeys = [];
+
+            const sender_id = 'urn:ot:mda:actor:id:Hospital1';
+            const Room1048 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:HospitalBuilding1.Room1048');
+            const HospitalBuilding1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:epc:id:sgln:HospitalBuilding1');
+            const Hospital1 = await graphStorage.findVertexWithMaxVersion(sender_id, 'urn:ot:mda:actor:id:Hospital1');
+
+            const nodes = [Room1048, HospitalBuilding1, Hospital1];
+
+            nodes.forEach((node) => {
+                myKey = node._key;
+                expectedKeys.push(myKey);
+            });
+
+            expectedKeys.push('Actor');
+            expectedKeys.push('Location');
+
+            const path = await graphStorage.findTraversalPath(Room1048, 200);
+
+            // there should be 5 node in traversal for this start vertex
+            assert.equal(Object.keys(path.data).length, 5);
+
+            const keysFromTraversal = Object.keys(path.data);
+            // make sure that all _keys match
+            assert.sameMembers(keysFromTraversal, expectedKeys);
+        }
+
         async function checkSpecificVerticeContent(xml) {
             if (xml === 'Transformation.xml') {
                 await checkTransformationXmlVerticeContent();
@@ -274,6 +386,7 @@ describe('GS1 Importer tests', () => {
                 await checkGraphExample3XmlVerticeContent();
             } else if (xml === 'GraphExample_4.xml') {
                 await checkGraphExample4XmlVerticeContent();
+                await checkGraphExample4XmlTraversalPath();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }

@@ -335,48 +335,6 @@ class OTNode {
             return true;
         };
 
-        server.post('/import', (req, res) => {
-            log.important('Import request received!');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body.importfile !== undefined) {
-                    const fileData = req.body.importfile;
-
-                    fs.writeFile('tmp/import.xml', fileData, (err) => {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        console.log('The file was saved!');
-
-                        const input_file = '/tmp/import.xml';
-                        const queryObject = {
-                            filepath: input_file,
-                            contact: req.contact,
-                            response: res,
-                        };
-
-                        emitter.emit('gs1-import-request', queryObject);
-                    });
-                } else {
-                    res.send({
-                        status: 400,
-                        message: 'Input file not provided!',
-                    });
-                }
-            } else {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                };
-
-                emitter.emit('import-request', queryObject);
-            }
-        });
-
         server.post('/import_gs1', (req, res) => {
             log.important('Import request received!');
 
