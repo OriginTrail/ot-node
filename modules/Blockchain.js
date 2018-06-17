@@ -342,7 +342,6 @@ class Blockchain {
     async payOutForReading(importId, dvWallet) {
         return this.blockchain.payOutForReading(importId, dvWallet);
     }
-
 }
 
 module.exports = Blockchain;
