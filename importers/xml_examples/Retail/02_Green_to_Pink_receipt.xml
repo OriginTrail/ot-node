@@ -38,12 +38,12 @@
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:ot:object:actor:id:Company_Green">
-								<attribute id="urn:ot:object:actor:person:id:name">Green</attribute>
+								<attribute id="urn:ot:object:actor:name">Green</attribute>
 								<attribute id="urn:ot:object:actor:category">Company producer</attribute>
 								<attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>	
 							<VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
-								<attribute id="urn:ot:object:actor:person:id:name">Pink</attribute>
+								<attribute id="urn:ot:object:actor:name">Pink</attribute>
 								<attribute id="urn:ot:object:actor:category">Company</attribute>
 								<attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
 							</VocabularyElement>																								
@@ -55,10 +55,6 @@
 							<VocabularyElement id="urn:epc:id:sgln:Building_Green">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
-								<children>
-									<id>urn:epc:id:sgln:Building_Pink_V3</id>
-									<id>urn:epc:id:sgln:Building_Pink_V4</id>
-								</children>
 								<extension>
 									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
 								</extension>
@@ -66,6 +62,10 @@
 							<VocabularyElement id="urn:epc:id:sgln:Building_Pink">
 								<attribute id="urn:ot:object:location:category">Building</attribute>
 								<attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
+								<children>
+									<id>urn:epc:id:sgln:Building_Pink_V3</id>
+									<id>urn:epc:id:sgln:Building_Pink_V4</id>
+								</children>
 								<extension>
 									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
 								</extension>

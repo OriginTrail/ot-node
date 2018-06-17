@@ -114,7 +114,7 @@
                                 <attribute id="urn:ot:object:product:batch:expirationDate">2021-312-12T00:11:34Z</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:Pallet_1">
-                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1_pallet</attribute>
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Pallet_1</attribute>
                                 <attribute id="urn:ot:object:product:batch:productionDate">2018-01-01T00:30:00.000-04:00</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
@@ -154,10 +154,10 @@
                         <OTEventClass>urn:ot:event:Ownership</OTEventClass>
                         <OTEventType>Sales</OTEventType>
                         <sourceList>
-                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green_1</source>
+                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
                         </sourceList>
                         <destinationList>
-                            <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink_1</destination>
+                            <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
                         </destinationList>
                     </extension>
                 </extension>

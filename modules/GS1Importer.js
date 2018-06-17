@@ -123,12 +123,30 @@ class GS1Importer {
 
             let locationKey;
             const privateData = {};
+
+            if (location.attributes.actorId) {
+                if (!locationKey) {
+                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                }
+                location.participant_id = location.attributes.actorId;
+                locationEdges.push({
+                    _key: this.helper.createKey('owned_by', senderId, locationKey, location.attributes.actorId),
+                    _from: `ot_vertices/${locationKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + location.attributes.actorId}`,
+                    edge_type: 'OWNED_BY',
+                    identifiers: {
+                        uid: `owned_by_${location.id}_${location.attributes.actorId}`,
+                    },
+                });
+            }
             if (location.extension) {
                 if (location.extension.private) {
                     // eslint-disable-next-line
                     await this.helper.handlePrivate(senderId, location.id, location.extension.private, data, privateData);
                 }
-                locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                if (!locationKey) {
+                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                }
                 const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:object:location:');
                 for (const attr of this.helper.arrayze(attrs)) {
                     if (attr.actorId) {
