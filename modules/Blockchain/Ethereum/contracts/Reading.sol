@@ -76,7 +76,7 @@ contract Reading is Ownable{
 	Bidding bidding;
 	address escrow;
 
- 	enum PurchaseStatus {inactive, initiated, commited, confirmed, sent, paid, disputed, cancelled, completed}
+ 	enum PurchaseStatus {inactive, initiated, commited, confirmed, sent, disputed, cancelled, completed}
 
 	struct PurchaseDefinition{
  		uint token_amount;
@@ -140,7 +140,8 @@ contract Reading is Ownable{
 	function initiatePurchase(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_factor)
 	public {
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
-		require(this_purchase.purchase_status == PurchaseStatus.inactive);
+		require(this_purchase.purchase_status == PurchaseStatus.inactive
+			|| 	this_purchase.purchase_status == PurchaseStatus.completed);
 
 		uint256 DH_balance = bidding.getBalance(DH_wallet);
 		uint256 DV_balance = bidding.getBalance(msg.sender);
@@ -238,7 +239,7 @@ contract Reading is Ownable{
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor).add(this_purchase.token_amount));
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
 
-		this_purchase.purchase_status = PurchaseStatus.paid;
+		this_purchase.purchase_status = PurchaseStatus.completed;
 	}
 
 	function initiateDispute(bytes32 import_id, address DH_wallet)
