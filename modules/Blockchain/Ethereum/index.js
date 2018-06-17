@@ -20,8 +20,8 @@ class Ethereum {
 
         this.transactions = new Transactions(
             this.web3,
-            blockchainConfig.wallet_private_key,
             blockchainConfig.wallet_address,
+            blockchainConfig.wallet_private_key,
         );
 
         // Loading contracts
