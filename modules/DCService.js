@@ -40,10 +40,11 @@ class DCService {
             await this.blockchain.cancelOffer(importId).catch((e) => {
                 this.log.log('error', 'Cancelling offer failed', e);
             });
-
+            this.challenger.stopChallenging();
             await Models.offers.update(
                 { status: 'CANCELLED' },
-                { where: { import_id: importId } },
+                /* eslint-disable-next-line no-undef */
+                { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
             );
         }
 
@@ -111,7 +112,7 @@ class DCService {
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { import_id: importId } }).then((offerModel) => {
+                Models.offers.findOne({ where: { id: offer.id } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
                         this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 

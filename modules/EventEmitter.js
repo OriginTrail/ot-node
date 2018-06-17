@@ -210,8 +210,8 @@ class EventEmitter {
             } catch (error) {
                 logger.error(`Failed to start offer. ${error}.`);
                 data.response.send({
-                    status: 500,
-                    message: `Failed to start offer. ${error}.`,
+                    status: 405,
+                    message: 'Failed to start offer.',
                 });
                 return;
             }

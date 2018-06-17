@@ -153,13 +153,13 @@ class Ethereum {
 
     /**
      * Get offer by dataId
-     * @param dataId
+     * @param importId
      * @returns {Promise}
      */
-    getOffer(dataId) {
+    getOffer(importId) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Get offer by dataId ${dataId}`);
-            this.biddingContract.methods.offer(dataId).call().then((res) => {
+            this.log.trace(`Get offer by dataId ${importId}`);
+            this.biddingContract.methods.offer(importId).call().then((res) => {
                 resolve(res);
             }).catch((e) => {
                 reject(e);
