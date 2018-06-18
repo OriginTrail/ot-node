@@ -410,7 +410,6 @@ class ArangoJS {
             const response = await collection.save(document);
             return ArangoJS._normalize(response);
         }
-        document.version = 1;
         const response = await collection.save(document);
         return ArangoJS._normalize(response);
     }
