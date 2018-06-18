@@ -30,6 +30,24 @@ class DCService {
     }
 
     async createOffer(importId, rootHash, totalDocuments, vertices) {
+        /**
+         * Check if offer already exists
+         */
+
+        const oldOffer = await this.blockchain.getOffer(importId);
+        if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
+            this.log.info(`Offer for ${importId} already exists. Cancelling old offer and writing new one`);
+            await this.blockchain.cancelOffer(importId).catch((e) => {
+                this.log.log('error', 'Cancelling offer failed', e);
+            });
+            this.challenger.stopChallenging();
+            await Models.offers.update(
+                { status: 'CANCELLED' },
+                /* eslint-disable-next-line no-undef */
+                { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
+            );
+        }
+
         this.blockchain.writeRootHash(importId, rootHash).then((res) => {
             this.log.info('Fingerprint written on blockchain');
         }).catch((e) => {
@@ -49,7 +67,7 @@ class DCService {
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
 
         const newOfferRow = {
-            id: importId,
+            import_id: importId,
             total_escrow_time: totalEscrowTime,
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
@@ -94,7 +112,7 @@ class DCService {
             offer.save({ fields: ['status'] });
 
             const finalizationCallback = () => {
-                Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
+                Models.offers.findOne({ where: { id: offer.id } }).then((offerModel) => {
                     if (offerModel.status === 'STARTED') {
                         this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
 
@@ -125,7 +143,7 @@ class DCService {
                 });
             });
         }).catch((err) => {
-            this.log.warn(`Failed to create offer. ${err}`);
+            this.log.log('error', 'Failed to create offer. %j', err);
         });
     }
 

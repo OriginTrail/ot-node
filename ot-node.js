@@ -414,6 +414,31 @@ class OTNode {
             }
         });
 
+        server.post('/replication', (req, res) => {
+            log.important('Replication request received!');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            if (req.body !== undefined && req.body.data_id !== undefined) {
+                const queryObject = {
+                    data_id: req.body.data_id,
+                    contact: req.contact,
+                    response: res,
+                };
+
+                emitter.emit('create-offer', queryObject);
+            } else {
+                log.error('Invalid request. You need to provide import ID!');
+                res.send({
+                    status: 400,
+                    message: 'Import ID not provided!',
+                });
+            }
+        });
+
+
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {

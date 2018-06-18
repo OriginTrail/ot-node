@@ -10,6 +10,9 @@ module.exports = {
         import_id: {
             type: Sequelize.STRING,
         },
+        data_provider_wallet: {
+            type: Sequelize.STRING,
+        },
         total_documents: {
             type: Sequelize.INTEGER,
         },
