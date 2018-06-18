@@ -41,7 +41,7 @@
                                 <attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa24323</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
-                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:name">Orange</attribute>
                                 <attribute id="urn:ot:object:actor:category">Company producer</attribute>
                                 <attribute id="urn:ot:object:actor:wallet">0xCcCcAd7BD40602B78C0649032D2532dEFa212345</attribute>
                             </VocabularyElement>
