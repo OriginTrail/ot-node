@@ -724,6 +724,14 @@ class DHService {
             )),
         );
         this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
+        this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
+
+        // Call payOut() after 5 minutes. Requirement from contract.
+        setTimeout(() => {
+            this.blockchain.payOutForReading(importId, networkReplyModel.receiver_wallet)
+                .then(() => this.log.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
+                .catch(error => this.log.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`));
+        }, 5 * 60 * 1000);
     }
 
     /**
