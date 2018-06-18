@@ -61,19 +61,19 @@ class GS1Importer {
         const vocabularyElements = this.helper.arrayze(vocabularyListElement.Vocabulary);
         for (const vocabularyElement of vocabularyElements) {
             switch (vocabularyElement.type) {
-            case 'urn:ot:mda:actor':
+            case 'urn:ot:object:actor':
                 actors = actors
                     .concat(this._parseActors(vocabularyElement.VocabularyElementList));
                 break;
-            case 'urn:ot:mda:product':
+            case 'urn:ot:object:product':
                 products = products
                     .concat(this._parseProducts(vocabularyElement.VocabularyElementList));
                 break;
-            case 'urn:ot:mda:batch':
+            case 'urn:ot:object:batch':
                 batches = batches
                     .concat(this._parseBatches(vocabularyElement.VocabularyElementList));
                 break;
-            case 'urn:ot:mda:location':
+            case 'urn:ot:object:location':
                 locations = locations
                     .concat(this._parseLocations(vocabularyElement.VocabularyElementList));
                 break;
@@ -123,24 +123,42 @@ class GS1Importer {
 
             let locationKey;
             const privateData = {};
+
+            if (location.attributes.actorId) {
+                if (!locationKey) {
+                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                }
+                location.participant_id = location.attributes.actorId;
+                locationEdges.push({
+                    _key: this.helper.createKey('owned_by', senderId, locationKey, location.attributes.actorId),
+                    _from: `ot_vertices/${locationKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + location.attributes.actorId}`,
+                    edge_type: 'OWNED_BY',
+                    identifiers: {
+                        uid: `owned_by_${location.id}_${location.attributes.actorId}`,
+                    },
+                });
+            }
             if (location.extension) {
                 if (location.extension.private) {
                     // eslint-disable-next-line
                     await this.helper.handlePrivate(senderId, location.id, location.extension.private, data, privateData);
                 }
-                locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
-                const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:location:');
+                if (!locationKey) {
+                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                }
+                const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:object:location:');
                 for (const attr of this.helper.arrayze(attrs)) {
-                    if (attr.participantId) {
-                        location.participant_id = attr.participantId;
+                    if (attr.actorId) {
+                        location.participant_id = attr.actorId;
 
                         locationEdges.push({
-                            _key: this.helper.createKey('owned_by', senderId, locationKey, attr.participantId),
+                            _key: this.helper.createKey('owned_by', senderId, locationKey, attr.actorId),
                             _from: `ot_vertices/${locationKey}`,
-                            _to: `${EDGE_KEY_TEMPLATE + attr.participantId}`,
+                            _to: `${EDGE_KEY_TEMPLATE + attr.actorId}`,
                             edge_type: 'OWNED_BY',
                             identifiers: {
-                                uid: `owned_by_${location.id}_${attr.participantId}`,
+                                uid: `owned_by_${location.id}_${attr.actorId}`,
                             },
                         });
                     }
@@ -167,22 +185,21 @@ class GS1Importer {
                 const data = {
                     parent_id: location.id,
                 };
-
-                const childLocationKey = this.helper.createKey('child_business_location', senderId, identifiers, data);
+                const childLocationKey = this.helper.createKey('child_location', senderId, identifiers, data);
                 locationVertices.push({
                     _key: childLocationKey,
                     identifiers,
                     data,
-                    vertex_type: 'CHILD_BUSINESS_LOCATION',
+                    vertex_type: 'CHILD_LOCATION',
                 });
 
                 locationEdges.push({
-                    _key: this.helper.createKey('child_business_location', senderId, location.id, identifiers, data),
+                    _key: this.helper.createKey('child_location', senderId, location.id, identifiers, data),
                     _from: `ot_vertices/${childLocationKey}`,
                     _to: `ot_vertices/${locationKey}`,
-                    edge_type: 'CHILD_BUSINESS_LOCATION',
+                    edge_type: 'CHILD_LOCATION',
                     identifiers: {
-                        uid: `child_business_location_${childId}_${location.id}`,
+                        uid: `child_location_${childId}_${location.id}`,
                     },
                 });
             }
@@ -254,7 +271,8 @@ class GS1Importer {
         }
 
         for (const batch of batches) {
-            const productId = batch.attributes.productid;
+            // eslint-disable-next-line prefer-destructuring
+            const productId = batch.attributes.productId;
 
             const identifiers = {
                 id: batch.id,
@@ -300,10 +318,10 @@ class GS1Importer {
             const { extension } = event;
             if (extension.extension) {
                 const eventClass = extension.extension.OTEventClass;
-                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'ot:events:'));
+                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:events:'));
             } else {
                 const eventClass = extension.OTEventClass;
-                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'ot:event:'));
+                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:event:'));
             }
 
             // eslint-disable-next-line
@@ -322,6 +340,9 @@ class GS1Importer {
             } else {
                 classId = objectEventTransformationId; // TODO map to class ID
             }
+
+            // TODO implement ADD and DELETE if event type is aggregation
+            // TODO kill parent pallet <childEPCs/ >
 
             const data = {
                 object_class_id: classId,
@@ -826,7 +847,7 @@ class GS1Importer {
             const location = {
                 type: 'location',
                 id: element.id,
-                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:location:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:location:'),
                 child_locations: childLocations,
                 extension: element.extension,
             };
@@ -846,7 +867,7 @@ class GS1Importer {
             const actor = {
                 type: 'actor',
                 id: element.id,
-                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:actor:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:actor:'),
                 extension: element.extension,
             };
             actors.push(actor);
@@ -865,7 +886,7 @@ class GS1Importer {
             const product = {
                 type: 'product',
                 id: element.id,
-                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:product:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:'),
                 extension: element.extension,
             };
             products.push(product);
@@ -884,7 +905,7 @@ class GS1Importer {
             const batch = {
                 type: 'batch',
                 id: element.id,
-                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:mda:batch:'),
+                attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:batch:'),
                 extension: element.extension,
             };
             batches.push(batch);

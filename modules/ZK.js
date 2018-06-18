@@ -80,6 +80,7 @@ class ZK {
                     unit,
                 },
                 private: {
+                    object: inputQuantities[i].object,
                     r: randomness.toString(),
                     quantity: rawQuantity,
                     unit,
