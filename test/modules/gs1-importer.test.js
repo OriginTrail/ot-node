@@ -193,7 +193,7 @@ describe('GS1 Importer tests', () => {
         });
     });
 
-    describe.only('Graph validation', async () => {
+    describe('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
             expect(import1Result.root_hash).to.be
                 .equal(import2Result.root_hash);
