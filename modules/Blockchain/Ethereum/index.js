@@ -848,7 +848,6 @@ class Ethereum {
             this.readingContractAbi, 'payOut',
             [importId, dvWallet], options,
         );
-
     }
 }
 
