@@ -303,6 +303,8 @@ describe('GS1 Importer tests', () => {
         });
 
         it('should correctly import all examples together', async () => {
+            this.timeout(8000);
+            
             const importResults = [];
             const imports = [];
 
