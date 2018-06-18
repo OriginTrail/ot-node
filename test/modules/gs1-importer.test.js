@@ -33,26 +33,26 @@ describe('GS1 Importer tests', () => {
     let importer;
 
     const inputXmlFiles = [
-        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/01_Green_to_pink_shipment.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/02_Green_to_pink_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Basic/01_Green_to_pink_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Basic/02_Green_to_pink_shipment.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/01_Green_packing.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/02_Green_to_pink_shipment.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/03_Green_to_pink_receipt.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/04_Pink_to_orange_shipment.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/05_Pink_to_orange_receipt.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/02_Green_to_pink_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/03_Green_to_pink_receipt.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/04_Pink_to_orange_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/05_Pink_to_orange_receipt.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/06_Orange_unpacking.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/07_Orange_unpacking_all.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/03_Pink_to_Orange_shipment_part1.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/04_Pink_to_Orange_receipt_part1.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/05_Pink_to_Orange_shipment_part2.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/06_Pink_to_Orange_receipt_part2.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/03_Pink_to_Orange_shipment_part1.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/04_Pink_to_Orange_receipt_part1.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/05_Pink_to_Orange_shipment_part2.xml')] },
+        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/06_Pink_to_Orange_receipt_part2.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')] },
@@ -193,7 +193,7 @@ describe('GS1 Importer tests', () => {
         });
     });
 
-    describe('Graph validation', async () => {
+    describe.only('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
             expect(import1Result.root_hash).to.be
                 .equal(import2Result.root_hash);
@@ -245,6 +245,12 @@ describe('GS1 Importer tests', () => {
                                     delete input.public.enc;
                                 }
                             });
+                            vertex2.data.quantities.inputs.forEach((input) => {
+                                if (input.public) {
+                                    delete input.private.r;
+                                    delete input.public.enc;
+                                }
+                            });
                         }
                         if (vertex.data.quantities.outputs) {
                             vertex.data.quantities.outputs.forEach((output) => {
@@ -253,16 +259,6 @@ describe('GS1 Importer tests', () => {
                                     delete output.public.enc;
                                 }
                             });
-                        }
-                        if (vertex2.data.quantities.inputs) {
-                            vertex2.data.quantities.inputs.forEach((input) => {
-                                if (input.public) {
-                                    delete input.private.r;
-                                    delete input.public.enc;
-                                }
-                            });
-                        }
-                        if (vertex2.data.quantities.outputs) {
                             vertex2.data.quantities.outputs.forEach((output) => {
                                 if (output.public) {
                                     delete output.private.r;
@@ -270,8 +266,10 @@ describe('GS1 Importer tests', () => {
                                 }
                             });
                         }
-                        delete vertex.data.quantities.private;
-                        delete vertex2.data.quantities.private;
+                        if (vertex.data.quantities.private) {
+                            delete vertex.data.quantities.private.r;
+                            delete vertex2.data.quantities.private.r;
+                        }
                         if (vertex.data.quantities.public) {
                             delete vertex.data.quantities.public.enc;
                             delete vertex2.data.quantities.public.enc;
@@ -304,23 +302,23 @@ describe('GS1 Importer tests', () => {
             );
         });
 
-        // it('should correctly import all examples together', async () => {
-        //     const importResults = [];
-        //     const imports = [];
-        //
-        //     imports.push(...inputXmlFiles);
-        //     imports.push(...inputXmlFiles);
-        //
-        //     for (let i = 0; i < imports.length; i += 1) {
-        //         // eslint-disable-next-line no-await-in-loop
-        //         const result = await gs1.parseGS1(imports[i].args[0]);
-        //         importResults.push(result);
-        //     }
-        //
-        //     for (let i = 0; i < inputXmlFiles.length; i += 1) {
-        //         checkImportResults(importResults[i], importResults[i + inputXmlFiles.length]);
-        //     }
-        // });
+        it('should correctly import all examples together', async () => {
+            const importResults = [];
+            const imports = [];
+
+            imports.push(...inputXmlFiles);
+            imports.push(...inputXmlFiles);
+
+            for (let i = 0; i < imports.length; i += 1) {
+                // eslint-disable-next-line no-await-in-loop
+                const result = await gs1.parseGS1(imports[i].args[0]);
+                importResults.push(result);
+            }
+
+            for (let i = 0; i < inputXmlFiles.length; i += 1) {
+                checkImportResults(importResults[i], importResults[i + inputXmlFiles.length]);
+            }
+        });
     });
 
     describe('Random vertices content and traversal path check', async () => {
