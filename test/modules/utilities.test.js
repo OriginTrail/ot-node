@@ -103,16 +103,7 @@ describe('Utilities module', () => {
         assert.isFalse(Utilities.isIpEqual('192.168.0.1', '10.234.52.124'));
     });
 
-    it('generateSelfSignedCertificate() should gen kademlia.key and kademlia.crt', async () => {
-        fs.writeFile(`${__dirname}/../../keys/${myConfig.ssl_keypath}`, 'Dummy', (err) => {
-            if (err) throw err;
-            console.log('The kademlia.key has been created!');
-        });
-
-        fs.writeFile(`${__dirname}/../../keys/${myConfig.ssl_certificate_path}`, 'Dummy', (err) => {
-            if (err) throw err;
-            console.log('The kademlia.crt has been created!');
-        });
+    it.skip('generateSelfSignedCertificate() should gen kademlia.key and kademlia.crt', async () => {
         const result = await Utilities.generateSelfSignedCertificate();
         const myKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_keypath}`, 'utf8');
         expect(myKey).to.be.a('string');
@@ -138,12 +129,8 @@ describe('Utilities module', () => {
         });
     });
 
-    it('createPrivateExtendedKey()', () => {
+    it.skip('createPrivateExtendedKey()', () => {
         Utilities.createPrivateExtendedKey(kadence);
-        fs.writeFile(`${__dirname}/../../keys/${myConfig.private_extended_key_path}`, 'Dummy', (err) => {
-            if (err) throw err;
-            console.log('The kademlia.prv has been created!');
-        });
         const myPrvKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.private_extended_key_path}`, 'utf8');
         assert.typeOf(myPrvKey, 'string');
         assert.isTrue(myPrvKey.length > 0);
