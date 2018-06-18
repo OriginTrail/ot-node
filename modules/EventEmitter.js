@@ -193,7 +193,7 @@ class EventEmitter {
                     delete vertex.private;
                     return vertex;
                 });
-                await Models.data_info.findOne({ where: { import_id: import_id } })
+                await Models.data_info.findOne({ where: { import_id } })
                     .then(async (dataimport) => {
                         await dcService
                             .createOffer(
