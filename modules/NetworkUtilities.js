@@ -175,57 +175,6 @@ class NetworkUtilities {
     }
 
     /**
-    * Spawn solvers for hashes
-    */
-    spawnHashSolverProcesses(node) {
-        const cpus = parseInt(config.cpus, 10);
-
-        if (cpus === 0) {
-            return this.log.info('There are no solver processes running');
-        }
-
-        if (os.cpus().length < cpus) {
-            return this.log.error('Refusing to start more solvers than cpu cores');
-        }
-
-        for (let c = 0; c < cpus; c += 1) {
-            this.forkHashSolver(c, node);
-        }
-    }
-
-    /**
-    * Create child processes for hash solvers
-    * @param c
-    */
-    forkHashSolver(c, node) {
-        this.log.info(`Forking solver process ${c}`);
-
-        const solver = fork(path.join(__dirname, 'workers', 'solver.js'), [], {
-            stdio: [0, 1, 2, 'ipc'],
-            env: process.env,
-        });
-
-        solver.on('message', (msg) => {
-            if (msg.error) {
-                return this.log.error(`Solver ${c} error, ${msg.error}`);
-            }
-
-            this.log.info(`Solver ${c} found solution ` +
-          `in ${msg.result.attempts} attempts (${ms(msg.result.time)})`);
-
-            const solution = new kadence.permission.PermissionSolution(Buffer.from(msg.result.solution, 'hex'));
-            node.wallet.put(solution);
-        });
-
-        solver.on('error', (err) => {
-            this.log.error(`solver ${c} error, ${err.message}`);
-        });
-
-        solver.send({ privateKey: node.spartacus.privateKey.toString('hex') });
-        this.solvers.push(solver);
-    }
-
-    /**
     * Get identity keys
     * @param string - extended private key
     * @return {{childkey: *, parentkey: *}}
@@ -245,13 +194,6 @@ class NetworkUtilities {
     * Verifies if we are on the test network and otherconfig checks
     */
     verifyConfiguration(config) {
-        if (parseInt(config.test_network, 10)) {
-            this.log.warn('Node is running in test mode, difficulties are reduced');
-            process.env.kadence_TestNetworkEnabled = config.test_network;
-            kadence.constants.SOLUTION_DIFFICULTY = 2;
-            kadence.constants.IDENTITY_DIFFICULTY = 2;
-        }
-
         if (parseInt(config.traverse_nat_enabled, 10) && parseInt(config.onion_enabled, 10)) {
             this.log.error('Refusing to start with both TraverseNatEnabled and ' +
           'OnionEnabled - this is a privacy risk');
