@@ -301,7 +301,7 @@ describe('GS1 Importer tests', () => {
         });
     });
 
-    describe.only('Random vertices content and traversal path check', async () => {
+    describe('Random vertices content and traversal path check', async () => {
         let specificVertice;
 
         async function checkTransformationXmlVerticeContent() {
