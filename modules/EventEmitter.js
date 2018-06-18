@@ -185,19 +185,19 @@ class EventEmitter {
         };
 
         this.globalEmitter.on('create-offer', async (data) => {
-            const { data_id } = data;
+            const { import_id } = data;
 
             try {
-                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
+                let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex, index) => {
                     delete vertex.private;
                     return vertex;
                 });
-                await Models.data_info.findOne({ where: { import_id: data_id } })
+                await Models.data_info.findOne({ where: { import_id: import_id } })
                     .then(async (dataimport) => {
                         await dcService
                             .createOffer(
-                                data_id,
+                                import_id,
                                 dataimport.root_hash,
                                 dataimport.total_documents,
                                 vertices,
