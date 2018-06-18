@@ -33,26 +33,26 @@ describe('GS1 Importer tests', () => {
     let importer;
 
     const inputXmlFiles = [
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Basic/01_Green_to_pink_shipment.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Basic/02_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Basic/02_Green_to_pink_shipment.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/01_Green_packing.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/02_Green_to_pink_shipment.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/03_Green_to_pink_receipt.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/04_Pink_to_orange_shipment.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/05_Pink_to_orange_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/02_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/03_Green_to_pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/04_Pink_to_orange_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/05_Pink_to_orange_receipt.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/06_Orange_unpacking.xml')] },
         // { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_aggregation/07_Orange_unpacking_all.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/03_Pink_to_Orange_shipment_part1.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/04_Pink_to_Orange_receipt_part1.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/05_Pink_to_Orange_shipment_part2.xml')] },
-        // { args: [path.join(__dirname, '../../importers/xml_examples/Retail/06_Pink_to_Orange_receipt_part2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/03_Pink_to_Orange_shipment_part1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/04_Pink_to_Orange_receipt_part1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/05_Pink_to_Orange_shipment_part2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail/06_Pink_to_Orange_receipt_part2.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')] },
         { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')] },
@@ -302,9 +302,9 @@ describe('GS1 Importer tests', () => {
             );
         });
 
-        it('should correctly import all examples together', async () => {
-            this.timeout(8000);
-            
+        it('should correctly import all examples together', async function() {
+            this.timeout(30000);
+
             const importResults = [];
             const imports = [];
 

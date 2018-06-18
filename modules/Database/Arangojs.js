@@ -71,6 +71,40 @@ class ArangoJS {
     }
 
     /**
+     * Find set of documents with _key, vertex_type and identifiers values
+     * @param queryObject       Query for getting documents
+     * @returns {Promise<any>}
+     */
+    async findDocuments(collectionName, queryObject) {
+        let queryString = `FOR v IN ${collectionName} `;
+        const params = {};
+        if (Utilities.isEmptyObject(queryObject) === false) {
+            queryString += 'FILTER ';
+
+            let count = 1;
+            const filters = [];
+            for (const key in queryObject) {
+                if (key.match(/^[\w\d]+$/g) !== null) {
+                    let searchKey;
+                    if (key !== 'vertex_type' && key !== 'edge_type' && key !== '_key') {
+                        searchKey = `identifiers.${key}`;
+                    } else {
+                        searchKey = key;
+                    }
+                    const param = `param${count}`;
+                    filters.push(`v.${searchKey} == @param${count}`);
+
+                    count += 1;
+                    params[param] = queryObject[key];
+                }
+            }
+            queryString += filters.join(' AND ');
+        }
+        queryString += ' RETURN v';
+        return this.runQuery(queryString, params);
+    }
+
+    /**
      * Finds vertices by query defined in DataLocationRequestObject
      * @param inputQuery
      */
@@ -351,6 +385,13 @@ class ArangoJS {
         if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
 
         const collection = this.db.collection(collectionName);
+        if (document._key) {
+            const response = await this.findDocuments(collectionName, { _key: document._key });
+            if (response.length > 0) {
+                if (response[0]._key === document._key);
+                return response[0];
+            }
+        }
         if (document.sender_id && document.identifiers && document.identifiers.uid) {
             const maxVersionDoc =
                 await this.findDocumentWithMaxVersion(
@@ -360,10 +401,6 @@ class ArangoJS {
                 );
 
             if (maxVersionDoc) {
-                if (maxVersionDoc._key === document._key) {
-                    return maxVersionDoc;
-                }
-
                 document.version = maxVersionDoc.version + 1;
                 const response = await collection.save(document);
                 return ArangoJS._normalize(response);
@@ -373,14 +410,9 @@ class ArangoJS {
             const response = await collection.save(document);
             return ArangoJS._normalize(response);
         }
-        try {
-            // First check if already exist.
-            const dbVertex = await this.getDocument(collectionName, document);
-            return dbVertex;
-        } catch (ignore) {
-            const response = await collection.save(document);
-            return ArangoJS._normalize(response);
-        }
+        document.version = 1;
+        const response = await collection.save(document);
+        return ArangoJS._normalize(response);
     }
 
     /**
