@@ -74,35 +74,14 @@ class Product {
         for (const key in graph) {
             const vertex = graph[key];
             if (vertex.vertex_type === 'EVENT') {
-                for (const neighbourEdge of vertex.outbound) {
-                    if (neighbourEdge.edge_type === 'EVENT_CONNECTION') {
-                        const neighbour = graph[neighbourEdge.to];
-                        const { bizStep } = vertex.data;
-                        if (bizStep.endsWith('shipping')) {
-                            vertex.zk_status = this._calculateZeroKnowledge(
-                                zk,
-                                vertex.data.quantities.outputs,
-                                neighbour.data.quantities.inputs,
-                                vertex.data.quantities.inputs,
-                                vertex.data.quantities.e,
-                                vertex.data.quantities.a,
-                                vertex.data.quantities.zp,
-                                false,
-                            );
-                        } else if (bizStep.endsWith('receiving')) {
-                            vertex.zk_status = this._calculateZeroKnowledge(
-                                zk,
-                                vertex.data.quantities.inputs,
-                                neighbour.data.quantities.outputs,
-                                vertex.data.quantities.outputs,
-                                vertex.data.quantities.e,
-                                vertex.data.quantities.a,
-                                vertex.data.quantities.zp,
-                                true,
-                            );
-                        }
-                    }
-                }
+                vertex.zk_status = this._calculateZeroKnowledge(
+                    zk,
+                    vertex.data.quantities.inputs,
+                    vertex.data.quantities.outputs,
+                    vertex.data.quantities.e,
+                    vertex.data.quantities.a,
+                    vertex.data.quantities.zp,
+                );
             }
         }
         return virtualGraph;
@@ -111,20 +90,12 @@ class Product {
     /**
      * Calculate ZK proof
      */
-    _calculateZeroKnowledge(zk, lQuantities, rQuantities, quantities, e, a, zp, isInput) {
-        const lQuantitiesMapped = lQuantities.map(o => o.public.enc).sort();
-        const nQuantitiesMapped = rQuantities.map(o => o.public.enc).sort();
+    _calculateZeroKnowledge(zk, inputQuantities, outputQuantities, e, a, zp) {
+        const inQuantities = inputQuantities.map(o => o.public.enc).sort();
+        const outQuantities = outputQuantities.map(o => o.public.enc).sort();
 
-        if (JSON.stringify(lQuantitiesMapped) !== JSON.stringify(nQuantitiesMapped)) {
-            return 'FAILED';
-        }
-        const quantitiesMapped = quantities.map(o => o.public.enc);
-        let z = null;
-        if (isInput) {
-            z = zk.calculateZero(lQuantitiesMapped, quantitiesMapped);
-        } else {
-            z = zk.calculateZero(quantitiesMapped, lQuantitiesMapped);
-        }
+        const z = zk.calculateZero(inQuantities, outQuantities);
+
         const valid = zk.V(
             e, a, z,
             zp,
