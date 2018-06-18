@@ -105,6 +105,7 @@ describe('Utilities module', () => {
 
     it('generateSelfSignedCertificate() should gen kademlia.key and kademlia.crt', async () => {
         const result = await Utilities.generateSelfSignedCertificate();
+        console.log(`${__dirname}/../../keys/${myConfig.ssl_keypath}`);
         const myKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_keypath}`, 'utf8');
         expect(myKey).to.be.a('string');
         assert.isTrue(/^\r?\n*-----BEGIN RSA PRIVATE KEY-----\r?\n/.test(myKey));
@@ -131,6 +132,7 @@ describe('Utilities module', () => {
 
     it('createPrivateExtendedKey()', () => {
         Utilities.createPrivateExtendedKey(kadence);
+        console.log(`${__dirname}/../../keys/${myConfig.private_extended_key_path}`);
         const myPrvKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.private_extended_key_path}`, 'utf8');
         assert.typeOf(myPrvKey, 'string');
         assert.isTrue(myPrvKey.length > 0);
