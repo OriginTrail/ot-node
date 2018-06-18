@@ -9,6 +9,7 @@ const Challenge = require('./Challenge');
 const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
 
+const { Op } = Models.Sequelize;
 const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
 const minStakeAmount = new BN('100');
