@@ -75,7 +75,7 @@ describe('GS1 Importer tests', () => {
     });
 
     describe('Parse and import XML file for n times', () => {
-        const repetition = 10;
+        const repetition = 5;
         inputXmlFiles.forEach((test) => {
             for (const i in Array.from({ length: repetition })) {
                 it(
