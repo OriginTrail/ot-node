@@ -26,7 +26,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('Check ZK by quering /api/trail for EVENT vertices', () => {
+describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     const databaseName = 'zk-test';
     let graphStorage;
     let systemDb;
