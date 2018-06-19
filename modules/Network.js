@@ -24,8 +24,10 @@ class Network {
         this.networkUtilities = ctx.networkUtilities;
 
         if (parseInt(config.test_network, 10)) {
-            kadence.constants.IDENTITY_DIFFICULTY = 2;
+            this.log.warn('Node is running in test mode, difficulties are reduced');
+            process.env.kadence_TestNetworkEnabled = config.test_network;
             kadence.constants.SOLUTION_DIFFICULTY = 2;
+            kadence.constants.IDENTITY_DIFFICULTY = 2;
         }
         this.index = parseInt(config.child_derivation_index, 10);
 
@@ -34,10 +36,10 @@ class Network {
     }
 
     /**
-     * Starts the node
+     * Initializes keys
      * @return {Promise<void>}
      */
-    async start() {
+    async initialize() {
         // Check config
         this.networkUtilities.verifyConfiguration(config);
 
@@ -59,8 +61,16 @@ class Network {
 
         this.log.notify(`My identity: ${this.identity}`);
         config.identity = this.identity;
+    }
 
+    /**
+     * Starts the node
+     * @return {Promise<void>}
+     */
+    async start() {
         this.log.info('Initializing network');
+
+        const { _, parentkey } = this.networkUtilities.getIdentityKeys(this.xprivkey);
 
         // Initialize public contact data
         const contact = {
@@ -96,17 +106,20 @@ class Network {
             }),
         });
         this.log.info('Starting OT Node...');
-
-        // Enable Quasar plugin used for publish/subscribe mechanism
         this.node.quasar = this.node.plugin(kadence.quasar());
+        this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
-
-        // We use Hashcash for relaying messages to prevent abuse and make large scale
-        // DoS and spam attacks cost prohibitive
-        // this.node.hashcash = this.node.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE', 'payload-sending'],
-        //     difficulty: 10,
-        // }));
+        this.log.info('Peercache initialised');
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialised');
+        this.node.hashcash = this.node.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE'],
+            difficulty: 2,
+        }));
         this.log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
@@ -131,10 +144,6 @@ class Network {
         this.node.listen(parseInt(config.node_port, 10), () => {
             this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
             this.networkUtilities.registerControlInterface(config, this.node);
-
-            if (parseInt(config.solve_hashes, 10)) {
-                this.networkUtilities.spawnHashSolverProcesses(this.node);
-            }
 
             const retryPeriod = 5000;
             async.retry({
@@ -179,6 +188,7 @@ class Network {
             },
             passthroughLoggingEnabled: 1,
         }));
+        this.log.info('Onion initialised');
     }
 
     /**

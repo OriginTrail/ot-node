@@ -172,7 +172,6 @@ class OTNode {
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
-        const dvService = container.resolve('dvService');
         const remoteControl = container.resolve('remoteControl');
         emitter.initialize();
 
@@ -196,11 +195,16 @@ class OTNode {
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
-        network.start().then(async (res) => {
+
+        await network.initialize();
+        try {
             await this.createProfile(blockchain);
-        }).catch((e) => {
-            console.log(e);
-        });
+        } catch (e) {
+            log.error('Failed to create profile');
+            process.exit(1);
+        }
+
+        await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -238,12 +242,14 @@ class OTNode {
      * Creates profile on the contract
      */
     async createProfile(blockchain) {
+        const { identity } = config;
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.info(`Profile has already been created for ${config.identity}`);
+            log.info(`Profile has already been created for ${identity}`);
             return;
         }
 
+        log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
             config.dh_price,
@@ -252,8 +258,11 @@ class OTNode {
             config.dh_max_time_mins,
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
-        if (event.node_id.includes(config.identity)) {
-            log.info(`Profile created for node: ${config.identity}`);
+        if (event.node_id.includes(identity)) {
+            log.notify(`Profile created for node ${identity}`);
+        } else {
+            log.error('Profile could not be confirmed in timely manner. Please, try again later.');
+            process.exit(1);
         }
     }
 
@@ -312,9 +321,8 @@ class OTNode {
         server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
-            log.notify('%s exposed at %s', server.name, server.url);
+            log.notify(`${server.name} exposed at ${server.url}`);
         });
-
         this.exposeAPIRoutes(server, emitter);
     }
 
@@ -405,6 +413,31 @@ class OTNode {
                 });
             }
         });
+
+        server.post('/replication', (req, res) => {
+            log.important('Replication request received!');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            if (req.body !== undefined && req.body.data_id !== undefined) {
+                const queryObject = {
+                    data_id: req.body.data_id,
+                    contact: req.contact,
+                    response: res,
+                };
+
+                emitter.emit('create-offer', queryObject);
+            } else {
+                log.error('Invalid request. You need to provide import ID!');
+                res.send({
+                    status: 400,
+                    message: 'Import ID not provided!',
+                });
+            }
+        });
+
 
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;

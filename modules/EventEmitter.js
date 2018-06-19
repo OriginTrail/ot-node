@@ -39,6 +39,12 @@ class EventEmitter {
             graph,
         } = this.ctx;
 
+        this.globalEmitter.on('import-request', (data) => {
+            importer.importXML(data.filepath, (response) => {
+                // emit response
+            });
+        });
+
         this.globalEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
                 data.response.send(res);
@@ -152,7 +158,11 @@ class EventEmitter {
             try {
                 await Models.data_info
                     .create({
-                        import_id, root_hash, import_timestamp: new Date(), total_documents,
+                        import_id,
+                        root_hash,
+                        data_provider_wallet: wallet,
+                        import_timestamp: new Date(),
+                        total_documents,
                     }).catch((error) => {
                         logger.error(error);
                         data.response.send({
@@ -160,12 +170,48 @@ class EventEmitter {
                             message: error,
                         });
                     });
-                await dcService.createOffer(import_id, root_hash, total_documents, vertices);
+
+                data.response.send({
+                    status: 200,
+                    message: 'Ok.',
+                });
             } catch (error) {
-                logger.error(`Failed to start offer. Error ${error}.`);
+                logger.error(`Failed to register import. Error ${error}.`);
                 data.response.send({
                     status: 500,
-                    message: 'Failed to parse XML.',
+                    message: error,
+                });
+            }
+        };
+
+        this.globalEmitter.on('create-offer', async (data) => {
+            const { data_id } = data;
+
+            try {
+                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
+                vertices = vertices.map((vertex, index) => {
+                    delete vertex.private;
+                    return vertex;
+                });
+                await Models.data_info.findOne({ where: { import_id: data_id } })
+                    .then(async (dataimport) => {
+                        await dcService
+                            .createOffer(
+                                data_id,
+                                dataimport.root_hash,
+                                dataimport.total_documents,
+                                vertices,
+                            ).catch((e) => {
+                                console.log(e);
+                            });
+                    }).catch((error) => {
+                        throw new Error('This import does not exist in database');
+                    });
+            } catch (error) {
+                logger.error(`Failed to start offer. ${error}.`);
+                data.response.send({
+                    status: 405,
+                    message: 'Failed to start offer.',
                 });
                 return;
             }
@@ -174,7 +220,8 @@ class EventEmitter {
                 status: 200,
                 message: 'Ok.',
             });
-        };
+        });
+
 
         this.globalEmitter.on('gs1-import-request', async (data) => {
             try {

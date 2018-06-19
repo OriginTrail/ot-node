@@ -46,7 +46,7 @@ class DHService {
     ) {
         try {
             // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { id: importId } });
+            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
                 this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);

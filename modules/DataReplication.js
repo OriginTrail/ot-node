@@ -2,6 +2,7 @@ const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
 
+
 class DataReplication {
     /**
      * Default constructor

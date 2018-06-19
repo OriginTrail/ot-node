@@ -1,13 +1,13 @@
 {
-  "name": "origintrail-node-0.9a",
-  "version": "0.9.0",
+  "name": "origintrail-node-1.0bRC",
+  "version": "1.0.0-alpha.1",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
     "test": "nyc mocha --recursive test/modules/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
     "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
-    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js",
+    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &"
   },
   "devDependencies": {
@@ -32,7 +32,7 @@
     "ot-node"
   ],
   "author": "OriginTrail",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "bugs": {
     "url": "https://github.com/OriginTrail/ot-node/issues"
   },
@@ -40,7 +40,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^3.2.2",
+    "@kadenceproject/kadence": "^3.4.0",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",

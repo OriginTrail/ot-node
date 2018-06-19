@@ -147,6 +147,7 @@ class Utilities {
                     new (winston.transports.Console)({
                         colorize: 'all',
                         timestamp: false,
+                        prettyPrint: object => JSON.stringify(object),
                     }),
                     new (winston.transports.File)({ filename: 'node.log' }),
                 ],
