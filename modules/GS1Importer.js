@@ -314,15 +314,14 @@ class GS1Importer {
             const currentBatchesToRemove = [];
             const eventId = this.helper.getEventId(senderId, event);
 
-            let eventCategories;
+            let eventClass;
             const { extension } = event;
             if (extension.extension) {
-                const eventClass = extension.extension.OTEventClass;
-                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:events:'));
+                eventClass = extension.extension.OTEventClass;
             } else {
-                const eventClass = extension.OTEventClass;
-                eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:event:'));
+                eventClass = extension.OTEventClass;
             }
+            const eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:event:'));
 
             // eslint-disable-next-line
             await this.helper.zeroKnowledge(senderId, event, eventId, eventCategories,
