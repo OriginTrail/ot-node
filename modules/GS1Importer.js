@@ -111,11 +111,11 @@ class GS1Importer {
         const objectEventObservationId = await this.db.getClassId('Observation');
 
         for (const location of locations) {
-            const identifiers = {
+            const { identifiers } = location;
+            Object.assign(identifiers, {
                 id: location.id,
                 uid: location.id,
-            };
-            Object.assign(identifiers, location.identifiers);
+            });
 
             const data = {
                 object_class_id: objectClassLocationId,
@@ -213,11 +213,11 @@ class GS1Importer {
                 senderWallet = actor.attributes.wallet;
             }
 
-            const identifiers = {
+            const { identifiers } = actor;
+            Object.assign(identifiers, {
                 id: actor.id,
                 uid: actor.id,
-            };
-            Object.assign(identifiers, actor.identifiers);
+            });
 
             const data = {
                 object_class_id: objectClassActorId,
@@ -244,11 +244,11 @@ class GS1Importer {
         }
 
         for (const product of products) {
-            const identifiers = {
+            const { identifiers } = product;
+            Object.assign(identifiers, {
                 id: product.id,
                 uid: product.id,
-            };
-            Object.assign(identifiers, product.identifiers);
+            });
 
             const data = {
                 object_class_id: objectClassProductId,
@@ -278,11 +278,11 @@ class GS1Importer {
             // eslint-disable-next-line prefer-destructuring
             const productId = batch.attributes.productId;
 
-            const identifiers = {
+            const { identifiers } = batch;
+            Object.assign(identifiers, {
                 id: batch.id,
                 uid: batch.id,
-            };
-            Object.assign(identifiers, batch.identifiers);
+            });
 
             const data = {
                 parent_id: productId,
