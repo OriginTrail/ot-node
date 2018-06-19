@@ -115,6 +115,8 @@ class GS1Importer {
                 id: location.id,
                 uid: location.id,
             };
+            Object.assign(identifiers, location.identifiers);
+
             const data = {
                 object_class_id: objectClassLocationId,
             };
@@ -215,6 +217,7 @@ class GS1Importer {
                 id: actor.id,
                 uid: actor.id,
             };
+            Object.assign(identifiers, actor.identifiers);
 
             const data = {
                 object_class_id: objectClassActorId,
@@ -245,6 +248,7 @@ class GS1Importer {
                 id: product.id,
                 uid: product.id,
             };
+            Object.assign(identifiers, product.identifiers);
 
             const data = {
                 object_class_id: objectClassProductId,
@@ -278,6 +282,7 @@ class GS1Importer {
                 id: batch.id,
                 uid: batch.id,
             };
+            Object.assign(identifiers, batch.identifiers);
 
             const data = {
                 parent_id: productId,
@@ -296,10 +301,7 @@ class GS1Importer {
             const key = this.helper.createKey('batch', senderId, identifiers, data);
             batchesVertices.push({
                 _key: key,
-                identifiers: {
-                    id: batch.id,
-                    uid: batch.id,
-                },
+                identifiers,
                 data,
                 private: privateData,
                 vertex_type: 'BATCH',
@@ -842,11 +844,13 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:location:');
             const childLocations = this.helper.arrayze(element.children ? element.children.id : []);
 
             const location = {
                 type: 'location',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:location:'),
                 child_locations: childLocations,
                 extension: element.extension,
@@ -864,9 +868,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:actor:');
+
             const actor = {
                 type: 'actor',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:actor:'),
                 extension: element.extension,
             };
@@ -883,9 +890,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:');
+
             const product = {
                 type: 'product',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:'),
                 extension: element.extension,
             };
@@ -902,9 +912,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:batch:');
+
             const batch = {
                 type: 'batch',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:batch:'),
                 extension: element.extension,
             };
