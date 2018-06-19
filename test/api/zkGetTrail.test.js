@@ -22,6 +22,7 @@ function buildSelectedDatabaseParam(databaseName) {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
         database_system: 'arango_db',
+        max_path_length: 2000,
     };
 }
 
@@ -30,8 +31,15 @@ describe.only('Check ZK by quering /api/trail for EVENT vertices', () => {
     let graphStorage;
     let systemDb;
     let gs1;
-    let importer;
     let product;
+
+    const inputXmlFiles = [
+        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+    ];
 
     beforeEach('Setup DB', async () => {
         systemDb = new Database();
@@ -66,18 +74,61 @@ describe.only('Check ZK by quering /api/trail for EVENT vertices', () => {
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
-        importer = container.resolve('importer');
         product = container.resolve('product');
-
     });
 
-    it('on the example of GraphExample_2.xml', async () => {
-        const myGraphExample2 = path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml');
-        await gs1.parseGS1(myGraphExample2);
+    inputXmlFiles.forEach((xmlFile) => {
+        let queryObject;
+        let myTrail;
+        it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
+            await gs1.parseGS1(xmlFile.args[0]);
+            switch (path.basename(xmlFile.args[0])) {
+            case 'Transformation.xml':
+                queryObject = { uid: 'CARENGINES_PROVIDER_ID:2015-03-15T00:00:00.000-04:00Z-04:00' };
+                break;
+            case 'GraphExample_1.xml':
+                queryObject = { uid: 'urn:ot:object:actor:id:Company_1:2015-04-17T00:00:00.000-04:00Z-04:00' };
+                break;
+            case 'GraphExample_2.xml':
+                queryObject = { uid: 'SENDER_ID:2015-03-15T00:00:00.000-04:00Z-04:00' };
+                break;
+            case 'GraphExample_3.xml':
+                queryObject = { uid: 'urn:ot:object:actor:id:Company_2:2015-04-17T00:00:00.000-04:00Z-04:00' };
+                break;
+            case 'GraphExample_4.xml':
+                // no event in this xml file, thus nothing to query
+                queryObject = { uid: '' };
+                break;
+            default:
+                throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
+            }
 
-        const queryObject = { uid: 'SENDER_ID:2015-03-15T00:00:00.000-04:00Z-04:00' };
-        const result = await product.getTrailByQuery(queryObject);
+            myTrail = await product.getTrailByQuery(queryObject);
 
+            Object.keys(myTrail).forEach((key, index) => {
+                if (myTrail[key].vertex_type === 'EVENT') {
+                    switch (path.basename(xmlFile.args[0])) {
+                    case 'Transformation.xml':
+                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                        break;
+                    case 'GraphExample_1.xml':
+                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                        break;
+                    case 'GraphExample_2.xml':
+                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                        break;
+                    case 'GraphExample_3.xml':
+                        assert.equal(myTrail[key].zk_status, 'PASSED', 'ZK should pass');
+                        break;
+                    case 'GraphExample_4.xml':
+                        // no ZK triggered at all, thus no assert
+                        break;
+                    default:
+                        throw Error(`Not implemented for ${path.basename(xmlFile.args[0])}`);
+                    }
+                }
+            });
+        });
     });
 
     afterEach('Drop DB', async () => {
