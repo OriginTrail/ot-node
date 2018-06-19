@@ -155,8 +155,8 @@
                     </quantityList>
                     <extension>
                         <documentId>144</documentId>
-                        <OTEventClass>ot:events:Transport</OTEventClass>
-                        <OTEventClass>ot:events:Ownership</OTEventClass>
+                        <OTEventClass>ot:event:Transport</OTEventClass>
+                        <OTEventClass>ot:event:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1</source>
@@ -243,8 +243,8 @@
                     </quantityList>
                     <extension>
                         <documentId>1123</documentId>
-                        <OTEventClass>ot:events:Transport</OTEventClass>
-                        <OTEventClass>ot:events:Ownership</OTEventClass>
+                        <OTEventClass>ot:event:Transport</OTEventClass>
+                        <OTEventClass>ot:event:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_2</source>
