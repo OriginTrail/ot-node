@@ -15,6 +15,7 @@ class Product {
      * @returns {Promise}
      */
     getTrail(queryObject) {
+        console.log(queryObject);
         return new Promise((resolve, reject) => {
             if (queryObject.restricted !== undefined) {
                 delete queryObject.restricted;

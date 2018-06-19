@@ -10,6 +10,7 @@ const GS1Importer = require('../../modules/GS1Importer');
 const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
+const Product = require('../../modules/Product');
 const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 
@@ -24,12 +25,13 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe('Check ZK by quering /api/trail for EVENT vertices', () => {
+describe.only('Check ZK by quering /api/trail for EVENT vertices', () => {
     const databaseName = 'zk-test';
     let graphStorage;
     let systemDb;
     let gs1;
     let importer;
+    let product;
 
     beforeEach('Setup DB', async () => {
         systemDb = new Database();
@@ -60,14 +62,22 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
+            product: awilix.asClass(Product),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
         importer = container.resolve('importer');
+        product = container.resolve('product');
+
     });
 
-    it('on the example of GraphExample_2.xml', () => {
-        console.log('Hello there');
+    it('on the example of GraphExample_2.xml', async () => {
+        const myGraphExample2 = path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml');
+        await gs1.parseGS1(myGraphExample2);
+
+        const queryObject = { uid: 'SENDER_ID:2015-03-15T00:00:00.000-04:00Z-04:00' };
+        const result = await product.getTrailByQuery(queryObject);
+
     });
 
     afterEach('Drop DB', async () => {
