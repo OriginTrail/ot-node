@@ -183,8 +183,7 @@ class EventEmitter {
                     });
 
                 data.response.send({
-                    status: 200,
-                    message: 'Import successful',
+                    status: 201,
                     import_id,
                 });
             } catch (error) {
