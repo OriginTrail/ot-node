@@ -20,8 +20,8 @@ class Ethereum {
 
         this.transactions = new Transactions(
             this.web3,
-            blockchainConfig.wallet_private_key,
             blockchainConfig.wallet_address,
+            blockchainConfig.wallet_private_key,
         );
 
         // Loading contracts
@@ -491,10 +491,11 @@ class Ethereum {
     * Subscribes to blockchain events
     * @param event
     * @param importId
+    * @param filterFn
     * @param endMs
     * @param endCallback
     */
-    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback) {
+    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
         return new Promise((resolve, reject) => {
             const token = setInterval(() => {
                 const where = {
@@ -508,11 +509,20 @@ class Ethereum {
                     where,
                 }).then((eventData) => {
                     if (eventData) {
+                        const parsedData = JSON.parse(eventData.dataValues.data);
+
+                        let ok = true;
+                        if (filterFn) {
+                            ok = filterFn(parsedData);
+                        }
+                        if (!ok) {
+                            return;
+                        }
                         this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
                         eventData.save().then(() => {
                             clearInterval(token);
-                            resolve(JSON.parse(eventData.dataValues.data));
+                            resolve(parsedData);
                         }).catch((err) => {
                             this.log.error(`Failed to update event ${event}. ${err}`);
                             reject(err);

@@ -57,6 +57,22 @@ class GS1Utilities {
         return output;
     }
 
+    parseIdentifiers(attributes, ignorePattern) {
+        const output = {};
+        const inputAttributeArray = this.arrayze(attributes);
+
+        for (const inputElement of inputAttributeArray) {
+            if (inputElement.identifier) {
+                if (inputElement.id) {
+                    output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
+                } else {
+                    this.handleError('Failed to parse XML. ID is missing for the identifier attribute.', 400);
+                }
+            }
+        }
+        return output;
+    }
+
     ignorePattern(attribute, ignorePattern) {
         return attribute.replace(ignorePattern, '');
     }

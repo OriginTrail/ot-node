@@ -108,6 +108,7 @@ class Network {
         this.log.info('Starting OT Node...');
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
         this.node.spartacus = this.node.plugin(kadence.spartacus(
