@@ -303,8 +303,8 @@ class EventEmitter {
             // }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
             const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
             let vertices = values[0];
