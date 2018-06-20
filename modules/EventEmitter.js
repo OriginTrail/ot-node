@@ -184,42 +184,56 @@ class EventEmitter {
             }
         };
 
-        this.globalEmitter.on('create-offer', async (data) => {
-            const { data_id } = data;
-
-            try {
-                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
-                vertices = vertices.map((vertex, index) => {
-                    delete vertex.private;
-                    return vertex;
+        this.globalEmitter.on('offer-status', async (data) => {
+            const { external_id } = data;
+            const offer = await dcService.getOffer(external_id);
+            if (offer) {
+                data.response.status(200);
+                data.response.send({
+                    offer_status: offer.status,
                 });
-                await Models.data_info.findOne({ where: { import_id: data_id } })
-                    .then(async (dataimport) => {
-                        await dcService
-                            .createOffer(
-                                data_id,
-                                dataimport.root_hash,
-                                dataimport.total_documents,
-                                vertices,
-                            ).catch((e) => {
-                                console.log(e);
-                            });
-                    }).catch((error) => {
-                        throw new Error('This import does not exist in database');
-                    });
-            } catch (error) {
-                logger.error(`Failed to start offer. ${error}.`);
+            } else {
+                logger.error(`There is no offer for external ID ${external_id}`);
+                data.response.status(200);
                 data.response.send({
                     status: 405,
                     message: 'Failed to start offer.',
                 });
-                return;
             }
+        });
 
-            data.response.send({
-                status: 200,
-                message: 'Ok.',
-            });
+        this.globalEmitter.on('create-offer', async (data) => {
+            const { data_id } = data;
+            try {
+                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
+                vertices = vertices.map((vertex) => {
+                    delete vertex.private;
+                    return vertex;
+                });
+
+                const dataImport = await Models.data_info.findOne({
+                    where: { import_id: data_id },
+                });
+                if (dataImport == null) {
+                    throw new Error('This import does not exist in database');
+                }
+                const externalId = await dcService.createOffer(
+                    data_id,
+                    dataImport.root_hash,
+                    dataImport.total_documents,
+                    vertices,
+                );
+                data.response.status(201);
+                data.response.send({
+                    Location: `/replication/${externalId}`,
+                });
+            } catch (error) {
+                logger.error(`Failed to start offer. ${error}.`);
+                data.response.status(405);
+                data.response.send({
+                    message: 'Failed to start offer.',
+                });
+            }
         });
 
 
