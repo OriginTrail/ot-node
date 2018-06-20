@@ -197,6 +197,11 @@ class OTNode {
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+
+        // Starting event listener on Blockchain
+        this.listenBlockchainEvents(blockchain);
+        dhService.listenToBlockchainEvents();
+
         try {
             await this.createProfile(blockchain);
         } catch (e) {
@@ -210,10 +215,6 @@ class OTNode {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
-
-        // Starting event listener on Blockchain
-        this.listenBlockchainEvents(blockchain);
-        dhService.listenToBlockchainEvents();
     }
 
     /**
