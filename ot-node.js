@@ -258,8 +258,13 @@ class OTNode {
             config.read_stake_factor,
             config.dh_max_time_mins,
         );
-        const event = await blockchain.subscribeToEvent('ProfileCreated', null);
-        if (event.node_id.includes(identity)) {
+        const event = await blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, (eventData) => {
+            if (eventData.node_id) {
+                return eventData.node_id.includes(identity);
+            }
+            return false;
+        });
+        if (event) {
             log.notify(`Profile created for node ${identity}`);
         } else {
             log.error('Profile could not be confirmed in timely manner. Please, try again later.');
@@ -345,72 +350,80 @@ class OTNode {
             return true;
         };
 
-        server.post('/import_gs1', (req, res) => {
+
+        /**
+         * Data import route
+         * @param importfile - file or text data
+         * @param importtype - (GS1/WOT)
+         */
+        server.post('/import', (req, res) => {
             log.important('Import request received!');
 
             if (!authorize(req, res)) {
                 return;
             }
 
-            if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body !== undefined && req.body.importfile !== undefined) {
-                    const fileData = req.body.importfile;
-
-                    fs.writeFile('tmp/import.xml', fileData, (err) => {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        console.log('The file was saved!');
-
-                        const input_file = '/tmp/import.xml';
-                        const queryObject = {
-                            filepath: input_file,
-                            contact: req.contact,
-                            response: res,
-                        };
-
-                        emitter.emit('gs1-import-request', queryObject);
-                    });
-                } else {
-                    log.error('Invalid request. Input file not provided.');
-                    res.send({
-                        status: 400,
-                        message: 'Input file not provided!',
-                    });
-                }
-            } else {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                    contact: req.contact,
-                    response: res,
-                };
-
-                emitter.emit('gs1-import-request', queryObject);
-            }
-        });
-
-        server.post('/import_wot', (req, res) => {
-            log.important('Import request received!');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.files !== undefined) {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                    contact: req.contact,
-                    response: res,
-                };
-
-                emitter.emit('wot-import-request', queryObject);
-            } else {
-                log.error('Invalid request. Input file not provided.');
+            if (req.body === undefined) {
+                res.status(400);
                 res.send({
+                    message: 'Bad request',
+                    data: {},
                     status: 400,
-                    message: 'Input file not provided!',
+                });
+                return;
+            }
+
+            const supportedImportTypes = ['GS1', 'WOT'];
+
+            // Check if import type is valid
+            if (req.body.importtype === undefined ||
+                supportedImportTypes.indexOf(req.body.importtype) === -1) {
+                res.status(400);
+                res.send({
+                    message: 'Invalid import type',
+                    data: {},
+                    status: 400,
+                });
+                return;
+            }
+
+            const importtype = req.body.importtype.toLowerCase();
+
+            // Check if file is provided
+            if (req.files !== undefined && req.files.importfile !== undefined) {
+                const inputFile = req.files.importfile.path;
+                const queryObject = {
+                    filepath: inputFile,
+                    contact: req.contact,
+                    response: res,
+                };
+
+                emitter.emit(`${importtype}-import-request`, queryObject);
+            } else if (req.body.importfile !== undefined) {
+                // Check if import data is provided in request body
+                const fileData = req.body.importfile;
+                fs.writeFile('tmp/import.xml', fileData, (err) => {
+                    if (err) {
+                        return console.log(err);
+                    }
+                    console.log('The file was saved!');
+
+                    const inputFile = '/tmp/import.tmp';
+                    const queryObject = {
+                        filepath: inputFile,
+                        contact: req.contact,
+                        response: res,
+                    };
+
+                    emitter.emit(`${importtype}-import-request`, queryObject);
+                });
+            } else {
+                // No import data provided
+                res.status(400);
+                res.send({
+                    message: 'No import data provided',
+                    data: {},
+                    status: 400,
                 });
             }
         });
@@ -462,6 +475,10 @@ class OTNode {
             }
         });
 
+        /**
+         * Get trail from database
+         * @param QueryObject - ex. {uid: abc:123}
+         */
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {
@@ -470,7 +487,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/get_root_hash', (req, res) => {
+        /** Get root hash for provided data query
+         * @param Query params: dc_wallet, import_id
+         */
+        server.get('/api/fingerprint', (req, res) => {
             const queryObject = req.query;
             emitter.emit('get_root_hash', {
                 query: queryObject,
