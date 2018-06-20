@@ -258,8 +258,13 @@ class OTNode {
             config.read_stake_factor,
             config.dh_max_time_mins,
         );
-        const event = await blockchain.subscribeToEvent('ProfileCreated', null);
-        if (event.node_id.includes(identity)) {
+        const event = await blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, (eventData) => {
+            if (eventData.node_id) {
+                return eventData.node_id.includes(identity);
+            }
+            return false;
+        });
+        if (event) {
             log.notify(`Profile created for node ${identity}`);
         } else {
             log.error('Profile could not be confirmed in timely manner. Please, try again later.');
