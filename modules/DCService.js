@@ -43,8 +43,8 @@ class DCService {
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
             this.log.info(`Offer for ${importId} already exists. Cancelling old offer and writing new one`);
-            await this.blockchain.cancelOffer(importId).catch((e) => {
-                this.log.log('error', 'Cancelling offer failed', e);
+            await this.blockchain.cancelOffer(importId).catch((error) => {
+                this.log.log('error', `Cancelling offer failed. ${error}.`);
             });
             // cancel challenges for cancelled offer
             await Models.replicated_data.update(
@@ -146,7 +146,7 @@ class DCService {
             }).catch((err) => {
                 offer.status = 'FAILED';
                 offer.save({ fields: ['status'] });
-                this.log.log('error', 'Failed to create offer. %j', err);
+                this.log.log('error', `Failed to create offer. ${err}.`);
             });
         }).catch((err) => {
             offer.status = 'FAILED';
