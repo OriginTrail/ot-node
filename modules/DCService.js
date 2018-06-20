@@ -162,22 +162,22 @@ class DCService {
 
     /**
      * Chose DHs
-     * @param importId Offer identifier
+     * @param offerId Offer identifier
      * @param totalEscrowTime   Total escrow time
      */
-    chooseBids(importId, totalEscrowTime) {
+    chooseBids(offerId, totalEscrowTime) {
         return new Promise((resolve, reject) => {
-            Models.offers.findOne({ where: { id: importId } }).then((offerModel) => {
+            Models.offers.findOne({ where: { id: offerId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
-                this.log.info(`Choose bids for offer ${importId}`);
+                this.log.info(`Choose bids for offer ID ${offerId}, import ID ${offer.import_id}.`);
                 this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
                     .then(() => {
-                        this.blockchain.chooseBids(importId)
+                        this.blockchain.chooseBids(offer.import_id)
                             .then(() => {
-                                this.log.info(`Bids chosen for data ${importId}`);
+                                this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
                                 resolve();
                             }).catch((err) => {
-                                this.log.warn(`Failed call choose bids for data ${importId}. ${err}`);
+                                this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
@@ -185,7 +185,7 @@ class DCService {
                         reject(err);
                     });
             }).catch((err) => {
-                this.log.error(`Failed to get offer (Import ID ${importId}). ${err}.`);
+                this.log.error(`Failed to get offer ID ${offerId}. ${err}.`);
                 reject(err);
             });
         });

@@ -273,7 +273,12 @@ class EventEmitter {
                 logger.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
             }
 
-            const offerModel = await Models.offers.findOne({ where: { id: import_id } });
+            const offerModel = await Models.offers.findOne({
+                where: {
+                    import_id,
+                    status: { [Models.Sequelize.Op.not]: 'FINALIZED' },
+                },
+            });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
                 logger.warn(errorMessage);
