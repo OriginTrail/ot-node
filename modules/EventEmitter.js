@@ -54,6 +54,15 @@ class EventEmitter {
             });
         });
 
+        this.globalEmitter.on('query', (data) => {
+            product.getVertices(data.query).then((res) => {
+                data.response.send(res);
+            }).catch(() => {
+                logger.error(`Failed to get trail for query ${data.query}`);
+                data.response.send(500); // TODO rethink about status codes
+            });
+        });
+
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
@@ -194,10 +203,10 @@ class EventEmitter {
                 });
             } else {
                 logger.error(`There is no offer for external ID ${external_id}`);
-                data.response.status(200);
+                data.response.status(404);
                 data.response.send({
-                    status: 405,
-                    message: 'Failed to start offer.',
+                    status: 404,
+                    message: 'Offer not found',
                 });
             }
         });

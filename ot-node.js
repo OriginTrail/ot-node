@@ -517,6 +517,14 @@ class OTNode {
                 response: res,
             });
         });
+
+        server.get('/api/query', (req, res) => {
+            const queryObject = req.query;
+            emitter.emit('query', {
+                query: queryObject,
+                response: res,
+            });
+        });
     }
 }
 
