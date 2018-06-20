@@ -50,6 +50,10 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        external_id: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('offers'),
 };

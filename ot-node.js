@@ -422,23 +422,45 @@ class OTNode {
                 return;
             }
 
-            if (req.body !== undefined && req.body.data_id !== undefined) {
+            if (req.body != null && req.body.import_id != null) {
+                const { import_id } = req.body;
                 const queryObject = {
-                    data_id: req.body.data_id,
+                    data_id: import_id,
                     contact: req.contact,
                     response: res,
                 };
-
                 emitter.emit('create-offer', queryObject);
             } else {
-                log.error('Invalid request. You need to provide import ID!');
+                log.error('Invalid request. You need to provide import ID');
+                res.status(400);
                 res.send({
-                    status: 400,
                     message: 'Import ID not provided!',
                 });
             }
         });
 
+        server.get('/replication/:replication_id', (req, res) => {
+            log.trace('Replication status received');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            const externalId = req.params.replication_id;
+            if (externalId == null) {
+                log.error('Invalid request. You need to provide replication ID');
+                res.status = 400;
+                res.send({
+                    message: 'Replication ID is not provided',
+                });
+            } else {
+                const queryObject = {
+                    external_id: externalId,
+                    response: res,
+                };
+                emitter.emit('offer-status', queryObject);
+            }
+        });
 
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
