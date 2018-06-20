@@ -26,6 +26,8 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
+const memwatch = require('memwatch-next');
+const heapdump = require('heapdump');
 
 const pjson = require('./package.json');
 
@@ -35,6 +37,17 @@ const Web3 = require('web3');
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
+});
+
+memwatch.on('leak', (info) => {
+    console.error('Memory leak detected:\n', info);
+    heapdump.writeSnapshot((err, filename) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.error(`Wrote snapshot: ${filename}`);
+        }
+    });
 });
 
 /**
@@ -198,7 +211,7 @@ class OTNode {
 
         await network.initialize();
         try {
-            await this.createProfile(blockchain);
+            //    await this.createProfile(blockchain);
         } catch (e) {
             log.error('Failed to create profile');
             process.exit(1);
@@ -212,8 +225,8 @@ class OTNode {
         }
 
         // Starting event listener on Blockchain
-        this.listenBlockchainEvents(blockchain);
-        dhService.listenToBlockchainEvents();
+        // this.listenBlockchainEvents(blockchain);
+        // dhService.listenToBlockchainEvents();
     }
 
     /**
@@ -335,81 +348,91 @@ class OTNode {
             const remote_access = config.remote_access_whitelist;
 
             if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+                res.status();
                 res.send({
+                    status: 400,
                     message: 'Unauthorized request',
-                    data: [],
+                    data: {},
                 });
                 return false;
             }
             return true;
         };
 
-        server.post('/import_gs1', (req, res) => {
+
+        /**
+         * Data import route
+         * @param importfile - file or text data
+         * @param importtype - (GS1/WOT)
+         */
+        server.post('/import', (req, res) => {
             log.important('Import request received!');
 
             if (!authorize(req, res)) {
                 return;
             }
 
-            if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body !== undefined && req.body.importfile !== undefined) {
-                    const fileData = req.body.importfile;
-
-                    fs.writeFile('tmp/import.xml', fileData, (err) => {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        console.log('The file was saved!');
-
-                        const input_file = '/tmp/import.xml';
-                        const queryObject = {
-                            filepath: input_file,
-                            contact: req.contact,
-                            response: res,
-                        };
-
-                        emitter.emit('gs1-import-request', queryObject);
-                    });
-                } else {
-                    log.error('Invalid request. Input file not provided.');
-                    res.send({
-                        status: 400,
-                        message: 'Input file not provided!',
-                    });
-                }
-            } else {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                    contact: req.contact,
-                    response: res,
-                };
-
-                emitter.emit('gs1-import-request', queryObject);
-            }
-        });
-
-        server.post('/import_wot', (req, res) => {
-            log.important('Import request received!');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.files !== undefined) {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                    contact: req.contact,
-                    response: res,
-                };
-
-                emitter.emit('wot-import-request', queryObject);
-            } else {
-                log.error('Invalid request. Input file not provided.');
+            if (req.body === undefined) {
+                res.status(400);
                 res.send({
+                    message: 'Bad request',
+                    data: {},
                     status: 400,
-                    message: 'Input file not provided!',
+                });
+                return;
+            }
+
+            const supportedImportTypes = ['GS1', 'WOT'];
+
+            // Check if import type is valid
+            if (req.body.importtype === undefined ||
+                supportedImportTypes.indexOf(req.body.importtype) === -1) {
+                res.status(400);
+                res.send({
+                    message: 'Invalid import type',
+                    data: {},
+                    status: 400,
+                });
+                return;
+            }
+
+            const importtype = req.body.importtype.toLowerCase();
+
+            // Check if file is provided
+            if (req.files !== undefined && req.files.importfile !== undefined) {
+                const inputFile = req.files.importfile.path;
+                const queryObject = {
+                    filepath: inputFile,
+                    contact: req.contact,
+                    response: res,
+                };
+
+                emitter.emit(`${importtype}-import-request`, queryObject);
+            } else if (req.body.importfile !== undefined) {
+                // Check if import data is provided in request body
+                const fileData = req.body.importfile;
+                fs.writeFile('tmp/import.xml', fileData, (err) => {
+                    if (err) {
+                        return console.log(err);
+                    }
+                    console.log('The file was saved!');
+
+                    const inputFile = '/tmp/import.tmp';
+                    const queryObject = {
+                        filepath: inputFile,
+                        contact: req.contact,
+                        response: res,
+                    };
+
+                    emitter.emit(`${importtype}-import-request`, queryObject);
+                });
+            } else {
+                // No import data provided
+                res.status(400);
+                res.send({
+                    message: 'No import data provided',
+                    data: {},
+                    status: 400,
                 });
             }
         });
@@ -439,6 +462,10 @@ class OTNode {
         });
 
 
+        /**
+         * Get trail from database
+         * @param QueryObject - ex. {uid: abc:123}
+         */
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {
@@ -447,7 +474,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/get_root_hash', (req, res) => {
+        /** Get root hash for provided data query
+         * @param Query params: dc_wallet, import_id
+         */
+        server.get('/api/fingerprint', (req, res) => {
             const queryObject = req.query;
             emitter.emit('get_root_hash', {
                 query: queryObject,

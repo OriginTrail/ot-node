@@ -47,10 +47,19 @@ class EventEmitter {
 
         this.globalEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
                 data.response.send(res);
-            }).catch(() => {
+            }).catch((error) => {
                 logger.error(`Failed to get trail for query ${data.query}`);
-                data.response.send(500); // TODO rethink about status codes
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                    status: 500,
+                });
             });
         });
 
@@ -82,17 +91,19 @@ class EventEmitter {
         this.globalEmitter.on('network-query', (data) => {
             const failFunction = (error) => {
                 logger.warn(error);
+                data.response.status(400);
                 data.response.send({
-                    status: 'FAIL',
+                    status: '400',
                     message: 'Failed to handle query',
+                    data: [],
                 });
             };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.send({
-                        status: 'OK',
+                        status: '200',
                         message: 'Query sent successfully.',
-                        query_id: queryId,
+                        data: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (offer) {
@@ -245,7 +256,7 @@ class EventEmitter {
                 const { error } = responseObject;
                 const { response } = responseObject;
 
-                if (response === null) {
+                if (response == null) {
                     await processImport(null, error, data);
                 } else {
                     await processImport(response, null, data);

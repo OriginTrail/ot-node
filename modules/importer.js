@@ -106,7 +106,6 @@ class Importer {
 
     async _importWOT(document) {
         try {
-            const result = await this.wotImporter.parse(document);
             return {
                 response: await this.afterImport(result),
                 error: null,
