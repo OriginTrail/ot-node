@@ -65,16 +65,26 @@ class EventEmitter {
 
         this.globalEmitter.on('query', (data) => {
             product.getVertices(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
                 data.response.send(res);
-            }).catch(() => {
-                logger.error(`Failed to get trail for query ${data.query}`);
-                data.response.send(500); // TODO rethink about status codes
+            }).catch((error) => {
+                logger.error(`Failed to get vertices for query ${data.query}`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                    status: 500,
+                });
             });
         });
 
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
+                data.response.status(400)
                 data.response.send({
                     status: 400,
                     message: 'dc_wallet parameter query is missing',
@@ -83,6 +93,7 @@ class EventEmitter {
             }
             const importId = data.query.import_id;
             if (importId == null) {
+                data.response.status(400);
                 data.response.send({
                     status: 400,
                     message: 'import_id parameter query is missing',
@@ -93,6 +104,7 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${data.query}`);
+                data.response.status(500);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -109,8 +121,9 @@ class EventEmitter {
             };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
+                    data.response.status(201);
                     data.response.send({
-                        status: '200',
+                        status: '201',
                         message: 'Query sent successfully.',
                         data: queryId,
                     });
@@ -191,12 +204,14 @@ class EventEmitter {
                         });
                     });
 
+                data.response.status(201);
                 data.response.send({
                     status: 201,
                     import_id,
                 });
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
+                data.response.status(500);
                 data.response.send({
                     status: 500,
                     message: error,

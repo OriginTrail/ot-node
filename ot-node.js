@@ -356,7 +356,7 @@ class OTNode {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/import', (req, res) => {
+        server.post('/api/import', (req, res) => {
             log.important('Import request received!');
 
             if (!authorize(req, res)) {
@@ -428,7 +428,7 @@ class OTNode {
             }
         });
 
-        server.post('/replication', (req, res) => {
+        server.post('/api/replication', (req, res) => {
             log.important('Replication request received!');
 
             if (!authorize(req, res)) {
@@ -452,7 +452,7 @@ class OTNode {
             }
         });
 
-        server.get('/replication/:replication_id', (req, res) => {
+        server.get('/api/replication/:replication_id', (req, res) => {
             log.trace('Replication status received');
 
             if (!authorize(req, res)) {
@@ -538,6 +538,10 @@ class OTNode {
             });
         });
 
+        /**
+         * Get vertices by query
+         * @param queryObject
+         */
         server.get('/api/query', (req, res) => {
             const queryObject = req.query;
             emitter.emit('query', {
