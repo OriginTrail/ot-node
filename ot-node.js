@@ -341,6 +341,7 @@ class OTNode {
             const remote_access = config.remote_access_whitelist;
 
             if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+                res.status(403);
                 res.send({
                     message: 'Unauthorized request',
                     data: [],
@@ -367,8 +368,6 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'Bad request',
-                    data: {},
-                    status: 400,
                 });
                 return;
             }
@@ -381,8 +380,6 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'Invalid import type',
-                    data: {},
-                    status: 400,
                 });
                 return;
             }
@@ -422,8 +419,6 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'No import data provided',
-                    data: {},
-                    status: 400,
                 });
             }
         });
