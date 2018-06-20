@@ -36,7 +36,6 @@ class GS1Utilities {
         if (!res) {
             this.handleError(`Invalid EAN13: ${code}`, 400);
         }
-        return code;
     }
 
     validateSender(sender) {
