@@ -53,6 +53,7 @@ after_script:
   - rm -f arangodb.log
   - cat neo4jdb.log
   - rm -f neo4jdb.log
-  - cat ganache.log
+  # enable line bellow in case you are interested in reading ganache-cli logs
+  # - cat ganache.log
   - rm -f ganache.log
   - kill -9 $(pgrep arangod)
