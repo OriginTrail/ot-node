@@ -84,7 +84,7 @@ class EventEmitter {
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
-                data.response.status(400)
+                data.response.status(400);
                 data.response.send({
                     status: 400,
                     message: 'dc_wallet parameter query is missing',
