@@ -419,7 +419,6 @@ class OTNode {
                     message: 'No import data provided',
                     data: {},
                     status: 400,
-                    message: 'Input file not provided!',
                 });
             }
         });
