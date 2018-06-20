@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const validator = require('validator');
 const Utilities = require('./Utilities');
 const stringify = require('json-stable-stringify');
+const Barcoder = require('barcoder');
 
 const ZK = require('./ZK');
 
@@ -28,6 +29,13 @@ class GS1Utilities {
         const err = new Error(message);
         err.status = status;
         throw err;
+    }
+
+    validateEan13(code) {
+        const res = Barcoder.validate(code);
+        if (!res) {
+            this.handleError(`Invalid EAN13: ${code}`, 400);
+        }
     }
 
     validateSender(sender) {
@@ -64,7 +72,11 @@ class GS1Utilities {
         for (const inputElement of inputAttributeArray) {
             if (inputElement.identifier) {
                 if (inputElement.id) {
-                    output[inputElement.id.replace(ignorePattern, '')] = inputElement._;
+                    const value = inputElement._;
+                    const validateEan = this.validateEan13(value);
+                    if (validateEan) {
+                        output[inputElement.id.replace(ignorePattern, '')] = value;
+                    }
                 } else {
                     this.handleError('Failed to parse XML. ID is missing for the identifier attribute.', 400);
                 }

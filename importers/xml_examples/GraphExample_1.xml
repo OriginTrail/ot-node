@@ -107,7 +107,7 @@
 					<Vocabulary type="urn:ot:object:batch">
 						<VocabularyElementList>
 							<VocabularyElement id="urn:epc:id:sgtin:Batch_1">
-								<attribute id="urn:ot:object:product:batch:ean13" identifier="true">0123456789014</attribute>
+								<attribute id="urn:ot:object:product:batch:ean13" identifier="true">9771451522022</attribute>
 								<attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
 								<attribute id="urn:ot:object:product:batch:productionDate">2018-03-03T00:01:54Z</attribute>
 								<attribute id="urn:ot:object:product:batch:expirationDate">2018-04-03T00:01:54Z</attribute>
