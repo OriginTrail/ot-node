@@ -184,7 +184,8 @@ class EventEmitter {
 
                 data.response.send({
                     status: 200,
-                    message: 'Ok.',
+                    message: 'Import successful',
+                    import_id,
                 });
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
@@ -195,42 +196,56 @@ class EventEmitter {
             }
         };
 
-        this.globalEmitter.on('create-offer', async (data) => {
-            const { data_id } = data;
-
-            try {
-                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
-                vertices = vertices.map((vertex, index) => {
-                    delete vertex.private;
-                    return vertex;
+        this.globalEmitter.on('offer-status', async (data) => {
+            const { external_id } = data;
+            const offer = await dcService.getOffer(external_id);
+            if (offer) {
+                data.response.status(200);
+                data.response.send({
+                    offer_status: offer.status,
                 });
-                await Models.data_info.findOne({ where: { import_id: data_id } })
-                    .then(async (dataimport) => {
-                        await dcService
-                            .createOffer(
-                                data_id,
-                                dataimport.root_hash,
-                                dataimport.total_documents,
-                                vertices,
-                            ).catch((e) => {
-                                console.log(e);
-                            });
-                    }).catch((error) => {
-                        throw new Error('This import does not exist in database');
-                    });
-            } catch (error) {
-                logger.error(`Failed to start offer. ${error}.`);
+            } else {
+                logger.error(`There is no offer for external ID ${external_id}`);
+                data.response.status(200);
                 data.response.send({
                     status: 405,
                     message: 'Failed to start offer.',
                 });
-                return;
             }
+        });
 
-            data.response.send({
-                status: 200,
-                message: 'Ok.',
-            });
+        this.globalEmitter.on('create-offer', async (data) => {
+            const { data_id } = data;
+            try {
+                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
+                vertices = vertices.map((vertex) => {
+                    delete vertex.private;
+                    return vertex;
+                });
+
+                const dataImport = await Models.data_info.findOne({
+                    where: { import_id: data_id },
+                });
+                if (dataImport == null) {
+                    throw new Error('This import does not exist in database');
+                }
+                const externalId = await dcService.createOffer(
+                    data_id,
+                    dataImport.root_hash,
+                    dataImport.total_documents,
+                    vertices,
+                );
+                data.response.status(201);
+                data.response.send({
+                    Location: `/replication/${externalId}`,
+                });
+            } catch (error) {
+                logger.error(`Failed to start offer. ${error}.`);
+                data.response.status(405);
+                data.response.send({
+                    message: 'Failed to start offer.',
+                });
+            }
         });
 
 
@@ -284,7 +299,12 @@ class EventEmitter {
                 logger.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
             }
 
-            const offerModel = await Models.offers.findOne({ where: { id: import_id } });
+            const offerModel = await Models.offers.findOne({
+                where: {
+                    import_id,
+                    status: { [Models.Sequelize.Op.not]: 'FINALIZED' },
+                },
+            });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
                 logger.warn(errorMessage);
@@ -309,8 +329,8 @@ class EventEmitter {
             // }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
             const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
             let vertices = values[0];

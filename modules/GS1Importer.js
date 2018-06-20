@@ -111,10 +111,12 @@ class GS1Importer {
         const objectEventObservationId = await this.db.getClassId('Observation');
 
         for (const location of locations) {
-            const identifiers = {
+            const { identifiers } = location;
+            Object.assign(identifiers, {
                 id: location.id,
                 uid: location.id,
-            };
+            });
+
             const data = {
                 object_class_id: objectClassLocationId,
             };
@@ -211,10 +213,11 @@ class GS1Importer {
                 senderWallet = actor.attributes.wallet;
             }
 
-            const identifiers = {
+            const { identifiers } = actor;
+            Object.assign(identifiers, {
                 id: actor.id,
                 uid: actor.id,
-            };
+            });
 
             const data = {
                 object_class_id: objectClassActorId,
@@ -241,10 +244,11 @@ class GS1Importer {
         }
 
         for (const product of products) {
-            const identifiers = {
+            const { identifiers } = product;
+            Object.assign(identifiers, {
                 id: product.id,
                 uid: product.id,
-            };
+            });
 
             const data = {
                 object_class_id: objectClassProductId,
@@ -274,10 +278,11 @@ class GS1Importer {
             // eslint-disable-next-line prefer-destructuring
             const productId = batch.attributes.productId;
 
-            const identifiers = {
+            const { identifiers } = batch;
+            Object.assign(identifiers, {
                 id: batch.id,
                 uid: batch.id,
-            };
+            });
 
             const data = {
                 parent_id: productId,
@@ -296,10 +301,7 @@ class GS1Importer {
             const key = this.helper.createKey('batch', senderId, identifiers, data);
             batchesVertices.push({
                 _key: key,
-                identifiers: {
-                    id: batch.id,
-                    uid: batch.id,
-                },
+                identifiers,
                 data,
                 private: privateData,
                 vertex_type: 'BATCH',
@@ -767,7 +769,7 @@ class GS1Importer {
         }
         await this.db.commit();
 
-        console.log('Done parsing and importing.');
+        // console.log('Done parsing and importing.');
 
         let edgesPerImport = await this.db.findEdgesByImportId(importId);
         edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
@@ -841,11 +843,13 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:location:');
             const childLocations = this.helper.arrayze(element.children ? element.children.id : []);
 
             const location = {
                 type: 'location',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:location:'),
                 child_locations: childLocations,
                 extension: element.extension,
@@ -863,9 +867,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:actor:');
+
             const actor = {
                 type: 'actor',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:actor:'),
                 extension: element.extension,
             };
@@ -882,9 +889,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:');
+
             const product = {
                 type: 'product',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:'),
                 extension: element.extension,
             };
@@ -901,9 +911,12 @@ class GS1Importer {
             this.helper.arrayze(vocabularyElementList.VocabularyElement);
 
         for (const element of vocabularyElementElements) {
+            const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:batch:');
+
             const batch = {
                 type: 'batch',
                 id: element.id,
+                identifiers,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:batch:'),
                 extension: element.extension,
             };

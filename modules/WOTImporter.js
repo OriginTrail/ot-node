@@ -30,10 +30,9 @@ class WOTImporter {
         try {
             payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
         } catch (err) {
-            const error = new Error('Error parsing JSON file');
+            const error = new Error('Invalid JSON file');
             error.status = 400;
             throw error;
-            return;
         }
 
         const importId = Utilities.createImportId();
