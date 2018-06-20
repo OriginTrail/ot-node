@@ -36,6 +36,7 @@ class GS1Utilities {
         if (!res) {
             this.handleError(`Invalid EAN13: ${code}`, 400);
         }
+        return code;
     }
 
     validateSender(sender) {
@@ -73,10 +74,8 @@ class GS1Utilities {
             if (inputElement.identifier) {
                 if (inputElement.id) {
                     const value = inputElement._;
-                    const validateEan = this.validateEan13(value);
-                    if (validateEan) {
-                        output[inputElement.id.replace(ignorePattern, '')] = value;
-                    }
+                    this.validateEan13(value);
+                    output[inputElement.id.replace(ignorePattern, '')] = value;
                 } else {
                     this.handleError('Failed to parse XML. ID is missing for the identifier attribute.', 400);
                 }

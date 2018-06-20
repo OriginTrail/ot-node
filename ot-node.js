@@ -201,13 +201,13 @@ class OTNode {
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
         dhService.listenToBlockchainEvents();
-
-        try {
-            await this.createProfile(blockchain);
-        } catch (e) {
-            log.error('Failed to create profile');
-            process.exit(1);
-        }
+        //
+        // try {
+        //     await this.createProfile(blockchain);
+        // } catch (e) {
+        //     log.error('Failed to create profile');
+        //     process.exit(1);
+        // }
 
         await network.start();
 
