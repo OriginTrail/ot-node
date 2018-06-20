@@ -1,11 +1,9 @@
 const Tx = require('ethereumjs-tx');
 const EventEmitter = require('events');
-const Utilities = require('../../Utilities');
 const config = require('../../Config');
 const Lightwallet = require('eth-lightwallet');
 const { Lock } = require('semaphore-async-await');
 
-const log = Utilities.getLogger();
 const { txutils } = Lightwallet;
 
 class Transactions {

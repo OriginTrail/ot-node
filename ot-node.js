@@ -1,4 +1,5 @@
 const Network = require('./modules/Network');
+const NetworkUtilities = require('./modules/NetworkUtilities');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -8,6 +9,7 @@ const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
+const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
@@ -22,11 +24,13 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
+const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
+const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -109,6 +113,9 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
@@ -148,15 +155,20 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
             dcService: awilix.asClass(DCService).singleton(),
+            dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
+            web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
+            gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase)),
+            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
+            logger: awilix.asValue(log),
+            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -183,11 +195,16 @@ class OTNode {
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
-        network.start().then(async (res) => {
+
+        await network.initialize();
+        try {
             await this.createProfile(blockchain);
-        }).catch((e) => {
-            console.log(e);
-        });
+        } catch (e) {
+            log.error('Failed to create profile');
+            process.exit(1);
+        }
+
+        await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -196,7 +213,7 @@ class OTNode {
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
-        dhService.listenToOffers();
+        dhService.listenToBlockchainEvents();
     }
 
     /**
@@ -213,6 +230,8 @@ class OTNode {
             if (!working && Date.now() > deadline) {
                 working = true;
                 blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                blockchain.getAllPastEvents('READING_CONTRACT');
+                blockchain.getAllPastEvents('ESCROW_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -223,22 +242,27 @@ class OTNode {
      * Creates profile on the contract
      */
     async createProfile(blockchain) {
+        const { identity } = config;
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
-            log.info(`Profile has already been created for ${config.identity}`);
+            log.info(`Profile has already been created for ${identity}`);
             return;
         }
 
+        log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
             config.dh_price,
             config.dh_stake_factor,
+            config.read_stake_factor,
             config.dh_max_time_mins,
-            config.dh_max_data_size_bytes,
         );
         const event = await blockchain.subscribeToEvent('ProfileCreated', null);
-        if (event.node_id.includes(config.identity)) {
-            log.info(`Profile created for node: ${config.identity}`);
+        if (event.node_id.includes(identity)) {
+            log.notify(`Profile created for node ${identity}`);
+        } else {
+            log.error('Profile could not be confirmed in timely manner. Please, try again later.');
+            process.exit(1);
         }
     }
 
@@ -297,9 +321,8 @@ class OTNode {
         server.use(cors.actual);
 
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
-            log.notify('%s exposed at %s', server.name, server.url);
+            log.notify(`${server.name} exposed at ${server.url}`);
         });
-
         this.exposeAPIRoutes(server, emitter);
     }
 
@@ -320,48 +343,6 @@ class OTNode {
             }
             return true;
         };
-
-        server.post('/import', (req, res) => {
-            log.important('Import request received!');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.files === undefined || req.files.importfile === undefined) {
-                if (req.body.importfile !== undefined) {
-                    const fileData = req.body.importfile;
-
-                    fs.writeFile('tmp/import.xml', fileData, (err) => {
-                        if (err) {
-                            return console.log(err);
-                        }
-                        console.log('The file was saved!');
-
-                        const input_file = '/tmp/import.xml';
-                        const queryObject = {
-                            filepath: input_file,
-                            contact: req.contact,
-                            response: res,
-                        };
-
-                        emitter.emit('gs1-import-request', queryObject);
-                    });
-                } else {
-                    res.send({
-                        status: 400,
-                        message: 'Input file not provided!',
-                    });
-                }
-            } else {
-                const input_file = req.files.importfile.path;
-                const queryObject = {
-                    filepath: input_file,
-                };
-
-                emitter.emit('import-request', queryObject);
-            }
-        });
 
         server.post('/import_gs1', (req, res) => {
             log.important('Import request received!');
@@ -433,6 +414,53 @@ class OTNode {
             }
         });
 
+        server.post('/replication', (req, res) => {
+            log.important('Replication request received!');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            if (req.body != null && req.body.import_id != null) {
+                const { import_id } = req.body;
+                const queryObject = {
+                    data_id: import_id,
+                    contact: req.contact,
+                    response: res,
+                };
+                emitter.emit('create-offer', queryObject);
+            } else {
+                log.error('Invalid request. You need to provide import ID');
+                res.status(400);
+                res.send({
+                    message: 'Import ID not provided!',
+                });
+            }
+        });
+
+        server.get('/replication/:replication_id', (req, res) => {
+            log.trace('Replication status received');
+
+            if (!authorize(req, res)) {
+                return;
+            }
+
+            const externalId = req.params.replication_id;
+            if (externalId == null) {
+                log.error('Invalid request. You need to provide replication ID');
+                res.status = 400;
+                res.send({
+                    message: 'Replication ID is not provided',
+                });
+            } else {
+                const queryObject = {
+                    external_id: externalId,
+                    response: res,
+                };
+                emitter.emit('offer-status', queryObject);
+            }
+        });
+
         server.get('/api/trail', (req, res) => {
             const queryObject = req.query;
             emitter.emit('trail', {
@@ -445,6 +473,46 @@ class OTNode {
             const queryObject = req.query;
             emitter.emit('get_root_hash', {
                 query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get('/api/network/query_by_id', (req, res) => {
+            log.info('Query by ID received!');
+
+            const queryObject = req.query;
+            const query = [{
+                path: 'identifiers.id',
+                value: queryObject.id,
+                opcode: 'EQ',
+            }];
+            emitter.emit('network-query', {
+                query,
+                response: res,
+            });
+        });
+
+        server.get('/api/network/query/:query_param', (req, res) => {
+            log.info('GET Query received!');
+            if (!req.params.query_param) {
+                res.send({
+                    status: 'FAIL',
+                    error: 'Param required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-status', {
+                id: req.params.query_param,
+                response: res,
+            });
+        });
+
+        server.post('/api/network/query', (req, res) => {
+            log.important('POST Query received!');
+
+            const { query } = req.body;
+            emitter.emit('network-query', {
+                query,
                 response: res,
             });
         });

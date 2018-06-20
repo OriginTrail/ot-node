@@ -7,6 +7,7 @@ const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const WOTImporter = require('../../modules/WOTImporter.js');
+const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -51,7 +52,8 @@ describe('WOT Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName));
+        const logger = Utilities.getLogger();
+        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
             wotImporter: awilix.asClass(WOTImporter),
             graphStorage: awilix.asValue(graphStorage),
@@ -61,7 +63,7 @@ describe('WOT Importer tests', () => {
     });
 
     describe('Parse and Import JSON for n repetitive times', () => {
-        const repetition = 10;
+        const repetition = 5;
         inputJsonFiles.forEach((test) => {
             for (const i in Array.from({ length: repetition })) {
                 it(
