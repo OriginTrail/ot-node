@@ -39,12 +39,12 @@ class Blockchain {
     }
 
     /**
-     * Get offer by dataId
-     * @param dataId
+     * Get offer by importId
+     * @param importId
      * @returns {Promise}
      */
-    getOffer(dataId) {
-        return this.blockchain.getOffer(dataId);
+    getOffer(importId) {
+        return this.blockchain.getOffer(importId);
     }
 
     /**
