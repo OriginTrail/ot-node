@@ -5,8 +5,7 @@ const exec = require('child_process').exec;
 const d = new Date();
 const dN = new Date(2018, 6, 24);
 const todaysDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
-// const testDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate() -8}`;
-// const pastDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate() - 7}`;
+
 
 
 if (fs.existsSync('./db_backup')) {
