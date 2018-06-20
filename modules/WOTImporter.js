@@ -26,7 +26,15 @@ class WOTImporter {
      * @return {Promise<void>}
      */
     async parse(payloadFile) {
-        const payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
+        let payload;
+        try {
+            payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
+        } catch (err) {
+            const error = new Error('Invalid JSON file');
+            error.status = 400;
+            throw error;
+        }
+
         const importId = Utilities.createImportId();
         const { things, sender } = payload.data;
 
@@ -43,6 +51,7 @@ class WOTImporter {
         await Promise.all(edges.map(edge => this.db.addEdge(edge)));
         await Promise.all(vertices.map(vertex => this.db.addVertex(vertex)));
         return {
+            status: 'success',
             vertices,
             edges,
             import_id: importId,

@@ -633,7 +633,7 @@ class Neo4jDB {
      * @return {Promise}
      */
     async clear() {
-        this.log.debug('Clear the database.');
+        // this.log.debug('Clear the database.');
         const session = this.driver.session();
         await session.writeTransaction(tx => tx.run('match (n) detach delete n'));
         session.close();

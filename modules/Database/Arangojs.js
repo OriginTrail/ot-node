@@ -166,6 +166,7 @@ class ArangoJS {
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);
+
         return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 

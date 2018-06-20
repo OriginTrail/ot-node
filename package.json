@@ -10,7 +10,8 @@
     "start": "node node_version_check.js && node ot-node.js",
     "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js",
-    "arango": "/usr/local/opt/arangodb/sbin/arangod &"
+    "arango": "/usr/local/opt/arangodb/sbin/arangod &",
+    "db_backup": " node add_db_backup.js"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.3",
@@ -83,6 +84,7 @@
     "randomstring": "^1.1.5",
     "restify": "^7.1.0",
     "restify-cors-middleware": "^1.1.0",
+    "rimraf": "^2.6.2",
     "semaphore-async-await": "^1.5.1",
     "sequelize": "^4.37.6",
     "sequelize-cli": "^4.0.0",

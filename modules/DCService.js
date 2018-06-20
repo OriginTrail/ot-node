@@ -128,19 +128,19 @@ class DCService {
                     offer.status = 'FINALIZING';
                     offer.save({ fields: ['status'] });
                     this.chooseBids(offer.id, totalEscrowTime).then(() => {
-                        this.blockchain.subscribeToEvent('OfferFinalized', offer.id)
+                        this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
                             .then(() => {
                                 offer.status = 'FINALIZED';
                                 offer.save({ fields: ['status'] });
 
-                                this.log.info(`Offer for ${offer.id} finalized`);
+                                this.log.info(`Offer for ${offer.import_id} finalized`);
                             }).catch((error) => {
-                                this.log.error(`Failed to get offer ${offer.id}). ${error}.`);
+                                this.log.error(`Failed to get offer ${offer.import_id}). ${error}.`);
                             });
                     }).catch((err) => {
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
-                        this.log.log('error', 'Failed to choose bids. %j', err);
+                        this.log.error(`Failed to choose bids. ${err}`);
                     });
                 });
             }).catch((err) => {
