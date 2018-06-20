@@ -236,7 +236,7 @@ class EventEmitter {
                 );
                 data.response.status(201);
                 data.response.send({
-                    Location: `/replication/${externalId}`,
+                    replication_id: externalId,
                 });
             } catch (error) {
                 logger.error(`Failed to start offer. ${error}.`);
