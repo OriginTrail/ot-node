@@ -270,12 +270,11 @@ class Blockchain {
 
     /**
     * Gets status of the offer
-    * @param dcWallet
     * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, importId) {
-        return this.blockchain.getOfferStatus(dcWallet, importId);
+    getOfferStatus(importId) {
+        return this.blockchain.getOfferStatus(importId);
     }
 
     getDcWalletFromOffer(importId) {

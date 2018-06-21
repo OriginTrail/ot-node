@@ -239,7 +239,7 @@ class EventEmitter {
                     replication_id: externalId,
                 });
             } catch (error) {
-                logger.error(`Failed to start offer. ${error}.`);
+                logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
                 data.response.send({
                     message: 'Failed to start offer.',
