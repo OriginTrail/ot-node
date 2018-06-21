@@ -127,7 +127,7 @@ contract BiddingTest {
 	}
 
 	uint256 public active_nodes;
-	mapping(bytes32 => OfferDefinition) public offer; //offer[import_id] import_id = keccak256(DC_wallet, DC_node_id, nonce)
+	mapping(bytes32 => OfferDefinition) public offer; //offer[import_id] import_id
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
 	event OfferCreated(bytes32 import_id, bytes32 DC_node_id, uint total_escrow_time_in_minutes, uint max_token_amount_per_DH, uint min_stake_amount_per_DH, uint min_reputation, uint data_size_in_bytes, bytes32 data_hash);
