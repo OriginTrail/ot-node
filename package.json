@@ -88,6 +88,7 @@
     "restify": "^7.1.0",
     "restify-cors-middleware": "^1.1.0",
     "rimraf": "^2.6.2",
+    "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",
     "sequelize": "^4.37.6",
     "sequelize-cli": "^4.0.0",

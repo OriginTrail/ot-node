@@ -214,8 +214,8 @@ library SafeMath {
 
  		uint256 amount_to_send;
 
- 		uint end_time = block.timestamp;
- 		if(end_time > this_escrow.end_time){
+ 		uint current_time = block.timestamp;
+ 		if(current_time > this_escrow.end_time){
  			uint stake_to_send = this_escrow.stake_amount;
  			this_escrow.stake_amount = 0;
  			if(stake_to_send > 0) {
@@ -228,8 +228,8 @@ library SafeMath {
  			emit EscrowCompleted(import_id, msg.sender);
  		}
  		else{
- 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
- 			this_escrow.last_confirmation_time = end_time;
+ 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(current_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
+ 			this_escrow.last_confirmation_time = current_time;
  		}
  		
  		if(amount_to_send > 0) {
@@ -408,9 +408,6 @@ library SafeMath {
      		this_escrow.escrow_status = EscrowStatus.completed;
 
      		reading.removeReadData(import_id, DH_wallet);
-
-     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-     		this_escrow.stake_amount = 0;
      	}
 
      	uint256 i = 0;
@@ -470,9 +467,6 @@ library SafeMath {
      		this_escrow.escrow_status = EscrowStatus.completed;
 
      		reading.removeReadData(import_id, DH_wallet);
-
-     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-     		this_escrow.stake_amount = 0;
      		emit LitigationCompleted(import_id, DH_wallet, true);
      	}
      }
