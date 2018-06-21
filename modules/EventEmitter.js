@@ -58,7 +58,23 @@ class EventEmitter {
                 data.response.status(500);
                 data.response.send({
                     message: error,
-                    status: 500,
+                });
+            });
+        });
+
+        this.globalEmitter.on('query', (data) => {
+            product.getVertices(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+                data.response.send(res);
+            }).catch((error) => {
+                logger.error(`Failed to get vertices for query ${data.query}`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
                 });
             });
         });
@@ -66,16 +82,16 @@ class EventEmitter {
         this.globalEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
+                data.response.status(400);
                 data.response.send({
-                    status: 400,
                     message: 'dc_wallet parameter query is missing',
                 });
                 return;
             }
             const importId = data.query.import_id;
             if (importId == null) {
+                data.response.status(400);
                 data.response.send({
-                    status: 400,
                     message: 'import_id parameter query is missing',
                 });
                 return;
@@ -84,6 +100,7 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${data.query}`);
+                data.response.status(500);
                 data.response.send(500); // TODO rethink about status codes
             });
         });
@@ -93,15 +110,14 @@ class EventEmitter {
                 logger.warn(error);
                 data.response.status(400);
                 data.response.send({
-                    status: '400',
                     message: 'Failed to handle query',
                     data: [],
                 });
             };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
+                    data.response.status(201);
                     data.response.send({
-                        status: '200',
                         message: 'Query sent successfully.',
                         data: queryId,
                     });
@@ -125,23 +141,23 @@ class EventEmitter {
                 try {
                     const vertices = await dhService.dataLocationQuery(id);
 
+                    response.status(200);
                     response.send({
-                        status: 'OK',
                         message: `Query status ${networkQuery.status}.`,
                         query_id: networkQuery.id,
                         vertices,
                     });
                 } catch (error) {
                     logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    response.status(500);
                     response.send({
-                        status: 'FAIL',
                         error: 'Fail to process.',
                         query_id: networkQuery.id,
                     });
                 }
             } else {
+                response.status(200);
                 response.send({
-                    status: 'OK',
                     message: `Query status ${networkQuery.status}.`,
                     query_id: networkQuery.id,
                 });
@@ -152,7 +168,6 @@ class EventEmitter {
             if (response === null) {
                 data.response.status(error.status);
                 data.response.send({
-                    status: error.status,
                     message: error.message,
                 });
                 return;
@@ -176,20 +191,20 @@ class EventEmitter {
                         total_documents,
                     }).catch((error) => {
                         logger.error(error);
+                        data.response.status(500);
                         data.response.send({
-                            status: 500,
                             message: error,
                         });
                     });
 
+                data.response.status(201);
                 data.response.send({
-                    status: 201,
                     import_id,
                 });
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
+                data.response.status(500);
                 data.response.send({
-                    status: 500,
                     message: error,
                 });
             }
@@ -205,10 +220,9 @@ class EventEmitter {
                 });
             } else {
                 logger.error(`There is no offer for external ID ${external_id}`);
-                data.response.status(200);
+                data.response.status(404);
                 data.response.send({
-                    status: 405,
-                    message: 'Failed to start offer.',
+                    message: 'Offer not found',
                 });
             }
         });
@@ -399,7 +413,6 @@ class EventEmitter {
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
                 logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
                 response.send({
-                    status: 'success',
                     answer,
                 }, (error) => {
                     logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
@@ -408,7 +421,6 @@ class EventEmitter {
                 logger.error(`Failed to get data. ${error}.`);
 
                 response.send({
-                    status: 'fail',
                 }, (error) => {
                     logger.error(`Failed to send 'fail' status.v Error: ${error}.`);
                 });

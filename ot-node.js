@@ -340,6 +340,7 @@ class OTNode {
             const remote_access = config.remote_access_whitelist;
 
             if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+                res.status(403);
                 res.send({
                     message: 'Unauthorized request',
                     data: [],
@@ -355,7 +356,7 @@ class OTNode {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/import', (req, res) => {
+        server.post('/api/import', (req, res) => {
             log.important('Import request received!');
 
             if (!authorize(req, res)) {
@@ -366,8 +367,6 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'Bad request',
-                    data: {},
-                    status: 400,
                 });
                 return;
             }
@@ -380,8 +379,6 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'Invalid import type',
-                    data: {},
-                    status: 400,
                 });
                 return;
             }
@@ -421,13 +418,11 @@ class OTNode {
                 res.status(400);
                 res.send({
                     message: 'No import data provided',
-                    data: {},
-                    status: 400,
                 });
             }
         });
 
-        server.post('/replication', (req, res) => {
+        server.post('/api/replication', (req, res) => {
             log.important('Replication request received!');
 
             if (!authorize(req, res)) {
@@ -451,7 +446,7 @@ class OTNode {
             }
         });
 
-        server.get('/replication/:replication_id', (req, res) => {
+        server.get('/api/replication/:replication_id', (req, res) => {
             log.trace('Replication status received');
 
             if (!authorize(req, res)) {
@@ -533,6 +528,18 @@ class OTNode {
             const { query } = req.body;
             emitter.emit('network-query', {
                 query,
+                response: res,
+            });
+        });
+
+        /**
+         * Get vertices by query
+         * @param queryObject
+         */
+        server.get('/api/query', (req, res) => {
+            const queryObject = req.query;
+            emitter.emit('query', {
+                query: queryObject,
                 response: res,
             });
         });
