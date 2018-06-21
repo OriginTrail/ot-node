@@ -90,6 +90,8 @@ contract BiddingTest {
 		bool active;
 		bool finalized;
 
+		// uint256 offer_creation_timestamp;
+
 		BidDefinition[] bid;
 	}
 
@@ -178,6 +180,7 @@ contract BiddingTest {
 		this_offer.finalized = false;
 
 		this_offer.first_bid_index = uint(-1);
+		// this_offer.offer_creation_timestamp = block.timestamp;
 
 		//Writing the predetermined DC into the bid list
 		while(this_offer.bid.length < predetermined_DH_wallet.length) {
@@ -324,7 +327,8 @@ contract BiddingTest {
 		OfferDefinition storage this_offer = offer[import_id];
 		require(this_offer.active && !this_offer.finalized);
 		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
-
+		// require(this_offer.offer_creation_timestamp + 5 minutes < block.timestamp);
+		
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
 
 		uint256 i;
