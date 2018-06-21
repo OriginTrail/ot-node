@@ -301,7 +301,7 @@ class EventEmitter {
             const offerModel = await Models.offers.findOne({
                 where: {
                     import_id,
-                    status: { [Models.Sequelize.Op.eq]: 'FINALIZED' },
+                    status: { [Models.Sequelize.Op.in]: ['FINALIZING', 'FINALIZED'] },
                 },
                 order: [
                     ['id', 'DESC'],
