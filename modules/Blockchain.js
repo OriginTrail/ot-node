@@ -39,12 +39,12 @@ class Blockchain {
     }
 
     /**
-     * Get offer by dataId
-     * @param dataId
+     * Get offer by importId
+     * @param importId
      * @returns {Promise}
      */
-    getOffer(dataId) {
-        return this.blockchain.getOffer(dataId);
+    getOffer(importId) {
+        return this.blockchain.getOffer(importId);
     }
 
     /**
@@ -270,12 +270,11 @@ class Blockchain {
 
     /**
     * Gets status of the offer
-    * @param dcWallet
     * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, importId) {
-        return this.blockchain.getOfferStatus(dcWallet, importId);
+    getOfferStatus(importId) {
+        return this.blockchain.getOfferStatus(importId);
     }
 
     getDcWalletFromOffer(importId) {

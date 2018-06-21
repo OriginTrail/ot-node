@@ -6,4 +6,3 @@ apt-get update -y
 echo arangodb3 arangodb3/password password root | debconf-set-selections
 echo arangodb3 arangodb3/password_again password root | debconf-set-selections
 apt-get install arangodb3 -y --allow-unauthenticated
-arangod --daemon --pid-file /var/tmp/arango.pid

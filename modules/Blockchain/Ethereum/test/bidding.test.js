@@ -283,15 +283,6 @@ contract('Bidding testing', async (accounts) => {
             log.info(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
         }
 
-        for (i = 3; i < 10; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            response = await bidding.amICloseEnough.call(
-                import_id,
-                node_id[i],
-                { from: accounts[i] },
-            );
-        }
-
         assert.equal(first_bid_index, 8, 'Something wrong');
     });
 

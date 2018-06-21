@@ -9,7 +9,7 @@
     "test:api": "nyc mocha --recursive test/api/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
     "config": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
-    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js",
+    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js add_db_backup.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
     "db_backup": " node add_db_backup.js"
   },
@@ -49,6 +49,7 @@
     "async": "^2.6.0",
     "awilix": "^3.0.8",
     "axios": "^0.18.0",
+    "barcoder": "^2.0.1",
     "better-queue": "^3.8.7",
     "bn.js": "^4.11.8",
     "boscar": "^2.0.0",

@@ -153,13 +153,13 @@ class Ethereum {
     }
 
     /**
-     * Get offer by dataId
+     * Get offer by importId
      * @param importId
      * @returns {Promise}
      */
     getOffer(importId) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Get offer by dataId ${importId}`);
+            this.log.trace(`Get offer by importId ${importId}`);
             this.biddingContract.methods.offer(importId).call().then((res) => {
                 resolve(res);
             }).catch((e) => {
@@ -506,10 +506,10 @@ class Ethereum {
                 if (importId) {
                     where.import_id = importId;
                 }
-                Storage.models.events.findOne({
+                Storage.models.events.findAll({
                     where,
-                }).then((eventData) => {
-                    if (eventData) {
+                }).then((events) => {
+                    for (const eventData of events) {
                         const parsedData = JSON.parse(eventData.dataValues.data);
 
                         let ok = true;
@@ -517,7 +517,8 @@ class Ethereum {
                             ok = filterFn(parsedData);
                         }
                         if (!ok) {
-                            return;
+                            // eslint-disable-next-line
+                            continue;
                         }
                         this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
@@ -528,6 +529,7 @@ class Ethereum {
                             this.log.error(`Failed to update event ${event}. ${err}`);
                             reject(err);
                         });
+                        break;
                     }
                 });
             }, 2000);
@@ -583,10 +585,10 @@ class Ethereum {
      * @param dhNodeId KADemplia ID of the DH node that wants to add bid
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
      */
-    amICloseEnough(importId, wallet, dhNodeId) {
+    getDistanceParameters(importId, wallet, dhNodeId) {
         return new Promise((resolve, reject) => {
             this.log.trace(`Check if close enough for ${wallet}:${dhNodeId}`);
-            this.biddingContract.methods.amICloseEnough(importId, dhNodeId).call({
+            this.biddingContract.methods.getDistanceParameters(importId, dhNodeId).call({
                 from: wallet,
             }).then((res) => {
                 resolve(res);
@@ -680,20 +682,18 @@ class Ethereum {
 
     /**
     * Gets status of the offer
-    * @param dcWallet
     * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, importId) {
+    getOfferStatus(importId) {
         return new Promise((resolve, reject) => {
             this.log.trace(`Asking for ${importId} offer status`);
-            this.biddingContract.methods.getOfferStatus(dcWallet, importId).call({
-                from: dcWallet,
-            }).then((res) => {
-                resolve(res);
-            }).catch((e) => {
-                reject(e);
-            });
+            this.biddingContract.methods.getOfferStatus(importId).call()
+                .then((res) => {
+                    resolve(res);
+                }).catch((e) => {
+                    reject(e);
+                });
         });
     }
 

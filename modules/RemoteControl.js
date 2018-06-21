@@ -38,17 +38,7 @@ class RemoteControl {
                     Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
                         replacements: [data[key], key],
                     }).then((res) => {
-                        setTimeout(() => {
-                            process.on('exit', () => {
-                                /* eslint-disable-next-line */
-                                require('child_process').spawn(process.argv.shift(), process.argv, {
-                                    cwd: process.cwd(),
-                                    detached: true,
-                                    stdio: 'inherit',
-                                });
-                            });
-                            process.exit();
-                        }, 5000);
+                        this.restartNode();
                     }).catch((err) => {
                         log.error(err);
                     });
@@ -61,6 +51,18 @@ class RemoteControl {
 
             this.socket.on('get-visual-graph', (import_id) => {
                 this.getImport(import_id);
+            });
+
+            this.socket.on('restart-node', () => {
+                this.restartNode();
+            });
+
+            this.socket.on('set-me-as-bootstrap', () => {
+                this.setMeAsBootstrap();
+            });
+
+            this.socket.on('set-bootstraps', (bootstrapNodes) => {
+                this.setBootstraps(bootstrapNodes);
             });
         });
     }
@@ -147,6 +149,54 @@ class RemoteControl {
                 this.socket.emit('visualise', { nodes, edges });
                 resolve();
             });
+        });
+    }
+
+    /**
+     * Restarts the node
+     */
+    restartNode() {
+        setTimeout(() => {
+            process.on('exit', () => {
+                /* eslint-disable-next-line */
+                require('child_process').spawn(process.argv.shift(), process.argv, {
+                    cwd: process.cwd(),
+                    detached: true,
+                    stdio: 'inherit',
+                });
+            });
+            process.exit();
+        }, 5000);
+    }
+
+    /**
+     * Set this node to be bootstrap node
+     */
+    setMeAsBootstrap() {
+        Models.node_config.update({
+            value: '[]',
+        }, {
+            where: {
+                key: 'network_bootstrap_nodes',
+            },
+        }).then(() => {
+            this.restartNode();
+        });
+    }
+
+    /**
+     * Set bootstrap nodes
+     * @param bootstrapNodes json
+     */
+    setBootstraps(bootstrapNodes) {
+        Models.node_config.update({
+            value: JSON.parse(bootstrapNodes),
+        }, {
+            where: {
+                key: 'network_bootstrap_nodes',
+            },
+        }).then(() => {
+            this.restartNode();
         });
     }
 }

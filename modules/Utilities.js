@@ -576,6 +576,11 @@ class Utilities {
                         reject('Failed to contact DB');
                     }
                 }).catch((err) => {
+                    if (err.toString().indexOf('Error: Unauthorized') >= 0) {
+                        console.log('Please make sure arango credentils (usually root/root) are set correctly in .env');
+                    } else if (err.toString().indexOf('Error: connect ECONNREFUSED') >= 0) {
+                        console.log('Please make sure Arango server is actually running');
+                    }
                     reject(err);
                 });
         });
