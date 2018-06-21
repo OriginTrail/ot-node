@@ -43,7 +43,7 @@ class DCService {
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
             if (oldOffer.active) {
-                throw new Error(`Offer for ${importId} already exists. Offer is active therefore cannot be cancelled.`)
+                throw new Error(`Offer for ${importId} already exists. Offer is active therefore cannot be cancelled.`);
             }
             this.log.info(`Offer for ${importId} already exists. Cancelling offer...`);
             await this.blockchain.cancelOffer(importId).catch((error) => {
