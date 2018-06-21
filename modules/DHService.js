@@ -750,7 +750,7 @@ class DHService {
         const marginBn = intervalBn.mul(new BN(k)).div(two);
 
         const dataHashBn = new BN(dataHash, 16);
-        
+
         let intervalTo;
         let higherMargin = marginBn;
 
