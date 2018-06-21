@@ -29,6 +29,7 @@ library SafeMath {
 contract Bidding{
 	function increaseBalance(address wallet, uint amount) public;
 	function decreaseBalance(address wallet, uint amount) public;
+	function increaseReputation(address wallet, uint amount) public;
 	function getBalance(address wallet) public view returns (uint256);
 }
 
@@ -237,6 +238,9 @@ contract Reading is Ownable{
 			&&  this_purchase.time_of_sending + 5 minutes <= block.timestamp);
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor).add(this_purchase.token_amount));
+		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
+
+		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor));
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
 
 		this_purchase.purchase_status = PurchaseStatus.completed;
