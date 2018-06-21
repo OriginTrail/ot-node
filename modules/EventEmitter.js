@@ -413,6 +413,7 @@ class EventEmitter {
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
                 logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
                 response.send({
+                    status: 'success',
                     answer,
                 }, (error) => {
                     logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
@@ -421,6 +422,7 @@ class EventEmitter {
                 logger.error(`Failed to get data. ${error}.`);
 
                 response.send({
+                    status: 'fail',
                 }, (error) => {
                     logger.error(`Failed to send 'fail' status.v Error: ${error}.`);
                 });
