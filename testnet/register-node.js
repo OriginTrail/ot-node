@@ -67,6 +67,7 @@ class RegisterNode {
                 env.NODE_WALLET = account.address;
                 env.NODE_PRIVATE_KEY = account.privateKey;
                 env.NODE_IP = await this.getExternalIp();
+                env.DB_PASSWORD = 'root';
 
                 process.env.NODE_WALLET = account.address;
                 process.env.NODE_PRIVATE_KEY = account.privateKey;
