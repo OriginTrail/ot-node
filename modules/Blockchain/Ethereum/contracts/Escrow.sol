@@ -428,6 +428,9 @@ library SafeMath {
      		this_escrow.escrow_status = EscrowStatus.completed;
 
      		reading.removeReadData(import_id, DH_wallet);
+
+               emit LitigationCompleted(import_id, DH_wallet, true);
+               return true;
      	}
 
      	uint256 i = 0;
@@ -488,6 +491,7 @@ library SafeMath {
 
      		reading.removeReadData(import_id, DH_wallet);
      		emit LitigationCompleted(import_id, DH_wallet, true);
+               return true;
      	}
      }
  }
