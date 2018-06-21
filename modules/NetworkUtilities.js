@@ -179,11 +179,12 @@ class NetworkUtilities {
     * @param string - extended private key
     * @return {{childkey: *, parentkey: *}}
     */
-    getIdentityKeys(xprivkey) {
+    getIdentityKeys(xprivkey, path, childDerivationIndex) {
         // Start initializing identity keys
-        const parentkey = hdkey.fromExtendedKey(xprivkey)
-            .derive(kadence.constants.HD_KEY_DERIVATION_PATH);
-        const childkey = parentkey.deriveChild(parseInt(config.child_derivation_index, 10));
+        const parentkey = hdkey.fromExtendedKey(xprivkey);
+        const childkey = parentkey
+            .derive(path)
+            .deriveChild(childDerivationIndex);
         return {
             childkey,
             parentkey,

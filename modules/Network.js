@@ -56,7 +56,11 @@ class Network {
             this.xprivkey,
         ); // Check if identity is valid
 
-        const { childkey, parentkey } = this.networkUtilities.getIdentityKeys(this.xprivkey);
+        const { childkey } = this.networkUtilities.getIdentityKeys(
+            this.xprivkey,
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+            parseInt(config.child_derivation_index, 10),
+        );
         this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey).toString('hex');
 
         this.log.notify(`My identity: ${this.identity}`);
@@ -70,7 +74,11 @@ class Network {
     async start() {
         this.log.info('Initializing network');
 
-        const { _, parentkey } = this.networkUtilities.getIdentityKeys(this.xprivkey);
+        const { parentkey } = this.networkUtilities.getIdentityKeys(
+            this.xprivkey,
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+            parseInt(config.child_derivation_index, 10),
+        );
 
         // Initialize public contact data
         const contact = {
@@ -114,7 +122,6 @@ class Network {
         this.node.spartacus = this.node.plugin(kadence.spartacus(
             this.xprivkey,
             parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
         this.log.info('Spartacus initialised');
         this.node.hashcash = this.node.plugin(kadence.hashcash({
@@ -479,6 +486,7 @@ class Network {
         });
         // Define a global custom error handler rule
         this.node.use((err, request, response, next) => {
+            this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
             response.send({ error: err.message });
         });
     }
