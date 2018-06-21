@@ -361,7 +361,7 @@ library SafeMath {
                this_litigation.litigation_status = LitigationStatus.completed;
                this_escrow.escrow_status = EscrowStatus.completed;
 
-               reading.removeReadData(import_id, DH_wallet);
+               reading.removeReadData(import_id, msg.sender);
  			emit LitigationTimedOut(import_id, msg.sender);
  			return false;
  		}
