@@ -223,7 +223,7 @@ class OTNode {
     listenBlockchainEvents(blockchain) {
         log.info('Starting blockchain event listener');
 
-        const delay = 3000;
+        const delay = 10000;
         let working = false;
         let deadline = Date.now();
         setInterval(() => {
