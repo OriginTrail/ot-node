@@ -227,15 +227,15 @@ contract Bidding {
 		this_bid.active = true;
 	}
 
-	function getDistanceParameters(bytes32 import_id, bytes32 DH_node_id)
+	function getDistanceParameters(bytes32 import_id)
 	public view returns (bytes32 node_hash, bytes32 data_hash, uint256 distance, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
 		OfferDefinition storage this_offer = offer[import_id];
 
-		node_hash = bytes32((2**128 - 1) & uint256(keccak256(msg.sender, DH_node_id)));
+		node_hash = bytes32(uint128(keccak256(msg.sender)));
 		data_hash = bytes32(uint128(this_offer.data_hash));
 
 
-		distance = calculateDistance(import_id, msg.sender, DH_node_id);
+		distance = calculateDistance(import_id, msg.sender);
 		required_bid_amount = this_offer.replication_factor.mul(2).add(1);
 		active_nodes_ = active_nodes;
 
@@ -269,7 +269,7 @@ contract Bidding {
 		//Create new bid in the list
 		uint this_bid_index = this_offer.bid.length;
 		BidDefinition memory new_bid = BidDefinition(msg.sender, DH_node_id, this_DH.token_amount_per_byte_minute * scope, this_DH.stake_amount_per_byte_minute * scope, 0, uint(-1), true, false);
-		new_bid.distance = calculateDistance(import_id, msg.sender, DH_node_id);
+		new_bid.distance = calculateDistance(import_id, msg.sender);
 
 		distance = new_bid.distance;
 
@@ -546,7 +546,7 @@ contract Bidding {
 	// Constant values used for distance calculation
 	uint256 corrective_factor = 10**10;
 
-	function calculateDistance(bytes32 import_id, address DH_wallet, bytes32 DH_node_id)
+	function calculateDistance(bytes32 import_id, address DH_wallet)
 	public view returns (uint256 distance) {
 		OfferDefinition storage this_offer = offer[import_id];
 		ProfileDefinition storage this_DH = profile[DH_wallet];
@@ -561,7 +561,7 @@ contract Bidding {
 		else reputation = (log2(this_DH.reputation / this_DH.number_of_escrows) * corrective_factor / 115) / (corrective_factor / 100);
 		if(reputation == 0) reputation = 1;
 
-		uint256 hash_difference = absoluteDifference(uint256(uint128(this_offer.data_hash)), uint256(uint128(keccak256(DH_wallet, DH_node_id))));
+		uint256 hash_difference = absoluteDifference(uint256(uint128(this_offer.data_hash)), uint256(uint128(keccak256(DH_wallet))));
 
 		uint256 hash_f = ((uint256(uint128(this_offer.data_hash)) * (2**128)) / (hash_difference + uint256(uint128(this_offer.data_hash))));
 		uint256 price_f = corrective_factor - ((corrective_factor * token_amount) / this_offer.max_token_amount_per_DH);
