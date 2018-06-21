@@ -434,10 +434,10 @@ class OTNode {
                 return;
             }
 
-            if (req.body != null && req.body.import_id != null) {
-                const { import_id } = req.body;
+
+            if (req.body !== undefined && req.body.import_id !== undefined) {
                 const queryObject = {
-                    data_id: import_id,
+                    import_id: req.body.import_id,
                     contact: req.contact,
                     response: res,
                 };

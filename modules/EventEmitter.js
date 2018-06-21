@@ -214,30 +214,28 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('create-offer', async (data) => {
-            const { data_id } = data;
+            const { import_id } = data;
+
             try {
-                let vertices = await this.graphStorage.findVerticesByImportId(data_id);
-                vertices = vertices.map((vertex) => {
+                let vertices = await this.graphStorage.findVerticesByImportId(import_id);
+                vertices = vertices.map((vertex, index) => {
                     delete vertex.private;
                     return vertex;
                 });
-
-                const dataImport = await Models.data_info.findOne({
-                    where: { import_id: data_id },
-                });
-                if (dataImport == null) {
-                    throw new Error('This import does not exist in database');
-                }
-                const externalId = await dcService.createOffer(
-                    data_id,
-                    dataImport.root_hash,
-                    dataImport.total_documents,
-                    vertices,
-                );
-                data.response.status(201);
-                data.response.send({
-                    replication_id: externalId,
-                });
+                await Models.data_info.findOne({ where: { import_id } })
+                    .then(async (dataimport) => {
+                        await dcService
+                            .createOffer(
+                                import_id,
+                                dataimport.root_hash,
+                                dataimport.total_documents,
+                                vertices,
+                            ).catch((e) => {
+                                console.log(e);
+                            });
+                    }).catch((error) => {
+                        throw new Error('This import does not exist in database');
+                    });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
