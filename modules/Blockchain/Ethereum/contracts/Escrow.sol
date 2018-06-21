@@ -317,7 +317,7 @@ library SafeMath {
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
  		require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
- 		require(this_litigation.litigation_start_time == 0 || this_litigation.litigation_status == LitigationStatus.completed);
+ 		require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed);
 
  		this_litigation.requested_data_index = requested_data_index;
  		this_litigation.hash_array = hash_array;
@@ -333,7 +333,7 @@ library SafeMath {
  		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
- 		require(this_litigation.litigation_start_time > 0 && this_litigation.litigation_status == LitigationStatus.initiated);
+ 		require(this_litigation.litigation_status == LitigationStatus.initiated);
 
  		if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
  			this_litigation.litigation_status = LitigationStatus.completed;
