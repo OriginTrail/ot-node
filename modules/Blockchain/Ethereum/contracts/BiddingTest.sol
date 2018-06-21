@@ -171,7 +171,7 @@ contract BiddingTest {
 		this_offer.min_stake_amount_per_DH = min_stake_amount_per_DH;
 		this_offer.min_reputation = min_reputation;
 
-		this_offer.data_hash = bytes32(uint256(data_hash) & (2**128-1));
+		this_offer.data_hash = data_hash;
 		this_offer.data_size_in_bytes = data_size_in_bytes;
 
 		this_offer.replication_factor = predetermined_DH_wallet.length;
@@ -232,7 +232,7 @@ contract BiddingTest {
 		OfferDefinition storage this_offer = offer[import_id];
 
 		node_hash = bytes32((2**128 - 1) & uint256(keccak256(msg.sender, DH_node_id)));
-		data_hash = this_offer.data_hash;
+		data_hash = bytes32(uint128(this_offer.data_hash));
 
 
 		distance = calculateDistance(import_id, msg.sender, DH_node_id);
@@ -561,11 +561,11 @@ contract BiddingTest {
 		else reputation = (log2(this_DH.reputation / this_DH.number_of_escrows) * corrective_factor / 115) / (corrective_factor / 100);
 		if(reputation == 0) reputation = 1;
 
-		uint256 hash_difference = absoluteDifference(uint256(this_offer.data_hash), (2**128 - 1) & uint256(keccak256(DH_wallet, DH_node_id)));
+		uint256 hash_difference = absoluteDifference(uint256(uint128(this_offer.data_hash)), uint256(uint128(keccak256(DH_wallet, DH_node_id))));
 
-		uint256 hash_f = ((uint256(this_offer.data_hash) * (2**128)) / (hash_difference + uint256(this_offer.data_hash)));
+		uint256 hash_f = ((uint256(uint128(this_offer.data_hash)) * (2**128)) / (hash_difference + uint256(uint128(this_offer.data_hash))));
 		uint256 price_f = corrective_factor - ((corrective_factor * token_amount) / this_offer.max_token_amount_per_DH);
-		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(this_offer.data_hash)) / (hash_difference + uint256(this_offer.data_hash));
+		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(uint128(this_offer.data_hash))) / (hash_difference + uint256(uint128(this_offer.data_hash)));
 		uint256 rep_f = (corrective_factor - (this_offer.min_reputation * corrective_factor / reputation));
 		distance = ((hash_f * (corrective_factor + price_f + stake_f + rep_f)) / 4) / corrective_factor;
 	}

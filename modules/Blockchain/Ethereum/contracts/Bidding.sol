@@ -90,6 +90,8 @@ contract Bidding {
 		bool active;
 		bool finalized;
 
+		// uint256 offer_creation_timestamp;
+
 		BidDefinition[] bid;
 	}
 
@@ -125,7 +127,7 @@ contract Bidding {
 	}
 
 	uint256 public active_nodes;
-	mapping(bytes32 => OfferDefinition) public offer; //offer[import_id] import_id = keccak256(DC_wallet, DC_node_id, nonce)
+	mapping(bytes32 => OfferDefinition) public offer; //offer[import_id] import_id
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
 	event OfferCreated(bytes32 import_id, bytes32 DC_node_id, uint total_escrow_time_in_minutes, uint max_token_amount_per_DH, uint min_stake_amount_per_DH, uint min_reputation, uint data_size_in_bytes, bytes32 data_hash);
@@ -169,7 +171,7 @@ contract Bidding {
 		this_offer.min_stake_amount_per_DH = min_stake_amount_per_DH;
 		this_offer.min_reputation = min_reputation;
 
-		this_offer.data_hash = bytes32(uint256(data_hash) & (2**128-1));
+		this_offer.data_hash = data_hash;
 		this_offer.data_size_in_bytes = data_size_in_bytes;
 
 		this_offer.replication_factor = predetermined_DH_wallet.length;
@@ -178,6 +180,7 @@ contract Bidding {
 		this_offer.finalized = false;
 
 		this_offer.first_bid_index = uint(-1);
+		// this_offer.offer_creation_timestamp = block.timestamp;
 
 		//Writing the predetermined DC into the bid list
 		while(this_offer.bid.length < predetermined_DH_wallet.length) {
@@ -193,7 +196,8 @@ contract Bidding {
 	function cancelOffer(bytes32 import_id)
 	public{
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active && this_offer.DC_wallet == msg.sender);
+		require(this_offer.active && this_offer.DC_wallet == msg.sender
+			&& this_offer.finalized == false);
 		this_offer.active = false;
 		uint max_total_token_amount = this_offer.max_token_amount_per_DH.mul(this_offer.replication_factor.mul(2).add(1));
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
@@ -228,7 +232,7 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[import_id];
 
 		node_hash = bytes32((2**128 - 1) & uint256(keccak256(msg.sender, DH_node_id)));
-		data_hash = this_offer.data_hash;
+		data_hash = bytes32(uint128(this_offer.data_hash));
 
 
 		distance = calculateDistance(import_id, msg.sender, DH_node_id);
@@ -324,7 +328,8 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[import_id];
 		require(this_offer.active && !this_offer.finalized);
 		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
-
+		// require(this_offer.offer_creation_timestamp + 5 minutes < block.timestamp);
+		
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
 
 		uint256 i;
@@ -556,11 +561,11 @@ contract Bidding {
 		else reputation = (log2(this_DH.reputation / this_DH.number_of_escrows) * corrective_factor / 115) / (corrective_factor / 100);
 		if(reputation == 0) reputation = 1;
 
-		uint256 hash_difference = absoluteDifference(uint256(this_offer.data_hash), (2**128 - 1) & uint256(keccak256(DH_wallet, DH_node_id)));
+		uint256 hash_difference = absoluteDifference(uint256(uint128(this_offer.data_hash)), uint256(uint128(keccak256(DH_wallet, DH_node_id))));
 
-		uint256 hash_f = ((uint256(this_offer.data_hash) * (2**128)) / (hash_difference + uint256(this_offer.data_hash)));
+		uint256 hash_f = ((uint256(uint128(this_offer.data_hash)) * (2**128)) / (hash_difference + uint256(uint128(this_offer.data_hash))));
 		uint256 price_f = corrective_factor - ((corrective_factor * token_amount) / this_offer.max_token_amount_per_DH);
-		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(this_offer.data_hash)) / (hash_difference + uint256(this_offer.data_hash));
+		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(uint128(this_offer.data_hash))) / (hash_difference + uint256(uint128(this_offer.data_hash)));
 		uint256 rep_f = (corrective_factor - (this_offer.min_reputation * corrective_factor / reputation));
 		distance = ((hash_f * (corrective_factor + price_f + stake_f + rep_f)) / 4) / corrective_factor;
 	}
