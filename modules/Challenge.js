@@ -19,7 +19,7 @@ class Challenge {
         dataCreator, importId, numberOfTests,
         startTime, endTime, blockSizeBytes, vertexData,
     ) {
-        log.info('generateTests');
+        // log.info('generateTests');
         // console.log(`Data creator: ${dataCreator}`);
         // console.log(`Import ID: ${importId}`);
         // console.log(`Number of tests: ${numberOfTests}`);

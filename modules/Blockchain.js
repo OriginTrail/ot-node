@@ -198,10 +198,12 @@ class Blockchain {
     * @param event
     * @param importId
     * @param endMs
+    * @param endCallback
+    * @param filterFn
     */
-    subscribeToEvent(event, importId, endMs) {
+    subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
         return this.blockchain
-            .subscribeToEvent(event, importId, endMs);
+            .subscribeToEvent(event, importId, endMs, endCallback, filterFn);
     }
 
     /**
@@ -268,12 +270,11 @@ class Blockchain {
 
     /**
     * Gets status of the offer
-    * @param dcWallet
     * @param importId
     * @return {Promise<any>}
     */
-    getOfferStatus(dcWallet, importId) {
-        return this.blockchain.getOfferStatus(dcWallet, importId);
+    getOfferStatus(importId) {
+        return this.blockchain.getOfferStatus(importId);
     }
 
     getDcWalletFromOffer(importId) {

@@ -47,10 +47,19 @@ class EventEmitter {
 
         this.globalEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
                 data.response.send(res);
-            }).catch(() => {
+            }).catch((error) => {
                 logger.error(`Failed to get trail for query ${data.query}`);
-                data.response.send(500); // TODO rethink about status codes
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                    status: 500,
+                });
             });
         });
 
@@ -82,17 +91,19 @@ class EventEmitter {
         this.globalEmitter.on('network-query', (data) => {
             const failFunction = (error) => {
                 logger.warn(error);
+                data.response.status(400);
                 data.response.send({
-                    status: 'FAIL',
+                    status: '400',
                     message: 'Failed to handle query',
+                    data: [],
                 });
             };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.send({
-                        status: 'OK',
+                        status: '200',
                         message: 'Query sent successfully.',
-                        query_id: queryId,
+                        data: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (offer) {
@@ -172,8 +183,8 @@ class EventEmitter {
                     });
 
                 data.response.send({
-                    status: 200,
-                    message: 'Ok.',
+                    status: 201,
+                    import_id,
                 });
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
@@ -183,6 +194,24 @@ class EventEmitter {
                 });
             }
         };
+
+        this.globalEmitter.on('offer-status', async (data) => {
+            const { external_id } = data;
+            const offer = await dcService.getOffer(external_id);
+            if (offer) {
+                data.response.status(200);
+                data.response.send({
+                    offer_status: offer.status,
+                });
+            } else {
+                logger.error(`There is no offer for external ID ${external_id}`);
+                data.response.status(200);
+                data.response.send({
+                    status: 405,
+                    message: 'Failed to start offer.',
+                });
+            }
+        });
 
         this.globalEmitter.on('create-offer', async (data) => {
             const { import_id } = data;
@@ -208,18 +237,12 @@ class EventEmitter {
                         throw new Error('This import does not exist in database');
                     });
             } catch (error) {
-                logger.error(`Failed to start offer. ${error}.`);
+                logger.error(`Failed to create offer. ${error}.`);
+                data.response.status(405);
                 data.response.send({
-                    status: 405,
                     message: 'Failed to start offer.',
                 });
-                return;
             }
-
-            data.response.send({
-                status: 200,
-                message: 'Ok.',
-            });
         });
 
 
@@ -245,7 +268,7 @@ class EventEmitter {
                 const { error } = responseObject;
                 const { response } = responseObject;
 
-                if (response === null) {
+                if (response == null) {
                     await processImport(null, error, data);
                 } else {
                     await processImport(response, null, data);
@@ -273,7 +296,15 @@ class EventEmitter {
                 logger.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
             }
 
-            const offerModel = await Models.offers.findOne({ where: { id: import_id } });
+            const offerModel = await Models.offers.findOne({
+                where: {
+                    import_id,
+                    status: { [Models.Sequelize.Op.eq]: 'FINALIZED' },
+                },
+                order: [
+                    ['id', 'DESC'],
+                ],
+            });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
                 logger.warn(errorMessage);
@@ -298,8 +329,8 @@ class EventEmitter {
             // }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.id);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
             const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
             let vertices = values[0];

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--Sample XML file for GS1 OriginTrail importer with Header with master data and ObjectEvent-->
-<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis-masterdata:xsd:1 EPCglobal-epcis-masterdata-1_2.xsd">
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
     <EPCISHeader>
         <sbdh:StandardBusinessDocumentHeader>
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
             <sbdh:Sender><!-- Mandatory -->
                 <!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-                <sbdh:Identifier Authority="OriginTrail">urn:ot:mda:actor:id:Hospital1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Hospital1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
                     <sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->
@@ -37,18 +37,18 @@
         <extension>
             <EPCISMasterData>
                 <VocabularyList>
-                    <Vocabulary type="urn:ot:mda:actor">
+                    <Vocabulary type="urn:ot:object:actor">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Hospital1">
-                                <attribute id="urn:ot:mda:actor:company:id:name">Example Hospital</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Medical Institution</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Hospital1">
+                                <attribute id="urn:ot:object:actor:name">Example Hospital</attribute>
+                                <attribute id="urn:ot:object:actor:category">Medical Institution</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
                             </VocabularyElement>
 
-                            <VocabularyElement id="urn:ot:mda:actor:id:PatientP1408">
-                                <attribute id="urn:ot:mda:actor:person:id:name">PatientP1408</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Patient</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:PatientP1408">
+                                <attribute id="urn:ot:object:actor:name">PatientP1408</attribute>
+                                <attribute id="urn:ot:object:actor:category">Patient</attribute>
                                 <extension>
                                     <private>
                                         <Name>John Doe</Name>
@@ -61,18 +61,18 @@
                         </VocabularyElementList>
                     </Vocabulary>
 
-                    <Vocabulary type="urn:ot:mda:location">
+                    <Vocabulary type="urn:ot:object:location">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgln:HospitalBuilding1">
-                                <attribute id="urn:ot:mda:location:category">Hospital Building 1</attribute>
-                                <attribute id="urn:ot:mda:location:description">Hospital 1</attribute>
+                                <attribute id="urn:ot:object:location:category">Hospital Building 1</attribute>
+                                <attribute id="urn:ot:object:location:description">Hospital 1</attribute>
                                 <children>
                                     <id>urn:epc:id:sgln:HospitalBuilding1.Room1046</id>
                                     <id>urn:epc:id:sgln:HospitalBuilding1.Room1047</id>
                                     <id>urn:epc:id:sgln:HospitalBuilding1.Room1048</id>
                                 </children>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Hospital1</attribute>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Hospital1</attribute>
                                 </extension>
                             </VocabularyElement>
                         </VocabularyElementList>

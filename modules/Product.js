@@ -36,6 +36,8 @@ class Product {
                     }).catch((err) => {
                         reject(err);
                     });
+            }).catch((error) => {
+                reject(error);
             });
         });
     }
