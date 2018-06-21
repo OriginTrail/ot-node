@@ -1,4 +1,3 @@
-const config = require('./Config');
 const Encryption = require('./Encryption');
 const Graph = require('./Graph');
 const bytes = require('utf8-length');
@@ -28,6 +27,7 @@ class DCService {
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.config = ctx.config;
     }
 
     /**
@@ -90,7 +90,7 @@ class DCService {
             this.log.info('Fingerprint written on blockchain');
 
             const profileBalance =
-                new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
+                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
             const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
 
             if (profileBalance.lt(condition)) {
@@ -100,7 +100,7 @@ class DCService {
 
             this.blockchain.createOffer(
                 importId,
-                config.identity,
+                this.config.identity,
                 totalEscrowTime,
                 maxTokenAmount,
                 minStakeAmount,
