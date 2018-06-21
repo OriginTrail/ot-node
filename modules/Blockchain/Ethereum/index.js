@@ -505,10 +505,10 @@ class Ethereum {
                 if (importId) {
                     where.import_id = importId;
                 }
-                Storage.models.events.findOne({
+                Storage.models.events.findAll({
                     where,
-                }).then((eventData) => {
-                    if (eventData) {
+                }).then((events) => {
+                    for (const eventData of events) {
                         const parsedData = JSON.parse(eventData.dataValues.data);
 
                         let ok = true;
@@ -516,7 +516,8 @@ class Ethereum {
                             ok = filterFn(parsedData);
                         }
                         if (!ok) {
-                            return;
+                            // eslint-disable-next-line
+                            continue;
                         }
                         this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
@@ -527,6 +528,7 @@ class Ethereum {
                             this.log.error(`Failed to update event ${event}. ${err}`);
                             reject(err);
                         });
+                        break;
                     }
                 });
             }, 2000);
