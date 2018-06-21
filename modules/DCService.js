@@ -109,7 +109,7 @@ class DCService {
                 importSizeInBytes,
                 dhWallets,
                 dhIds,
-            ).then(() => {
+            ).then(async () => {
                 this.log.info('Offer written to blockchain. Started bidding phase.');
                 offer.status = 'STARTED';
                 offer.save({ fields: ['status'] });
@@ -125,7 +125,7 @@ class DCService {
                     });
                 };
 
-                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback, event => event.import_id === importId).then(() => {
                     this.log.trace('Started choosing phase.');
 
                     offer.status = 'FINALIZING';
