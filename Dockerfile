@@ -13,6 +13,10 @@ RUN /install-arango.sh
 
 RUN export LC_ALL=C
 
+RUN apt-get update && apt install -y -qq supervisor
+RUN mkdir -p /var/log/supervisor
+COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 #Clone the project
 RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/develop
 RUN unzip develop -d . && rm develop && mv ot-node-develop ot-node
@@ -20,5 +24,7 @@ RUN unzip develop -d . && rm develop && mv ot-node-develop ot-node
 WORKDIR /ot-node
 RUN mkdir keys data &> /dev/null
 RUN cp .env.example .env && npm install
-CMD node testnet/register-node.js
 
+
+EXPOSE 5278 80 443 5279 8900 8529 3000
+CMD ["/usr/bin/supervisord"]
