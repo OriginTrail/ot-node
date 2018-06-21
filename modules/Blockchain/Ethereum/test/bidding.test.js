@@ -36,35 +36,35 @@ contract('Bidding testing', async (accounts) => {
     it('Should get TracToken contract', async () => {
         await TracToken.deployed().then((res) => {
             log.info(`\t TracToken address: ${res.address}`);
-        }).catch(err => console.log(err));
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Escrow contract', async () => {
         await EscrowHolder.deployed().then((res) => {
             log.info(`\t Escrow address: ${res.address}`);
-        }).catch(err => console.log(err));
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Bidding contract', async () => {
         await Bidding.deployed().then((res) => {
             log.info(`\t Bidding address: ${res.address}`);
-        }).catch(err => console.log(err));
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Reading contract', async () => {
         await Reading.deployed().then((res) => {
             log.info(`\t Reading address: ${res.address}`);
-        }).catch(err => console.log(err));
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get TestingUtilities contract', async () => {
         await TestingUtilities.deployed().then((res) => {
             log.info(`\t TestingUtilities address: ${res.address}`);
-        }).catch(err => console.log(err));
+        }).catch(err => log.error(err));
     });
 
     DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring

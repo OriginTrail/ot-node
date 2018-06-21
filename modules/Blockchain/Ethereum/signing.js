@@ -114,7 +114,7 @@ module.exports = function () {
                     });
                 }).catch((e) => {
                     log.error('Not Approved!');
-                    console.log(e);
+                    log.error(e);
                     reject(e);
                 });
             });
@@ -184,7 +184,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
             var serializedTx = transaction.serialize().toString('hex');
             web3.eth.sendSignedTransaction(`0x${serializedTx}`, (err, result) => {
                 if (err) {
-                    console.log(err);
+                    log.error(err);
 
                     if (callback) {
                         utilities.executeCallback(callback, false);

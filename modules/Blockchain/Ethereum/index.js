@@ -484,7 +484,7 @@ class Ethereum {
             });
         }).catch((err) => {
             this.log.error('Failed to get block number from the blockchain');
-            console.log(err);
+            this.log.error(err);
         });
     }
 
