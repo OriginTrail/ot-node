@@ -114,7 +114,7 @@ module.exports = function () {
                     });
                 }).catch((e) => {
                     log.error('Not Approved!');
-                    console.log(e);
+                    log.error(e);
                     reject(e);
                 });
             });
@@ -138,7 +138,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
 */
 
             // (msg.sender, data_id, confirmation_verification_number, confirmation_time, confirmation_valid) == confirmation_hash
-            console.log(
+            log.notify(
                 DH_wallet,
                 data_id,
                 confirmation_verification_number,
@@ -184,7 +184,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
             var serializedTx = transaction.serialize().toString('hex');
             web3.eth.sendSignedTransaction(`0x${serializedTx}`, (err, result) => {
                 if (err) {
-                    console.log(err);
+                    log.error(err);
 
                     if (callback) {
                         utilities.executeCallback(callback, false);
@@ -193,7 +193,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
                     if (callback) {
                         utilities.executeCallback(callback, result);
                     }
-                    console.log('Transaction: ', result);
+                    log.notify('Transaction: ', result);
                 }
             });
         },
@@ -211,7 +211,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
                 to: escrow_address,
             };
 
-            console.log(txOptions);
+            log.notify(txOptions);
 
             var rawTx = txutils.functionTx(escrow_abi, 'payOut', [confirmation.DC_wallet,
                 confirmation.data_id,

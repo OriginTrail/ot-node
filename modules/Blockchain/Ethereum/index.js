@@ -4,6 +4,7 @@ const Utilities = require('../../Utilities');
 const Storage = require('../../Storage');
 const Op = require('sequelize/lib/operators');
 
+
 class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
@@ -80,21 +81,21 @@ class Ethereum {
 
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
+                log.info(event); // same results as the optional callback above
                 emitter.emit('eth-offer-created', event);
             })
             .on('error', log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
+                log.info(event); // same results as the optional callback above
                 emitter.emit('eth-offer-canceled', event);
             })
             .on('error', this.log.warn);
 
         this.biddingContract.events.BidTaken()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
+                log.info(event); // same results as the optional callback above
                 emitter.emit('eth-bid-taken', event);
             })
             .on('error', this.log.warn);
@@ -466,7 +467,7 @@ class Ethereum {
                                 JSON.stringify(event.returnValues),
                             ],
                         }).catch((err) => {
-                            console.log(err);
+                            this.log.error(err);
                         });
                     }
                 });
@@ -475,15 +476,15 @@ class Ethereum {
                 Storage.db.query('DELETE FROM events WHERE block < ?', {
                     replacements: [currentBlock - 10],
                 }).catch((err) => {
-                    console.log(err);
+                    this.log.error(err);
                 });
             }).catch((err) => {
                 this.log.error('Failed to get past events');
-                console.log(err);
+                this.log.error('error', 'Error: %j', err);
             });
         }).catch((err) => {
             this.log.error('Failed to get block number from the blockchain');
-            console.log(err);
+            this.log.error(err);
         });
     }
 

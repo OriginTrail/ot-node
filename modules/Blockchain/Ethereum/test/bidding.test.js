@@ -5,6 +5,7 @@ var TracToken = artifacts.require('./TracToken.sol'); // eslint-disable-line no-
 var EscrowHolder = artifacts.require('./EscrowHolder.sol'); // eslint-disable-line no-undef
 var Bidding = artifacts.require('./BiddingTest.sol'); // eslint-disable-line no-undef
 var Reading = artifacts.require('./Reading.sol'); // eslint-disable-line no-undef
+const log = require('../../../Utilities').getLogger();
 
 var Web3 = require('web3');
 
@@ -34,36 +35,36 @@ contract('Bidding testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     it('Should get TracToken contract', async () => {
         await TracToken.deployed().then((res) => {
-            console.log(`\t TracToken address: ${res.address}`);
-        }).catch(err => console.log(err));
+            log.info(`\t TracToken address: ${res.address}`);
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Escrow contract', async () => {
         await EscrowHolder.deployed().then((res) => {
-            console.log(`\t Escrow address: ${res.address}`);
-        }).catch(err => console.log(err));
+            log.info(`\t Escrow address: ${res.address}`);
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Bidding contract', async () => {
         await Bidding.deployed().then((res) => {
-            console.log(`\t Bidding address: ${res.address}`);
-        }).catch(err => console.log(err));
+            log.info(`\t Bidding address: ${res.address}`);
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get Reading contract', async () => {
         await Reading.deployed().then((res) => {
-            console.log(`\t Reading address: ${res.address}`);
-        }).catch(err => console.log(err));
+            log.info(`\t Reading address: ${res.address}`);
+        }).catch(err => log.error(err));
     });
 
     // eslint-disable-next-line no-undef
     it('Should get TestingUtilities contract', async () => {
         await TestingUtilities.deployed().then((res) => {
-            console.log(`\t TestingUtilities address: ${res.address}`);
-        }).catch(err => console.log(err));
+            log.info(`\t TestingUtilities address: ${res.address}`);
+        }).catch(err => log.error(err));
     });
 
     DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
@@ -115,7 +116,7 @@ contract('Bidding testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.profile.call(accounts[i]);
 
-            console.log(`\t account[${i}] price: ${response[0].toNumber() / 1e18} \t stake: ${response[1].toNumber() / 1e18}`);
+            log.info(`\t account[${i}] price: ${response[0].toNumber() / 1e18} \t stake: ${response[1].toNumber() / 1e18}`);
 
             assert.equal(response[0].toNumber(), DH_price[i], 'Price not matching');
             assert.equal(response[1].toNumber(), DH_stake[i], 'Stake not matching');
@@ -183,7 +184,7 @@ contract('Bidding testing', async (accounts) => {
         // Data holding parameters
         const data_hash = await util.keccakAddressBytes(accounts[9], node_id[9]);
 
-        console.log(`\t Data hash: ${data_hash}`);
+        log.info(`\t Data hash: ${data_hash}`);
 
         await bidding.createOffer(
             import_id,
@@ -206,31 +207,31 @@ contract('Bidding testing', async (accounts) => {
 
         const actual_DC_wallet = response[0];
 
-        console.log(`\t DC_wallet: ${actual_DC_wallet}`);
+        log.info(`\t DC_wallet: ${actual_DC_wallet}`);
 
         let actual_max_token = response[1];
         actual_max_token = actual_max_token.toNumber();
-        console.log(`\t actual_max_token: ${actual_max_token}`);
+        log.info(`\t actual_max_token: ${actual_max_token}`);
 
         let actual_min_stake = response[2];
         actual_min_stake = actual_min_stake.toNumber();
-        console.log(`\t actual_min_stake: ${actual_min_stake}`);
+        log.info(`\t actual_min_stake: ${actual_min_stake}`);
 
         let actual_min_reputation = response[3];
         actual_min_reputation = actual_min_reputation.toNumber();
-        console.log(`\t actual_min_reputation: ${actual_min_reputation}`);
+        log.info(`\t actual_min_reputation: ${actual_min_reputation}`);
 
         let actual_escrow_time = response[4];
         actual_escrow_time = actual_escrow_time.toNumber();
-        console.log(`\t actual_escrow_time: ${actual_escrow_time}`);
+        log.info(`\t actual_escrow_time: ${actual_escrow_time}`);
 
         let actual_data_size = response[5];
         actual_data_size = actual_data_size.toNumber();
-        console.log(`\t actual_data_size: ${actual_data_size}`);
+        log.info(`\t actual_data_size: ${actual_data_size}`);
 
         let replication_factor = response[8];
         replication_factor = replication_factor.toNumber();
-        console.log(`\t replication_factor: ${replication_factor}`);
+        log.info(`\t replication_factor: ${replication_factor}`);
 
         assert.equal(actual_DC_wallet, DC_wallet, 'DC_wallet not matching');
         assert.equal(actual_max_token, max_token_amount, 'max_token_amount not matching');
@@ -269,7 +270,7 @@ contract('Bidding testing', async (accounts) => {
         for (var i = 3; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             var response = await bidding.addBid.call(import_id, node_id[i], { from: accounts[i] });
-            console.log(`\t distance[${i}] = ${response.toNumber()}`);
+            log.info(`\t distance[${i}] = ${response.toNumber()}`);
         }
 
         var first_bid_index;
@@ -279,7 +280,7 @@ contract('Bidding testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             response = await bidding.offer.call(import_id);
             first_bid_index = response[7].toNumber();
-            console.log(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
+            log.info(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
         }
 
         assert.equal(first_bid_index, 8, 'Something wrong');
@@ -300,7 +301,7 @@ contract('Bidding testing', async (accounts) => {
         const escrow = await EscrowHolder.deployed();
 
         chosen_bids = await bidding.chooseBids.call(import_id, { from: DC_wallet });
-        console.log(`\t chosen DH indexes: ${JSON.stringify(chosen_bids)}`);
+        log.info(`\t chosen DH indexes: ${JSON.stringify(chosen_bids)}`);
 
         for (var i = 0; i < chosen_bids.length; i += 1) {
             chosen_bids[i] = chosen_bids[i].toNumber() + 1;
@@ -369,7 +370,7 @@ contract('Bidding testing', async (accounts) => {
         for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
-            console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
+            log.info(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
 
@@ -392,7 +393,7 @@ contract('Bidding testing', async (accounts) => {
         // Get block timestamp
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
-        console.log(`\t Escrow start time: ${response}, Escrow end time: ${response + (60 * total_escrow_time)}`);
+        log.notify(`\t Escrow start time: ${response}, Escrow end time: ${response + (60 * total_escrow_time)}`);
 
         for (i = 1; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -419,7 +420,7 @@ contract('Bidding testing', async (accounts) => {
                 status = 'err';
                 break;
             }
-            console.log(`\t EscrowStatus for account[${i}]: ${status}`);
+            log.info(`\t EscrowStatus for account[${i}]: ${status}`);
             if (chosen_bids.includes(i)) {
                 assert.equal(status, 'active', "Escrow wasn't verified");
             }
@@ -478,7 +479,7 @@ contract('Bidding testing', async (accounts) => {
         for (var i = 0; i < litigators.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
-            console.log(`\t litigation for profile ${litigators[i]}: ${JSON.stringify(response)}`);
+            log.info(`\t litigation for profile ${litigators[i]}: ${JSON.stringify(response)}`);
         }
     });
 
@@ -503,7 +504,7 @@ contract('Bidding testing', async (accounts) => {
         for (i = 0; i < litigators.length; i += 1) {
             // eslint-disable-next-line
             var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
-            console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
+            log.info(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
 
@@ -518,7 +519,7 @@ contract('Bidding testing', async (accounts) => {
 
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
-        console.log(`\t current escrow time: ${response}`);
+        log.info(`\t current escrow time: ${response}`);
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
@@ -551,7 +552,7 @@ contract('Bidding testing', async (accounts) => {
 
         var response = await util.getBlockTimestamp.call();
         response = response.toNumber();
-        console.log(`\t Escrow finish time: ${response}`);
+        log.notify(`\t Escrow finish time: ${response}`);
 
         var promises = [];
         for (var i = 0; i < chosen_bids.length; i += 1) {
@@ -568,7 +569,7 @@ contract('Bidding testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             response = await bidding.profile.call(accounts[chosen_bids[i]]);
             var balance = response[2].toNumber();
-            console.log(`\t new DH balance[${chosen_bids[i]}]: ${balance}`);
+            log.notify(`\t new DH balance[${chosen_bids[i]}]: ${balance}`);
             // TODO Fix the rounding of the token amount issue
             // assert.equal(
             //     balance,
@@ -604,13 +605,13 @@ contract('Bidding testing', async (accounts) => {
                 status = 'err';
                 break;
             }
-            console.log(`\t EscrowStatus for account[${chosen_bids[i]}]: ${status}`);
+            log.info(`\t EscrowStatus for account[${chosen_bids[i]}]: ${status}`);
             assert.equal(status, 'completed', "Escrow wasn't completed");
         }
         for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
-            console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
+            log.info(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
 
@@ -623,7 +624,7 @@ contract('Bidding testing', async (accounts) => {
         const reading = await Reading.deployed();
 
         var response = await reading.purchased_data.call(import_id, accounts[chosen_bids[0]]);
-        console.log(`${JSON.stringify(response)}`);
+        log.notify(`${JSON.stringify(response)}`);
 
         var actual_DC_wallet = response[0];
         var actual_distribution_root_hash = response[1];

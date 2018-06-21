@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_!!!W_1!!!</sbdh:Identifier>
+                <sbdh:ContactInformation> <!-- Mandatory-->
+                    <sbdh:Contact>!!!N_1!!!</sbdh:Contact> <!-- Mandatory -->
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_!!!W_2!!!</sbdh:Identifier>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>!!!D_1!!!</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2003-07-09T00:31:52Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:ot:object:actor">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_!!!W_1!!!">
+                                <attribute id="urn:ot:object:actor:name">!!!C_1!!!</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">!!!W_1!!!</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_!!!W_2!!!">
+                                <attribute id="urn:ot:object:actor:name">!!!C_2!!!</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">!!!W_2!!!</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:location">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:Building_!!!W_1!!!">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Distribution Center</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_ReadPoint_!!!W_1!!!</id>
+                                </children>
+                                <extension>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_!!!W_1!!!</attribute>
+                                </extension>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:Building_!!!W_2!!!">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Retail Store</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_ReadPoint_!!!W_2!!!</id>
+                                </children>
+                                <extension>
+                                    <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_!!!W_2!!!</attribute>
+                                </extension>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:product">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:product:id:!!!P_1!!!">
+                                <attribute id="urn:ot:object:product:category">Finished goods</attribute>
+                                <attribute id="urn:ot:object:product:description">Pallet !!!P_1!!!</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:batch">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:!!!P_1!!!</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2003-07-09T00:31:52Z</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!.!!!D_2!!!">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:!!!P_1!!!</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2003-07-09T00:31:52Z</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>
+            <extension>
+                <TransformationEvent>
+                    <eventTime>2003-07-09T00:31:52Z</eventTime>
+                    <eventTimeZoneOffset>-00:00</eventTimeZoneOffset>
+                    <inputEPCList>
+                        <epc>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!</epc>
+                    </inputEPCList>
+                    <inputQuantityList>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!</epcClass>
+                            <quantity>2</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </inputQuantityList>
+                    <outputEPCList>
+                        <epc>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!.!!!D_2!!!</epc>
+                    </outputEPCList>
+                    <outputQuantityList>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!.!!!D_2!!!</epcClass>
+                            <quantity>2</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </outputQuantityList>
+                    <transformationID>!!!D_1!!!.1</transformationID>
+                    <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                    <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                    <readPoint>
+                        <id>urn:epc:id:sgln:Building_ReadPoint_!!!W_1!!!</id>
+                    </readPoint>
+                    <bizLocation>
+                        <id>urn:epc:id:sgln:Building_!!!W_1!!!</id>
+                    </bizLocation>
+                    <extension>
+                        <OTEventClass>ot:event:Transformation</OTEventClass>
+                        <OTEventType>ZeroKnowledgeTransformation</OTEventType>
+                        <documentId>!!!D_1!!!</documentId>
+                    </extension>
+                </TransformationEvent>
+            </extension>
+            <!--<ObjectEvent>-->
+            <!--&lt;!&ndash; Transport Shipment&ndash;&gt;-->
+            <!--<eventTime>2003-07-09T00:31:52Z</eventTime>-->
+            <!--<eventTimeZoneOffset>-00:00</eventTimeZoneOffset>-->
+            <!--<epcList>-->
+            <!--<epc>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!</epc>-->
+            <!--</epcList>-->
+            <!--<action>OBSERVE</action>-->
+            <!--<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>-->
+            <!--<disposition>urn:epcglobal:cbv:disp:active</disposition>-->
+            <!--<readPoint>-->
+            <!--<id>urn:epc:id:sgln:Building_ReadPoint_!!!W_1!!!</id>-->
+            <!--</readPoint>-->
+            <!--<bizLocation>-->
+            <!--<id>urn:epc:id:sgln:Building_!!!W_1!!!</id>-->
+            <!--</bizLocation>-->
+            <!--<extension>-->
+            <!--<quantityList>-->
+            <!--<quantityElement>-->
+            <!--<epcClass>urn:epc:id:sgtin:!!!P_1!!!.!!!B_1!!!.!!!D_2!!!</epcClass>-->
+            <!--<quantity>2</quantity>-->
+            <!--<uom>PCS</uom>-->
+            <!--</quantityElement>-->
+            <!--</quantityList>-->
+            <!--<extension>-->
+            <!--<documentId>!!!D_1!!!.2</documentId>-->
+            <!--<OTEventClass>urn:ot:event:Transport</OTEventClass>-->
+            <!--<OTEventClass>urn:ot:event:Ownership</OTEventClass>-->
+            <!--<OTEventType>Sales</OTEventType>-->
+            <!--<sourceList>-->
+            <!--<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_!!!W_1!!!</source>-->
+            <!--</sourceList>-->
+            <!--<destinationList>-->
+            <!--<destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_!!!W_2!!!</destination>-->
+            <!--</destinationList>-->
+            <!--</extension>-->
+            <!--</extension>-->
+            <!--</ObjectEvent>-->
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

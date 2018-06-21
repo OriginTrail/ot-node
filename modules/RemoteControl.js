@@ -5,6 +5,7 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
+const log = require('./Utilities').getLogger();
 
 
 class RemoteControl {
@@ -39,7 +40,7 @@ class RemoteControl {
                     }).then((res) => {
                         this.restartNode();
                     }).catch((err) => {
-                        console.log(err);
+                        log.error(err);
                     });
                 }
             });

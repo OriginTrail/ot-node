@@ -20,6 +20,7 @@ class EventEmitter {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.globalEmitter = new events.EventEmitter();
+        this.log = ctx.logger;
     }
 
     /**
@@ -245,7 +246,7 @@ class EventEmitter {
                                 dataimport.total_documents,
                                 vertices,
                             ).catch((e) => {
-                                console.log(e);
+                                this.log.error(e);
                             });
                     }).catch((error) => {
                         throw new Error('This import does not exist in database');

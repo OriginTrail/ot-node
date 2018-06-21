@@ -232,7 +232,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
-                    console.log('Please make sure Arango server is up and running');
+                    this.getLogger.info('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }
@@ -577,9 +577,9 @@ class Utilities {
                     }
                 }).catch((err) => {
                     if (err.toString().indexOf('Error: Unauthorized') >= 0) {
-                        console.log('Please make sure arango credentils (usually root/root) are set correctly in .env');
+                        this.getLogger.info('Please make sure arango credentils (usually root/root) are set correctly in .env');
                     } else if (err.toString().indexOf('Error: connect ECONNREFUSED') >= 0) {
-                        console.log('Please make sure Arango server is actually running');
+                        this.getLogger.info('Please make sure Arango server is actually running');
                     }
                     reject(err);
                 });
