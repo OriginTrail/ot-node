@@ -301,8 +301,11 @@ class EventEmitter {
             const offerModel = await Models.offers.findOne({
                 where: {
                     import_id,
-                    status: { [Models.Sequelize.Op.not]: 'FINALIZED' },
+                    status: { [Models.Sequelize.Op.eq]: 'FINALIZED' },
                 },
+                order: [
+                    ['id', 'DESC'],
+                ],
             });
             if (!offerModel) {
                 const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
