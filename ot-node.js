@@ -64,7 +64,6 @@ class OTNode {
                 const responseFromArango = await Utilities.getArangoDbVersion();
                 log.info(`Arango server version ${responseFromArango.version} is up and running`);
             } catch (err) {
-                log.error('Please make sure Arango server is runing before starting ot-node');
                 process.exit(1);
             }
         }
