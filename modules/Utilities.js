@@ -232,7 +232,7 @@ class Utilities {
                     }
                     resolve();
                 }).catch((error) => {
-                    console.log('Please make sure Arango server is up and running');
+                    this.getLogger.info('Please make sure Arango server is up and running');
                     reject(error);
                 });
             }

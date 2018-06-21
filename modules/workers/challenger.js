@@ -1,8 +1,9 @@
 const readLine = require('readline');
+const log = require('../Utilities').getLogger();
 
 
 process.once('message', ({ argument }) => {
-    console.log('And the message came');
+    log.info('And the message came');
 });
 
 process.once('SIGTERM', () => process.exit(0));
@@ -15,10 +16,10 @@ if (process.platform === 'win32') {
 }
 
 
-console.log('Child process');
+log.info('Child process');
 
 function intervalFunc() {
-    console.log('Cant stop me now!');
+    log.info('Cant stop me now!');
 }
 
 setInterval(intervalFunc, 1500);

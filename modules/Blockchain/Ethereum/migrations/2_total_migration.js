@@ -13,6 +13,8 @@ var MockReading = artifacts.require('MockReading'); // eslint-disable-line no-un
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
+const log = require('../../../Utilities').getLogger();
+
 
 const giveMeTracToken = async function giveMeTracToken() {
     const token = TracToken.deployed();
@@ -111,12 +113,12 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
         .then(() => {
-            console.log('\n\n \t Contract adressess on ganache:');
-            console.log(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
-            console.log(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
-            console.log(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
-            console.log(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
-            console.log(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
+            log.info('\n\n \t Contract adressess on ganache:');
+            log.info(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
+            log.info(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
+            log.info(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
+            log.info(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
+            log.info(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
         });
         });
         });
@@ -169,11 +171,11 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
         .then(() => {
-            console.log('\n\n \t Contract adressess on ganache (for testing):');
-            console.log(`\t Token contract address: \t ${token.address}`);
-            console.log(`\t Escrow contract address: \t ${escrow.address}`);
-            console.log(`\t Bidding contract address: \t ${bidding.address}`);
-            console.log(`\t Reading contract address: \t ${reading.address}`);
+            log.info('\n\n \t Contract adressess on ganache (for testing):');
+            log.info(`\t Token contract address: \t ${token.address}`);
+            log.info(`\t Escrow contract address: \t ${escrow.address}`);
+            log.info(`\t Bidding contract address: \t ${bidding.address}`);
+            log.info(`\t Reading contract address: \t ${reading.address}`);
         });
         });
         });
@@ -209,27 +211,27 @@ module.exports = (deployer, network, accounts) => {
         .then(() => giveMeBiddingTest())
         .then(async (result) => {
             bidding = result;
-            console.log('Setting bidding address in escrow...');
+            log.trace('Setting bidding address in escrow...');
             await escrow.setBidding(bidding.address)
         .then(async () => {
-            console.log('Setting reading address in escrow...');
+            log.trace('Setting reading address in escrow...');
             await escrow.setReading(reading.address)
         .then(async () => {
-            console.log('Setting bidding address in reading...');
+            log.trace('Setting bidding address in reading...');
             await reading.setBidding(bidding.address)
         .then(async () => {
-            console.log('Transfering reading ownership to escrow...');
+            log.trace('Transfering reading ownership to escrow...');
             await reading.transferOwnership(escrow.address)
         .then(async () => {
-            console.log('Transfering escrow ownership to bidding...');
+            log.trace('Transfering escrow ownership to bidding...');
             await escrow.transferOwnership(bidding.address)
         .then(() => {
-            console.log('\n\n \t Contract adressess on ganache:');
-            console.log(`\t OT-fingerprint contract address: \t ${fingerprintAddress} (unchanged)`);
-            console.log(`\t Token contract address: \t ${tokenAddress} (unchanged)`);
-            console.log(`\t Escrow contract address: \t ${escrow.address}`);
-            console.log(`\t Bidding contract address: \t ${bidding.address}`);
-            console.log(`\t Reading contract address: \t ${reading.address}`);
+            log.info('\n\n \t Contract adressess on ganache:');
+            log.info(`\t OT-fingerprint contract address: \t ${fingerprintAddress} (unchanged)`);
+            log.info(`\t Token contract address: \t ${tokenAddress} (unchanged)`);
+            log.info(`\t Escrow contract address: \t ${escrow.address}`);
+            log.info(`\t Bidding contract address: \t ${bidding.address}`);
+            log.info(`\t Reading contract address: \t ${reading.address}`);
         });
         });
         });
@@ -274,12 +276,12 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
         .then(() => {
-            console.log('\n\n \t Contract adressess on ganache (mock versions):');
-            console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-            console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-            console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-            console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-            console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
+            log.info('\n\n \t Contract adressess on ganache (mock versions):');
+            log.info('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
+            log.info('\t Token contract address: \t' + token.address); // eslint-disable-line
+            log.info('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
+            log.info('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
+            log.info('\t Reading contract address: \t' + reading.address); // eslint-disable-line
         });
         });
         });
