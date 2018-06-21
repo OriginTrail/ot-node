@@ -34,11 +34,11 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     let product;
 
     const inputXmlFiles = [
-        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, '../modules/test_xml/Transformation.xml')] },
+        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, '../modules/test_xml/GraphExample_4.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {

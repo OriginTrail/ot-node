@@ -33,11 +33,11 @@ describe('GS1 Importer tests', () => {
     let importer;
 
     const inputXmlFiles = [
-        { args: [path.join(__dirname, '../../importers/xml_examples/Transformation.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')] },
-        { args: [path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, 'test_xml/Transformation.xml')] },
+        { args: [path.join(__dirname, 'test_xml/GraphExample_1.xml')] },
+        { args: [path.join(__dirname, 'test_xml/GraphExample_2.xml')] },
+        { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
+        { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -122,7 +122,7 @@ describe('GS1 Importer tests', () => {
         }
 
         it('check keys immutability on GraphExample_3.xml', async () => {
-            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+            const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
             await gs1.parseGS1(myGraphExample3);
             const firstImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
@@ -147,7 +147,7 @@ describe('GS1 Importer tests', () => {
 
     describe('Total # of docs/edges after re-import of same file should remain constant', async () => {
         it('check total graph nodes count in scenario of GraphExample_3.xml', async () => {
-            const myGraphExample3 = path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml');
+            const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
             await gs1.parseGS1(myGraphExample3);
             const verticesCount1 = await graphStorage.getDocumentsCount('ot_vertices');
@@ -424,16 +424,16 @@ describe('GS1 Importer tests', () => {
         }
 
         async function checkSpecificVerticeContent(xml) {
-            if (xml === path.join(__dirname, '../../importers/xml_examples/Transformation.xml')) {
+            if (xml === path.join(__dirname, 'test_xml/Transformation.xml')) {
                 await checkTransformationXmlVerticeContent();
-            } else if (xml === path.join(__dirname, '../../importers/xml_examples/GraphExample_1.xml')) {
+            } else if (xml === path.join(__dirname, 'test_xml/GraphExample_1.xml')) {
                 await checkGraphExample1XmlVerticeContent();
                 await checkGraphExample1XmlTraversalPath();
-            } else if (xml === path.join(__dirname, '../../importers/xml_examples/GraphExample_2.xml')) {
+            } else if (xml === path.join(__dirname, 'test_xml/GraphExample_2.xml')) {
                 await checkGraphExample2XmlVerticeContent();
-            } else if (xml === path.join(__dirname, '../../importers/xml_examples/GraphExample_3.xml')) {
+            } else if (xml === path.join(__dirname, 'test_xml/GraphExample_3.xml')) {
                 await checkGraphExample3XmlVerticeContent();
-            } else if (xml === path.join(__dirname, '../../importers/xml_examples/GraphExample_4.xml')) {
+            } else if (xml === path.join(__dirname, 'test_xml/GraphExample_4.xml')) {
                 await checkGraphExample4XmlVerticeContent();
                 await checkGraphExample4XmlTraversalPath();
             } else {
