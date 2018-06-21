@@ -318,6 +318,7 @@ library SafeMath {
 
  		require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
  		require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed);
+          require(block.timestamp < this_escrow.end_time);
 
  		this_litigation.requested_data_index = requested_data_index;
  		this_litigation.hash_array = hash_array;
