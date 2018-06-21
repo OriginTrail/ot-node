@@ -229,7 +229,8 @@ library SafeMath {
  		}
  		else{
  			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(current_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
- 			this_escrow.last_confirmation_time = current_time;
+ 	          assert(amount_to_send.add(this_escrow.tokens_sent) <= this_escrow.token_amount);
+               this_escrow.last_confirmation_time = current_time;
  		}
  		
  		if(amount_to_send > 0) {
