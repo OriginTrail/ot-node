@@ -8,23 +8,28 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         time: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
         block_id: {
+            allowNull: false,
             type: Sequelize.INTEGER,
         },
         answer: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         dh_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         import_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         answered: {
-            type: Sequelize.INTEGER,
             allowNull: true,
+            type: Sequelize.INTEGER,
         },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('data_challenges'),
