@@ -28,6 +28,7 @@ class DCService {
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.network = ctx.network;
     }
 
     /**
