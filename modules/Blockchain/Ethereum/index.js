@@ -86,12 +86,14 @@ class Ethereum {
             this.log.trace(`Get reading contract address`);
             this.readingContractAddress = await this.hubContract.methods.readingAddress().call();
             this.readingContract = new this.web3.eth.Contract(this.readingContractAbi, this.readingContractAddress);
+
+            this.log.info('Contracts initiated');
         }
-        catch(error) {
-            log.error(error);
+        catch
+        (error) {
+            this.log.error(error);
             return;
         }
-        this.log.info('Contracts initiated');
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,

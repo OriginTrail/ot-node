@@ -196,6 +196,8 @@ class OTNode {
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+        await blockchain.initialize();
+
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);

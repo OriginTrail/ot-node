@@ -21,6 +21,13 @@ class Blockchain {
     }
 
     /**
+     * Runs required initializations for the selected blockchain
+     */
+    async initialize() {
+        return this.blockchain.initialize();
+    }
+
+    /**
      * Writes data import root hash on blockchain
      * @param importId
      * @param rootHash
