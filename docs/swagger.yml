@@ -27,6 +27,8 @@ tags:
   description: Replicate stuff
 - name: read
   description: Read stuff
+- name: database
+  description: Database operations
   
 paths:
   /import:
@@ -62,13 +64,11 @@ paths:
               message: 'Invalid import type'
           description: "Invalid import parameters."
 
-
   /replication:
     post:
       tags:
       - replication
       summary: Replicate import / Creates an offer
-      operationId: replication
       consumes:
         - application/json
         - application/x-www-form-urlencoded
@@ -81,8 +81,33 @@ paths:
         required: true
         type: "string"
       responses:
-        405:
+        '200':
+          description: OK
+        '400':
           description: Invalid input
+          
+  /replication/:
+    get:
+      tags:
+      - replication
+      summary: Asks for replication status
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: "formData"
+        name: "import_id"
+        description: ID of the import you want to replicate
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          
   /network/query:
     post:
       tags:
@@ -101,10 +126,11 @@ paths:
         required: true
         type: "string"
       responses:
-        200:
+        '200':
           description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. If query was successful additional attribute 'query_id' will be present which will contain UUID of the query which can be used to check the result or status of the query.
-        500:
+        '500':
           description: Internal error happened on server.
+          
   /network/query/{queryID}:
     get:
       tags:
@@ -124,6 +150,72 @@ paths:
           description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
         500:
           description: Internal error happened on server.         
+  
+  /network/query_by_id:
+    get:
+      tags:
+      - read
+      summary: Makes a network query
+      operationId: network-query-status
+      produces:
+        - application/json
+      parameters:
+      - in: path
+        name: "queryID"
+        description: UUID of network query.
+        required: true
+        type: string
+      responses:
+        200:
+          description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
+        500:
+          description: Internal error happened on server. 
+  
+  /trail:
+    get:
+      tags:
+      - database
+      summary: Trail
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: "query"
+        name: "queryObject"
+        description: queryObject
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          
+  /fingerprint:
+    get:
+      tags:
+      - database
+      summary: Fingerprint
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: "query"
+        name: "queryObject"
+        description: queryObject
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+          
+  
 
 definitions:
   Import:
