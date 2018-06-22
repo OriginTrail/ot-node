@@ -538,9 +538,11 @@ class DHService {
             }
          */
 
+        const dataInfo = Models.data_info.find({ where: { import_id: importId } });
         const replyMessage = {
             id,
             wallet: this.config.node_wallet,
+            data_provider_wallet: dataInfo.data_provider_wallet,
             nodeId: this.config.identity,
             agreementStatus: 'CONFIRMED',
             encryptedData: {
