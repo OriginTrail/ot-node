@@ -214,6 +214,7 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
+        const { data_provider_wallet } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -291,6 +292,7 @@ class DVService {
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
+            data_provider_wallet,
             import_timestamp: new Date(),
         });
 
