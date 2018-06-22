@@ -489,6 +489,11 @@ contract BiddingTest {
 		return profile[wallet].balance;
 	}
 
+	function getReadStakeFactor(address wallet)
+	public view returns (uint256) {
+		return profile[wallet].read_stake_factor;
+	}
+
 	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {
 		if (a > b) return a-b;
 		else return b-a;

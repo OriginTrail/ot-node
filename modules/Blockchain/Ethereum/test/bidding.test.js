@@ -645,7 +645,6 @@ contract('Bidding testing', async (accounts) => {
             import_id,
             accounts[chosen_bids[0]],
             read_token_amount,
-            read_stake_factor,
             { from: accounts[2] },
         );
 

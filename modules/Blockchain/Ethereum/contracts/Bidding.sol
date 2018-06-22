@@ -44,7 +44,7 @@ contract EscrowHolder {
 	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes) public;
 }
 
-contract Bidding {
+contract Bidding{
 	using SafeMath for uint256;
 
 	ERC20 public token;
@@ -89,6 +89,8 @@ contract Bidding {
 
 		bool active;
 		bool finalized;
+
+		// uint256 offer_creation_timestamp;
 
 		BidDefinition[] bid;
 	}
@@ -178,6 +180,7 @@ contract Bidding {
 		this_offer.finalized = false;
 
 		this_offer.first_bid_index = uint(-1);
+		// this_offer.offer_creation_timestamp = block.timestamp;
 
 		//Writing the predetermined DC into the bid list
 		while(this_offer.bid.length < predetermined_DH_wallet.length) {
@@ -193,7 +196,8 @@ contract Bidding {
 	function cancelOffer(bytes32 import_id)
 	public{
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active && this_offer.DC_wallet == msg.sender);
+		require(this_offer.active && this_offer.DC_wallet == msg.sender
+			&& this_offer.finalized == false);
 		this_offer.active = false;
 		uint max_total_token_amount = this_offer.max_token_amount_per_DH.mul(this_offer.replication_factor.mul(2).add(1));
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
@@ -324,7 +328,8 @@ contract Bidding {
 		OfferDefinition storage this_offer = offer[import_id];
 		require(this_offer.active && !this_offer.finalized);
 		require(this_offer.replication_factor.mul(3).add(1) <= this_offer.bid.length);
-
+		// require(this_offer.offer_creation_timestamp + 5 minutes < block.timestamp);
+		
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(1));
 
 		uint256 i;
@@ -482,6 +487,11 @@ contract Bidding {
 	function getBalance(address wallet)
 	public view returns (uint256) {
 		return profile[wallet].balance;
+	}
+
+	function getReadStakeFactor(address wallet)
+	public view returns (uint256) {
+		return profile[wallet].read_stake_factor;
 	}
 
 	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {
