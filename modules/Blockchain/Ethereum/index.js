@@ -26,11 +26,6 @@ class Ethereum {
 
         // Loading contracts
         this.hubContractAddress = blockchainConfig.hub_contract_address;
-        // this.otContractAddress = blockchainConfig.ot_contract_address;
-        // this.tokenContractAddress = blockchainConfig.token_contract_address;
-        // this.escrowContractAddress = blockchainConfig.escrow_contract_address;
-        // this.biddingContractAddress = blockchainConfig.bidding_contract_address;
-        // this.readingContractAddress = blockchainConfig.reading_contract_address;
 
         // Hub contract data
         const hubContractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/hub-contract/abi.json');
@@ -65,35 +60,49 @@ class Ethereum {
     /**
      * Initializing Ethereum blockchain contracts
      */
-    async initialize() {
-        try{
-            this.log.trace(`Get ot contract address`);
+    async initialize(emitter) {
+        try {
+            this.log.trace('Get ot contract address');
             this.otContractAddress = await this.hubContract.methods.otAddress().call();
-            this.otContract = new this.web3.eth.Contract(this.otContractAbi, this.otContractAddress);
-    
-            this.log.trace(`Get token contract address`);
+            this.otContract = new this.web3.eth.Contract(
+                this.otContractAbi,
+                this.otContractAddress,
+            );
+
+            this.log.trace('Get token contract address');
             this.tokenContractAddress = await this.hubContract.methods.tokenAddress().call();
-            this.tokenContract = new this.web3.eth.Contract(this.tokenContractAbi, this.tokenContractAddress);
-    
-            this.log.trace(`Get bidding contract address`);
+            this.tokenContract = new this.web3.eth.Contract(
+                this.tokenContractAbi,
+                this.tokenContractAddress,
+            );
+
+            this.log.trace('Get bidding contract address');
             this.biddingContractAddress = await this.hubContract.methods.biddingAddress().call();
-            this.biddingContract = new this.web3.eth.Contract(this.biddingContractAbi, this.biddingContractAddress);
-    
-            this.log.trace(`Get escrow contract address`);
+            this.biddingContract = new this.web3.eth.Contract(
+                this.biddingContractAbi,
+                this.biddingContractAddress,
+            );
+
+            this.log.trace('Get escrow contract address');
             this.escrowContractAddress = await this.hubContract.methods.escrowAddress().call();
-            this.escrowContract = new this.web3.eth.Contract(this.escrowContractAbi, this.escrowContractAddress);
-    
-            this.log.trace(`Get reading contract address`);
+            this.escrowContract = new this.web3.eth.Contract(
+                this.escrowContractAbi,
+                this.escrowContractAddress,
+            );
+
+            this.log.trace('Get reading contract address');
             this.readingContractAddress = await this.hubContract.methods.readingAddress().call();
-            this.readingContract = new this.web3.eth.Contract(this.readingContractAbi, this.readingContractAddress);
+            this.readingContract = new this.web3.eth.Contract(
+                this.readingContractAbi,
+                this.readingContractAddress,
+            );
 
             this.log.info('Contracts initiated');
-        }
-        catch
-        (error) {
+        } catch (error) {
             this.log.error(error);
-            return;
+            process.exit(1);
         }
+
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,
@@ -106,7 +115,7 @@ class Ethereum {
                 console.log(event); // same results as the optional callback above
                 emitter.emit('eth-offer-created', event);
             })
-            .on('error', log.warn);
+            .on('error', this.log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {

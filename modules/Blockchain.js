@@ -24,7 +24,7 @@ class Blockchain {
      * Runs required initializations for the selected blockchain
      */
     async initialize() {
-        return this.blockchain.initialize();
+        return this.blockchain.initialize(this.emitter);
     }
 
     /**
