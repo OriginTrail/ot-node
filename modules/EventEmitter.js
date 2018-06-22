@@ -232,29 +232,31 @@ class EventEmitter {
 
             try {
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
-                vertices = vertices.map((vertex, index) => {
+                vertices = vertices.map((vertex) => {
                     delete vertex.private;
                     return vertex;
                 });
-                await Models.data_info.findOne({ where: { import_id } })
-                    .then(async (dataimport) => {
-                        await dcService
-                            .createOffer(
-                                import_id,
-                                dataimport.root_hash,
-                                dataimport.total_documents,
-                                vertices,
-                            ).catch((e) => {
-                                console.log(e);
-                            });
-                    }).catch((error) => {
-                        throw new Error('This import does not exist in database');
-                    });
+
+                const dataimport = await Models.data_info.findOne({ where: { import_id } });
+                if (dataimport == null) {
+                    throw new Error('This import does not exist in the database');
+                }
+
+                const replicationId = await dcService.createOffer(
+                    import_id,
+                    dataimport.root_hash,
+                    dataimport.total_documents,
+                    vertices,
+                );
+                data.response.status(201);
+                data.response.send({
+                    replication_id: replicationId,
+                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
                 data.response.send({
-                    message: 'Failed to start offer.',
+                    message: `Failed to start offer. ${error}.`,
                 });
             }
         });

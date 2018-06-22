@@ -24,6 +24,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         root_hash: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         epk: {

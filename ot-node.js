@@ -205,6 +205,7 @@ class OTNode {
             await this.createProfile(blockchain);
         } catch (e) {
             log.error('Failed to create profile');
+            console.log(e);
             process.exit(1);
         }
 
