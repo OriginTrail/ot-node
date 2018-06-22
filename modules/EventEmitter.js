@@ -232,29 +232,31 @@ class EventEmitter {
 
             try {
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
-                vertices = vertices.map((vertex, index) => {
+                vertices = vertices.map((vertex) => {
                     delete vertex.private;
                     return vertex;
                 });
-                await Models.data_info.findOne({ where: { import_id } })
-                    .then(async (dataimport) => {
-                        await dcService
-                            .createOffer(
-                                import_id,
-                                dataimport.root_hash,
-                                dataimport.total_documents,
-                                vertices,
-                            ).catch((e) => {
-                                console.log(e);
-                            });
-                    }).catch((error) => {
-                        throw new Error('This import does not exist in database');
-                    });
+
+                const dataimport = await Models.data_info.findOne({ where: { import_id } });
+                if (dataimport == null) {
+                    throw new Error('This import does not exist in the database');
+                }
+
+                const replicationId = await dcService.createOffer(
+                    import_id,
+                    dataimport.root_hash,
+                    dataimport.total_documents,
+                    vertices,
+                );
+                data.response.status(201);
+                data.response.send({
+                    replication_id: replicationId,
+                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
                 data.response.send({
-                    message: 'Failed to start offer.',
+                    message: `Failed to start offer. ${error}.`,
                 });
             }
         });
@@ -719,21 +721,27 @@ class EventEmitter {
             const { epk, importId, encryptionKey } = request.params.message;
 
             // TODO: Add guard for fake replations.
-            const success = await dcService.verifyImport(
+            dcService.verifyImport(
                 epk,
                 importId, encryptionKey, kadWallet, request.contact[0],
             );
-            if (success) {
-                response.send({
-                    status: 'OK',
-                    message: 'Data successfully verified',
-                });
+            response.send({
+                status: 'OK',
+            });
+        });
+
+        this.globalEmitter.on('kad-verify-import-response', async (request, response) => {
+            logger.info('kad-verify-import-response');
+
+            const { status, import_id } = request.params.message;
+            if (status === 'success') {
+                logger.notify(`Key verification for import ${import_id} succeeded`);
             } else {
-                response.send({
-                    status: 'Failed',
-                    message: 'Verification failed',
-                });
+                logger.notify(`Key verification for import ${import_id} failed`);
             }
+            response.send({
+                status: 'OK',
+            });
         });
 
         this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {
