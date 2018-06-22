@@ -10,7 +10,8 @@ const solc = require('solc');
 const fs = require('fs');
 
 const Utilities = require('../../modules/Utilities');
-const models = require('../../models');
+const ImportUtilities = require('../../modules/ImportUtilities');
+const Models = require('../../models');
 const Storage = require('../../modules/Storage');
 const DCService = require('../../modules/DCService');
 
@@ -35,12 +36,19 @@ describe('Protocol tests', () => {
     }
 
     class MockGraphStorage {
+        constructor(importId, vertices, edges) {
+            this.imports = {};
+            if (!importId && !vertices && !edges) {
+                this.imports[importId] = {vertices, edges};
+            }
+        }
+
         findEdgesByImportId(importId) {
-            return [];
+            return this.imports[importId].vertices;
         }
 
         findVerticesByImportId(importId) {
-            return [];
+            return this.imports[importId].edgeds;
         }
     }
 
@@ -283,6 +291,11 @@ describe('Protocol tests', () => {
         await tokenInstance.methods.finishMinting();
     });
 
+    beforeEach('Recreate database', () => {
+        return Models.sequelize.sync({ force: true });
+        // TODO: Find solution how to seed the database.
+    });
+
     beforeEach('Register container and build objects', () => {
         // DCService depends on: blockchain, challenger, graphStorage and logger.
         const config = {
@@ -350,40 +363,81 @@ describe('Protocol tests', () => {
     });
 
     describe('DC replication', () => {
-        before('Create session profile', () => {
+        const vertices = [
+            {
+                _id: '247d8e3809b448fe8f5b67495801e246',
+                _key: '247d8e3809b448fe8f5b67495801e246',
+                identifiers: {
+                    id: 'urn:epc:id:sgln:Building_2',
+                    uid: 'urn:epc:id:sgln:Building_2',
+                },
+                data: {
+                    category: 'Building _2b',
+                    description: 'Description of building _2b',
+                    object_class_id: 'Location',
+                },
+                private: {},
+                vertex_type: 'LOCATION',
+                sender_id: 'urn:ot:object:actor:id:Company_2',
+                version: 1,
+                imports: [],
+            },
+            {
+                _id: 'Location',
+                _key: 'Location',
+                vertex_type: 'CLASS',
+            },
+        ];
+
+        const edges = [
+            {
+                _id: 'af54d5a366006fa21dcbf4df50421165',
+                _key: '_key:af54d5a366006fa21dcbf4df50421165',
+                _from: '247d8e3809b448fe8f5b67495801e246',
+                _to: 'Location',
+                edge_type: 'IS',
+                sender_id: 'urn:ot:object:actor:id:Company_2',
+                imports: [],
+            },
+        ];
+
+        let importId;
+        let rootHash;
+        let mockGraphStorage;
+
+        beforeEach('Create session profile', () => {
             const blockchain = container.resolve('blockchain');
             return blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
         });
 
+        beforeEach('Create one import', async () => {
+            mockGraphStorage = container.resolve('graphStorage')
+            importId = Utilities.createImportId();
+            vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
+            edges.forEach(edge => edge.imports.push(importId));
+            mockGraphStorage.imports[importId] = { vertices, edges };
+            const merkle = await ImportUtilities.merkleStructure(vertices, edges);
+            rootHash = merkle.tree.getRoot();
+        });
+
+
         it('should initiate replication for happy path', async () => {
             const dcService = container.resolve('dcService');
+            const offerExternalId =
+                await dcService.createOffer(importId, rootHash, 1, vertices);
 
-            const vertices = [
-                {
-                    _id: 'ot_vertices/247d8e3809b448fe8f5b67495801e246',
-                    _key: '247d8e3809b448fe8f5b67495801e246',
-                    identifiers: {
-                        id: 'urn:epc:id:sgln:Building_2',
-                        uid: 'urn:epc:id:sgln:Building_2',
-                    },
-                    data: {
-                        category: 'Building _2b',
-                        description: 'Description of building _2b',
-                        object_class_id: 'Location',
-                    },
-                    private: {},
-                    vertex_type: 'LOCATION',
-                    sender_id: 'urn:ot:object:actor:id:Company_2',
-                    version: 1,
-                    imports: [],
-                },
-                {
-                    vertex_type: 'CLASS',
-                },
-            ];
-
-
-            // await dcService.createOffer('0x00', 'dafa', 100, vertices);
+            // Check for offer in db.
+            const offers = await Models.offers.findAll({ where: { import_id: importId } });
+            expect(offers).to.have.lengthOf(1);
+            const offer = offers[0];
+            expect(offer).to.include({
+                import_id: importId,
+                data_hash: rootHash,
+                dh_wallets: '[]',
+                dh_ids: '[]',
+                status: 'STARTED',
+                external_id: offerExternalId,
+            });
         });
     });
 
