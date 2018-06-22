@@ -70,11 +70,12 @@ class RegisterNode {
                 env.DB_PASSWORD = 'root';
 
                 process.env.NODE_WALLET = account.address;
-                process.env.NODE_PRIVATE_KEY = account.privateKey;
+                process.env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
                 process.env.NODE_IP = env.NODE_IP;
                 process.env.DB_PASSWORD = 'root';
 
                 const envF = envfile.stringifySync(env);
+                console.log(env);
                 fs.writeFile('.env', envF, (err) => {
                     umzug_migrations.up().then((migrations) => {
                         umzug_seeders.up().then((migrations) => {
