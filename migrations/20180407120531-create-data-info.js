@@ -19,10 +19,6 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        total_data_blocks: {
-            allowNull: false,
-            type: Sequelize.INTEGER,
-        },
         root_hash: {
             allowNull: false,
             type: Sequelize.STRING,
