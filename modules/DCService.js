@@ -42,9 +42,12 @@ class DCService {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
-            this.log.info(`Offer for ${importId} already exists. Cancelling old offer and writing new one`);
+            if (oldOffer.active) {
+                throw new Error(`Offer for ${importId} already exists. Offer is active therefore cannot be cancelled.`);
+            }
+            this.log.info(`Offer for ${importId} already exists. Cancelling offer...`);
             await this.blockchain.cancelOffer(importId).catch((error) => {
-                this.log.log('error', `Cancelling offer failed. ${error}.`);
+                throw new Error(`Cancelling offer failed. ${error}.`);
             });
             // cancel challenges for cancelled offer
             await Models.replicated_data.update(
@@ -106,7 +109,7 @@ class DCService {
                 importSizeInBytes,
                 dhWallets,
                 dhIds,
-            ).then(() => {
+            ).then(async () => {
                 this.log.info('Offer written to blockchain. Started bidding phase.');
                 offer.status = 'STARTED';
                 offer.save({ fields: ['status'] });
@@ -122,7 +125,7 @@ class DCService {
                     });
                 };
 
-                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback).then(() => {
+                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback, event => event.import_id === importId).then(() => {
                     this.log.trace('Started choosing phase.');
 
                     offer.status = 'FINALIZING';

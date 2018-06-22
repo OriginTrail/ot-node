@@ -27,3 +27,4 @@ Envoy.blade.php
 /modules/Database/system.db
 @kadenceproject
 test.*
+db_backup/*
