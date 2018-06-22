@@ -337,6 +337,11 @@ class Network {
             this.emitter.emit('kad-verify-import-request', request, response);
         });
 
+        this.node.use('kad-verify-import-response', (request, response, next) => {
+            this.log.info('kad-verify-import-response received');
+            this.emitter.emit('kad-verify-import-response', request, response);
+        });
+
         // add challenge-request route
         this.node.use('challenge-request', (request, response, next) => {
             this.log.info('challenge-request received');
@@ -482,6 +487,11 @@ class Network {
             node.verifyImport = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('kad-verify-import-request', { message }, [contactId, contact], callback);
+            };
+
+            node.sendVerifyImportResponse = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-verify-import-response', { message }, [contactId, contact], callback);
             };
         });
         // Define a global custom error handler rule

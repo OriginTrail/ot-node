@@ -721,21 +721,27 @@ class EventEmitter {
             const { epk, importId, encryptionKey } = request.params.message;
 
             // TODO: Add guard for fake replations.
-            const success = await dcService.verifyImport(
+            dcService.verifyImport(
                 epk,
                 importId, encryptionKey, kadWallet, request.contact[0],
             );
-            if (success) {
-                response.send({
-                    status: 'OK',
-                    message: 'Data successfully verified',
-                });
+            response.send({
+                status: 'OK',
+            });
+        });
+
+        this.globalEmitter.on('kad-verify-import-response', async (request, response) => {
+            logger.info('kad-verify-import-response');
+
+            const { status, import_id } = request.params.message;
+            if (status === 'success') {
+                logger.notify(`Key verification for import ${import_id} succeeded`);
             } else {
-                response.send({
-                    status: 'Failed',
-                    message: 'Verification failed',
-                });
+                logger.notify(`Key verification for import ${import_id} failed`);
             }
+            response.send({
+                status: 'OK',
+            });
         });
 
         this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {

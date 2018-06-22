@@ -28,6 +28,7 @@ class DCService {
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.network = ctx.network;
     }
 
     /**
@@ -114,18 +115,7 @@ class DCService {
                 offer.status = 'STARTED';
                 offer.save({ fields: ['status'] });
 
-                const finalizationCallback = () => {
-                    Models.offers.findOne({ where: { id: offer.id } }).then((offerModel) => {
-                        if (offerModel.status === 'STARTED') {
-                            this.log.warn('Event for finalizing offer hasn\'t arrived yet. Setting status to FAILED.');
-
-                            offer.status = 'FAILED';
-                            offer.save({ fields: ['status'] });
-                        }
-                    });
-                };
-
-                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, finalizationCallback, event => event.import_id === importId).then(() => {
+                this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then(() => {
                     this.log.trace('Started choosing phase.');
 
                     offer.status = 'FINALIZING';
@@ -278,8 +268,11 @@ class DCService {
                     kadWallet,
                     importId,
                 );
-                // TODO handle failed situation
-                return false;
+                this.network.kademlia().sendVerifyImportResponse({
+                    status: 'fail',
+                    import_id: importId,
+                }, nodeId);
+                return;
             }
             await this.blockchain.verifyEscrow(
                 importId,
@@ -288,7 +281,10 @@ class DCService {
             this.log.warn('Data successfully verified, preparing to start challenges');
             this.challenger.startChallenging();
 
-            return true;
+            this.network.kademlia().sendVerifyImportResponse({
+                status: 'success',
+                import_id: importId,
+            }, nodeId);
         });
     }
 }
