@@ -12,37 +12,50 @@ const fs = require('fs');
 const Utilities = require('../../modules/Utilities');
 const models = require('../../models');
 const Storage = require('../../modules/Storage');
-const DCService = require('../../modules/DCService')
+const DCService = require('../../modules/DCService');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
 process.removeAllListeners('uncaughtException');
 
-class MockEmitter {
-    constructor() {
-        this.events = [];
-    }
-
-    emit(eventName, data) {
-        this.events.push({ eventName, data });
-    }
-
-    getEvents() {
-        return this.events;
-    }
-}
-
-class MockGraphStorage {
-    findEdgesByImportId(importId) {
-        return [];
-    }
-
-    findVerticesByImportId(importId) {
-        return [];
-    }
-}
 
 describe('Protocol tests', () => {
+    class MockEmitter {
+        constructor() {
+            this.events = [];
+        }
+
+        emit(eventName, data) {
+            this.events.push({ eventName, data });
+        }
+
+        getEvents() {
+            return this.events;
+        }
+    }
+
+    class MockGraphStorage {
+        findEdgesByImportId(importId) {
+            return [];
+        }
+
+        findVerticesByImportId(importId) {
+            return [];
+        }
+    }
+
+    class TestNode {
+        constructor(identity, wallet, walletPrivateKey) {
+            this.identity = identity;
+            this.wallet = wallet;
+            this.walletPrivateKey = walletPrivateKey;
+        }
+
+        getIdentityExtended() {
+            return `0x${this.identity}000000000000000000000000`;
+        }
+    }
+
     const accountPrivateKeys = [
         '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
         '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -106,13 +119,11 @@ describe('Protocol tests', () => {
     const log = Utilities.getLogger();
     let container; // Created before each test and destroyed after.
 
-    function nodeWallet() {
-        return accounts[0];
-    }
+    const testNodes = [];
 
-    function identity() {
-        return 'd55b78943898105a0d1cddb140f8aeef6d81cfe0';
-    }
+    let testNode1;
+    let testNode2;
+    let testNode3;
 
     function deployTracTokenContract() {
         return tokenContract.deploy({
@@ -212,6 +223,14 @@ describe('Protocol tests', () => {
 
         accounts = await web3.eth.getAccounts();
 
+        testNodes.push(
+            new TestNode('d55b78943898105a0d1cddb140f8aeef6d81cfe0', accounts[0], accountPrivateKeys[0]),
+            new TestNode('f796e0c221ceef14a3cf9fbd8b995c2a0001fd7d', accounts[1], accountPrivateKeys[1]),
+            new TestNode('f8896b195f56040cbbb97f5c1d862a91e1dbc2b1', accounts[2], accountPrivateKeys[2]),
+        );
+
+        [testNode1, testNode2, testNode3] = testNodes;
+
         let compileResult = solc.compile({ sources: { 'TracToken.sol': tokenSource } }, 1);
         tokenContractData = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
         tokenContractAbi = JSON.parse(compileResult.contracts['TracToken.sol:TracToken'].interface);
@@ -267,12 +286,12 @@ describe('Protocol tests', () => {
     beforeEach('Register container and build objects', () => {
         // DCService depends on: blockchain, challenger, graphStorage and logger.
         const config = {
-            node_wallet: accounts[0],
-            identity: identity(),
+            node_wallet: testNode1.wallet,
+            identity: testNode1.identity,
             blockchain: {
                 blockchain_title: 'Ethereum',
-                wallet_address: accounts[0],
-                wallet_private_key: accountPrivateKeys[0],
+                wallet_address: testNode1.wallet,
+                wallet_private_key: testNode1.walletPrivateKey,
                 ot_contract_address: otFingerprintInstance._address,
                 token_contract_address: tokenInstance._address,
                 escrow_contract_address: escrowInstance._address,
@@ -281,7 +300,7 @@ describe('Protocol tests', () => {
                 gas_limit: 800000,
                 gas_price: 5000000000,
             },
-        }
+        };
 
         container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -310,21 +329,62 @@ describe('Protocol tests', () => {
 
     it('should successfully create profile', async () => {
         const blockchain = container.resolve('blockchain');
-        const emitter = container.resolve('emitter');
 
-        let profileInfo = await blockchain.getProfile(nodeWallet());
+        let profileInfo = await blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.false;
 
-        await blockchain.createProfile(identity(), 2, '1', '1', '100000');
+        await blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
 
-        profileInfo = await blockchain.getProfile(nodeWallet());
+        profileInfo = await blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.true;
 
-        // const event = await blockchain.subscribeToEvent('ProfileCreated', null, 5000, null, null);
+        const events = await biddingInstance.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
 
-        expect(emitter.getEvents()).to.have.lengthOf(1);
-        expect(emitter.getEvents()[0].eventName).to.equal('ProfileCreated');
-        expect(emitter.getEvents()[0].data).to.equal({ wallet: nodeWallet(), node_id: identity() });
+        expect(events).to.have.lengthOf(1);
+        expect(events[0].event).to.equal('ProfileCreated');
+        expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
+        expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
+    });
+
+    describe('DC replication', () => {
+        before('Create session profile', () => {
+            const blockchain = container.resolve('blockchain');
+            return blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
+        });
+
+        it('should initiate replication for happy path', async () => {
+            const dcService = container.resolve('dcService');
+
+            const vertices = [
+                {
+                    _id: 'ot_vertices/247d8e3809b448fe8f5b67495801e246',
+                    _key: '247d8e3809b448fe8f5b67495801e246',
+                    identifiers: {
+                        id: 'urn:epc:id:sgln:Building_2',
+                        uid: 'urn:epc:id:sgln:Building_2',
+                    },
+                    data: {
+                        category: 'Building _2b',
+                        description: 'Description of building _2b',
+                        object_class_id: 'Location',
+                    },
+                    private: {},
+                    vertex_type: 'LOCATION',
+                    sender_id: 'urn:ot:object:actor:id:Company_2',
+                    version: 1,
+                    imports: [],
+                },
+                {
+                    vertex_type: 'CLASS',
+                },
+            ];
+
+
+            // await dcService.createOffer('0x00', 'dafa', 100, vertices);
+        });
     });
 
     // it('should do something', async () => {
