@@ -358,7 +358,7 @@ class OTNode {
          * @param importtype - (GS1/WOT)
          */
         server.post('/api/import', (req, res) => {
-            log.important('Import request received!');
+            log.trace('POST Import request received.');
 
             if (!authorize(req, res)) {
                 return;
@@ -424,7 +424,7 @@ class OTNode {
         });
 
         server.post('/api/replication', (req, res) => {
-            log.important('Replication request received!');
+            log.trace('POST Replication request received.');
 
             if (!authorize(req, res)) {
                 return;
@@ -448,7 +448,7 @@ class OTNode {
         });
 
         server.get('/api/replication/:replication_id', (req, res) => {
-            log.trace('Replication status received');
+            log.trace('GET Replication status request received');
 
             if (!authorize(req, res)) {
                 return;
@@ -475,6 +475,7 @@ class OTNode {
          * @param QueryObject - ex. {uid: abc:123}
          */
         server.get('/api/trail', (req, res) => {
+            log.trace('GET Trail request received.');
             const queryObject = req.query;
             emitter.emit('trail', {
                 query: queryObject,
@@ -486,6 +487,7 @@ class OTNode {
          * @param Query params: dc_wallet, import_id
          */
         server.get('/api/fingerprint', (req, res) => {
+            log.trace('GET Fingerprint request received.');
             const queryObject = req.query;
             emitter.emit('get_root_hash', {
                 query: queryObject,
@@ -494,7 +496,7 @@ class OTNode {
         });
 
         server.get('/api/network/query_by_id', (req, res) => {
-            log.info('Query by ID received!');
+            log.trace('GET Query by ID received.');
 
             const queryObject = req.query;
             const query = [{
@@ -509,7 +511,7 @@ class OTNode {
         });
 
         server.get('/api/network/query/:query_param', (req, res) => {
-            log.info('GET Query received!');
+            log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
                 res.send({
                     status: 'FAIL',
@@ -524,7 +526,7 @@ class OTNode {
         });
 
         server.post('/api/network/query', (req, res) => {
-            log.important('POST Query received!');
+            log.trace('POST Query request received.');
 
             const { query } = req.body;
             emitter.emit('network-query', {
@@ -538,6 +540,7 @@ class OTNode {
          * @param queryObject
          */
         server.get('/api/query', (req, res) => {
+            log.trace('GET Query request received.');
             const queryObject = req.query;
             emitter.emit('query', {
                 query: queryObject,
