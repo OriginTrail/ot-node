@@ -207,61 +207,59 @@ class Network {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
         const peercachePlugin = this.node.peercache;
-        setTimeout(() => {
-            peercachePlugin.getBootstrapCandidates().then((peers) => {
-                const isBootstrap = bootstrapNodes.length === 0;
-                const nodes = _.uniq(bootstrapNodes.concat(peers));
+        peercachePlugin.getBootstrapCandidates().then((peers) => {
+            const isBootstrap = bootstrapNodes.length === 0;
+            const nodes = _.uniq(bootstrapNodes.concat(peers));
 
-                if (isBootstrap) {
-                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
-                    this.log.info(`Found additional ${peers.length} peers in peer cache`);
-                    this.log.info(`Trying to contact ${nodes.length} peers from peer cache`);
-                } else {
-                    this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
-                    this.log.info(`Found additional ${peers.length} peers in peer cache`);
-                    this.log.info(`Trying to join the network from ${nodes.length} unique seeds`);
-                }
+            if (isBootstrap) {
+                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
+                this.log.info(`Found additional ${peers.length} peers in peer cache`);
+                this.log.info(`Trying to contact ${nodes.length} peers from peer cache`);
+            } else {
+                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
+                this.log.info(`Found additional ${peers.length} peers in peer cache`);
+                this.log.info(`Trying to join the network from ${nodes.length} unique seeds`);
+            }
 
-                if (nodes.length === 0) {
-                    this.log.info('No bootstrap seeds provided and no known profiles');
-                    this.log.info('Running in seed mode (waiting for connections)');
+            if (nodes.length === 0) {
+                this.log.info('No bootstrap seeds provided and no known profiles');
+                this.log.info('Running in seed mode (waiting for connections)');
 
-                    this.node.router.events.once('add', (identity) => {
-                        config.NetworkBootstrapNodes = [
-                            kadence.utils.getContactURL([
-                                identity,
-                                this.node.router.getContactByNodeId(identity),
-                            ]),
-                        ];
-                        this._joinNetwork(callback, retryPeriod);
-                    });
-                    callback();
-                    return;
-                }
-
-                async.detectSeries(nodes, (url, done) => {
-                    const contact = kadence.utils.parseContactURL(url);
-                    this.node.join(contact, (err) => {
-                        done(null, (!err) && this.node.router.size >= 1);
-                    });
-                }, (err, result) => {
-                    if (result) {
-                        this.log.important('Joined the network');
-                        const contact = kadence.utils.parseContactURL(result);
-
-                        this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
-                        this.log.info(`Discovered ${this.node.router.size} peers from seed`);
-                        callback();
-                    } else if (!isBootstrap) {
-                        this.log.error(`Failed to join network, will retry in ${retryPeriod / 1000} seconds. Bootstrap nodes are probably not online.`);
-                        callback(new Error('Failed to join network'));
-                    } else {
-                        this.log.info('Bootstrap node couldn\'t contact peers from peer cache. Waiting for some peers.');
-                        callback();
-                    }
+                this.node.router.events.once('add', (identity) => {
+                    config.NetworkBootstrapNodes = [
+                        kadence.utils.getContactURL([
+                            identity,
+                            this.node.router.getContactByNodeId(identity),
+                        ]),
+                    ];
+                    this._joinNetwork(callback, retryPeriod);
                 });
+                callback();
+                return;
+            }
+
+            async.detectSeries(nodes, (url, done) => {
+                const contact = kadence.utils.parseContactURL(url);
+                this.node.join(contact, (err) => {
+                    done(null, (!err) && this.node.router.size >= 1);
+                });
+            }, (err, result) => {
+                if (result) {
+                    this.log.important('Joined the network');
+                    const contact = kadence.utils.parseContactURL(result);
+
+                    this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
+                    this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+                    callback();
+                } else if (!isBootstrap) {
+                    this.log.error(`Failed to join network, will retry in ${retryPeriod / 1000} seconds. Bootstrap nodes are probably not online.`);
+                    callback(new Error('Failed to join network'));
+                } else {
+                    this.log.info('Bootstrap node couldn\'t contact peers from peer cache. Waiting for some peers.');
+                    callback();
+                }
             });
-        }, 500); // this delay is needed because of the peercache
+        });
     }
 
     /**
