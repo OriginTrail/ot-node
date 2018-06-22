@@ -182,7 +182,7 @@ contract('Bidding testing', async (accounts) => {
         predetermined_node_id.push(node_id[2]);
 
         // Data holding parameters
-        const data_hash = await util.keccakSender({ from: accounts[predestined_first_bid_index]});
+        const data_hash = await util.keccakSender({ from: accounts[predestined_first_bid_index] });
 
         console.log(`\t Data hash: ${data_hash}`);
 
