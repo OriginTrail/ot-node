@@ -278,8 +278,11 @@ class DCService {
                     kadWallet,
                     importId,
                 );
-                // TODO handle failed situation
-                return false;
+                this.network.kademlia().sendVerifyImportResponse({
+                    status: 'fail',
+                    import_id: importId,
+                }, nodeId);
+                return;
             }
             await this.blockchain.verifyEscrow(
                 importId,
@@ -288,7 +291,10 @@ class DCService {
             this.log.warn('Data successfully verified, preparing to start challenges');
             this.challenger.startChallenging();
 
-            return true;
+            this.network.kademlia().sendVerifyImportResponse({
+                status: 'success',
+                import_id: importId,
+            }, nodeId);
         });
     }
 }
