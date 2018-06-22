@@ -528,6 +528,14 @@ class OTNode {
         server.post('/api/network/query', (req, res) => {
             log.trace('POST Query request received.');
 
+            if (req.body == null || req.body.query == null) {
+                res.status(400);
+                res.send({
+                    message: 'Bad request',
+                });
+                return;
+            }
+
             const { query } = req.body;
             emitter.emit('network-query', {
                 query,
@@ -544,6 +552,23 @@ class OTNode {
             const queryObject = req.query;
             emitter.emit('query', {
                 query: queryObject,
+                response: res,
+            });
+        });
+
+        server.post('/api/offer', (req, res) => {
+            log.trace('POST Select offer request received.');
+
+            if (req.body == null || req.body.offerId == null || req.body.replyId) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+            const { offerId, replyId } = req.body;
+
+            emitter.emit('choose-offer', {
+                offerId,
+                replyId,
                 response: res,
             });
         });

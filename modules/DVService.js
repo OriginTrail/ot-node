@@ -105,19 +105,22 @@ class DVService {
                 let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
-                    if (lowestOffer === null || price.lt(new BN(lowestOffer.data_price, 10))) {
+                    if (lowestOffer == null || price.lt(new BN(lowestOffer.data_price, 10))) {
                         lowestOffer = response.get({ plain: true });
                     }
                 });
 
-                if (lowestOffer === undefined) {
-                    this.log.info('Didn\'t find answer or no one replied.');
-                }
-
-                // Finish auction.
                 const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
-                networkQuery.status = 'PROCESSING';
-                await networkQuery.save({ fields: ['status'] });
+
+                if (!lowestOffer) {
+                    this.log.info('Didn\'t find answer or no one replied.');
+                    networkQuery.status = 'FINISHED';
+                    await networkQuery.save({ fields: ['status'] });
+                } else {
+                    // Finish auction.
+                    networkQuery.status = 'PROCESSING';
+                    await networkQuery.save({ fields: ['status'] });
+                }
 
                 resolve(lowestOffer);
             }, totalTime);
@@ -188,6 +191,8 @@ class DVService {
             stake_factor: message.stakeFactor,
             reply_id: message.replyId,
         });
+
+        // TODO: Fire socket notification for Houston
 
         if (!networkQueryResponse) {
             this.log.error(`Failed to add query response. ${message}.`);

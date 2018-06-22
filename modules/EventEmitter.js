@@ -106,14 +106,6 @@ class EventEmitter {
         });
 
         this.globalEmitter.on('network-query', (data) => {
-            const failFunction = (error) => {
-                logger.warn(error);
-                data.response.status(400);
-                data.response.send({
-                    message: 'Failed to handle query',
-                    data: [],
-                });
-            };
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -123,14 +115,44 @@ class EventEmitter {
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (offer) {
-                            dvService.handleReadOffer(offer).then(() => {
-                                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                            }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
+                            logger.info(`No offers for query ${queryId} handled.`);
                         } else {
-                            logger.info(`No offers for query ${offer.query_id} handled.`);
+                            logger.info(`Offers for query ${queryId} are collected`);
+                            // TODO: Fire socket event for Houston
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
+        });
+
+        this.globalEmitter.on('choose-offer', async (data) => {
+            const failFunction = (error) => {
+                logger.warn(error);
+                data.response.status(400);
+                data.response.send({
+                    message: 'Failed to handle query',
+                    data: [],
+                });
+            };
+            const { queryId, replyId } = data;
+
+            // TODO: Load offer reply from DB
+            const offer = await Models.network_query_responses.findOne({
+                where: {
+                    query_id: queryId,
+                    reply_id: replyId,
+                },
+            });
+
+            if (offer == null) {
+                data.response.status(400);
+                data.response.send({ message: 'Reply not found' });
+                return;
+            }
+
+            dvService.handleReadOffer(offer).then(() => {
+                logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+                data.response.send(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+            }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
         });
 
         this.globalEmitter.on('network-query-status', async (data) => {
