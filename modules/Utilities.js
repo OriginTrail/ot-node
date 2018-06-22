@@ -385,7 +385,7 @@ class Utilities {
     static getBalanceInEthers() {
         return new Promise((resolve, reject) => {
             this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
                 web3.eth.getBalance(config.wallet_address).then((result) => {
                     const balance = web3.utils.fromWei(result, 'ether');
                     resolve(balance);
@@ -405,7 +405,7 @@ class Utilities {
     static getAlphaTracTokenBalance() {
         return new Promise((resolve, reject) => {
             this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
                 const wallet_address_minus0x = (config.wallet_address).substring(2);
                 // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
                 var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
@@ -516,7 +516,7 @@ class Utilities {
     static getNodeNetworkType() {
         return new Promise((resolve, reject) => {
             this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
                 web3.eth.net.getNetworkType()
                     .then((result) => {
                         resolve(result);
@@ -576,11 +576,6 @@ class Utilities {
                         reject('Failed to contact DB');
                     }
                 }).catch((err) => {
-                    if (err.toString().indexOf('Error: Unauthorized') >= 0) {
-                        console.log('Please make sure arango credentils (usually root/root) are set correctly in .env');
-                    } else if (err.toString().indexOf('Error: connect ECONNREFUSED') >= 0) {
-                        console.log('Please make sure Arango server is actually running');
-                    }
                     reject(err);
                 });
         });
@@ -593,7 +588,7 @@ class Utilities {
     static getBlockNumberFromWeb3() {
         return new Promise((resolve, reject) => {
             this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
                 web3.eth.getBlockNumber()
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
