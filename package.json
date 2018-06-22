@@ -43,7 +43,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^3.4.0",
+    "@kadenceproject/kadence": "^3.4.1",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
@@ -75,6 +75,7 @@
     "libxml-xsd": "^0.5.2",
     "lodash": "^4.17.5",
     "md5": "^2.2.1",
+    "moment": "^2.22.2",
     "ms": "^2.1.1",
     "nedb": "^1.8.0",
     "neo4j-driver": "^1.5.0",

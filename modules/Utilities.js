@@ -1,6 +1,7 @@
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
+const moment = require('moment');
 const ipaddr = require('ipaddr.js');
 const winston = require('winston');
 const Storage = require('./Storage');
@@ -113,6 +114,12 @@ class Utilities {
         });
     }
 
+    formatFileLogs(args) {
+        const date = moment().format('D/MM/YYYY hh:mm:ss');
+        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
+        return msg;
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
@@ -149,7 +156,11 @@ class Utilities {
                         timestamp: false,
                         prettyPrint: object => JSON.stringify(object),
                     }),
-                    new (winston.transports.File)({ filename: 'node.log' }),
+                    new (winston.transports.File)({
+                        filename: 'node.log',
+                        json: false,
+                        formatter: this.formatFileLogs,
+                    }),
                 ],
             });
             winston.addColors(customColors);
