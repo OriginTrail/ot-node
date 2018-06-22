@@ -65,7 +65,7 @@ class RegisterNode {
             if (!env.NODE_WALLET) {
                 const account = await web3.eth.accounts.create();
                 env.NODE_WALLET = account.address;
-                env.NODE_PRIVATE_KEY = account.privateKey;
+                env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
                 env.NODE_IP = await this.getExternalIp();
                 env.DB_PASSWORD = 'root';
 
