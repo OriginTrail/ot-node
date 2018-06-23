@@ -65,35 +65,31 @@ class Ethereum {
      */
     async initialize(emitter) {
         try {
-            this.log.trace('Get ot contract address');
+            this.log.trace('Getting contracts from contract hub');
             this.otContractAddress = await this.hubContract.methods.fingerprintAddress().call();
             this.otContract = new this.web3.eth.Contract(
                 this.otContractAbi,
                 this.otContractAddress,
             );
 
-            this.log.trace('Get token contract address');
             this.tokenContractAddress = await this.hubContract.methods.tokenAddress().call();
             this.tokenContract = new this.web3.eth.Contract(
                 this.tokenContractAbi,
                 this.tokenContractAddress,
             );
 
-            this.log.trace('Get bidding contract address');
             this.biddingContractAddress = await this.hubContract.methods.biddingAddress().call();
             this.biddingContract = new this.web3.eth.Contract(
                 this.biddingContractAbi,
                 this.biddingContractAddress,
             );
 
-            this.log.trace('Get escrow contract address');
             this.escrowContractAddress = await this.hubContract.methods.escrowAddress().call();
             this.escrowContract = new this.web3.eth.Contract(
                 this.escrowContractAbi,
                 this.escrowContractAddress,
             );
 
-            this.log.trace('Get reading contract address');
             this.readingContractAddress = await this.hubContract.methods.readingAddress().call();
             this.readingContract = new this.web3.eth.Contract(
                 this.readingContractAbi,
