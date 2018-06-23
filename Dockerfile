@@ -18,14 +18,16 @@ RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 #Clone the project
-
 RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/docker
 RUN unzip docker -d . && rm docker && mv ot-node-docker ot-node
 
+COPY package.json /tmp/package.json
+RUN cd /tmp && npm install
+RUN cp -a /tmp/node_modules /ot-node
+
 WORKDIR /ot-node
 RUN mkdir keys data &> /dev/null
-RUN cp .env.example .env && npm install
-
+RUN cp .env.example .env
 
 EXPOSE 5278 80 443 5279 8900 8529 3000
-CMD ["/usr/bin/supervisord"]
+CMD ["/ot-node/testnet/start.sh"]
