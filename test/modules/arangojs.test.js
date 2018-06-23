@@ -27,7 +27,7 @@ let testDb;
 describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
         systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
+        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -638,7 +638,7 @@ describe('Arangojs module ', async () => {
 
     after('drop testDb db', async () => {
         systemDb = new Database();
-        systemDb.useBasicAuth('root', 'root');
+        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
         await systemDb.dropDatabase(myDatabaseName);
     });
 });
