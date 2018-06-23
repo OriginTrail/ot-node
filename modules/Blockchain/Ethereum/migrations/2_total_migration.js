@@ -29,7 +29,6 @@ const giveMeFingerprint = function giveMeFingerprint() {
     return fingerprint;
 };
 
-
 const giveMeEscrowHolder = async function giveMeEscrowHolder() {
     const escrow = EscrowHolder.deployed();
     return escrow;
@@ -209,9 +208,13 @@ module.exports = (deployer, network, accounts) => {
         break;
     // eslint-disable-next-line
     case 'rinkeby':
-        const tokenAddress = '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882';
-        const fingerprintAddress = '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d';
-        deployer.deploy(EscrowHolder, tokenAddress, { gas: 6000000 })
+        Hub.at('0xaf810f20e36de6dd64eb8fa2e8fac51d085c1de3')
+        .then(async (result) => {
+            const tokenAddress = await hub.tokenAddress.call();
+            const fingerprintAddress = await hub.fingerprintAddress.call();
+            token = await TracToken.at(tokenAddress);
+            fingerprint = await OTFingerprintStore.at(fingerprintAddress);
+            deployer.deploy(EscrowHolder, token.address, { gas: 6000000 })
         .then(() => giveMeEscrowHolder())
         .then(async (result) => {
             escrow = result;
@@ -255,6 +258,8 @@ module.exports = (deployer, network, accounts) => {
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
+        });
+        });
         });
         });
         });
