@@ -18,6 +18,7 @@ const BN = require('bn.js');
 var numberToBN = require('number-to-bn');
 
 require('dotenv').config();
+require('winston-loggly-bulk');
 
 
 class Utilities {
@@ -138,6 +139,29 @@ class Utilities {
         };
 
         try {
+            const transports =
+                [
+                    new (winston.transports.Console)({
+                        colorize: 'all',
+                        timestamp: false,
+                        prettyPrint: object => JSON.stringify(object),
+                    }),
+                    new (winston.transports.File)({
+                        filename: 'node.log',
+                        json: false,
+                        formatter: this.formatFileLogs,
+                    }),
+                ];
+
+            if (process.env.SEND_LOGS) {
+                transports.push(new (winston.transports.Loggly)({
+                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
+                    subdomain: 'origintrail.loggly.com',
+                    tags: ['OT-Node'],
+                    json: true,
+                }));
+            }
+
             const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
@@ -150,18 +174,7 @@ class Utilities {
                     notify: 5,
                     trace: 6,
                 },
-                transports: [
-                    new (winston.transports.Console)({
-                        colorize: 'all',
-                        timestamp: false,
-                        prettyPrint: object => JSON.stringify(object),
-                    }),
-                    new (winston.transports.File)({
-                        filename: 'node.log',
-                        json: false,
-                        formatter: this.formatFileLogs,
-                    }),
-                ],
+                transports,
             });
             winston.addColors(customColors);
 

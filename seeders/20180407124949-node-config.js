@@ -110,6 +110,10 @@ module.exports = {
         key: 'node_rpc_port',
         value: process.env.NODE_RPC_PORT,
     },
+    {
+        key: 'send_logs_to_origintrail',
+        value: process.env.SEND_LOGS,
+    },
     ], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),

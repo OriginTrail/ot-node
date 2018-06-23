@@ -326,8 +326,8 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(parseInt(config.node_rpc_port, 10), '0.0.0.0', () => {
-            log.notify(`${server.name} exposed at ${server.url}`);
+        server.listen(parseInt(config.node_rpc_port, 10), () => {
+            log.notify(`API exposed at port ${server.url}`);
         });
         this.exposeAPIRoutes(server, emitter);
     }

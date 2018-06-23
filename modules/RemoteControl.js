@@ -164,7 +164,7 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit();
+            process.exit(2);
         }, 5000);
     }
 
