@@ -546,9 +546,9 @@ class OTNode {
         server.get('/api/network/query/:query_param', (req, res) => {
             log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
+                res.status(400);
                 res.send({
-                    status: 'FAIL',
-                    error: 'Param required.',
+                    message: 'Param required.',
                 });
                 return;
             }
@@ -560,7 +560,13 @@ class OTNode {
 
         server.post('/api/network/query', (req, res) => {
             log.trace('POST Query request received.');
-
+            if (!req.body) {
+                res.status(400);
+                res.send({
+                    message: 'Body required.',
+                });
+                return;
+            }
             const { query } = req.body;
             emitter.emit('network-query', {
                 query,
