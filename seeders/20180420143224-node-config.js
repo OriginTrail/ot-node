@@ -19,7 +19,8 @@ module.exports = {
     },
     {
         key: 'remote_control_port',
-        value: process.env.NODE_REMOTE_CONTROL_PORT,
+        value: process.env.NODE_REMOTE_CONTROL_PORT ?
+            process.env.NODE_REMOTE_CONTROL_PORT : 3000,
     },
     {
         key: 'dh_stake_factor',

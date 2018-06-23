@@ -8,9 +8,11 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         event: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         data: {
+            allowNull: false,
             type: Sequelize.TEXT,
         },
         block: {

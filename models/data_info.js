@@ -4,7 +4,6 @@ module.exports = (sequelize, DataTypes) => {
         import_id: DataTypes.STRING,
         data_provider_wallet: DataTypes.STRING(42),
         total_documents: DataTypes.INTEGER,
-        total_data_blocks: DataTypes.INTEGER,
         root_hash: DataTypes.STRING(40),
         import_timestamp: DataTypes.DATE,
     }, {

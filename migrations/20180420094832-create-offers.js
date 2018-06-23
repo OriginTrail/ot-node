@@ -8,6 +8,7 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         import_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         total_escrow_time: {
