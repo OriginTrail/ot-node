@@ -24,12 +24,15 @@ class Ethereum {
             blockchainConfig.wallet_private_key,
         );
 
-        // Loading contracts
         this.hubContractAddress = blockchainConfig.hub_contract_address;
 
         // Hub contract data
         const hubContractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/hub-contract/abi.json');
         this.hubContractAbi = JSON.parse(hubContractAbiFile);
+        this.hubContract = new this.web3.eth.Contract(
+                this.hubContractAbi,
+                this.hubContractAddress,
+            );
 
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
@@ -63,7 +66,7 @@ class Ethereum {
     async initialize(emitter) {
         try {
             this.log.trace('Get ot contract address');
-            this.otContractAddress = await this.hubContract.methods.otAddress().call();
+            this.otContractAddress = await this.hubContract.methods.fingerprintAddress().call();
             this.otContract = new this.web3.eth.Contract(
                 this.otContractAbi,
                 this.otContractAddress,

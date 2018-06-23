@@ -61,22 +61,22 @@ contract ContractHub is Ownable{
 
      function setToken(address newTokenAddress)
      public onlyOwner{
-          Address = newAddress;
+          tokenAddress = newTokenAddress;
      }
 
      function setBidding(address newBiddingAddress)
      public onlyOwner{
-          Address = newAddress;
+       biddingAddress = newBiddingAddress;
      }
 
      function setEscrow(address newEscrowAddress)
      public onlyOwner{
-          Address = newAddress;
+          escrowAddress = newEscrowAddress;
      }
 
      function setReading(address newReadingAddress)
      public onlyOwner{
-          Address = newAddress;
+          readingAddress = newReadingAddress;
      }
      
 }

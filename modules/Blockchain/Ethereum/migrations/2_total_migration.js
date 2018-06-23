@@ -1,4 +1,6 @@
 /* eslint indent: 0 */
+var Hub = artifacts.require('ContractHub'); // eslint-disable-line no-undef
+
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var OTFingerprintStore = artifacts.require('OTFingerprintStore'); // eslint-disable-line no-undef
 
@@ -13,6 +15,10 @@ var MockReading = artifacts.require('MockReading'); // eslint-disable-line no-un
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
+const giveMeHub = async function giveMeHub() {
+    const hub = Hub.deployed();
+    return hub;
+};
 
 const giveMeTracToken = async function giveMeTracToken() {
     const token = TracToken.deployed();
@@ -54,6 +60,8 @@ const giveMeMockReading = async function giveMeMockReading() {
     const reading = MockReading.deployed();
     return reading;
 };
+
+var hub;
 
 var token;
 var escrow;
@@ -110,13 +118,19 @@ module.exports = (deployer, network, accounts) => {
             await token.mintMany(recepients, amounts, { from: accounts[0] })
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
-        .then(() => {
+        .then(async () => {
+            await deployer.deploy(Hub, fingerprint.address, token.address, bidding.address, escrow.address, reading.address)
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache:');
+            console.log(`\t Hub contract address: \t ${hub.address}`); // eslint-disable-line
             console.log(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
             console.log(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
             console.log(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
             console.log(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
             console.log(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
+        });
         });
         });
         });
@@ -168,12 +182,18 @@ module.exports = (deployer, network, accounts) => {
             await token.mintMany(recepients, amounts, { from: accounts[0] })
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
-        .then(() => {
+        .then(async () => {
+            await deployer.deploy(Hub, token.address, token.address, bidding.address, escrow.address, reading.address)
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache (for testing):');
+            console.log(`\t Hub contract address: \t ${hub.address}`);
             console.log(`\t Token contract address: \t ${token.address}`);
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
+        });
         });
         });
         });
@@ -223,8 +243,13 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             console.log('Transfering escrow ownership to bidding...');
             await escrow.transferOwnership(bidding.address)
-        .then(() => {
+        .then(async () => {
+            await deployer.deploy(Hub, fingerprintAddress, tokenAddress, bidding.address, escrow.address, reading.address)
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache:');
+            console.log(`\t Hub contract address: \t ${hub.result} (unchanged)`);
             console.log(`\t OT-fingerprint contract address: \t ${fingerprintAddress} (unchanged)`);
             console.log(`\t Token contract address: \t ${tokenAddress} (unchanged)`);
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
