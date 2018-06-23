@@ -356,7 +356,7 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
+        server.listen(parseInt(config.node_rpc_port, 10), '127.0.0.1', () => {
             log.notify(`API exposed at  ${server.url}`);
         });
         if (!Utilities.isBootstrapNode()) {

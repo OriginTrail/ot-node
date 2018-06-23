@@ -29,6 +29,8 @@ RUN cp -a /tmp/node_modules /ot-node
 WORKDIR /ot-node
 RUN mkdir keys data &> /dev/null
 RUN cp .env.example .env
+RUN rm testnet/start.sh
+COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
 EXPOSE 5278 80 443 5279 8900 8529 3000
