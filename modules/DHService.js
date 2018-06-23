@@ -317,29 +317,6 @@ class DHService {
     }
 
     async handleDataLocationRequest(message) {
-        /*
-            dataLocationRequestObject = {
-                message: {
-                    id: ID,
-                    wallet: DV_WALLET,
-                    nodeId: KAD_ID
-                    query: [
-                        {
-                                path: _path,
-                                value: _value,
-                                opcode: OPCODE
-                        },
-                        ...
-                    ]
-                }
-                messageSignature: {
-                    v: …,
-                    r: …,
-                    s: …
-                }
-             }
-         */
-
         // Check if mine publish.
         if (message.nodeId === this.config.identity &&
             message.wallet === this.config.node_wallet) {
@@ -379,27 +356,6 @@ class DHService {
             return;
         }
 
-        /*
-            dataLocationResponseObject = {
-                message: {
-                    id: ID,
-                    wallet: DH_WALLET,
-                    nodeId: KAD_ID,
-                    imports: [
-                                importId1,
-                                importId2
-                            ],
-                    dataSize: DATA_BYTE_SIZE,
-                    dataPrice: TOKEN_AMOUNT,
-                    stakeFactor: X
-                }
-                messageSignature: {
-                    c: …,
-                    r: …,
-                    s: …
-                }
-            }
-         */
         const wallet = this.config.node_wallet;
         const nodeId = this.config.identity;
         const dataSize = 500; // TODO
@@ -452,15 +408,11 @@ class DHService {
         );
     }
 
+    /**
+     * Handles date read request from Kademlia
+     * @return {Promise<void>}
+     */
     async handleDataReadRequest(message) {
-        /*
-                message: {
-                id: REPLY_ID
-                wallet: DH_WALLET,
-                nodeId: KAD_ID
-                }
-         */
-
         // TODO in order to avoid getting a different import.
         const { nodeId, wallet, id } = message;
 
@@ -527,23 +479,6 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            /*
-                dataReadResponseObject = {
-                    message: {
-                        id: REPLY_ID
-                        wallet: DH_WALLET,
-                        nodeId: KAD_ID
-                        agreementStatus: CONFIRMED/REJECTED,
-                        encryptedData: { … }
-                    },
-                    messageSignature: {
-                        c: …,
-                        r: …,
-                        s: …
-                   }
-                }
-             */
-
             const dataInfo = Models.data_info.find({ where: { import_id: importId } });
             const replyMessage = {
                 id,
@@ -576,8 +511,20 @@ class DHService {
             }, nodeId);
             return; // halt
         }
+        await this.listenPurchaseInititation(
+            importId, wallet, offer, networkReplyModel,
+            holdingData, nodeId, id,
+        );
+    }
 
-
+    /**
+     * Wait for purchase
+     * @return {Promise<void>}
+     */
+    async listenPurchaseInititation(
+        importId, wallet, offer,
+        networkReplyModel, holdingData, nodeId, messageId,
+    ) {
         // Wait for event from blockchain.
         await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
 
@@ -646,7 +593,7 @@ class DHService {
 
         // From smart contract:
         // keccak256(checksum_left, checksum_right, checksum_hash,
-        //          random_number_1, random_number_2, decryption_key, block_index);
+        //           random_number_1, random_number_2, decryption_key, block_index);
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
             [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, eHex, selectedBlockNumber],
@@ -677,7 +624,7 @@ class DHService {
         // Send data to DV.
         const encryptedPaddedKeyObject = {
             message: {
-                id,
+                messageId,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identifiers,
                 m1,
@@ -695,34 +642,25 @@ class DHService {
             this.config.node_private_key,
         );
 
-        // Monitor for litigation event. Just in case.
-        this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000).then(async (eventData) => {
-            if (!eventData) {
-                // Everything is ok.
-                this.log.info(`No litigation process initiated for purchase for ${importId}.`);
-                return;
-            }
-
-            await this.blockchain.sendProofData(
-                importId, wallet, m1Checksum,
-                m2Checksum, epkChecksumHash, r1, r2,
-                Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
-            );
-
-            // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
-            this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000).then(async (eventData) => {
-                if (eventData.proof_was_correct) {
-                    this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
-                } else {
-                    this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
-                }
-            });
-        });
+        await this.listenPurchaseDispute(
+            importId, wallet, m2Checksum,
+            epkChecksumHash, selectedBlockNumber,
+            m1Checksum, r1, r2, e,
+        );
 
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+        await this.listenPurchaseConfirmation(
+            importId, wallet, networkReplyModel,
+            selectedBlock, eHex,
+        );
+    }
 
+    /**
+     * Wait and process purchase confirmation
+     * @return {Promise<void>}
+     */
+    async listenPurchaseConfirmation(importId, wallet, networkReplyModel, selectedBlock, eHex) {
         const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
-
         if (!eventData) {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
@@ -732,7 +670,6 @@ class DHService {
         }
 
         this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
-
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
@@ -750,6 +687,36 @@ class DHService {
                 .then(() => this.log.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
                 .catch(error => this.log.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`));
         }, 5 * 60 * 1000);
+    }
+
+    /**
+     * Monitor for litigation event. Just in case.
+     * @return {Promise<void>}
+     */
+    async listenPurchaseDispute(
+        importId, wallet, m2Checksum, epkChecksumHash,
+        selectedBlockNumber, m1Checksum, r1, r2, e,
+    ) {
+        let eventData = await this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000);
+        if (!eventData) {
+            // Everything is ok.
+            this.log.info(`No litigation process initiated for purchase for ${importId}.`);
+            return;
+        }
+
+        await this.blockchain.sendProofData(
+            importId, wallet, m1Checksum,
+            m2Checksum, epkChecksumHash, r1, r2,
+            Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
+        );
+
+        // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
+        eventData = this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000);
+        if (eventData.proof_was_correct) {
+            this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
+        } else {
+            this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
+        }
     }
 
     /**
@@ -787,7 +754,6 @@ class DHService {
         const nodeHashBn = new BN(nodeHash, 16);
 
         let distance;
-
         if (dataHashBn.gt(nodeHashBn)) {
             distance = dataHashBn.sub(nodeHashBn);
         } else {
@@ -797,10 +763,7 @@ class DHService {
         console.log(distance.toString('hex'));
         console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
-        if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
-            return true;
-        }
-        return false;
+        return !!distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)));
     }
 
     /**

@@ -148,16 +148,16 @@ class EventEmitter {
                 data.response.send({ message: 'Reply not found' });
                 return;
             }
-
-            dvService.handleReadOffer(offer).then(() => {
+            try {
+                dvService.handleReadOffer(offer);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
                     message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
                 });
-            }).catch((err) => {
-                failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`);
-            });
+            } catch (e) {
+                failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`);
+            }
         });
 
         this.globalEmitter.on('network-query-status', async (data) => {
@@ -662,16 +662,7 @@ class EventEmitter {
                 status: 'OK',
                 message: 'Successfully noted. Data is being prepared and on the way.',
             });
-            try {
-                await dhService.handleDataReadRequest(message);
-            } catch (error) {
-                const errorMessage = `Failed to process data read request. ${error}.`;
-                logger.warn(errorMessage);
-                response.send({
-                    status: 'FAIL',
-                    message: errorMessage,
-                });
-            }
+            await dhService.handleDataReadRequest(message);
         });
 
         this.globalEmitter.on('kad-data-read-response', async (request, response) => {
@@ -695,20 +686,15 @@ class EventEmitter {
             }
 
             try {
+                // send notification immediately, don't block
+                response.send({
+                    status: 'RECEIVED',
+                });
                 await dvService.handleDataReadResponse(message);
             } catch (error) {
                 const errorMessage = `Failed to process data read response. ${error}.`;
                 logger.warn(errorMessage);
-                response.send({
-                    status: 'FAIL',
-                    message: errorMessage,
-                });
-                return;
             }
-            response.send({
-                status: 'OK',
-                message: 'Successfully imported data.',
-            });
         });
 
         this.globalEmitter.on('kad-send-encrypted-key', async (request, response) => {
@@ -727,21 +713,32 @@ class EventEmitter {
                 return;
             }
 
+            // send response immediately, don't block
+            response.send({
+                status: 'RECEIVED',
+            });
             try {
                 await dvService.handleEncryptedPaddedKey(message);
+                this.sendEncryptedKeyProcessResult({
+                    status: 'SUCCESS',
+                });
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
-                response.send({
+                this.sendEncryptedKeyProcessResult({
                     status: 'FAIL',
-                    message: errorMessage,
+                    message: error.message
                 });
-                return;
             }
-            response.send({
-                status: 'OK',
-                message: 'Verified data.',
-            });
+        });
+
+        this.globalEmitter.on('kad-encrypted-key-process-result', async (request, response) => {
+            const { status } = request.params.message;
+            if (status === 'SUCCESS') {
+                logger.info('DV successfully processed the encrypted key');
+            } else {
+                logger.info('DV failed to process the encrypted key');
+            }
         });
 
         this.globalEmitter.on('kad-verify-import-request', async (request, response) => {

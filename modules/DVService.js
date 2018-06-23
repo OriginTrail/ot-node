@@ -127,7 +127,7 @@ class DVService {
         });
     }
 
-    async handleReadOffer(offer) {
+    handleReadOffer(offer) {
         /*
             dataReadRequestObject = {
             message: {
@@ -160,6 +160,13 @@ class DVService {
         this.network.kademlia().dataReadRequest(
             dataReadRequestObject,
             offer.node_id,
+            (err) => {
+                if (err) {
+                    this.log.warn(`Data request failed. ${err}`);
+                } else {
+                    this.log.info('Data request sent.');
+                }
+            },
         );
     }
 
@@ -292,15 +299,15 @@ class DVService {
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
-            data_provider_wallet: '',
+            data_provider_wallet,
             import_timestamp: new Date(),
         });
 
         // Check if enough tokens. From smart contract:
         // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
         const stakeAmount =
-            new BN(networkQueryResponse.data_price)
-                .mul(new BN(networkQueryResponse.stake_factor));
+            new BN(networkQueryResponse.data_price).mul(new BN(networkQueryResponse.stake_factor));
+
         // Check for DH first.
         const dhBalance =
             new BN((await this.blockchain.getProfile(networkQueryResponse.wallet)).balance, 10);
@@ -394,8 +401,7 @@ class DVService {
             ).toString('hex'));
 
         // Get checksum from blockchain.
-        const purchaseData =
-            await this.blockchain.getPurchasedData(importId, wallet);
+        const purchaseData = await this.blockchain.getPurchasedData(importId, wallet);
 
         let testNumber = new BN(purchaseData.checksum, 10);
         const r1Bn = new BN(r1);

@@ -330,6 +330,11 @@ class Network {
             this.emitter.emit('kad-send-encrypted-key', request, response);
         });
 
+        this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
+            this.log.info('kad-encrypted-key-process-result received');
+            this.emitter.emit('kad-encrypted-key-process-result', request, response);
+        });
+
         this.node.use('kad-verify-import-request', (request, response, next) => {
             this.log.info('kad-verify-import-request received');
             this.emitter.emit('kad-verify-import-request', request, response);
@@ -480,6 +485,11 @@ class Network {
             node.sendEncryptedKey = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
                 node.send('kad-send-encrypted-key', { message }, [contactId, contact], callback);
+            };
+
+            node.sendEncryptedKeyProcessResult = (message, contactId, callback) => {
+                const contact = node.getContact(contactId);
+                node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], callback);
             };
 
             node.verifyImport = (message, contactId, callback) => {
