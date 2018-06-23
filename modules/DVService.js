@@ -75,7 +75,7 @@ class DVService {
             );
 
         this.network.kademlia().quasar.quasarPublish(
-            'data-location-request',
+            'kad-data-location-request',
             dataLocationRequestObject,
             {},
             async () => {

@@ -266,126 +266,125 @@ class Network {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        this.node.quasar.quasarSubscribe('data-location-request', (message, err) => {
+        this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
         });
 
-
-        // add payload-request route
-        this.node.use('payload-request', (request, response, next) => {
-            this.log.info('payload-request received');
-            this.emitter.emit('payload-request', request, response);
+        // async
+        this.node.use('kad-payload-request', (request, response, next) => {
+            this.log.info('kad-payload-request received');
+            this.emitter.emit('kad-payload-request', request, response);
             response.send({
-                status: 'OK',
+                status: 'RECEIVED',
             });
         });
 
-        // add payload-request error handler
-        this.node.use('payload-request', (err, request, response, next) => {
+        // async
+        this.node.use('kad-replication-request', (request, response, next) => {
+            this.log.info('kad-replication-request received');
+            this.emitter.emit('kad-replication-request', request, response);
             response.send({
-                error: 'payload-request error',
+                status: 'RECEIVED',
             });
         });
 
-        // add replication-request route
-        this.node.use('replication-request', (request, response, next) => {
-            this.log.info('replication-request received');
-            this.emitter.emit('replication-request', request, response);
-        });
-
-        // add replication-finished route
-        this.node.use('replication-finished', (request, response, next) => {
-            this.log.info('replication-finished received');
-            this.emitter.emit('replication-finished', request);
+        // async
+        this.node.use('kad-replication-finished', (request, response, next) => {
+            this.log.info('kad-replication-finished received');
+            this.emitter.emit('kad-replication-finished', request);
             response.send({
-                status: 'OK',
+                status: 'RECEIVED',
             });
         });
 
-        // add replication-finished error handler
-        this.node.use('replication-finished', (err, request, response, next) => {
-            response.send({
-                error: 'replication-finished error',
-            });
-        });
-
+        // async
         this.node.use('kad-data-location-response', (request, response, next) => {
             this.log.info('kad-data-location-response received');
             this.emitter.emit('kad-data-location-response', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-data-read-request', (request, response, next) => {
             this.log.info('kad-data-read-request received');
             this.emitter.emit('kad-data-read-request', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-data-read-response', (request, response, next) => {
             this.log.info('kad-data-read-response received');
             this.emitter.emit('kad-data-read-response', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-send-encrypted-key', (request, response, next) => {
             this.log.info('kad-send-encrypted-key received');
             this.emitter.emit('kad-send-encrypted-key', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
             this.log.info('kad-encrypted-key-process-result received');
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-verify-import-request', (request, response, next) => {
             this.log.info('kad-verify-import-request received');
             this.emitter.emit('kad-verify-import-request', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
+        // async
         this.node.use('kad-verify-import-response', (request, response, next) => {
             this.log.info('kad-verify-import-response received');
             this.emitter.emit('kad-verify-import-response', request, response);
+            response.send({
+                status: 'RECEIVED',
+            });
         });
 
-        // add challenge-request route
-        this.node.use('challenge-request', (request, response, next) => {
-            this.log.info('challenge-request received');
+        // sync
+        this.node.use('kad-challenge-request', (request, response, next) => {
+            this.log.info('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
         });
 
-        // add challenge-request error handler
-        this.node.use('challenge-request', (err, request, response, next) => {
+        // error handler
+        this.node.use('kad-challenge-request', (err, request, response, next) => {
             response.send({
-                error: 'challenge-request error',
+                error: 'kad-challenge-request error',
             });
         });
 
-        // TODO remove temp add bid route
-        this.node.use('add-bid', (request, response, next) => {
-            this.log.info('add-bid');
-            const { bid } = request.params.message;
-            [bid.dhId] = request.contact;
+        // error handler
+        this.node.use('kad-payload-request', (err, request, response, next) => {
             response.send({
-                status: 'OK',
+                error: 'kad-payload-request error',
             });
         });
 
-        // TODO remove temp add bid route
-        this.node.use('add-bid', (err, request, response, next) => {
-            this.log.error('add-bid failed');
+        // error handler
+        this.node.use('kad-replication-finished', (err, request, response, next) => {
             response.send({
-                error: 'add-bid error',
-            });
-        });
-
-        // add kad-bidding-won route
-        this.node.use('kad-bidding-won', (request, response, next) => {
-            this.log.info('kad-bidding-won received');
-            this.emitter.emit('kad-bidding-won', request, response);
-        });
-
-        // add kad-bidding-won error handler
-        this.node.use('kad-bidding-won', (err, request, response, next) => {
-            response.send({
-                error: 'kad-bidding-won error',
+                error: 'kad-replication-finished error',
             });
         });
 
@@ -405,66 +404,25 @@ class Network {
              */
             node.getContact = contactId => node.router.getContactByNodeId(contactId);
 
-            /**
-             * Sends payload request to DH
-             * @param message   Payload to be sent
-             * @param contactId  KADemlia contact ID to be sent to
-             * @param callback  Response/Error callback
-             */
             node.payloadRequest = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
-                node.send('payload-request', { message }, [contactId, contact], callback);
+                node.send('kad-payload-request', { message }, [contactId, contact], callback);
             };
 
-            /**
-             * Sends replication request to the DC
-             * @param message
-             * @param contactId KADemlia contact ID to be sent to
-             * @param callback
-             */
             node.replicationRequest = (message, contactId, callback) => {
                 // contactId = utilities.numberToHex(contactId).substring(2);
                 const contact = node.getContact(contactId);
-                node.send('replication-request', { message }, [contactId, contact], callback);
+                node.send('kad-replication-request', { message }, [contactId, contact], callback);
             };
 
-            /**
-             * Sends replication finished direct message
-             * @param message   Payload to be sent
-             * @param contactId KADemlia contact ID to be sent to
-             * @param callback  Response/Error callback
-             */
             node.replicationFinished = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
-                node.send('replication-finished', { message }, [contactId, contact], callback);
+                node.send('kad-replication-finished', { message }, [contactId, contact], callback);
             };
 
-            /**
-             * Sends challenge request direct message
-             * @param message   Payload to be sent
-             * @param contactId  KADemlia contact ID to be sent to
-             * @param callback  Response/Error callback
-             */
             node.challengeRequest = (message, contactId, callback) => {
                 const contact = node.getContact(contactId);
-                node.send('challenge-request', { message }, [contactId, contact], callback);
-            };
-
-            /**
-             * Sends add bid to DC
-             * TODO remove after SC intro
-             * @param message   Payload to be sent
-             * @param contactId  KADemlia contact ID to be sent to
-             * @param callback  Response/Error callback
-             */
-            node.addBid = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
-                node.send('add-bid', { message }, [contactId, contact], callback);
-            };
-
-            node.biddingWon = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
-                node.send('kad-bidding-won', { message }, [contactId, contact], callback);
+                node.send('kad-challenge-request', { message }, [contactId, contact], callback);
             };
 
             node.sendDataLocationResponse = (message, contactId, callback) => {

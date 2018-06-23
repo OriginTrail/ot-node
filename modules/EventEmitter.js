@@ -3,7 +3,6 @@ const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const config = require('./Config');
 const Models = require('../models');
-const Op = require('sequelize/lib/operators');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 
@@ -19,33 +18,43 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
-        this.globalEmitter = new events.EventEmitter();
+
+        this.apiEmitter = new events.EventEmitter();
+        this.kadEmitter = new events.EventEmitter();
+        this.blockchainEmitter = new events.EventEmitter();
     }
 
     /**
      * Initializes event listeners
      */
     initialize() {
+        this._initializeAPIEmitter();
+        this._initializeKadEmitter();
+        this._initializeBlockchainEmitter();
+    }
+
+    /**
+     * Initializes API related emitter
+     * @private
+     */
+    _initializeAPIEmitter() {
         const {
             dcService,
             dhService,
             dvService,
-            dataReplication,
             importer,
-            challenger,
             blockchain,
             product,
             logger,
-            graph,
         } = this.ctx;
 
-        this.globalEmitter.on('import-request', (data) => {
+        this.apiEmitter.on('import-request', (data) => {
             importer.importXML(data.filepath, (response) => {
                 // emit response
             });
         });
 
-        this.globalEmitter.on('trail', (data) => {
+        this.apiEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -62,7 +71,7 @@ class EventEmitter {
             });
         });
 
-        this.globalEmitter.on('query', (data) => {
+        this.apiEmitter.on('query', (data) => {
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -79,7 +88,7 @@ class EventEmitter {
             });
         });
 
-        this.globalEmitter.on('get_root_hash', (data) => {
+        this.apiEmitter.on('get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
                 data.response.status(400);
@@ -105,7 +114,7 @@ class EventEmitter {
             });
         });
 
-        this.globalEmitter.on('network-query', (data) => {
+        this.apiEmitter.on('network-query', (data) => {
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -124,7 +133,7 @@ class EventEmitter {
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
-        this.globalEmitter.on('choose-offer', async (data) => {
+        this.apiEmitter.on('choose-offer', async (data) => {
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
@@ -160,7 +169,7 @@ class EventEmitter {
             }
         });
 
-        this.globalEmitter.on('network-query-status', async (data) => {
+        this.apiEmitter.on('network-query-status', async (data) => {
             const { id, response } = data;
 
             const networkQuery = await Models.network_queries.find({ where: { id } });
@@ -204,7 +213,6 @@ class EventEmitter {
                 import_id,
                 root_hash,
                 total_documents,
-                vertices,
                 wallet,
             } = response;
 
@@ -237,7 +245,7 @@ class EventEmitter {
             }
         };
 
-        this.globalEmitter.on('offer-status', async (data) => {
+        this.apiEmitter.on('offer-status', async (data) => {
             const { external_id } = data;
             const offer = await dcService.getOffer(external_id);
             if (offer) {
@@ -254,7 +262,7 @@ class EventEmitter {
             }
         });
 
-        this.globalEmitter.on('create-offer', async (data) => {
+        this.apiEmitter.on('create-offer', async (data) => {
             const { import_id } = data;
 
             try {
@@ -289,7 +297,7 @@ class EventEmitter {
         });
 
 
-        this.globalEmitter.on('gs1-import-request', async (data) => {
+        this.apiEmitter.on('gs1-import-request', async (data) => {
             try {
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
@@ -305,7 +313,7 @@ class EventEmitter {
             }
         });
 
-        this.globalEmitter.on('wot-import-request', async (data) => {
+        this.apiEmitter.on('wot-import-request', async (data) => {
             try {
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
@@ -320,18 +328,188 @@ class EventEmitter {
                 await processImport(null, error, data);
             }
         });
+    }
 
-        this.globalEmitter.on('replication-request', async (request, response) => {
-            logger.trace('replication-request received');
+    /**
+     * Initializes blockchain related emitter
+     * @private
+     */
+    _initializeBlockchainEmitter() {
+        const {
+            dhService,
+            logger,
+        } = this.ctx;
+
+        this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
+            logger.info('eth-OfferCreated');
+
+            const {
+                import_id,
+                DC_node_id,
+                total_escrow_time_in_minutes,
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
+                min_reputation,
+                data_hash,
+                data_size_in_bytes,
+            } = eventData;
+
+            await dhService.handleOffer(
+                import_id,
+                DC_node_id,
+                total_escrow_time_in_minutes * 60000, // In ms.
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
+                min_reputation,
+                data_size_in_bytes,
+                data_hash,
+                false,
+            );
+        });
+
+        this.blockchainEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
+            logger.info('eth-AddedPredeterminedBid');
+
+            const {
+                import_id,
+                DH_wallet,
+                DH_node_id,
+                total_escrow_time_in_minutes,
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
+                data_size_in_bytes,
+            } = eventData;
+
+            if (DH_wallet !== config.node_wallet
+                || config.identity !== DH_node_id.substring(2, 42)) {
+                // Offer not for me.
+                return;
+            }
+
+            // TODO: This is a hack. DH doesn't know with whom to sign the offer.
+            // Try to dig it from events.
+            const createOfferEventEventModel = await Models.events.findOne({
+                where: {
+                    event: 'OfferCreated',
+                    import_id,
+                },
+            });
+
+            if (!createOfferEventEventModel) {
+                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
+                return;
+            }
+
+            try {
+                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
+                const createOfferEventData = JSON.parse(createOfferEvent.data);
+
+                await dhService.handleOffer(
+                    import_id,
+                    createOfferEventData.DC_node_id.substring(2, 42),
+                    total_escrow_time_in_minutes * 60000, // In ms.
+                    max_token_amount_per_DH,
+                    min_stake_amount_per_DH,
+                    createOfferEventData.min_reputation,
+                    data_size_in_bytes,
+                    createOfferEventData.data_hash,
+                    true,
+                );
+            } catch (error) {
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
+            }
+        });
+
+        this.blockchainEmitter.on('eth-offer-canceled', (event) => {
+            logger.info('eth-offer-canceled');
+        });
+
+        this.blockchainEmitter.on('eth-bid-taken', (event) => {
+            logger.info('eth-bid-taken');
+        });
+
+        this.blockchainEmitter.on('eth-LitigationInitiated', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                requested_data_index,
+            } = eventData;
+
+            try {
+                await dhService.litigationInitiated(
+                    import_id,
+                    DH_wallet,
+                    requested_data_index,
+                );
+            } catch (error) {
+                logger.error(`Failed to handle predetermined bid. ${error}.`);
+            }
+        });
+
+        this.blockchainEmitter.on('eth-LitigationCompleted', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+                DH_was_penalized,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // the node is DH
+                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
+            }
+        });
+    }
+
+    /**
+     * Initializes Kadence related emitter
+     * @private
+     */
+    _initializeKadEmitter() {
+        const {
+            dcService,
+            dhService,
+            dvService,
+            logger,
+            challenger,
+            dataReplication,
+        } = this.ctx;
+
+        this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
+            logger.info('kad-data-location-request received');
+
+            const { message, messageSignature } = kadMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                return;
+            }
+
+            try {
+                await dhService.handleDataLocationRequest(message);
+            } catch (error) {
+                const errorMessage = `Failed to process data location request. ${error}.`;
+                logger.warn(errorMessage);
+            }
+        });
+
+        // async
+        this.kadEmitter.on('kad-payload-request', async (request) => {
+            logger.trace(`kad-payload-request arrived from ${request.contact[0]}`);
+            await dhService.handleImport(request.params.message.payload);
+
+            // TODO: send fail in case of fail.
+        });
+
+        // sync
+        this.kadEmitter.on('kad-replication-request', async (request) => {
+            logger.trace('kad-replication-request received');
 
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
             const kadIdentity = request.contact[0];
 
             if (!import_id || !wallet) {
-                const errorMessage = 'Asked replication without providing import ID or wallet.';
-                logger.warn(errorMessage);
-                response.send({ status: 'fail', error: errorMessage });
+                logger.warn('Asked replication without providing import ID or wallet.');
                 return;
             }
 
@@ -349,9 +527,7 @@ class EventEmitter {
                 ],
             });
             if (!offerModel) {
-                const errorMessage = `Replication request for offer I don't know: ${import_id}.`;
-                logger.warn(errorMessage);
-                response.send({ status: 'fail', error: errorMessage });
+                logger.warn(`Replication request for offer I don't know: ${import_id}.`);
                 return;
             }
 
@@ -415,23 +591,17 @@ class EventEmitter {
             }).catch((error) => {
                 logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });
-
-            response.send({ status: 'success' });
         });
 
-        this.globalEmitter.on('payload-request', async (request) => {
-            logger.trace(`payload-request arrived from ${request.contact[0]}`);
-            await dhService.handleImport(request.params.message.payload);
-
-            // TODO doktor: send fail in case of fail.
-        });
-
-        this.globalEmitter.on('replication-finished', (status) => {
+        // async
+        this.kadEmitter.on('kad-replication-finished', () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
             challenger.startChallenging();
         });
 
-        this.globalEmitter.on('kad-challenge-request', (request, response) => {
+        // sync
+        // TODO this call should be refactored to be async
+        this.kadEmitter.on('kad-challenge-request', (request, response) => {
             logger.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
@@ -458,160 +628,13 @@ class EventEmitter {
             });
         });
 
-        /**
-         * Handles bidding-broadcast on the DH side
-         */
-        this.globalEmitter.on('kad-data-location-request', async (kadMessage) => {
-            logger.info('kad-data-location-request received');
-
-            const dataLocationRequestObject = kadMessage;
-            const { message, messageSignature } = dataLocationRequestObject;
-
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
-                return;
-            }
-
-            try {
-                await dhService.handleDataLocationRequest(message);
-            } catch (error) {
-                const errorMessage = `Failed to process data location request. ${error}.`;
-                logger.warn(errorMessage);
-            }
-        });
-
-        this.globalEmitter.on('offer-ended', (message) => {
-            const { scId } = message;
-
-            logger.info(`Offer ${scId} has ended.`);
-        });
-
-        this.globalEmitter.on('AddedBid', (message) => {
-
-        });
-
-        this.globalEmitter.on('kad-bidding-won', (message) => {
+        this.kadEmitter.on('kad-bidding-won', (message) => {
             logger.info('Wow I won bidding. Let\'s get into it.');
         });
 
-        this.globalEmitter.on('eth-OfferCreated', async (eventData) => {
-            logger.info('eth-OfferCreated');
-
-            const {
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
-                min_reputation,
-                data_hash,
-                data_size_in_bytes,
-            } = eventData;
-
-            await dhService.handleOffer(
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes * 60000, // In ms.
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
-                min_reputation,
-                data_size_in_bytes,
-                data_hash,
-                false,
-            );
-        });
-
-        this.globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
-            logger.info('eth-AddedPredeterminedBid');
-
-            const {
-                import_id,
-                DH_wallet,
-                DH_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
-                data_size_in_bytes,
-            } = eventData;
-
-            if (DH_wallet !== config.node_wallet
-                || config.identity !== DH_node_id.substring(2, 42)) {
-                // Offer not for me.
-                return;
-            }
-
-            // TODO: This is a hack. DH doesn't know with whom to sign the offer.
-            // Try to dig it from events.
-            const createOfferEventEventModel = await Models.events.findOne({
-                where: {
-                    event: 'OfferCreated',
-                    import_id,
-                },
-            });
-
-            if (!createOfferEventEventModel) {
-                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
-                return;
-            }
-
-            try {
-                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
-                const createOfferEventData = JSON.parse(createOfferEvent.data);
-
-                await dhService.handleOffer(
-                    import_id,
-                    createOfferEventData.DC_node_id.substring(2, 42),
-                    total_escrow_time_in_minutes * 60000, // In ms.
-                    max_token_amount_per_DH,
-                    min_stake_amount_per_DH,
-                    createOfferEventData.min_reputation,
-                    data_size_in_bytes,
-                    createOfferEventData.data_hash,
-                    true,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-            }
-        });
-
-        this.globalEmitter.on('eth-offer-canceled', (event) => {
-            logger.info('eth-offer-canceled');
-        });
-
-        this.globalEmitter.on('eth-bid-taken', (event) => {
-            logger.info('eth-bid-taken');
-
-            const {
-                DC_wallet,
-                DC_node_id,
-                import_id,
-                total_escrow_time,
-                min_stake_amount,
-                data_size,
-            } = event.returnValues;
-        });
-
-        this.globalEmitter.on('kad-data-location-response', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-data-location-response', async (request) => {
             logger.info('kad-data-location-response');
-
-            /*
-                dataLocationResponseObject = {
-                    message: {
-                        wallet: DH_WALLET,
-                        nodeId: KAD_ID,
-                        imports: [
-                                     importId: …
-                                ],
-                        dataSize: DATA_BYTE_SIZE,
-                        stakeFactor: X
-                    }
-                    messageSignature: {
-                        c: …,
-                        r: …,
-                        s: …
-                    }
-                }
-             */
             try {
                 const dataLocationResponseObject = request.params.message;
                 const { message, messageSignature } = dataLocationResponseObject;
@@ -619,30 +642,17 @@ class EventEmitter {
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                     const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
                     logger.warn(returnMessage);
-                    response.send({
-                        status: 'FAIL',
-                        message: returnMessage,
-                    });
                     return;
                 }
 
                 await dvService.handleDataLocationResponse(message);
             } catch (error) {
                 logger.error(`Failed to process location response. ${error}.`);
-                response.send({
-                    status: 'FAIL',
-                    message: error,
-                });
-                return;
             }
-
-            response.send({
-                status: 'OK',
-                message: 'Location response successfully noted.',
-            });
         });
 
-        this.globalEmitter.on('kad-data-read-request', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-data-read-request', async (request) => {
             logger.info('kad-data-read-request');
 
             const dataReadRequestObject = request.params.message;
@@ -651,21 +661,13 @@ class EventEmitter {
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
                 logger.warn(returnMessage);
-                response.send({
-                    status: 'FAIL',
-                    message: returnMessage,
-                });
                 return;
             }
-            // send response immediately, don't block
-            response.send({
-                status: 'OK',
-                message: 'Successfully noted. Data is being prepared and on the way.',
-            });
             await dhService.handleDataReadRequest(message);
         });
 
-        this.globalEmitter.on('kad-data-read-response', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-data-read-response', async (request) => {
             logger.info('kad-data-read-response');
 
             if (request.params.status === 'FAIL') {
@@ -676,47 +678,29 @@ class EventEmitter {
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                logger.warn(returnMessage);
-                response.send({
-                    status: 'FAIL',
-                    message: returnMessage,
-                });
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
                 return;
             }
 
             try {
-                // send notification immediately, don't block
-                response.send({
-                    status: 'RECEIVED',
-                });
                 await dvService.handleDataReadResponse(message);
             } catch (error) {
-                const errorMessage = `Failed to process data read response. ${error}.`;
-                logger.warn(errorMessage);
+                logger.warn(`Failed to process data read response. ${error}.`);
             }
         });
 
-        this.globalEmitter.on('kad-send-encrypted-key', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-send-encrypted-key', async (request) => {
             logger.info('kad-send-encrypted-key');
 
             const encryptedPaddedKeyObject = request.params.message;
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                logger.warn(returnMessage);
-                response.send({
-                    status: 'FAIL',
-                    message: returnMessage,
-                });
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
                 return;
             }
 
-            // send response immediately, don't block
-            response.send({
-                status: 'RECEIVED',
-            });
             try {
                 await dvService.handleEncryptedPaddedKey(message);
                 this.sendEncryptedKeyProcessResult({
@@ -727,12 +711,13 @@ class EventEmitter {
                 logger.warn(errorMessage);
                 this.sendEncryptedKeyProcessResult({
                     status: 'FAIL',
-                    message: error.message
+                    message: error.message,
                 });
             }
         });
 
-        this.globalEmitter.on('kad-encrypted-key-process-result', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-encrypted-key-process-result', async (request) => {
             const { status } = request.params.message;
             if (status === 'SUCCESS') {
                 logger.info('DV successfully processed the encrypted key');
@@ -741,7 +726,8 @@ class EventEmitter {
             }
         });
 
-        this.globalEmitter.on('kad-verify-import-request', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-verify-import-request', async (request) => {
             logger.info('kad-verify-import-request');
 
             const { wallet: kadWallet } = request.contact[1];
@@ -752,12 +738,10 @@ class EventEmitter {
                 epk,
                 importId, encryptionKey, kadWallet, request.contact[0],
             );
-            response.send({
-                status: 'OK',
-            });
         });
 
-        this.globalEmitter.on('kad-verify-import-response', async (request, response) => {
+        // async
+        this.kadEmitter.on('kad-verify-import-response', async (request) => {
             logger.info('kad-verify-import-response');
 
             const { status, import_id } = request.params.message;
@@ -766,45 +750,20 @@ class EventEmitter {
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
             }
-            response.send({
-                status: 'OK',
-            });
-        });
-
-        this.globalEmitter.on('eth-LitigationInitiated', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                requested_data_index,
-            } = eventData;
-
-            try {
-                await dhService.litigationInitiated(
-                    import_id,
-                    DH_wallet,
-                    requested_data_index,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-            }
-        });
-
-        this.globalEmitter.on('eth-LitigationCompleted', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-                DH_was_penalized,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // the node is DH
-                logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
-            }
         });
     }
 
+    /**
+     * Emits event via appropriate event emitter
+     */
     emit(event, ...args) {
-        this.globalEmitter.emit(event, ...args);
+        if (event.startsWith('eth-')) {
+            this.blockchainEmitter.emit(event, ...args);
+        } else if (event.startsWith('kad-')) {
+            this.kadEmitter.emit(event, ...args);
+        } else {
+            this.apiEmitter.emit(event, ...args);
+        }
     }
 }
 
