@@ -20,7 +20,7 @@ COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 #Clone the project
 
 RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/docker
-RUN unzip develop -d . && rm develop && mv ot-node-develop ot-node
+RUN unzip docker -d . && rm docker && mv ot-node-docker ot-node
 
 WORKDIR /ot-node
 RUN mkdir keys data &> /dev/null
