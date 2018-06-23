@@ -848,6 +848,18 @@ class Utilities {
 
         return new Array(digitCount - hex.length).join('0') + hex;
     }
+
+    /**
+     * Is node a bootstrap node
+     * @return {boolean}
+     */
+    static isBootstrapNode() {
+        const bootstrapNodes = config.network_bootstrap_nodes;
+        if (bootstrapNodes) {
+            return bootstrapNodes.length === 0;
+        }
+        return true;
+    }
 }
 
 module.exports = Utilities;

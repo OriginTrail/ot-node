@@ -177,7 +177,6 @@ class EventEmitter {
                 import_id,
                 root_hash,
                 total_documents,
-                vertices,
                 wallet,
             } = response;
 
