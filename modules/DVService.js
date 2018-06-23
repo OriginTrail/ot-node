@@ -456,7 +456,7 @@ class DVService {
 
             try {
                 const publicKey = Encryption.unpackEPK(epk);
-                const holdingData = await Models.holding_data.create({
+                await Models.holding_data.create({
                     id: importId,
                     source_wallet: wallet,
                     data_public_key: publicKey,

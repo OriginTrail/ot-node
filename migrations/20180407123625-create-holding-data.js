@@ -12,11 +12,11 @@ module.exports = {
             type: Sequelize.STRING,
         },
         data_public_key: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         distribution_public_key: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         distribution_private_key: {
