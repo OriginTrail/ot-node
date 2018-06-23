@@ -560,7 +560,13 @@ class OTNode {
 
         server.post('/api/network/query', (req, res) => {
             log.trace('POST Query request received.');
-
+            if (!req.body) {
+                res.send({
+                    status: 'FAIL',
+                    error: 'Body required.',
+                });
+                return;
+            }
             const { query } = req.body;
             emitter.emit('network-query', {
                 query,
