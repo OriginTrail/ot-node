@@ -37,19 +37,23 @@ paths:
       - import
       summary: Import new GS1/WOT data
       # operationId: import
+      description: |
+        Find out more about XML data structure
+        * https://github.com/OriginTrail/ot-node/wiki/Data-Structure-Guidelines
+
       parameters: 
       - name: importfile
         in: body
-        description: "xml/json file that needs to be imported"
+        description: "path to xml/json file that needs to be imported"
         required: true
         schema:
-            $ref: '#/definitions/Import'
+            $ref: '#/definitions/importfileExample'
       - name: importtype
         in: body
         description: "GS1 or WOT"
         required: true
         schema:
-            $ref: '#/definitions/ApiResponse'
+            $ref: '#/definitions/importtypeExample'
       responses:
         '201':
           schema:
@@ -62,7 +66,7 @@ paths:
             type: object
             example:
               message: 'Invalid import type'
-          description: "Invalid import parameters."
+          description: "Invalid import parameters (importfile/importtype)"
 
   /replication:
     post:
@@ -156,7 +160,7 @@ paths:
       tags:
       - read
       summary: Makes a network query
-      operationId: network-query-status
+      operationId: network-query-
       produces:
         - application/json
       parameters:
@@ -218,42 +222,17 @@ paths:
   
 
 definitions:
-  Import:
-    type: object
-    required:
-    - name
-    - photoUrls
-    properties:
-      id:
-        type: integer
-        format: int64
-      name:
-        type: string
-        example: doggie
-      photoUrls:
-        type: array
-        xml:
-          name: photoUrl
-          wrapped: true
-        items:
-          type: string
-      status:
-        type: string
-        description: pet status in the store
-        enum:
-        - available
-        - pending
-        - sold
-    xml:
-      name: Pet
-  ApiResponse:
+  importfileExample:
     type: object
     properties:
-      code:
-        type: integer
-        format: int32
-      type:
+      importfile:
         type: string
-      message:
+        example: 'importfile=@/ot-node/test/modules/test_xml/GraphExample_4.xml'
+  importtypeExample:
+    type: object
+    properties:
+      importtype:
         type: string
+        example: 'GS1'
+
 
