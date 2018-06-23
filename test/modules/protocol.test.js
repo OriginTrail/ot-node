@@ -62,6 +62,18 @@ describe('Protocol tests', () => {
         getIdentityExtended() {
             return `0x${this.identity}000000000000000000000000`;
         }
+
+        get blockchain() {
+            return this.container.resolve('blockchain');
+        }
+
+        get dcService() {
+            return this.container.resolve('dcService');
+        }
+
+        get graphStorage() {
+            return this.container.resolve('graphStorage');
+        }
     }
 
     const accountPrivateKeys = [
@@ -91,7 +103,7 @@ describe('Protocol tests', () => {
             { secretKey: `0x${accountPrivateKeys[9]}`, balance: Web3.utils.toWei('100', 'ether') },
         ],
     });
-    const web3 = new Web3(ganacheProvider);
+    const web3 = new Web3(ganacheProvider); // Used for deployment and is bound to accounts[0].
     let accounts;
     let tokenContractData;
     let tokenContractAbi;
@@ -125,10 +137,7 @@ describe('Protocol tests', () => {
     const otFingerprintSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol', 'utf8');
 
     const log = Utilities.getLogger();
-    let container; // Created before each test and destroyed after.
-
     const testNodes = [];
-
     let testNode1;
     let testNode2;
     let testNode3;
@@ -298,57 +307,87 @@ describe('Protocol tests', () => {
 
     beforeEach('Register container and build objects', () => {
         // DCService depends on: blockchain, challenger, graphStorage and logger.
-        const config = {
-            node_wallet: testNode1.wallet,
-            identity: testNode1.identity,
-            blockchain: {
-                blockchain_title: 'Ethereum',
-                wallet_address: testNode1.wallet,
-                wallet_private_key: testNode1.walletPrivateKey,
-                ot_contract_address: otFingerprintInstance._address,
-                token_contract_address: tokenInstance._address,
-                escrow_contract_address: escrowInstance._address,
-                bidding_contract_address: biddingInstance._address,
-                reading_contract_address: readingInstance._address,
-                gas_limit: 800000,
-                gas_price: 5000000000,
-            },
-        };
 
-        container = awilix.createContainer({
-            injectionMode: awilix.InjectionMode.PROXY,
-        });
+        testNodes.forEach((testNode) => {
+            const config = {
+                node_wallet: testNode.wallet,
+                identity: testNode.identity,
+                blockchain: {
+                    blockchain_title: 'Ethereum',
+                    wallet_address: testNode.wallet,
+                    wallet_private_key: testNode.walletPrivateKey,
+                    ot_contract_address: otFingerprintInstance._address,
+                    token_contract_address: tokenInstance._address,
+                    escrow_contract_address: escrowInstance._address,
+                    bidding_contract_address: biddingInstance._address,
+                    reading_contract_address: readingInstance._address,
+                    gas_limit: 800000,
+                    gas_price: 5000000000,
+                },
+            };
 
-        container.register({
-            emitter: awilix.asValue(new MockEmitter()),
-            config: awilix.asValue(config),
-            web3: awilix.asValue(web3),
-            blockchain: awilix.asClass(Blockchain).singleton(),
-            graphStorage: awilix.asValue(new MockGraphStorage()),
-            challenger: awilix.asValue({ startChallenging: () => { log.info('start challenging.'); } }),
-            logger: awilix.asValue(log),
-            dcService: awilix.asClass(DCService),
+            const nodeWeb3 = new Web3(ganacheProvider);
+
+            const container = awilix.createContainer({
+                injectionMode: awilix.InjectionMode.PROXY,
+            });
+
+            container.register({
+                emitter: awilix.asValue(new MockEmitter()),
+                config: awilix.asValue(config),
+                web3: awilix.asValue(nodeWeb3),
+                blockchain: awilix.asClass(Blockchain).singleton(),
+                graphStorage: awilix.asValue(new MockGraphStorage()),
+                challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
+                logger: awilix.asValue(log),
+                dcService: awilix.asClass(DCService),
+            });
+
+            const blockchain = container.resolve('blockchain');
+            const dcService = container.resolve('dcService');
+
+            // Set event listener
+            function listenBlockchainEvents() {
+                const delay = 10000;
+                let working = false;
+                let deadline = Date.now();
+                return setInterval(() => {
+                    if (!working && Date.now() > deadline) {
+                        working = true;
+                        blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                        blockchain.getAllPastEvents('READING_CONTRACT');
+                        blockchain.getAllPastEvents('ESCROW_CONTRACT');
+                        deadline = Date.now() + delay;
+                        working = false;
+                    }
+                }, 500);
+            }
+
+            testNode.container = container;
+            testNode.eventListener = listenBlockchainEvents();
         });
-        const blockchain = container.resolve('blockchain');
-        const dcService = container.resolve('dcService');
     });
 
     afterEach('Unregister container', async () => {
-        if (container) {
-            await container.dispose();
-            container = undefined;
-        }
+        testNodes.forEach((testNode) => {
+            if (testNode.container) {
+                testNode.container.dispose(); // Promise.
+                testNode.container = undefined;
+            }
+
+            if (testNode.eventListener) {
+                clearInterval(testNode.eventListener);
+            }
+        });
     });
 
     it('should successfully create profile', async () => {
-        const blockchain = container.resolve('blockchain');
-
-        let profileInfo = await blockchain.getProfile(testNode1.wallet);
+        let profileInfo = await testNode1.blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.false;
 
-        await blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
+        await testNode1.blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
 
-        profileInfo = await blockchain.getProfile(testNode1.wallet);
+        profileInfo = await testNode1.blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.true;
 
         const events = await biddingInstance.getPastEvents('allEvents', {
@@ -405,13 +444,14 @@ describe('Protocol tests', () => {
         let rootHash;
         let mockGraphStorage;
 
-        beforeEach('Create session profile', () => {
-            const blockchain = container.resolve('blockchain');
-            return blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000');
-        });
+        beforeEach('Create session profiles', () =>
+            Promise.all([
+                testNode1.blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000'),
+                testNode2.blockchain.createProfile(testNode2.identity, 2, '1', '1', '100000'),
+            ]));
 
         beforeEach('Create one import', async () => {
-            mockGraphStorage = container.resolve('graphStorage')
+            mockGraphStorage = testNode1.graphStorage;
             importId = Utilities.createImportId();
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
@@ -421,8 +461,10 @@ describe('Protocol tests', () => {
         });
 
 
-        it('should initiate replication for happy path', async () => {
-            const dcService = container.resolve('dcService');
+        it('should initiate replication for happy path and without predetermined bidders', async () => {
+            const dcService = testNode1.dcService;
+            const blockchain = testNode1.blockchain;
+
             const offerExternalId =
                 await dcService.createOffer(importId, rootHash, 1, vertices);
 
@@ -435,9 +477,31 @@ describe('Protocol tests', () => {
                 data_hash: rootHash,
                 dh_wallets: '[]',
                 dh_ids: '[]',
-                status: 'STARTED',
+                status: 'PENDING',
                 external_id: offerExternalId,
             });
+
+            await blockchain.subscribeToEvent('OfferCreated', importId, 1000);
+
+            // Send one bid.
+            testNode2.blockchain.addBid(importId, testNode2.identity);
+
+            await blockchain.subscribeToEvent('FinalizeOfferReady', importId, 1000);
+
+            // Check for events in the contract.
+            const events = await biddingInstance.getPastEvents('allEvents', {
+                fromBlock: 0,
+                toBlock: 'latest',
+            });
+
+            expect(events).to.be.an('arrary').that.includes({ event: 'FinalizeOfferReady', import_id: importId });
+
+            // expect(events).to.have.lengthOf(1);
+            // expect(events[0].event).to.equal('ProfileCreated');
+            // expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
+            // expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
+
+
         });
     });
 
