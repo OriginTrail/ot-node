@@ -559,16 +559,16 @@ class OTNode {
         server.post('/api/offer', (req, res) => {
             log.trace('POST Select offer request received.');
 
-            if (req.body == null || req.body.offerId == null || req.body.replyId) {
+            if (req.body == null || req.body.query_id == null || req.body.reply_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
                 return;
             }
-            const { offerId, replyId } = req.body;
+            const { query_id, reply_id } = req.body;
 
             emitter.emit('choose-offer', {
-                offerId,
-                replyId,
+                query_id,
+                reply_id,
                 response: res,
             });
         });

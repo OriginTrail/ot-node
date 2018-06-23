@@ -114,7 +114,7 @@ class EventEmitter {
                         data: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
-                        if (offer) {
+                        if (!offer) {
                             logger.info(`No offers for query ${queryId} handled.`);
                         } else {
                             logger.info(`Offers for query ${queryId} are collected`);
@@ -133,13 +133,13 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { queryId, replyId } = data;
+            const { query_id, reply_id } = data;
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
                 where: {
-                    query_id: queryId,
-                    reply_id: replyId,
+                    query_id,
+                    reply_id,
                 },
             });
 
@@ -151,8 +151,13 @@ class EventEmitter {
 
             dvService.handleReadOffer(offer).then(() => {
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-                data.response.send(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
-            }).catch(err => failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`));
+                data.response.status(200);
+                data.response.send({
+                    message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
+                });
+            }).catch((err) => {
+                failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${err}.`);
+            });
         });
 
         this.globalEmitter.on('network-query-status', async (data) => {
@@ -652,7 +657,11 @@ class EventEmitter {
                 });
                 return;
             }
-
+            // send response immediately, don't block
+            response.send({
+                status: 'OK',
+                message: 'Successfully noted. Data is being prepared and on the way.',
+            });
             try {
                 await dhService.handleDataReadRequest(message);
             } catch (error) {
@@ -662,17 +671,16 @@ class EventEmitter {
                     status: 'FAIL',
                     message: errorMessage,
                 });
-                return;
             }
-            response.send({
-                status: 'OK',
-                message: 'Successfully noted. Data is being prepared and on the way.',
-            });
         });
 
         this.globalEmitter.on('kad-data-read-response', async (request, response) => {
             logger.info('kad-data-read-response');
 
+            if (request.params.status === 'FAIL') {
+                logger.warn(`Failed to send data-read-request. ${request.params.message}`);
+                return;
+            }
             const dataReadResponseObject = request.params.message;
             const { message, messageSignature } = dataReadResponseObject;
 

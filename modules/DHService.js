@@ -454,113 +454,129 @@ class DHService {
 
     async handleDataReadRequest(message) {
         /*
-        message: {
-            id: REPLY_ID
-            wallet: DH_WALLET,
-            nodeId: KAD_ID
-        }
-        */
-
-        // TODO in order to avoid getting a different import.
-
-        const { nodeId, wallet, id } = message;
-
-        // Check is it mine offer.
-        const networkReplyModel = await Models.network_replies.find({ where: { id } });
-
-        if (!networkReplyModel) {
-            throw Error(`Couldn't find reply with ID ${id}.`);
-        }
-
-        const offer = networkReplyModel.data;
-
-        if (networkReplyModel.receiver_wallet !== wallet && networkReplyModel.receiver_identity) {
-            throw Error('Sorry not your read request');
-        }
-
-        // TODO: Only one import ID used. Later we'll support replication from multiple imports.
-        const importId = offer.imports[0];
-
-        const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-        const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
-
-        const values = await Promise.all([verticesPromise, edgesPromise]);
-        const vertices = values[0];
-        const edges = values[1];
-
-        // Get replication key and then encrypt data.
-        const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
-
-        if (!holdingDataModel) {
-            throw Error(`Didn't find import with ID. ${importId}`);
-        }
-
-        const holdingData = holdingDataModel.get({ plain: true });
-        const dataPublicKey = holdingData.data_public_key;
-        const replicationPrivateKey = holdingData.distribution_private_key;
-
-        Graph.decryptVertices(
-            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-            dataPublicKey,
-        );
-
-        Graph.encryptVertices(
-            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-            replicationPrivateKey,
-        );
-
-        // Make sure we have enough token balance before DV makes a purchase.
-        // From smart contract:
-        // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
-        const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
-        const profileBalance =
-            new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
-
-        if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
-        }
-
-        /*
-            dataReadResponseObject = {
                 message: {
-                    id: REPLY_ID
-                    wallet: DH_WALLET,
-                    nodeId: KAD_ID
-                    agreementStatus: CONFIRMED/REJECTED,
-                    encryptedData: { … }
-                },
-                messageSignature: {
-                    c: …,
-                    r: …,
-                    s: …
-               }
-            }
+                id: REPLY_ID
+                wallet: DH_WALLET,
+                nodeId: KAD_ID
+                }
          */
 
-        const dataInfo = Models.data_info.find({ where: { import_id: importId } });
-        const replyMessage = {
-            id,
-            wallet: this.config.node_wallet,
-            data_provider_wallet: dataInfo.data_provider_wallet,
-            nodeId: this.config.identity,
-            agreementStatus: 'CONFIRMED',
-            encryptedData: {
-                vertices,
-                edges,
-            },
-            importId, // TODO: Temporal. Remove it.
-        };
-        const dataReadResponseObject = {
-            message: replyMessage,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(replyMessage),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
+        // TODO in order to avoid getting a different import.
+        const { nodeId, wallet, id } = message;
 
-        this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+        let offer;
+        let importId;
+        let holdingData;
+        let networkReplyModel;
+        try {
+            // Check is it mine offer.
+            networkReplyModel = await Models.network_replies.find({ where: { id } });
+
+            if (!networkReplyModel) {
+                throw Error(`Couldn't find reply with ID ${id}.`);
+            }
+
+            offer = networkReplyModel.data;
+
+            if (networkReplyModel.receiver_wallet !== wallet &&
+                networkReplyModel.receiver_identity) {
+                throw Error('Sorry not your read request');
+            }
+
+            // TODO: Only one import ID used. Later we'll support replication from multiple imports.
+            // eslint-disable-next-line
+            importId = offer.imports[0];
+
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
+            const edges = values[1];
+
+            // Get replication key and then encrypt data.
+            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+
+            if (!holdingDataModel) {
+                throw Error(`Didn't find import with ID. ${importId}`);
+            }
+
+            holdingData = holdingDataModel.get({ plain: true });
+            const dataPublicKey = holdingData.data_public_key;
+            const replicationPrivateKey = holdingData.distribution_private_key;
+
+            Graph.decryptVertices(
+                vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                dataPublicKey,
+            );
+
+            Graph.encryptVertices(
+                vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                replicationPrivateKey,
+            );
+
+            // Make sure we have enough token balance before DV makes a purchase.
+            // From smart contract:
+            // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
+            const profileBalance =
+                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+
+            if (profileBalance.lt(condition)) {
+                await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+                await this.blockchain.depositToken(condition.sub(profileBalance));
+            }
+
+            /*
+                dataReadResponseObject = {
+                    message: {
+                        id: REPLY_ID
+                        wallet: DH_WALLET,
+                        nodeId: KAD_ID
+                        agreementStatus: CONFIRMED/REJECTED,
+                        encryptedData: { … }
+                    },
+                    messageSignature: {
+                        c: …,
+                        r: …,
+                        s: …
+                   }
+                }
+             */
+
+            const dataInfo = Models.data_info.find({ where: { import_id: importId } });
+            const replyMessage = {
+                id,
+                wallet: this.config.node_wallet,
+                data_provider_wallet: dataInfo.data_provider_wallet,
+                nodeId: this.config.identity,
+                agreementStatus: 'CONFIRMED',
+                encryptedData: {
+                    vertices,
+                    edges,
+                },
+                importId, // TODO: Temporal. Remove it.
+            };
+            const dataReadResponseObject = {
+                message: replyMessage,
+                messageSignature: Utilities.generateRsvSignature(
+                    JSON.stringify(replyMessage),
+                    this.web3,
+                    this.config.node_private_key,
+                ),
+            };
+
+            this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+        } catch (e) {
+            const errorMessage = `Failed to process data read request. ${e}.`;
+            this.log.warn(errorMessage);
+            this.network.kademlia().sendDataReadResponse({
+                status: 'FAIL',
+                message: errorMessage,
+            }, nodeId);
+            return; // halt
+        }
+
 
         // Wait for event from blockchain.
         await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
