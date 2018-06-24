@@ -124,6 +124,7 @@ class Utilities {
         return new Promise((resolve, reject) => {
             // eslint-disable-next-line
             require('../check-updates');
+            resolve();
         });
     }
 

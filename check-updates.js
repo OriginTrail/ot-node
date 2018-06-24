@@ -28,7 +28,7 @@ autoupdater.on('update.downloaded', () => {
     autoupdater.fire('extract'); // If autoupdate: false, you'll have to do this manually.
 });
 autoupdater.on('update.not-installed', () => {
-    console.log("The Update was already in your folder! It's read for install");
+    console.log("The Update was already in your folder! It's ready for install");
     autoupdater.fire('extract'); // If autoupdate: false, you'll have to do this manually.
 });
 autoupdater.on('update.extracted', () => {
