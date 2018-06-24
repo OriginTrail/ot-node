@@ -8,7 +8,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         source_wallet: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         data_public_key: {
@@ -24,11 +24,11 @@ module.exports = {
             type: Sequelize.STRING,
         },
         root_hash: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         epk: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
     }),
