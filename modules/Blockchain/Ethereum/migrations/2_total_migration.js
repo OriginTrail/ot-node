@@ -118,7 +118,14 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
         .then(async () => {
-            await deployer.deploy(Hub, fingerprint.address, token.address, bidding.address, escrow.address, reading.address)
+            await deployer.deploy(
+                Hub,
+                fingerprint.address,
+                token.address,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
         .then(() => giveMeHub())
         .then(async (result) => {
             hub = result;
@@ -182,7 +189,14 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
         .then(async () => {
-            await deployer.deploy(Hub, token.address, token.address, bidding.address, escrow.address, reading.address)
+            await deployer.deploy(
+                Hub,
+                fingerprint.address,
+                token.address,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
         .then(() => giveMeHub())
         .then(async (result) => {
             hub = result;
@@ -247,7 +261,14 @@ module.exports = (deployer, network, accounts) => {
             console.log('Transfering escrow ownership to bidding...');
             await escrow.transferOwnership(bidding.address)
         .then(async () => {
-            await deployer.deploy(Hub, fingerprintAddress, tokenAddress, bidding.address, escrow.address, reading.address)
+            await deployer.deploy(
+                Hub,
+                fingerprintAddress,
+                tokenAddress,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
         .then(() => giveMeHub())
         .then(async (result) => {
             hub = result;

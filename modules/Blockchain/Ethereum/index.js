@@ -30,9 +30,9 @@ class Ethereum {
         const hubContractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/hub-contract/abi.json');
         this.hubContractAbi = JSON.parse(hubContractAbiFile);
         this.hubContract = new this.web3.eth.Contract(
-                this.hubContractAbi,
-                this.hubContractAddress,
-            );
+            this.hubContractAbi,
+            this.hubContractAddress,
+        );
 
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
