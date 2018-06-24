@@ -56,20 +56,6 @@ class OTNode {
             // Checking root folder stucture
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
-
-            // Check for updates
-            const autoupdater = new AutoUpdater({
-                pathToJson: '',
-                autoupdate: false,
-                checkgit: true,
-                jsonhost: 'raw.githubusercontent.com',
-                contenthost: 'codeload.github.com',
-                progressDebounce: 0,
-                devmode: false,
-            });
-
-            Update.checkForUpdates(autoupdater);
-            log.info('Updates checking finished');
         } catch (err) {
             console.log(err);
             process.exit(1);
@@ -83,6 +69,15 @@ class OTNode {
         try {
             await Utilities.loadConfig();
             log.info('Loaded system config');
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
+        }
+
+        // check for Updates
+        try {
+            await Utilities.checkForUpdates();
+            log.info('Checking for updates');
         } catch (err) {
             console.log(err);
             process.exit(1);

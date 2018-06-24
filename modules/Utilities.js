@@ -115,6 +115,18 @@ class Utilities {
         });
     }
 
+    /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise((resolve, reject) => {
+            // eslint-disable-next-line
+            require('../check-updates');
+        });
+    }
+
     formatFileLogs(args) {
         const date = moment().format('D/MM/YYYY hh:mm:ss');
         const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
