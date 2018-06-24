@@ -53,6 +53,7 @@ contract OTFingerprintStore is Ownable{
         require(msg.sender!=address(0));
         require(batch_id_hash!=0x0);
         require(graph_hash!=0x0);
+        require(DHFS[msg.sender][batch_id_hash] == bytes32(0));
         DHFS[msg.sender][batch_id_hash] = graph_hash;
         emit Fingerprint(msg.sender,batch_id,batch_id_hash,graph_hash);      
     }
