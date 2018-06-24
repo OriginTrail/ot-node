@@ -14,7 +14,7 @@
     "db_backup": " node add_db_backup.js"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.4",
+    "babel-eslint": "^8.2.5",
     "chai": "^4.1.2",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
@@ -47,6 +47,7 @@
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
+    "auto-updater": "git+https://github.com/schrink/auto-updater.git",
     "awilix": "^3.0.8",
     "axios": "^0.18.0",
     "barcoder": "^2.0.1",
@@ -96,7 +97,7 @@
     "socks": "^2.1.6",
     "solidity-sha3": "^0.4.1",
     "sqldown": "^2.1.0",
-    "sqlite3": "^4.0.0",
+    "sqlite3": "^4.0.1",
     "superagent": "^3.8.3",
     "truffle-hdwallet-provider": "0.0.5",
     "umzug": "^2.1.0",
@@ -108,5 +109,9 @@
     "winston": "^2.4.3",
     "winston-loggly-bulk": "^2.0.2",
     "xml2js": "^0.4.19"
+  },
+  "auto-updater": {
+    "repo": "origintrail/ot-node",
+    "branch": "docker"
   }
 }

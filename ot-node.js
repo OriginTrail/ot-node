@@ -14,6 +14,7 @@ const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
+const Update = require('./modules/Update');
 const corsMiddleware = require('restify-cors-middleware');
 
 const awilix = require('awilix');
@@ -31,6 +32,8 @@ const pjson = require('./package.json');
 
 const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+global.__basedir = __dirname;
 
 process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -53,6 +56,20 @@ class OTNode {
             // Checking root folder stucture
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
+
+            // Check for updates
+            const autoupdater = new AutoUpdater({
+                pathToJson: '',
+                autoupdate: false,
+                checkgit: true,
+                jsonhost: 'raw.githubusercontent.com',
+                contenthost: 'codeload.github.com',
+                progressDebounce: 0,
+                devmode: false,
+            });
+
+            Update.checkForUpdates(autoupdater);
+            log.info('Updates checking finished');
         } catch (err) {
             console.log(err);
             process.exit(1);

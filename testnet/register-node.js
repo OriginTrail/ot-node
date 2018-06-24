@@ -75,7 +75,9 @@ class RegisterNode {
                 process.env.DB_PASSWORD = 'root';
 
                 const envF = envfile.stringifySync(env);
-                console.log(env);
+                env.forEach((setting) => {
+                    console.log(setting);
+                });
                 fs.writeFile('.env', envF, (err) => {
                     umzug_migrations.up().then((migrations) => {
                         umzug_seeders.up().then((migrations) => {
