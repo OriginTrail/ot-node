@@ -305,13 +305,13 @@ class DHService {
                 this.log.warn('Failed to store holding data info.');
             }
 
-            await Models.data_info.create({
-                import_id: data.import_id,
-                total_documents: data.vertices.length,
-                root_hash: rootHash,
-                data_provider_wallet: data.data_provider_wallet,
-                import_timestamp: new Date(),
-            });
+            // await Models.data_info.create({
+            //     import_id: data.import_id,
+            //     total_documents: data.vertices.length,
+            //     root_hash: rootHash,
+            //     data_provider_wallet: data.data_provider_wallet,
+            //     import_timestamp: new Date(),
+            // });
 
             this.log.important('Replication finished. Send data to DC for verification.');
             this.network.kademlia().verifyImport({
@@ -632,7 +632,7 @@ class DHService {
         // Send data to DV.
         const encryptedPaddedKeyObject = {
             message: {
-                messageId,
+                id: messageId,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identifiers,
                 m1,
