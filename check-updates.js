@@ -33,7 +33,18 @@ autoupdater.on('update.not-installed', () => {
 });
 autoupdater.on('update.extracted', () => {
     console.log('Update extracted successfully!');
-    console.warn('RESTART THE APP!');
+    console.warn('RESTARTING THE APP!');
+    setTimeout(() => {
+        process.on('exit', () => {
+            /* eslint-disable-next-line */
+            require('child_process').spawn(process.argv.shift(), process.argv, {
+                cwd: process.cwd(),
+                detached: true,
+                stdio: 'inherit',
+            });
+        });
+        process.exit(2);
+    }, 5000);
 });
 autoupdater.on('download.start', (name) => {
     console.log(`Starting downloading: ${name}`);
