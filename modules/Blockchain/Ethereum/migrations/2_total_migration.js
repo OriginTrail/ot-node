@@ -191,7 +191,7 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await deployer.deploy(
                 Hub,
-                fingerprint.address,
+                token.address, // Irrelevant, truffle tests don't use OT contract
                 token.address,
                 bidding.address,
                 escrow.address,
