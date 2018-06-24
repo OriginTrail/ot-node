@@ -14,7 +14,6 @@ const WOTImporter = require('./modules/WOTImporter');
 const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
-const Update = require('./modules/Update');
 const corsMiddleware = require('restify-cors-middleware');
 
 const awilix = require('awilix');

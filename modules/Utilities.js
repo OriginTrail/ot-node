@@ -125,7 +125,6 @@ class Utilities {
             // eslint-disable-next-line
             const Update = require('../check-updates');
             const res = await Update.update();
-            console.log(res);
             if (res) {
                 resolve(res);
             }
