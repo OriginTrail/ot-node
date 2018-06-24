@@ -479,11 +479,11 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            const dataInfo = Models.data_info.find({ where: { import_id: importId } });
+            const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
             const replyMessage = {
                 id,
                 wallet: this.config.node_wallet,
-                data_provider_wallet: dataInfo.data_provider_wallet,
+                data_provider_wallet: '',
                 nodeId: this.config.identity,
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
@@ -642,14 +642,14 @@ class DHService {
             this.config.node_private_key,
         );
 
-        await this.listenPurchaseDispute(
+        this.listenPurchaseDispute(
             importId, wallet, m2Checksum,
             epkChecksumHash, selectedBlockNumber,
             m1Checksum, r1, r2, e,
         );
 
         this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
-        await this.listenPurchaseConfirmation(
+        this.listenPurchaseConfirmation(
             importId, wallet, networkReplyModel,
             selectedBlock, eHex,
         );
