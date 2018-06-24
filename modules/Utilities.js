@@ -121,10 +121,14 @@ class Utilities {
      */
 
     static checkForUpdates() {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             // eslint-disable-next-line
-            require('../check-updates');
-            resolve();
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            console.log(res);
+            if (res) {
+                resolve(res);
+            }
         });
     }
 
