@@ -506,6 +506,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
+    /*
 
     // eslint-disable-next-line no-undef
     it('Should wait a 30 seconds, then pay all DHs', async () => {
@@ -612,15 +613,17 @@ contract('Bidding testing', async (accounts) => {
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
-    });
+    });*/
 
     var read_token_amount = 10e10;
-    var read_stake_factor = 2;
 
     // eslint-disable-next-line no-undef
     it('Should initiate reading between acc[2] and acc[1]', async () => {
         // Get instances of contracts used in the test
         const reading = await Reading.deployed();
+
+        const read_stake_factor = DH_read_factor[chosen_bids[0]];
+
 
         var response = await reading.purchased_data.call(import_id, accounts[chosen_bids[0]]);
         console.log(`${JSON.stringify(response)}`);
@@ -649,8 +652,8 @@ contract('Bidding testing', async (accounts) => {
         );
 
         response = await reading.purchase.call(accounts[chosen_bids[0]], accounts[2], import_id);
-        var actual_token_amount = response[0];
-        var actual_stake_factor = response[1];
+        var actual_token_amount = response[0].toNumber();
+        var actual_stake_factor = response[1].toNumber();
         var actual_status = response[5].toNumber();
 
         assert.equal(
