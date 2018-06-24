@@ -23,6 +23,7 @@ class AutoUpdate {
             });
             autoupdater.on('check.up-to-date', (v) => {
                 log.info(`You have the latest version: ${v}`);
+                resolve(true);
             });
             autoupdater.on('check.out-dated', (v_old, v) => {
                 log.warn(`Your version is outdated. ${v_old} of ${v}`);
@@ -63,12 +64,15 @@ class AutoUpdate {
             });
             autoupdater.on('download.error', (err) => {
                 log.error(`Error when downloading: ${err}`);
+                resolve(true);
             });
             autoupdater.on('end', () => {
                 log.warn('The app is ready to function');
+                resolve(true);
             });
             autoupdater.on('error', (name, e) => {
                 log.error(name, e);
+                resolve(true);
             });
 
             // Start checking
