@@ -576,6 +576,8 @@ class EventEmitter {
                 status: 'ACTIVE',
             });
 
+            const dataInfo = Models.data_info.find({ where: { import_id } });
+
             logger.info('[DC] Preparing to enter sendPayload');
             const data = {
                 contact: kadIdentity,
@@ -584,6 +586,7 @@ class EventEmitter {
                 import_id,
                 public_key: keyPair.publicKey,
                 root_hash: offer.data_hash,
+                data_provider_wallet: dataInfo.data_provider_wallet,
                 total_escrow_time: offer.total_escrow_time,
             };
 
