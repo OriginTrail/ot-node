@@ -709,14 +709,14 @@ class EventEmitter {
                 await dvService.handleEncryptedPaddedKey(message);
                 network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
-                });
+                }, request.contact[0]);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
                 network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
-                });
+                }, request.contact[0]);
             }
         });
 
