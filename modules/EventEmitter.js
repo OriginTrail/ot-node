@@ -472,6 +472,7 @@ class EventEmitter {
             logger,
             challenger,
             dataReplication,
+            network,
         } = this.ctx;
 
         this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
@@ -703,13 +704,13 @@ class EventEmitter {
 
             try {
                 await dvService.handleEncryptedPaddedKey(message);
-                this.sendEncryptedKeyProcessResult({
+                network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
                 });
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
-                this.sendEncryptedKeyProcessResult({
+                network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
                 });
