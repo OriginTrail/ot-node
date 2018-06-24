@@ -506,7 +506,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
-    /*
+
 
     // eslint-disable-next-line no-undef
     it('Should wait a 30 seconds, then pay all DHs', async () => {
@@ -613,7 +613,7 @@ contract('Bidding testing', async (accounts) => {
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
-    });*/
+    });
 
     var read_token_amount = 10e10;
 
