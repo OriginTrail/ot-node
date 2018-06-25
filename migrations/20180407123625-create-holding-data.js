@@ -31,6 +31,10 @@ module.exports = {
             allowNull: true,
             type: Sequelize.STRING,
         },
+        data_provider_wallet: {
+            allowNull: true,
+            type: Sequelize.STRING,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('holding_data'),
 };
