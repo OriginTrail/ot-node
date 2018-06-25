@@ -137,6 +137,10 @@ class Product {
             });
         });
     }
+
+    getImports(inputQuery) {
+        return this.graphStorage.findImportIds(inputQuery);
+    }
 }
 
 module.exports = Product;
