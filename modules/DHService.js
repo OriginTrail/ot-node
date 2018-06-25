@@ -298,6 +298,7 @@ class DHService {
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
                 root_hash: data.root_hash,
+                data_provider_wallet: data.data_provider_wallet,
                 epk,
             });
 
@@ -317,6 +318,29 @@ class DHService {
     }
 
     async handleDataLocationRequest(message) {
+        /*
+            dataLocationRequestObject = {
+                message: {
+                    id: ID,
+                    wallet: DV_WALLET,
+                    nodeId: KAD_ID
+                    query: [
+                        {
+                                path: _path,
+                                value: _value,
+                                opcode: OPCODE
+                        },
+                        ...
+                    ]
+                }
+                messageSignature: {
+                    v: …,
+                    r: …,
+                    s: …
+                }
+             }
+         */
+
         // Check if mine publish.
         if (message.nodeId === this.config.identity &&
             message.wallet === this.config.node_wallet) {
@@ -356,6 +380,27 @@ class DHService {
             return;
         }
 
+        /*
+            dataLocationResponseObject = {
+                message: {
+                    id: ID,
+                    wallet: DH_WALLET,
+                    nodeId: KAD_ID,
+                    imports: [
+                                importId1,
+                                importId2
+                            ],
+                    dataSize: DATA_BYTE_SIZE,
+                    dataPrice: TOKEN_AMOUNT,
+                    stakeFactor: X
+                }
+                messageSignature: {
+                    c: …,
+                    r: …,
+                    s: …
+                }
+            }
+         */
         const wallet = this.config.node_wallet;
         const nodeId = this.config.identity;
         const dataSize = 500; // TODO
@@ -413,22 +458,24 @@ class DHService {
      * @return {Promise<void>}
      */
     async handleDataReadRequest(message) {
+        /*
+            message: {
+                id: REPLY_ID
+                wallet: DH_WALLET,
+                nodeId: KAD_ID
+            }
+        */
+
         // TODO in order to avoid getting a different import.
         const { nodeId, wallet, id } = message;
-
-        let offer;
-        let importId;
-        let holdingData;
-        let networkReplyModel;
         try {
             // Check is it mine offer.
-            networkReplyModel = await Models.network_replies.find({ where: { id } });
-
+            const networkReplyModel = await Models.network_replies.find({ where: { id } });
             if (!networkReplyModel) {
                 throw Error(`Couldn't find reply with ID ${id}.`);
             }
 
-            offer = networkReplyModel.data;
+            const offer = networkReplyModel.data;
 
             if (networkReplyModel.receiver_wallet !== wallet &&
                 networkReplyModel.receiver_identity) {
@@ -437,7 +484,7 @@ class DHService {
 
             // TODO: Only one import ID used. Later we'll support replication from multiple imports.
             // eslint-disable-next-line
-            importId = offer.imports[0];
+            const importId = offer.imports[0];
 
             const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
             const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
@@ -453,7 +500,7 @@ class DHService {
                 throw Error(`Didn't find import with ID. ${importId}`);
             }
 
-            holdingData = holdingDataModel.get({ plain: true });
+            const holdingData = holdingDataModel.get({ plain: true });
             const dataPublicKey = holdingData.data_public_key;
             const replicationPrivateKey = holdingData.distribution_private_key;
 
@@ -479,12 +526,29 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            const dataInfo = Models.data_info.find({ where: { import_id: importId } });
+            /*
+            dataReadResponseObject = {
+                message: {
+                    id: REPLY_ID
+                    wallet: DH_WALLET,
+                    nodeId: KAD_ID
+                    agreementStatus: CONFIRMED/REJECTED,
+                    data_provider_wallet,
+                    encryptedData: { … }
+                },
+                messageSignature: {
+                    c: …,
+                    r: …,
+                    s: …
+               }
+            }
+             */
+
             const replyMessage = {
                 id,
                 wallet: this.config.node_wallet,
-                data_provider_wallet: dataInfo.data_provider_wallet,
                 nodeId: this.config.identity,
+                data_provider_wallet: holdingDataModel.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
                     vertices,
@@ -502,6 +566,10 @@ class DHService {
             };
 
             this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.listenPurchaseInititation(
+                importId, wallet, offer, networkReplyModel,
+                holdingData, nodeId, id,
+            );
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
@@ -509,12 +577,7 @@ class DHService {
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
-            return; // halt
         }
-        await this.listenPurchaseInititation(
-            importId, wallet, offer, networkReplyModel,
-            holdingData, nodeId, id,
-        );
     }
 
     /**
@@ -607,7 +670,7 @@ class DHService {
             commitmentHash,
         );
 
-        Models.data_holders.create({
+        await Models.data_holders.create({
             import_id: importId,
             dh_wallet: this.config.node_wallet,
             dh_kademlia_id: this.config.identity,
@@ -624,7 +687,7 @@ class DHService {
         // Send data to DV.
         const encryptedPaddedKeyObject = {
             message: {
-                messageId,
+                id: messageId,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identifiers,
                 m1,
@@ -642,17 +705,18 @@ class DHService {
             this.config.node_private_key,
         );
 
-        await this.listenPurchaseDispute(
+        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+
+        this.listenPurchaseDispute(
             importId, wallet, m2Checksum,
             epkChecksumHash, selectedBlockNumber,
             m1Checksum, r1, r2, e,
-        );
+        ).then(() => this.log.info('Purchase dispute completed'));
 
-        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
-        await this.listenPurchaseConfirmation(
+        this.listenPurchaseConfirmation(
             importId, wallet, networkReplyModel,
             selectedBlock, eHex,
-        );
+        ).then(() => this.log.info('Purchase confirmation completed'));
     }
 
     /**
@@ -763,7 +827,10 @@ class DHService {
         console.log(distance.toString('hex'));
         console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
-        return !!distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)));
+        if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
+            return true;
+        }
+        return false;
     }
 
     /**

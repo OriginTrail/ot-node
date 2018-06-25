@@ -71,6 +71,23 @@ class EventEmitter {
             });
         });
 
+        this.apiEmitter.on('get-imports', (data) => {
+            product.getImports(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+                data.response.send(res);
+            }).catch((error) => {
+                logger.error(`Failed to get imports for query ${data.query}`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            });
+        });
+
         this.apiEmitter.on('query', (data) => {
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
@@ -472,6 +489,7 @@ class EventEmitter {
             logger,
             challenger,
             dataReplication,
+            network,
         } = this.ctx;
 
         this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
@@ -575,6 +593,8 @@ class EventEmitter {
                 status: 'ACTIVE',
             });
 
+            const dataInfo = Models.data_info.find({ where: { import_id } });
+
             logger.info('[DC] Preparing to enter sendPayload');
             const data = {
                 contact: kadIdentity,
@@ -583,6 +603,7 @@ class EventEmitter {
                 import_id,
                 public_key: keyPair.publicKey,
                 root_hash: offer.data_hash,
+                data_provider_wallet: dataInfo.data_provider_wallet,
                 total_escrow_time: offer.total_escrow_time,
             };
 
@@ -703,16 +724,16 @@ class EventEmitter {
 
             try {
                 await dvService.handleEncryptedPaddedKey(message);
-                this.sendEncryptedKeyProcessResult({
+                network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
-                });
+                }, request.contact[0]);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
-                this.sendEncryptedKeyProcessResult({
+                network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
-                });
+                }, request.contact[0]);
             }
         });
 

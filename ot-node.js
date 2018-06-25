@@ -560,10 +560,10 @@ class OTNode {
 
         server.post('/api/network/query', (req, res) => {
             log.trace('POST Query request received.');
-            if (req.body == null || req.body.query == null) {
+            if (!req.body) {
                 res.status(400);
                 res.send({
-                    message: 'Bad request',
+                    message: 'Body required.',
                 });
                 return;
             }
@@ -578,14 +578,44 @@ class OTNode {
          * Get vertices by query
          * @param queryObject
          */
-        server.get('/api/query', (req, res) => {
+        server.post('/api/query', (req, res) => {
             log.trace('GET Query request received.');
-            const queryObject = req.query;
+
+            if (req.body == null || req.body.query == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+
+
+            // TODO: Decrypt returned vertices
+            const queryObject = req.body.query;
             emitter.emit('query', {
                 query: queryObject,
                 response: res,
             });
         });
+
+        server.get('/api/import/:import_id', (req, res) => {
+            // TODO: Implement route, returns decrypted data from found import
+        });
+
+        server.post('/api/import/query', (req, res) => {
+            log.trace('GET Query request received.');
+
+            if (req.body == null || req.body.query == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+
+            const queryObject = req.body.query;
+            emitter.emit('get-imports', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
 
         server.post('/api/offer', (req, res) => {
             log.trace('POST Select offer request received.');

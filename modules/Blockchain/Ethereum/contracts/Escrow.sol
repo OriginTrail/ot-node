@@ -214,8 +214,8 @@ library SafeMath {
 
  		uint256 amount_to_send;
 
- 		uint end_time = block.timestamp;
- 		if(end_time > this_escrow.end_time){
+ 		uint current_time = block.timestamp;
+ 		if(current_time > this_escrow.end_time){
  			uint stake_to_send = this_escrow.stake_amount;
  			this_escrow.stake_amount = 0;
  			if(stake_to_send > 0) {
@@ -228,8 +228,9 @@ library SafeMath {
  			emit EscrowCompleted(import_id, msg.sender);
  		}
  		else{
- 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(end_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
- 			this_escrow.last_confirmation_time = end_time;
+ 			amount_to_send = SafeMath.mul(this_escrow.token_amount,SafeMath.sub(current_time,this_escrow.last_confirmation_time)) / this_escrow.total_time_in_seconds;
+ 	          assert(amount_to_send.add(this_escrow.tokens_sent) <= this_escrow.token_amount);
+               this_escrow.last_confirmation_time = current_time;
  		}
  		
  		if(amount_to_send > 0) {
@@ -317,7 +318,8 @@ library SafeMath {
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
  		require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
- 		require(this_litigation.litigation_start_time == 0 || this_litigation.litigation_status == LitigationStatus.completed);
+ 		require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed);
+          require(block.timestamp < this_escrow.end_time);
 
  		this_litigation.requested_data_index = requested_data_index;
  		this_litigation.hash_array = hash_array;
@@ -333,15 +335,34 @@ library SafeMath {
  		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
- 		require(this_litigation.litigation_start_time > 0 && this_litigation.litigation_status == LitigationStatus.initiated);
+ 		require(this_litigation.litigation_status == LitigationStatus.initiated);
 
  		if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
- 			this_litigation.litigation_status = LitigationStatus.completed;
- 			this_escrow.escrow_status = EscrowStatus.completed;
- 			//TODO Transfer remaining escrow tokens
- 			reading.removeReadData(import_id, msg.sender);
- 			bidding.increaseBalance(this_escrow.DC_wallet, this_escrow.stake_amount);
- 			this_escrow.stake_amount = 0;
+ 			uint256 amount_to_send;
+
+               uint cancelation_time = this_litigation.litigation_start_time;
+               amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
+
+               //Transfer the amount_to_send to DC 
+               if(amount_to_send > 0) {
+                    this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+                    bidding.increaseBalance(this_escrow.DC_wallet, amount_to_send);
+               }
+               //Calculate the amount to send back to DH and transfer the money back
+               amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);
+               if(amount_to_send > 0) {
+                    this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
+                    bidding.increaseBalance(msg.sender, amount_to_send);
+               }
+
+               uint stake_to_send = this_escrow.stake_amount;
+               this_escrow.stake_amount = 0;
+               if(stake_to_send > 0) bidding.increaseBalance(msg.sender, amount_to_send);
+
+               this_litigation.litigation_status = LitigationStatus.completed;
+               this_escrow.escrow_status = EscrowStatus.completed;
+
+               reading.removeReadData(import_id, msg.sender);
  			emit LitigationTimedOut(import_id, msg.sender);
  			return false;
  		}
@@ -409,8 +430,8 @@ library SafeMath {
 
      		reading.removeReadData(import_id, DH_wallet);
 
-     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-     		this_escrow.stake_amount = 0;
+               emit LitigationCompleted(import_id, DH_wallet, true);
+               return true;
      	}
 
      	uint256 i = 0;
@@ -470,10 +491,8 @@ library SafeMath {
      		this_escrow.escrow_status = EscrowStatus.completed;
 
      		reading.removeReadData(import_id, DH_wallet);
-
-     		bidding.increaseBalance(msg.sender, this_escrow.stake_amount);
-     		this_escrow.stake_amount = 0;
      		emit LitigationCompleted(import_id, DH_wallet, true);
+               return true;
      	}
      }
  }
