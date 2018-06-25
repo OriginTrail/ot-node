@@ -123,12 +123,12 @@ class Network {
         //     this.xprivkey,
         //     parseInt(config.child_derivation_index, 10),
         // ));
-        this.log.info('Spartacus initialised');
+        // this.log.info('Spartacus initialised');
         // this.node.hashcash = this.node.plugin(kadence.hashcash({
         //     methods: ['PUBLISH', 'SUBSCRIBE'],
         //     difficulty: 2,
         // }));
-        this.log.info('Hashcash initialised');
+        // this.log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
             this.enableOnion();
