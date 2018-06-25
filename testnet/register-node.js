@@ -61,8 +61,8 @@ class RegisterNode {
     }
 
     socketSend(wallet, nodeIp) {
-        socket.on('news', (data) => {
-            socket.emit('sendData', { walletAddress: wallet, ipAddress: nodeIp });
+        socket.on('connect', (data) => {
+            socket.emit('registrations', { walletAddress: wallet, ipAddress: nodeIp });
         });
     }
 
