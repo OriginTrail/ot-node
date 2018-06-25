@@ -8,15 +8,15 @@ module.exports = {
             type: Sequelize.STRING,
         },
         source_wallet: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         data_public_key: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         distribution_public_key: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         distribution_private_key: {
@@ -24,11 +24,15 @@ module.exports = {
             type: Sequelize.STRING,
         },
         root_hash: {
-            allowNull: false,
+            allowNull: true,
             type: Sequelize.STRING,
         },
         epk: {
-            allowNull: false,
+            allowNull: true,
+            type: Sequelize.STRING,
+        },
+        data_provider_wallet: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
     }),
