@@ -162,9 +162,9 @@ class DVService {
             offer.node_id,
             (err) => {
                 if (err) {
-                    this.log.warn(`Data request failed. ${err}`);
+                    this.log.warn(`Data request failed for reply_id ${message.id}. ${err}`);
                 } else {
-                    this.log.info('Data request sent.');
+                    this.log.info(`Data request sent for reply_id ${message.id}.`);
                 }
             },
         );
