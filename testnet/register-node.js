@@ -7,7 +7,7 @@ const externalip = require('externalip');
 const fs = require('fs');
 const io = require('socket.io-client');
 
-const socket = io('http://18.185.39.223:3010');
+const socket = io('https://station.origintrail.io:3010');
 
 const Web3 = require('web3');
 
