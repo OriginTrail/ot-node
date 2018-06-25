@@ -5,7 +5,9 @@ const axios = require('axios');
 const envfile = require('envfile');
 const externalip = require('externalip');
 const fs = require('fs');
+const io = require('socket.io-client');
 
+const socket = io('https://station.origintrail.io:3010');
 
 const Web3 = require('web3');
 
@@ -58,6 +60,11 @@ class RegisterNode {
         });
     }
 
+    socketSend(wallet, nodeIp) {
+        socket.on('news', (data) => {
+            socket.emit('sendData', { walletAddress: wallet, ipAddress: nodeIp });
+        });
+    }
 
     generateWallet() {
         return new Promise(async (resolve, reject) => {
@@ -89,8 +96,7 @@ class RegisterNode {
                     });
                 });
             } else {
-                // eslint-disable-next-line
-                require('../ot-node');
+                this.runNode();
             }
         });
     }
@@ -106,7 +112,7 @@ class RegisterNode {
 
     registerNode(ip, wallet) {
         console.log(ip, wallet);
-        axios.post('https://spacestation.origintrail.io/api/node/register', {
+        axios.post('https://station.origintrail.io/api/node/register', {
             ip, wallet,
         }).then((result) => {
             // console.log(result.data);
@@ -114,14 +120,21 @@ class RegisterNode {
                 web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
                     if (balance > 0) {
                         clearInterval(checkBalanceInterval);
-                        // eslint-disable-next-line
-                        require('../ot-node');
+                        this.runNode();
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
         });
+    }
+
+    runNode() {
+        const nodeIp = process.env.NODE_IP;
+        const wallet = process.env.NODE_WALLET;
+        this.socketSend(wallet, nodeIp);
+        // eslint-disable-next-line
+        require('../ot-node');
     }
 
     getExternalIp() {

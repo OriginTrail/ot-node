@@ -94,6 +94,7 @@
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "socket.io": "^2.1.0",
+    "socket.io-client": "^2.1.1",
     "socks": "^2.1.6",
     "solidity-sha3": "^0.4.1",
     "sqldown": "^2.1.0",
