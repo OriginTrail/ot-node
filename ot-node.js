@@ -597,7 +597,20 @@ class OTNode {
         });
 
         server.get('/api/import/:import_id', (req, res) => {
-            // TODO: Implement route, returns decrypted data from found import
+            log.trace('GET import request received.');
+
+            if (!req.params.import_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-get/api/import', {
+                import_id: req.params.import_id,
+                response: res,
+            });
         });
 
         server.post('/api/import/query', (req, res) => {
