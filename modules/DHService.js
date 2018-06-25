@@ -615,7 +615,7 @@ class DHService {
             commitmentHash,
         );
 
-        Models.data_holders.create({
+        await Models.data_holders.create({
             import_id: importId,
             dh_wallet: this.config.node_wallet,
             dh_kademlia_id: this.config.identity,

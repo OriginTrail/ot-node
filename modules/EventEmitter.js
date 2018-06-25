@@ -71,6 +71,23 @@ class EventEmitter {
             });
         });
 
+        this.apiEmitter.on('get-imports', (data) => {
+            product.getImports(data.query).then((res) => {
+                if (res.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+                data.response.send(res);
+            }).catch((error) => {
+                logger.error(`Failed to get imports for query ${data.query}`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            });
+        });
+
         this.apiEmitter.on('query', (data) => {
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
