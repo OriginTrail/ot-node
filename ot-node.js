@@ -58,16 +58,6 @@ class OTNode {
             process.exit(1);
         }
 
-        // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            try {
-                const responseFromArango = await Utilities.getArangoDbVersion();
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
-            } catch (err) {
-                process.exit(1);
-            }
-        }
-
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
@@ -79,6 +69,22 @@ class OTNode {
         } catch (err) {
             console.log(err);
             process.exit(1);
+        }
+
+        if (Utilities.isBootstrapNode()) {
+            await this.startBootstrapNode();
+            this.startRPC();
+            return;
+        }
+
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                process.exit(1);
+            }
         }
 
         let selectedDatabase;
@@ -218,6 +224,30 @@ class OTNode {
     }
 
     /**
+     * Starts bootstrap node
+     * @return {Promise<void>}
+     */
+    async startBootstrapNode() {
+        const container = awilix.createContainer({
+            injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        container.register({
+            emitter: awilix.asValue({}),
+            network: awilix.asClass(Network).singleton(),
+            config: awilix.asValue(config),
+            dataReplication: awilix.asClass(DataReplication).singleton(),
+            remoteControl: awilix.asClass(RemoteControl).singleton(),
+            logger: awilix.asValue(log),
+            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+        });
+
+        const network = container.resolve('network');
+        await network.initialize();
+        await network.start();
+    }
+
+    /**
      * Listen to all Bidding events
      * @param blockchain
      */
@@ -326,10 +356,13 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(parseInt(config.node_rpc_port, 10), '0.0.0.0', () => {
-            log.notify(`${server.name} exposed at ${server.url}`);
+        server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
+            log.notify(`API exposed at  ${server.url}`);
         });
-        this.exposeAPIRoutes(server, emitter);
+        if (!Utilities.isBootstrapNode()) {
+            // register API routes only if the node is not bootstrap
+            this.exposeAPIRoutes(server, emitter);
+        }
     }
 
     /**
@@ -515,8 +548,7 @@ class OTNode {
             if (!req.params.query_param) {
                 res.status(400);
                 res.send({
-                    status: 'FAIL',
-                    error: 'Param required.',
+                    message: 'Param required.',
                 });
                 return;
             }
@@ -528,15 +560,13 @@ class OTNode {
 
         server.post('/api/network/query', (req, res) => {
             log.trace('POST Query request received.');
-
-            if (req.body == null || req.body.query == null) {
+            if (!req.body) {
                 res.status(400);
                 res.send({
-                    message: 'Bad request',
+                    message: 'Body required.',
                 });
                 return;
             }
-
             const { query } = req.body;
             emitter.emit('network-query', {
                 query,
