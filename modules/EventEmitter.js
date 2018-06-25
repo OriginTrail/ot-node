@@ -18,6 +18,7 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.blockchain = ctx.blockchain;
 
         this.apiEmitter = new events.EventEmitter();
         this.kadEmitter = new events.EventEmitter();
@@ -371,17 +372,35 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            await dhService.handleOffer(
+            const distanceParams = await this.blockchain.getDistanceParameters(
                 import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes * 60000, // In ms.
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
-                min_reputation,
-                data_size_in_bytes,
-                data_hash,
-                false,
+                config.identity,
             );
+            // (bytes32 node_hash, bytes32 data_hash, uint256 distance,
+            // uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_)
+
+            const nodeHash = distanceParams[0];
+            const dataHash = distanceParams[1];
+            const currentRanking = distanceParams[3]; // Not used at the moment
+            const k = distanceParams[4];
+            const numNodes = distanceParams[5];
+
+            if (dhService.amIClose(k, numNodes, dataHash, nodeHash, 100)) {
+                this.log.notify('Close enough to take bid');
+                await dhService.handleOffer(
+                    import_id,
+                    DC_node_id,
+                    total_escrow_time_in_minutes * 60000, // In ms.
+                    max_token_amount_per_DH,
+                    min_stake_amount_per_DH,
+                    min_reputation,
+                    data_size_in_bytes,
+                    data_hash,
+                    false,
+                );
+            } else {
+                this.log.notify('Not close enough to take bid');
+            }
         });
 
         this.blockchainEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
