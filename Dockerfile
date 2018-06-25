@@ -4,7 +4,7 @@ MAINTAINER OriginTrail
 
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
-RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip
+RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip nano
 RUN add-apt-repository -y ppa:ethereum/ethereum && apt-get -qq update && apt-get install -y -qq ethereum geth
 #ArangoDB
 ADD testnet/install-arango.sh /install-arango.sh
@@ -22,8 +22,8 @@ RUN cd /tmp && npm install
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 
-RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && sudo cp ./remote_syslog /usr/local/bin
-ADD testnet/papertrail.yml /etc/log_files.xml
+RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
+ADD testnet/papertrail.yml /etc/log_files.yml
 #Clone the project
 RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/docker && ls
 RUN unzip docker -d . && rm docker && mv ot-node-docker ot-node
