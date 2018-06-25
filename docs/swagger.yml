@@ -1,0 +1,282 @@
+swagger: '2.0'
+host: "NODE_IP:8900"
+basePath: "/api"
+info:
+  description: |
+    API documentation for an OriginTrail Node
+  version: 1.0.0
+  title: OT Node API
+  termsOfService: https://origintrail.io/terms-and-conditions
+  contact:
+    email: support@origin-trail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find out more about OriginTrail
+  url: https://origintrail.io
+schemes:
+ - http
+tags:
+- name: import
+  description: Import XML and JSON files
+  # externalDocs:
+  #   description: Find out more about XML data structure
+  #   url: https://github.com/OriginTrail/ot-node/wiki/Data-Structure-Guidelines
+- name: replication
+  description: Create an offer and initiate replication
+- name: read
+  description: Make network queries 
+- name: database
+  description: Database operations
+  
+paths:
+  /import:
+    post:
+      tags:
+      - import
+      summary: Import new GS1/WOT data
+      # operationId: import
+      description: |
+        Find out more about XML data structure
+        * https://github.com/OriginTrail/ot-node/wiki/Data-Structure-Guidelines
+
+      parameters: 
+      - name: importfile
+        in: body
+        description: "path to xml/json file that needs to be imported"
+        required: true
+        schema:
+            $ref: '#/definitions/importfileExample'
+      - name: importtype
+        in: body
+        description: "GS1 or WOT"
+        required: true
+        schema:
+            $ref: '#/definitions/importtypeExample'
+      responses:
+        '201':
+          schema:
+            type: object
+            example:
+              import_id: '0x477eae0227cce0ffaadc235c7946b97cbe2a948fe7782796b53a0c5a6ca6595f'
+          description: "File was successfully imported."
+        '400':
+          schema:
+            type: object
+            example:
+              message: 'Invalid import type'
+          description: "Invalid import parameters (importfile/importtype)"
+
+  /replication:
+    post:
+      tags:
+      - replication
+      summary: Creates an offer and trigger replication
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: "body"
+        name: "import_id"
+        description: ID of the import you want to replicate
+        required: true
+        type: "string"
+        schema:
+          type: object
+          properties:
+            import_id:
+              type: string
+              example: '0x7e9d30d3f78fd21180c9c075403b1feeace7fbf10e10ad4184dd8b7e38358bc6'
+
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              replication_id:
+                type: string
+                example: '60bc3cd1-9b2c-4e12-b59a-14405ec73ce5'
+              
+        '400':
+          description: Invalid input
+          
+  /replication/:{replication_id}:
+    get:
+      tags:
+      - replication
+      summary: Asks for replication status
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: path
+        name: "replication_id"
+        description: ID of the import you want to replicate
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              offer_status:
+                type: 'string'
+                example: 'PENDING'
+                
+        '400':
+          description: Invalid input
+          
+  /network/query:
+    post:
+      tags:
+      - read
+      summary: Sends read query to the network
+      operationId: network-query
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: "formData"
+        name: "query"
+        description: Query in specific format
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. If query was successful additional attribute 'query_id' will be present which will contain UUID of the query which can be used to check the result or status of the query.
+        '500':
+          description: Internal error happened on server.
+          
+  /network/query/{queryID}:
+    get:
+      tags:
+      - read
+      summary: Checks the status of the network query
+      operationId: network-query-status
+      produces:
+        - application/json
+      parameters:
+      - in: path
+        name: "queryID"
+        description: UUID of network query.
+        required: true
+        type: string
+      responses:
+        200:
+          description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
+        500:
+          description: Internal error happened on server.         
+  
+  /network/query_by_id:
+    get:
+      tags:
+      - read
+      summary: Makes a network query
+      operationId: network-query-
+      produces:
+        - application/json
+      parameters:
+      - in: path
+        name: "queryID"
+        description: UUID of network query.
+        required: true
+        type: string
+      responses:
+        200:
+          description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
+        500:
+          description: Internal error happened on server. 
+  
+  /trail:
+    get:
+      tags:
+      - database
+      summary: Trail
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: query
+        name: "queryObject"
+        description: 'queryObject, for example ?vertex_type=BATCH'
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '204':
+          description: No content found
+          
+  /fingerprint:
+    get:
+      tags:
+      - database
+      summary: Fingerprint
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: query
+        name: "dc_wallet"
+        description: valid Ethereum account address
+        required: true
+        type: "string"
+      - in: query
+        name: import_id
+        required: true
+        description: value of import_id received as an response of sucessful /api/import request
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+      
+  /query:
+    get:
+      tags: 
+      - database
+      summary: Make queries on graph database
+      consumes:
+          - application/json
+          - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: query
+        name: 'queryObject'
+        description: 'queryObject, for example ?uid=urn:epc:id:sgln:HospitalBuilding1'
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+  
+
+definitions:
+  importfileExample:
+    type: object
+    properties:
+      importfile:
+        type: string
+        example: 'importfile=@/ot-node/test/modules/test_xml/GraphExample_4.xml'
+  importtypeExample:
+    type: object
+    properties:
+      importtype:
+        type: string
+        example: 'GS1'

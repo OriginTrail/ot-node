@@ -137,7 +137,6 @@ class Network {
         if (parseInt(config.traverse_nat_enabled, 10)) {
             this.enableNatTraversal();
         }
-        this._registerRoutes();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -147,6 +146,10 @@ class Network {
         // Cast network nodes to an array
         if (typeof config.network_bootstrap_nodes === 'string') {
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
+        }
+
+        if (!utilities.isBootstrapNode()) {
+            this._registerRoutes();
         }
 
         this.node.listen(parseInt(config.node_port, 10), () => {
