@@ -289,7 +289,8 @@ class EventEmitter {
             if (offer) {
                 data.response.status(200);
                 data.response.send({
-                    offer_status: offer.status,
+                    status: offer.status,
+                    message: offer.message,
                 });
             } else {
                 logger.error(`There is no offer for external ID ${external_id}`);
