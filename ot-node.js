@@ -33,6 +33,10 @@ const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
+    if (reason.message.startsWith('Invalid JSON RPC response')) {
+        log.warn('Web3 failed to communicate with blockchain provider. Check internet connection');
+        return;
+    }
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
@@ -221,6 +225,9 @@ class OTNode {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
+
+        const challenger = container.resolve('challenger');
+        await challenger.startChallenging();
     }
 
     /**
@@ -597,7 +604,20 @@ class OTNode {
         });
 
         server.get('/api/import/:import_id', (req, res) => {
-            // TODO: Implement route, returns decrypted data from found import
+            log.trace('GET import request received.');
+
+            if (!req.params.import_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-get/api/import', {
+                import_id: req.params.import_id,
+                response: res,
+            });
         });
 
         server.post('/api/import/query', (req, res) => {
