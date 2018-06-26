@@ -88,7 +88,7 @@ class RegisterNode {
                 fs.writeFile('.env', envF, (err) => {
                     umzug_migrations.up().then((migrations) => {
                         umzug_seeders.up().then((migrations) => {
-                            console.log('Configuration loaded...');
+                            console.log('Configuration loaded..!');
                             resolve({
                                 ip: env.NODE_IP,
                                 wallet: env.NODE_WALLET,
