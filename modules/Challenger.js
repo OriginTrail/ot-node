@@ -46,7 +46,7 @@ class Challenger {
     sendChallenge(challenge) {
         Models.replicated_data.findOne({
             where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
-        }).then((replicatedData) => {
+        }).then(async (replicatedData) => {
             if (replicatedData.status === 'ACTIVE') {
                 replicatedData.status = 'TESTING';
                 replicatedData.save({ fields: ['status'] });
@@ -59,7 +59,7 @@ class Challenger {
                         import_id: challenge.import_id,
                     },
                 };
-                this.network.kademlia().challengeRequest(
+                await this.network.kademlia().challengeRequest(
                     payload, challenge.dh_id,
                     (error, response) => {
                         if (error) {

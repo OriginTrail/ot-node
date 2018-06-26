@@ -1,5 +1,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+
 const levelup = require('levelup');
 const sqldown = require('sqldown');
 const encoding = require('encoding-down');
@@ -249,7 +251,7 @@ class Network {
                 this.node.join(contact, (err) => {
                     done(null, (!err) && this.node.router.size >= 1);
                 });
-            }, (err, result) => {
+            }, async (err, result) => {
                 if (result) {
                     this.log.important('Joined the network');
                     const contact = kadence.utils.parseContactURL(result);
@@ -408,61 +410,73 @@ class Network {
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = contactId => node.router.getContactByNodeId(contactId);
+            node.getContact = async (contactId) => {
+                let contact = node.router.getContactByNodeId(contactId);
+                if (contact == null || contact.hostname == null) {
+                    // check peercache
+                    contact = await this.node.peercache.getExternalPeerInfo(contactId);
+                    if (contact) {
+                        contact = KadenceUtils.parseContactURL(contact);
+                        // refresh bucket
+                        node.router.addContactByNodeId(contactId, contact);
+                    }
+                }
+                return contact;
+            };
 
-            node.payloadRequest = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.payloadRequest = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-payload-request', { message }, [contactId, contact], callback);
             };
 
-            node.replicationRequest = (message, contactId, callback) => {
+            node.replicationRequest = async (message, contactId, callback) => {
                 // contactId = utilities.numberToHex(contactId).substring(2);
-                const contact = node.getContact(contactId);
+                const contact = await node.getContact(contactId);
                 node.send('kad-replication-request', { message }, [contactId, contact], callback);
             };
 
-            node.replicationFinished = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.replicationFinished = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-replication-finished', { message }, [contactId, contact], callback);
             };
 
-            node.challengeRequest = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.challengeRequest = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-challenge-request', { message }, [contactId, contact], callback);
             };
 
-            node.sendDataLocationResponse = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.sendDataLocationResponse = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-data-location-response', { message }, [contactId, contact], callback);
             };
 
-            node.dataReadRequest = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.dataReadRequest = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-data-read-request', { message }, [contactId, contact], callback);
             };
 
-            node.sendDataReadResponse = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.sendDataReadResponse = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-data-read-response', { message }, [contactId, contact], callback);
             };
 
-            node.sendEncryptedKey = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.sendEncryptedKey = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-send-encrypted-key', { message }, [contactId, contact], callback);
             };
 
-            node.sendEncryptedKeyProcessResult = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.sendEncryptedKeyProcessResult = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], callback);
             };
 
-            node.verifyImport = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.verifyImport = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-verify-import-request', { message }, [contactId, contact], callback);
             };
 
-            node.sendVerifyImportResponse = (message, contactId, callback) => {
-                const contact = node.getContact(contactId);
+            node.sendVerifyImportResponse = async (message, contactId, callback) => {
+                const contact = await node.getContact(contactId);
                 node.send('kad-verify-import-response', { message }, [contactId, contact], callback);
             };
         });

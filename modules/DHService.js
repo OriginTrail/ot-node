@@ -194,7 +194,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
-            this.network.kademlia().replicationRequest(
+            await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
                     wallet: this.config.node_wallet,
@@ -322,7 +322,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
-            this.network.kademlia().verifyImport({
+            await this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,
@@ -462,7 +462,7 @@ class DHService {
             messageSignature: messageResponseSignature,
         };
 
-        this.network.kademlia().sendDataLocationResponse(
+        await this.network.kademlia().sendDataLocationResponse(
             dataLocationResponseObject,
             message.nodeId,
         );
@@ -580,7 +580,7 @@ class DHService {
                 ),
             };
 
-            this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
             await this.listenPurchaseInititation(
                 importId, wallet, offer, networkReplyModel,
                 holdingData, nodeId, id,
@@ -588,7 +588,7 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
-            this.network.kademlia().sendDataReadResponse({
+            await this.network.kademlia().sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
@@ -720,7 +720,7 @@ class DHService {
             this.config.node_private_key,
         );
 
-        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+        await this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
 
         this.listenPurchaseDispute(
             importId, wallet, m2Checksum,

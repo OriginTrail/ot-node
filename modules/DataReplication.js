@@ -64,7 +64,7 @@ class DataReplication {
         };
 
         // send payload to DH
-        this.network.kademlia().payloadRequest(payload, data.contact, () => {
+        await this.network.kademlia().payloadRequest(payload, data.contact, () => {
             this.log.info('Payload request sent');
         });
     }

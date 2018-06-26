@@ -285,7 +285,7 @@ class DCService {
                     kadWallet,
                     importId,
                 );
-                this.network.kademlia().sendVerifyImportResponse({
+                await this.network.kademlia().sendVerifyImportResponse({
                     status: 'fail',
                     import_id: importId,
                 }, nodeId);
@@ -298,7 +298,7 @@ class DCService {
             this.log.warn('Data successfully verified, preparing to start challenges');
             await this.challenger.startChallenging();
 
-            this.network.kademlia().sendVerifyImportResponse({
+            await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',
                 import_id: importId,
             }, nodeId);
