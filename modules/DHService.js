@@ -811,9 +811,9 @@ class DHService {
         const deg128 = two.pow(new BN(128));
         console.log(deg128.toString('hex'));
 
-        const intervalBn = deg128.div(new BN(Utilities.denormalizeHex(numNodes), 16));
+        const intervalBn = deg128.div(new BN(numNodes, 10));
 
-        const marginBn = intervalBn.mul(new BN(Utilities.denormalizeHex(k), 16)).div(two);
+        const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
 
         const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
