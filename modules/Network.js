@@ -26,8 +26,8 @@ class Network {
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
-            kadence.constants.SOLUTION_DIFFICULTY = 2;
-            kadence.constants.IDENTITY_DIFFICULTY = 2;
+            kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
+            kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
         }
         this.index = parseInt(config.child_derivation_index, 10);
 
@@ -48,20 +48,22 @@ class Network {
 
         this.log.info('Getting the identity');
         this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
-        this.identity = new kadence.eclipse.EclipseIdentity(this.xprivkey, this.index);
+        this.identity = new kadence.eclipse.EclipseIdentity(
+            this.xprivkey,
+            this.index,
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        );
 
         this.log.info('Checking the identity');
-        this.networkUtilities.checkIdentity(
-            this.identity,
-            this.xprivkey,
-        ); // Check if identity is valid
+        // Check if identity is valid
+        this.networkUtilities.checkIdentity(this.identity);
 
-        const { childkey } = this.networkUtilities.getIdentityKeys(
+        const { childKey } = this.networkUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
             parseInt(config.child_derivation_index, 10),
         );
-        this.identity = kadence.utils.toPublicKeyHash(childkey.publicKey).toString('hex');
+        this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
         this.log.notify(`My identity: ${this.identity}`);
         config.identity = this.identity;
@@ -74,7 +76,7 @@ class Network {
     async start() {
         this.log.info('Initializing network');
 
-        const { parentkey } = this.networkUtilities.getIdentityKeys(
+        const { parentKey } = this.networkUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
             parseInt(config.child_derivation_index, 10),
@@ -85,7 +87,7 @@ class Network {
             hostname: config.node_rpc_ip,
             protocol: 'https:',
             port: parseInt(config.node_port, 10),
-            xpub: parentkey.publicExtendedKey,
+            xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
             wallet: config.node_wallet,
@@ -119,11 +121,12 @@ class Network {
         // this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        // this.node.spartacus = this.node.plugin(kadence.spartacus(
-        //     this.xprivkey,
-        //     parseInt(config.child_derivation_index, 10),
-        // ));
-        // this.log.info('Spartacus initialised');
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialised');
         // this.node.hashcash = this.node.plugin(kadence.hashcash({
         //     methods: ['PUBLISH', 'SUBSCRIBE'],
         //     difficulty: 2,
