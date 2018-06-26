@@ -133,7 +133,7 @@ class GS1Importer {
                 location.participant_id = location.attributes.actorId;
                 locationEdges.push({
                     _key: this.helper.createKey('owned_by', senderId, locationKey, location.attributes.actorId),
-                    _from: `ot_vertices/${locationKey}`,
+                    _from: `${locationKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + location.attributes.actorId}`,
                     edge_type: 'OWNED_BY',
                     identifiers: {
