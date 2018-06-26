@@ -60,7 +60,7 @@ class RegisterNode {
     }
 
     socketSend(wallet, nodeIp) {
-        console.log('Entering sockets');
+        console.log('Entering sockets...');
         socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
         // socket.on('connect', () => {
         // socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
@@ -88,7 +88,7 @@ class RegisterNode {
                 fs.writeFile('.env', envF, (err) => {
                     umzug_migrations.up().then((migrations) => {
                         umzug_seeders.up().then((migrations) => {
-                            console.log('Configuration loaded..!');
+                            console.log('Configuration loaded!');
                             resolve({
                                 ip: env.NODE_IP,
                                 wallet: env.NODE_WALLET,
