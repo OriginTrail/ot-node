@@ -1,6 +1,6 @@
 swagger: '2.0'
-host: "NODE_IP:8900"
-basePath: "/api"
+host: 'http://NODE_IP:NODE_RPC_PORT'
+basePath: '/api'
 info:
   description: |
     API documentation for an OriginTrail Node
@@ -44,13 +44,13 @@ paths:
       parameters: 
       - name: importfile
         in: body
-        description: "path to xml/json file that needs to be imported"
+        description: "Import data (file or text data)"
         required: true
         schema:
             $ref: '#/definitions/importfileExample'
       - name: importtype
         in: body
-        description: "GS1 or WOT"
+        description: "Type of provided data (GS1 / WOT)"
         required: true
         schema:
             $ref: '#/definitions/importtypeExample'
@@ -67,6 +67,8 @@ paths:
             example:
               message: 'Invalid import type'
           description: "Invalid import parameters (importfile/importtype)"
+        '405':
+          description: Invalid input
 
   /replication:
     post:
@@ -102,7 +104,9 @@ paths:
                 example: '60bc3cd1-9b2c-4e12-b59a-14405ec73ce5'
               
         '400':
-          description: Invalid input
+          description: Import ID not provided
+        '405':
+          description: Failed to start offer  
           
   /replication/:{replication_id}:
     get:
@@ -131,7 +135,9 @@ paths:
                 example: 'PENDING'
                 
         '400':
-          description: Invalid input
+          description: Replication ID is not provided
+        '404':
+          description: Offer not found
           
   /network/query:
     post:
@@ -200,7 +206,7 @@ paths:
     get:
       tags:
       - database
-      summary: Trail
+      summary: Find trail in database
       consumes:
         - application/json
         - application/x-www-form-urlencoded
@@ -209,20 +215,22 @@ paths:
       parameters:
       - in: query
         name: "queryObject"
-        description: 'queryObject, for example ?vertex_type=BATCH'
+        description: ' Query in specific format, for example ?vertex_type=BATCH'
         required: true
         type: "string"
       responses:
         '200':
-          description: OK
+          description: Array of found vertices for given query
         '204':
-          description: No content found
+          description: No vertices found
+        '500':
+          description: Internal error happened on server
           
   /fingerprint:
     get:
       tags:
       - database
-      summary: Fingerprint
+      summary: Get import fingerprint from blockchain
       consumes:
         - application/json
         - application/x-www-form-urlencoded
@@ -231,24 +239,26 @@ paths:
       parameters:
       - in: query
         name: "dc_wallet"
-        description: valid Ethereum account address
+        description:  Data creator's wallet address
         required: true
         type: "string"
       - in: query
         name: import_id
         required: true
-        description: value of import_id received as an response of sucessful /api/import request
+        description: Value of import_id received as an response of sucessful /api/import request (Data import ID)
       responses:
         '200':
-          description: OK
+          description: Data fingerprint
         '400':
-          description: Invalid input
+          description: Required parameters not provided
+        '500':
+          description: Internal error happened on server
       
   /query:
     get:
       tags: 
       - database
-      summary: Make queries on graph database
+      summary: Run local query on graph database
       consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -257,14 +267,17 @@ paths:
       parameters:
       - in: query
         name: 'queryObject'
-        description: 'queryObject, for example ?uid=urn:epc:id:sgln:HospitalBuilding1'
+        description: 'Query in specific format, for example ?uid=urn:epc:id:sgln:HospitalBuilding1'
         required: true
         type: "string"
       responses:
         '200':
-          description: OK
-        '400':
-          description: Invalid input
+          description: Array of found vertices for given query
+        '204':
+          description: No vertices found
+        '500':
+          description: Internal error happened on server
+
   
 
 definitions:
