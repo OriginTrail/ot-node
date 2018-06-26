@@ -60,10 +60,11 @@ class RegisterNode {
     }
 
     socketSend(wallet, nodeIp) {
-        console.log('Entering sockets....!');
-        socket.on('connect', () => {
-            socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
-        });
+        console.log('Entering sockets');
+        socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
+        // socket.on('connect', () => {
+        // socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
+        // });
     }
 
     generateWallet() {
