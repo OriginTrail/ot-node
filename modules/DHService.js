@@ -807,6 +807,7 @@ class DHService {
      * @param correctionFactor
      */
     amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
+        console.log(k, numNodes, dataHash, nodeHash, correctionFactor);
         const two = new BN(2);
         const deg128 = two.pow(new BN(128));
         console.log(deg128.toString('hex'));
