@@ -596,12 +596,11 @@ class Ethereum {
      * @param dhNodeId KADemplia ID of the DH node that wants to add bid
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
      */
-    getDistanceParameters(importId, dhNodeId) {
+    getDistanceParameters(importId) {
         return new Promise((resolve, reject) => {
             this.log.trace('Check if close enough ... ');
             this.biddingContract.methods.getDistanceParameters(
                 importId,
-                dhNodeId,
             ).call().then((res) => {
                 resolve(res);
             }).catch((e) => {

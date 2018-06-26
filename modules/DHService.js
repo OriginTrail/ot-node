@@ -53,10 +53,7 @@ class DHService {
                 return;
             }
 
-            const distanceParams = await this.blockchain.getDistanceParameters(
-                importId,
-                this.config.identity,
-            );
+            const distanceParams = await this.blockchain.getDistanceParameters(importId);
 
             const nodeHash = distanceParams[0];
             const dataHash = distanceParams[1];

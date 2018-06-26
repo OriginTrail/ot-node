@@ -27,8 +27,8 @@ class Blockchain {
      * @param dhNodeId KADemplia ID of the DH node that wants to add bid
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
      */
-    getDistanceParameters(importId, dhNodeId) {
-        return this.blockchain.getDistanceParameters(importId, dhNodeId);
+    getDistanceParameters(importId) {
+        return this.blockchain.getDistanceParameters(importId);
     }
 
     /**
