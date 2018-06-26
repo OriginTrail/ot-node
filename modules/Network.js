@@ -84,7 +84,7 @@ class Network {
 
         // Initialize public contact data
         const contact = {
-            hostname: config.node_rpc_ip,
+            hostname: config.node_external_ip ? config.node_external_ip : config.node_rpc_ip,
             protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
@@ -138,7 +138,7 @@ class Network {
         }
 
         if (parseInt(config.traverse_nat_enabled, 10)) {
-            this.enableNatTraversal();
+            // this.enableNatTraversal();
         }
 
         // Use verbose logging if enabled
