@@ -3,12 +3,13 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('offers', {
         id: {
             allowNull: false,
+            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
         },
         import_id: {
-            type: Sequelize.INTEGER,
             allowNull: false,
+            type: Sequelize.STRING,
         },
         total_escrow_time: {
             type: Sequelize.INTEGER,
@@ -47,6 +48,10 @@ module.exports = {
             allowNull: false,
         },
         status: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
+        external_id: {
             type: Sequelize.STRING,
             allowNull: false,
         },

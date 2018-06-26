@@ -1,7 +1,7 @@
+const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
-
-const log = require('./Utilities').getLogger();
+const Models = require('../models');
 
 class DataReplication {
     /**
@@ -11,6 +11,10 @@ class DataReplication {
     constructor(ctx) {
         this.network = ctx.network;
         this.challenger = ctx.challenger;
+        this.graphStorage = ctx.graphStorage;
+        this.importer = ctx.importer;
+        this.blockchain = ctx.blockchain;
+        this.log = ctx.logger;
     }
 
     /**
@@ -20,11 +24,10 @@ class DataReplication {
      * @return object response
      */
     async sendPayload(data) {
-        log.info('Entering sendPayload');
+        this.log.info('Entering sendPayload');
 
         const currentUnixTime = Date.now();
         const options = {
-            offer_hash: data.offer_hash,
             dh_wallet: config.dh_wallet,
             import_id: data.import_id,
             amount: data.vertices.length + data.edges.length,
@@ -32,53 +35,38 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data = this._sortEncryptedVertices(data);
+        data.vertices = Graph.sortVertices(data.vertices);
 
+        // TODO: Move test generation outside sendPayload(.
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 10,
             options.start_time, options.start_time + options.total_time,
-            16, data.encryptedVertices.vertices,
+            32, data.vertices,
         );
 
         Challenge.addTests(tests).then(() => {
-            this.challenger.startChallenging();
+            this.log.trace(`Tests generated for DH ${tests[0].dhId}`);
         }, () => {
-            log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
 
+        const dataimport = await Models.data_info.findOne({ where: { import_id: data.import_id } });
         const payload = {
             payload: {
-                offer_hash: data.offer_hash,
                 edges: data.edges,
                 import_id: data.import_id,
                 dc_wallet: config.blockchain.wallet_address,
-                public_key: data.encryptedVertices.public_key,
-                vertices: data.encryptedVertices.vertices,
+                public_key: data.public_key,
+                vertices: data.vertices,
+                root_hash: data.root_hash,
+                data_provider_wallet: dataimport.data_provider_wallet,
             },
         };
 
         // send payload to DH
         this.network.kademlia().payloadRequest(payload, data.contact, () => {
-            log.info('Payload request sent');
+            this.log.info('Payload request sent');
         });
-    }
-
-    /**
-     * Sort encypted vertices according to their keys
-     * @param data
-     * @return {*}
-     * @private
-     */
-    _sortEncryptedVertices(data) {
-        data.encryptedVertices.vertices.sort((a, b) => {
-            if (a._key < b._key) {
-                return -1;
-            } else if (a._key > b._key) {
-                return 1;
-            }
-            return 0;
-        });
-        return data;
     }
 }
 

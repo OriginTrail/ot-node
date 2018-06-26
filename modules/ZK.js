@@ -80,7 +80,8 @@ class ZK {
                     unit,
                 },
                 private: {
-                    r: randomness,
+                    object: inputQuantities[i].object,
+                    r: randomness.toString(),
                     quantity: rawQuantity,
                     unit,
                 },
@@ -117,7 +118,7 @@ class ZK {
                 },
                 private: {
                     object: outputQuantities[i].object,
-                    r: randomness,
+                    r: randomness.toString(),
                     // rp : negRandomness,
                     quantity: rawQuantity,
                     unit,

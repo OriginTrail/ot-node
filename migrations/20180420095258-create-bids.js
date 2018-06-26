@@ -15,7 +15,7 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        offer_hash: {
+        import_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },

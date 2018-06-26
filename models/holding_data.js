@@ -1,14 +1,13 @@
 
 module.exports = (sequelize, DataTypes) => {
     var holding_data = sequelize.define('holding_data', {
-        dc_id: DataTypes.INTEGER,
-        data_id: DataTypes.INTEGER,
-        start_time: DataTypes.DATE,
-        end_time: DataTypes.DATE,
-        total_token_amount: DataTypes.REAL,
-        data_size: DataTypes.REAL,
-        my_stake: DataTypes.REAL,
-        dc_stake: DataTypes.REAL,
+        source_wallet: DataTypes.STRING,
+        data_public_key: DataTypes.STRING,
+        distribution_public_key: DataTypes.STRING,
+        distribution_private_key: DataTypes.STRING,
+        root_hash: DataTypes.STRING(40),
+        data_provider_wallet: DataTypes.STRING(42),
+        epk: DataTypes.STRING,
     }, {
         tableName: 'holding_data',
     });

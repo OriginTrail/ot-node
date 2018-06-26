@@ -2,7 +2,6 @@ const { Database } = require('arangojs');
 const Utilities = require('./../Utilities');
 const request = require('superagent');
 
-const log = Utilities.getLogger();
 const IGNORE_DOUBLE_INSERT = true;
 
 class ArangoJS {
@@ -16,7 +15,8 @@ class ArangoJS {
      * @param {string} - host
      * @param {number} - port
      */
-    constructor(username, password, database, host, port) {
+    constructor(username, password, database, host, port, log) {
+        this.log = log;
         this.db = new Database(`http://${host}:${port}`);
         this.db.useDatabase(database);
         this.db.useBasicAuth(username, password);
@@ -71,6 +71,85 @@ class ArangoJS {
     }
 
     /**
+     * Find set of documents with _key, vertex_type and identifiers values
+     * @param queryObject       Query for getting documents
+     * @returns {Promise<any>}
+     */
+    async findDocuments(collectionName, queryObject) {
+        let queryString = `FOR v IN ${collectionName} `;
+        const params = {};
+        if (Utilities.isEmptyObject(queryObject) === false) {
+            queryString += 'FILTER ';
+
+            let count = 1;
+            const filters = [];
+            for (const key in queryObject) {
+                if (key.match(/^[\w\d]+$/g) !== null) {
+                    let searchKey;
+                    if (key !== 'vertex_type' && key !== 'edge_type' && key !== '_key') {
+                        searchKey = `identifiers.${key}`;
+                    } else {
+                        searchKey = key;
+                    }
+                    const param = `param${count}`;
+                    filters.push(`v.${searchKey} == @param${count}`);
+
+                    count += 1;
+                    params[param] = queryObject[key];
+                }
+            }
+            queryString += filters.join(' AND ');
+        }
+        queryString += ' RETURN v';
+        return this.runQuery(queryString, params);
+    }
+
+    /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param inputQuery
+     */
+    async findImportIds(inputQuery) {
+        const results = await this.dataLocationQuery(inputQuery);
+        const imports = results.reduce((prevVal, elem) => {
+            for (const importId of elem.imports) {
+                prevVal.add(importId);
+            }
+            return prevVal;
+        }, new Set([]));
+        return [...imports].sort();
+    }
+
+    /**
+     * Finds vertices by query defined in DataLocationRequestObject
+     * @param inputQuery
+     */
+    async dataLocationQuery(inputQuery) {
+        const params = {};
+        const filters = [];
+
+        let count = 1;
+        let queryString = 'FOR v IN ot_vertices FILTER ';
+        for (const searchRequestPart of inputQuery) {
+            const { path, value, opcode } = searchRequestPart;
+
+            switch (opcode) {
+            case 'EQ':
+                filters.push(`v.${path} == @param${count}`);
+                break;
+            case 'IN':
+                filters.push(`POSITION(v.${path}, @param${count}) == true`);
+                break;
+            default:
+                throw new Error(`OPCODE ${opcode} is not defined`);
+            }
+            params[`param${count}`] = value;
+            count += 1;
+        }
+        queryString += `${filters.join(' AND ')} RETURN v`;
+        return this.runQuery(queryString, params);
+    }
+
+    /**
      * Finds traversal path starting from particular vertex
      * @param startVertex       Starting vertex
      * @param depth             Explicit traversal depth
@@ -87,6 +166,7 @@ class ArangoJS {
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);
+
         return ArangoJS.convertToVirtualGraph(rawGraph);
     }
 
@@ -311,6 +391,13 @@ class ArangoJS {
         if (collectionName === undefined || collectionName === null) { throw Error('ArangoError: invalid collection type'); }
 
         const collection = this.db.collection(collectionName);
+        if (document._key) {
+            const response = await this.findDocuments(collectionName, { _key: document._key });
+            if (response.length > 0) {
+                if (response[0]._key === document._key);
+                return response[0];
+            }
+        }
         if (document.sender_id && document.identifiers && document.identifiers.uid) {
             const maxVersionDoc =
                 await this.findDocumentWithMaxVersion(
@@ -320,10 +407,6 @@ class ArangoJS {
                 );
 
             if (maxVersionDoc) {
-                if (maxVersionDoc._key === document._key) {
-                    return maxVersionDoc;
-                }
-
                 document.version = maxVersionDoc.version + 1;
                 const response = await collection.save(document);
                 return ArangoJS._normalize(response);
@@ -333,14 +416,8 @@ class ArangoJS {
             const response = await collection.save(document);
             return ArangoJS._normalize(response);
         }
-        try {
-            // First check if already exist.
-            const dbVertex = await this.getDocument(collectionName, document);
-            return dbVertex;
-        } catch (ignore) {
-            const response = await collection.save(document);
-            return ArangoJS._normalize(response);
-        }
+        const response = await collection.save(document);
+        return ArangoJS._normalize(response);
     }
 
     /**
@@ -470,20 +547,17 @@ class ArangoJS {
     async findVerticesByImportId(data_id) {
         const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
-        if (typeof data_id !== 'number') {
-            data_id = parseInt(data_id, 10);
-        }
-
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
     }
 
+    async findObjectClassVertices() {
+        const queryString = 'FOR v IN ot_vertices FILTER v.data == null SORT v._key RETURN v';
+        return this.runQuery(queryString, {});
+    }
+
     async findEdgesByImportId(data_id) {
         const queryString = 'FOR v IN ot_edges FILTER v.imports != null and POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
-
-        if (typeof data_id !== 'number') {
-            data_id = parseInt(data_id, 10);
-        }
 
         const params = { importId: data_id };
         return this.runQuery(queryString, params);
@@ -509,6 +583,34 @@ class ArangoJS {
         };
         const result = await this.runQuery(queryString, params);
         return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
+    }
+
+    /**
+     * Mimics commit opertaion
+     * Removes inTransaction fields
+     * @return {Promise<void>}
+     */
+    async commit() {
+        const queryUpdateTemplate = 'FOR v IN __COLLECTION__ ' +
+            'FILTER v.inTransaction == true ' +
+            'UPDATE v WITH { inTransaction: null } ' +
+            'IN __COLLECTION__ OPTIONS { keepNull: false } ' +
+            'RETURN NEW';
+
+        await this.runQuery(queryUpdateTemplate.replace(/__COLLECTION__/g, 'ot_vertices'));
+        await this.runQuery(queryUpdateTemplate.replace(/__COLLECTION__/g, 'ot_edges'));
+    }
+
+    /**
+     * Mimics rollback opertaion
+     * Removes elements in transaction
+     * @return {Promise<void>}
+     */
+    async rollback() {
+        let queryString = 'FOR v IN ot_vertices FILTER v.inTransaction == true REMOVE v IN ot_vertices';
+        await this.runQuery(queryString);
+        queryString = 'FOR e IN ot_edges FILTER e.inTransaction == true REMOVE e IN ot_edges';
+        await this.runQuery(queryString);
     }
 
     /**

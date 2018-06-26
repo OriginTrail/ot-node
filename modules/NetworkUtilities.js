@@ -7,7 +7,6 @@ const boscar = require('boscar');
 const hdkey = require('hdkey');
 const deasync = require('deasync-promise');
 const utilities = require('./Utilities');
-const log = require('./Utilities').getLogger();
 const config = require('./Config');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
@@ -15,8 +14,9 @@ const { fork } = require('child_process');
 const Control = require('./Control');
 
 class NetworkUtilities {
-    constructor() {
+    constructor(ctx) {
         this.solvers = [];
+        this.log = ctx.logger;
     }
 
     /**
@@ -27,11 +27,11 @@ class NetworkUtilities {
         if (!fs.existsSync(`../keys/${config.ssl_key_path}`)) {
             const result = await utilities.generateSelfSignedCertificate(config);
             if (result) {
-                log.info('SSL generated');
+                this.log.info('SSL generated');
                 return true;
             }
         }
-        log.info('SSL checked successfully');
+        this.log.info('SSL checked successfully');
         return true;
     }
 
@@ -45,12 +45,12 @@ class NetworkUtilities {
         let time;
         let attempts = 0;
         const status = setInterval(() => {
-            log.info('Still solving identity, ' +
+            this.log.info('Still solving identity, ' +
           `currently ${attempts} of ${kadence.constants.MAX_NODE_INDEX} ` +
           `possible indices tested in the last ${ms(Date.now() - start)}`);
         }, 60000);
 
-        log.info(`Solving identity derivation index with ${config.cpus} ` +
+        this.log.info(`Solving identity derivation index with ${config.cpus} ` +
         'solver processes, this can take a while...');
 
         events.on('attempt', () => attempts += 1);
@@ -59,15 +59,15 @@ class NetworkUtilities {
             this.index = await this.spawnIdentityDerivationProcesses(this.xprivkey, events);
             time = Date.now() - start;
         } catch (err) {
-            log.error(err.message.toLowerCase());
-            log.info(`Delete/move ${config.private_extended_key_path} and restart`);
+            this.log.error(err.message.toLowerCase());
+            this.log.info(`Delete/move ${config.private_extended_key_path} and restart`);
             process.exit(1);
         }
 
         events.removeAllListeners();
         clearInterval(status);
 
-        log.info(`Solved identity derivation index ${this.index} in ${ms(time)}`);
+        this.log.info(`Solved identity derivation index ${this.index} in ${ms(time)}`);
         utilities.saveToConfig('child_derivation_index', this.index);
         config.child_derivation_index = this.index;
     }
@@ -83,10 +83,10 @@ class NetworkUtilities {
         const cpus = parseInt(config.cpus, 10);
 
         if (cpus === 0) {
-            return log.info('There are no derivation processes running');
+            return this.log.info('There are no derivation processes running');
         }
         if (os.cpus().length < cpus) {
-            return log.error('Refusing to start more solvers than cpu cores');
+            return this.log.error('Refusing to start more solvers than cpu cores');
         }
 
         for (let c = 0; c < cpus; c += 1) {
@@ -97,9 +97,9 @@ class NetworkUtilities {
 
             solver.once('exit', (code) => {
                 if (code === 0) {
-                    log.info(`Derivation solver ${c} exited normally`);
+                    this.log.info(`Derivation solver ${c} exited normally`);
                 } else {
-                    log.error(`Derivation solver ${c} exited with code ${code}`);
+                    this.log.error(`Derivation solver ${c} exited with code ${code}`);
                 }
             });
         }
@@ -122,7 +122,7 @@ class NetworkUtilities {
     * @return {*}
     */
     forkIdentityDerivationSolver(c, xprv, index, events) {
-        log.info(`Forking derivation process ${c}`);
+        this.log.info(`Forking derivation process ${c}`);
 
         const solver = fork(path.join(__dirname, 'workers', 'identity.js'), [], {
             stdio: [0, 1, 2, 'ipc'],
@@ -132,7 +132,7 @@ class NetworkUtilities {
 
         solver.on('message', (msg) => {
             if (msg.error) {
-                return log.error(`Derivation ${c} error, ${msg.error}`);
+                return this.log.error(`Derivation ${c} error, ${msg.error}`);
             }
 
             if (msg.attempts) {
@@ -142,7 +142,7 @@ class NetworkUtilities {
         });
 
         solver.on('error', (err) => {
-            log.error(`Derivation ${c} error, ${err.message}`);
+            this.log.error(`Derivation ${c} error, ${err.message}`);
         });
 
         solver.send([xprv, index]);
@@ -164,65 +164,14 @@ class NetworkUtilities {
         const controller = new boscar.Server(new Control(node));
 
         if (parseInt(config.control_port_enabled, 10)) {
-            log.notify(`Binding controller to port ${config.control_port}`);
+            this.log.notify(`Binding controller to port ${config.control_port}`);
             controller.listen(parseInt(config.control_port, 10), '0.0.0.0');
         }
 
         if (parseInt(config.control_sock_enabled, 10)) {
-            log.notify(`Binding controller to path ${config.control_sock}`);
+            this.log.notify(`Binding controller to path ${config.control_sock}`);
             controller.listen(config.control_sock);
         }
-    }
-
-    /**
-    * Spawn solvers for hashes
-    */
-    spawnHashSolverProcesses(node) {
-        const cpus = parseInt(config.cpus, 10);
-
-        if (cpus === 0) {
-            return log.info('There are no solver processes running');
-        }
-
-        if (os.cpus().length < cpus) {
-            return log.error('Refusing to start more solvers than cpu cores');
-        }
-
-        for (let c = 0; c < cpus; c += 1) {
-            this.forkHashSolver(c, node);
-        }
-    }
-
-    /**
-    * Create child processes for hash solvers
-    * @param c
-    */
-    forkHashSolver(c, node) {
-        log.info(`Forking solver process ${c}`);
-
-        const solver = fork(path.join(__dirname, 'workers', 'solver.js'), [], {
-            stdio: [0, 1, 2, 'ipc'],
-            env: process.env,
-        });
-
-        solver.on('message', (msg) => {
-            if (msg.error) {
-                return log.error(`Solver ${c} error, ${msg.error}`);
-            }
-
-            log.info(`Solver ${c} found solution ` +
-          `in ${msg.result.attempts} attempts (${ms(msg.result.time)})`);
-
-            const solution = new kadence.permission.PermissionSolution(Buffer.from(msg.result.solution, 'hex'));
-            node.wallet.put(solution);
-        });
-
-        solver.on('error', (err) => {
-            log.error(`solver ${c} error, ${err.message}`);
-        });
-
-        solver.send({ privateKey: node.spartacus.privateKey.toString('hex') });
-        this.solvers.push(solver);
     }
 
     /**
@@ -230,11 +179,12 @@ class NetworkUtilities {
     * @param string - extended private key
     * @return {{childkey: *, parentkey: *}}
     */
-    getIdentityKeys(xprivkey) {
+    getIdentityKeys(xprivkey, path, childDerivationIndex) {
         // Start initializing identity keys
-        const parentkey = hdkey.fromExtendedKey(xprivkey)
-            .derive(kadence.constants.HD_KEY_DERIVATION_PATH);
-        const childkey = parentkey.deriveChild(parseInt(config.child_derivation_index, 10));
+        const parentkey = hdkey.fromExtendedKey(xprivkey);
+        const childkey = parentkey
+            .derive(path)
+            .deriveChild(childDerivationIndex);
         return {
             childkey,
             parentkey,
@@ -245,15 +195,8 @@ class NetworkUtilities {
     * Verifies if we are on the test network and otherconfig checks
     */
     verifyConfiguration(config) {
-        if (parseInt(config.test_network, 10)) {
-            log.warn('Node is running in test mode, difficulties are reduced');
-            process.env.kadence_TestNetworkEnabled = config.test_network;
-            kadence.constants.SOLUTION_DIFFICULTY = 2;
-            kadence.constants.IDENTITY_DIFFICULTY = 2;
-        }
-
         if (parseInt(config.traverse_nat_enabled, 10) && parseInt(config.onion_enabled, 10)) {
-            log.error('Refusing to start with both TraverseNatEnabled and ' +
+            this.log.error('Refusing to start with both TraverseNatEnabled and ' +
           'OnionEnabled - this is a privacy risk');
             process.exit(1);
         }
@@ -268,7 +211,7 @@ class NetworkUtilities {
         this.xprivkey = xprivkey;
         this.identity = identity;
         if (!identity.validate(this.xprivkey, this.index)) {
-            log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${this.index} is invalid`);
+            this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${this.index} is invalid`);
             deasync(this.solveIdentity());
         }
     }

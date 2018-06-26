@@ -1,6 +1,7 @@
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
+const moment = require('moment');
 const ipaddr = require('ipaddr.js');
 const winston = require('winston');
 const Storage = require('./Storage');
@@ -17,11 +18,20 @@ const BN = require('bn.js');
 var numberToBN = require('number-to-bn');
 
 require('dotenv').config();
+require('winston-loggly-bulk');
 
 
 class Utilities {
     constructor() {
         this.getLogger();
+    }
+
+    /**
+     * Creates new hash import ID.
+     * @returns {*}
+     */
+    static createImportId() {
+        return soliditySha3(Date.now().toString() + config.node_wallet);
     }
 
     /**
@@ -105,14 +115,20 @@ class Utilities {
         });
     }
 
+    formatFileLogs(args) {
+        const date = moment().format('D/MM/YYYY hh:mm:ss');
+        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
+        return msg;
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        var logLevel = 'trace';
+        const logLevel = 'trace';
 
-        var customColors = {
+        const customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'blue',
@@ -122,9 +138,31 @@ class Utilities {
             error: 'red',
         };
 
-
         try {
-            var logger = new (winston.Logger)({
+            const transports =
+                [
+                    new (winston.transports.Console)({
+                        colorize: 'all',
+                        timestamp: false,
+                        prettyPrint: object => JSON.stringify(object),
+                    }),
+                    new (winston.transports.File)({
+                        filename: 'node.log',
+                        json: false,
+                        formatter: this.formatFileLogs,
+                    }),
+                ];
+
+            if (process.env.SEND_LOGS) {
+                transports.push(new (winston.transports.Loggly)({
+                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
+                    subdomain: 'origintrail.loggly.com',
+                    tags: ['OT-Node'],
+                    json: true,
+                }));
+            }
+
+            const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {
@@ -136,31 +174,27 @@ class Utilities {
                     notify: 5,
                     trace: 6,
                 },
-                transports: [
-                    new (winston.transports.Console)({
-                        colorize: 'all',
-                        timestamp: false,
-                    }),
-                    new (winston.transports.File)({ filename: 'node.log' }),
-                ],
+                transports,
             });
             winston.addColors(customColors);
 
             // Extend logger object to properly log 'Error' types
             const origLog = logger.log;
             logger.log = (level, msg) => {
-                if (msg.startsWith('connect econnrefused')) {
-                    level = 'debug';
-                    const address = msg.substr(21);
-                    msg = `Failed to connect to ${address}`;
-                }
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
                     const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    // eslint-disable-next-line prefer-rest-params
+                    if (msg.startsWith('updating peer profile')) {
+                        return; // skip logging
+                    }
+                    if (msg.startsWith('connect econnrefused')) {
+                        level = 'trace';
+                        const address = msg.substr(21);
+                        msg = `Failed to connect to ${address}`;
+                    }
                     origLog.apply(logger, [level, msg]);
                 }
             };
@@ -583,11 +617,11 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
-                        this.logger.error(error);
+                        Utilities.getLogger().error(error);
                         reject(error);
                     });
             }).catch((error) => {
-                this.logger.error(error);
+                Utilities.getLogger().error(error);
                 reject(error);
             });
         });
@@ -775,6 +809,80 @@ class Utilities {
         const myBid = hashWallerNodeId.add(price);
         const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
+    }
+
+    static generateRsvSignature(message, web3, privateKey) {
+        const signature = web3.eth.accounts.sign(
+            message,
+            privateKey.toLowerCase().startsWith('0x') ?
+                privateKey : `0x${privateKey}`,
+        );
+
+        return { r: signature.r, s: signature.s, v: signature.v };
+    }
+
+    static isMessageSigned(web3, message, signature) {
+        const signedAddress = web3.eth.accounts.recover(
+            JSON.stringify(message),
+            signature.v,
+            signature.r,
+            signature.s,
+        );
+
+        return signedAddress === message.wallet;
+    }
+
+    /**
+     * Normalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static normalizeHex(number) {
+        if (!number.toLowerCase().startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
+    }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
+    /**
+     * Expands hex number to desired number of digits.
+     *
+     * For example expandHex('3', 4) or expandHex('0x3', 4) will return '0003'
+     * @param number
+     * @param digitCount
+     */
+    static expandHex(number, digitCount) {
+        const hex = this.denormalizeHex(number);
+
+        if (hex.length > digitCount) {
+            throw Error(`Number ${number} has more digits than required.`);
+        }
+
+        return new Array(digitCount - hex.length).join('0') + hex;
+    }
+
+    /**
+     * Is node a bootstrap node
+     * @return {boolean}
+     */
+    static isBootstrapNode() {
+        const bootstrapNodes = config.network_bootstrap_nodes;
+        if (bootstrapNodes) {
+            return bootstrapNodes.length === 0;
+        }
+        return true;
     }
 }
 
