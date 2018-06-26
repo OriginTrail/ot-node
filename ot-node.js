@@ -33,6 +33,10 @@ const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
+    if (reason.message.startsWith('Invalid JSON RPC response')) {
+        log.warn('Web3 failed to communicate with blockchain provider. Check internet connection');
+        return;
+    }
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
