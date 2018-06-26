@@ -51,6 +51,10 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        message: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
         external_id: {
             type: Sequelize.STRING,
             allowNull: false,
