@@ -874,6 +874,30 @@ class Utilities {
     }
 
     /**
+     * Validates number property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameter(property) {
+        if (property == null || typeof property === 'number') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Validates string property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateStringParameter(property) {
+        if (property == null || typeof property === 'string') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Is node a bootstrap node
      * @return {boolean}
      */
