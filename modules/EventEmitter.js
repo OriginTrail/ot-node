@@ -71,6 +71,27 @@ class EventEmitter {
             });
         });
 
+        this.apiEmitter.on('api-get/api/import', (data) => {
+            const { import_d: importId } = data;
+
+            try {
+                const result = dhService.getVerticesForImport(importId);
+
+                if (result.vertices.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+                data.response.send(result);
+            } catch (error) {
+                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            }
+        });
+
         this.apiEmitter.on('get-imports', (data) => {
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
@@ -615,9 +636,9 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-replication-finished', () => {
+        this.kadEmitter.on('kad-replication-finished', async () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
-            challenger.startChallenging();
+            await challenger.startChallenging();
         });
 
         // sync

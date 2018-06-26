@@ -945,6 +945,56 @@ class DHService {
         return vertices;
     }
 
+    /**
+     * Returns given import's vertices and edges and decrypt them if needed.
+     *
+     * Method will return object in following format { vertices: [], edges: [] }.
+     * @param importId ID of import.
+     * @returns {Promise<*>}
+     */
+    async getVerticesForImport(importId) {
+        // Check if import came from DH replication or reading replication.
+        const holdingData = await Models.holding_data.find({ where: { id: importId } });
+
+        if (holdingData) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            const encodedVertices = values[0];
+            const edges = values[1];
+            const decryptKey = holdingData.data_public_key;
+            const vertices = [];
+
+            encodedVertices.forEach((encodedVertex) => {
+                const decryptedVertex = Utilities.copyObject(encodedVertex);
+                decryptedVertex.data =
+                    Encryption.decryptObject(
+                        encodedVertex.data,
+                        decryptKey,
+                    );
+                vertices.push(decryptedVertex);
+            });
+
+            return { vertices, edges };
+        }
+
+        // Check if import came from DC side.
+        const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+
+        if (dataInfo) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            return { vertices: values[0], edges: values[1] };
+        }
+
+        throw Error(`Cannot find vertices for import ID ${importId}.`);
+    }
+
     listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated', 'LitigationInitiated', 'LitigationCompleted']);
     }
