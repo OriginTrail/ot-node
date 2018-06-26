@@ -6,7 +6,7 @@ const envfile = require('envfile');
 const externalip = require('externalip');
 const fs = require('fs');
 
-const socket = require('socket.io-client')('http://18.185.39.223:3010');
+const socket = require('socket.io-client')('https://18.185.39.223:3010');
 
 const Web3 = require('web3');
 
