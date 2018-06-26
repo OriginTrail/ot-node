@@ -400,7 +400,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Calling - createOffer() on contract.');
+        this.log.warn('Calling - create offer on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
@@ -597,7 +597,9 @@ class Ethereum {
     getDistanceParameters(importId) {
         return new Promise((resolve, reject) => {
             this.log.trace('Check if close enough ... ');
-            this.biddingContract.methods.getDistanceParameters(importId).call().then((res) => {
+            this.biddingContract.methods.getDistanceParameters(importId).call({
+                from: this.config.wallet_address,
+            }).then((res) => {
                 resolve(res);
             }).catch((e) => {
                 reject(e);
