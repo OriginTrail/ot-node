@@ -53,6 +53,21 @@ class DHService {
                 return;
             }
 
+            const distanceParams = await this.blockchain.getDistanceParameters(importId);
+
+            const nodeHash = distanceParams[0];
+            const dataHash = distanceParams[1];
+            const currentRanking = distanceParams[3]; // Not used at the moment
+            const k = distanceParams[4];
+            const numNodes = distanceParams[5];
+
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 200)) {
+                this.log.notify('Close enough to take bid');
+            } else {
+                this.log.notify('Not close enough to take bid');
+                return;
+            }
+
             const holdingData = await Models.holding_data.findOne({
                 where: { root_hash: dataHash },
             });
@@ -796,11 +811,11 @@ class DHService {
         const deg128 = two.pow(new BN(128));
         console.log(deg128.toString('hex'));
 
-        const intervalBn = deg128.div(new BN(numNodes));
+        const intervalBn = deg128.div(new BN(Utilities.denormalizeHex(numNodes), 16));
 
-        const marginBn = intervalBn.mul(new BN(k)).div(two);
+        const marginBn = intervalBn.mul(new BN(Utilities.denormalizeHex(k), 16)).div(two);
 
-        const dataHashBn = new BN(dataHash, 16);
+        const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
         let intervalTo;
         let higherMargin = marginBn;
@@ -815,7 +830,7 @@ class DHService {
             higherMargin = dataHashBn.add(marginBn).sub(deg128).add(marginBn);
         }
 
-        const nodeHashBn = new BN(nodeHash, 16);
+        const nodeHashBn = new BN(Utilities.denormalizeHex(nodeHash), 16);
 
         let distance;
         if (dataHashBn.gt(nodeHashBn)) {
