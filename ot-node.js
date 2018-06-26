@@ -535,31 +535,6 @@ class OTNode {
             });
         });
 
-        server.get('/api/network/query_by_id', (req, res) => {
-            log.trace('GET Query by ID received.');
-
-            const queryObject = req.query;
-
-            if (Utilities.isEmptyObject(queryObject)) {
-                log.error('Invalid request. You need to provide query ID');
-                res.status = 400;
-                res.send({
-                    message: 'Query ID is not provided',
-                });
-                return;
-            }
-
-            const query = [{
-                path: 'identifiers.id',
-                value: queryObject.id,
-                opcode: 'EQ',
-            }];
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
-        });
-
         server.get('/api/query/network/:query_param', (req, res) => {
             log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
