@@ -53,6 +53,24 @@ class DHService {
                 return;
             }
 
+            const distanceParams = await this.blockchain.getDistanceParameters(
+                importId,
+                this.config.identity,
+            );
+
+            const nodeHash = distanceParams[0];
+            const dataHash = distanceParams[1];
+            const currentRanking = distanceParams[3]; // Not used at the moment
+            const k = distanceParams[4];
+            const numNodes = distanceParams[5];
+
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 100)) {
+                this.log.notify('Close enough to take bid');
+            } else {
+                this.log.notify('Not close enough to take bid');
+                return;
+            }
+
             const holdingData = await Models.holding_data.findOne({
                 where: { root_hash: dataHash },
             });

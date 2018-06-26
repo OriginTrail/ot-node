@@ -355,7 +355,6 @@ class EventEmitter {
         const {
             dhService,
             logger,
-            blockchain,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -372,35 +371,17 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            const distanceParams = await blockchain.getDistanceParameters(
+            await dhService.handleOffer(
                 import_id,
-                config.identity,
+                DC_node_id,
+                total_escrow_time_in_minutes * 60000, // In ms.
+                max_token_amount_per_DH,
+                min_stake_amount_per_DH,
+                min_reputation,
+                data_size_in_bytes,
+                data_hash,
+                false,
             );
-            // (bytes32 node_hash, bytes32 data_hash, uint256 distance,
-            // uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_)
-
-            const nodeHash = distanceParams[0];
-            const dataHash = distanceParams[1];
-            const currentRanking = distanceParams[3]; // Not used at the moment
-            const k = distanceParams[4];
-            const numNodes = distanceParams[5];
-
-            if (dhService.amIClose(k, numNodes, dataHash, nodeHash, 100)) {
-                this.log.notify('Close enough to take bid');
-                await dhService.handleOffer(
-                    import_id,
-                    DC_node_id,
-                    total_escrow_time_in_minutes * 60000, // In ms.
-                    max_token_amount_per_DH,
-                    min_stake_amount_per_DH,
-                    min_reputation,
-                    data_size_in_bytes,
-                    data_hash,
-                    false,
-                );
-            } else {
-                this.log.notify('Not close enough to take bid');
-            }
         });
 
         this.blockchainEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
