@@ -1,5 +1,7 @@
 const SystemStorage = require('./Database/SystemStorage');
 const Storage = require('./Storage');
+const { Op } = require('sequelize');
+const Models = require('../models');
 
 const Models = require('../models');
 
@@ -106,31 +108,25 @@ class Challenge {
      * @param tests Tests to store.
      * @returns {Promise<any>}
      */
-    static addTests(tests) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    'DELETE FROM data_challenges WHERE dh_id=? AND import_id=?',
-                    [tests[0].dhId, tests[0].importId],
-                ).then(() => {
-                    for (let i = 0; i < tests.length; i += 1) {
-                        SystemStorage.runSystemQuery(
-                            'INSERT INTO data_challenges (time, block_id, answer, dh_id, import_id) VALUES (?, ?, ?, ?, ?)',
-                            [tests[i].time, tests[i].block, tests[i].answer, tests[i].dhId,
-                                tests[i].importId],
-                        ).then(() => {
-                            resolve();
-                        }).catch((error) => {
-                            reject(error);
-                        });
-                    }
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
+    static async addTests(tests) {
+        await Models.data_challenges.destroy({
+            where: {
+                dh_id: tests[0].dhId,
+                import_id: tests[0].importId,
+            },
         });
+
+        return Promise.all([
+            tests.forEach((test) => {
+                Models.data_challenges.create({
+                    time: test.time,
+                    block_id: test.block,
+                    answer: test.answer,
+                    dh_id: test.dhId,
+                    import_id: test.importId,
+                });
+            }),
+        ]);
     }
 
     /**
@@ -139,20 +135,13 @@ class Challenge {
      * @param importId Import ID.
      * @returns {Promise<any>}
      */
-    static getTests(dhtId, importId) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=?',
-                    [dhtId, importId],
-                ).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
+    static async getTests(dhtId, importId) {
+        return Models.data_challenges.findAll({
+            attributes: ['id', 'time', 'block_id', 'answer'],
+            where: {
+                dh_id: dhtId,
+                import_id: importId,
+            },
         });
     }
 
@@ -172,20 +161,15 @@ class Challenge {
      * @param endTime Unix time in milliseconds.
      * @returns {Promise}
      */
-    static getUnansweredTest(startTime, endTime) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    'select id, time, block_id, answer, dh_id, import_id from data_challenges where time between ? AND ? AND answered IS NULL',
-                    [startTime, endTime],
-                ).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
+    static async getUnansweredTest(startTime, endTime) {
+        return Models.data_challenges.findAll({
+            attributes: ['id', 'time', 'block_id', 'answer', 'dh_id', 'import_id'],
+            where: {
+                time: {
+                    [Op.between]: [startTime, endTime],
+                },
+                answered: null,
+            },
         });
     }
 
@@ -195,21 +179,17 @@ class Challenge {
      * @param importId ID of the import.
      * @returns {Promise<any>}
      */
-    static getNextTest(dhId, importId) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    // todo add import id
-                    'SELECT id, time, block_id, answer FROM data_challenges WHERE dh_id=? AND import_id=? AND time > ? AND answered IS NULL',
-                    [dhId, importId, Date.now()],
-                ).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
+    static async getNextTest(dhId, importId) {
+        return Models.data_challenges.findAll({
+            attributes: ['id', 'time', 'block_id', 'answer'],
+            where: {
+                dh_id: dhId,
+                import_id: importId,
+                time: {
+                    [Op.gt]: Date.now(),
+                },
+                answered: null,
+            },
         });
     }
 

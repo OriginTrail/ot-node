@@ -18,7 +18,6 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
-        this.blockchain = ctx.blockchain;
 
         this.apiEmitter = new events.EventEmitter();
         this.kadEmitter = new events.EventEmitter();
@@ -356,6 +355,7 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            blockchain,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -372,7 +372,7 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            const distanceParams = await this.blockchain.getDistanceParameters(
+            const distanceParams = await blockchain.getDistanceParameters(
                 import_id,
                 config.identity,
             );

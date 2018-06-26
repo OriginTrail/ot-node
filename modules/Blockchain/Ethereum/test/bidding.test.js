@@ -19,6 +19,7 @@ const total_escrow_time = 1;
 const max_token_amount = 1000e18;
 const min_stake_amount = 10e12;
 const min_reputation = 0;
+const predestined_first_bid_index = 9;
 
 // Profile variables
 var chosen_bids = [];
@@ -181,7 +182,7 @@ contract('Bidding testing', async (accounts) => {
         predetermined_node_id.push(node_id[2]);
 
         // Data holding parameters
-        const data_hash = await util.keccakAddressBytes(accounts[9], node_id[9]);
+        const data_hash = await util.keccakSender({ from: accounts[predestined_first_bid_index] });
 
         console.log(`\t Data hash: ${data_hash}`);
 
@@ -282,7 +283,7 @@ contract('Bidding testing', async (accounts) => {
             console.log(`\t first_bid_index =  ${first_bid_index} (node[${first_bid_index + 1}])`);
         }
 
-        assert.equal(first_bid_index, 8, 'Something wrong');
+        assert.equal(first_bid_index, predestined_first_bid_index - 1, 'Something wrong');
     });
 
     // EscrowDefinition
