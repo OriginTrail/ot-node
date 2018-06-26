@@ -807,11 +807,8 @@ class DHService {
      * @param correctionFactor
      */
     amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
-        console.log(k, numNodes, dataHash, nodeHash, correctionFactor);
         const two = new BN(2);
         const deg128 = two.pow(new BN(128));
-        console.log(deg128.toString('hex'));
-
         const intervalBn = deg128.div(new BN(numNodes, 10));
 
         const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
@@ -839,9 +836,6 @@ class DHService {
         } else {
             distance = nodeHashBn.sub(dataHashBn);
         }
-
-        console.log(distance.toString('hex'));
-        console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
         if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
             return true;
