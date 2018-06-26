@@ -60,13 +60,9 @@ class RegisterNode {
     }
 
     socketSend(wallet, nodeIp) {
-        console.log('Entering sockets....');
+        console.log('Entering sockets....!');
         socket.on('connect', () => {
             socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
-        });
-
-        socket.on('disconnect', () => {
-            socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: false });
         });
     }
 
