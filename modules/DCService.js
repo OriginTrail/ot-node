@@ -91,7 +91,7 @@ class DCService {
         // Check if root-hash already written.
         const blockchainRootHash = await this.blockchain.getRootHash(config.node_wallet, importId);
 
-        if (!blockchainRootHash) {
+        if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
             await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
                 offer.status = 'FAILED';
                 offer.save({ fields: ['status'] });
