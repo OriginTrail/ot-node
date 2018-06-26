@@ -5,6 +5,8 @@ const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 
+const { Op } = Models.Sequelize;
+
 const intervalMs = 1500;
 
 class Challenger {
@@ -15,9 +17,16 @@ class Challenger {
         this.graphStorage = ctx.graphStorage;
     }
 
-    startChallenging() {
-        if (this.timerId === undefined) {
-            // TODO doktor: temp solution to delay.
+    async startChallenging() {
+        const activeChallegesCount = await Models.replicated_data.findAndCountAll({
+            where: {
+                status: {
+                    [Op.in]: ['ACTIVE', 'TESTING'],
+                },
+            },
+        });
+        if (activeChallegesCount.count > 0 && this.timerId === undefined) {
+            // TODO: temp solution to delay.
             // Should be started after replication-finished received.
             setTimeout(() => {
                 setInterval(this.intervalFunc, intervalMs, this, this.log);

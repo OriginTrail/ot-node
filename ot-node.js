@@ -221,6 +221,9 @@ class OTNode {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
+
+        const challenger = container.resolve('challenger');
+        await challenger.startChallenging();
     }
 
     /**
