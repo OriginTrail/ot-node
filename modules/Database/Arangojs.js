@@ -190,12 +190,7 @@ class ArangoJS {
             for (const edgeId in graph.edges) {
                 const edge = graph.edges[edgeId];
                 if (edge !== null) {
-                    if (edge._from.indexOf('ot_vertices/') > -1) {
-                        edge._from = edge._from.substring('ot_vertices/'.length);
-                    }
-                    if (edge._to.indexOf('ot_vertices/') > -1) {
-                        edge._to = edge._to.substring('ot_vertices/'.length);
-                    }
+                    ArangoJS._normalizeConnection(edge);
 
                     delete edge._id;
                     delete edge._rev;
@@ -427,13 +422,7 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async updateDocument(collectionName, document) {
-        if (typeof document._from === 'string' && document._from.indexOf('ot_vertices/') === -1) {
-            document._from = `ot_vertices/${document._from}`;
-        }
-        if (typeof document._to === 'string' && document._to.indexOf('ot_vertices/') === -1) {
-            document._to = `ot_vertices/${document._to}`;
-        }
-
+        ArangoJS._deNormalizeConnection(document);
         const collection = this.db.collection(collectionName);
         const response = await collection.update(document._key, document);
         return ArangoJS._normalize(response);
@@ -614,28 +603,55 @@ class ArangoJS {
     }
 
     /**
-     * Normalize properties returned from Arango
+     * Normalize properties returned from ArangoDB
      * @param document
      * @returns {*}
      * @private
      */
-    static _normalize(data) {
-        if (Array.isArray(data)) {
-            for (const k of data) {
-                ArangoJS._normalize(k);
+    static _normalize(document) {
+        if (Array.isArray(document)) {
+            for (const doc of document) {
+                ArangoJS._normalize(doc);
             }
         } else {
-            delete data._id;
-            delete data._rev;
-            delete data._oldRev;
-            if (typeof data._from === 'string' && data._from.indexOf('ot_vertices/') > -1) {
-                data._from = data._from.substring('ot_vertices/'.length);
-            }
-            if (typeof data._to === 'string' && data._to.indexOf('ot_vertices/') > -1) {
-                data._to = data._to.substring('ot_vertices/'.length);
-            }
+            delete document._id;
+            delete document._rev;
+            delete document._oldRev;
+            ArangoJS._normalizeConnection(document);
         }
-        return data;
+        return document;
+    }
+
+    /**
+     * Removes collection name from document properties
+     * @param document
+     * @returns {*}
+     * @private
+     */
+    static _normalizeConnection(document) {
+        if (typeof document._from === 'string' && document._from.startsWith('ot_vertices/')) {
+            document._from = document._from.substring('ot_vertices/'.length);
+        }
+        if (typeof document._to === 'string' && document._to.startsWith('ot_vertices/')) {
+            document._to = document._to.substring('ot_vertices/'.length);
+        }
+        return document;
+    }
+
+    /**
+     * Adds collection name to document properties
+     * @param document
+     * @returns {*}
+     * @private
+     */
+    static _deNormalizeConnection(document) {
+        if (typeof document._from === 'string' && !document._from.startsWith('ot_vertices/')) {
+            document._from = `ot_vertices/${document._from}`;
+        }
+        if (typeof document._to === 'string' && !document._to.startsWith('ot_vertices/')) {
+            document._to = `ot_vertices/${document._to}`;
+        }
+        return document;
     }
 }
 
