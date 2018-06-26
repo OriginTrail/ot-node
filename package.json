@@ -77,6 +77,7 @@
     "md5": "^2.2.1",
     "moment": "^2.22.2",
     "ms": "^2.1.1",
+    "nat-upnp": "git+https://github.com/OriginTrail/node-nat-upnp.git#7e9f552d4812ababf404f89d8e41c0fd5ab93d9e",
     "nedb": "^1.8.0",
     "neo4j-driver": "^1.5.0",
     "node-rsa": "^0.4.2",
