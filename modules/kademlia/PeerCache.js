@@ -22,7 +22,6 @@ class PeerCache {
     /**
      * Gets the external peer data for the given identity
      * @param {string} identity - Identity key for the peer
-     * @param {object} contact - Peer's external contact information
      * @returns {object}
      */
     getExternalPeerInfo(identity) {
