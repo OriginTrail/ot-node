@@ -94,7 +94,7 @@ class DCService {
             await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
                 offer.status = 'FAILED';
                 offer.save({ fields: ['status'] });
-                this.log.error(`Failed to write fingerprint on blockchain. ${err}`);
+                throw Error(`Failed to write fingerprint on blockchain. ${err}`);
             });
         } else if (blockchainRootHash !== rootHash) {
             throw Error(`Calculated roothash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
