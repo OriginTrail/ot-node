@@ -416,9 +416,13 @@ class Network {
                     // check peercache
                     contact = await this.node.peercache.getExternalPeerInfo(contactId);
                     if (contact) {
-                        contact = KadenceUtils.parseContactURL(contact);
+                        const contactInfo = KadenceUtils.parseContactURL(contact);
                         // refresh bucket
-                        node.router.addContactByNodeId(contactId, contact);
+                        if (contactInfo) {
+                            // eslint-disable-next-line
+                            contact = contactInfo[1];
+                            node.router.addContactByNodeId(contactId, contact);
+                        }
                     }
                 }
                 return contact;
