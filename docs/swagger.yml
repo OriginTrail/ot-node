@@ -1,5 +1,5 @@
 swagger: '2.0'
-host: "localhost:8900"
+host: "NODE_IP:8900"
 basePath: "/api"
 info:
   description: |
@@ -24,9 +24,9 @@ tags:
   #   description: Find out more about XML data structure
   #   url: https://github.com/OriginTrail/ot-node/wiki/Data-Structure-Guidelines
 - name: replication
-  description: Replicate stuff
+  description: Create an offer and initiate replication
 - name: read
-  description: Read stuff
+  description: Make network queries 
 - name: database
   description: Database operations
   
@@ -72,25 +72,39 @@ paths:
     post:
       tags:
       - replication
-      summary: Replicate import / Creates an offer
+      summary: Creates an offer and trigger replication
       consumes:
         - application/json
         - application/x-www-form-urlencoded
       produces:
         - application/json
       parameters:
-      - in: "formData"
+      - in: "body"
         name: "import_id"
         description: ID of the import you want to replicate
         required: true
         type: "string"
+        schema:
+          type: object
+          properties:
+            import_id:
+              type: string
+              example: '0x7e9d30d3f78fd21180c9c075403b1feeace7fbf10e10ad4184dd8b7e38358bc6'
+
       responses:
         '200':
           description: OK
+          schema:
+            type: object
+            properties:
+              replication_id:
+                type: string
+                example: '60bc3cd1-9b2c-4e12-b59a-14405ec73ce5'
+              
         '400':
           description: Invalid input
           
-  /replication/:
+  /replication/:{replication_id}:
     get:
       tags:
       - replication
@@ -101,14 +115,21 @@ paths:
       produces:
         - application/json
       parameters:
-      - in: "formData"
-        name: "import_id"
+      - in: path
+        name: "replication_id"
         description: ID of the import you want to replicate
         required: true
         type: "string"
       responses:
         '200':
           description: OK
+          schema:
+            type: object
+            properties:
+              offer_status:
+                type: 'string'
+                example: 'PENDING'
+                
         '400':
           description: Invalid input
           
@@ -186,16 +207,16 @@ paths:
       produces:
         - application/json
       parameters:
-      - in: "query"
+      - in: query
         name: "queryObject"
-        description: queryObject
+        description: 'queryObject, for example ?vertex_type=BATCH'
         required: true
         type: "string"
       responses:
         '200':
           description: OK
-        '400':
-          description: Invalid input
+        '204':
+          description: No content found
           
   /fingerprint:
     get:
@@ -208,9 +229,35 @@ paths:
       produces:
         - application/json
       parameters:
-      - in: "query"
-        name: "queryObject"
-        description: queryObject
+      - in: query
+        name: "dc_wallet"
+        description: valid Ethereum account address
+        required: true
+        type: "string"
+      - in: query
+        name: import_id
+        required: true
+        description: value of import_id received as an response of sucessful /api/import request
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Invalid input
+      
+  /query:
+    get:
+      tags: 
+      - database
+      summary: Make queries on graph database
+      consumes:
+          - application/json
+          - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: query
+        name: 'queryObject'
+        description: 'queryObject, for example ?uid=urn:epc:id:sgln:HospitalBuilding1'
         required: true
         type: "string"
       responses:
@@ -218,7 +265,6 @@ paths:
           description: OK
         '400':
           description: Invalid input
-          
   
 
 definitions:
@@ -234,5 +280,3 @@ definitions:
       importtype:
         type: string
         example: 'GS1'
-
-

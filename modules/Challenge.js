@@ -1,6 +1,8 @@
 const SystemStorage = require('./Database/SystemStorage');
 const Storage = require('./Storage');
 
+const Models = require('../models');
+
 const log = require('./Utilities').getLogger();
 
 class Challenge {
@@ -76,46 +78,26 @@ class Challenge {
 
     /**
      * Returns promise that marks test with given ID as answered.
-     * @param testID Test ID.
+     * @param testId Test ID.
      * @returns {Promise<any>}
      */
-    static completeTest(testId) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    'UPDATE data_challenges SET answered=? WHERE id=?',
-                    [Date.now(), testId],
-                ).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+    static async completeTest(testId) {
+        await Models.data_challenges.update(
+            { answered: Date.now() },
+            { where: { id: testId } },
+        );
     }
 
     /**
      * Returns promise that marks test as failed with given ID as answered.
-     * @param testID Test ID.
+     * @param testId Test ID.
      * @returns {Promise<any>}
      */
-    static failTest(testId) {
-        return new Promise((resolve, reject) => {
-            SystemStorage.connect().then(() => {
-                SystemStorage.runSystemQuery(
-                    'UPDATE data_challenges SET answered=? WHERE id=?',
-                    [-Date.now(), testId],
-                ).then((rows) => {
-                    resolve(rows);
-                }).catch((err) => {
-                    reject(err);
-                });
-            }).catch((err) => {
-                reject(err);
-            });
-        });
+    static async failTest(testId) {
+        await Models.data_challenges.update(
+            { answered: -Date.now() },
+            { where: { id: testId } },
+        );
     }
 
     /**

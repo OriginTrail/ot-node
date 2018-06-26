@@ -1,6 +1,6 @@
 {
   "name": "origintrail-node-1.0bRC",
-  "version": "1.0.2",
+  "version": "1.0.1",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "db_backup": " node add_db_backup.js"
   },
   "devDependencies": {
-    "babel-eslint": "^8.2.5",
+    "babel-eslint": "^8.2.4",
     "chai": "^4.1.2",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
@@ -90,6 +90,7 @@
     "restify": "^7.2.1",
     "restify-cors-middleware": "^1.1.1",
     "rimraf": "^2.6.2",
+    "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",

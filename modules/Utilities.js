@@ -115,6 +115,12 @@ class Utilities {
         });
     }
 
+    formatFileLogs(args) {
+        const date = moment().format('D/MM/YYYY hh:mm:ss');
+        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
+        return msg;
+    }
+
     /**
      * Check if there is a new version of ot-node
      * @returns {Promise<any>}
