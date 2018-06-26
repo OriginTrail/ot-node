@@ -127,11 +127,11 @@ class Network {
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
         this.log.info('Spartacus initialised');
-        // this.node.hashcash = this.node.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 2,
-        // }));
-        // this.log.info('Hashcash initialised');
+        this.node.hashcash = this.node.plugin(kadence.hashcash({
+            methods: ['PUBLISH', 'SUBSCRIBE'],
+            difficulty: 8,
+        }));
+        this.log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
             this.enableOnion();
