@@ -599,9 +599,7 @@ class Ethereum {
     getDistanceParameters(importId) {
         return new Promise((resolve, reject) => {
             this.log.trace('Check if close enough ... ');
-            this.biddingContract.methods.getDistanceParameters(
-                importId,
-            ).call().then((res) => {
+            this.biddingContract.methods.getDistanceParameters(importId).call().then((res) => {
                 resolve(res);
             }).catch((e) => {
                 reject(e);

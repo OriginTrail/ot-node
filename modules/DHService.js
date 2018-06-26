@@ -811,11 +811,11 @@ class DHService {
         const deg128 = two.pow(new BN(128));
         console.log(deg128.toString('hex'));
 
-        const intervalBn = deg128.div(new BN(numNodes));
+        const intervalBn = deg128.div(new BN(Utilities.denormalizeHex(numNodes), 16));
 
-        const marginBn = intervalBn.mul(new BN(k)).div(two);
+        const marginBn = intervalBn.mul(new BN(Utilities.denormalizeHex(k), 16)).div(two);
 
-        const dataHashBn = new BN(dataHash, 16);
+        const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
         let intervalTo;
         let higherMargin = marginBn;
@@ -830,7 +830,7 @@ class DHService {
             higherMargin = dataHashBn.add(marginBn).sub(deg128).add(marginBn);
         }
 
-        const nodeHashBn = new BN(nodeHash, 16);
+        const nodeHashBn = new BN(Utilities.denormalizeHex(nodeHash), 16);
 
         let distance;
         if (dataHashBn.gt(nodeHashBn)) {

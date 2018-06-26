@@ -532,6 +532,16 @@ class OTNode {
             log.trace('GET Query by ID received.');
 
             const queryObject = req.query;
+
+            if (Utilities.isEmptyObject(queryObject)) {
+                log.error('Invalid request. You need to provide query ID');
+                res.status = 400;
+                res.send({
+                    message: 'Query ID is not provided',
+                });
+                return;
+            }
+
             const query = [{
                 path: 'identifiers.id',
                 value: queryObject.id,
@@ -543,7 +553,7 @@ class OTNode {
             });
         });
 
-        server.get('/api/network/query/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_param', (req, res) => {
             log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
                 res.status(400);
@@ -558,7 +568,7 @@ class OTNode {
             });
         });
 
-        server.post('/api/network/query', (req, res) => {
+        server.post('/api/query/network', (req, res) => {
             log.trace('POST Query request received.');
             if (!req.body) {
                 res.status(400);
@@ -578,7 +588,7 @@ class OTNode {
          * Get vertices by query
          * @param queryObject
          */
-        server.post('/api/query', (req, res) => {
+        server.post('/api/query/local', (req, res) => {
             log.trace('GET Query request received.');
 
             if (req.body == null || req.body.query == null) {
@@ -596,11 +606,11 @@ class OTNode {
             });
         });
 
-        server.get('/api/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:import_id', (req, res) => {
             // TODO: Implement route, returns decrypted data from found import
         });
 
-        server.post('/api/import/query', (req, res) => {
+        server.post('/api/query/local/import', (req, res) => {
             log.trace('GET Query request received.');
 
             if (req.body == null || req.body.query == null) {
@@ -617,8 +627,8 @@ class OTNode {
         });
 
 
-        server.post('/api/offer', (req, res) => {
-            log.trace('POST Select offer request received.');
+        server.post('/api/read/network', (req, res) => {
+            log.trace('POST Read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null) {
                 res.status(400);
