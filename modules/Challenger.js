@@ -100,7 +100,7 @@ class Challenger {
      * @return {Promise<void>}
      */
     async initiateLitigation(challenge) {
-        const contact = this.network.kademlia().getContact(challenge.dh_id);
+        const contact = await this.network.kademlia().getContact(challenge.dh_id);
 
         const dhId = challenge.dh_id;
         const dhWallet = contact.wallet;
