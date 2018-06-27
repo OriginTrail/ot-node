@@ -35,6 +35,10 @@ const Web3 = require('web3');
 global.__basedir = __dirname;
 
 process.on('unhandledRejection', (reason, p) => {
+    if (reason.message.startsWith('Invalid JSON RPC response')) {
+        log.warn('Web3 failed to communicate with blockchain provider. Check internet connection');
+        return;
+    }
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
@@ -232,6 +236,9 @@ class OTNode {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
+
+        const challenger = container.resolve('challenger');
+        await challenger.startChallenging();
     }
 
     /**
@@ -539,22 +546,7 @@ class OTNode {
             });
         });
 
-        server.get('/api/network/query_by_id', (req, res) => {
-            log.trace('GET Query by ID received.');
-
-            const queryObject = req.query;
-            const query = [{
-                path: 'identifiers.id',
-                value: queryObject.id,
-                opcode: 'EQ',
-            }];
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
-        });
-
-        server.get('/api/network/query/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_param', (req, res) => {
             log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
                 res.status(400);
@@ -569,7 +561,7 @@ class OTNode {
             });
         });
 
-        server.post('/api/network/query', (req, res) => {
+        server.post('/api/query/network', (req, res) => {
             log.trace('POST Query request received.');
             if (!req.body) {
                 res.status(400);
@@ -579,17 +571,24 @@ class OTNode {
                 return;
             }
             const { query } = req.body;
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
+            if (query) {
+                emitter.emit('network-query', {
+                    query,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({
+                    message: 'Query required',
+                });
+            }
         });
 
         /**
          * Get vertices by query
          * @param queryObject
          */
-        server.post('/api/query', (req, res) => {
+        server.post('/api/query/local', (req, res) => {
             log.trace('GET Query request received.');
 
             if (req.body == null || req.body.query == null) {
@@ -607,11 +606,24 @@ class OTNode {
             });
         });
 
-        server.get('/api/import/:import_id', (req, res) => {
-            // TODO: Implement route, returns decrypted data from found import
+        server.get('/api/query/local/import/:import_id', (req, res) => {
+            log.trace('GET import request received.');
+
+            if (!req.params.import_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-get/api/import', {
+                import_id: req.params.import_id,
+                response: res,
+            });
         });
 
-        server.post('/api/import/query', (req, res) => {
+        server.post('/api/query/local/import', (req, res) => {
             log.trace('GET Query request received.');
 
             if (req.body == null || req.body.query == null) {
@@ -628,8 +640,8 @@ class OTNode {
         });
 
 
-        server.post('/api/offer', (req, res) => {
-            log.trace('POST Select offer request received.');
+        server.post('/api/read/network', (req, res) => {
+            log.trace('POST Read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null) {
                 res.status(400);

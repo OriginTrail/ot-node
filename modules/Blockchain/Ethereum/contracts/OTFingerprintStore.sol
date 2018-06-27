@@ -27,7 +27,7 @@ contract OTFingerprintStore is Ownable{
     uint256 public _version;
     /* Data Holder Fingerprint Store */ 
     // mapping(address => mapping (bytes32 => bytes32)) public DHFS; 
-    mapping(address => mapping (bytes32 => bytes32[])) public DHFS; 
+    mapping(address => mapping (bytes32 => bytes32)) public DHFS; 
     /* Agreement store */
     struct Agreement {
         uint256 startTime;
@@ -53,13 +53,14 @@ contract OTFingerprintStore is Ownable{
         require(msg.sender!=address(0));
         require(batch_id_hash!=0x0);
         require(graph_hash!=0x0);
-        DHFS[msg.sender][batch_id_hash].push(graph_hash);
+        require(DHFS[msg.sender][batch_id_hash] == bytes32(0));
+        DHFS[msg.sender][batch_id_hash] = graph_hash;
         emit Fingerprint(msg.sender,batch_id,batch_id_hash,graph_hash);      
     }
     function getFingerprintByBatchHash(address dataHolder, bytes32 batch_id_hash) public constant returns (bytes32 fingerprint){
         require(dataHolder!=address(0));
         require(batch_id_hash!=0x0);
-        return DHFS[dataHolder][batch_id_hash][DHFS[dataHolder][batch_id_hash].length - 1];
+        return DHFS[dataHolder][batch_id_hash];
     }
     /* Agreements */ 
     function createAgreement(address dataHolder, uint256 startTime, uint256 endTime,bytes32 batch_id_hash, bytes32 data_hash) public returns (bool){

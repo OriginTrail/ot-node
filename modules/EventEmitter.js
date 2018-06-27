@@ -71,6 +71,27 @@ class EventEmitter {
             });
         });
 
+        this.apiEmitter.on('api-get/api/import', async (data) => {
+            const { import_id: importId } = data;
+
+            try {
+                const result = await dhService.getVerticesForImport(importId);
+
+                if (result.vertices.length === 0) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+                }
+                data.response.send(result);
+            } catch (error) {
+                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            }
+        });
+
         this.apiEmitter.on('get-imports', (data) => {
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
@@ -175,7 +196,7 @@ class EventEmitter {
                 return;
             }
             try {
-                dvService.handleReadOffer(offer);
+                await dvService.handleReadOffer(offer);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
@@ -268,7 +289,8 @@ class EventEmitter {
             if (offer) {
                 data.response.status(200);
                 data.response.send({
-                    offer_status: offer.status,
+                    status: offer.status,
+                    message: offer.message,
                 });
             } else {
                 logger.error(`There is no offer for external ID ${external_id}`);
@@ -615,9 +637,9 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-replication-finished', () => {
+        this.kadEmitter.on('kad-replication-finished', async () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
-            challenger.startChallenging();
+            await challenger.startChallenging();
         });
 
         // sync
@@ -724,13 +746,13 @@ class EventEmitter {
 
             try {
                 await dvService.handleEncryptedPaddedKey(message);
-                network.kademlia().sendEncryptedKeyProcessResult({
+                await network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
                 }, request.contact[0]);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
-                network.kademlia().sendEncryptedKeyProcessResult({
+                await network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
                 }, request.contact[0]);
@@ -755,7 +777,7 @@ class EventEmitter {
             const { epk, importId, encryptionKey } = request.params.message;
 
             // TODO: Add guard for fake replations.
-            dcService.verifyImport(
+            await dcService.verifyImport(
                 epk,
                 importId, encryptionKey, kadWallet, request.contact[0],
             );

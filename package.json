@@ -43,7 +43,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^3.4.1",
+    "@kadenceproject/kadence": "^4.0.0",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
@@ -94,6 +94,7 @@
     "semaphore-async-await": "^1.5.1",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
+    "sleep": "^5.1.1",
     "socket.io": "^2.1.0",
     "socket.io-client": "^2.1.1",
     "socks": "^2.1.6",
@@ -107,7 +108,7 @@
     "utf8-length": "latest",
     "uuid": "^3.2.1",
     "validator": "^9.4.1",
-    "web3": "1.0.0-beta.30",
+    "web3": "1.0.0-beta.34",
     "winston": "^2.4.3",
     "winston-loggly-bulk": "^2.0.2",
     "xml2js": "^0.4.19"

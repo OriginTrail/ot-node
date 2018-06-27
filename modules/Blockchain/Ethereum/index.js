@@ -400,7 +400,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Calling - createOffer() on contract.');
+        this.log.warn('Calling - create offer on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
@@ -592,15 +592,13 @@ class Ethereum {
     /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
-     * @param wallet DH wallet
-     * @param dhNodeId KADemplia ID of the DH node that wants to add bid
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
      */
-    getDistanceParameters(importId, wallet, dhNodeId) {
+    getDistanceParameters(importId) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Check if close enough for ${wallet}:${dhNodeId}`);
-            this.biddingContract.methods.getDistanceParameters(importId, dhNodeId).call({
-                from: wallet,
+            this.log.trace('Check if close enough ... ');
+            this.biddingContract.methods.getDistanceParameters(importId).call({
+                from: this.config.wallet_address,
             }).then((res) => {
                 resolve(res);
             }).catch((e) => {

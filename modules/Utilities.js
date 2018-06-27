@@ -15,7 +15,8 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-var numberToBN = require('number-to-bn');
+const KademliaUtils = require('./kademlia/KademliaUtils');
+const numberToBN = require('number-to-bn');
 
 require('dotenv').config();
 require('winston-loggly-bulk');
@@ -209,20 +210,17 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    if (msg.startsWith('updating peer profile')) {
-                        return; // skip logging
+                    const transformed = KademliaUtils.transformLog(level, msg);
+                    if (!transformed) {
+                        return;
                     }
-                    if (msg.startsWith('connect econnrefused')) {
-                        level = 'trace';
-                        const address = msg.substr(21);
-                        msg = `Failed to connect to ${address}`;
-                    }
-                    origLog.apply(logger, [level, msg]);
+                    origLog.apply(logger, [transformed.level, transformed.msg]);
                 }
             };
             return logger;
         } catch (e) {
-            // console.log(e);
+            console.error('Failed to create logger', e);
+            process.exit(1);
         }
     }
 

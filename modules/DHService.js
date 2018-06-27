@@ -49,7 +49,28 @@ class DHService {
             const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
+                return;
+            }
+
+            const dcContact = await this.network.kademlia().getContact(dcNodeId.substring(2, 42));
+            if (dcContact == null || dcContact.hostname == null) {
+                this.log.warn(`Unknown DC contact ${dcNodeId.substring(2, 42)} for import ${importId}. Offer ignored`);
+                return;
+            }
+
+            const distanceParams = await this.blockchain.getDistanceParameters(importId);
+
+            const nodeHash = distanceParams[0];
+            const dataHash = distanceParams[1];
+            const currentRanking = distanceParams[3]; // Not used at the moment
+            const k = distanceParams[4];
+            const numNodes = distanceParams[5];
+
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 200)) {
+                this.log.notify('Close enough to take bid');
+            } else {
+                this.log.notify('Not close enough to take bid');
                 return;
             }
 
@@ -179,7 +200,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
-            this.network.kademlia().replicationRequest(
+            await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
                     wallet: this.config.node_wallet,
@@ -307,7 +328,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
-            this.network.kademlia().verifyImport({
+            await this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,
@@ -447,7 +468,7 @@ class DHService {
             messageSignature: messageResponseSignature,
         };
 
-        this.network.kademlia().sendDataLocationResponse(
+        await this.network.kademlia().sendDataLocationResponse(
             dataLocationResponseObject,
             message.nodeId,
         );
@@ -565,7 +586,7 @@ class DHService {
                 ),
             };
 
-            this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
             await this.listenPurchaseInititation(
                 importId, wallet, offer, networkReplyModel,
                 holdingData, nodeId, id,
@@ -573,7 +594,7 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
-            this.network.kademlia().sendDataReadResponse({
+            await this.network.kademlia().sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
@@ -705,7 +726,7 @@ class DHService {
             this.config.node_private_key,
         );
 
-        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+        await this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
 
         this.listenPurchaseDispute(
             importId, wallet, m2Checksum,
@@ -794,13 +815,11 @@ class DHService {
     amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
         const two = new BN(2);
         const deg128 = two.pow(new BN(128));
-        console.log(deg128.toString('hex'));
+        const intervalBn = deg128.div(new BN(numNodes, 10));
 
-        const intervalBn = deg128.div(new BN(numNodes));
+        const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
 
-        const marginBn = intervalBn.mul(new BN(k)).div(two);
-
-        const dataHashBn = new BN(dataHash, 16);
+        const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
         let intervalTo;
         let higherMargin = marginBn;
@@ -815,7 +834,7 @@ class DHService {
             higherMargin = dataHashBn.add(marginBn).sub(deg128).add(marginBn);
         }
 
-        const nodeHashBn = new BN(nodeHash, 16);
+        const nodeHashBn = new BN(Utilities.denormalizeHex(nodeHash), 16);
 
         let distance;
         if (dataHashBn.gt(nodeHashBn)) {
@@ -823,9 +842,6 @@ class DHService {
         } else {
             distance = nodeHashBn.sub(dataHashBn);
         }
-
-        console.log(distance.toString('hex'));
-        console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
         if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
             return true;
@@ -928,6 +944,58 @@ class DHService {
         });
 
         return vertices;
+    }
+
+    /**
+     * Returns given import's vertices and edges and decrypt them if needed.
+     *
+     * Method will return object in following format { vertices: [], edges: [] }.
+     * @param importId ID of import.
+     * @returns {Promise<*>}
+     */
+    async getVerticesForImport(importId) {
+        // Check if import came from DH replication or reading replication.
+        const holdingData = await Models.holding_data.find({ where: { id: importId } });
+
+        if (holdingData) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            const encodedVertices = values[0];
+            const edges = values[1];
+            const decryptKey = holdingData.data_public_key;
+            const vertices = [];
+
+            encodedVertices.forEach((encodedVertex) => {
+                const decryptedVertex = Utilities.copyObject(encodedVertex);
+                if (decryptedVertex.vertex_type !== 'CLASS') {
+                    decryptedVertex.data =
+                        Encryption.decryptObject(
+                            encodedVertex.data,
+                            decryptKey,
+                        );
+                }
+                vertices.push(decryptedVertex);
+            });
+
+            return { vertices, edges };
+        }
+
+        // Check if import came from DC side.
+        const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+
+        if (dataInfo) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            return { vertices: values[0], edges: values[1] };
+        }
+
+        throw Error(`Cannot find vertices for import ID ${importId}.`);
     }
 
     listenToBlockchainEvents() {
