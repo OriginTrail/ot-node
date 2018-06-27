@@ -53,9 +53,9 @@ class DHService {
                 return;
             }
 
-            const dcContact = await this.network.kademlia().getContact(dcNodeId);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId.substring(2, 42));
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
+                this.log.warn(`Unknown DC contact ${dcNodeId.substring(2, 42)} for import ${importId}. Offer ignored`);
                 return;
             }
 
