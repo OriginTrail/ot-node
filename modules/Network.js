@@ -453,11 +453,33 @@ class Network {
                             // eslint-disable-next-line
                             contact = contactInfo[1];
                             this.node.router.addContactByNodeId(contactId, contact);
+                        } else {
+                            // ask network
+                            contact = await node.find(contactId);
+                            if (contact) {
+                                this.node.router.addContactByNodeId(contactId, contact);
+                            }
                         }
                     }
                 }
                 return contact;
             };
+
+            node.find = async contactId => new Promise((resolve, reject) => {
+                this.node.iterativeFindNode(contactId.toString('hex'), (err, res) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    for (const contact of res) {
+                        if (contact[0] === contactId) {
+                            resolve(contact[1]);
+                            return;
+                        }
+                    }
+                    return resolve(null);
+                });
+            });
 
             node.payloadRequest = async (message, contactId, callback) => {
                 const contact = await node.getContact(contactId);
