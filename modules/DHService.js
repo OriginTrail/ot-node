@@ -970,11 +970,13 @@ class DHService {
 
             encodedVertices.forEach((encodedVertex) => {
                 const decryptedVertex = Utilities.copyObject(encodedVertex);
-                decryptedVertex.data =
-                    Encryption.decryptObject(
-                        encodedVertex.data,
-                        decryptKey,
-                    );
+                if (decryptedVertex.vertex_type !== 'CLASS') {
+                    decryptedVertex.data =
+                        Encryption.decryptObject(
+                            encodedVertex.data,
+                            decryptKey,
+                        );
+                }
                 vertices.push(decryptedVertex);
             });
 

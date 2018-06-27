@@ -71,11 +71,11 @@ class EventEmitter {
             });
         });
 
-        this.apiEmitter.on('api-get/api/import', (data) => {
-            const { import_d: importId } = data;
+        this.apiEmitter.on('api-get/api/import', async (data) => {
+            const { import_id: importId } = data;
 
             try {
-                const result = dhService.getVerticesForImport(importId);
+                const result = await dhService.getVerticesForImport(importId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
