@@ -421,7 +421,7 @@ class Network {
                         if (contactInfo) {
                             // eslint-disable-next-line
                             contact = contactInfo[1];
-                            node.router.addContactByNodeId(contactId, contact);
+                            this.node.router.addContactByNodeId(contactId, contact);
                         }
                     }
                 }
