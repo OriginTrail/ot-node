@@ -439,7 +439,7 @@ class OTNode {
             } else if (req.body.importfile !== undefined) {
                 // Check if import data is provided in request body
                 const fileData = req.body.importfile;
-                fs.writeFile('tmp/import.xml', fileData, (err) => {
+                fs.writeFile('tmp/import.tmp', fileData, (err) => {
                     if (err) {
                         return console.log(err);
                     }
