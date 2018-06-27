@@ -248,7 +248,7 @@ class Network {
                 ];
                 await this._joinNetwork();
             });
-            return;
+            return true;
         }
         nodes = nodes.slice(0, 10); // take no more than 10 peers for joining
 
