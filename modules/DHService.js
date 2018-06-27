@@ -49,7 +49,13 @@ class DHService {
             const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
+                return;
+            }
+
+            const dcContact = await this.network.kademlia().getContact(dcNodeId);
+            if (dcContact == null || dcContact.hostname == null) {
+                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
                 return;
             }
 
