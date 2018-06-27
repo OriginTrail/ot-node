@@ -83,6 +83,7 @@
     "node-rsa": "^0.4.2",
     "nodeify": "^1.0.1",
     "npm": "^6.0.0",
+    "npm-cmd": "^0.2.0",
     "number-to-bn": "^1.7.0",
     "pem": "^1.12.3",
     "python-shell": "^0.5.0",

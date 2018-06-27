@@ -1,5 +1,6 @@
 const AutoUpdater = require('auto-updater');
 const Utilities = require('./modules/Utilities');
+var npm = require('npm-cmd');
 
 const log = Utilities.getLogger();
 
@@ -40,18 +41,20 @@ class AutoUpdate {
             });
             autoupdater.on('update.extracted', () => {
                 log.warn('Update extracted successfully!');
-                log.warn('RESTARTING THE APP!');
-                setTimeout(() => {
-                    process.on('exit', () => {
-                    /* eslint-disable-next-line */
-                    require('child_process').spawn(process.argv.shift(), process.argv, {
-                            cwd: process.cwd(),
-                            detached: true,
-                            stdio: 'inherit',
-                        });
-                    });
-                    process.exit(0);
-                }, 5000);
+
+
+                npm.install([], {
+                    cwd: '/ot-node',
+                    save: true,
+                }, (err) => {
+                    if (err) {
+                        log.error('Installation failed.');
+                    } else {
+                        this.restartNode();
+                        log.info('Installation succeeded!');
+                        log.warn('RESTARTING THE APP!');
+                    }
+                });
             });
             autoupdater.on('download.start', (name) => {
                 log.warn(`Starting downloading: ${name}`);
@@ -78,6 +81,19 @@ class AutoUpdate {
             // Start checking
             autoupdater.fire('check');
         });
+    }
+    restartNode() {
+        setTimeout(() => {
+            process.on('exit', () => {
+                /* eslint-disable-next-line */
+                require('child_process').spawn(process.argv.shift(), process.argv, {
+                    cwd: process.cwd(),
+                    detached: true,
+                    stdio: 'inherit',
+                });
+            });
+            process.exit(0);
+        }, 5000);
     }
 }
 
