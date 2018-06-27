@@ -127,7 +127,7 @@ class DVService {
         });
     }
 
-    handleReadOffer(offer) {
+    async handleReadOffer(offer) {
         /*
             dataReadRequestObject = {
             message: {
@@ -157,7 +157,7 @@ class DVService {
             ),
         };
 
-        this.network.kademlia().dataReadRequest(
+        await this.network.kademlia().dataReadRequest(
             dataReadRequestObject,
             offer.node_id,
             (err) => {

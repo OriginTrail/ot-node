@@ -560,10 +560,17 @@ class OTNode {
                 return;
             }
             const { query } = req.body;
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
+            if (query) {
+                emitter.emit('network-query', {
+                    query,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({
+                    message: 'Query required',
+                });
+            }
         });
 
         /**

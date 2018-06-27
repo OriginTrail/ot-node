@@ -49,7 +49,13 @@ class DHService {
             const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
+                return;
+            }
+
+            const dcContact = await this.network.kademlia().getContact(dcNodeId.substring(2, 42));
+            if (dcContact == null || dcContact.hostname == null) {
+                this.log.warn(`Unknown DC contact ${dcNodeId.substring(2, 42)} for import ${importId}. Offer ignored`);
                 return;
             }
 
@@ -194,7 +200,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
-            this.network.kademlia().replicationRequest(
+            await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
                     wallet: this.config.node_wallet,
@@ -322,7 +328,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
-            this.network.kademlia().verifyImport({
+            await this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,
@@ -462,7 +468,7 @@ class DHService {
             messageSignature: messageResponseSignature,
         };
 
-        this.network.kademlia().sendDataLocationResponse(
+        await this.network.kademlia().sendDataLocationResponse(
             dataLocationResponseObject,
             message.nodeId,
         );
@@ -580,7 +586,7 @@ class DHService {
                 ),
             };
 
-            this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
             await this.listenPurchaseInititation(
                 importId, wallet, offer, networkReplyModel,
                 holdingData, nodeId, id,
@@ -588,7 +594,7 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
-            this.network.kademlia().sendDataReadResponse({
+            await this.network.kademlia().sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
@@ -720,7 +726,7 @@ class DHService {
             this.config.node_private_key,
         );
 
-        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+        await this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
 
         this.listenPurchaseDispute(
             importId, wallet, m2Checksum,
@@ -809,11 +815,9 @@ class DHService {
     amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
         const two = new BN(2);
         const deg128 = two.pow(new BN(128));
-        console.log(deg128.toString('hex'));
+        const intervalBn = deg128.div(new BN(numNodes, 10));
 
-        const intervalBn = deg128.div(new BN(Utilities.denormalizeHex(numNodes), 16));
-
-        const marginBn = intervalBn.mul(new BN(Utilities.denormalizeHex(k), 16)).div(two);
+        const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
 
         const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
@@ -838,9 +842,6 @@ class DHService {
         } else {
             distance = nodeHashBn.sub(dataHashBn);
         }
-
-        console.log(distance.toString('hex'));
-        console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
         if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
             return true;
@@ -969,11 +970,13 @@ class DHService {
 
             encodedVertices.forEach((encodedVertex) => {
                 const decryptedVertex = Utilities.copyObject(encodedVertex);
-                decryptedVertex.data =
-                    Encryption.decryptObject(
-                        encodedVertex.data,
-                        decryptKey,
-                    );
+                if (decryptedVertex.vertex_type !== 'CLASS') {
+                    decryptedVertex.data =
+                        Encryption.decryptObject(
+                            encodedVertex.data,
+                            decryptKey,
+                        );
+                }
                 vertices.push(decryptedVertex);
             });
 

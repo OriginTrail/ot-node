@@ -91,7 +91,7 @@ class DCService {
         // Check if root-hash already written.
         const blockchainRootHash = await this.blockchain.getRootHash(config.node_wallet, importId);
 
-        if (!blockchainRootHash) {
+        if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
             await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
                 offer.status = 'FAILED';
                 offer.save({ fields: ['status'] });
@@ -285,7 +285,7 @@ class DCService {
                     kadWallet,
                     importId,
                 );
-                this.network.kademlia().sendVerifyImportResponse({
+                await this.network.kademlia().sendVerifyImportResponse({
                     status: 'fail',
                     import_id: importId,
                 }, nodeId);
@@ -298,7 +298,7 @@ class DCService {
             this.log.warn('Data successfully verified, preparing to start challenges');
             await this.challenger.startChallenging();
 
-            this.network.kademlia().sendVerifyImportResponse({
+            await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',
                 import_id: importId,
             }, nodeId);
