@@ -211,13 +211,13 @@ class Network {
      * Try to join network
      * Note: this method tries to find possible bootstrap nodes from cache as well
      */
-    _joinNetwork(callback, retryPeriod) {
+    async _joinNetwork(callback, retryPeriod) {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
         const peercachePlugin = this.node.peercache;
-        peercachePlugin.getBootstrapCandidates().then((peers) => {
+        peercachePlugin.getBootstrapCandidates().then(async (peers) => {
             const isBootstrap = bootstrapNodes.length === 0;
-            const nodes = _.uniq(bootstrapNodes.concat(peers));
+            let nodes = _.uniq(bootstrapNodes.concat(peers));
 
             if (isBootstrap) {
                 this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
@@ -233,40 +233,66 @@ class Network {
                 this.log.info('No bootstrap seeds provided and no known profiles');
                 this.log.info('Running in seed mode (waiting for connections)');
 
-                this.node.router.events.once('add', (identity) => {
+                this.node.router.events.once('add', async (identity) => {
                     config.NetworkBootstrapNodes = [
                         kadence.utils.getContactURL([
                             identity,
                             this.node.router.getContactByNodeId(identity),
                         ]),
                     ];
-                    this._joinNetwork(callback, retryPeriod);
+                    await this._joinNetwork(callback, retryPeriod);
                 });
                 callback();
                 return;
             }
+            nodes = nodes.slice(0, 10); // take no more than 10 peers for joining
 
-            async.detectSeries(nodes, (url, done) => {
-                const contact = kadence.utils.parseContactURL(url);
-                this.node.join(contact, (err) => {
-                    done(null, (!err) && this.node.router.size >= 1);
-                });
-            }, async (err, result) => {
-                if (result) {
-                    this.log.important('Joined the network');
-                    const contact = kadence.utils.parseContactURL(result);
+            const func = url => new Promise((resolve, reject) => {
+                try {
+                    this.log.info(`Joining via ${url}`);
+                    const contact = kadence.utils.parseContactURL(url);
 
-                    this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
-                    this.log.info(`Discovered ${this.node.router.size} peers from seed`);
-                    callback();
-                } else if (!isBootstrap) {
-                    this.log.error(`Failed to join network, will retry in ${retryPeriod / 1000} seconds. Bootstrap nodes are probably not online.`);
-                    callback(new Error('Failed to join network'));
-                } else {
-                    this.log.info('Bootstrap node couldn\'t contact peers from peer cache. Waiting for some peers.');
-                    callback();
+                    this.node.join(contact, (err, x) => {
+                        if (err) {
+                            // eslint-disable-next-line
+                            reject(err);
+                            return;
+                        }
+                        if (this.node.router.size >= 1) {
+                            resolve(url);
+                        } else {
+                            resolve(null);
+                        }
+                    });
+                } catch (err) {
+                    reject(err);
                 }
             });
+
+            let result;
+            for (const node of nodes) {
+                try {
+                    // eslint-disable-next-line
+                    result = await func(node);
+                    if (result) {
+                        break;
+                    }
+                } catch (e) {
+                    this.log.warn(`Failed to join via ${node}`);
+                }
+            }
+
+            if (result) {
+                this.log.important('Joined the network');
+                const contact = kadence.utils.parseContactURL(result);
+
+                this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
+                this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+            } else if (!isBootstrap) {
+                this.log.error(`Failed to join network, will retry in ${retryPeriod / 1000} seconds. Bootstrap nodes are probably not online.`);
+            } else {
+                this.log.info('Bootstrap node couldn\'t contact peers from peer cache. Waiting for some peers.');
+            }
         });
     }
 
