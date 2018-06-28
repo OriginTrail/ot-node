@@ -114,6 +114,7 @@ class Ethereum {
             BIDDING_CONTRACT: this.biddingContract,
             READING_CONTRACT: this.readingContract,
             ESCROW_CONTRACT: this.escrowContract,
+            HUB_CONTRACT: this.hubContract,
         };
 
         this.biddingContract.events.OfferCreated()
@@ -136,6 +137,15 @@ class Ethereum {
                 emitter.emit('eth-bid-taken', event);
             })
             .on('error', this.log.warn);
+
+        this.contracsChangedHandle = this.subscribeToEventPermanent([ 'ContractsChanged' ]);
+    }
+
+    /**
+     * Initializing Ethereum blockchain contracts
+     */
+    async deinitialize(emitter) {
+        unsubscribeToEventPermanent(this.contracsChangedHandle);
     }
 
     /**
@@ -185,6 +195,40 @@ class Ethereum {
             });
         });
     }
+
+    getFingerprintAddress() {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Get profile by wallet ${wallet}`);
+            this.biddingContract.methods.profile(wallet).call({
+                from: wallet,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    async getFingerprintAddress() {
+        return this.hubContract.methods.fingerprintAddress().call();
+    }
+
+    async getTokenAddress() {
+        return this.hubContract.methods.tokenAddress().call();
+    }
+
+    async getEscrowAddress() {
+        return this.hubContract.methods.escrowAddress().call();
+    }
+
+    async getBiddingAddress() {
+        return this.hubContract.methods.biddingAddress().call();
+    }
+
+    async getReadingAddress() {
+        return this.hubContract.methods.readingAddress().call();
+    }
+
 
     /**
      * Gets TRAC token wallet

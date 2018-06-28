@@ -361,6 +361,26 @@ class Blockchain {
         );
     }
 
+    async getFingerprintAddress() {
+        return this.blockchain.getFingerprintAddress();
+    }
+
+    async getTokenAddress() {
+        return this.blockchain.getTokenAddress();
+    }
+
+    async getEscrowAddress() {
+        return this.blockchain.getEscrowAddress();
+    }
+
+    async getBiddingAddress() {
+        return this.blockchain.getBiddingAddress();
+    }
+
+    async getReadingAddress() {
+        return this.blockchain.getReadingAddress();
+    }
+
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
         return this.blockchain.sendEncryptedBlock(importId, dvWallet, encryptedBlock);
     }
