@@ -1,7 +1,6 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
-
+const async = require('async');
 const levelup = require('levelup');
 const sqldown = require('sqldown');
 const encoding = require('encoding-down');
@@ -9,7 +8,6 @@ const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
 const fs = require('fs');
 const utilities = require('./Utilities');
-const PeerCache = require('./kademlia/PeerCache');
 const _ = require('lodash');
 const sleep = require('sleep');
 
@@ -220,7 +218,7 @@ class Network {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
         // const peercachePlugin = this.node.peercache;
-        const peers = []; //await peercachePlugin.getBootstrapCandidates();
+        const peers = [];
 
         const isBootstrap = bootstrapNodes.length === 0;
         let nodes = _.uniq(bootstrapNodes.concat(peers));
@@ -257,7 +255,7 @@ class Network {
                 this.log.info(`Joining via ${url}`);
                 const contact = kadence.utils.parseContactURL(url);
 
-                this.node.join(contact, (err, x) => {
+                this._join(contact, (err, x) => {
                     if (err) {
                         // eslint-disable-next-line
                         reject(err);
@@ -299,6 +297,30 @@ class Network {
             return true;
         }
         return false;
+    }
+
+    _join([identity, contact], callback) {
+        /* istanbul ignore else */
+        if (callback) {
+            this.node.once('join', callback);
+            this.node.once('error', callback);
+        }
+
+        this.node.router.addContactByNodeId(identity, contact);
+        async.series([
+            next => this.node.iterativeFindNode(this.identity.toString('hex'), next),
+        ], (err) => {
+            if (err) {
+                this.node.emit('error', err);
+            } else {
+                this.node.emit('join');
+            }
+
+            if (callback) {
+                this.node.removeListener('join', callback);
+                this.node.removeListener('error', callback);
+            }
+        });
     }
 
     /**
@@ -442,42 +464,20 @@ class Network {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId) => {
-                let contact = node.router.getContactByNodeId(contactId);
-                if (contact == null || contact.hostname == null) {
-                    // check peercache
-                    contact = null;
-                    if (contact) {
-                        const contactInfo = KadenceUtils.parseContactURL(contact);
-                        // refresh bucket
-                        if (contactInfo) {
-                            // eslint-disable-next-line
-                            contact = contactInfo[1];
-                            this.node.router.addContactByNodeId(contactId, contact);
-                        } else {
-                            // ask network
-                            contact = await node.find(contactId);
-                            if (contact) {
-                                this.node.router.addContactByNodeId(contactId, contact);
-                            }
-                        }
-                    }
+                const contact = node.router.getContactByNodeId(contactId);
+                if (!contact) {
+                    await node.refresh(contactId);
                 }
-                return contact;
+                return node.router.getContactByNodeId(contactId);
             };
 
-            node.find = async contactId => new Promise((resolve, reject) => {
+            node.refresh = async contactId => new Promise((resolve, reject) => {
                 this.node.iterativeFindNode(contactId.toString('hex'), (err, res) => {
                     if (err) {
                         reject(err);
-                        return;
+                    } else {
+                        resolve(res);
                     }
-                    for (const contact of res) {
-                        if (contact[0] === contactId) {
-                            resolve(contact[1]);
-                            return;
-                        }
-                    }
-                    return resolve(null);
                 });
             });
 
