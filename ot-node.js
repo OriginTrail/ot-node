@@ -79,8 +79,8 @@ class OTNode {
 
         // check for Updates
         try {
-            await Utilities.checkForUpdates();
             log.info('Checking for updates');
+            await Utilities.checkForUpdates();
         } catch (err) {
             console.log(err);
             process.exit(1);
