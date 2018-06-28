@@ -475,8 +475,12 @@ class OTNode {
         });
 
         server.get('/api/store', (req, res) => {
-            network.kademlia().iterativeFindValue(req.params.id, (err, res) => {
+            network.kademlia().iterativeFindValue(req.query.id, (err, res) => {
                 console.log(res);
+            });
+            res.status(200);
+            res.send({
+                status: 'OK',
             });
         });
 
