@@ -317,7 +317,7 @@ class EventEmitter {
                 }
 
                 const replicationId = await dcService.createOffer(
-                    import_id,
+                    data,
                     dataimport.root_hash,
                     dataimport.total_documents,
                     vertices,
