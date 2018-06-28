@@ -471,23 +471,19 @@ class OTNode {
                 return;
             }
 
-            if (req.body !== undefined && req.body.import_id !== undefined &&
-                Utilities.validateNumberParameter(req.body.import_id) &&
-                Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
-                Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
-                Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
+
+            if (req.body !== undefined && req.body.import_id !== undefined) {
                 const queryObject = {
+                    import_id: req.body.import_id,
                     contact: req.contact,
                     response: res,
                 };
-                Object.assign(queryObject, req.body);
                 emitter.emit('create-offer', queryObject);
             } else {
-                log.error('Invalid request');
+                log.error('Invalid request. You need to provide import ID');
                 res.status(400);
                 res.send({
-                    message: 'Invalid data provided',
+                    message: 'Import ID not provided!',
                 });
             }
         });

@@ -10,7 +10,11 @@ const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
 
 const { Op } = Models.Sequelize;
+const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
+const minStakeAmount = new BN('100');
+const maxTokenAmount = new BN('1000000');
+const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -29,15 +33,13 @@ class DCService {
 
     /**
      * Creates new offer
-     * @param offerParameters
+     * @param importId
      * @param rootHash
      * @param totalDocuments
      * @param vertices
      * @return {Promise<external_id|{type, defaultValue}|offers.external_id|{type, allowNull}>}
      */
-    async createOffer(offerParameters, rootHash, totalDocuments, vertices) {
-        const { importId } = offerParameters;
-
+    async createOffer(importId, rootHash, totalDocuments, vertices) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
@@ -69,40 +71,12 @@ class DCService {
             }
         });
 
-        let totalEscrowTime;
-        if (offerParameters.total_escrow_time_in_minutes) {
-            totalEscrowTime = offerParameters.total_escrow_time_in_minutes;
-        } else {
-            totalEscrowTime = config.total_escrow_time_in_minutes;
-        }
-
-        let maxTokenAmount;
-        if (offerParameters.max_token_amount_per_dh) {
-            maxTokenAmount = offerParameters.max_token_amount_per_dh;
-        } else {
-            maxTokenAmount = config.max_token_amount_per_dh;
-        }
-
-        let minStakeAmount;
-        if (offerParameters.dh_min_stake_amount) {
-            minStakeAmount = offerParameters.dh_min_stake_amount;
-        } else {
-            minStakeAmount = config.dh_min_stake_amount;
-        }
-
-        let minReputation;
-        if (offerParameters.dh_min_reputation) {
-            minReputation = offerParameters.dh_min_reputation;
-        } else {
-            minReputation = config.dh_min_reputation;
-        }
-
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
             total_escrow_time: totalEscrowTime,
-            max_token_amount: maxTokenAmount,
-            min_stake_amount: minStakeAmount,
+            max_token_amount: maxTokenAmount.toString(),
+            min_stake_amount: minStakeAmount.toString(),
             min_reputation: minReputation,
             data_hash: rootHash,
             data_size_bytes: importSizeInBytes.toString(),
