@@ -78,12 +78,14 @@ class RegisterNode {
                 env.NODE_IP = await this.getExternalIp();
                 env.DB_PASSWORD = 'root';
                 env.IMPORT_WHITELIST = '18.185.39.223';
+                env.BOOTSTRAP_NODE = 'https://159.65.125.107:5278/#8ade2b6eee3f491fe671f2c44a7f9903900c63c8';
 
                 process.env.NODE_WALLET = account.address;
                 process.env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
                 process.env.NODE_IP = env.NODE_IP;
                 process.env.DB_PASSWORD = 'root';
                 process.env.IMPORT_WHITELIST = '18.185.39.223';
+                process.env.BOOTSTRAP_NODE = 'https://159.65.125.107:5278/#8ade2b6eee3f491fe671f2c44a7f9903900c63c8';
 
                 const envF = envfile.stringifySync(env);
                 console.log(envF);
