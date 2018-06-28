@@ -48,11 +48,12 @@ class AutoUpdate {
                     save: true,
                 }, (err) => {
                     if (err) {
+                        console.log(err);
                         log.error('Installation failed.');
                     } else {
-                        this.restartNode();
                         log.info('Installation succeeded!');
                         log.warn('RESTARTING THE APP!');
+                        this.restartNode();
                     }
                 });
             });
