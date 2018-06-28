@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">    
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender> <!-- Mandatory -->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:ContactInformation> <!-- Mandatory-->
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>	<!-- Optional -->				
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver><!-- Mandatory -->				
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:ContactInformation> <!-- Mandatory-->
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>	<!-- Optional -->				
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification> <!-- Mandatory-->
+                <sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
+                <sbdh:InstanceIdentifier>100002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
+                <sbdh:Type>Packing</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
+                <sbdh:CreationDateAndTime>2018-01-01T11:11:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+            </sbdh:DocumentIdentification>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:ot:object:actor">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Green">
+                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company producer</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xAaBbAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
+                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company producer</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa24323</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
+                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company producer</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xCcCcAd7BD40602B78C0649032D2532dEFa212345</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    
+                    <Vocabulary type="urn:ot:object:location">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:Building_Green">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_Green_V1</id>
+                                    <id>urn:epc:id:sgln:Building_Green_V2</id>
+                                </children>
+                            </VocabularyElement>
+                            
+                            <VocabularyElement id="urn:epc:id:sgln:Building_Pink">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Distributor</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_Pink_V3</id>
+                                    <id>urn:epc:id:sgln:Building_Pink_V4</id>
+                                </children>
+                            </VocabularyElement>
+                            
+                            <VocabularyElement id="urn:epc:id:sgln:Building_Orange">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Retail store</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Orange</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_Orange_V5</id>
+                                    <id>urn:epc:id:sgln:Building_Orange_V6</id>
+                                </children>
+                            </VocabularyElement>
+                            
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    
+                    <Vocabulary type="urn:ot:object:product">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:product:id:Product_1">
+                                <attribute id="urn:ot:object:product:category">Beverage</attribute>
+                                <attribute id="urn:ot:object:product:description">Wine bottles</attribute>
+                            </VocabularyElement>                        
+                            <VocabularyElement id="urn:ot:object:product:id:Pallet_1">
+                                <attribute id="urn:ot:object:product:category">Beverage</attribute>
+                                <attribute id="urn:ot:object:product:description">Wine pallet</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    
+                    <Vocabulary type="urn:ot:object:batch">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgtin:Batch_1">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2017-31-12T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationDate">2020-31-12T00:01:54Z</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:Batch_2">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2018-31-12T00:02:12Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationDate">2021-31-12T00:02:12Z</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:Batch_3">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2018-12-12T00:11:34Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationDate">2021-312-12T00:11:34Z</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgtin:Pallet_1">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Pallet_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2018-01-01T00:30:00.000-04:00</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>                 
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>    
+            <AggregationEvent> <!-- Unpacking Event 2 Orange -->
+                <eventTime>2018-01-07T12:30:00.000-01:00</eventTime>
+                <eventTimeZoneOffset>-01:00</eventTimeZoneOffset>
+                <parentID>urn:epc:id:sgtin:Pallet_1</parentID>		 		
+                <childEPCs />
+                <action>DELETE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:unpacking</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:in_progress</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:Building_Orange_V6</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:Building_Orange</id>
+                </bizLocation>
+                <extension>
+                    <extension>
+                        <documentId>ORANGEUNPACK2</documentId>
+                        <OTEventClass>urn:ot:event:Transform</OTEventClass>
+                        <OTEventType>Unpacking</OTEventType>
+                    </extension>
+                </extension>
+            </AggregationEvent>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>
