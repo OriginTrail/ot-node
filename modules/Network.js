@@ -465,9 +465,10 @@ class Network {
              */
             node.getContact = async (contactId) => {
                 const contact = node.router.getContactByNodeId(contactId);
-                if (!contact) {
-                    await node.refresh(contactId);
+                if (contact && contact.hostname) {
+                    return contact;
                 }
+                await node.refresh(contactId);
                 return node.router.getContactByNodeId(contactId);
             };
 
