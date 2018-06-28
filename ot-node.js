@@ -473,6 +473,16 @@ class OTNode {
             });
         });
 
+        server.get('/api/node', (req, res) => {
+            network.kademlia().iterativeFindNode(req.query.id.toString('hex'), (err, res) => {
+                console.log(res);
+            });
+            res.status(200);
+            res.send({
+                status: 'OK',
+            });
+        });
+
         server.post('/api/replication', (req, res) => {
             log.trace('POST Replication request received.');
 
