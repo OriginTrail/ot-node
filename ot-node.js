@@ -199,7 +199,7 @@ class OTNode {
         }
 
         // Initialise API
-        this.startRPC(emitter);
+        this.startRPC(emitter, container.resolve('network'));
 
         // Starting the kademlia
         const network = container.resolve('network');
@@ -312,7 +312,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC(emitter) {
+    startRPC(emitter, network) {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
@@ -368,14 +368,14 @@ class OTNode {
         });
         if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, emitter);
+            this.exposeAPIRoutes(server, emitter, network);
         }
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter) {
+    exposeAPIRoutes(server, emitter, network) {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -461,6 +461,12 @@ class OTNode {
                     message: 'No import data provided',
                 });
             }
+        });
+
+        server.get('/api/store', (req, res) => {
+            network.kademlia().iterativeFindValue(req.params.id, (err, res) => {
+                console.log(res);
+            });
         });
 
         server.post('/api/replication', (req, res) => {

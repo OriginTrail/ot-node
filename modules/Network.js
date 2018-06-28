@@ -3,7 +3,6 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 
 const levelup = require('levelup');
-const sqldown = require('sqldown');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
@@ -12,6 +11,7 @@ const utilities = require('./Utilities');
 const PeerCache = require('./kademlia/PeerCache');
 const _ = require('lodash');
 const sleep = require('sleep');
+const leveldown = require('leveldown');
 
 /**
  * DHT module (Kademlia)
@@ -108,14 +108,7 @@ class Network {
             transport,
             identity: Buffer.from(this.identity, 'hex'),
             contact,
-            storage: levelup(encoding(sqldown(`${__dirname}/Database/system.db`)), {
-                table: 'node_data',
-            }, (err) => {
-                if (err) {
-                    this.log.error('Failed to create SQLite3 Kademlia adapter');
-                    throw err;
-                }
-            }),
+            storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
         this.log.info('Starting OT Node...');
         this.node.quasar = this.node.plugin(kadence.quasar());
@@ -166,7 +159,7 @@ class Network {
             while (!connected) {
                 try {
                     // eslint-disable-next-line
-                    const connected = await this._joinNetwork();
+                    const connected = await this._joinNetwork(contact);
                     if (connected) {
                         break;
                     }
@@ -216,7 +209,7 @@ class Network {
      * Try to join network
      * Note: this method tries to find possible bootstrap nodes from cache as well
      */
-    async _joinNetwork() {
+    async _joinNetwork(myContact) {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
         const peercachePlugin = this.node.peercache;
@@ -246,7 +239,7 @@ class Network {
                         this.node.router.getContactByNodeId(identity),
                     ]),
                 ];
-                await this._joinNetwork();
+                await this._joinNetwork(myContact);
             });
             return true;
         }
@@ -290,6 +283,14 @@ class Network {
         if (result) {
             this.log.important('Joined the network');
             const contact = kadence.utils.parseContactURL(result);
+
+            this.node.iterativeStore(config.identity, JSON.stringify(myContact), (err, res) => {
+                if (err) {
+                    console.error(e);
+                } else {
+                    console.log('############################ STORED ###########################')
+                }
+            });
 
             this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
