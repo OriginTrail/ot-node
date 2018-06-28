@@ -483,6 +483,20 @@ class OTNode {
             });
         });
 
+        server.get('/api/dump', (req, res) => {
+            console.log('Routing table:');
+            network.node.router.forEach((value, key, map) => {
+                if (value.size > 0) {
+                    console.log(key, value);
+                }
+            });
+            
+            res.status(200);
+            res.send({
+                status: 'OK',
+            });
+        });
+
         server.post('/api/replication', (req, res) => {
             log.trace('POST Replication request received.');
 
