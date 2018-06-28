@@ -34,6 +34,13 @@ class Ethereum {
             this.hubContractAddress,
         );
 
+        this.hubContract.events.ContractsChanged()
+            .on('data', (event) => {
+                // console.log(event); // same results as the optional callback above
+                emitter.emit('eth-contracts-changed', event);
+            })
+            .on('error', this.log.warn);
+
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
         this.otContractAbi = JSON.parse(contractAbiFile);

@@ -494,6 +494,11 @@ class EventEmitter {
             );
         });
 
+        this.globalEmitter.on('eth-contracts-changed', (eventData) => {
+            logger.info('Contracts changed');
+            blockchain.initialize();
+        });
+
         this.globalEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
             logger.info('eth-AddedPredeterminedBid');
 
