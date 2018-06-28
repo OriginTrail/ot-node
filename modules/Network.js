@@ -286,7 +286,7 @@ class Network {
 
             this.node.iterativeStore(config.identity, JSON.stringify(myContact), (err, res) => {
                 if (err) {
-                    console.error(e);
+                    console.error(err);
                 } else {
                     console.log('############################ STORED ###########################')
                 }
