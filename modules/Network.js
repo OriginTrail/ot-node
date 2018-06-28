@@ -121,14 +121,14 @@ class Network {
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
         // this.node.eclipse = this.node.plugin(kadence.eclipse());
-        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
-        this.log.info('Peercache initialised');
-        this.node.spartacus = this.node.plugin(kadence.spartacus(
-            this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        ));
-        this.log.info('Spartacus initialised');
+        // this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        // this.log.info('Peercache initialised');
+        // this.node.spartacus = this.node.plugin(kadence.spartacus(
+        //     this.xprivkey,
+        //     parseInt(config.child_derivation_index, 10),
+        //     kadence.constants.HD_KEY_DERIVATION_PATH,
+        // ));
+        // this.log.info('Spartacus initialised');
         this.node.hashcash = this.node.plugin(kadence.hashcash({
             methods: ['PUBLISH', 'SUBSCRIBE'],
             difficulty: 8,
@@ -219,8 +219,8 @@ class Network {
     async _joinNetwork() {
         const bootstrapNodes = config.network_bootstrap_nodes;
 
-        const peercachePlugin = this.node.peercache;
-        const peers = await peercachePlugin.getBootstrapCandidates();
+        // const peercachePlugin = this.node.peercache;
+        const peers = []; //await peercachePlugin.getBootstrapCandidates();
 
         const isBootstrap = bootstrapNodes.length === 0;
         let nodes = _.uniq(bootstrapNodes.concat(peers));
@@ -445,7 +445,7 @@ class Network {
                 let contact = node.router.getContactByNodeId(contactId);
                 if (contact == null || contact.hostname == null) {
                     // check peercache
-                    contact = await this.node.peercache.getExternalPeerInfo(contactId);
+                    contact = null;
                     if (contact) {
                         const contactInfo = KadenceUtils.parseContactURL(contact);
                         // refresh bucket
