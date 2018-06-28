@@ -45,6 +45,8 @@ contract ContractHub is Ownable{
      address public escrowAddress;
      address public readingAddress;
 
+     event ContractsChanged();
+
      function ContractHub(address _fingerprintAddress, address _tokenAddress, address _biddingAddress, address _escrowAddress, address _readingAddress)
      public {
           fingerprintAddress = _fingerprintAddress;
@@ -57,26 +59,31 @@ contract ContractHub is Ownable{
      function setFingerprint(address newFingerprintAddress)
      public onlyOwner{
           fingerprintAddress = newFingerprintAddress;
+          emit ContractsChanged();
      }
 
      function setToken(address newTokenAddress)
      public onlyOwner{
           tokenAddress = newTokenAddress;
+          emit ContractsChanged();
      }
 
      function setBidding(address newBiddingAddress)
      public onlyOwner{
-       biddingAddress = newBiddingAddress;
+          biddingAddress = newBiddingAddress;
+          emit ContractsChanged();
      }
 
      function setEscrow(address newEscrowAddress)
      public onlyOwner{
           escrowAddress = newEscrowAddress;
+          emit ContractsChanged();
      }
 
      function setReading(address newReadingAddress)
      public onlyOwner{
           readingAddress = newReadingAddress;
-     }
+          emit ContractsChanged();
+     }   
      
 }
