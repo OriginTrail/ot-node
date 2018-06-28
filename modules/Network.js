@@ -232,7 +232,7 @@ class Network {
             this.log.info('Running in seed mode (waiting for connections)');
 
             this.node.router.events.once('add', async (identity) => {
-                config.NetworkBootstrapNodes = [
+                config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
                         this.node.router.getContactByNodeId(identity),
@@ -283,11 +283,11 @@ class Network {
             this.log.important('Joined the network');
             const contact = kadence.utils.parseContactURL(result);
 
-            this.node.iterativeStore(config.identity, JSON.stringify(this.node.contact), (err, res) => {
+            this.node.iterativeStore(config.identity, JSON.stringify(this.node.contact), (err) => {
                 if (err) {
                     console.error(err);
                 } else {
-                    console.log('############################ STORED ###########################')
+                    this.log.info('Stored identity to DHT');
                 }
             });
 
