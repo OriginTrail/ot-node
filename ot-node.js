@@ -199,7 +199,7 @@ class OTNode {
         }
 
         // Initialise API
-        this.startRPC(emitter, container.resolve('network'));
+        this.startRPC(emitter);
 
         // Starting the kademlia
         const network = container.resolve('network');
@@ -312,7 +312,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC(emitter, network) {
+    startRPC(emitter) {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
@@ -368,14 +368,14 @@ class OTNode {
         });
         if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, emitter, network);
+            this.exposeAPIRoutes(server, emitter);
         }
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter, network) {
+    exposeAPIRoutes(server, emitter) {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -467,30 +467,6 @@ class OTNode {
             network.kademlia().iterativeFindValue(req.query.id, (err, res) => {
                 console.log(res);
             });
-            res.status(200);
-            res.send({
-                status: 'OK',
-            });
-        });
-
-        server.get('/api/node', (req, res) => {
-            network.kademlia().iterativeFindNode(req.query.id.toString('hex'), (err, res) => {
-                console.log(res);
-            });
-            res.status(200);
-            res.send({
-                status: 'OK',
-            });
-        });
-
-        server.get('/api/dump', (req, res) => {
-            console.log('Routing table:');
-            network.node.router.forEach((value, key, map) => {
-                if (value.size > 0) {
-                    console.log(key, value);
-                }
-            });
-
             res.status(200);
             res.send({
                 status: 'OK',
