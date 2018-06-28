@@ -1,6 +1,7 @@
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
+const moment = require('moment');
 const ipaddr = require('ipaddr.js');
 const winston = require('winston');
 const Storage = require('./Storage');
@@ -14,9 +15,11 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-var numberToBN = require('number-to-bn');
+const KademliaUtils = require('./kademlia/KademliaUtils');
+const numberToBN = require('number-to-bn');
 
 require('dotenv').config();
+require('winston-loggly-bulk');
 
 
 class Utilities {
@@ -113,6 +116,12 @@ class Utilities {
         });
     }
 
+    formatFileLogs(args) {
+        const date = moment().format('D/MM/YYYY hh:mm:ss');
+        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
+        return msg;
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
@@ -131,6 +140,29 @@ class Utilities {
         };
 
         try {
+            const transports =
+                [
+                    new (winston.transports.Console)({
+                        colorize: 'all',
+                        timestamp: false,
+                        prettyPrint: object => JSON.stringify(object),
+                    }),
+                    new (winston.transports.File)({
+                        filename: 'node.log',
+                        json: false,
+                        formatter: this.formatFileLogs,
+                    }),
+                ];
+
+            if (process.env.SEND_LOGS) {
+                transports.push(new (winston.transports.Loggly)({
+                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
+                    subdomain: 'origintrail.loggly.com',
+                    tags: ['OT-Node'],
+                    json: true,
+                }));
+            }
+
             const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
@@ -143,14 +175,7 @@ class Utilities {
                     notify: 5,
                     trace: 6,
                 },
-                transports: [
-                    new (winston.transports.Console)({
-                        colorize: 'all',
-                        timestamp: false,
-                        prettyPrint: object => JSON.stringify(object),
-                    }),
-                    new (winston.transports.File)({ filename: 'node.log' }),
-                ],
+                transports,
             });
             winston.addColors(customColors);
 
@@ -163,20 +188,17 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    if (msg.startsWith('updating peer profile')) {
-                        return; // skip logging
+                    const transformed = KademliaUtils.transformLog(level, msg);
+                    if (!transformed) {
+                        return;
                     }
-                    if (msg.startsWith('connect econnrefused')) {
-                        level = 'trace';
-                        const address = msg.substr(21);
-                        msg = `Failed to connect to ${address}`;
-                    }
-                    origLog.apply(logger, [level, msg]);
+                    origLog.apply(logger, [transformed.level, transformed.msg]);
                 }
             };
             return logger;
         } catch (e) {
-            // console.log(e);
+            console.error('Failed to create logger', e);
+            process.exit(1);
         }
     }
 
@@ -820,6 +842,42 @@ class Utilities {
         }
 
         return new Array(digitCount - hex.length).join('0') + hex;
+    }
+
+    /**
+     * Validates number property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameter(property) {
+        if (property == null || typeof property === 'number') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Validates string property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateStringParameter(property) {
+        if (property == null || typeof property === 'string') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Is node a bootstrap node
+     * @return {boolean}
+     */
+    static isBootstrapNode() {
+        const bootstrapNodes = config.network_bootstrap_nodes;
+        if (bootstrapNodes) {
+            return bootstrapNodes.length === 0;
+        }
+        return true;
     }
 }
 

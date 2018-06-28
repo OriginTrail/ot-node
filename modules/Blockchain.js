@@ -28,6 +28,17 @@ class Blockchain {
     }
 
     /**
+     * Checks if the node would rank in the top n + 1 network bids.
+     * @param importId Offer import id
+     * @param wallet DH wallet
+     * @param dhNodeId KADemplia ID of the DH node that wants to add bid
+     * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
+     */
+    getDistanceParameters(importId) {
+        return this.blockchain.getDistanceParameters(importId);
+    }
+
+    /**
      * Writes data import root hash on blockchain
      * @param importId
      * @param rootHash

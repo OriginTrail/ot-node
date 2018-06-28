@@ -70,8 +70,8 @@ databaseData.edges = [
         edge_type: 'OWNED_BY',
         data_provider: 'WALLET_ID',
         imports: [1520345631],
-        _from: 'ot_vertices/2e0b1ba163be76138d51a0b8258e97d7',
-        _to: 'ot_vertices/cd923bec4266a7f63b68722da254f205',
+        _from: '2e0b1ba163be76138d51a0b8258e97d7',
+        _to: 'cd923bec4266a7f63b68722da254f205',
         sender_id: 'a',
     },
 ];

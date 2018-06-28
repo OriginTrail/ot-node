@@ -33,6 +33,10 @@ const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
+    if (reason.message.startsWith('Invalid JSON RPC response')) {
+        log.warn('Web3 failed to communicate with blockchain provider. Check internet connection');
+        return;
+    }
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
 });
@@ -58,16 +62,6 @@ class OTNode {
             process.exit(1);
         }
 
-        // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            try {
-                const responseFromArango = await Utilities.getArangoDbVersion();
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
-            } catch (err) {
-                process.exit(1);
-            }
-        }
-
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
@@ -79,6 +73,22 @@ class OTNode {
         } catch (err) {
             console.log(err);
             process.exit(1);
+        }
+
+        if (Utilities.isBootstrapNode()) {
+            await this.startBootstrapNode();
+            this.startRPC();
+            return;
+        }
+
+        // check if ArangoDB service is running at all
+        if (process.env.GRAPH_DATABASE === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion();
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                process.exit(1);
+            }
         }
 
         let selectedDatabase;
@@ -217,6 +227,33 @@ class OTNode {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
+
+        const challenger = container.resolve('challenger');
+        await challenger.startChallenging();
+    }
+
+    /**
+     * Starts bootstrap node
+     * @return {Promise<void>}
+     */
+    async startBootstrapNode() {
+        const container = awilix.createContainer({
+            injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        container.register({
+            emitter: awilix.asValue({}),
+            network: awilix.asClass(Network).singleton(),
+            config: awilix.asValue(config),
+            dataReplication: awilix.asClass(DataReplication).singleton(),
+            remoteControl: awilix.asClass(RemoteControl).singleton(),
+            logger: awilix.asValue(log),
+            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+        });
+
+        const network = container.resolve('network');
+        await network.initialize();
+        await network.start();
     }
 
     /**
@@ -328,10 +365,13 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(parseInt(config.node_rpc_port, 10), '0.0.0.0', () => {
-            log.notify(`${server.name} exposed at ${server.url}`);
+        server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
+            log.notify(`API exposed at  ${server.url}`);
         });
-        this.exposeAPIRoutes(server, emitter);
+        if (!Utilities.isBootstrapNode()) {
+            // register API routes only if the node is not bootstrap
+            this.exposeAPIRoutes(server, emitter);
+        }
     }
 
     /**
@@ -432,19 +472,23 @@ class OTNode {
                 return;
             }
 
-
-            if (req.body !== undefined && req.body.import_id !== undefined) {
+            if (req.body !== undefined && req.body.import_id !== undefined &&
+                Utilities.validateNumberParameter(req.body.import_id) &&
+                Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
+                Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
+                Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
+                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
                 const queryObject = {
-                    import_id: req.body.import_id,
                     contact: req.contact,
                     response: res,
                 };
+                Object.assign(queryObject, req.body);
                 emitter.emit('create-offer', queryObject);
             } else {
-                log.error('Invalid request. You need to provide import ID');
+                log.error('Invalid request');
                 res.status(400);
                 res.send({
-                    message: 'Import ID not provided!',
+                    message: 'Invalid data provided',
                 });
             }
         });
@@ -497,27 +541,12 @@ class OTNode {
             });
         });
 
-        server.get('/api/network/query_by_id', (req, res) => {
-            log.trace('GET Query by ID received.');
-
-            const queryObject = req.query;
-            const query = [{
-                path: 'identifiers.id',
-                value: queryObject.id,
-                opcode: 'EQ',
-            }];
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
-        });
-
-        server.get('/api/network/query/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_param', (req, res) => {
             log.trace('GET Query for status request received.');
             if (!req.params.query_param) {
+                res.status(400);
                 res.send({
-                    status: 'FAIL',
-                    error: 'Param required.',
+                    message: 'Param required.',
                 });
                 return;
             }
@@ -527,25 +556,98 @@ class OTNode {
             });
         });
 
-        server.post('/api/network/query', (req, res) => {
+        server.post('/api/query/network', (req, res) => {
             log.trace('POST Query request received.');
-
+            if (!req.body) {
+                res.status(400);
+                res.send({
+                    message: 'Body required.',
+                });
+                return;
+            }
             const { query } = req.body;
-            emitter.emit('network-query', {
-                query,
-                response: res,
-            });
+            if (query) {
+                emitter.emit('network-query', {
+                    query,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({
+                    message: 'Query required',
+                });
+            }
         });
 
         /**
          * Get vertices by query
          * @param queryObject
          */
-        server.get('/api/query', (req, res) => {
+        server.post('/api/query/local', (req, res) => {
             log.trace('GET Query request received.');
-            const queryObject = req.query;
+
+            if (req.body == null || req.body.query == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+
+
+            // TODO: Decrypt returned vertices
+            const queryObject = req.body.query;
             emitter.emit('query', {
                 query: queryObject,
+                response: res,
+            });
+        });
+
+        server.get('/api/query/local/import/:import_id', (req, res) => {
+            log.trace('GET import request received.');
+
+            if (!req.params.import_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param required.',
+                });
+                return;
+            }
+
+            emitter.emit('api-get/api/import', {
+                import_id: req.params.import_id,
+                response: res,
+            });
+        });
+
+        server.post('/api/query/local/import', (req, res) => {
+            log.trace('GET Query request received.');
+
+            if (req.body == null || req.body.query == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+
+            const queryObject = req.body.query;
+            emitter.emit('get-imports', {
+                query: queryObject,
+                response: res,
+            });
+        });
+
+
+        server.post('/api/read/network', (req, res) => {
+            log.trace('POST Read request received.');
+
+            if (req.body == null || req.body.query_id == null || req.body.reply_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            }
+            const { query_id, reply_id } = req.body;
+
+            emitter.emit('choose-offer', {
+                query_id,
+                reply_id,
                 response: res,
             });
         });

@@ -49,7 +49,28 @@ class DHService {
             const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
             if (offerModel) {
                 const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Ignoring.`);
+                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
+                return;
+            }
+
+            const dcContact = await this.network.kademlia().getContact(dcNodeId.substring(2, 42));
+            if (dcContact == null || dcContact.hostname == null) {
+                this.log.warn(`Unknown DC contact ${dcNodeId.substring(2, 42)} for import ${importId}. Offer ignored`);
+                return;
+            }
+
+            const distanceParams = await this.blockchain.getDistanceParameters(importId);
+
+            const nodeHash = distanceParams[0];
+            const dataHash = distanceParams[1];
+            const currentRanking = distanceParams[3]; // Not used at the moment
+            const k = distanceParams[4];
+            const numNodes = distanceParams[5];
+
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 200)) {
+                this.log.notify('Close enough to take bid');
+            } else {
+                this.log.notify('Not close enough to take bid');
                 return;
             }
 
@@ -179,7 +200,7 @@ class DHService {
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
-            this.network.kademlia().replicationRequest(
+            await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
                     wallet: this.config.node_wallet,
@@ -298,6 +319,7 @@ class DHService {
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
                 root_hash: data.root_hash,
+                data_provider_wallet: data.data_provider_wallet,
                 epk,
             });
 
@@ -306,7 +328,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
-            this.network.kademlia().verifyImport({
+            await this.network.kademlia().verifyImport({
                 epk,
                 importId: data.import_id,
                 encryptionKey: keyPair.privateKey,
@@ -446,88 +468,93 @@ class DHService {
             messageSignature: messageResponseSignature,
         };
 
-        this.network.kademlia().sendDataLocationResponse(
+        await this.network.kademlia().sendDataLocationResponse(
             dataLocationResponseObject,
             message.nodeId,
         );
     }
 
+    /**
+     * Handles date read request from Kademlia
+     * @return {Promise<void>}
+     */
     async handleDataReadRequest(message) {
         /*
-        message: {
-            id: REPLY_ID
-            wallet: DH_WALLET,
-            nodeId: KAD_ID
-        }
+            message: {
+                id: REPLY_ID
+                wallet: DH_WALLET,
+                nodeId: KAD_ID
+            }
         */
 
         // TODO in order to avoid getting a different import.
-
         const { nodeId, wallet, id } = message;
+        try {
+            // Check is it mine offer.
+            const networkReplyModel = await Models.network_replies.find({ where: { id } });
+            if (!networkReplyModel) {
+                throw Error(`Couldn't find reply with ID ${id}.`);
+            }
 
-        // Check is it mine offer.
-        const networkReplyModel = await Models.network_replies.find({ where: { id } });
+            const offer = networkReplyModel.data;
 
-        if (!networkReplyModel) {
-            throw Error(`Couldn't find reply with ID ${id}.`);
-        }
+            if (networkReplyModel.receiver_wallet !== wallet &&
+                networkReplyModel.receiver_identity) {
+                throw Error('Sorry not your read request');
+            }
 
-        const offer = networkReplyModel.data;
+            // TODO: Only one import ID used. Later we'll support replication from multiple imports.
+            // eslint-disable-next-line
+            const importId = offer.imports[0];
 
-        if (networkReplyModel.receiver_wallet !== wallet && networkReplyModel.receiver_identity) {
-            throw Error('Sorry not your read request');
-        }
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
 
-        // TODO: Only one import ID used. Later we'll support replication from multiple imports.
-        const importId = offer.imports[0];
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
+            const edges = values[1];
 
-        const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-        const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            // Get replication key and then encrypt data.
+            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
 
-        const values = await Promise.all([verticesPromise, edgesPromise]);
-        const vertices = values[0];
-        const edges = values[1];
+            if (!holdingDataModel) {
+                throw Error(`Didn't find import with ID. ${importId}`);
+            }
 
-        // Get replication key and then encrypt data.
-        const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+            const holdingData = holdingDataModel.get({ plain: true });
+            const dataPublicKey = holdingData.data_public_key;
+            const replicationPrivateKey = holdingData.distribution_private_key;
 
-        if (!holdingDataModel) {
-            throw Error(`Didn't find import with ID. ${importId}`);
-        }
+            Graph.decryptVertices(
+                vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                dataPublicKey,
+            );
 
-        const holdingData = holdingDataModel.get({ plain: true });
-        const dataPublicKey = holdingData.data_public_key;
-        const replicationPrivateKey = holdingData.distribution_private_key;
+            Graph.encryptVertices(
+                vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                replicationPrivateKey,
+            );
 
-        Graph.decryptVertices(
-            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-            dataPublicKey,
-        );
+            // Make sure we have enough token balance before DV makes a purchase.
+            // From smart contract:
+            // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
+            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
+            const profileBalance =
+                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 
-        Graph.encryptVertices(
-            vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-            replicationPrivateKey,
-        );
+            if (profileBalance.lt(condition)) {
+                await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+                await this.blockchain.depositToken(condition.sub(profileBalance));
+            }
 
-        // Make sure we have enough token balance before DV makes a purchase.
-        // From smart contract:
-        // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
-        const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
-        const profileBalance =
-            new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
-
-        if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
-        }
-
-        /*
+            /*
             dataReadResponseObject = {
                 message: {
                     id: REPLY_ID
                     wallet: DH_WALLET,
                     nodeId: KAD_ID
                     agreementStatus: CONFIRMED/REJECTED,
+                    data_provider_wallet,
                     encryptedData: { … }
                 },
                 messageSignature: {
@@ -536,30 +563,52 @@ class DHService {
                     s: …
                }
             }
-         */
+             */
 
-        const replyMessage = {
-            id,
-            wallet: this.config.node_wallet,
-            nodeId: this.config.identity,
-            agreementStatus: 'CONFIRMED',
-            encryptedData: {
-                vertices,
-                edges,
-            },
-            importId, // TODO: Temporal. Remove it.
-        };
-        const dataReadResponseObject = {
-            message: replyMessage,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(replyMessage),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
+            const replyMessage = {
+                id,
+                wallet: this.config.node_wallet,
+                nodeId: this.config.identity,
+                data_provider_wallet: holdingDataModel.data_provider_wallet,
+                agreementStatus: 'CONFIRMED',
+                encryptedData: {
+                    vertices,
+                    edges,
+                },
+                importId, // TODO: Temporal. Remove it.
+            };
+            const dataReadResponseObject = {
+                message: replyMessage,
+                messageSignature: Utilities.generateRsvSignature(
+                    JSON.stringify(replyMessage),
+                    this.web3,
+                    this.config.node_private_key,
+                ),
+            };
 
-        this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.listenPurchaseInititation(
+                importId, wallet, offer, networkReplyModel,
+                holdingData, nodeId, id,
+            );
+        } catch (e) {
+            const errorMessage = `Failed to process data read request. ${e}.`;
+            this.log.warn(errorMessage);
+            await this.network.kademlia().sendDataReadResponse({
+                status: 'FAIL',
+                message: errorMessage,
+            }, nodeId);
+        }
+    }
 
+    /**
+     * Wait for purchase
+     * @return {Promise<void>}
+     */
+    async listenPurchaseInititation(
+        importId, wallet, offer,
+        networkReplyModel, holdingData, nodeId, messageId,
+    ) {
         // Wait for event from blockchain.
         await this.blockchain.subscribeToEvent('PurchaseInitiated', importId, 20 * 60 * 1000);
 
@@ -628,7 +677,7 @@ class DHService {
 
         // From smart contract:
         // keccak256(checksum_left, checksum_right, checksum_hash,
-        //          random_number_1, random_number_2, decryption_key, block_index);
+        //           random_number_1, random_number_2, decryption_key, block_index);
         const commitmentHash = Utilities.normalizeHex(ethAbi.soliditySHA3(
             ['uint256', 'uint256', 'bytes32', 'uint256', 'uint256', 'uint256', 'uint256'],
             [m1Checksum, m2Checksum, epkChecksumHash, r1, r2, eHex, selectedBlockNumber],
@@ -642,7 +691,7 @@ class DHService {
             commitmentHash,
         );
 
-        Models.data_holders.create({
+        await Models.data_holders.create({
             import_id: importId,
             dh_wallet: this.config.node_wallet,
             dh_kademlia_id: this.config.identity,
@@ -659,7 +708,7 @@ class DHService {
         // Send data to DV.
         const encryptedPaddedKeyObject = {
             message: {
-                id,
+                id: messageId,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identifiers,
                 m1,
@@ -677,34 +726,26 @@ class DHService {
             this.config.node_private_key,
         );
 
-        // Monitor for litigation event. Just in case.
-        this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000).then(async (eventData) => {
-            if (!eventData) {
-                // Everything is ok.
-                this.log.info(`No litigation process initiated for purchase for ${importId}.`);
-                return;
-            }
+        await this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
 
-            await this.blockchain.sendProofData(
-                importId, wallet, m1Checksum,
-                m2Checksum, epkChecksumHash, r1, r2,
-                Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
-            );
+        this.listenPurchaseDispute(
+            importId, wallet, m2Checksum,
+            epkChecksumHash, selectedBlockNumber,
+            m1Checksum, r1, r2, e,
+        ).then(() => this.log.info('Purchase dispute completed'));
 
-            // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
-            this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000).then(async (eventData) => {
-                if (eventData.proof_was_correct) {
-                    this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
-                } else {
-                    this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
-                }
-            });
-        });
+        this.listenPurchaseConfirmation(
+            importId, wallet, networkReplyModel,
+            selectedBlock, eHex,
+        ).then(() => this.log.info('Purchase confirmation completed'));
+    }
 
-        this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
-
+    /**
+     * Wait and process purchase confirmation
+     * @return {Promise<void>}
+     */
+    async listenPurchaseConfirmation(importId, wallet, networkReplyModel, selectedBlock, eHex) {
         const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
-
         if (!eventData) {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
@@ -714,7 +755,6 @@ class DHService {
         }
 
         this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
-
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
@@ -735,6 +775,36 @@ class DHService {
     }
 
     /**
+     * Monitor for litigation event. Just in case.
+     * @return {Promise<void>}
+     */
+    async listenPurchaseDispute(
+        importId, wallet, m2Checksum, epkChecksumHash,
+        selectedBlockNumber, m1Checksum, r1, r2, e,
+    ) {
+        let eventData = await this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000);
+        if (!eventData) {
+            // Everything is ok.
+            this.log.info(`No litigation process initiated for purchase for ${importId}.`);
+            return;
+        }
+
+        await this.blockchain.sendProofData(
+            importId, wallet, m1Checksum,
+            m2Checksum, epkChecksumHash, r1, r2,
+            Utilities.normalizeHex(e.toString('hex')), selectedBlockNumber,
+        );
+
+        // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
+        eventData = this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000);
+        if (eventData.proof_was_correct) {
+            this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
+        } else {
+            this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
+        }
+    }
+
+    /**
      * Checking if node Hash is close enugh to respond to bid
      * @param k - Number of required data holders
      * @param numNodes - Number of registered nodes on ODN network
@@ -745,13 +815,11 @@ class DHService {
     amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
         const two = new BN(2);
         const deg128 = two.pow(new BN(128));
-        console.log(deg128.toString('hex'));
+        const intervalBn = deg128.div(new BN(numNodes, 10));
 
-        const intervalBn = deg128.div(new BN(numNodes));
+        const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
 
-        const marginBn = intervalBn.mul(new BN(k)).div(two);
-
-        const dataHashBn = new BN(dataHash, 16);
+        const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
 
         let intervalTo;
         let higherMargin = marginBn;
@@ -766,18 +834,14 @@ class DHService {
             higherMargin = dataHashBn.add(marginBn).sub(deg128).add(marginBn);
         }
 
-        const nodeHashBn = new BN(nodeHash, 16);
+        const nodeHashBn = new BN(Utilities.denormalizeHex(nodeHash), 16);
 
         let distance;
-
         if (dataHashBn.gt(nodeHashBn)) {
             distance = dataHashBn.sub(nodeHashBn);
         } else {
             distance = nodeHashBn.sub(dataHashBn);
         }
-
-        console.log(distance.toString('hex'));
-        console.log(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)).toString('hex'));
 
         if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
             return true;
@@ -880,6 +944,58 @@ class DHService {
         });
 
         return vertices;
+    }
+
+    /**
+     * Returns given import's vertices and edges and decrypt them if needed.
+     *
+     * Method will return object in following format { vertices: [], edges: [] }.
+     * @param importId ID of import.
+     * @returns {Promise<*>}
+     */
+    async getVerticesForImport(importId) {
+        // Check if import came from DH replication or reading replication.
+        const holdingData = await Models.holding_data.find({ where: { id: importId } });
+
+        if (holdingData) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            const encodedVertices = values[0];
+            const edges = values[1];
+            const decryptKey = holdingData.data_public_key;
+            const vertices = [];
+
+            encodedVertices.forEach((encodedVertex) => {
+                const decryptedVertex = Utilities.copyObject(encodedVertex);
+                if (decryptedVertex.vertex_type !== 'CLASS') {
+                    decryptedVertex.data =
+                        Encryption.decryptObject(
+                            encodedVertex.data,
+                            decryptKey,
+                        );
+                }
+                vertices.push(decryptedVertex);
+            });
+
+            return { vertices, edges };
+        }
+
+        // Check if import came from DC side.
+        const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+
+        if (dataInfo) {
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+
+            return { vertices: values[0], edges: values[1] };
+        }
+
+        throw Error(`Cannot find vertices for import ID ${importId}.`);
     }
 
     listenToBlockchainEvents() {

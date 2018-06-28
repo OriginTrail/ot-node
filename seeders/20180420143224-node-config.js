@@ -38,6 +38,22 @@ module.exports = {
         key: 'dh_price',
         value: 2,
     },
+    {
+        key: 'total_escrow_time_in_minutes',
+        value: 100,
+    },
+    {
+        key: 'max_token_amount_per_dh',
+        value: '1000',
+    },
+    {
+        key: 'dh_min_stake_amount',
+        value: '100',
+    },
+    {
+        key: 'dh_min_reputation',
+        value: 0,
+    },
     ], {}),
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
 };

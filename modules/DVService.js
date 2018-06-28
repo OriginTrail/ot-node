@@ -75,7 +75,7 @@ class DVService {
             );
 
         this.network.kademlia().quasar.quasarPublish(
-            'data-location-request',
+            'kad-data-location-request',
             dataLocationRequestObject,
             {},
             async () => {
@@ -105,19 +105,22 @@ class DVService {
                 let lowestOffer = null;
                 responseModels.forEach((response) => {
                     const price = new BN(response.data_price, 10);
-                    if (lowestOffer === null || price.lt(new BN(lowestOffer.data_price, 10))) {
+                    if (lowestOffer == null || price.lt(new BN(lowestOffer.data_price, 10))) {
                         lowestOffer = response.get({ plain: true });
                     }
                 });
 
-                if (lowestOffer === undefined) {
-                    this.log.info('Didn\'t find answer or no one replied.');
-                }
-
-                // Finish auction.
                 const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
-                networkQuery.status = 'PROCESSING';
-                await networkQuery.save({ fields: ['status'] });
+
+                if (!lowestOffer) {
+                    this.log.info('Didn\'t find answer or no one replied.');
+                    networkQuery.status = 'FINISHED';
+                    await networkQuery.save({ fields: ['status'] });
+                } else {
+                    // Finish auction.
+                    networkQuery.status = 'PROCESSING';
+                    await networkQuery.save({ fields: ['status'] });
+                }
 
                 resolve(lowestOffer);
             }, totalTime);
@@ -154,9 +157,16 @@ class DVService {
             ),
         };
 
-        this.network.kademlia().dataReadRequest(
+        await this.network.kademlia().dataReadRequest(
             dataReadRequestObject,
             offer.node_id,
+            (err) => {
+                if (err) {
+                    this.log.warn(`Data request failed for reply_id ${message.id}. ${err}`);
+                } else {
+                    this.log.info(`Data request sent for reply_id ${message.id}.`);
+                }
+            },
         );
     }
 
@@ -189,6 +199,8 @@ class DVService {
             reply_id: message.replyId,
         });
 
+        // TODO: Fire socket notification for Houston
+
         if (!networkQueryResponse) {
             this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
@@ -209,6 +221,7 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
+        const { data_provider_wallet } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -286,14 +299,15 @@ class DVService {
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
+            data_provider_wallet,
             import_timestamp: new Date(),
         });
 
         // Check if enough tokens. From smart contract:
         // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
         const stakeAmount =
-            new BN(networkQueryResponse.data_price)
-                .mul(new BN(networkQueryResponse.stake_factor));
+            new BN(networkQueryResponse.data_price).mul(new BN(networkQueryResponse.stake_factor));
+
         // Check for DH first.
         const dhBalance =
             new BN((await this.blockchain.getProfile(networkQueryResponse.wallet)).balance, 10);
@@ -387,8 +401,7 @@ class DVService {
             ).toString('hex'));
 
         // Get checksum from blockchain.
-        const purchaseData =
-            await this.blockchain.getPurchasedData(importId, wallet);
+        const purchaseData = await this.blockchain.getPurchasedData(importId, wallet);
 
         let testNumber = new BN(purchaseData.checksum, 10);
         const r1Bn = new BN(r1);
@@ -449,7 +462,7 @@ class DVService {
 
             try {
                 const publicKey = Encryption.unpackEPK(epk);
-                const holdingData = await Models.holding_data.create({
+                await Models.holding_data.create({
                     id: importId,
                     source_wallet: wallet,
                     data_public_key: publicKey,

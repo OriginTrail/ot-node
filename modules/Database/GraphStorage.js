@@ -362,8 +362,6 @@ class GraphStorage {
         const edges = [];
         for (const key in virtualGraph.data) {
             for (const edge in virtualGraph.data[key].outbound) {
-                virtualGraph.data[key].outbound[edge]._from = `ot_vertices/${virtualGraph.data[key].outbound[edge]._from}`;
-                virtualGraph.data[key].outbound[edge]._to = `ot_vertices/${virtualGraph.data[key].outbound[edge]._to}`;
                 edges.push(virtualGraph.data[key].outbound[edge]);
             }
         }

@@ -39,7 +39,7 @@ class NetworkUtilities {
     * Mining a new identity
     * @return {Promise<void>}
     */
-    async solveIdentity() {
+    async solveIdentity(xprivkey, path) {
         const events = new EventEmitter();
         const start = Date.now();
         let time;
@@ -55,8 +55,9 @@ class NetworkUtilities {
 
         events.on('attempt', () => attempts += 1);
 
+        let childIndex;
         try {
-            this.index = await this.spawnIdentityDerivationProcesses(this.xprivkey, events);
+            childIndex = await this.spawnIdentityDerivationProcesses(xprivkey, path, events);
             time = Date.now() - start;
         } catch (err) {
             this.log.error(err.message.toLowerCase());
@@ -67,18 +68,19 @@ class NetworkUtilities {
         events.removeAllListeners();
         clearInterval(status);
 
-        this.log.info(`Solved identity derivation index ${this.index} in ${ms(time)}`);
-        utilities.saveToConfig('child_derivation_index', this.index);
-        config.child_derivation_index = this.index;
+        this.log.info(`Solved identity derivation index ${childIndex} in ${ms(time)}`);
+        utilities.saveToConfig('child_derivation_index', childIndex);
+        config.child_derivation_index = childIndex;
     }
 
     /**
     * Creates child processes to mine an identity
-    * @param xprivkey
+    * @param xprivkey Extended HD private key
+    * @param path Child derivation path
     * @param events
     * @return {Promise<any>}
     */
-    async spawnIdentityDerivationProcesses(xprivkey, events) {
+    async spawnIdentityDerivationProcesses(xprivkey, path, events) {
         // How many process can we run
         const cpus = parseInt(config.cpus, 10);
 
@@ -91,7 +93,7 @@ class NetworkUtilities {
 
         for (let c = 0; c < cpus; c += 1) {
             const index = Math.floor(kadence.constants.MAX_NODE_INDEX / cpus) * c;
-            const solver = this.forkIdentityDerivationSolver(c, xprivkey, index, events);
+            const solver = this.forkIdentityDerivationSolver(c, xprivkey, index, path, events);
 
             this.solvers.push(solver);
 
@@ -116,12 +118,13 @@ class NetworkUtilities {
     /**
     * Creating child process for mining an identity
     * @param c
-    * @param xprv
-    * @param index
+    * @param xprv Extended private HD key
+    * @param index Child derivation index
+    * @param derivationPath Derivation path
     * @param events
     * @return {*}
     */
-    forkIdentityDerivationSolver(c, xprv, index, events) {
+    forkIdentityDerivationSolver(c, xprv, index, derivationPath, events) {
         this.log.info(`Forking derivation process ${c}`);
 
         const solver = fork(path.join(__dirname, 'workers', 'identity.js'), [], {
@@ -145,7 +148,7 @@ class NetworkUtilities {
             this.log.error(`Derivation ${c} error, ${err.message}`);
         });
 
-        solver.send([xprv, index]);
+        solver.send([xprv, index, derivationPath]);
 
         return solver;
     }
@@ -175,19 +178,21 @@ class NetworkUtilities {
     }
 
     /**
-    * Get identity keys
-    * @param string - extended private key
-    * @return {{childkey: *, parentkey: *}}
-    */
-    getIdentityKeys(xprivkey, path, childDerivationIndex) {
+     * Get identity keys
+     * @return {{childKey: *, parentKey: *}}
+     * @param xpriv Extended private HD key
+     * @param path Key derivation path
+     * @param childDerivationIndex Child index
+     */
+    getIdentityKeys(xpriv, path, childDerivationIndex) {
         // Start initializing identity keys
-        const parentkey = hdkey.fromExtendedKey(xprivkey);
-        const childkey = parentkey
+        const parentKey = hdkey.fromExtendedKey(xpriv);
+        const childKey = parentKey
             .derive(path)
             .deriveChild(childDerivationIndex);
         return {
-            childkey,
-            parentkey,
+            childKey,
+            parentKey,
         };
     }
 
@@ -205,14 +210,11 @@ class NetworkUtilities {
     /**
    * Validate identity and solve if not valid
    * @param identity
-   * @param xprivkeyd
    */
-    checkIdentity(identity, xprivkey) {
-        this.xprivkey = xprivkey;
-        this.identity = identity;
-        if (!identity.validate(this.xprivkey, this.index)) {
-            this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${this.index} is invalid`);
-            deasync(this.solveIdentity());
+    checkIdentity(identity) {
+        if (!identity.validate()) {
+            this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${identity.index} is invalid`);
+            deasync(this.solveIdentity(identity.xprv, identity.path));
         }
     }
 }

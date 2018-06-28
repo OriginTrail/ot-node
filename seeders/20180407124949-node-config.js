@@ -1,6 +1,14 @@
 require('dotenv').config();
 
-const bootstrap_node = (process.env.BOOTSTRAP_NODE) ? `"${process.env.BOOTSTRAP_NODE}"` : '';
+let bootstrap_nodes = [];
+if (process.env.BOOTSTRAP_NODE) {
+    bootstrap_nodes = process.env.BOOTSTRAP_NODE.split(',');
+}
+
+let import_whitelist = [];
+if (process.env.IMPORT_WHITELIST) {
+    import_whitelist = process.env.IMPORT_WHITELIST.split(',');
+}
 
 const selected_database = (process.env.GRAPH_DATABASE === 'neo4j') ? 2 : 1;
 module.exports = {
@@ -97,18 +105,22 @@ module.exports = {
         value: '[]',
     }, {
         key: 'network_bootstrap_nodes',
-        value: `[${bootstrap_node}]`,
+        value: JSON.stringify(bootstrap_nodes),
     }, {
         key: 'solve_hashes',
         value: '0',
     },
     {
         key: 'remote_access_whitelist',
-        value: `["${process.env.IMPORT_WHITELIST}"]`,
+        value: JSON.stringify(import_whitelist),
     },
     {
         key: 'node_rpc_port',
         value: process.env.NODE_RPC_PORT,
+    },
+    {
+        key: 'send_logs_to_origintrail',
+        value: process.env.SEND_LOGS,
     },
     ], {}),
 

@@ -38,7 +38,7 @@ describe('GraphStorage module', () => {
 
         if (selectedDatabase.database_system === 'arango_db') {
             systemDb = new Database();
-            systemDb.useBasicAuth('root', '');
+            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
             await systemDb.createDatabase(
                 myDatabaseName,
                 [{ username: myUserName, passwd: myPassword, active: true }],
@@ -187,7 +187,7 @@ describe('GraphStorage module', () => {
     after('drop myGraphStorage db', async () => {
         if (selectedDatabase.database_system === 'arango_db') {
             systemDb = new Database();
-            systemDb.useBasicAuth('root', '');
+            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
             await systemDb.dropDatabase(myDatabaseName);
         } else if (selectedDatabase.database_system === 'neo4j') {
             // TODO implement me

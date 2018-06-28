@@ -229,6 +229,45 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDistanceParameters",
+    "outputs": [
+      {
+        "name": "node_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "data_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distance",
+        "type": "uint256"
+      },
+      {
+        "name": "current_ranking",
+        "type": "uint256"
+      },
+      {
+        "name": "required_bid_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "active_nodes_",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -353,76 +392,6 @@
         "type": "bytes32"
       },
       {
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "calculateDistance",
-    "outputs": [
-      {
-        "name": "distance",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getDistanceParameters",
-    "outputs": [
-      {
-        "name": "node_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "data_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "distance",
-        "type": "uint256"
-      },
-      {
-        "name": "current_ranking",
-        "type": "uint256"
-      },
-      {
-        "name": "required_bid_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "active_nodes_",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
         "name": "DH_node_id",
         "type": "bytes32"
       }
@@ -499,6 +468,29 @@
     ],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "calculateDistance",
+    "outputs": [
+      {
+        "name": "distance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {

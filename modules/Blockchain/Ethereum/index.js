@@ -452,7 +452,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Calling - createOffer() on contract.');
+        this.log.warn('Calling - create offer on contract.');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
@@ -493,50 +493,62 @@ class Ethereum {
      * Gets all past events for the contract
      * @param contractName
      */
-    getAllPastEvents(contractName) {
-        Utilities.getBlockNumberFromWeb3().then((currentBlockHex) => {
-            const currentBlock = Utilities.hexToNumber(currentBlockHex);
-            this.contractsByName[contractName].getPastEvents('allEvents', {
-                fromBlock: Math.min(currentBlock, 10),
-                toBlock: 'latest',
-            }).then((events) => {
-                events.forEach((event) => {
-                    // TODO: make filters - we don't need to listen all events
-                    /* eslint-disable-next-line */
-                    if (event.event === 'OfferCreated' || 1 === 1) {
-                        const timestamp = Date.now();
-                        Storage.db.query('INSERT INTO events(event, data, import_id, block, timestamp, finished) \n' +
-                          'SELECT ?, ?, ?, ?, ?, 0 \n' +
-                          'WHERE NOT EXISTS(SELECT 1 FROM events WHERE event = ? AND data = ?)', {
-                            replacements: [
-                                event.event,
-                                JSON.stringify(event.returnValues),
-                                event.returnValues.import_id,
-                                event.blockNumber,
-                                timestamp,
-                                event.event,
-                                JSON.stringify(event.returnValues),
-                            ],
-                        }).catch((err) => {
-                            console.log(err);
-                        });
-                    }
-                });
+    async getAllPastEvents(contractName) {
+        try {
+            const currentBlock = Utilities.hexToNumber(await this.web3.eth.getBlockNumber());
 
-                // Delete old events
-                Storage.db.query('DELETE FROM events WHERE block < ?', {
-                    replacements: [currentBlock - 10],
-                }).catch((err) => {
-                    console.log(err);
-                });
-            }).catch((err) => {
-                this.log.error('Failed to get past events');
-                console.log(err);
+            let fromBlock = 0;
+
+            // Find last queried block if any.
+            const lastEvent = await Storage.models.events.findOne({
+                where: {
+                    contract: contractName,
+                },
+                order: [
+                    ['block', 'DESC'],
+                ],
             });
-        }).catch((err) => {
-            this.log.error('Failed to get block number from the blockchain');
-            console.log(err);
-        });
+
+            if (lastEvent) {
+                fromBlock = lastEvent.block + 1;
+            } else {
+                fromBlock = Math.max(currentBlock - 100, 0);
+            }
+
+            const events = await this.contractsByName[contractName].getPastEvents('allEvents', {
+                fromBlock,
+                toBlock: 'latest',
+            });
+            for (let i = 0; i < events.length; i += 1) {
+                const event = events[i];
+                const timestamp = Date.now();
+                /* eslint-disable-next-line */
+                await Storage.models.events.create({
+                    id: event.id,
+                    contract: contractName,
+                    event: event.event,
+                    data: JSON.stringify(event.returnValues),
+                    import_id: event.returnValues.import_id,
+                    block: event.blockNumber,
+                    timestamp,
+                    finished: 0,
+                });
+            }
+
+            const twoWeeksAgo = new Date();
+            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+            // Delete old events
+            await Storage.models.events.destroy({
+                where: {
+                    timestamp: {
+                        [Op.lt]: twoWeeksAgo.getTime(),
+                    },
+                    finished: 1,
+                },
+            });
+        } catch (error) {
+            this.log.error(`Failed to get all passed events. ${error}.`);
+        }
     }
 
     /**
@@ -632,15 +644,13 @@ class Ethereum {
     /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
-     * @param wallet DH wallet
-     * @param dhNodeId KADemplia ID of the DH node that wants to add bid
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
      */
-    getDistanceParameters(importId, wallet, dhNodeId) {
+    getDistanceParameters(importId) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Check if close enough for ${wallet}:${dhNodeId}`);
-            this.biddingContract.methods.getDistanceParameters(importId, dhNodeId).call({
-                from: wallet,
+            this.log.trace('Check if close enough ... ');
+            this.biddingContract.methods.getDistanceParameters(importId).call({
+                from: this.config.wallet_address,
             }).then((res) => {
                 resolve(res);
             }).catch((e) => {
