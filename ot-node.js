@@ -467,6 +467,10 @@ class OTNode {
             network.kademlia().iterativeFindValue(req.query.id, (err, res) => {
                 console.log(res);
             });
+            res.status(200);
+            res.send({
+                status: 'OK',
+            });
         });
 
         server.post('/api/replication', (req, res) => {
