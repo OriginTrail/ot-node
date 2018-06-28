@@ -1,6 +1,0 @@
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2694,"time":"2018-06-28T09:26:18.326Z","msg":"Using New Relic for Node.js. Agent version: 4.2.0; Node version: v9.11.1."}
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2694,"time":"2018-06-28T09:26:18.522Z","msg":"Starting New Relic for Node.js connection process."}
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2706,"time":"2018-06-28T09:28:46.746Z","msg":"Using New Relic for Node.js. Agent version: 4.2.0; Node version: v9.11.1."}
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2706,"time":"2018-06-28T09:28:46.883Z","msg":"Starting New Relic for Node.js connection process."}
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2714,"time":"2018-06-28T09:29:13.605Z","msg":"Using New Relic for Node.js. Agent version: 4.2.0; Node version: v9.11.1."}
-{"v":0,"level":30,"name":"newrelic","hostname":"Vlada-OT.local","pid":2714,"time":"2018-06-28T09:29:13.768Z","msg":"Starting New Relic for Node.js connection process."}
