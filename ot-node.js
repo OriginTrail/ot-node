@@ -184,7 +184,7 @@ class OTNode {
                     );
                 }
 
-                const atracBalance = await Utilities.getAlphaTracTokenBalance();
+                const atracBalance = await blockchain.getAlphaTracTokenBalance();
                 if (atracBalance <= 0) {
                     console.log('Please get some ATRAC in the node wallet before running ot-node');
                     process.exit(1);

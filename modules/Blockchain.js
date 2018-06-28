@@ -45,6 +45,10 @@ class Blockchain {
         return this.blockchain.getProfile(wallet);
     }
 
+    getAlphaTracTokenBalance() {
+        return this.blockchain.getAlphaTracTokenBalance();
+    }
+
     /**
      * Get offer by importId
      * @param importId
