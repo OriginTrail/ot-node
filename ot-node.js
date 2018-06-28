@@ -15,6 +15,8 @@ const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
+const natUpnp = require('nat-upnp');
+const ip = require('ip');
 
 const awilix = require('awilix');
 
@@ -73,6 +75,14 @@ class OTNode {
         } catch (err) {
             console.log(err);
             process.exit(1);
+        }
+
+        if (parseInt(config.traverse_nat_enabled, 10)) {
+            try {
+                config.node_external_ip = await this.checkForNat();
+            } catch (error) {
+                log.error(error);
+            }
         }
 
         if (Utilities.isBootstrapNode()) {
@@ -643,6 +653,39 @@ class OTNode {
                 query_id,
                 reply_id,
                 response: res,
+            });
+        });
+    }
+
+    checkForNat() {
+        return new Promise((accept, reject) => {
+            const client = natUpnp.createClient();
+
+            client.portMapping({
+                public: parseInt(config.node_port, 10),
+                private: parseInt(config.node_port, 10),
+                ttl: 0, // Infinite time.
+            }, (error) => {
+                if (error) {
+                    log.error(`Failed to set up NAT traversal. ${error}.`);
+                    return;
+                }
+                log.info('Finished setting up NAT traversal.');
+            });
+
+            client.externalIp((error, ipAddress) => {
+                if (error) {
+                    reject(Error(`Failed get external IP. ${error}.`));
+                    return;
+                }
+
+                if (ip.isPublic(ipAddress)) {
+                    log.notify(`NAT traverse successful. Got the IP address: ${ipAddress}.`);
+                    accept(ipAddress);
+                    return;
+                }
+
+                reject(Error(`NAT traverse failed. Got a local IP address: ${ipAddress}.`));
             });
         });
     }
