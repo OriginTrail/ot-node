@@ -283,7 +283,7 @@ class Network {
             this.log.important('Joined the network');
             const contact = kadence.utils.parseContactURL(result);
 
-            this.node.iterativeStore(config.identity, JSON.stringify(myContact), (err, res) => {
+            this.node.iterativeStore(config.identity, JSON.stringify(this.node.contact), (err, res) => {
                 if (err) {
                     console.error(err);
                 } else {
@@ -466,7 +466,7 @@ class Network {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId) => {
-                let contact = null;
+                let contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
