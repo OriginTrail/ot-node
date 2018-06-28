@@ -179,19 +179,21 @@ class Ethereum {
         });
     }
 
+    /**
+     * Gets TRAC token wallet
+     * @param wallet
+     */
     async getAlphaTracTokenBalance() {
         const wallet_address_minus0x = (this.config.wallet_address).substring(2);
         // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-        var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
-        const result = await this.web3.eth.call({
-            to: this.otContractAddress,
-            data: contractData,
+        // var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
+        const result = await this.tokenContract.methods.balanceOf(this.config.wallet_address).call({
+            from: this.config.wallet_address,
         });
 
-        const tokensInWei = web3.utils.toBN(result).toString();
-        const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
-        return(tokensInEther);
-        });
+        const tokensInWei = this.web3.utils.toBN(result).toString();
+        const tokensInEther = this.web3.utils.fromWei(tokensInWei, 'ether');
+        return (tokensInEther);
     }
 
     /**

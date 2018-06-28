@@ -398,33 +398,6 @@ class Utilities {
         });
     }
 
-    // /**
-    //  * Get NODE_WALLETs ATRAC token balance in Ether
-    //  * @return {Promise<any>}
-    //  */
-    // static getAlphaTracTokenBalance() {
-    //     return new Promise((resolve, reject) => {
-    //         this.loadSelectedBlockchainInfo().then((config) => {
-    //             const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-    //             const wallet_address_minus0x = (config.wallet_address).substring(2);
-    //             // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-    //             var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
-    //             web3.eth.call({
-    //                 to: config.token_contract_address,
-    //                 data: contractData,
-    //             }).then((result) => {
-    //                 const tokensInWei = web3.utils.toBN(result).toString();
-    //                 const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
-    //                 resolve(tokensInEther);
-    //             }).catch((error) => {
-    //                 reject(error);
-    //             });
-    //         }).catch((error) => {
-    //             reject(error);
-    //         });
-    //     });
-    // }
-
     /**
      * Makes a copy of object
      *
