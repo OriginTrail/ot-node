@@ -97,6 +97,11 @@ library SafeMath {
  	Bidding public bidding;
  	Reading public reading;
 
+     uint public litigation_interval_in_seconds;
+
+     function setLitigationInterval(uint newInterval) public onlyOwner{
+          litigation_interval_in_seconds = newInterval;
+     }
  	function EscrowHolder(address tokenAddress)
  	public{
  		require ( tokenAddress != address(0) );
@@ -132,6 +137,7 @@ library SafeMath {
  		uint last_confirmation_time;
  		uint end_time;
  		uint total_time_in_seconds;
+          uint litigation_interval_in_seconds;
 
  		bytes32 litigation_root_hash;
  		bytes32 distribution_root_hash;
@@ -162,6 +168,7 @@ library SafeMath {
  		this_escrow.last_confirmation_time = 0;
  		this_escrow.end_time = 0;
  		this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
+          this_escrow.litigation_interval_in_seconds = litigation_interval_in_seconds;
  		this_escrow.escrow_status = EscrowStatus.initiated;
 
  		emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
@@ -337,7 +344,7 @@ library SafeMath {
 
  		require(this_litigation.litigation_status == LitigationStatus.initiated);
 
- 		if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
+ 		if(block.timestamp > this_litigation.litigation_start_time + this_litigation.litigation_interval_in_seconds){
  			uint256 amount_to_send;
 
                uint cancelation_time = this_litigation.litigation_start_time;
@@ -385,7 +392,7 @@ library SafeMath {
      	LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
      	require(this_litigation.litigation_status == LitigationStatus.answered
-     		&& 	this_litigation.answer_timestamp + 15 minutes <= block.timestamp);
+     		&& 	this_litigation.answer_timestamp + this_litigation.litigation_interval_in_seconds <= block.timestamp);
 
      	this_litigation.litigation_status = LitigationStatus.completed;
      	emit LitigationCompleted(import_id, msg.sender, false);
@@ -402,7 +409,7 @@ library SafeMath {
      			|| this_litigation.litigation_status == LitigationStatus.answered));
 
      	if (this_litigation.litigation_status == LitigationStatus.initiated){
-     		require(this_litigation.litigation_start_time + 15 minutes <= block.timestamp);
+     		require(this_litigation.litigation_start_time + this_litigation.litigation_interval_in_seconds <= block.timestamp);
 
      		uint256 amount_to_send;
 
