@@ -221,6 +221,7 @@ module.exports = (deployer, network, accounts) => {
     case 'rinkeby':
         Hub.at('0xaf810f20e36de6dd64eb8fa2e8fac51d085c1de3')
         .then(async (result) => {
+            hub = result;
             const tokenAddress = await hub.tokenAddress.call();
             const fingerprintAddress = await hub.fingerprintAddress.call();
             token = await TracToken.at(tokenAddress);
