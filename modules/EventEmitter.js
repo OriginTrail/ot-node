@@ -469,7 +469,7 @@ class EventEmitter {
         });
 
         this.blockchainEmitter.on('eth-ContractsChanged', async (eventData) => {
-            logger.trace('eth-ContractsChanged');     
+            logger.trace('eth-ContractsChanged');
             blockchain.initialize();
         });
 
