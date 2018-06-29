@@ -258,7 +258,12 @@ class DHService {
         const bid = bidModel.get({ plain: true });
         let importResult;
         try {
-            importResult = await this.importer.importJSON(data);
+            importResult = await this.importer.importJSON({
+                import_id: data.import_id,
+                vertices: data.vertices,
+                edges: data.edges,
+                wallet: data.dc_wallet,
+            });
 
             if (importResult.error) {
                 throw Error(importResult.error);
@@ -274,7 +279,7 @@ class DHService {
                 import_timestamp: new Date(),
             });
         } catch (err) {
-            this.log.warn(`Failed to import JSON successfully. ${err}.`);
+            this.log.warn(`Failed to import JSON. ${err}.`);
             return;
         }
 

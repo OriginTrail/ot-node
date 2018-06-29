@@ -51,7 +51,7 @@ class Importer {
 
     async importJSON(json_document) {
         try {
-            const result = this._import('JSON', json_document);
+            const result = await this._import('JSON', json_document);
             return {
                 response: await this.afterImport(result),
                 error: null,
@@ -68,7 +68,12 @@ class Importer {
 
     async _importJSON(json_document) {
         this.log.info('Entering importJSON');
-        const { vertices, edges, import_id, wallet } = json_document;
+        const {
+            vertices,
+            edges,
+            import_id,
+            wallet,
+        } = json_document;
 
         this.log.trace('Vertex importing');
 
@@ -79,6 +84,13 @@ class Importer {
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
 
         this.log.info('JSON import complete');
+
+        return {
+            vertices,
+            edges,
+            import_id,
+            wallet,
+        };
     }
 
     /**
