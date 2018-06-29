@@ -397,6 +397,7 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            blockchain,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -485,6 +486,11 @@ class EventEmitter {
 
         this.blockchainEmitter.on('eth-bid-taken', (event) => {
             logger.info('eth-bid-taken');
+        });
+
+        this.blockchainEmitter.on('eth-ContractsChanged', async (eventData) => {
+            logger.trace('eth-ContractsChanged');
+            blockchain.initialize();
         });
 
         this.blockchainEmitter.on('eth-LitigationInitiated', async (eventData) => {

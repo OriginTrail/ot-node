@@ -21,6 +21,13 @@ class Blockchain {
     }
 
     /**
+     * Runs required initializations for the selected blockchain
+     */
+    async initialize() {
+        return this.blockchain.initialize(this.emitter);
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @param wallet DH wallet
@@ -47,6 +54,10 @@ class Blockchain {
      */
     getProfile(wallet) {
         return this.blockchain.getProfile(wallet);
+    }
+
+    getAlphaTracTokenBalance() {
+        return this.blockchain.getAlphaTracTokenBalance();
     }
 
     /**
@@ -348,6 +359,26 @@ class Blockchain {
             importId, dvWallet, checksumLeft, checksumRight, checksumHash,
             randomNumber1, randomNumber2, decryptionKey, blockIndex,
         );
+    }
+
+    async getFingerprintAddress() {
+        return this.blockchain.getFingerprintAddress();
+    }
+
+    async getTokenAddress() {
+        return this.blockchain.getTokenAddress();
+    }
+
+    async getEscrowAddress() {
+        return this.blockchain.getEscrowAddress();
+    }
+
+    async getBiddingAddress() {
+        return this.blockchain.getBiddingAddress();
+    }
+
+    async getReadingAddress() {
+        return this.blockchain.getReadingAddress();
     }
 
     async sendEncryptedBlock(importId, dvWallet, encryptedBlock) {
