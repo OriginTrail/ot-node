@@ -221,7 +221,6 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
-        const { data_provider_wallet } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -245,7 +244,7 @@ class DVService {
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         // Calculate root hash and check is it the same on the SC.
-        const { vertices, edges } = message.encryptedData;
+        const { vertices, edges, data_provider_wallet } = message.encryptedData;
         const dhWallet = message.wallet;
 
         const escrow = await this.blockchain.getEscrow(importId, message.wallet);
@@ -284,6 +283,7 @@ class DVService {
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
+                wallet: data_provider_wallet,
             });
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
@@ -294,7 +294,6 @@ class DVService {
 
         this.log.info(`Import ID ${importId} imported successfully.`);
 
-        // TODO: Maybe separate table is needed.
         Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,
@@ -515,10 +514,11 @@ class DVService {
             const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
             const publicKey = Encryption.unpackEPK(epk);
 
-            const holdingData = await Models.holding_data.create({
+            await Models.holding_data.create({
                 id: importId,
                 source_wallet: wallet,
                 data_public_key: publicKey,
+                distribution_public_key: publicKey,
                 epk,
             });
 

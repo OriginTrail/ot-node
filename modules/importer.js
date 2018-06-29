@@ -50,12 +50,25 @@ class Importer {
     }
 
     async importJSON(json_document) {
-        return this._import('JSON', json_document);
+        try {
+            const result = this._import('JSON', json_document);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
+        } catch (error) {
+            this.log.error(`Import error: ${error}.`);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
     }
 
     async _importJSON(json_document) {
         this.log.info('Entering importJSON');
-        const { vertices, edges, import_id } = json_document;
+        const { vertices, edges, import_id, wallet } = json_document;
 
         this.log.trace('Vertex importing');
 
