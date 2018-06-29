@@ -36,11 +36,11 @@ module.exports = {
             allowNull: false,
         },
         dh_wallets: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: false,
         },
         dh_ids: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: false,
         },
         start_tender_time: {
