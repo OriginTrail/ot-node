@@ -140,7 +140,10 @@ class OTNode {
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
-                const etherBalance = await Utilities.getBalanceInEthers();
+                const etherBalance = await Utilities.getBalanceInEthers(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                );
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
@@ -150,7 +153,11 @@ class OTNode {
                     );
                 }
 
-                const atracBalance = await Utilities.getAlphaTracTokenBalance();
+                const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                    selectedBlockchain.token_contract_address,
+                );
                 if (atracBalance <= 0) {
                     console.log('Please get some ATRAC in the node wallet before running ot-node');
                     process.exit(1);
@@ -194,6 +201,7 @@ class OTNode {
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+
         emitter.initialize();
 
         // Connecting to graph database
@@ -210,14 +218,14 @@ class OTNode {
             process.exit(1);
         }
 
-        // Initialise API
-        this.startRPC(emitter, container.resolve('network'));
-
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+
+        // Initialise API
+        this.startRPC(emitter);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -324,7 +332,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC(emitter, network) {
+    startRPC(emitter) {
         const server = restify.createServer({
             name: 'RPC server',
             version: pjson.version,
@@ -380,14 +388,14 @@ class OTNode {
         });
         if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, emitter, network);
+            this.exposeAPIRoutes(server, emitter);
         }
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter, network) {
+    exposeAPIRoutes(server, emitter) {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -473,40 +481,6 @@ class OTNode {
                     message: 'No import data provided',
                 });
             }
-        });
-
-        server.get('/api/store', (req, res) => {
-            network.kademlia().iterativeFindValue(req.query.id, (err, res) => {
-                console.log(res);
-            });
-            res.status(200);
-            res.send({
-                status: 'OK',
-            });
-        });
-
-        server.get('/api/node', (req, res) => {
-            network.kademlia().iterativeFindNode(req.query.id.toString('hex'), (err, res) => {
-                console.log(res);
-            });
-            res.status(200);
-            res.send({
-                status: 'OK',
-            });
-        });
-
-        server.get('/api/dump', (req, res) => {
-            console.log('Routing table:');
-            network.node.router.forEach((value, key, map) => {
-                if (value.size > 0) {
-                    console.log(key, value);
-                }
-            });
-
-            res.status(200);
-            res.send({
-                status: 'OK',
-            });
         });
 
         server.post('/api/replication', (req, res) => {

@@ -122,6 +122,10 @@ module.exports = {
         key: 'send_logs_to_origintrail',
         value: process.env.SEND_LOGS,
     },
+    {
+        key: 'is_bootstrap_node',
+        value: false,
+    },
     ], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
