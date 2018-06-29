@@ -258,9 +258,6 @@ module.exports = (deployer, network, accounts) => {
             console.log('Transfering reading ownership to escrow...');
             await reading.transferOwnership(escrow.address)
         .then(async () => {
-            console.log('Transfering escrow ownership to bidding...');
-            await escrow.transferOwnership(bidding.address)
-        .then(async () => {
             await deployer.deploy(
                 Hub,
                 fingerprintAddress,
@@ -279,7 +276,6 @@ module.exports = (deployer, network, accounts) => {
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
-        });
         });
         });
         });
