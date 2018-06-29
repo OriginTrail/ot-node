@@ -149,7 +149,8 @@ library SafeMath {
  	event EscrowCompleted(bytes32 import_id, address DH_wallet);
 
  	function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
- 	public onlyOwner{
+ 	public {
+          require (msg.sender == address(bidding));
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
  		require(this_escrow.escrow_status == EscrowStatus.completed
  			||	this_escrow.escrow_status == EscrowStatus.inactive);
@@ -169,6 +170,7 @@ library SafeMath {
 
  	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint256 checksum)
  	public {
+          require(msg.sender != address(0));
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
  		require(this_escrow.escrow_status == EscrowStatus.initiated);
@@ -186,6 +188,7 @@ library SafeMath {
 
  	function verifyEscrow(bytes32 import_id, address DH_wallet)
  	public {
+          require(msg.sender != address(0));
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
  		require(this_escrow.DC_wallet == msg.sender
@@ -204,7 +207,8 @@ library SafeMath {
  	}
 
  	function payOut(bytes32 import_id)
- 	public{
+ 	public {
+          require(msg.sender != address(0));
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
  		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
@@ -241,6 +245,7 @@ library SafeMath {
 
  	function cancelEscrow(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
      public {
+          require(msg.sender != address(0));
           address DH_wallet;
           address DC_wallet;
 
@@ -313,7 +318,8 @@ library SafeMath {
  	mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
 
  	function initiateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
- 	public returns (bool newLitigationInitiated){
+ 	public returns (bool newLitigationInitiated) {
+          require (msg.sender != address(0));
  		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
  		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
@@ -331,7 +337,8 @@ library SafeMath {
  	}
 
  	function answerLitigation(bytes32 import_id, bytes32 requested_data)
- 	public returns (bool answer_accepted){
+ 	public returns (bool answer_accepted) {
+          require (msg.sender != address(0));
  		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
  		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
@@ -382,6 +389,7 @@ library SafeMath {
      */
      function cancelInactiveLitigation(bytes32 import_id)
      public {
+          require(msg.sender != address(0));
      	LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
      	require(this_litigation.litigation_status == LitigationStatus.answered
@@ -394,6 +402,7 @@ library SafeMath {
 
      function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
      public returns (bool DH_was_penalized){
+          require (msg.sender != address(0));
      	LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
      	EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
