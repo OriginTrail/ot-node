@@ -219,13 +219,17 @@ module.exports = (deployer, network, accounts) => {
         break;
     // eslint-disable-next-line
     case 'rinkeby':
-        Hub.at('0xaf810f20e36de6dd64eb8fa2e8fac51d085c1de3')
+        Hub.at('0x423a3defb4849c96c7aa6aa974c29c37ae9738c9')
         .then(async (result) => {
             hub = result;
             const tokenAddress = await hub.tokenAddress.call();
             const fingerprintAddress = await hub.fingerprintAddress.call();
-            token = await TracToken.at(tokenAddress);
-            fingerprint = await OTFingerprintStore.at(fingerprintAddress);
+        TracToken.at(tokenAddress)
+        .then(async (result) => {
+            token = result;
+        OTFingerprintStore.at(fingerprintAddress)
+        .then(async (result) => {
+            fingerprint =result;
             deployer.deploy(EscrowHolder, token.address, { gas: 6000000 })
         .then(() => giveMeEscrowHolder())
         .then(async (result) => {
@@ -274,6 +278,8 @@ module.exports = (deployer, network, accounts) => {
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
+        });
+        });
         });
         });
         });
