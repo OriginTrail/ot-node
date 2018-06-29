@@ -787,9 +787,9 @@ class EventEmitter {
         this.kadEmitter.on('kad-encrypted-key-process-result', async (request) => {
             const { status } = request.params.message;
             if (status === 'SUCCESS') {
-                logger.info('DV successfully processed the encrypted key');
+                logger.important(`DV ${request.contact[0]} successfully processed the encrypted key`);
             } else {
-                logger.info('DV failed to process the encrypted key');
+                logger.important(`DV ${request.contact[0]} failed to process the encrypted key`);
             }
         });
 

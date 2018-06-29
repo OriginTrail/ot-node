@@ -3,20 +3,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "newInterval",
-        "type": "uint256"
-      }
-    ],
-    "name": "setLitigationInterval",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "DC_wallet",
         "type": "address"
       },
@@ -59,20 +45,6 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "litigation_interval_in_seconds",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -288,10 +260,6 @@
       },
       {
         "name": "total_time_in_seconds",
-        "type": "uint256"
-      },
-      {
-        "name": "litigation_interval_in_seconds",
         "type": "uint256"
       },
       {
