@@ -11,6 +11,7 @@ const _ = require('lodash');
 const sleep = require('sleep');
 const leveldown = require('leveldown');
 const PeerCache = require('./kademlia/PeerCache');
+const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 
 /**
  * DHT module (Kademlia)
@@ -249,7 +250,6 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
-            this.log.info('Refreshing peer buckets...');
             for (const node of nodes) {
                 // async fill buckets from some of the nodes
                 this.node.refresh(node);
@@ -428,12 +428,27 @@ class Network {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId, retry) => {
-                const contact = node.router.getContactByNodeId(contactId);
+                let contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
                 await node.refresh(contactId, retry);
-                this.node.router.getContactByNodeId(contactId);
+                contact = this.node.router.getContactByNodeId(contactId);
+                if (contact && contact.hostname) {
+                    return contact;
+                }
+                this.log.trace(`Trying to fetch contact ${contactId} from peercache`);
+                contact = await this.node.peercache.getExternalPeerInfo(contactId);
+                if (contact) {
+                    const contactInfo = KadenceUtils.parseContactURL(contact);
+                    // refresh bucket
+                    if (contactInfo) {
+                        // eslint-disable-next-line
+                        contact = contactInfo[1];
+                        this.node.router.addContactByNodeId(contactId, contact);
+                    }
+                }
+                return this.node.router.getContactByNodeId(contactId);
             };
 
             /**

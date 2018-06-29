@@ -1,4 +1,5 @@
 require('dotenv').config();
+const uuidv4 = require('uuid/v4');
 
 let bootstrap_nodes = [];
 if (process.env.BOOTSTRAP_NODE) {
@@ -125,6 +126,10 @@ module.exports = {
     {
         key: 'is_bootstrap_node',
         value: false,
+    },
+    {
+        key: 'houston_password',
+        value: uuidv4(),
     },
     ], {}),
 

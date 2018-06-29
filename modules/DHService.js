@@ -132,7 +132,7 @@ class DHService {
                 .mul(new BN(totalEscrowTimePerMinute));
 
             if (maxTokenAmount.lt(myPrice)) {
-                this.log.info(`Offer ${importId} too expensive for me.`);
+                this.log.info(`Offer ${importId} too cheap for me.`);
                 return;
             }
 
@@ -738,7 +738,7 @@ class DHService {
         this.listenPurchaseConfirmation(
             importId, wallet, networkReplyModel,
             selectedBlock, eHex,
-        ).then(() => this.log.info('Purchase confirmation completed'));
+        ).then(() => this.log.important('Purchase confirmation completed'));
     }
 
     /**
@@ -751,11 +751,11 @@ class DHService {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
             await this.blockchain.cancelPurchase(importId, wallet, true);
-            this.log.info(`Purchase for import ${importId} canceled.`);
+            this.log.important(`Purchase for import ${importId} canceled.`);
             return;
         }
 
-        this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
+        this.log.important(`[DH] Purchase confirmed for import ID ${importId}`);
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
@@ -764,7 +764,7 @@ class DHService {
                 Utilities.denormalizeHex(eHex),
             )),
         );
-        this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
+        this.log.notify(`[DH] Encrypted block sent for import ID ${importId}`);
         this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
 
         // Call payOut() after 5 minutes. Requirement from contract.
