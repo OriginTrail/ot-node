@@ -96,7 +96,7 @@ module.exports = {
         value: '',
     }, {
         key: 'onion_enabled',
-        value: '0',
+        value: '1',
     }, {
         key: 'test_network',
         value: process.env.TEST_NETWORK_ENABLED,
