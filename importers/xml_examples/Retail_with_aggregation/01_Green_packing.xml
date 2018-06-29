@@ -166,7 +166,7 @@
                         <OTEventClass>urn:ot:event:Transform</OTEventClass>
                         <OTEventType>Packing</OTEventType>
                         <sourceList>
-                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green_1</source>
+                            <source type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
                         </sourceList>
                     </extension>
                 </extension>
