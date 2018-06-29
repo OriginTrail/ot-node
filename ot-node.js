@@ -502,7 +502,7 @@ class OTNode {
                     console.log(key, value);
                 }
             });
-            
+
             res.status(200);
             res.send({
                 status: 'OK',
