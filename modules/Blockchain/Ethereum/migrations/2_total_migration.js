@@ -157,6 +157,8 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await reading.transferOwnership(escrow.address, { from: accounts[0] })
         .then(async () => {
+            await escrow.transferOwnership(bidding.address, { from: accounts[0] })
+        .then(async () => {
             var amounts = [];
             var recepients = [];
             for (let i = 0; i < 10; i += 1) {
@@ -172,6 +174,7 @@ module.exports = (deployer, network, accounts) => {
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
+        });
         });
         });
         });
@@ -291,4 +294,3 @@ module.exports = (deployer, network, accounts) => {
         break;
     }
 };
-
