@@ -267,12 +267,12 @@ class RemoteControl {
      */
     getBalance() {
         Utilities.getAlphaTracTokenBalance(
-            this.web3, this.config.blockchain.wallet_address,
-            this.config.blockchain.tokenContractAddress,
+            this.web3, process.env.NODE_WALLET,
+            this.config.blockchain.token_contract_address,
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        web3.eth.getBalance(this.config.blockchain.wallet_address).then((balance) => {
+        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
             console.log('Balance ' - balance);
             this.socket.emit('balance', balance);
         });
