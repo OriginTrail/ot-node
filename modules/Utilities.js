@@ -860,7 +860,7 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || typeof property === 'number') {
+        if (property == null || parseInt(property, 10) > 0) {
             return true;
         }
         return false;
