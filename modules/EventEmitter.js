@@ -346,7 +346,6 @@ class EventEmitter {
                     min_reputation,
                     replicationId,
                 );
-
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
