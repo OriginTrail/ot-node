@@ -216,7 +216,6 @@ module.exports = (deployer, network, accounts) => {
         });
         });
         });
-        });
         break;
     // eslint-disable-next-line
     case 'rinkeby':
