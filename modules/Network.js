@@ -416,31 +416,60 @@ class Network {
 
             /**
              * Gets contact by ID
+             * @param retry Should retry to find it?
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = async (contactId) => {
+            node.getContact = async (contactId, retry) => {
                 const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
-                await node.refresh(contactId);
+                await node.refresh(contactId, retry);
                 this.node.router.getContactByNodeId(contactId);
             };
 
             /**
              * Tries to refresh buckets based on contact ID
              * @param contactId
+             * @param retry
              * @return {Promise}
              */
-            node.refresh = async contactId => new Promise((resolve, reject) => {
-                this.node.iterativeFindNode(contactId, (err, res) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(null);
-                    }
+            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+                const _refresh = () => new Promise((resolve, reject) => {
+                    this.node.iterativeFindNode(contactId, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            const contact = this.node.router.getContactByNodeId(contactId);
+                            if (contact && contact.hostname) {
+                                resolve(contact);
+                            } else {
+                                resolve(null);
+                            }
+                        }
+                    });
                 });
+
+                try {
+                    if (retry) {
+                        for (let i = 1; i <= 3; i += 1) {
+                            // eslint-disable-next-line no-await-in-loop
+                            const contact = await _refresh();
+                            if (contact) {
+                                resolve(contact);
+                                return;
+                            }
+                            sleep.sleep(2 ** i);
+                        }
+                    } else {
+                        await _refresh(contactId, retry);
+                    }
+
+                    resolve(null);
+                } catch (e) {
+                    // failed to refresh buckets (should not happen)
+                }
             });
 
             node.payloadRequest = async (message, contactId, callback) => {

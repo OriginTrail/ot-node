@@ -53,9 +53,10 @@ class DHService {
                 return;
             }
 
-            const dcContact = await this.network.kademlia().getContact(dcNodeId.substring(2, 42));
+            dcNodeId = dcNodeId.substring(2, 42);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.warn(`Unknown DC contact ${dcNodeId.substring(2, 42)} for import ${importId}. Offer ignored`);
+                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
                 return;
             }
 
@@ -165,7 +166,7 @@ class DHService {
             const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
             this._saveBidToStorage(
                 addedBidEvent,
-                dcNodeId.substring(2, 42),
+                dcNodeId,
                 dcWallet,
                 myPrice,
                 totalEscrowTime,
