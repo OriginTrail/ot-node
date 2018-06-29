@@ -313,7 +313,7 @@ class DHService {
 
             this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
-                importResult,
+                importResult.import_id,
                 litigationRootHash,
                 distributionHash,
                 Utilities.normalizeHex(epkChecksum),
