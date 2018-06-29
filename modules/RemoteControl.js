@@ -5,6 +5,10 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
+const Web3 = require('web3');
+const Utilities = require('./Utilities');
+
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
 
 class RemoteControl {
@@ -62,6 +66,18 @@ class RemoteControl {
 
             this.socket.on('set-bootstraps', (bootstrapNodes) => {
                 this.setBootstraps(bootstrapNodes);
+            });
+
+            this.socket.on('get-balance', () => {
+                this.getBalance();
+            });
+
+            this.socket.on('get-holding', () => {
+                this.getHoldingData();
+            });
+
+            this.socket.on('get-replicated', () => {
+                this.getReplicatedData();
             });
         });
     }
@@ -196,6 +212,41 @@ class RemoteControl {
             },
         }).then(() => {
             this.restartNode();
+        });
+    }
+
+    /**
+     * Get holding data
+     */
+    getHoldingData() {
+        Models.holding_data.findAll()
+            .then((rows) => {
+                this.socket.emit('holding', rows);
+            });
+    }
+
+    /**
+     * Get replicated data
+     */
+    getReplicatedData() {
+        Models.replicated_data.findAll()
+            .then((rows) => {
+                this.socket.emit('replicated', rows);
+            });
+    }
+
+
+    /**
+     * Get wallet balance
+     * @param wallet
+     */
+    getBalance() {
+        Utilities.getAlphaTracTokenBalance().then((trac) => {
+            this.socket.emit('trac_balance', trac);
+        });
+        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+            console.log('Balance ' - balance);
+            this.socket.emit('balance', balance);
         });
     }
 }
