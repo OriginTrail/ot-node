@@ -335,7 +335,7 @@ class EventEmitter {
                     replication_id: replicationId,
                 });
 
-                dcService.createOffer(
+                await dcService.createOffer(
                     import_id,
                     dataimport.root_hash,
                     dataimport.total_documents,
