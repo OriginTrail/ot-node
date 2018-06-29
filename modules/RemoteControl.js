@@ -18,6 +18,7 @@ class RemoteControl {
         this.blockchain = ctx.blockchain;
         this.log = ctx.logger;
         this.config = ctx.config;
+        this.web3 = ctx.web3;
     }
 
     async updateProfile() {
@@ -266,7 +267,7 @@ class RemoteControl {
      */
     getBalance() {
         Utilities.getAlphaTracTokenBalance(
-            web3, process.env.NODE_WALLET,
+            this.web3, process.env.NODE_WALLET,
             this.config.blockchain.tokenContractAddress,
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
