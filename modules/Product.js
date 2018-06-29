@@ -10,6 +10,21 @@ class Product {
     }
 
     /**
+     * Get vertex
+     * @param queryObject
+     * @returns {Promise}
+     */
+    getVertices(queryObject) {
+        return new Promise((resolve, reject) => {
+            this.graphStorage.findVertices(queryObject).then((vertices) => {
+                resolve(vertices);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Gets trail based on query parameter map
      * @param queryObject   Query parameter map
      * @returns {Promise}
@@ -121,6 +136,10 @@ class Product {
                 reject(err);
             });
         });
+    }
+
+    getImports(inputQuery) {
+        return this.graphStorage.findImportIds(inputQuery);
     }
 }
 

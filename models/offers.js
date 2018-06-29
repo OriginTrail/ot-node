@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         dh_ids: DataTypes.STRING,
         start_tender_time: DataTypes.INTEGER,
         status: DataTypes.STRING,
+        message: DataTypes.STRING,
         external_id: {
             type: DataTypes.STRING,
             defaultValue: () => uuidv4(),

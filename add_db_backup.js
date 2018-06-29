@@ -1,10 +1,9 @@
 const fs = require('fs');
 const rimraf = require('rimraf');
-const exec = require('child_process').exec;
+const { exec } = require('child_process');
 
 const d = new Date();
 const todaysDate = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}-${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
-
 
 
 if (fs.existsSync('./db_backup')) {
@@ -82,7 +81,7 @@ if (fs.existsSync(`./db_backup/arango_db/arango-db-${todaysDate}`)) {
 setTimeout(() => {
     const files = fs.readdirSync('./db_backup/sqllite_db');
     var i;
-    for (i = 0; i < files.length; i++) {
+    for (i = 0; i < files.length; i += 1) {
         const stats = fs.statSync(`./db_backup/sqllite_db/${files[i]}`);
 
         const ctime = new Date((stats.ctime));
@@ -107,7 +106,7 @@ setTimeout(() => {
 setTimeout(() => {
     const files = fs.readdirSync('./db_backup/arango_db');
     var i;
-    for (i = 0; i < files.length; i++) {
+    for (i = 0; i < files.length; i += 1) {
         const stats = fs.statSync(`./db_backup/arango_db/${files[i]}`);
 
         const ctime = new Date((stats.ctime));

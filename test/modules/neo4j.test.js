@@ -27,8 +27,8 @@ const edges = [
         edgeType: 'IS', _from: '101', _to: '103', sender_id: 'b',
     }];
 
-const myUsername = 'neo4j';
-const myPassword = 'neo4j';
+const myUsername = process.env.NEO_USERNAME;
+const myPassword = process.env.NEO_PASSWORD;
 const myDatabaseName = 'testDb';
 const host = 'localhost';
 const port = '7687';

@@ -5,6 +5,10 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
+const Web3 = require('web3');
+const Utilities = require('./Utilities');
+
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
 
 class RemoteControl {
@@ -37,17 +41,7 @@ class RemoteControl {
                     Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
                         replacements: [data[key], key],
                     }).then((res) => {
-                        setTimeout(() => {
-                            process.on('exit', () => {
-                                /* eslint-disable-next-line */
-                                require('child_process').spawn(process.argv.shift(), process.argv, {
-                                    cwd: process.cwd(),
-                                    detached: true,
-                                    stdio: 'inherit',
-                                });
-                            });
-                            process.exit();
-                        }, 5000);
+                        this.restartNode();
                     }).catch((err) => {
                         console.log(err);
                     });
@@ -60,6 +54,30 @@ class RemoteControl {
 
             this.socket.on('get-visual-graph', (import_id) => {
                 this.getImport(import_id);
+            });
+
+            this.socket.on('restart-node', () => {
+                this.restartNode();
+            });
+
+            this.socket.on('set-me-as-bootstrap', () => {
+                this.setMeAsBootstrap();
+            });
+
+            this.socket.on('set-bootstraps', (bootstrapNodes) => {
+                this.setBootstraps(bootstrapNodes);
+            });
+
+            this.socket.on('get-balance', () => {
+                this.getBalance();
+            });
+
+            this.socket.on('get-holding', () => {
+                this.getHoldingData();
+            });
+
+            this.socket.on('get-replicated', () => {
+                this.getReplicatedData();
             });
         });
     }
@@ -146,6 +164,89 @@ class RemoteControl {
                 this.socket.emit('visualise', { nodes, edges });
                 resolve();
             });
+        });
+    }
+
+    /**
+     * Restarts the node
+     */
+    restartNode() {
+        setTimeout(() => {
+            process.on('exit', () => {
+                /* eslint-disable-next-line */
+                require('child_process').spawn(process.argv.shift(), process.argv, {
+                    cwd: process.cwd(),
+                    detached: true,
+                    stdio: 'inherit',
+                });
+            });
+            process.exit(2);
+        }, 5000);
+    }
+
+    /**
+     * Set this node to be bootstrap node
+     */
+    setMeAsBootstrap() {
+        Models.node_config.update({
+            value: '[]',
+        }, {
+            where: {
+                key: 'network_bootstrap_nodes',
+            },
+        }).then(() => {
+            this.restartNode();
+        });
+    }
+
+    /**
+     * Set bootstrap nodes
+     * @param bootstrapNodes json
+     */
+    setBootstraps(bootstrapNodes) {
+        Models.node_config.update({
+            value: JSON.parse(bootstrapNodes),
+        }, {
+            where: {
+                key: 'network_bootstrap_nodes',
+            },
+        }).then(() => {
+            this.restartNode();
+        });
+    }
+
+    /**
+     * Get holding data
+     */
+    getHoldingData() {
+        Models.holding_data.findAll()
+            .then((rows) => {
+                this.socket.emit('holding', rows);
+            });
+    }
+
+    /**
+     * Get replicated data
+     */
+    getReplicatedData() {
+        Models.replicated_data.findAll()
+            .then((rows) => {
+                this.socket.emit('replicated', rows);
+            });
+    }
+
+
+    /**
+     * Get wallet balance
+     * @param wallet
+     */
+    getBalance() {
+        Utilities.getAlphaTracTokenBalance().then((trac) => {
+            this.socket.emit('trac_balance', trac);
+        });
+        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+            console.log('Balance ' - balance);
+            this.socket.emit('balance', balance);
         });
     }
 }

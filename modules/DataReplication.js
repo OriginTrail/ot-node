@@ -1,6 +1,7 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
+const Models = require('../models');
 
 class DataReplication {
     /**
@@ -49,6 +50,7 @@ class DataReplication {
             this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
         });
 
+        const dataimport = await Models.data_info.findOne({ where: { import_id: data.import_id } });
         const payload = {
             payload: {
                 edges: data.edges,
@@ -57,11 +59,12 @@ class DataReplication {
                 public_key: data.public_key,
                 vertices: data.vertices,
                 root_hash: data.root_hash,
+                data_provider_wallet: dataimport.data_provider_wallet,
             },
         };
 
         // send payload to DH
-        this.network.kademlia().payloadRequest(payload, data.contact, () => {
+        await this.network.kademlia().payloadRequest(payload, data.contact, () => {
             this.log.info('Payload request sent');
         });
     }
