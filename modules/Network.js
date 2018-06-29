@@ -249,7 +249,7 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
-            this.log.info('Refreshing buckets...');
+            this.log.info('Refreshing peer buckets...');
             for (const node of nodes) {
                 // async fill buckets from some of the nodes
                 this.node.refresh(node);
