@@ -62,7 +62,7 @@ class RemoteControl {
             this.socket.on('config-update', (data) => {
                 let query = '';
                 for (var key in data) {
-                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = ${key};`;
+                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
                 }
                 Storage.db.query(query).then(async (res) => {
                     await this.updateProfile();
