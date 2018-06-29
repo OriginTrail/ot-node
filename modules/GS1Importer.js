@@ -552,14 +552,20 @@ class GS1Importer {
             }
 
             if (event.childEPCs) {
-                for (const inputEpc of this.helper.arrayze(event.childEPCs)) {
-                    const batchId = inputEpc.epc;
+                let edgeType;
+                if (event.action === 'ADD') {
+                    edgeType = 'ADDED_BATCH';
+                } else if (event.action === 'DELETE') {
+                    edgeType = 'REMOVED_BATCH';
+                }
+                for (const inputEpc of this.helper.arrayze(event.childEPCs.epc)) {
+                    const batchId = inputEpc;
 
                     currentEventEdges.push({
                         _key: this.helper.createKey('event_batch', senderId, eventKey, batchId),
                         _from: `ot_vertices/${eventKey}`,
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
-                        edge_type: 'CHILD_BATCH',
+                        edge_type: edgeType,
                         identifiers: {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
@@ -568,6 +574,29 @@ class GS1Importer {
                 }
             }
 
+            if (event.parentID) {
+                const { parentID } = event;
+
+                currentEventEdges.push({
+                    _key: this.helper.createKey('event_batch', senderId, eventKey, parentID),
+                    _from: `ot_vertices/${eventKey}`,
+                    _to: `${EDGE_KEY_TEMPLATE + parentID}`,
+                    edge_type: 'PALLET',
+                    identifiers: {
+                        uid: `event_batch_${eventId}_${parentID}`,
+                    },
+                });
+                currentEventEdges.push({
+                    _key: this.helper.createKey('event_batch', senderId, parentID, eventKey),
+                    _from: `${EDGE_KEY_TEMPLATE + parentID}`,
+                    _to: `ot_vertices/${eventKey}`,
+                    edge_type: 'PALLET',
+                    identifiers: {
+                        uid: `event_batch_${parentID}_${eventId}`,
+                    },
+                });
+                currentBatchesToRemove.push(parentID);
+            }
             if (event.outputEPCList) {
                 for (const outputEpc of this.helper.arrayze(event.outputEPCList.epc)) {
                     const batchId = outputEpc;
