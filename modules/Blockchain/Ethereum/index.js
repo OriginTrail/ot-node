@@ -196,19 +196,6 @@ class Ethereum {
         });
     }
 
-    getFingerprintAddress() {
-        return new Promise((resolve, reject) => {
-            this.log.trace(`Get profile by wallet ${wallet}`);
-            this.biddingContract.methods.profile(wallet).call({
-                from: wallet,
-            }).then((res) => {
-                resolve(res);
-            }).catch((e) => {
-                reject(e);
-            });
-        });
-    }
-
     async getFingerprintAddress() {
         return this.hubContract.methods.fingerprintAddress().call();
     }
