@@ -60,17 +60,19 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', (data) => {
+                let query = '';
                 for (var key in data) {
-                    Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
-                        replacements: [data[key], key],
-                    }).then(async (res) => {
-                        await this.updateProfile();
-                        this.socket.emit('update-complete');
-                        this.restartNode();
-                    }).catch((err) => {
-                        console.log(err);
-                    });
+                    query += 'UPDATE node_config SET value = ? WHERE key = ?;';
                 }
+                Storage.db.query(query, {
+                    replacements: [data[key], key],
+                }).then(async (res) => {
+                    await this.updateProfile();
+                    this.socket.emit('update-complete');
+                    this.restartNode();
+                }).catch((err) => {
+                    console.log(err);
+                });
             });
 
             this.socket.on('get-imports', () => {
