@@ -566,6 +566,21 @@ class OTNode {
             });
         });
 
+        server.get('/api/query/:query_id/responses', (req, res) => {
+            log.trace('GET Query responses');
+            if (!req.params.query_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param query_id is required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-responses', {
+                query_id: req.params.query_id,
+                response: res,
+            });
+        });
+
         server.post('/api/query/network', (req, res) => {
             log.trace('POST Query request received.');
             if (!req.body) {
