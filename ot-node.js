@@ -206,6 +206,13 @@ class OTNode {
             process.exit(1);
         }
 
+        // Fetching Houston access password
+        models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+            log.notify('================================================================');
+            log.notify(`Houston password: ${res.value}`);
+            log.notify('================================================================');
+        });
+
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
@@ -562,6 +569,21 @@ class OTNode {
             }
             emitter.emit('network-query-status', {
                 id: req.params.query_param,
+                response: res,
+            });
+        });
+
+        server.get('/api/query/:query_id/responses', (req, res) => {
+            log.trace('GET Query responses');
+            if (!req.params.query_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param query_id is required.',
+                });
+                return;
+            }
+            emitter.emit('network-query-responses', {
+                query_id: req.params.query_id,
                 response: res,
             });
         });
