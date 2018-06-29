@@ -405,7 +405,7 @@ class Ethereum {
             [
                 importId,
                 Utilities.normalizeHex(nodeId),
-                totalEscrowTime,
+                Math.round(totalEscrowTime / 1000 / 60), // In minutestotalEscrowTime
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
