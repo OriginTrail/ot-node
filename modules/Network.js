@@ -440,7 +440,6 @@ class Network {
                 this.log.trace(`Refreshing bucket for ${contactId}`);
                 const _refresh = () => new Promise((resolve, reject) => {
                     this.node.iterativeFindNode(contactId, (err, res) => {
-                        console.log(res);
                         if (err) {
                             reject(err);
                         } else {
