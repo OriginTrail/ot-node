@@ -98,6 +98,7 @@ contract BiddingTest is Ownable{
 	
 	function BiddingTest(address token_address, address escrow_address, address reading_address)
 	public{
+		require(msg.sender != address(0));
 		require ( token_address != address(0) && escrow_address != address(0) && reading_address != address(0));
 		token = ERC20(token_address);
 		escrow = EscrowHolder(escrow_address);
@@ -201,6 +202,7 @@ contract BiddingTest is Ownable{
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
 	public {
+		require(msg.sender != address(0));
 		OfferDefinition storage this_offer = offer[import_id];
 
 		require(max_token_amount_per_DH > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
@@ -242,6 +244,7 @@ contract BiddingTest is Ownable{
 	//TODO Decide when and under which conditions DC can cancel an offer
 	function cancelOffer(bytes32 import_id)
 	public{
+		require(msg.sender != address(0));
 		OfferDefinition storage this_offer = offer[import_id];
 		require(this_offer.active && this_offer.DC_wallet == msg.sender
 			&& this_offer.finalized == false);
@@ -254,6 +257,7 @@ contract BiddingTest is Ownable{
 
 	function activatePredeterminedBid(bytes32 import_id, bytes32 DH_node_id, uint bid_index)
 	public{
+		require(msg.sender != address(0));
 		require(offer[import_id].active && !offer[import_id].finalized);
 
 		OfferDefinition storage this_offer = offer[import_id];
@@ -276,6 +280,7 @@ contract BiddingTest is Ownable{
 
 	function getDistanceParameters(bytes32 import_id)
 	public view returns (bytes32 node_hash, bytes32 data_hash, uint256 distance, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
+		require(msg.sender != address(0));
 		OfferDefinition storage this_offer = offer[import_id];
 
 		node_hash = bytes32(uint128(keccak256(msg.sender)));
@@ -301,6 +306,7 @@ contract BiddingTest is Ownable{
 
 	function addBid(bytes32 import_id, bytes32 DH_node_id)
 	public returns (uint distance){
+		require(msg.sender != address(0));
 		require(offer[import_id].active && !offer[import_id].finalized);
 
 		OfferDefinition storage this_offer = offer[import_id];
@@ -357,6 +363,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function getBidIndex(bytes32 import_id, bytes32 DH_node_id) public view returns(uint){
+		require(msg.sender != address(0));
 		OfferDefinition storage this_offer = offer[import_id];
 		uint256 i = 0;
 		while(i < this_offer.bid.length && (offer[import_id].bid[i].DH_wallet != msg.sender || offer[import_id].bid[i].DH_node_id != DH_node_id)) i = i + 1;
@@ -366,11 +373,13 @@ contract BiddingTest is Ownable{
 
 	function cancelBid(bytes32 import_id, uint bid_index)
 	public{
+		require(msg.sender != address(0));
 		require(offer[import_id].bid[bid_index].DH_wallet == msg.sender);
 		offer[import_id].bid[bid_index].active = false;
 	}
 
 	function chooseBids(bytes32 import_id) public returns (uint256[] chosen_data_holders){
+		require(msg.sender != address(0));
 
 		OfferDefinition storage this_offer = offer[import_id];
 		require(this_offer.active && !this_offer.finalized);
@@ -443,10 +452,12 @@ contract BiddingTest is Ownable{
 
 
 	function isBidChosen(bytes32 import_id, uint bid_index) public constant returns (bool _isBidChosen){
+		require(msg.sender != address(0));
 		return offer[import_id].bid[bid_index].chosen;
 	}
 
 	function getOfferStatus(bytes32 import_id) public constant returns (bool isOfferFinal){
+		require(msg.sender != address(0));
 		return offer[import_id].finalized;
 	}
 
@@ -457,6 +468,7 @@ contract BiddingTest is Ownable{
 	event ReputationModified(address wallet, uint new_balance);
 
 	function createProfile(bytes32 node_id, uint price_per_byte_minute, uint stake_per_byte_minute, uint read_stake_factor, uint max_time_in_minutes) public{
+		require(msg.sender != address(0));
 		ProfileDefinition storage this_profile = profile[msg.sender];
 		require(!this_profile.active);
 		this_profile.active = true;
@@ -472,18 +484,22 @@ contract BiddingTest is Ownable{
 	}
 
 	function setPrice(uint new_price_per_byte_minute) public {
+		require(msg.sender != address(0));
 		profile[msg.sender].token_amount_per_byte_minute = new_price_per_byte_minute;
 	}
 
 	function setStake(uint new_stake_per_byte_minute) public {
+		require(msg.sender != address(0));
 		profile[msg.sender].stake_amount_per_byte_minute = new_stake_per_byte_minute;
 	}
 
 	function setMaxTime(uint new_max_time_in_minutes) public {
+		require(msg.sender != address(0));
 		profile[msg.sender].max_escrow_time_in_minutes = new_max_time_in_minutes;
 	}
 
 	function depositToken(uint amount) public {
+		require(msg.sender != address(0));
 		require(token.balanceOf(msg.sender) >= amount && token.allowance(msg.sender, this) >= amount);
 		uint amount_to_transfer = amount;
 		amount = 0;
@@ -495,6 +511,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function withdrawToken(uint amount) public {
+		require(msg.sender != address(0));
 		uint256 amount_to_transfer;
 		if(profile[msg.sender].balance >= amount){
 			amount_to_transfer = amount;
@@ -512,27 +529,32 @@ contract BiddingTest is Ownable{
 	}
 
 	function increaseBalance(address wallet, uint amount) public onlyContracts {
+		require(msg.sender != address(0));
 		profile[wallet].balance = profile[wallet].balance.add(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
 	function decreaseBalance(address wallet, uint amount) public onlyContracts {
+		require(msg.sender != address(0));
 		require(profile[wallet].balance >= amount);
 		profile[wallet].balance = profile[wallet].balance.sub(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
 	function increaseReputation(address wallet, uint amount) public onlyContracts {
+		require(msg.sender != address(0));
 		profile[wallet].reputation = profile[wallet].reputation.add(amount);
 		emit ReputationModified(wallet, profile[wallet].reputation);
 	}
 
 	function addEscrow(address wallet) public onlyContracts {
+		require(msg.sender != address(0));
 		profile[wallet].number_of_escrows = profile[wallet].number_of_escrows.add(1);
 	}
 
 	function getBalance(address wallet)
 	public view returns (uint256) {
+		require(msg.sender != address(0));
 		return profile[wallet].balance;
 	}
 
@@ -595,6 +617,7 @@ contract BiddingTest is Ownable{
 
 	function calculateDistance(bytes32 import_id, address DH_wallet)
 	public view returns (uint256 distance) {
+		require(msg.sender != address(0));
 		OfferDefinition storage this_offer = offer[import_id];
 		ProfileDefinition storage this_DH = profile[DH_wallet];
 
