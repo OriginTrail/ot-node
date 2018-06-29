@@ -437,6 +437,7 @@ class Network {
                 if (contact && contact.hostname) {
                     return contact;
                 }
+                this.log.trace(`Trying to fetch contact ${contactId} from peercache`);
                 contact = await this.node.peercache.getExternalPeerInfo(contactId);
                 if (contact) {
                     const contactInfo = KadenceUtils.parseContactURL(contact);
