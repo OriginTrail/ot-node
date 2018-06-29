@@ -539,7 +539,7 @@ class DHService {
             // Make sure we have enough token balance before DV makes a purchase.
             // From smart contract:
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
-            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
+            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
             const profileBalance =
                 new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 

@@ -322,7 +322,7 @@ class DVService {
         const profileBalance =
             new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
         const condition = new BN(networkQueryResponse.data_price)
-            .add(stakeAmount).add(new BN(1)); // Thanks Cookie.
+            .add(stakeAmount);
 
         if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
@@ -330,6 +330,7 @@ class DVService {
         }
 
         // Sign escrow.
+        this.log.notify(`Initiating purchase for import ${importId}`);
         await this.blockchain.initiatePurchase(
             importId,
             dhWallet,
@@ -337,7 +338,7 @@ class DVService {
             new BN(networkQueryResponse.stake_factor),
         );
 
-        this.log.info(`[DV] - Purchase initiated for import ID ${importId}.`);
+        this.log.important(`[DV] - Purchase initiated for import ID ${importId}.`);
 
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);

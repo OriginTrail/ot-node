@@ -9,6 +9,28 @@
       {
         "name": "DH_node_id",
         "type": "bytes32"
+      },
+      {
+        "name": "bid_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "activatePredeterminedBid",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
       }
     ],
     "name": "addBid",
@@ -26,11 +48,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_stake_per_byte_minute",
-        "type": "uint256"
+        "name": "wallet",
+        "type": "address"
       }
     ],
-    "name": "setStake",
+    "name": "addEscrow",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -40,12 +62,49 @@
     "constant": false,
     "inputs": [
       {
-        "name": "amount",
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "bid_index",
         "type": "uint256"
       }
     ],
-    "name": "withdrawToken",
+    "name": "cancelBid",
     "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "cancelOffer",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "chooseBids",
+    "outputs": [
+      {
+        "name": "chosen_data_holders",
+        "type": "uint256[]"
+      }
+    ],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -104,294 +163,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "bid_index",
-        "type": "uint256"
-      }
-    ],
-    "name": "cancelBid",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseBalance",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferStatus",
-    "outputs": [
-      {
-        "name": "isOfferFinal",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "depositToken",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "a",
-        "type": "uint256"
-      },
-      {
-        "name": "b",
-        "type": "uint256"
-      }
-    ],
-    "name": "absoluteDifference",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "pure",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "bid_index",
-        "type": "uint256"
-      }
-    ],
-    "name": "activatePredeterminedBid",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "new_price_per_byte_minute",
-        "type": "uint256"
-      }
-    ],
-    "name": "setPrice",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getDistanceParameters",
-    "outputs": [
-      {
-        "name": "node_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "data_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "distance",
-        "type": "uint256"
-      },
-      {
-        "name": "current_ranking",
-        "type": "uint256"
-      },
-      {
-        "name": "required_bid_amount",
-        "type": "uint256"
-      },
-      {
-        "name": "active_nodes_",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "new_max_time_in_minutes",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMaxTime",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "profile",
-    "outputs": [
-      {
-        "name": "token_amount_per_byte_minute",
-        "type": "uint256"
-      },
-      {
-        "name": "stake_amount_per_byte_minute",
-        "type": "uint256"
-      },
-      {
-        "name": "read_stake_factor",
-        "type": "uint256"
-      },
-      {
-        "name": "balance",
-        "type": "uint256"
-      },
-      {
-        "name": "reputation",
-        "type": "uint256"
-      },
-      {
-        "name": "number_of_escrows",
-        "type": "uint256"
-      },
-      {
-        "name": "max_escrow_time_in_minutes",
-        "type": "uint256"
-      },
-      {
-        "name": "active",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "active_nodes",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "bid_index",
-        "type": "uint256"
-      }
-    ],
-    "name": "isBidChosen",
-    "outputs": [
-      {
-        "name": "_isBidChosen",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_node_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getBidIndex",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "node_id",
         "type": "bytes32"
       },
@@ -424,9 +195,13 @@
       {
         "name": "wallet",
         "type": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    "name": "addEscrow",
+    "name": "decreaseBalance",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -436,101 +211,32 @@
     "constant": false,
     "inputs": [
       {
-        "name": "import_id",
-        "type": "bytes32"
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    "name": "chooseBids",
-    "outputs": [
-      {
-        "name": "chosen_data_holders",
-        "type": "uint256[]"
-      }
-    ],
+    "name": "depositToken",
+    "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "constant": true,
+    "constant": false,
     "inputs": [
       {
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "name": "DH_wallet",
-        "type": "address"
-      }
-    ],
-    "name": "calculateDistance",
-    "outputs": [
-      {
-        "name": "distance",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "offer",
-    "outputs": [
-      {
-        "name": "DC_wallet",
+        "name": "wallet",
         "type": "address"
       },
       {
-        "name": "max_token_amount_per_DH",
+        "name": "amount",
         "type": "uint256"
-      },
-      {
-        "name": "min_stake_amount_per_DH",
-        "type": "uint256"
-      },
-      {
-        "name": "min_reputation",
-        "type": "uint256"
-      },
-      {
-        "name": "total_escrow_time_in_minutes",
-        "type": "uint256"
-      },
-      {
-        "name": "data_size_in_bytes",
-        "type": "uint256"
-      },
-      {
-        "name": "data_hash",
-        "type": "bytes32"
-      },
-      {
-        "name": "first_bid_index",
-        "type": "uint256"
-      },
-      {
-        "name": "replication_factor",
-        "type": "uint256"
-      },
-      {
-        "name": "active",
-        "type": "bool"
-      },
-      {
-        "name": "finalized",
-        "type": "bool"
       }
     ],
+    "name": "increaseBalance",
+    "outputs": [],
     "payable": false,
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -552,165 +258,6 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "escrow",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "wallet",
-        "type": "address"
-      }
-    ],
-    "name": "getBalance",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "import_id",
-        "type": "bytes32"
-      }
-    ],
-    "name": "cancelOffer",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "token",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "wallet",
-        "type": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "decreaseBalance",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "reading",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "name": "token_address",
-        "type": "address"
-      },
-      {
-        "name": "escrow_address",
-        "type": "address"
-      },
-      {
-        "name": "reading_address",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "DC_node_id",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "total_escrow_time_in_minutes",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "max_token_amount_per_DH",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "min_stake_amount_per_DH",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "min_reputation",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "data_size_in_bytes",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "data_hash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "OfferCreated",
-    "type": "event"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -719,34 +266,7 @@
         "type": "bytes32"
       }
     ],
-    "name": "OfferCanceled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "import_id",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "DH_wallet",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "DH_node_id",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "bid_index",
-        "type": "uint256"
-      }
-    ],
-    "name": "AddedBid",
+    "name": "FinalizeOfferReady",
     "type": "event"
   },
   {
@@ -803,26 +323,24 @@
         "indexed": false,
         "name": "import_id",
         "type": "bytes32"
-      }
-    ],
-    "name": "FinalizeOfferReady",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "import_id",
-        "type": "bytes32"
       },
       {
         "indexed": false,
         "name": "DH_wallet",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "DH_node_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "bid_index",
+        "type": "uint256"
       }
     ],
-    "name": "BidTaken",
+    "name": "AddedBid",
     "type": "event"
   },
   {
@@ -834,7 +352,7 @@
         "type": "bytes32"
       }
     ],
-    "name": "OfferFinalized",
+    "name": "OfferCanceled",
     "type": "event"
   },
   {
@@ -842,16 +360,46 @@
     "inputs": [
       {
         "indexed": false,
-        "name": "wallet",
-        "type": "address"
+        "name": "import_id",
+        "type": "bytes32"
       },
       {
         "indexed": false,
-        "name": "node_id",
+        "name": "DC_node_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "total_escrow_time_in_minutes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "max_token_amount_per_DH",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "min_stake_amount_per_DH",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "min_reputation",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "data_size_in_bytes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "data_hash",
         "type": "bytes32"
       }
     ],
-    "name": "ProfileCreated",
+    "name": "OfferCreated",
     "type": "event"
   },
   {
@@ -887,5 +435,520 @@
     ],
     "name": "ReputationModified",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ProfileCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "OfferFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "BidTaken",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_max_time_in_minutes",
+        "type": "uint256"
+      }
+    ],
+    "name": "setMaxTime",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_price_per_byte_minute",
+        "type": "uint256"
+      }
+    ],
+    "name": "setPrice",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_modifier",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReplicationModifier",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_stake_per_byte_minute",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStake",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "token_address",
+        "type": "address"
+      },
+      {
+        "name": "escrow_address",
+        "type": "address"
+      },
+      {
+        "name": "reading_address",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawToken",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "a",
+        "type": "uint256"
+      },
+      {
+        "name": "b",
+        "type": "uint256"
+      }
+    ],
+    "name": "absoluteDifference",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "active_nodes",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_wallet",
+        "type": "address"
+      }
+    ],
+    "name": "calculateDistance",
+    "outputs": [
+      {
+        "name": "distance",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "escrow",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "wallet",
+        "type": "address"
+      }
+    ],
+    "name": "getBalance",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "DH_node_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getBidIndex",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getDistanceParameters",
+    "outputs": [
+      {
+        "name": "node_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "data_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "distance",
+        "type": "uint256"
+      },
+      {
+        "name": "current_ranking",
+        "type": "uint256"
+      },
+      {
+        "name": "required_bid_amount",
+        "type": "uint256"
+      },
+      {
+        "name": "active_nodes_",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getOfferStatus",
+    "outputs": [
+      {
+        "name": "isOfferFinal",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "name": "bid_index",
+        "type": "uint256"
+      }
+    ],
+    "name": "isBidChosen",
+    "outputs": [
+      {
+        "name": "_isBidChosen",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "offer",
+    "outputs": [
+      {
+        "name": "DC_wallet",
+        "type": "address"
+      },
+      {
+        "name": "max_token_amount_per_DH",
+        "type": "uint256"
+      },
+      {
+        "name": "min_stake_amount_per_DH",
+        "type": "uint256"
+      },
+      {
+        "name": "min_reputation",
+        "type": "uint256"
+      },
+      {
+        "name": "total_escrow_time_in_minutes",
+        "type": "uint256"
+      },
+      {
+        "name": "data_size_in_bytes",
+        "type": "uint256"
+      },
+      {
+        "name": "data_hash",
+        "type": "bytes32"
+      },
+      {
+        "name": "first_bid_index",
+        "type": "uint256"
+      },
+      {
+        "name": "replication_factor",
+        "type": "uint256"
+      },
+      {
+        "name": "replication_modifier",
+        "type": "uint256"
+      },
+      {
+        "name": "active",
+        "type": "bool"
+      },
+      {
+        "name": "finalized",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "profile",
+    "outputs": [
+      {
+        "name": "token_amount_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "stake_amount_per_byte_minute",
+        "type": "uint256"
+      },
+      {
+        "name": "read_stake_factor",
+        "type": "uint256"
+      },
+      {
+        "name": "balance",
+        "type": "uint256"
+      },
+      {
+        "name": "reputation",
+        "type": "uint256"
+      },
+      {
+        "name": "number_of_escrows",
+        "type": "uint256"
+      },
+      {
+        "name": "max_escrow_time_in_minutes",
+        "type": "uint256"
+      },
+      {
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "reading",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "token",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   }
 ]

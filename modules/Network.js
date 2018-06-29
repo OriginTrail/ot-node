@@ -127,7 +127,7 @@ class Network {
         }
 
         this.node.listen(parseInt(config.node_port, 10), async () => {
-            this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
+            this.log.notify(`OT Node listening at http://${this.node.contact.hostname}:${this.node.contact.port}`);
             this.networkUtilities.registerControlInterface(config, this.node);
 
             const connected = false;
@@ -248,6 +248,12 @@ class Network {
 
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+
+            this.log.info('Refreshing peer buckets...');
+            for (const node of nodes) {
+                // async fill buckets from some of the nodes
+                this.node.refresh(node);
+            }
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -437,7 +443,6 @@ class Network {
              * @return {Promise}
              */
             node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
-                this.log.trace(`Refreshing bucket for ${contactId}`);
                 const _refresh = () => new Promise((resolve, reject) => {
                     this.node.iterativeFindNode(contactId, (err, res) => {
                         if (err) {
