@@ -406,7 +406,7 @@ class Ethereum {
             [
                 importId,
                 Utilities.normalizeHex(nodeId),
-                Math.round(totalEscrowTime / 1000 / 60), // In minutes
+                totalEscrowTime,
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
@@ -476,7 +476,7 @@ class Ethereum {
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),
-                    import_id: event.returnValues.import_id,
+                     import_id: event.returnValues.import_id,
                     block: event.blockNumber,
                     timestamp,
                     finished: 0,
