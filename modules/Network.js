@@ -2,7 +2,6 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const async = require('async');
 const levelup = require('levelup');
-const sqldown = require('sqldown');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
 const config = require('./Config');
@@ -11,6 +10,7 @@ const utilities = require('./Utilities');
 const _ = require('lodash');
 const sleep = require('sleep');
 const leveldown = require('leveldown');
+const PeerCache = require('./kademlia/PeerCache');
 
 /**
  * DHT module (Kademlia)
@@ -94,10 +94,6 @@ class Network {
             wallet: config.node_wallet,
         };
 
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
-
         // Initialize transport adapter
         const transport = new kadence.HTTPTransport();
 
@@ -112,29 +108,9 @@ class Network {
         this.log.info('Starting OT Node...');
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
-        // this.node.eclipse = this.node.plugin(kadence.eclipse());
-        // this.node.peercache = this.node.plugin(
-        //      PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
-        // this.log.info('Peercache initialised');
-        // this.node.spartacus = this.node.plugin(kadence.spartacus(
-        //     this.xprivkey,
-        //     parseInt(config.child_derivation_index, 10),
-        //     kadence.constants.HD_KEY_DERIVATION_PATH,
-        // ));
-        // this.log.info('Spartacus initialised');
-        // this.node.hashcash = this.node.plugin(kadence.hashcash({
-        //     methods: ['PUBLISH', 'SUBSCRIBE'],
-        //     difficulty: 8,
-        // }));
-        // this.log.info('Hashcash initialised');
-
-        if (parseInt(config.onion_enabled, 10)) {
-            this.enableOnion();
-        }
-
-        if (parseInt(config.traverse_nat_enabled, 10)) {
-            this.enableNatTraversal();
-        }
+        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        this.log.info('Peercache initialised');
+        this.enableOnion();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -172,23 +148,11 @@ class Network {
         });
     }
 
-    enableNatTraversal() {
-        this.log.info('Trying NAT traversal');
-        this.node.traverse = this.node.plugin(kadence.traverse([
-            new kadence.traverse.UPNPStrategy({
-                mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                publicPort: parseInt(this.node.contact.port, 10),
-            }),
-            new kadence.traverse.NATPMPStrategy({
-                mappingTtl: parseInt(config.traverse_port_forward_ttl, 10),
-                publicPort: parseInt(this.node.contact.port, 10),
-            }),
-        ]));
-    }
-
+    /**
+     * Enables Onion client
+     */
     enableOnion() {
         this.log.info('Use Tor for an anonymous overlay');
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
         this.node.onion = this.node.plugin(kadence.onion({
             dataDirectory: `${__dirname}/../data/hidden_service`,
             virtualPort: config.onion_virtual_port,
@@ -211,17 +175,17 @@ class Network {
      */
     async _joinNetwork(myContact) {
         const bootstrapNodes = config.network_bootstrap_nodes;
+        utilities.shuffle(bootstrapNodes);
 
-        // const peercachePlugin = this.node.peercache;
-        const peers = [];
-
-        const isBootstrap = bootstrapNodes.length === 0;
+        const peercachePlugin = this.node.peercache;
+        const peers = await peercachePlugin.getBootstrapCandidates();
         let nodes = _.uniq(bootstrapNodes.concat(peers));
+        nodes = nodes.slice(0, 5); // take no more than 5 peers for joining
 
-        if (isBootstrap) {
+        if (utilities.isBootstrapNode()) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
-            this.log.info(`Trying to contact ${nodes.length} peers from peer cache`);
+            this.log.info(`Trying to contact ${nodes.length} peers`);
         } else {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
@@ -243,16 +207,14 @@ class Network {
             });
             return true;
         }
-        nodes = nodes.slice(0, 10); // take no more than 10 peers for joining
 
         const func = url => new Promise((resolve, reject) => {
             try {
                 this.log.info(`Joining via ${url}`);
                 const contact = kadence.utils.parseContactURL(url);
 
-                this._join(contact, (err, x) => {
+                this._join(contact, (err) => {
                     if (err) {
-                        // eslint-disable-next-line
                         reject(err);
                         return;
                     }
@@ -284,19 +246,11 @@ class Network {
             this.log.important('Joined the network');
             const contact = kadence.utils.parseContactURL(result);
 
-            this.node.iterativeStore(config.identity, JSON.stringify(this.node.contact), (err) => {
-                if (err) {
-                    console.error(err);
-                } else {
-                    this.log.info('Stored identity to DHT');
-                }
-            });
-
-            this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
+            this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
             return true;
-        } else if (isBootstrap) {
-            this.log.info('Bootstrap node couldn\'t contact peers from peer cache. Waiting for some peers.');
+        } else if (utilities.isBootstrapNode()) {
+            this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
             return true;
         }
         return false;
@@ -463,31 +417,61 @@ class Network {
 
             /**
              * Gets contact by ID
+             * @param retry Should retry to find it?
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = async (contactId) => {
-                let contact = node.router.getContactByNodeId(contactId);
+            node.getContact = async (contactId, retry) => {
+                const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
-                contact = await node.loadContact(contactId);
-                if (contact) {
-                    this.node.router.addContactByNodeId(contactId, contact);
-                }
-                return node.router.getContactByNodeId(contactId);
+                await node.refresh(contactId, retry);
+                this.node.router.getContactByNodeId(contactId);
             };
 
-            node.loadContact = async contactId => new Promise((resolve, reject) => {
-                this.node.iterativeFindValue(contactId, (err, res) => {
-                    if (err) {
-                        reject(err);
-                    } else if (!Array.isArray(res)) {
-                        resolve(JSON.parse(res.value));
-                    } else {
-                        resolve(null);
-                    }
+            /**
+             * Tries to refresh buckets based on contact ID
+             * @param contactId
+             * @param retry
+             * @return {Promise}
+             */
+            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+                this.log.trace(`Refreshing bucket for ${contactId}`);
+                const _refresh = () => new Promise((resolve, reject) => {
+                    this.node.iterativeFindNode(contactId, (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            const contact = this.node.router.getContactByNodeId(contactId);
+                            if (contact && contact.hostname) {
+                                resolve(contact);
+                            } else {
+                                resolve(null);
+                            }
+                        }
+                    });
                 });
+
+                try {
+                    if (retry) {
+                        for (let i = 1; i <= 3; i += 1) {
+                            // eslint-disable-next-line no-await-in-loop
+                            const contact = await _refresh();
+                            if (contact) {
+                                resolve(contact);
+                                return;
+                            }
+                            sleep.sleep(2 ** i);
+                        }
+                    } else {
+                        await _refresh(contactId, retry);
+                    }
+
+                    resolve(null);
+                } catch (e) {
+                    // failed to refresh buckets (should not happen)
+                }
             });
 
             node.payloadRequest = async (message, contactId, callback) => {

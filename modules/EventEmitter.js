@@ -5,6 +5,7 @@ const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const uuidv4 = require('uuid/v4');
 
 const events = require('events');
 
@@ -270,10 +271,15 @@ class EventEmitter {
                         });
                     });
 
-                data.response.status(201);
-                data.response.send({
-                    import_id,
-                });
+
+                if (data.replicate) {
+                    this.emit('create-offer', { import_id, response: data.response });
+                } else {
+                    data.response.status(201);
+                    data.response.send({
+                        import_id,
+                    });
+                }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
                 data.response.status(500);
@@ -302,7 +308,13 @@ class EventEmitter {
         });
 
         this.apiEmitter.on('create-offer', async (data) => {
-            const { import_id } = data;
+            const {
+                import_id,
+                total_escrow_time,
+                max_token_amount,
+                min_stake_amount,
+                min_reputation,
+            } = data;
 
             try {
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
@@ -316,16 +328,24 @@ class EventEmitter {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = await dcService.createOffer(
-                    import_id,
-                    dataimport.root_hash,
-                    dataimport.total_documents,
-                    vertices,
-                );
+                const replicationId = uuidv4();
+
                 data.response.status(201);
                 data.response.send({
                     replication_id: replicationId,
                 });
+
+                dcService.createOffer(
+                    import_id,
+                    dataimport.root_hash,
+                    dataimport.total_documents,
+                    vertices,
+                    total_escrow_time,
+                    max_token_amount,
+                    min_stake_amount,
+                    min_reputation,
+                    replicationId,
+                );
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
@@ -512,6 +532,7 @@ class EventEmitter {
             challenger,
             dataReplication,
             network,
+            blockchain,
         } = this.ctx;
 
         this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
@@ -574,18 +595,21 @@ class EventEmitter {
             const offer = offerModel.get({ plain: true });
 
             // Check is it valid ID of replicator.
-            const offerDhIds = JSON.parse(offer.dh_ids);
-            const offerWallets = JSON.parse(offer.dh_wallets);
+            const offerDhIds = offer.dh_ids;
+            const offerWallets = offer.dh_wallets;
 
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
-            //     const errorMessage = `Replication request for
-            // offer you didn't apply: ${import_id}.`;
-            //     logger.warn(`DH ${kadIdentity} requested data
-            // without offer for import ID ${import_id}.`);
-            //     response.send({ status: 'fail', error: errorMessage });
-            //     return;
-            // }
+            if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
+                // Check escrow to see if it was a chosen bid. Expected status to be initiated.
+                const escrow = await blockchain.getEscrow(import_id, wallet);
+
+                if (escrow.escrow_status === 0) {
+                    // const errorMessage = `Replication request
+                    //  for offer you didn't apply: ${import_id}.`;
+                    logger.info(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+                    return;
+                }
+            }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
