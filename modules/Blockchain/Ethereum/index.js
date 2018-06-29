@@ -399,8 +399,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.biddingContractAddress,
         };
-
-        this.log.trace('Create offer on contract.');
+        this.log.trace(`createOffer (${importId}, ${nodeId}, ${totalEscrowTime}, ${maxTokenAmount}, ${MinStakeAmount}, ${minReputation}, ${dataHash}, ${dataSize}, ${predeterminedDhWallets}, ${predeterminedDhNodeIds}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [

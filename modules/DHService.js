@@ -132,7 +132,7 @@ class DHService {
                 .mul(new BN(totalEscrowTimePerMinute));
 
             if (maxTokenAmount.lt(myPrice)) {
-                this.log.info(`Offer ${importId} too expensive for me.`);
+                this.log.info(`Offer ${importId} too cheap for me.`);
                 return;
             }
 
