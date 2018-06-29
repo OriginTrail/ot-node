@@ -878,7 +878,9 @@ class Utilities {
      */
     static validateNumberParameter(property) {
         if (property == null || typeof property === 'number') {
-            return true;
+            if (property > 0) {
+                return true;
+            }
         }
         return false;
     }

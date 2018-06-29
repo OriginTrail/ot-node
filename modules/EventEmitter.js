@@ -324,13 +324,13 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     import_id,
+                    dataimport.root_hash,
+                    dataimport.total_documents,
+                    vertices,
                     total_escrow_time,
                     max_token_amount,
                     min_stake_amount,
                     min_reputation,
-                    dataimport.root_hash,
-                    dataimport.total_documents,
-                    vertices,
                 );
                 data.response.status(201);
                 data.response.send({

@@ -41,13 +41,13 @@ class DCService {
      */
     async createOffer(
         importId,
+        rootHash,
+        totalDocuments,
+        vertices,
         total_escrow_time,
         max_token_amount,
         min_stake_amount,
         min_reputation,
-        rootHash,
-        totalDocuments,
-        vertices,
     ) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
