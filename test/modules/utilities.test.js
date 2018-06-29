@@ -20,7 +20,7 @@ describe('Utilities module', () => {
         myConfig = await Utilities.loadConfig();
     });
 
-    it.only('node_config should contain certain entries', () => {
+    it('node_config should contain certain entries', () => {
         assert.hasAllKeys(
             myConfig, ['node_wallet', 'node_private_key', 'node_rpc_ip', 'node_port',
                 'node_kademlia_id', 'selected_graph_database', 'selected_blockchain', 'request_timeout', 'ssl_keypath',
