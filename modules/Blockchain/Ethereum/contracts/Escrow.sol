@@ -139,7 +139,7 @@ library SafeMath {
           uint last_confirmation_time;
           uint end_time;
           uint total_time_in_seconds;
-        uint litigation_interval_in_seconds;
+          uint litigation_interval_in_seconds;
 
           bytes32 litigation_root_hash;
           bytes32 distribution_root_hash;

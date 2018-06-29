@@ -398,7 +398,7 @@ contract('Bidding testing', async (accounts) => {
         for (i = 1; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             response = await escrow.escrow.call(import_id, accounts[i]);
-            let status = response[10];
+            let status = response[11];
             status = status.toNumber();
             switch (status) {
             case 0:
@@ -583,7 +583,7 @@ contract('Bidding testing', async (accounts) => {
         for (i = 0; i < chosen_bids.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
-            let status = response[10];
+            let status = response[11];
             status = status.toNumber();
             switch (status) {
             case 0:
