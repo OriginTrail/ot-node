@@ -328,14 +328,7 @@ class EventEmitter {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = uuidv4();
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                });
-
-                await dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     import_id,
                     dataimport.root_hash,
                     dataimport.total_documents,
@@ -344,8 +337,12 @@ class EventEmitter {
                     max_token_amount,
                     min_stake_amount,
                     min_reputation,
-                    replicationId,
                 );
+
+                data.response.status(201);
+                data.response.send({
+                    replication_id: replicationId,
+                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
