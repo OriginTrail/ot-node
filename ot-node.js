@@ -129,7 +129,10 @@ class OTNode {
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
-                const etherBalance = await Utilities.getBalanceInEthers();
+                const etherBalance = await Utilities.getBalanceInEthers(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                );
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
@@ -139,7 +142,11 @@ class OTNode {
                     );
                 }
 
-                const atracBalance = await Utilities.getAlphaTracTokenBalance();
+                const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                    selectedBlockchain.token_contract_address,
+                );
                 if (atracBalance <= 0) {
                     console.log('Please get some ATRAC in the node wallet before running ot-node');
                     process.exit(1);
@@ -183,6 +190,7 @@ class OTNode {
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+
         emitter.initialize();
 
         // Connecting to graph database
