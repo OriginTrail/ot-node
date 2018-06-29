@@ -24,7 +24,7 @@ script:
   # checks for angangodb based solution
   - npm test
   - npm start &>arangodb.log &
-  - sleep 10
+  - sleep 30
   - jobs
   - kill %1
   # make sure previous deamon is really terminated
@@ -36,7 +36,7 @@ script:
   # checks for neo4j based solution
   - npm run config &> /dev/null
   - npm start &>neo4jdb.log &
-  - sleep 10
+  - sleep 30
   - jobs
   - kill %1
   - node isStartHealthy.js neo4jdb
