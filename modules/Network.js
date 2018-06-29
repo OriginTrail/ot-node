@@ -86,7 +86,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'https:',
+            protocol: 'http:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -94,12 +94,8 @@ class Network {
             wallet: config.node_wallet,
         };
 
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
-
         // Initialize transport adapter
-        const transport = new kadence.HTTPSTransport({ key, cert, ca });
+        const transport = new kadence.HTTPTransport();
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -122,11 +118,11 @@ class Network {
         //     kadence.constants.HD_KEY_DERIVATION_PATH,
         // ));
         // this.log.info('Spartacus initialised');
-        this.node.hashcash = this.node.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 8,
-        }));
-        this.log.info('Hashcash initialised');
+        // this.node.hashcash = this.node.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE'],
+        //     difficulty: 8,
+        // }));
+        // this.log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
             this.enableOnion();
@@ -188,7 +184,6 @@ class Network {
 
     enableOnion() {
         this.log.info('Use Tor for an anonymous overlay');
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
         this.node.onion = this.node.plugin(kadence.onion({
             dataDirectory: `${__dirname}/../data/hidden_service`,
             virtualPort: config.onion_virtual_port,
@@ -292,7 +287,7 @@ class Network {
                 }
             });
 
-            this.log.info(`Connected to network via ${contact[0]} (https://${contact[1].hostname}:${contact[1].port})`);
+            this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
             return true;
         } else if (isBootstrap) {
