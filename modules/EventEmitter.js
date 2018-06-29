@@ -532,6 +532,7 @@ class EventEmitter {
             challenger,
             dataReplication,
             network,
+            blockchain,
         } = this.ctx;
 
         this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
@@ -594,18 +595,21 @@ class EventEmitter {
             const offer = offerModel.get({ plain: true });
 
             // Check is it valid ID of replicator.
-            const offerDhIds = JSON.parse(offer.dh_ids);
-            const offerWallets = JSON.parse(offer.dh_wallets);
+            const offerDhIds = offer.dh_ids;
+            const offerWallets = offer.dh_wallets;
 
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            // if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
-            //     const errorMessage = `Replication request for
-            // offer you didn't apply: ${import_id}.`;
-            //     logger.warn(`DH ${kadIdentity} requested data
-            // without offer for import ID ${import_id}.`);
-            //     response.send({ status: 'fail', error: errorMessage });
-            //     return;
-            // }
+            if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
+                // Check escrow to see if it was a chosen bid. Expected status to be initiated.
+                const escrow = await blockchain.getEscrow(import_id, wallet);
+
+                if (escrow.escrow_status === 0) {
+                    // const errorMessage = `Replication request
+                    //  for offer you didn't apply: ${import_id}.`;
+                    logger.info(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+                    return;
+                }
+            }
 
             const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
