@@ -128,7 +128,23 @@ class DCService {
             offer.status = 'STARTED';
             offer.save({ fields: ['status'] });
 
-            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then(() => {
+            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
+                if (!event) {
+                    this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+                    this.blockchain.cancelOffer(importId).then(() => {
+                        offer.status = 'CANCELLED';
+                        offer.message = 'Offer not finalized';
+                        offer.save({ fields: ['status', 'message'] });
+                        this.log.trace(`Offer ${importId} canceled.`);
+                    }).catch((error) => {
+                        this.log.warn(`Failed to cancel offer ${importId}. ${error}.`);
+                        offer.status = 'STARTED';
+                        offer.message = 'Failed to cancel. Still opened';
+                        offer.save({ fields: ['status', 'message'] });
+                    });
+                    return;
+                }
+
                 this.log.trace('Started choosing phase.');
 
                 offer.status = 'FINALIZING';
