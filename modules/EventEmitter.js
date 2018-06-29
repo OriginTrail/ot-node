@@ -302,7 +302,13 @@ class EventEmitter {
         });
 
         this.apiEmitter.on('create-offer', async (data) => {
-            const { import_id } = data;
+            const {
+                import_id,
+                total_escrow_time,
+                max_token_amount,
+                min_stake_amount,
+                min_reputation,
+            } = data;
 
             try {
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
@@ -318,6 +324,10 @@ class EventEmitter {
 
                 const replicationId = await dcService.createOffer(
                     import_id,
+                    total_escrow_time,
+                    max_token_amount,
+                    min_stake_amount,
+                    min_reputation,
                     dataimport.root_hash,
                     dataimport.total_documents,
                     vertices,

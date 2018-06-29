@@ -10,11 +10,11 @@ const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
 
 const { Op } = Models.Sequelize;
-const totalEscrowTime = 10 * 60 * 1000;
+let totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
-const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('1000000');
-const minReputation = 0;
+let minStakeAmount = new BN('100');
+let maxTokenAmount = new BN('1000000');
+let minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -39,7 +39,16 @@ class DCService {
      * @param vertices
      * @return {Promise<external_id|{type, defaultValue}|offers.external_id|{type, allowNull}>}
      */
-    async createOffer(importId, rootHash, totalDocuments, vertices) {
+    async createOffer(
+        importId,
+        total_escrow_time,
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        rootHash,
+        totalDocuments,
+        vertices,
+    ) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
@@ -64,6 +73,23 @@ class DCService {
 
         const dhIds = [];
         const dhWallets = [];
+
+        if (total_escrow_time) {
+            totalEscrowTime = total_escrow_time;
+        }
+
+        if (max_token_amount) {
+            maxTokenAmount = new BN(max_token_amount, 10);
+        }
+
+        if (min_stake_amount) {
+            minStakeAmount = new BN(min_stake_amount, 10);
+        }
+
+        if (min_reputation) {
+            minReputation = min_reputation;
+        }
+
         vertices.forEach((vertex) => {
             if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
                 dhWallets.push(vertex.data.wallet);
