@@ -7,6 +7,12 @@ class KademliaUtils {
      * @return {*}
      */
     static transformLog(level, msg) {
+        if (msg.startsWith('connection timed out')) {
+            return null; // skip logging
+        }
+        if (msg.startsWith('negotiation error')) {
+            return null; // skip logging
+        }
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
@@ -16,7 +22,7 @@ class KademliaUtils {
         if (msg.startsWith('connect econnrefused')) {
             level = 'trace';
             const address = msg.substr(21);
-            msg = `Failed to connect to ${address}`;
+            msg = `Peer ${address} timed out`;
         }
         return {
             level,
