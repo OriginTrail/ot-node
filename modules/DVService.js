@@ -322,7 +322,7 @@ class DVService {
         const profileBalance =
             new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
         const condition = new BN(networkQueryResponse.data_price)
-            .add(stakeAmount).add(new BN(1)); // Thanks Cookie.
+            .add(stakeAmount);
 
         if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
