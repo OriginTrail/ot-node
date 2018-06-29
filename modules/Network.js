@@ -86,7 +86,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'https:',
+            protocol: 'http:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -99,7 +99,7 @@ class Network {
         const ca = config.ssl_authority_paths.map(fs.readFileSync);
 
         // Initialize transport adapter
-        const transport = new kadence.HTTPSTransport({ key, cert, ca });
+        const transport = new kadence.HTTPTransport();
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -122,11 +122,11 @@ class Network {
         //     kadence.constants.HD_KEY_DERIVATION_PATH,
         // ));
         // this.log.info('Spartacus initialised');
-        this.node.hashcash = this.node.plugin(kadence.hashcash({
-            methods: ['PUBLISH', 'SUBSCRIBE'],
-            difficulty: 8,
-        }));
-        this.log.info('Hashcash initialised');
+        // this.node.hashcash = this.node.plugin(kadence.hashcash({
+        //     methods: ['PUBLISH', 'SUBSCRIBE'],
+        //     difficulty: 8,
+        // }));
+        // this.log.info('Hashcash initialised');
 
         if (parseInt(config.onion_enabled, 10)) {
             this.enableOnion();

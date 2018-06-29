@@ -67,11 +67,11 @@ class DHService {
             const k = distanceParams[4];
             const numNodes = distanceParams[5];
 
-            if (this.amIClose(k, numNodes, dataHash, nodeHash, 200)) {
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 20000)) {
                 this.log.notify('Close enough to take bid');
             } else {
                 this.log.notify('Not close enough to take bid');
-                return;
+              //  return;
             }
 
             const holdingData = await Models.holding_data.findOne({

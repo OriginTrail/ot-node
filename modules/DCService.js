@@ -64,12 +64,12 @@ class DCService {
 
         const dhIds = [];
         const dhWallets = [];
-        vertices.forEach((vertex) => {
-            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
-                dhWallets.push(vertex.data.wallet);
-                dhIds.push(vertex.data.node_id);
-            }
-        });
+        // vertices.forEach((vertex) => {
+        //     if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+        //         dhWallets.push(vertex.data.wallet);
+        //         dhIds.push(vertex.data.node_id);
+        //     }
+        // });
 
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
