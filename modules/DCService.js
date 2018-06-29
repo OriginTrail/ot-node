@@ -166,7 +166,7 @@ class DCService {
                         offer.save({ fields: ['status', 'message'] });
                         this.log.trace(`Offer ${importId} canceled.`);
                     }).catch((error) => {
-                        this.log.warn(`Failed to cancel offer ${importId}. ${error}.`);
+                        this.log.warn(`Failed to cancel offer for import ${importId}. ${error}.`);
                         offer.status = 'STARTED';
                         offer.message = 'Failed to cancel. Still opened';
                         offer.save({ fields: ['status', 'message'] });
