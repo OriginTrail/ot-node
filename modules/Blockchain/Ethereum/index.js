@@ -71,26 +71,25 @@ class Ethereum {
      * Initializing Ethereum blockchain contracts
      */
     async initialize(emitter) {
-
         const blockchainModel = await Storage.blockchain_data.findOne({
-                where: {
-                    id: 1,
-                },
-            });
-            blockchainModel.ot_contract_address = await this.getFingerprintAddress();
-            blockchainModel.token_contract_address = await this.getTokenAddress();
-            blockchainModel.bidding_contract_address = await this.getBiddingAddress();
-            blockchainModel.escrow_contract_address = await this.getEscrowAddress();
-            blockchainModel.reading_contract_address = await this.getReadingAddress();
-            await blockchainModel.save({
-                fields: [
-                    'ot_contract_address',
-                    'token_contract_address',
-                    'bidding_contract_address',
-                    'escrow_contract_address',
-                    'reading_contract_address',
-                ],
-            });
+            where: {
+                id: 1,
+            },
+        });
+        blockchainModel.ot_contract_address = await this.getFingerprintAddress();
+        blockchainModel.token_contract_address = await this.getTokenAddress();
+        blockchainModel.bidding_contract_address = await this.getBiddingAddress();
+        blockchainModel.escrow_contract_address = await this.getEscrowAddress();
+        blockchainModel.reading_contract_address = await this.getReadingAddress();
+        await blockchainModel.save({
+            fields: [
+                'ot_contract_address',
+                'token_contract_address',
+                'bidding_contract_address',
+                'escrow_contract_address',
+                'reading_contract_address',
+            ],
+        });
 
 
         try {
@@ -160,16 +159,14 @@ class Ethereum {
             })
             .on('error', this.log.warn);
 
-        this.contracsChangedHandle = this.subscribeToEventPermanent([ 'ContractsChanged' ]);
-
-         
+        this.contracsChangedHandle = this.subscribeToEventPermanent(['ContractsChanged']);
     }
 
     /**
      * Initializing Ethereum blockchain contracts
      */
     async deinitialize(emitter) {
-        unsubscribeToEventPermanent(this.contracsChangedHandle);
+        this.unsubscribeToEventPermanent(this.contracsChangedHandle);
     }
 
     /**
