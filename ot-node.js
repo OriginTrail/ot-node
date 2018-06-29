@@ -75,7 +75,7 @@ class OTNode {
             process.exit(1);
         }
 
-        if (config.is_bootstrap_node) {
+        if (Utilities.isBootstrapNode()) {
             await this.startBootstrapNode();
             this.startRPC();
             return;
@@ -199,14 +199,14 @@ class OTNode {
             process.exit(1);
         }
 
-        // Initialise API
-        this.startRPC(emitter);
-
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+
+        // Initialise API
+        this.startRPC(emitter);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -367,7 +367,7 @@ class OTNode {
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
-        if (!config.is_bootstrap_node) {
+        if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
             this.exposeAPIRoutes(server, emitter);
         }

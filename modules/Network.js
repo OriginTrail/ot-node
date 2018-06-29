@@ -122,7 +122,7 @@ class Network {
             config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
         }
 
-        if (!config.is_bootstrap_node) {
+        if (!utilities.isBootstrapNode()) {
             this._registerRoutes();
         }
 
@@ -182,7 +182,7 @@ class Network {
         let nodes = _.uniq(bootstrapNodes.concat(peers));
         nodes = nodes.slice(0, 5); // take no more than 5 peers for joining
 
-        if (config.is_bootstrap_node) {
+        if (utilities.isBootstrapNode()) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
             this.log.info(`Trying to contact ${nodes.length} peers`);
@@ -232,6 +232,7 @@ class Network {
         let result;
         for (const node of nodes) {
             try {
+                // eslint-disable-next-line
                 result = await func(node);
                 if (result) {
                     break;
@@ -248,7 +249,7 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
             return true;
-        } else if (config.is_bootstrap_node) {
+        } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
             return true;
         }
@@ -436,8 +437,10 @@ class Network {
              * @return {Promise}
              */
             node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+                this.log.trace(`Refreshing bucket for ${contactId}`);
                 const _refresh = () => new Promise((resolve, reject) => {
-                    this.node.iterativeFindNode(contactId, (err) => {
+                    this.node.iterativeFindNode(contactId, (err, res) => {
+                        console.log(res);
                         if (err) {
                             reject(err);
                         } else {
