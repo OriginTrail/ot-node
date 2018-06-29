@@ -177,8 +177,6 @@ module.exports = (deployer, network, accounts) => {
         .then(async () => {
             await reading.transferOwnership(escrow.address, { from: accounts[0] })
         .then(async () => {
-            await escrow.transferOwnership(bidding.address, { from: accounts[0] })
-        .then(async () => {
             var amounts = [];
             var recepients = [];
             for (let i = 0; i < 10; i += 1) {

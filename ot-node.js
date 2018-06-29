@@ -156,6 +156,7 @@ class OTNode {
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+
         emitter.initialize();
 
         // Connecting to graph database
@@ -171,9 +172,6 @@ class OTNode {
             console.log(err);
             process.exit(1);
         }
-
-        // Initialise API
-        this.startRPC(emitter);
 
         // Starting the kademlia
         const network = container.resolve('network');
@@ -209,6 +207,9 @@ class OTNode {
             }
         }
 
+
+        // Initialise API
+        this.startRPC(emitter);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -436,6 +437,7 @@ class OTNode {
                 const queryObject = {
                     filepath: inputFile,
                     contact: req.contact,
+                    replicate: req.body.replicate,
                     response: res,
                 };
 
@@ -453,6 +455,7 @@ class OTNode {
                     const queryObject = {
                         filepath: inputFile,
                         contact: req.contact,
+                        replicate: req.body.replicate,
                         response: res,
                     };
 
@@ -474,19 +477,25 @@ class OTNode {
                 return;
             }
 
-
-            if (req.body !== undefined && req.body.import_id !== undefined) {
+            if (req.body !== undefined && req.body.import_id !== undefined && typeof req.body.import_id === 'string' &&
+                Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
+                Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
+                Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
+                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
-                    contact: req.contact,
+                    total_escrow_time: req.body.total_escrow_time_in_minutes,
+                    max_token_amount: req.body.max_token_amount_per_dh,
+                    min_stake_amount: req.body.dh_min_stake_amount,
+                    min_reputation: req.body.dh_min_reputation,
                     response: res,
                 };
                 emitter.emit('create-offer', queryObject);
             } else {
-                log.error('Invalid request. You need to provide import ID');
+                log.error('Invalid request');
                 res.status(400);
                 res.send({
-                    message: 'Import ID not provided!',
+                    message: 'Invalid parameters!',
                 });
             }
         });

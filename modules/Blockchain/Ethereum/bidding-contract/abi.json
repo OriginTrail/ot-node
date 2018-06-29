@@ -193,6 +193,20 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
@@ -540,6 +554,10 @@
         "type": "uint256"
       },
       {
+        "name": "replication_modifier",
+        "type": "uint256"
+      },
+      {
         "name": "active",
         "type": "bool"
       },
@@ -582,6 +600,20 @@
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -644,6 +676,20 @@
       }
     ],
     "name": "decreaseBalance",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "new_modifier",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReplicationModifier",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -905,6 +951,23 @@
       }
     ],
     "name": "ReputationModified",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
     "type": "event"
   }
 ]

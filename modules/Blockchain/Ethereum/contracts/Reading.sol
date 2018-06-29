@@ -111,18 +111,21 @@ contract Reading is Ownable{
 
 	function Reading(address escrow_address)
 	public {
+          require (msg.sender != address(0));
 		require(escrow_address != address(0));
 		escrow = escrow_address;
 	}
 
 	function setBidding(address bidding_address)
 	public onlyOwner {
+          require (msg.sender != address(0));
 		require(bidding_address != address(0));
 		bidding = Bidding(bidding_address);
 	}
 
 	function addReadData (bytes32 import_id, address DH_wallet, address DC_wallet, bytes32 distribution_root_hash, uint256 checksum)
 	public onlyOwner {
+          require (msg.sender != address(0));
 		PurchasedDataDefinition storage this_purchased_data = purchased_data[import_id][DH_wallet];
 
 		this_purchased_data.DC_wallet = DC_wallet;
@@ -132,6 +135,7 @@ contract Reading is Ownable{
 
 	function removeReadData (bytes32 import_id, address DH_wallet)
 	public onlyOwner {
+          require (msg.sender != address(0));
 		PurchasedDataDefinition storage this_purchased_data = purchased_data[import_id][DH_wallet];
 
 		this_purchased_data.DC_wallet = address(0);
@@ -141,6 +145,7 @@ contract Reading is Ownable{
 
 	function initiatePurchase(bytes32 import_id, address DH_wallet, uint token_amount)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.inactive
 			|| 	this_purchase.purchase_status == PurchaseStatus.completed);
@@ -162,6 +167,7 @@ contract Reading is Ownable{
 
 	function sendCommitment(bytes32 import_id, address DV_wallet, bytes32 commitment)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.initiated);
 
@@ -177,6 +183,7 @@ contract Reading is Ownable{
 
 	function confirmPurchase(bytes32 import_id, address DH_wallet)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.commited);
 
@@ -186,6 +193,7 @@ contract Reading is Ownable{
 
 	function cancelPurchase(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
 	public {
+          require (msg.sender != address(0));
 		address DH_wallet;
 		address DV_wallet;
 
@@ -214,6 +222,7 @@ contract Reading is Ownable{
 
 	function sendEncryptedBlock(bytes32 import_id, address DV_wallet, uint256 encrypted_block)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 		PurchasedDataDefinition storage this_purchased_data = purchased_data[import_id][DV_wallet];
 		PurchasedDataDefinition storage previous_purchase = purchased_data[import_id][msg.sender];
@@ -234,6 +243,7 @@ contract Reading is Ownable{
 
 	function payOut(bytes32 import_id, address DV_wallet)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		require(this_purchase.purchase_status == PurchaseStatus.sent
@@ -250,6 +260,7 @@ contract Reading is Ownable{
 
 	function initiateDispute(bytes32 import_id, address DH_wallet)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 
 		require(this_purchase.purchase_status == PurchaseStatus.sent
@@ -264,6 +275,7 @@ contract Reading is Ownable{
 			uint256 random_number_1, uint256 random_number_2,
 			uint256 decryption_key, uint256 block_index)
 	public {
+          require (msg.sender != address(0));
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
 		bool commitment_proof = this_purchase.commitment == keccak256(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index);

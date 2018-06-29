@@ -10,11 +10,7 @@ const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
 
 const { Op } = Models.Sequelize;
-const totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
-const minStakeAmount = new BN('100');
-const maxTokenAmount = new BN('1000000');
-const minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -39,7 +35,17 @@ class DCService {
      * @param vertices
      * @return {Promise<external_id|{type, defaultValue}|offers.external_id|{type, allowNull}>}
      */
-    async createOffer(importId, rootHash, totalDocuments, vertices) {
+    async createOffer(
+        importId,
+        rootHash,
+        totalDocuments,
+        vertices,
+        total_escrow_time,
+        max_token_amount,
+        min_stake_amount,
+        min_reputation,
+        replicationId,
+    ) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
         if (oldOffer[0] !== '0x0000000000000000000000000000000000000000') {
@@ -64,6 +70,28 @@ class DCService {
 
         const dhIds = [];
         const dhWallets = [];
+
+        let totalEscrowTime = config.total_escrow_time_in_minutes;
+        let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
+        let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
+        let minReputation = config.dh_min_reputation;
+
+        if (total_escrow_time) {
+            totalEscrowTime = total_escrow_time;
+        }
+
+        if (max_token_amount) {
+            maxTokenAmount = new BN(max_token_amount, 10);
+        }
+
+        if (min_stake_amount) {
+            minStakeAmount = new BN(min_stake_amount, 10);
+        }
+
+        if (min_reputation) {
+            minReputation = min_reputation;
+        }
+
         vertices.forEach((vertex) => {
             if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
                 dhWallets.push(vertex.data.wallet);
@@ -80,11 +108,12 @@ class DCService {
             min_reputation: minReputation,
             data_hash: rootHash,
             data_size_bytes: importSizeInBytes.toString(),
-            dh_wallets: JSON.stringify(dhWallets),
-            dh_ids: JSON.stringify(dhIds),
+            dh_wallets: dhWallets,
+            dh_ids: dhIds,
             message: 'Offer is pending',
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
+            external_id: replicationId,
         };
         const offer = await Models.offers.create(newOfferRow);
 
@@ -128,7 +157,23 @@ class DCService {
             offer.status = 'STARTED';
             offer.save({ fields: ['status'] });
 
-            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then(() => {
+            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
+                if (!event) {
+                    this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+                    this.blockchain.cancelOffer(importId).then(() => {
+                        offer.status = 'CANCELLED';
+                        offer.message = 'Offer not finalized';
+                        offer.save({ fields: ['status', 'message'] });
+                        this.log.trace(`Offer ${importId} canceled.`);
+                    }).catch((error) => {
+                        this.log.warn(`Failed to cancel offer ${importId}. ${error}.`);
+                        offer.status = 'STARTED';
+                        offer.message = 'Failed to cancel. Still opened';
+                        offer.save({ fields: ['status', 'message'] });
+                    });
+                    return;
+                }
+
                 this.log.trace('Started choosing phase.');
 
                 offer.status = 'FINALIZING';
@@ -163,7 +208,6 @@ class DCService {
             offer.save({ fields: ['status', 'message'] });
             this.log.error(errorMsg);
         });
-        return offer.external_id;
     }
 
     /**

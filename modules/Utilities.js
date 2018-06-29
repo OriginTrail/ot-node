@@ -401,23 +401,14 @@ class Utilities {
     }
 
     /**
-     * Get NODE_WALLETs balance in Ether
-     * @return {Promise<any>}
+     * Get wallet's balance in Ether
+     * @param web3 Instance of Web3
+     * @param wallet Address of the wallet.
+     * @returns {Promise<string |  | Object>}
      */
-    static getBalanceInEthers() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.getBalance(config.wallet_address).then((result) => {
-                    const balance = web3.utils.fromWei(result, 'ether');
-                    resolve(balance);
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
-        });
+    static async getBalanceInEthers(web3, wallet) {
+        const result = await web3.eth.getBalance(wallet);
+        return web3.utils.fromWei(result, 'ether');
     }
 
     /**
@@ -850,7 +841,7 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || typeof property === 'number') {
+        if (property == null || parseInt(property, 10) > 0) {
             return true;
         }
         return false;
@@ -869,15 +860,23 @@ class Utilities {
     }
 
     /**
-     * Is node a bootstrap node
-     * @return {boolean}
+     * Is bootstrap node?
+     * @return {number}
      */
     static isBootstrapNode() {
-        const bootstrapNodes = config.network_bootstrap_nodes;
-        if (bootstrapNodes) {
-            return bootstrapNodes.length === 0;
+        return parseInt(config.is_bootstrap_node, 10);
+    }
+
+    /**
+     * Shuffles array in place
+     * @param {Array} a items An array containing the items.
+     */
+    static shuffle(a) {
+        for (let i = a.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return true;
+        return a;
     }
 }
 
