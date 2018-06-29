@@ -29,6 +29,11 @@ tags:
   description: Make network queries 
 - name: database
   description: Database operations
+- name: queryLocal
+  description: Local query operations
+- name: queryNetwork
+  description: Network query operations
+  
   
 paths:
   /import:
@@ -47,13 +52,16 @@ paths:
         description: "Import data (file or text data)"
         required: true
         schema:
-            $ref: '#/definitions/importfileExample'
+          type: string
+          example: 'importfile=@/ot-node/test/modules/test_xml/GraphExample_4.xml'
       - name: importtype
         in: body
         description: "Type of provided data (GS1 / WOT)"
         required: true
         schema:
-            $ref: '#/definitions/importtypeExample'
+          type: string
+          example: 'GS1'
+
       responses:
         '201':
           schema:
@@ -139,11 +147,11 @@ paths:
         '404':
           description: Offer not found
           
-  /network/query:
+  /query/network:
     post:
       tags:
-      - read
-      summary: Sends read query to the network
+      - queryNetwork
+      summary: Makes a network query
       operationId: network-query
       consumes:
         - application/json
@@ -151,7 +159,7 @@ paths:
       produces:
         - application/json
       parameters:
-      - in: "formData"
+      - in: "body"
         name: "query"
         description: Query in specific format
         required: true
@@ -159,20 +167,22 @@ paths:
       responses:
         '200':
           description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. If query was successful additional attribute 'query_id' will be present which will contain UUID of the query which can be used to check the result or status of the query.
+        '400':
+          description: Bad request
         '500':
           description: Internal error happened on server.
           
-  /network/query/{queryID}:
+  /query/network/{query_param}:
     get:
       tags:
-      - read
+      - queryNetwork
       summary: Checks the status of the network query
       operationId: network-query-status
       produces:
         - application/json
       parameters:
       - in: path
-        name: "queryID"
+        name: "query_param"
         description: UUID of network query.
         required: true
         type: string
@@ -182,25 +192,25 @@ paths:
         500:
           description: Internal error happened on server.         
   
-  /network/query_by_id:
-    get:
-      tags:
-      - read
-      summary: Makes a network query
-      operationId: network-query-
-      produces:
-        - application/json
-      parameters:
-      - in: path
-        name: "queryID"
-        description: UUID of network query.
-        required: true
-        type: string
-      responses:
-        200:
-          description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
-        500:
-          description: Internal error happened on server. 
+  # /network/query_by_id:
+  #   get:
+  #     tags:
+  #     - query
+  #     summary: Makes a network query
+  #     operationId: network-query-
+  #     produces:
+  #       - application/json
+  #     parameters:
+  #     - in: path
+  #       name: "queryID"
+  #       description: UUID of network query.
+  #       required: true
+  #       type: string
+  #     responses:
+  #       200:
+  #         description: Always, except on a internal server error. Body will contain message in JSON format containing at least 'status' and 'message' attribute. 'message' will contain the status of the query in format `Query status $status.`. If status is FINISHED body will contain another attribute 'vertices' containing all query result vertices.
+  #       500:
+  #         description: Internal error happened on server. 
   
   /trail:
     get:
@@ -254,10 +264,10 @@ paths:
         '500':
           description: Internal error happened on server
       
-  /query:
-    get:
+  /query/local:
+    post:
       tags: 
-      - database
+      - queryLocal
       summary: Run local query on graph database
       consumes:
           - application/json
@@ -265,11 +275,14 @@ paths:
       produces:
         - application/json
       parameters:
-      - in: query
-        name: 'queryObject'
-        description: 'Query in specific format, for example ?uid=urn:epc:id:sgln:HospitalBuilding1'
+      - in: body
+        name: 'query'
+        description: 'Query in specific format'
         required: true
         type: "string"
+        schema:
+          type: string
+          example: "?uid=urn:epc:id:sgln:HospitalBuilding1"
       responses:
         '200':
           description: Array of found vertices for given query
@@ -278,18 +291,89 @@ paths:
         '500':
           description: Internal error happened on server
 
+  /query/local/import:
+    post:
+      tags: 
+      - queryLocal
+      summary: to be defined
+      consumes:
+          - application/json
+          - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: params
+        name: 'import_id'
+        description: 'Import ID for example: 0x477eae0227cce0ffaadc235c7946b97cbe2a948fe7782796b53a0c5a6ca6595f'
+        required: true
+        type: "string"
+        schema:
+          type: string
+          example: "0x477eae0227cce0ffaadc235c7946b97cbe2a948fe7782796b53a0c5a6ca6595f"
+      responses:
+        '200':
+          description: Array of found vertices for given query
+        '204':
+          description: No vertices found
+        '400':
+          description: Bad request
+        '500':
+          description: Internal error happened on server
+  
+  /query/local/import:{import_id}:
+    get:
+      tags:
+      - queryLocal
+      summary: To be defined
+      consumes:
+        - application/json
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+      - in: params
+        name: "import_id"
+        description: Import Id
+        required: true
+        type: "string"
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Param required
+          
+  /read/network:
+    post:
+      tags:
+      - read
+      summary: To be defined
+      parameters:
+      - in: body
+        name: query_id
+        description: "query_id"
+        type: string
+        required: true
+        schema:
+          type: string
+          example: "query_id"
+      - in: body
+        name: reply_id
+        description: "reply_id"
+        type: string
+        required: true
+        schema:
+          type: string
+          example: "reply_id"
+      responses:
+        200:
+          description: "OK"
+        400:
+          description: "Bad request"
+          schema:
+            type: object
+            example:
+              message: 'Invalid import type'
   
 
 definitions:
-  importfileExample:
-    type: object
-    properties:
-      importfile:
-        type: string
-        example: 'importfile=@/ot-node/test/modules/test_xml/GraphExample_4.xml'
-  importtypeExample:
-    type: object
-    properties:
-      importtype:
-        type: string
-        example: 'GS1'
+
