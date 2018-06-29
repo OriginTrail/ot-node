@@ -40,7 +40,7 @@ module.exports = {
     },
     {
         key: 'total_escrow_time_in_minutes',
-        value: 100,
+        value: 600000,
     },
     {
         key: 'max_token_amount_per_dh',
