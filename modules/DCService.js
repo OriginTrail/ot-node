@@ -44,6 +44,7 @@ class DCService {
         max_token_amount,
         min_stake_amount,
         min_reputation,
+        replicationId,
     ) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
@@ -112,6 +113,7 @@ class DCService {
             message: 'Offer is pending',
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
+            external_id: replicationId,
         };
         const offer = await Models.offers.create(newOfferRow);
 
@@ -190,7 +192,6 @@ class DCService {
             offer.save({ fields: ['status', 'message'] });
             this.log.error(errorMsg);
         });
-        return offer.external_id;
     }
 
     /**

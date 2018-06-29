@@ -433,6 +433,7 @@ class OTNode {
                 const queryObject = {
                     filepath: inputFile,
                     contact: req.contact,
+                    replicate: req.body.replicate,
                     response: res,
                 };
 
@@ -450,6 +451,7 @@ class OTNode {
                     const queryObject = {
                         filepath: inputFile,
                         contact: req.contact,
+                        replicate: req.body.replicate,
                         response: res,
                     };
 
