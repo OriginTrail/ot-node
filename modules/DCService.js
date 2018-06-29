@@ -71,8 +71,8 @@ class DCService {
         const dhWallets = [];
 
         let totalEscrowTime = config.total_escrow_time_in_minutes;
-        let maxTokenAmount = config.max_token_amount_per_dh;
-        let minStakeAmount = config.dh_min_stake_amount;
+        let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
+        let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
         let minReputation = config.dh_min_reputation;
 
         if (total_escrow_time) {
