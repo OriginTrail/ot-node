@@ -3,12 +3,13 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('offers', {
         id: {
             allowNull: false,
+            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.STRING,
+            type: Sequelize.INTEGER,
         },
         import_id: {
-            type: Sequelize.INTEGER,
             allowNull: false,
+            type: Sequelize.STRING,
         },
         total_escrow_time: {
             type: Sequelize.INTEGER,
@@ -35,11 +36,11 @@ module.exports = {
             allowNull: false,
         },
         dh_wallets: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: false,
         },
         dh_ids: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: false,
         },
         start_tender_time: {
@@ -47,6 +48,14 @@ module.exports = {
             allowNull: false,
         },
         status: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
+        message: {
+            type: Sequelize.STRING,
+            allowNull: false,
+        },
+        external_id: {
             type: Sequelize.STRING,
             allowNull: false,
         },

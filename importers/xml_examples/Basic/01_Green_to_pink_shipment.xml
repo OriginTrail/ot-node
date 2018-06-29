@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact>
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Betty Johnson</sbdh:Contact>
+                    <sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>100001</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2018-01-01T00:31:52Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+            <sbdh:BusinessScope>
+                <sbdh:Scope>
+                    <sbdh:Type>BusinessProcess</sbdh:Type>
+                    <sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+                    <sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+                </sbdh:Scope>
+            </sbdh:BusinessScope>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:ot:object:actor">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Green">
+                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
+                                <attribute id="urn:ot:object:actor:name">Pink</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:location">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:Building_Green">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Producer Warehouses</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Green</attribute>
+                                <children>
+                                    <id>urn:epc:id:sgln:Building_Green_V1</id>
+                                    <id>urn:epc:id:sgln:Building_Green_V2</id>
+                                </children>
+                            </VocabularyElement>
+                            <VocabularyElement id="urn:epc:id:sgln:Building_Pink">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Pink distributor warehouse</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:product">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:product:id:Product_1">
+                                <attribute id="urn:ot:object:product:category">Beverage</attribute>
+                                <attribute id="urn:ot:object:product:description">Wine Bottle</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+
+                    <Vocabulary type="urn:ot:object:batch">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgtin:Batch_1">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:Product_1</attribute>
+                                <attribute id="urn:ot:object:product:batch:productionDate">2017-31-12T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationDate">2020-31-12T00:01:54Z</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+            </EPCISMasterData>
+        </extension>
+    </EPCISHeader>
+    <EPCISBody>
+        <EventList>
+            <ObjectEvent>
+                <!-- Transport Shipment-->
+                <eventTime>2018-01-01T01:00:00.000-04:00</eventTime>
+                <eventTimeZoneOffset>-04:00</eventTimeZoneOffset>
+                <epcList>
+                    <epc>urn:epc:id:sgtin:Batch_1</epc>
+                </epcList>
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                <readPoint>
+                    <id>urn:epc:id:sgln:Building_Green_V2</id>
+                </readPoint>
+                <bizLocation>
+                    <id>urn:epc:id:sgln:Building_Green</id>
+                </bizLocation>
+                <extension>
+                    <quantityList>
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
+                            <quantity>10</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </quantityList>
+                    <extension>
+                        <documentId>GREENSHIP1</documentId>
+                        <OTEventClass>urn:ot:event:Transport</OTEventClass>
+                        <OTEventClass>urn:ot:event:Ownership</OTEventClass>
+                        <OTEventType>Sales</OTEventType>
+                        <sourceList>
+                            <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>
+                        </sourceList>
+                        <destinationList>
+                            <destination type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Pink</destination>
+                        </destinationList>
+                    </extension>
+                </extension>
+            </ObjectEvent>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

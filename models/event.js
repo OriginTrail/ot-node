@@ -1,9 +1,10 @@
 
 module.exports = (sequelize, DataTypes) => {
     var Event = sequelize.define('events', {
+        contract: DataTypes.STRING,
         event: DataTypes.STRING,
         data: DataTypes.TEXT,
-        offer_hash: DataTypes.STRING,
+        import_id: DataTypes.STRING,
         block: DataTypes.INTEGER,
         finished: DataTypes.BOOLEAN,
         timestamp: DataTypes.INTEGER,

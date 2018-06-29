@@ -1,41 +1,32 @@
 const Tx = require('ethereumjs-tx');
 const EventEmitter = require('events');
-const Utilities = require('../../Utilities');
-const config = require('../../Config');
-const Lightwallet = require('eth-lightwallet');
+const { txutils } = require('eth-lightwallet');
 const { Lock } = require('semaphore-async-await');
-
-const lock = new Lock();
-
-const log = Utilities.getLogger();
-const { txutils } = Lightwallet;
 
 class Transactions {
     /**
      * Initialize Transaction object
-     * @param web3
+     * @param web3 Instance of the Web object
+     * @param wallet Blockchain wallet represented in hex string in 0x format
+     * @param walletKey Wallet's private in Hex string without 0x at beginning
      */
-    constructor(web3) {
+    constructor(web3, wallet, walletKey) {
         this.web3 = web3;
-        this.transactionQueue = [];
-        this.transactionPending = false;
         this.transactionEventEmmiter = new EventEmitter();
-        this.privateKey = Buffer.from(config.node_private_key, 'hex');
-        this.walletAddress = config.node_wallet;
+        this.privateKey = Buffer.from(walletKey, 'hex');
+        this.walletAddress = wallet;
+        this.lock = new Lock();
     }
+
     /**
      * Send transaction to Ethereum blockchain
-     * @param {object} - rawTx
-     * @param {string} - privateKey
      * @returns {PromiEvent<TransactionReceipt>}
+     * @param newTransaction
      */
     async sendTransaction(newTransaction) {
         await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
-            console.log('getting nonce');
         });
-
-        console.log('Nonce is ', newTransaction.options.nonce);
 
         const rawTx = txutils.functionTx(
             newTransaction.contractAbi,
@@ -55,22 +46,7 @@ class Transactions {
      * Signal that queue is ready for next transaction
      */
     signalNextInQueue() {
-        lock.release();
-    }
-
-    /**
-     * Returns promise that would be resolved when transaction,
-     * given as argument, is next in transaction queue
-     * @param newTransaction
-     * @returns {Promise<any>}
-     */
-    readyFor(newTransaction) {
-        return new Promise((resolve) => {
-            var txString = String(newTransaction);
-            this.transactionEventEmmiter.on(txString, () => {
-                resolve();
-            });
-        });
+        this.lock.release();
     }
 
     /**
@@ -87,7 +63,8 @@ class Transactions {
                 contractAbi, method, args, options,
             };
 
-            await lock.acquire();
+            await this.lock.acquire();
+
             this.sendTransaction(newTransaction)
                 .then((response) => {
                     this.signalNextInQueue();
@@ -103,24 +80,6 @@ class Transactions {
                     reject(err);
                 });
         }));
-    }
-
-    /**
-    * Get the value from getter
-    * @param contract
-    * @param functionName
-    * @param functionParameters
-    * @return {Promise<string>}
-    */
-    getValue(contract, functionName, functionParameters) {
-        console.log(contract);
-        var callData = contract.methods.cancelBid.call(0, (err, res) => {
-            console.log(res);
-        });
-        // return this.web3.eth.call({
-        //     to: this.walletAddress,
-        //     data: callData,
-        // });
     }
 }
 

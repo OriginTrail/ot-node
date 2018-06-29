@@ -3,14 +3,19 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('events', {
         id: {
             allowNull: false,
-            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
+        },
+        contract: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
         event: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         data: {
+            allowNull: false,
             type: Sequelize.TEXT,
         },
         block: {
@@ -18,7 +23,8 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
 
-        offer_hash: {
+        import_id: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
         finished: {

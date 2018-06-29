@@ -1,6 +1,7 @@
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
+const moment = require('moment');
 const ipaddr = require('ipaddr.js');
 const winston = require('winston');
 const Storage = require('./Storage');
@@ -14,14 +15,24 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-var numberToBN = require('number-to-bn');
+const KademliaUtils = require('./kademlia/KademliaUtils');
+const numberToBN = require('number-to-bn');
 
 require('dotenv').config();
+require('winston-loggly-bulk');
 
 
 class Utilities {
     constructor() {
         this.getLogger();
+    }
+
+    /**
+     * Creates new hash import ID.
+     * @returns {*}
+     */
+    static createImportId() {
+        return soliditySha3(Date.now().toString() + config.node_wallet);
     }
 
     /**
@@ -105,14 +116,20 @@ class Utilities {
         });
     }
 
+    formatFileLogs(args) {
+        const date = moment().format('D/MM/YYYY hh:mm:ss');
+        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
+        return msg;
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        var logLevel = 'trace';
+        const logLevel = 'trace';
 
-        var customColors = {
+        const customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'blue',
@@ -122,9 +139,31 @@ class Utilities {
             error: 'red',
         };
 
-
         try {
-            var logger = new (winston.Logger)({
+            const transports =
+                [
+                    new (winston.transports.Console)({
+                        colorize: 'all',
+                        timestamp: false,
+                        prettyPrint: object => JSON.stringify(object),
+                    }),
+                    new (winston.transports.File)({
+                        filename: 'node.log',
+                        json: false,
+                        formatter: this.formatFileLogs,
+                    }),
+                ];
+
+            if (process.env.SEND_LOGS) {
+                transports.push(new (winston.transports.Loggly)({
+                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
+                    subdomain: 'origintrail.loggly.com',
+                    tags: ['OT-Node'],
+                    json: true,
+                }));
+            }
+
+            const logger = new (winston.Logger)({
                 colors: customColors,
                 level: logLevel,
                 levels: {
@@ -136,33 +175,30 @@ class Utilities {
                     notify: 5,
                     trace: 6,
                 },
-                transports: [
-                    new (winston.transports.Console)({
-                        colorize: 'all',
-                        timestamp: false,
-                    }),
-                    new (winston.transports.File)({ filename: 'node.log' }),
-                ],
+                transports,
             });
             winston.addColors(customColors);
 
             // Extend logger object to properly log 'Error' types
-            var origLog = logger.log;
-
-            logger.log = function (level, msg) {
+            const origLog = logger.log;
+            logger.log = (level, msg) => {
                 if (msg instanceof Error) {
                     // eslint-disable-next-line prefer-rest-params
-                    var args = Array.prototype.slice.call(arguments);
+                    const args = Array.prototype.slice.call(arguments);
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    // eslint-disable-next-line prefer-rest-params
-                    origLog.apply(logger, arguments);
+                    const transformed = KademliaUtils.transformLog(level, msg);
+                    if (!transformed) {
+                        return;
+                    }
+                    origLog.apply(logger, [transformed.level, transformed.msg]);
                 }
             };
             return logger;
         } catch (e) {
-            // console.log(e);
+            console.error('Failed to create logger', e);
+            process.exit(1);
         }
     }
 
@@ -365,50 +401,33 @@ class Utilities {
     }
 
     /**
-     * Get NODE_WALLETs balance in Ether
-     * @return {Promise<any>}
+     * Get wallet's balance in Ether
+     * @param web3 Instance of Web3
+     * @param wallet Address of the wallet.
+     * @returns {Promise<string |  | Object>}
      */
-    static getBalanceInEthers() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.getBalance(config.wallet_address).then((result) => {
-                    const balance = web3.utils.fromWei(result, 'ether');
-                    resolve(balance);
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
-        });
+    static async getBalanceInEthers(web3, wallet) {
+        const result = await web3.eth.getBalance(wallet);
+        return web3.utils.fromWei(result, 'ether');
     }
 
     /**
-     * Get NODE_WALLETs ATRAC token balance in Ether
-     * @return {Promise<any>}
+     * Get wallet's ATRAC token balance in Ether
+     * @param web3 Instance of Web3
+     * @param wallet Address of the wallet.
+     * @param tokenContractAddress Contract address.
+     * @returns {Promise<string |  | Object>}
      */
-    static getAlphaTracTokenBalance() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                const wallet_address_minus0x = (config.wallet_address).substring(2);
-                // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-                var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
-                web3.eth.call({
-                    to: config.token_contract_address,
-                    data: contractData,
-                }).then((result) => {
-                    const tokensInWei = web3.utils.toBN(result).toString();
-                    const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
-                    resolve(tokensInEther);
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
+    static async getAlphaTracTokenBalance(web3, wallet, tokenContractAddress) {
+        const walletDenormalized = this.denormalizeHex(wallet);
+        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
+        const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
+        const result = await web3.eth.call({
+            to: this.normalizeHex(tokenContractAddress),
+            data: contractData,
         });
+        const tokensInWei = web3.utils.toBN(result).toString();
+        return web3.utils.fromWei(tokensInWei, 'ether');
     }
 
     /**
@@ -579,9 +598,11 @@ class Utilities {
                     .then((result) => {
                         resolve(web3.utils.numberToHex(result));
                     }).catch((error) => {
+                        Utilities.getLogger().error(error);
                         reject(error);
                     });
             }).catch((error) => {
+                Utilities.getLogger().error(error);
                 reject(error);
             });
         });
@@ -769,6 +790,112 @@ class Utilities {
         const myBid = hashWallerNodeId.add(price);
         const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
+    }
+
+    static generateRsvSignature(message, web3, privateKey) {
+        const signature = web3.eth.accounts.sign(
+            message,
+            privateKey.toLowerCase().startsWith('0x') ?
+                privateKey : `0x${privateKey}`,
+        );
+
+        return { r: signature.r, s: signature.s, v: signature.v };
+    }
+
+    static isMessageSigned(web3, message, signature) {
+        const signedAddress = web3.eth.accounts.recover(
+            JSON.stringify(message),
+            signature.v,
+            signature.r,
+            signature.s,
+        );
+
+        return signedAddress === message.wallet;
+    }
+
+    /**
+     * Normalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static normalizeHex(number) {
+        if (!number.toLowerCase().startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
+    }
+
+    /**
+     * Denormalizes hex number
+     * @param number     Hex number
+     * @returns {string} Normalized hex number
+     */
+    static denormalizeHex(number) {
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
+    }
+
+    /**
+     * Expands hex number to desired number of digits.
+     *
+     * For example expandHex('3', 4) or expandHex('0x3', 4) will return '0003'
+     * @param number
+     * @param digitCount
+     */
+    static expandHex(number, digitCount) {
+        const hex = this.denormalizeHex(number);
+
+        if (hex.length > digitCount) {
+            throw Error(`Number ${number} has more digits than required.`);
+        }
+
+        return new Array(digitCount - hex.length).join('0') + hex;
+    }
+
+    /**
+     * Validates number property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameter(property) {
+        if (property == null || parseInt(property, 10) > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Validates string property type
+     * @param property
+     * @returns {boolean}
+     */
+    static validateStringParameter(property) {
+        if (property == null || typeof property === 'string') {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Is bootstrap node?
+     * @return {number}
+     */
+    static isBootstrapNode() {
+        return parseInt(config.is_bootstrap_node, 10);
+    }
+
+    /**
+     * Shuffles array in place
+     * @param {Array} a items An array containing the items.
+     */
+    static shuffle(a) {
+        for (let i = a.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
     }
 }
 

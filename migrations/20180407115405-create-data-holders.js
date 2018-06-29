@@ -7,16 +7,48 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
+        import_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         dh_wallet: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         dh_kademlia_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
-        data_public_key: {
+        m1: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
-        data_private_key: {
+        m2: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        e: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        sd: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        r1: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        r2: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        block_number: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+        },
+        block: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
     }),
