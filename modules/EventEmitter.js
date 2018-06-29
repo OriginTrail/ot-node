@@ -477,14 +477,14 @@ class EventEmitter {
             });
             blockchainModel.ot_contract_address = await blockchain.getFingerprintAddress();
             blockchainModel.token_contract_address = await blockchain.getTokenAddress();
-            blockchainModel.bidding_contract_adddress = await blockchain.getBiddingAddress();
+            blockchainModel.bidding_contract_address = await blockchain.getBiddingAddress();
             blockchainModel.escrow_contract_address = await blockchain.getEscrowAddress();
             blockchainModel.reading_contract_address = await blockchain.getReadingAddress();
             await blockchainModel.save({
                 fields: [
                     'ot_contract_address',
                     'token_contract_address',
-                    'bidding_contract_adddress',
+                    'bidding_contract_address',
                     'escrow_contract_address',
                     'reading_contract_address',
                 ],
