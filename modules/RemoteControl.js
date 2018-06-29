@@ -27,10 +27,14 @@ class RemoteControl {
             const regex = /password=([\w0-9-]+)/g;
             const match = regex.exec(request);
 
-            const password = match[1];
-            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-                callback(null, res.value === password);
-            });
+            try {
+                const password = match[1];
+                Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                    callback(null, res.value === password);
+                });
+            } catch (e) {
+                this.log.trace('Wrong pass');
+            }
         });
     }
 
