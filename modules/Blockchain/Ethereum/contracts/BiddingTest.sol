@@ -411,9 +411,10 @@ contract BiddingTest {
 
 	function createProfile(bytes32 node_id, uint price_per_byte_minute, uint stake_per_byte_minute, uint read_stake_factor, uint max_time_in_minutes) public{
 		ProfileDefinition storage this_profile = profile[msg.sender];
-		require(!this_profile.active);
+		// require(!this_profile.active);
 		this_profile.active = true;
 		active_nodes = active_nodes.add(1);
+		if(!this_profile.active) active_nodes = active_nodes.add(1);
 
 		this_profile.token_amount_per_byte_minute = price_per_byte_minute;
 		this_profile.stake_amount_per_byte_minute = stake_per_byte_minute;
