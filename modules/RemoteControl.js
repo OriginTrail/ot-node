@@ -15,6 +15,29 @@ class RemoteControl {
     constructor(ctx) {
         this.network = ctx.network;
         this.graphStorage = ctx.graphStorage;
+        this.blockchain = ctx.blockchain;
+        this.log = ctx.logger;
+        this.config = ctx.config;
+    }
+
+    async updateProfile() {
+        const { identity } = this.config;
+        const profileInfo = await this.blockchain.getProfile(this.config.node_wallet);
+        if (!profileInfo.active) {
+            this.log.info(`Profile hasn't been created for ${identity} yet`);
+            return;
+        }
+
+        this.log.notify(`Profile is being updated for ${identity}. This could take a while...`);
+        await this.blockchain.createProfile(
+            this.config.identity,
+            this.config.dh_price,
+            this.config.dh_stake_factor,
+            this.config.read_stake_factor,
+            this.config.dh_max_time_mins,
+        );
+
+        this.log.notify('Profile successfully updated');
     }
 
     async connect() {
@@ -40,7 +63,9 @@ class RemoteControl {
                 for (var key in data) {
                     Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
                         replacements: [data[key], key],
-                    }).then((res) => {
+                    }).then(async (res) => {
+                        await this.updateProfile();
+                        this.socket.emit('update-complete');
                         this.restartNode();
                     }).catch((err) => {
                         console.log(err);
@@ -234,7 +259,6 @@ class RemoteControl {
                 this.socket.emit('replicated', rows);
             });
     }
-
 
     /**
      * Get wallet balance
