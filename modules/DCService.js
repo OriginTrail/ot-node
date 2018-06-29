@@ -339,7 +339,7 @@ class DCService {
                 importId,
                 kadWallet,
             );
-            this.log.warn('Data successfully verified, preparing to start challenges');
+            this.log.important('Data successfully verified, preparing to start challenges');
             await this.challenger.startChallenging();
 
             await this.network.kademlia().sendVerifyImportResponse({

@@ -751,11 +751,11 @@ class DHService {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
             await this.blockchain.cancelPurchase(importId, wallet, true);
-            this.log.info(`Purchase for import ${importId} canceled.`);
+            this.log.important(`Purchase for import ${importId} canceled.`);
             return;
         }
 
-        this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
+        this.log.important(`[DH] Purchase confirmed for import ID ${importId}`);
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
