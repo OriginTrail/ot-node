@@ -44,7 +44,7 @@ module.exports = {
     },
     {
         key: 'max_token_amount_per_dh',
-        value: '1000',
+        value: '1000000',
     },
     {
         key: 'dh_min_stake_amount',
