@@ -207,14 +207,14 @@ class OTNode {
             process.exit(1);
         }
 
-        // Initialise API
-        this.startRPC(emitter);
-
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+
+        // Initialise API
+        this.startRPC(emitter);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);

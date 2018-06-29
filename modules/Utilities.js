@@ -879,15 +879,23 @@ class Utilities {
     }
 
     /**
-     * Is node a bootstrap node
-     * @return {boolean}
+     * Is bootstrap node?
+     * @return {number}
      */
     static isBootstrapNode() {
-        const bootstrapNodes = config.network_bootstrap_nodes;
-        if (bootstrapNodes) {
-            return bootstrapNodes.length === 0;
+        return parseInt(config.is_bootstrap_node, 10);
+    }
+
+    /**
+     * Shuffles array in place
+     * @param {Array} a items An array containing the items.
+     */
+    static shuffle(a) {
+        for (let i = a.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return true;
+        return a;
     }
 }
 
