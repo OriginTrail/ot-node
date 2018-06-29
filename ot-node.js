@@ -206,6 +206,13 @@ class OTNode {
             process.exit(1);
         }
 
+        // Fetching Houston access password
+        models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+            log.notify('================================================================');
+            log.notify(`Houston password: ${res.value}`);
+            log.notify('================================================================');
+        });
+
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');

@@ -19,6 +19,19 @@ class RemoteControl {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.web3 = ctx.web3;
+
+
+        remote.set('authorization', (handshakeData, callback) => {
+            const request = handshakeData;
+
+            const regex = /password=([\w0-9-]+)/g;
+            const match = regex.exec(request);
+
+            const password = match[1];
+            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                callback(null, res.value === password);
+            });
+        });
     }
 
     async updateProfile() {
@@ -273,7 +286,6 @@ class RemoteControl {
             this.socket.emit('trac_balance', trac);
         });
         web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
-            console.log('Balance ' - balance);
             this.socket.emit('balance', balance);
         });
     }
