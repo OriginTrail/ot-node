@@ -377,7 +377,6 @@ class EventEmitter {
         const {
             dhService,
             logger,
-            blockchain,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -466,30 +465,6 @@ class EventEmitter {
 
         this.blockchainEmitter.on('eth-bid-taken', (event) => {
             logger.info('eth-bid-taken');
-        });
-
-        this.blockchainEmitter.on('eth-ContractsChanged', async (eventData) => {
-            logger.trace('eth-ContractsChanged');
-            const blockchainModel = await Models.blockchain_data.findOne({
-                where: {
-                    id: 1,
-                },
-            });
-            blockchainModel.ot_contract_address = await blockchain.getFingerprintAddress();
-            blockchainModel.token_contract_address = await blockchain.getTokenAddress();
-            blockchainModel.bidding_contract_adddress = await blockchain.getEscrowAddress();
-            blockchainModel.escrow_contract_address = await blockchain.getBiddingAddress();
-            blockchainModel.reading_contract_address = await blockchain.getReadingAddress();
-            await blockchainModel.save({
-                fields: [
-                    'ot_contract_address',
-                    'token_contract_address',
-                    'bidding_contract_adddress',
-                    'escrow_contract_address',
-                    'reading_contract_address',
-                ],
-            });
-            blockchain.initialize();
         });
 
         this.blockchainEmitter.on('eth-LitigationInitiated', async (eventData) => {
