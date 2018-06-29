@@ -10,11 +10,7 @@ const MerkleTree = require('./Merkle');
 const ImportUtilities = require('./ImportUtilities');
 
 const { Op } = Models.Sequelize;
-let totalEscrowTime = 10 * 60 * 1000;
 const finalizeWaitTime = 10 * 60 * 1000;
-let minStakeAmount = new BN('100');
-let maxTokenAmount = new BN('1000000');
-let minReputation = 0;
 /**
  * DC operations (handling new offers, etc.)
  */
@@ -73,6 +69,11 @@ class DCService {
 
         const dhIds = [];
         const dhWallets = [];
+
+        let totalEscrowTime = config.total_escrow_time_in_minutes;
+        let maxTokenAmount = config.max_token_amount_per_dh;
+        let minStakeAmount = config.dh_min_stake_amount;
+        let minReputation = config.dh_min_reputation;
 
         if (total_escrow_time) {
             totalEscrowTime = total_escrow_time;

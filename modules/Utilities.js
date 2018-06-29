@@ -877,10 +877,8 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || typeof property === 'number') {
-            if (property > 0) {
-                return true;
-            }
+        if (property == null || (typeof property === 'number' && parseInt(property, 10) > 0)) {
+            return true;
         }
         return false;
     }
