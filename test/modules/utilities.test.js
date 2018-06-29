@@ -30,7 +30,7 @@ describe('Utilities module', () => {
                 'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
                 'dh_min_price', 'dh_max_price', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
                 'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
-                'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_minutes', 'is_bootstrap_node'],
+                'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_minutes', 'is_bootstrap_node', 'houston_password'],
             'Some config items are missing in node_config',
         );
     });
