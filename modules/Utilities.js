@@ -401,50 +401,33 @@ class Utilities {
     }
 
     /**
-     * Get NODE_WALLETs balance in Ether
-     * @return {Promise<any>}
+     * Get wallet's balance in Ether
+     * @param web3 Instance of Web3
+     * @param wallet Address of the wallet.
+     * @returns {Promise<string |  | Object>}
      */
-    static getBalanceInEthers() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.getBalance(config.wallet_address).then((result) => {
-                    const balance = web3.utils.fromWei(result, 'ether');
-                    resolve(balance);
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
-        });
+    static async getBalanceInEthers(web3, wallet) {
+        const result = await web3.eth.getBalance(wallet);
+        return web3.utils.fromWei(result, 'ether');
     }
 
     /**
-     * Get NODE_WALLETs ATRAC token balance in Ether
-     * @return {Promise<any>}
+     * Get wallet's ATRAC token balance in Ether
+     * @param web3 Instance of Web3
+     * @param wallet Address of the wallet.
+     * @param tokenContractAddress Contract address.
+     * @returns {Promise<string |  | Object>}
      */
-    static getAlphaTracTokenBalance() {
-        return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                const wallet_address_minus0x = (config.wallet_address).substring(2);
-                // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
-                var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
-                web3.eth.call({
-                    to: config.token_contract_address,
-                    data: contractData,
-                }).then((result) => {
-                    const tokensInWei = web3.utils.toBN(result).toString();
-                    const tokensInEther = web3.utils.fromWei(tokensInWei, 'ether');
-                    resolve(tokensInEther);
-                }).catch((error) => {
-                    reject(error);
-                });
-            }).catch((error) => {
-                reject(error);
-            });
+    static async getAlphaTracTokenBalance(web3, wallet, tokenContractAddress) {
+        const walletDenormalized = this.denormalizeHex(wallet);
+        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
+        const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
+        const result = await web3.eth.call({
+            to: this.normalizeHex(tokenContractAddress),
+            data: contractData,
         });
+        const tokensInWei = web3.utils.toBN(result).toString();
+        return web3.utils.fromWei(tokensInWei, 'ether');
     }
 
     /**
@@ -896,15 +879,23 @@ class Utilities {
     }
 
     /**
-     * Is node a bootstrap node
-     * @return {boolean}
+     * Is bootstrap node?
+     * @return {number}
      */
     static isBootstrapNode() {
-        const bootstrapNodes = config.network_bootstrap_nodes;
-        if (bootstrapNodes) {
-            return bootstrapNodes.length === 0;
+        return parseInt(config.is_bootstrap_node, 10);
+    }
+
+    /**
+     * Shuffles array in place
+     * @param {Array} a items An array containing the items.
+     */
+    static shuffle(a) {
+        for (let i = a.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return true;
+        return a;
     }
 }
 

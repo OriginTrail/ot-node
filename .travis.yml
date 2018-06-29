@@ -30,7 +30,6 @@ script:
   # make sure previous deamon is really terminated
   - jobs
   - kill $(lsof -t -i:8900)
-  - node isStartHealthy.js arangodb
   # switches graph database in .env
   - node switchDatabase.js
   # checks for neo4j based solution
@@ -39,7 +38,6 @@ script:
   - sleep 10
   - jobs
   - kill %1
-  - node isStartHealthy.js neo4jdb
   # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
   - cd modules/Blockchain/Ethereum
