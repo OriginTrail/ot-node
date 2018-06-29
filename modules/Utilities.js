@@ -896,15 +896,15 @@ class Utilities {
     }
 
     /**
-     * Is node a bootstrap node
-     * @return {boolean}
+     * Shuffles array in place
+     * @param {Array} a items An array containing the items.
      */
-    static isBootstrapNode() {
-        const bootstrapNodes = config.network_bootstrap_nodes;
-        if (bootstrapNodes) {
-            return bootstrapNodes.length === 0;
+    static shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
         }
-        return true;
+        return a;
     }
 }
 

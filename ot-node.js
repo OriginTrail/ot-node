@@ -75,7 +75,7 @@ class OTNode {
             process.exit(1);
         }
 
-        if (Utilities.isBootstrapNode()) {
+        if (config.is_bootstrap_node) {
             await this.startBootstrapNode();
             this.startRPC();
             return;
@@ -367,7 +367,7 @@ class OTNode {
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
-        if (!Utilities.isBootstrapNode()) {
+        if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
             this.exposeAPIRoutes(server, emitter);
         }
