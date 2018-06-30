@@ -286,7 +286,7 @@ class DHService {
         this.log.trace('[DH] Replication finished');
 
         try {
-            const encryptedVertices = importResult.vertices;
+            const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
             ImportUtilities.sort(encryptedVertices);
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
