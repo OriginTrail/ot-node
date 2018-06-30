@@ -322,7 +322,7 @@ class DHService {
             // Store holding information and generate keys for eventual
             // data replication.
             const holdingData = await Models.holding_data.create({
-                id: importResult.import_Id,
+                id: importResult.import_id,
                 source_wallet: bid.dc_wallet,
                 data_public_key: data.public_key,
                 distribution_public_key: keyPair.privateKey,
