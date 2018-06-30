@@ -15,6 +15,43 @@ class RemoteControl {
     constructor(ctx) {
         this.network = ctx.network;
         this.graphStorage = ctx.graphStorage;
+        this.blockchain = ctx.blockchain;
+        this.log = ctx.logger;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
+
+
+        remote.set('authorization', (handshakeData, callback) => {
+            const request = handshakeData;
+
+            const regex = /password=([\w0-9-]+)/g;
+            const match = regex.exec(request);
+
+            const password = match[1];
+            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                callback(null, res.value === password);
+            });
+        });
+    }
+
+    async updateProfile() {
+        const { identity } = this.config;
+        const profileInfo = await this.blockchain.getProfile(this.config.node_wallet);
+        if (!profileInfo.active) {
+            this.log.info(`Profile hasn't been created for ${identity} yet`);
+            return;
+        }
+
+        this.log.notify(`Profile is being updated for ${identity}. This could take a while...`);
+        await this.blockchain.createProfile(
+            this.config.identity,
+            this.config.dh_price,
+            this.config.dh_stake_factor,
+            this.config.read_stake_factor,
+            this.config.dh_max_time_mins,
+        );
+
+        this.log.notify('Profile successfully updated');
     }
 
     async connect() {
@@ -37,15 +74,17 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', (data) => {
+                let query = '';
                 for (var key in data) {
-                    Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
-                        replacements: [data[key], key],
-                    }).then((res) => {
-                        this.restartNode();
-                    }).catch((err) => {
-                        console.log(err);
-                    });
+                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
                 }
+                Storage.db.query(query).then(async (res) => {
+                    await this.updateProfile();
+                    this.socket.emit('update-complete');
+                    this.restartNode();
+                }).catch((err) => {
+                    console.log(err);
+                });
             });
 
             this.socket.on('get-imports', () => {
@@ -235,17 +274,18 @@ class RemoteControl {
             });
     }
 
-
     /**
      * Get wallet balance
      * @param wallet
      */
     getBalance() {
-        Utilities.getAlphaTracTokenBalance().then((trac) => {
+        Utilities.getAlphaTracTokenBalance(
+            this.web3, process.env.NODE_WALLET,
+            this.config.blockchain.token_contract_address,
+        ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
         web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
-            console.log('Balance ' - balance);
             this.socket.emit('balance', balance);
         });
     }

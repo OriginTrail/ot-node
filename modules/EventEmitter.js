@@ -55,6 +55,27 @@ class EventEmitter {
             });
         });
 
+        this.apiEmitter.on('network-query-responses', async (data) => {
+            const { query_id } = data;
+
+            let responses = await Models.network_query_responses.findAll({
+                where: {
+                    query_id,
+                },
+            });
+
+            responses = responses.map(response => ({
+                imports: JSON.parse(response.imports),
+                data_size: response.data_size,
+                data_price: response.data_price,
+                stake_factor: response.stake_factor,
+                reply_id: response.reply_id,
+            }));
+
+            data.response.status(200);
+            data.response.send(responses);
+        });
+
         this.apiEmitter.on('trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
@@ -328,14 +349,7 @@ class EventEmitter {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = uuidv4();
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                });
-
-                dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     import_id,
                     dataimport.root_hash,
                     dataimport.total_documents,
@@ -344,8 +358,12 @@ class EventEmitter {
                     max_token_amount,
                     min_stake_amount,
                     min_reputation,
-                    replicationId,
                 );
+
+                data.response.status(201);
+                data.response.send({
+                    replication_id: replicationId,
+                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
