@@ -75,11 +75,11 @@ class DHService {
                 return;
             }
 
-            const holdingData = await Models.holding_data.findOne({
-                where: { root_hash: dataHash },
+            const dataInfo = await Models.data_info.findOne({
+                where: { import_id: importId },
             });
-            if (holdingData) {
-                this.log.trace(`I've already stored data for root hash ${dataHash}. Ignoring.`);
+            if (dataInfo) {
+                this.log.trace(`I've already stored data for import ID ${importId}. Ignoring.`);
                 return;
             }
 
