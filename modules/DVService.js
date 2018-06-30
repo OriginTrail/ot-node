@@ -244,7 +244,8 @@ class DVService {
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         // Calculate root hash and check is it the same on the SC.
-        const { vertices, edges, data_provider_wallet } = message.encryptedData;
+        const { data_provider_wallet } = message;
+        const { vertices, edges } = message.encryptedData;
         const dhWallet = message.wallet;
 
         const escrow = await this.blockchain.getEscrow(importId, message.wallet);
