@@ -14,8 +14,10 @@ class PeerCache {
         this.node.router.events.on('add', (identity) => {
             this.node.logger.debug(`updating peer profile ${identity}`);
             const contact = this.node.router.getContactByNodeId(identity);
-            contact.timestamp = Date.now();
-            this._setExternalPeerInfo(identity, contact);
+            if (contact != null) {
+                contact.timestamp = Date.now();
+                this._setExternalPeerInfo(identity, contact);
+            }
         });
     }
 
