@@ -8,31 +8,23 @@ module.exports = {
             type: Sequelize.STRING,
         },
         source_wallet: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
         data_public_key: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
         distribution_public_key: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
         distribution_private_key: {
             allowNull: true, // Only DH who got data from DC have it.
             type: Sequelize.STRING,
         },
-        root_hash: {
-            allowNull: true,
-            type: Sequelize.STRING,
-        },
         epk: {
-            allowNull: true,
-            type: Sequelize.STRING,
-        },
-        data_provider_wallet: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
     }),

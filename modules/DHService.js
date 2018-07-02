@@ -75,11 +75,11 @@ class DHService {
                 return;
             }
 
-            const holdingData = await Models.holding_data.findOne({
-                where: { root_hash: dataHash },
+            const dataInfo = await Models.data_info.findOne({
+                where: { import_id: importId },
             });
-            if (holdingData) {
-                this.log.trace(`I've already stored data for root hash ${dataHash}. Ignoring.`);
+            if (dataInfo) {
+                this.log.trace(`I've already stored data for import ID ${importId}. Ignoring.`);
                 return;
             }
 
@@ -256,29 +256,37 @@ class DHService {
             return;
         }
         const bid = bidModel.get({ plain: true });
+        let importResult;
         try {
-            await this.importer.importJSON(data);
+            importResult = await this.importer.importJSON({
+                import_id: data.import_id,
+                vertices: data.vertices,
+                edges: data.edges,
+                wallet: data.dc_wallet,
+            });
+
+            if (importResult.error) {
+                throw Error(importResult.error);
+            }
+
+            importResult = importResult.response;
+
+            await Models.data_info.create({
+                import_id: importResult.import_id,
+                total_documents: importResult.vertices.length,
+                root_hash: importResult.root_hash,
+                data_provider_wallet: importResult.wallet,
+                import_timestamp: new Date(),
+            });
         } catch (err) {
-            this.log.warn(`Failed to import JSON successfully. ${err}.`);
+            this.log.warn(`Failed to import JSON. ${err}.`);
             return;
         }
-
-        data.edges = Graph.sortVertices(data.edges);
-        data.vertices = Graph.sortVertices(data.vertices);
-        data.vertices = data.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-
-        const merkle = await ImportUtilities.merkleStructure(
-            data.vertices,
-            data.edges,
-        );
-
-        const rootHash = merkle.tree.getRoot();
-        this.log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
 
         this.log.trace('[DH] Replication finished');
 
         try {
-            const encryptedVertices = data.vertices;
+            const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
             ImportUtilities.sort(encryptedVertices);
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
@@ -296,7 +304,7 @@ class DHService {
 
             const distributionMerkle = await ImportUtilities.merkleStructure(
                 decryptedVertices,
-                data.edges,
+                importResult.edges,
             );
             const distributionHash = distributionMerkle.tree.getRoot();
 
@@ -305,7 +313,7 @@ class DHService {
 
             this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
-                data.import_id,
+                importResult.import_id,
                 litigationRootHash,
                 distributionHash,
                 Utilities.normalizeHex(epkChecksum),
@@ -314,13 +322,11 @@ class DHService {
             // Store holding information and generate keys for eventual
             // data replication.
             const holdingData = await Models.holding_data.create({
-                id: data.import_id,
+                id: importResult.import_id,
                 source_wallet: bid.dc_wallet,
                 data_public_key: data.public_key,
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
-                root_hash: data.root_hash,
-                data_provider_wallet: data.data_provider_wallet,
                 epk,
             });
 
@@ -331,7 +337,7 @@ class DHService {
             this.log.important('Replication finished. Send data to DC for verification.');
             await this.network.kademlia().verifyImport({
                 epk,
-                importId: data.import_id,
+                importId: importResult.import_id,
                 encryptionKey: keyPair.privateKey,
             }, bid.dc_id);
         } catch (error) {
@@ -566,11 +572,21 @@ class DHService {
             }
              */
 
+            const dataInfo = await Models.data_info.findOne({
+                where: {
+                    import_id: importId,
+                },
+            });
+
+            if (!dataInfo) {
+                throw Error(`Failed to get data info for import ID ${importId}.`);
+            }
+
             const replyMessage = {
                 id,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: holdingDataModel.data_provider_wallet,
+                data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
                     vertices,
