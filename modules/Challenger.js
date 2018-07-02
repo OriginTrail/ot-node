@@ -5,6 +5,8 @@ const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 
+const { Op } = Models.Sequelize;
+
 const intervalMs = 1500;
 
 class Challenger {
@@ -15,9 +17,16 @@ class Challenger {
         this.graphStorage = ctx.graphStorage;
     }
 
-    startChallenging() {
-        if (this.timerId === undefined) {
-            // TODO doktor: temp solution to delay.
+    async startChallenging() {
+        const activeChallegesCount = await Models.replicated_data.findAndCountAll({
+            where: {
+                status: {
+                    [Op.in]: ['ACTIVE', 'TESTING'],
+                },
+            },
+        });
+        if (activeChallegesCount.count > 0 && this.timerId === undefined) {
+            // TODO: temp solution to delay.
             // Should be started after replication-finished received.
             setTimeout(() => {
                 setInterval(this.intervalFunc, intervalMs, this, this.log);
@@ -37,7 +46,7 @@ class Challenger {
     sendChallenge(challenge) {
         Models.replicated_data.findOne({
             where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
-        }).then((replicatedData) => {
+        }).then(async (replicatedData) => {
             if (replicatedData.status === 'ACTIVE') {
                 replicatedData.status = 'TESTING';
                 replicatedData.save({ fields: ['status'] });
@@ -50,7 +59,7 @@ class Challenger {
                         import_id: challenge.import_id,
                     },
                 };
-                this.network.kademlia().challengeRequest(
+                await this.network.kademlia().challengeRequest(
                     payload, challenge.dh_id,
                     (error, response) => {
                         if (error) {
@@ -91,7 +100,7 @@ class Challenger {
      * @return {Promise<void>}
      */
     async initiateLitigation(challenge) {
-        const contact = this.network.kademlia().getContact(challenge.dh_id);
+        const contact = await this.network.kademlia().getContact(challenge.dh_id);
 
         const dhId = challenge.dh_id;
         const dhWallet = contact.wallet;

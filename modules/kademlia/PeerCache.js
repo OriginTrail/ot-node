@@ -14,8 +14,32 @@ class PeerCache {
         this.node.router.events.on('add', (identity) => {
             this.node.logger.debug(`updating peer profile ${identity}`);
             const contact = this.node.router.getContactByNodeId(identity);
-            contact.timestamp = Date.now();
-            this._setExternalPeerInfo(identity, contact);
+            if (contact != null) {
+                contact.timestamp = Date.now();
+                this._setExternalPeerInfo(identity, contact);
+            }
+        });
+    }
+
+    /**
+     * Gets the external peer data for the given identity
+     * @param {string} identity - Identity key for the peer
+     * @returns {object}
+     */
+    getExternalPeerInfo(identity) {
+        return new Promise((resolve, reject) => {
+            this.db.findOne({ _id: identity }, (err, doc) => {
+                if (err) {
+                    reject(err);
+                } else if (doc == null) {
+                    resolve(null);
+                } else {
+                    resolve(KadenceUtils.getContactURL([
+                        doc._id,
+                        doc.contact,
+                    ]));
+                }
+            });
         });
     }
 

@@ -294,4 +294,3 @@ module.exports = (deployer, network, accounts) => {
         break;
     }
 };
-

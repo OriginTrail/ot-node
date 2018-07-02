@@ -5,12 +5,53 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
+const Web3 = require('web3');
+const Utilities = require('./Utilities');
+
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
 
 class RemoteControl {
     constructor(ctx) {
         this.network = ctx.network;
         this.graphStorage = ctx.graphStorage;
+        this.blockchain = ctx.blockchain;
+        this.log = ctx.logger;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
+
+
+        remote.set('authorization', (handshakeData, callback) => {
+            const request = handshakeData;
+
+            const regex = /password=([\w0-9-]+)/g;
+            const match = regex.exec(request);
+
+            const password = match[1];
+            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                callback(null, res.value === password);
+            });
+        });
+    }
+
+    async updateProfile() {
+        const { identity } = this.config;
+        const profileInfo = await this.blockchain.getProfile(this.config.node_wallet);
+        if (!profileInfo.active) {
+            this.log.info(`Profile hasn't been created for ${identity} yet`);
+            return;
+        }
+
+        this.log.notify(`Profile is being updated for ${identity}. This could take a while...`);
+        await this.blockchain.createProfile(
+            this.config.identity,
+            this.config.dh_price,
+            this.config.dh_stake_factor,
+            this.config.read_stake_factor,
+            this.config.dh_max_time_mins,
+        );
+
+        this.log.notify('Profile successfully updated');
     }
 
     async connect() {
@@ -33,15 +74,17 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', (data) => {
+                let query = '';
                 for (var key in data) {
-                    Storage.db.query('UPDATE node_config SET value = ? WHERE key = ?', {
-                        replacements: [data[key], key],
-                    }).then((res) => {
-                        this.restartNode();
-                    }).catch((err) => {
-                        console.log(err);
-                    });
+                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
                 }
+                Storage.db.query(query).then(async (res) => {
+                    await this.updateProfile();
+                    this.socket.emit('update-complete');
+                    this.restartNode();
+                }).catch((err) => {
+                    console.log(err);
+                });
             });
 
             this.socket.on('get-imports', () => {
@@ -62,6 +105,18 @@ class RemoteControl {
 
             this.socket.on('set-bootstraps', (bootstrapNodes) => {
                 this.setBootstraps(bootstrapNodes);
+            });
+
+            this.socket.on('get-balance', () => {
+                this.getBalance();
+            });
+
+            this.socket.on('get-holding', () => {
+                this.getHoldingData();
+            });
+
+            this.socket.on('get-replicated', () => {
+                this.getReplicatedData();
             });
         });
     }
@@ -164,7 +219,7 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit();
+            process.exit(2);
         }, 5000);
     }
 
@@ -196,6 +251,42 @@ class RemoteControl {
             },
         }).then(() => {
             this.restartNode();
+        });
+    }
+
+    /**
+     * Get holding data
+     */
+    getHoldingData() {
+        Models.holding_data.findAll()
+            .then((rows) => {
+                this.socket.emit('holding', rows);
+            });
+    }
+
+    /**
+     * Get replicated data
+     */
+    getReplicatedData() {
+        Models.replicated_data.findAll()
+            .then((rows) => {
+                this.socket.emit('replicated', rows);
+            });
+    }
+
+    /**
+     * Get wallet balance
+     * @param wallet
+     */
+    getBalance() {
+        Utilities.getAlphaTracTokenBalance(
+            this.web3, process.env.NODE_WALLET,
+            this.config.blockchain.token_contract_address,
+        ).then((trac) => {
+            this.socket.emit('trac_balance', trac);
+        });
+        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+            this.socket.emit('balance', balance);
         });
     }
 }
