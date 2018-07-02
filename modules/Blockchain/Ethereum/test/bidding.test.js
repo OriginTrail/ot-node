@@ -69,7 +69,6 @@ contract('Bidding testing', async (accounts) => {
         const util = await TestingUtilities.deployed();
 
         for (var i = 0; i < 10; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
             const response = await util.keccakSender.call({ from: accounts[i] });
             node_id.push(response);
         }
@@ -348,7 +347,6 @@ contract('Bidding testing', async (accounts) => {
         await Promise.all(promises);
 
         for (i = 0; i < chosen_bids.length; i += 1) {
-            // eslint-disable-next-line
             var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
@@ -475,7 +473,6 @@ contract('Bidding testing', async (accounts) => {
         await Promise.all(promises);
 
         for (i = 0; i < litigators.length; i += 1) {
-            // eslint-disable-next-line
             var response = await escrow.litigation.call(import_id, accounts[litigators[i]]);
             console.log(`\t litigation for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
@@ -577,8 +574,7 @@ contract('Bidding testing', async (accounts) => {
             assert.equal(status, 'completed', "Escrow wasn't completed");
         }
         for (i = 0; i < chosen_bids.length; i += 1) {
-            // eslint-disable-next-line
-            var response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
+            response = await escrow.escrow.call(import_id, accounts[chosen_bids[i]]);
             console.log(`\t escrow for profile ${chosen_bids[i]}: ${JSON.stringify(response)}`);
         }
     });
