@@ -122,6 +122,10 @@ class RemoteControl {
             this.socket.on('get-replicated', () => {
                 this.getReplicatedData();
             });
+
+            this.socket.on('get-network-query-responses', (queryId) => {
+                this.getNetworkQueryResponses(queryId);
+            });
         });
     }
 
@@ -292,6 +296,28 @@ class RemoteControl {
         web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
             this.socket.emit('balance', balance);
         });
+    }
+
+    /**
+     * Get network query responses
+     */
+    getNetworkQueryResponses(queryId) {
+        const interval = setInterval(() => {
+            Models.network_query_responses.findAll({
+                where: {
+                    query_id: queryId,
+                },
+            })
+                .then((rows) => {
+                    console.log(rows);
+                    if (rows.length > 0) {
+                        this.socket.emit('networkQueryResponses', rows);
+                        clearInterval(interval);
+                    }
+                }).catch((e) => {
+
+                });
+        }, 15000);
     }
 }
 
