@@ -1,7 +1,6 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
@@ -458,6 +457,9 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            blockchain,
+            config,
+            timeUtils,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -576,6 +578,49 @@ class EventEmitter {
             if (config.node_wallet === DH_wallet) {
                 // the node is DH
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
+            }
+        });
+
+        this.blockchainEmitter.on('eth-EscrowVerified', async (eventData) => {
+            logger.trace('Received eth-EscrowVerified');
+            const {
+                import_id,
+                DH_wallet,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // Event is for me.
+                try {
+                    // TODO: Possible race condition if another bid for same import came meanwhile.
+                    const bid = await Models.bids.findOne({
+                        where: {
+                            import_id,
+                        },
+                        order: [
+                            ['id', 'DESC'],
+                        ],
+                    });
+
+                    if (!bid) {
+                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
+                        return;
+                    }
+
+                    new Promise(async (accept, reject) => {
+                        logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
+                        timeUtils.wait(bid.total_escrow_time);
+
+                        try {
+                            await blockchain.payOut(DH_wallet, import_id);
+                        } catch (error) {
+                            reject(Error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`));
+                        }
+                        logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
+                        accept();
+                    }).catch(error => logger.error(error));
+                } catch (error) {
+                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
+                }
             }
         });
     }
