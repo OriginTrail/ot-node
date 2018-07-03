@@ -1,11 +1,9 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
-const uuidv4 = require('uuid/v4');
 
 const events = require('events');
 
@@ -415,6 +413,8 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            blockchain,
+            config,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -533,6 +533,25 @@ class EventEmitter {
             if (config.node_wallet === DH_wallet) {
                 // the node is DH
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
+            }
+        });
+
+        this.blockchainEmitter.on('eth-EscrowVerified', async (eventData) => {
+            const {
+                import_id,
+                DH_wallet,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // Event is for me.
+                logger.trace(`Escrow verified for import ID ${import_id}. Withdrawing money...`);
+                try {
+                    await blockchain.payOut(DH_wallet, import_id);
+                } catch (error) {
+                    logger.error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`);
+                    return;
+                }
+                logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
             }
         });
     }

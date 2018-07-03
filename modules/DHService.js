@@ -1016,7 +1016,13 @@ class DHService {
     }
 
     listenToBlockchainEvents() {
-        this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated', 'LitigationInitiated', 'LitigationCompleted']);
+        this.blockchain.subscribeToEventPermanent([
+            'AddedPredeterminedBid',
+            'OfferCreated',
+            'LitigationInitiated',
+            'LitigationCompleted',
+            'EscrowVerified',
+        ]);
     }
 }
 
