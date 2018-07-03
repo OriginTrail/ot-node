@@ -6,7 +6,7 @@
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender><!-- Mandatory -->
 				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-				<sbdh:Identifier Authority="OriginTrail">SENDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company _1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				
@@ -39,10 +39,11 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
-							<VocabularyElement id="urn:ot:object:actor:id:Company_1">
+							<VocabularyElement id="urn:ot:object:actor:id:Company _1">
 								<attribute id="urn:ot:object:actor:name">Company _1</attribute>
 								<attribute id="urn:ot:object:actor:category">Company</attribute>
-						    </VocabularyElement>																		
+								<attribute id="urn:ot:object:actor:wallet">0xFfDDAd75D40602B78C0649032D2532dEFa23A4C8</attribute>
+							</VocabularyElement>
 						</VocabularyElementList>			
 					</Vocabulary>		
 
@@ -52,7 +53,7 @@
 								<attribute id="urn:ot:object:location:category">Building _1</attribute>
 								<attribute id="urn:ot:object:location:description">Description of building _1</attribute>
 								<extension>
-									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_1</attribute>
+									<attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company _1</attribute>
 								</extension>
 							</VocabularyElement>
 						</VocabularyElementList>
