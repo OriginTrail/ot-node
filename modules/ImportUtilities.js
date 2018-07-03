@@ -78,6 +78,18 @@ class ImportUtilities {
         }
         return true;
     }
+
+    /**
+     * Deletes internal vertex data
+     * @param vertices
+     */
+    static deleteInternal(vertices) {
+        for (const vertex of vertices) {
+            delete vertex.imports;
+            delete vertex.private;
+            delete vertex.version;
+        }
+    }
 }
 
 module.exports = ImportUtilities;

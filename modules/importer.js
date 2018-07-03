@@ -76,6 +76,7 @@ class Importer {
         } = json_document;
 
         this.log.trace('Vertex importing');
+        ImportUtilities.deleteInternal(vertices);
 
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
