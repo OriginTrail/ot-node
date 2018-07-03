@@ -21,7 +21,7 @@ before_script:
   - npm install -g truffle &> /dev/null
 script:
   - npm run lint
-  # checks for angangodb based solution
+  # checks for arangodb based solution
   - npm test 2> mocha-logs.log
   - npm start &>arangodb.log &
   - sleep 10
@@ -41,8 +41,8 @@ script:
   # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
   - cd modules/Blockchain/Ethereum
-  - truffle test --network test > truffle-test.log
-  - rm -rf build && truffle migrate --reset --compile-all --network ganache > truffle-migrate.log
+  - truffle test --network test > ../../../truffle-test.log
+  - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log
   - cd ../../../
   - jobs
   - kill %1
