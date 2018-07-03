@@ -59,7 +59,6 @@ class EventEmitter {
             throw new Error(`Invalid event prefix for ${event}. Event name convention is PREFIX-EVENT`);
         }
         const key = event.split('-')[0];
-
         if (!this._MAPPINGS[key]) {
             this._MAPPINGS[key] = {
                 EVENTS: [],
@@ -69,9 +68,7 @@ class EventEmitter {
 
         const eventMapping = this._MAPPINGS[key];
         eventMapping.EVENTS.push(event);
-
         const emitterIndex = Math.floor(eventMapping.EVENTS.length / this._MAX_LISTENERS);
-
         if (eventMapping.EMITTERS.length < emitterIndex + 1) {
             const emitter = new events.EventEmitter();
             emitter.setMaxListeners(this._MAX_LISTENERS);
