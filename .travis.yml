@@ -29,7 +29,7 @@ script:
   - kill %1
   # make sure previous deamon is really terminated
   - jobs
-  - kill $(lsof -t -i:8900)
+  #  - kill $(lsof -t -i:8900)
   # switches graph database in .env
   - node switchDatabase.js
   # checks for neo4j based solution
