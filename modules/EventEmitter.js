@@ -415,6 +415,7 @@ class EventEmitter {
             logger,
             blockchain,
             config,
+            timeUtils,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
@@ -537,6 +538,7 @@ class EventEmitter {
         });
 
         this.blockchainEmitter.on('eth-EscrowVerified', async (eventData) => {
+            logger.trace('Received eth-EscrowVerified');
             const {
                 import_id,
                 DH_wallet,
@@ -544,14 +546,37 @@ class EventEmitter {
 
             if (config.node_wallet === DH_wallet) {
                 // Event is for me.
-                logger.trace(`Escrow verified for import ID ${import_id}. Withdrawing money...`);
                 try {
-                    await blockchain.payOut(DH_wallet, import_id);
+                    // TODO: Possible race condition if another bid for same import came meanwhile.
+                    const bid = await Models.bids.findOne({
+                        where: {
+                            import_id,
+                        },
+                        order: [
+                            ['id', 'DESC'],
+                        ],
+                    });
+
+                    if (!bid) {
+                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
+                        return;
+                    }
+
+                    new Promise(async (accept, reject) => {
+                        logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
+                        timeUtils.wait(bid.total_escrow_time);
+
+                        try {
+                            await blockchain.payOut(DH_wallet, import_id);
+                        } catch (error) {
+                            reject(Error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`));
+                        }
+                        logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
+                        accept();
+                    }).catch(error => logger.error(error));
                 } catch (error) {
-                    logger.error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`);
-                    return;
+                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
                 }
-                logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
             }
         });
     }
