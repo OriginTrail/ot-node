@@ -1,11 +1,11 @@
-/* eslint-disable no-undef,no-await-in-loop */
+/* eslint-disable no-undef,no-await-in-loop,no-console */
 const { assert, expect } = require('chai');
 
-var TestingUtilities = artifacts.require('./TestingUtilities.sol');
-var TracToken = artifacts.require('./TracToken.sol');
-var EscrowHolder = artifacts.require('./EscrowHolder.sol');
-var Bidding = artifacts.require('./BiddingTest.sol');
-var Reading = artifacts.require('./Reading.sol');
+var TestingUtilities = artifacts.require('TestingUtilities');
+var TracToken = artifacts.require('TracToken');
+var EscrowHolder = artifacts.require('EscrowHolder');
+var Bidding = artifacts.require('BiddingTest');
+var Reading = artifacts.require('Reading');
 
 var Web3 = require('web3');
 
@@ -34,31 +34,36 @@ var DH_read_factor = [];
 contract('Bidding testing', async (accounts) => {
     it('Should get TracToken contract', async () => {
         await TracToken.deployed().then((res) => {
-            console.log(`\t TracToken address: ${res.address}`);
+            assert.isTrue(Web3.utils.isAddress(res.address), 'TracToken should be a valid address');
+            // console.log(`\t TracToken address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
     it('Should get Escrow contract', async () => {
         await EscrowHolder.deployed().then((res) => {
-            console.log(`\t Escrow address: ${res.address}`);
+            assert.isTrue(Web3.utils.isAddress(res.address), 'Escrow should be a valid address');
+            // console.log(`\t Escrow address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
     it('Should get Bidding contract', async () => {
         await Bidding.deployed().then((res) => {
-            console.log(`\t Bidding address: ${res.address}`);
+            assert.isTrue(Web3.utils.isAddress(res.address), 'Bidding should be a valid address');
+            // console.log(`\t Bidding address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
     it('Should get Reading contract', async () => {
         await Reading.deployed().then((res) => {
-            console.log(`\t Reading address: ${res.address}`);
+            assert.isTrue(Web3.utils.isAddress(res.address), 'Reading should be a valid address');
+            // console.log(`\t Reading address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
     it('Should get TestingUtilities contract', async () => {
         await TestingUtilities.deployed().then((res) => {
-            console.log(`\t TestingUtilities address: ${res.address}`);
+            assert.isTrue(Web3.utils.isAddress(res.address), 'TestingUtilities should be a valid address');
+            // console.log(`\t TestingUtilities address: ${res.address}`);
         }).catch(err => console.log(err));
     });
 
