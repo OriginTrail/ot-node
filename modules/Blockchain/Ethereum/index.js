@@ -534,7 +534,6 @@ class Ethereum {
                             // eslint-disable-next-line
                             continue;
                         }
-                        this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
                         eventData.save().then(() => {
                             clearInterval(token);

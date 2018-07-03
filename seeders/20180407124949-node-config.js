@@ -4,11 +4,21 @@ const uuidv4 = require('uuid/v4');
 let bootstrap_nodes = [];
 if (process.env.BOOTSTRAP_NODE) {
     bootstrap_nodes = process.env.BOOTSTRAP_NODE.split(',');
+} else {
+    const error = 'Valid BOOTSTRAP_NODE list is required for a node to run. Please check your .env file.';
+    console.error(error);
+    throw Error(error);
 }
 
 let import_whitelist = [];
 if (process.env.IMPORT_WHITELIST) {
     import_whitelist = process.env.IMPORT_WHITELIST.split(',');
+}
+
+if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
+    const error = 'Valid NODE_WALLET and NODE_PRIVATE_KEY is required for a node to run. Please check your .env file.';
+    console.error(error);
+    throw Error(error);
 }
 
 const selected_database = (process.env.GRAPH_DATABASE === 'neo4j') ? 2 : 1;
@@ -23,10 +33,10 @@ module.exports = {
     },
     {
         key: 'node_rpc_ip',
-        value: process.env.NODE_IP,
+        value: process.env.NODE_IP ? process.env.NODE_IP : '127.0.0.1',
     }, {
         key: 'node_port',
-        value: process.env.NODE_PORT,
+        value: process.env.NODE_PORT ? process.env.NODE_PORT : '5278',
     }, {
         key: 'node_kademlia_id',
         value: '',
@@ -76,7 +86,7 @@ module.exports = {
         value: '443',
     }, {
         key: 'traverse_nat_enabled',
-        value: process.env.TRAVERSE_NAT_ENABLED,
+        value: process.env.TRAVERSE_NAT_ENABLED ? process.env.TRAVERSE_NAT_ENABLED : '0',
     }, {
         key: 'traverse_port_forward_ttl',
         value: '0',
@@ -100,7 +110,7 @@ module.exports = {
         value: '0',
     }, {
         key: 'test_network',
-        value: process.env.TEST_NETWORK_ENABLED,
+        value: process.env.TEST_NETWORK_ENABLED ? process.env.TEST_NETWORK_ENABLED : '1',
     }, {
         key: 'ssl_authority_paths',
         value: '[]',
@@ -117,11 +127,11 @@ module.exports = {
     },
     {
         key: 'node_rpc_port',
-        value: process.env.NODE_RPC_PORT,
+        value: process.env.NODE_RPC_PORT ? process.env.NODE_RPC_PORT : '8900',
     },
     {
         key: 'send_logs_to_origintrail',
-        value: process.env.SEND_LOGS,
+        value: process.env.SEND_LOGS ? process.env.SEND_LOGS : '1',
     },
     {
         key: 'is_bootstrap_node',

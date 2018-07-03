@@ -7,19 +7,19 @@ Company Website: [origintrail.io](https://origintrail.io)
 
 __OriginTrail is building first Purpose-built Protocol for Supply Chains Based on Blockchain.__
  
-This repository contains a work-in-progress code for a network node. Please have in mind that code is still __in early alpha version__ developed mostly as a quick proof of concept and although main features will work, there are many limitations. 
+This repository contains a work-in-progress code for a network node. Please have in mind that code is still __testnet phase__ developed where all main features will work, with some limitations. 
 
-We expect __Test Network__ release to be available by the end of Q2 2018 as a beta of our protocol, while __Main Network__ is scheduled for Q3 2018. For further information about our roadmap please see our [website](https://origintrail.io/roadmap).
+__Test Network__ is available from end of June 2018 as a beta of our protocol, while __Main Network__ is scheduled for Q3 2018. For further information about our roadmap please see our [website](https://origintrail.io/roadmap).
 
-[Please see our main wiki page for more information](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/)
+[Please see our main documentation page for more information](http://docs.origintrail.io)
 
 Installation
 =============
 
-Detailed instructions for installation and configuration of OriginTrail Node are provided on our wiki.
-
- * [Integration Instructions](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Integration-Instructions)
- * [Configuration](http://github.com/OriginTrail/ot-yimishiji-pilot/wiki/Configuration)
+Detailed instructions for installation and configuration of OriginTrail Node:
+ 
+ * [API and technical documentation](http://docs.origintrail.io)
+ * [Node setup](http://origintrail.io/node-setup) 
  
 Contribution
 ============
