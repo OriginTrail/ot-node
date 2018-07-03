@@ -146,6 +146,15 @@ class Utilities {
                         colorize: 'all',
                         timestamp: false,
                         prettyPrint: object => JSON.stringify(object),
+                        stderrLevels: [
+                            'trace',
+                            'notify',
+                            'debug',
+                            'info',
+                            'warn',
+                            'important',
+                            'error',
+                        ],
                     }),
                     new (winston.transports.File)({
                         filename: 'node.log',
