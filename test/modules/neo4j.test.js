@@ -42,7 +42,7 @@ const edgeOne = databaseData.edges[0];
 
 let testDb;
 
-describe('Neo4j module ', async () => {
+describe.skip('Neo4j module ', async () => {
     before('create and use testDb db', async () => {
         const log = Utilities.getLogger();
         testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port, log);
