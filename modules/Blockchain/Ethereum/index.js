@@ -176,7 +176,10 @@ class Ethereum {
     getBidIndex(importId, nodeId) {
         return new Promise((resolve, reject) => {
             this.log.trace(`Get bid index for import ${importId}`);
-            this.biddingContract.methods.getBidIndex(importId, Utilities.normalizeHex(nodeId)).call({
+            this.biddingContract.methods.getBidIndex(
+                importId,
+                Utilities.normalizeHex(nodeId),
+            ).call({
                 from: this.config.wallet_address,
             }).then((res) => {
                 resolve(res);
