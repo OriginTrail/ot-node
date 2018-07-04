@@ -83,6 +83,7 @@ class DHService {
                 return;
             }
 
+            let bidEvent;
             // Check if predetermined bid was already added for me.
             // Possible race condition here.
             if (!predeterminedBid) {
@@ -95,12 +96,13 @@ class DHService {
                 });
 
                 if (eventModels) {
-                    let found = false;
+                    const found = false;
                     eventModels.forEach((eventModel) => {
                         const data = JSON.parse(eventModel.data);
                         if (data.DH_node_id.substring(2, 42) === this.config.identity &&
                             data.DH_wallet === this.config.node_wallet) {
                             // I'm chosen for predetermined bid.
+                            bidEvent = data;
                             predeterminedBid = true;
                         }
                     });
@@ -157,20 +159,24 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-
-            let addedBidEvent;
             if (!predeterminedBid) {
                 await this.blockchain.addBid(importId, this.config.identity);
-                addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
-            } 
-            else {
-                const myBidIndex = await this.blockchain.getBidIndex(importId, this.config.identity);
-                await this.blockchain.activatePredeterminedBid(importId, this.config.identity, myBidIndex);
+                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            } else {
+                const myBidIndex = await this.blockchain.getBidIndex(
+                    importId,
+                    this.config.identity,
+                );
+                await this.blockchain.activatePredeterminedBid(
+                    importId,
+                    this.config.identity,
+                    myBidIndex,
+                );
             }
-            // await blockchainc.increaseBiddingApproval(myStake);
+            // await blockchain.increaseBiddingApproval(myStake);
             const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
             this._saveBidToStorage(
-                addedBidEvent, // TODO addedBidEvent alternative for predetermined bids
+                bidEvent, // TODO addedBidEvent alternative for predetermined bids
                 dcNodeId,
                 dcWallet,
                 myPrice,
@@ -178,6 +184,7 @@ class DHService {
                 myStake,
                 dataSizeBytes,
                 importId,
+                predeterminedBid,
             );
 
             await this.blockchain.subscribeToEvent('OfferFinalized', importId);
@@ -232,6 +239,7 @@ class DHService {
         stake,
         dataSizeBytes,
         importId,
+        predeterminedBid,
     ) {
         Models.bids.create({
             bid_index: event.bid_index,
@@ -242,6 +250,7 @@ class DHService {
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
+            pd_bid: predeterminedBid,
         }).then((bid) => {
             this.log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
         }).catch((err) => {
