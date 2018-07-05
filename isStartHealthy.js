@@ -5,7 +5,7 @@ const fileToRead = process.argv[2];
 
 fs.readFile(`${fileToRead}.log`, (err, data) => {
     if (err) throw err;
-    if (data.indexOf('OT Node listening at https://127.0.0.1:5278') >= 0) {
+    if (data.indexOf('OT Node listening at http:') >= 0) {
         console.log('npm start is healthy!');
         process.exit(0);
     } else {

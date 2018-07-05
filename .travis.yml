@@ -27,6 +27,7 @@ script:
   - sleep 10
   - jobs
   - kill %1
+  - node isStartHealthy.js arangodb
   # make sure previous deamon is really terminated
   # - jobs
   #  - kill $(lsof -t -i:8900)
