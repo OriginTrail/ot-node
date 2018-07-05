@@ -74,7 +74,7 @@ class DCService {
         const dhIds = [];
         const dhWallets = [];
 
-        let totalEscrowTime = config.total_escrow_time_in_minutes;
+        let totalEscrowTime = config.total_escrow_time_in_milliseconds;
         let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
         let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
         let minReputation = config.dh_min_reputation;
@@ -105,7 +105,7 @@ class DCService {
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
-            total_escrow_time: totalEscrowTime,
+            total_escrow_time: totalEscrowTime / 60000,
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
             min_reputation: minReputation,

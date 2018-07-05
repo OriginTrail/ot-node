@@ -24,7 +24,7 @@ module.exports = {
     },
     {
         key: 'dh_stake_factor',
-        value: '1',
+        value: '3500000000000', // ~ 5 TRAC per kB/day
     },
     {
         key: 'read_stake_factor',
@@ -36,19 +36,19 @@ module.exports = {
     },
     {
         key: 'dh_price',
-        value: 2,
+        value: '14000000000000', // ~ 20 TRAC per kB/day
     },
     {
-        key: 'total_escrow_time_in_minutes',
+        key: 'total_escrow_time_in_milliseconds',
         value: 600000,
     },
     {
         key: 'max_token_amount_per_dh',
-        value: '1000000',
+        value: '14000000000000',  // ~ 20 TRAC per kB/day
     },
     {
         key: 'dh_min_stake_amount',
-        value: '100',
+        value: '3500000000000',  // ~ 5 TRAC per kB/day
     },
     {
         key: 'dh_min_reputation',
