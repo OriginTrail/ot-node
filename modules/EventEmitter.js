@@ -1,11 +1,9 @@
 const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const config = require('./Config');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
-const uuidv4 = require('uuid/v4');
 
 const events = require('events');
 
@@ -20,9 +18,8 @@ class EventEmitter {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
 
-        this.apiEmitter = new events.EventEmitter();
-        this.kadEmitter = new events.EventEmitter();
-        this.blockchainEmitter = new events.EventEmitter();
+        this._MAPPINGS = {};
+        this._MAX_LISTENERS = 10; // limits the number of listeners in order to detect memory leaks
     }
 
     /**
@@ -32,6 +29,51 @@ class EventEmitter {
         this._initializeAPIEmitter();
         this._initializeKadEmitter();
         this._initializeBlockchainEmitter();
+    }
+
+    /**
+     * Gets appropriate event emitter based on the event
+     * @param event
+     * @return {*}
+     * @private
+     */
+    _getEmitter(event) {
+        for (const prefix in this._MAPPINGS) {
+            if (event.startsWith(prefix)) {
+                const index = this._MAPPINGS[prefix].EVENTS.indexOf(event);
+                return this._MAPPINGS[prefix].EMITTERS[Math.floor(index / this._MAX_LISTENERS)];
+            }
+        }
+        throw new Error(`No listeners for event ${event}`);
+    }
+
+    /**
+     * Register event handler
+     * @param event
+     * @param fn
+     * @private
+     */
+    _on(event, fn) {
+        if (event.indexOf('-') === -1) {
+            throw new Error(`Invalid event prefix for ${event}. Event name convention is PREFIX-EVENT`);
+        }
+        const key = event.split('-')[0];
+        if (!this._MAPPINGS[key]) {
+            this._MAPPINGS[key] = {
+                EVENTS: [],
+                EMITTERS: [],
+            };
+        }
+
+        const eventMapping = this._MAPPINGS[key];
+        eventMapping.EVENTS.push(event);
+        const emitterIndex = Math.floor(eventMapping.EVENTS.length / this._MAX_LISTENERS);
+        if (eventMapping.EMITTERS.length < emitterIndex + 1) {
+            const emitter = new events.EventEmitter();
+            emitter.setMaxListeners(this._MAX_LISTENERS);
+            eventMapping.EMITTERS.push(emitter);
+        }
+        this._getEmitter(event).on(event, fn);
     }
 
     /**
@@ -49,13 +91,34 @@ class EventEmitter {
             logger,
         } = this.ctx;
 
-        this.apiEmitter.on('import-request', (data) => {
+        this._on('api-import-request', (data) => {
             importer.importXML(data.filepath, (response) => {
                 // emit response
             });
         });
 
-        this.apiEmitter.on('trail', (data) => {
+        this._on('api-network-query-responses', async (data) => {
+            const { query_id } = data;
+
+            let responses = await Models.network_query_responses.findAll({
+                where: {
+                    query_id,
+                },
+            });
+
+            responses = responses.map(response => ({
+                imports: JSON.parse(response.imports),
+                data_size: response.data_size,
+                data_price: response.data_price,
+                stake_factor: response.stake_factor,
+                reply_id: response.reply_id,
+            }));
+
+            data.response.status(200);
+            data.response.send(responses);
+        });
+
+        this._on('api-trail', (data) => {
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -72,7 +135,7 @@ class EventEmitter {
             });
         });
 
-        this.apiEmitter.on('api-get/api/import', async (data) => {
+        this._on('api-query-local-import', async (data) => {
             const { import_id: importId } = data;
 
             try {
@@ -93,7 +156,7 @@ class EventEmitter {
             }
         });
 
-        this.apiEmitter.on('get-imports', (data) => {
+        this._on('api-get-imports', (data) => {
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -110,7 +173,7 @@ class EventEmitter {
             });
         });
 
-        this.apiEmitter.on('query', (data) => {
+        this._on('api-query', (data) => {
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -127,7 +190,7 @@ class EventEmitter {
             });
         });
 
-        this.apiEmitter.on('get_root_hash', (data) => {
+        this._on('api-get_root_hash', (data) => {
             const dcWallet = data.query.dc_wallet;
             if (dcWallet == null) {
                 data.response.status(400);
@@ -153,7 +216,7 @@ class EventEmitter {
             });
         });
 
-        this.apiEmitter.on('network-query', (data) => {
+        this._on('api-network-query', (data) => {
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -172,7 +235,7 @@ class EventEmitter {
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
-        this.apiEmitter.on('choose-offer', async (data) => {
+        this._on('api-choose-offer', async (data) => {
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
@@ -208,7 +271,7 @@ class EventEmitter {
             }
         });
 
-        this.apiEmitter.on('network-query-status', async (data) => {
+        this._on('api-network-query-status', async (data) => {
             const { id, response } = data;
 
             const networkQuery = await Models.network_queries.find({ where: { id } });
@@ -273,7 +336,7 @@ class EventEmitter {
 
 
                 if (data.replicate) {
-                    this.emit('create-offer', { import_id, response: data.response });
+                    this.emit('api-create-offer', { import_id, response: data.response });
                 } else {
                     data.response.status(201);
                     data.response.send({
@@ -289,7 +352,7 @@ class EventEmitter {
             }
         };
 
-        this.apiEmitter.on('offer-status', async (data) => {
+        this._on('api-offer-status', async (data) => {
             const { external_id } = data;
             const offer = await dcService.getOffer(external_id);
             if (offer) {
@@ -307,7 +370,7 @@ class EventEmitter {
             }
         });
 
-        this.apiEmitter.on('create-offer', async (data) => {
+        this._on('api-create-offer', async (data) => {
             const {
                 import_id,
                 total_escrow_time,
@@ -328,14 +391,7 @@ class EventEmitter {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = uuidv4();
-
-                data.response.status(201);
-                data.response.send({
-                    replication_id: replicationId,
-                });
-
-                dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     import_id,
                     dataimport.root_hash,
                     dataimport.total_documents,
@@ -344,8 +400,12 @@ class EventEmitter {
                     max_token_amount,
                     min_stake_amount,
                     min_reputation,
-                    replicationId,
                 );
+
+                data.response.status(201);
+                data.response.send({
+                    replication_id: replicationId,
+                });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
                 data.response.status(405);
@@ -356,7 +416,7 @@ class EventEmitter {
         });
 
 
-        this.apiEmitter.on('gs1-import-request', async (data) => {
+        this._on('api-gs1-import-request', async (data) => {
             try {
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
@@ -372,7 +432,7 @@ class EventEmitter {
             }
         });
 
-        this.apiEmitter.on('wot-import-request', async (data) => {
+        this._on('api-wot-import-request', async (data) => {
             try {
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
@@ -397,9 +457,12 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            blockchain,
+            config,
+            timeUtils,
         } = this.ctx;
 
-        this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {
+        this._on('eth-OfferCreated', async (eventData) => {
             logger.info('eth-OfferCreated');
 
             const {
@@ -426,7 +489,7 @@ class EventEmitter {
             );
         });
 
-        this.blockchainEmitter.on('eth-AddedPredeterminedBid', async (eventData) => {
+        this._on('eth-AddedPredeterminedBid', async (eventData) => {
             logger.info('eth-AddedPredeterminedBid');
 
             const {
@@ -479,15 +542,15 @@ class EventEmitter {
             }
         });
 
-        this.blockchainEmitter.on('eth-offer-canceled', (event) => {
+        this._on('eth-offer-canceled', (event) => {
             logger.info('eth-offer-canceled');
         });
 
-        this.blockchainEmitter.on('eth-bid-taken', (event) => {
+        this._on('eth-bid-taken', (event) => {
             logger.info('eth-bid-taken');
         });
 
-        this.blockchainEmitter.on('eth-LitigationInitiated', async (eventData) => {
+        this._on('eth-LitigationInitiated', async (eventData) => {
             const {
                 import_id,
                 DH_wallet,
@@ -505,7 +568,7 @@ class EventEmitter {
             }
         });
 
-        this.blockchainEmitter.on('eth-LitigationCompleted', async (eventData) => {
+        this._on('eth-LitigationCompleted', async (eventData) => {
             const {
                 import_id,
                 DH_wallet,
@@ -515,6 +578,49 @@ class EventEmitter {
             if (config.node_wallet === DH_wallet) {
                 // the node is DH
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
+            }
+        });
+
+        this._on('eth-EscrowVerified', async (eventData) => {
+            logger.trace('Received eth-EscrowVerified');
+            const {
+                import_id,
+                DH_wallet,
+            } = eventData;
+
+            if (config.node_wallet === DH_wallet) {
+                // Event is for me.
+                try {
+                    // TODO: Possible race condition if another bid for same import came meanwhile.
+                    const bid = await Models.bids.findOne({
+                        where: {
+                            import_id,
+                        },
+                        order: [
+                            ['id', 'DESC'],
+                        ],
+                    });
+
+                    if (!bid) {
+                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
+                        return;
+                    }
+
+                    new Promise(async (accept, reject) => {
+                        logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
+                        timeUtils.wait(bid.total_escrow_time);
+
+                        try {
+                            await blockchain.payOut(DH_wallet, import_id);
+                        } catch (error) {
+                            reject(Error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`));
+                        }
+                        logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
+                        accept();
+                    }).catch(error => logger.error(error));
+                } catch (error) {
+                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
+                }
             }
         });
     }
@@ -535,7 +641,7 @@ class EventEmitter {
             blockchain,
         } = this.ctx;
 
-        this.kadEmitter.on('kad-data-location-request', async (kadMessage) => {
+        this._on('kad-data-location-request', async (kadMessage) => {
             logger.info('kad-data-location-request received');
 
             const { message, messageSignature } = kadMessage;
@@ -554,7 +660,7 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-payload-request', async (request) => {
+        this._on('kad-payload-request', async (request) => {
             logger.trace(`kad-payload-request arrived from ${request.contact[0]}`);
             await dhService.handleImport(request.params.message.payload);
 
@@ -562,7 +668,7 @@ class EventEmitter {
         });
 
         // sync
-        this.kadEmitter.on('kad-replication-request', async (request) => {
+        this._on('kad-replication-request', async (request) => {
             logger.trace('kad-replication-request received');
 
             const { import_id, wallet } = request.params.message;
@@ -621,11 +727,7 @@ class EventEmitter {
             const objectClassVertices = values[2];
 
             vertices = vertices.concat(...objectClassVertices);
-
-            for (const vertex of vertices) {
-                delete vertex.imports;
-                delete vertex.private;
-            }
+            ImportUtilities.deleteInternal(vertices);
 
             const keyPair = Encryption.generateKeyPair();
             Graph.encryptVertices(vertices, keyPair.privateKey);
@@ -661,14 +763,14 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-replication-finished', async () => {
+        this._on('kad-replication-finished', async () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
             await challenger.startChallenging();
         });
 
         // sync
         // TODO this call should be refactored to be async
-        this.kadEmitter.on('kad-challenge-request', (request, response) => {
+        this._on('kad-challenge-request', (request, response) => {
             logger.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
@@ -695,12 +797,12 @@ class EventEmitter {
             });
         });
 
-        this.kadEmitter.on('kad-bidding-won', (message) => {
+        this._on('kad-bidding-won', (message) => {
             logger.info('Wow I won bidding. Let\'s get into it.');
         });
 
         // async
-        this.kadEmitter.on('kad-data-location-response', async (request) => {
+        this._on('kad-data-location-response', async (request) => {
             logger.info('kad-data-location-response');
             try {
                 const dataLocationResponseObject = request.params.message;
@@ -719,7 +821,7 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-data-read-request', async (request) => {
+        this._on('kad-data-read-request', async (request) => {
             logger.info('kad-data-read-request');
 
             const dataReadRequestObject = request.params.message;
@@ -734,7 +836,7 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-data-read-response', async (request) => {
+        this._on('kad-data-read-response', async (request) => {
             logger.info('kad-data-read-response');
 
             if (request.params.status === 'FAIL') {
@@ -757,7 +859,7 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-send-encrypted-key', async (request) => {
+        this._on('kad-send-encrypted-key', async (request) => {
             logger.info('kad-send-encrypted-key');
 
             const encryptedPaddedKeyObject = request.params.message;
@@ -784,17 +886,17 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-encrypted-key-process-result', async (request) => {
+        this._on('kad-encrypted-key-process-result', async (request) => {
             const { status } = request.params.message;
             if (status === 'SUCCESS') {
-                logger.info('DV successfully processed the encrypted key');
+                logger.important(`DV ${request.contact[0]} successfully processed the encrypted key`);
             } else {
-                logger.info('DV failed to process the encrypted key');
+                logger.important(`DV ${request.contact[0]} failed to process the encrypted key`);
             }
         });
 
         // async
-        this.kadEmitter.on('kad-verify-import-request', async (request) => {
+        this._on('kad-verify-import-request', async (request) => {
             logger.info('kad-verify-import-request');
 
             const { wallet: kadWallet } = request.contact[1];
@@ -808,7 +910,7 @@ class EventEmitter {
         });
 
         // async
-        this.kadEmitter.on('kad-verify-import-response', async (request) => {
+        this._on('kad-verify-import-response', async (request) => {
             logger.info('kad-verify-import-response');
 
             const { status, import_id } = request.params.message;
@@ -824,13 +926,7 @@ class EventEmitter {
      * Emits event via appropriate event emitter
      */
     emit(event, ...args) {
-        if (event.startsWith('eth-')) {
-            this.blockchainEmitter.emit(event, ...args);
-        } else if (event.startsWith('kad-')) {
-            this.kadEmitter.emit(event, ...args);
-        } else {
-            this.apiEmitter.emit(event, ...args);
-        }
+        this._getEmitter(event).emit(event, ...args);
     }
 }
 

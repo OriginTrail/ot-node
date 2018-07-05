@@ -6,7 +6,7 @@
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender><!-- Mandatory -->
 				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-				<sbdh:Identifier Authority="OriginTrail">CARENGINES_PROVIDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Car.Engines</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
 				<sbdh:ContactInformation> <!-- Mandatory-->
 					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
 					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				
@@ -39,6 +39,9 @@
 				<VocabularyList>
 					<Vocabulary type="urn:ot:object:actor">
 						<VocabularyElementList>
+							<VocabularyElement id="urn:ot:object:actor:id:Car.Engines">
+								<attribute id="urn:ot:object:actor:wallet">0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+							</VocabularyElement>
 							<VocabularyElement id="urn:ot:object:actor:id:Employee.Bob">
 								<attribute id="urn:ot:object:actor:name">Bob Johnson</attribute>
 								<attribute id="urn:ot:object:actor:category">Person</attribute>

@@ -243,6 +243,10 @@ class GS1Importer {
             });
         }
 
+        if (senderWallet == null) {
+            throw new Error('It is required for sender to have a valid wallet!');
+        }
+
         for (const product of products) {
             const { identifiers } = product;
             Object.assign(identifiers, {
@@ -341,9 +345,6 @@ class GS1Importer {
             } else {
                 classId = objectEventTransformationId; // TODO map to class ID
             }
-
-            // TODO implement ADD and DELETE if event type is aggregation
-            // TODO kill parent pallet <childEPCs/ >
 
             const data = {
                 object_class_id: classId,
@@ -579,7 +580,7 @@ class GS1Importer {
 
                 currentEventEdges.push({
                     _key: this.helper.createKey('event_batch', senderId, eventKey, parentID),
-                    _from: `ot_vertices/${eventKey}`,
+                    _from: `${eventKey}`,
                     _to: `${EDGE_KEY_TEMPLATE + parentID}`,
                     edge_type: 'PALLET',
                     identifiers: {
@@ -589,7 +590,7 @@ class GS1Importer {
                 currentEventEdges.push({
                     _key: this.helper.createKey('event_batch', senderId, parentID, eventKey),
                     _from: `${EDGE_KEY_TEMPLATE + parentID}`,
-                    _to: `ot_vertices/${eventKey}`,
+                    _to: `${eventKey}`,
                     edge_type: 'PALLET',
                     identifiers: {
                         uid: `event_batch_${parentID}_${eventId}`,

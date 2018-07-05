@@ -10,6 +10,7 @@ const ZK = require('./ZK');
 class GS1Utilities {
     constructor(ctx) {
         this.db = ctx.graphStorage;
+        this.ctx = ctx;
     }
 
     /**
@@ -360,7 +361,7 @@ class GS1Utilities {
                 }
             }
         }
-        const zk = new ZK();
+        const zk = new ZK(this.ctx);
         const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
         for (const quantity of quantities.inputs.concat(quantities.outputs)) {
             if (quantity.added) {

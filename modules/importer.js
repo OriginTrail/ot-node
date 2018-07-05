@@ -50,14 +50,33 @@ class Importer {
     }
 
     async importJSON(json_document) {
-        return this._import('JSON', json_document);
+        try {
+            const result = await this._import('JSON', json_document);
+            return {
+                response: await this.afterImport(result),
+                error: null,
+            };
+        } catch (error) {
+            this.log.error(`Import error: ${error}.`);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
     }
 
     async _importJSON(json_document) {
         this.log.info('Entering importJSON');
-        const { vertices, edges, import_id } = json_document;
+        const {
+            vertices,
+            edges,
+            import_id,
+            wallet,
+        } = json_document;
 
         this.log.trace('Vertex importing');
+        ImportUtilities.deleteInternal(vertices);
 
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
@@ -66,6 +85,13 @@ class Importer {
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
 
         this.log.info('JSON import complete');
+
+        return {
+            vertices,
+            edges,
+            import_id,
+            wallet,
+        };
     }
 
     /**

@@ -1,7 +1,7 @@
 const Tx = require('ethereumjs-tx');
-const EventEmitter = require('events');
 const { txutils } = require('eth-lightwallet');
-const { Lock } = require('semaphore-async-await');
+const Queue = require('better-queue');
+const sleep = require('sleep');
 
 class Transactions {
     /**
@@ -12,10 +12,29 @@ class Transactions {
      */
     constructor(web3, wallet, walletKey) {
         this.web3 = web3;
-        this.transactionEventEmmiter = new EventEmitter();
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
-        this.lock = new Lock();
+        this.lastTransactionTime = Date.now();
+
+        this.queue = new Queue((async (args, cb) => {
+            const { transaction, future } = args;
+            try {
+                const delta = (Date.now() - this.lastTransactionTime) / 1000;
+                if (delta < 10) {
+                    sleep.sleep(10);
+                }
+                const result = await this._sendTransaction(transaction);
+                if (result.status === '0x0') {
+                    future.reject(result);
+                } else {
+                    future.resolve(result);
+                }
+            } catch (e) {
+                future.reject(e);
+            }
+            this.lastTransactionTime = Date.now();
+            cb();
+        }), { concurrent: 1 });
     }
 
     /**
@@ -23,7 +42,7 @@ class Transactions {
      * @returns {PromiEvent<TransactionReceipt>}
      * @param newTransaction
      */
-    async sendTransaction(newTransaction) {
+    async _sendTransaction(newTransaction) {
         await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
         });
@@ -43,13 +62,6 @@ class Transactions {
     }
 
     /**
-     * Signal that queue is ready for next transaction
-     */
-    signalNextInQueue() {
-        this.lock.release();
-    }
-
-    /**
      * Adding new transaction in transaction queue
      * @param contractAbi
      * @param method
@@ -59,26 +71,16 @@ class Transactions {
      */
     queueTransaction(contractAbi, method, args, options) {
         return new Promise((async (resolve, reject) => {
-            const newTransaction = {
+            const transaction = {
                 contractAbi, method, args, options,
             };
 
-            await this.lock.acquire();
-
-            this.sendTransaction(newTransaction)
-                .then((response) => {
-                    this.signalNextInQueue();
-                    if (response.status === '0x0') {
-                        reject(response);
-                    } else {
-                        resolve(response);
-                    }
-                })
-                .catch((err) => {
-                    // log.warn(err);
-                    this.signalNextInQueue();
-                    reject(err);
-                });
+            this.queue.push({
+                transaction,
+                future: {
+                    resolve, reject,
+                },
+            });
         }));
     }
 }
