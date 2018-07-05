@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
@@ -8,19 +9,85 @@ const awilix = require('awilix');
 const Blockchain = require('../../modules/Blockchain');
 const solc = require('solc');
 const fs = require('fs');
+const Umzug = require('umzug');
+const BN = require('bn.js');
 
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
-const Storage = require('../../modules/Storage');
 const DCService = require('../../modules/DCService');
+
+const sequelizeConfig = require('./../../config/config.json').development;
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
 process.removeAllListeners('uncaughtException');
 
-
 describe('Protocol tests', () => {
+// Global functions.
+    function recreateDatabase() {
+        fs.closeSync(fs.openSync(sequelizeConfig.storage, 'w'));
+
+        const migrator = new Umzug({
+            storage: 'sequelize',
+            storageOptions: {
+                sequelize: Models.sequelize,
+                tableName: 'migrations',
+            },
+            logging: console.log,
+            migrations: {
+                params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
+                path: `${__dirname}/../../migrations`,
+                pattern: /^\d+[\w-]+\.js$/,
+            },
+        });
+
+        const seeder = new Umzug({
+            storage: 'sequelize',
+            storageOptions: {
+                sequelize: Models.sequelize,
+                tableName: 'seeders',
+            },
+            logging: console.log,
+            migrations: {
+                params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
+                path: `${__dirname}/../../seeders`,
+                pattern: /^\d+[\w-]+\.js$/,
+            },
+        });
+
+        return Models.sequelize.authenticate().then(() => migrator.up().then(() => seeder.up()));
+    }
+
+    function deployContract(
+        web3,
+        contract,
+        contractData,
+        constructorArguments,
+        from,
+    ) {
+        let deploymentReceipt;
+        let contractInstance;
+        return new Promise((accept, reject) => {
+            contract.deploy({
+                data: contractData,
+                arguments: constructorArguments,
+            })
+                .send({ from, gas: 3141592 })
+                .on('receipt', (receipt) => {
+                    deploymentReceipt = receipt;
+                })
+                .then((instance) => {
+                    // TODO: ugly workaround - not sure why this is necessary.
+                    if (!instance._requestManager.provider) {
+                        instance._requestManager.setProvider(web3.eth._provider);
+                    }
+                    contractInstance = instance;
+                    accept([deploymentReceipt, contractInstance]);
+                });
+        });
+    }
+
     class MockEmitter {
         constructor() {
             this.events = [];
@@ -39,7 +106,7 @@ describe('Protocol tests', () => {
         constructor(importId, vertices, edges) {
             this.imports = {};
             if (!importId && !vertices && !edges) {
-                this.imports[importId] = {vertices, edges};
+                this.imports[importId] = { vertices, edges };
             }
         }
 
@@ -49,6 +116,20 @@ describe('Protocol tests', () => {
 
         findVerticesByImportId(importId) {
             return this.imports[importId].edgeds;
+        }
+    }
+
+    class MockNetwork {
+        constructor() {
+            this.requests = [];
+        }
+
+        kademlia() {
+            return this;
+        }
+
+        sendVerifyImportResponse(message, nodeId) {
+            this.requests.push({ message, nodeId });
         }
     }
 
@@ -74,6 +155,14 @@ describe('Protocol tests', () => {
         get graphStorage() {
             return this.container.resolve('graphStorage');
         }
+
+        get network() {
+            return this.container.resolve('network');
+        }
+
+        get logger() {
+            return this.container.resolve('logger');
+        }
     }
 
     const accountPrivateKeys = [
@@ -89,21 +178,24 @@ describe('Protocol tests', () => {
         '03c5646544ea8e47174ac98e3b97338c486860897e31333318ee62d19e5ea118',
     ];
 
-    const ganacheProvider = Ganache.provider({
-        accounts: [
-            { secretKey: `0x${accountPrivateKeys[0]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[1]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[2]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[3]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[4]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[5]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[6]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[7]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[8]}`, balance: Web3.utils.toWei('100', 'ether') },
-            { secretKey: `0x${accountPrivateKeys[9]}`, balance: Web3.utils.toWei('100', 'ether') },
-        ],
-    });
-    const web3 = new Web3(ganacheProvider); // Used for deployment and is bound to accounts[0].
+    const ganacheProvider =
+        Ganache.provider({
+            accounts: [
+                { secretKey: `0x${accountPrivateKeys[0]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[1]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[2]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[3]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[4]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[5]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[6]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[7]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[8]}`, balance: Web3.utils.toWei('100', 'ether') },
+                { secretKey: `0x${accountPrivateKeys[9]}`, balance: Web3.utils.toWei('100', 'ether') },
+            ],
+        });
+    // new Web3.providers.HttpProvider('http://localhost:7545');
+
+    const web3 = new Web3(ganacheProvider); // Used for deployment and is bound to accounts[7].
     let accounts;
     let tokenContractData;
     let tokenContractAbi;
@@ -141,99 +233,6 @@ describe('Protocol tests', () => {
     let testNode1;
     let testNode2;
     let testNode3;
-
-    function deployTracTokenContract() {
-        return tokenContract.deploy({
-            data: tokenContractData,
-            arguments: [accounts[0], accounts[1], accounts[2]],
-        })
-            .send({ from: accounts[0], gas: 3141592 })
-            .on('receipt', (receipt) => {
-                tokenDeploymentReceipt = receipt;
-            })
-            .then((instance) => {
-                // TODO: ugly workaround - not sure why this is necessary.
-                if (!instance._requestManager.provider) {
-                    instance._requestManager.setProvider(web3.eth._provider);
-                }
-                tokenInstance = instance;
-            });
-    }
-
-    function deployEscrowContract() {
-        return escrowContract.deploy({
-            data: escrowContractData,
-            arguments: [tokenInstance._address],
-        })
-            .send({ from: accounts[0], gas: 3141592 })
-            .on('receipt', (receipt) => {
-                escrowDeploymentReceipt = receipt;
-            })
-            .then((instance) => {
-                // TODO: ugly workaround - not sure why this is necessary.
-                if (!instance._requestManager.provider) {
-                    instance._requestManager.setProvider(web3.eth._provider);
-                }
-                escrowInstance = instance;
-            });
-    }
-
-    function deployReadingContract() {
-        return readingContract.deploy({
-            data: readingContractData,
-            arguments: [escrowInstance._address],
-        })
-            .send({ from: accounts[0], gas: 3141592 })
-            .on('receipt', (receipt) => {
-                readingDeploymentReceipt = receipt;
-            })
-            .then((instance) => {
-                // TODO: ugly workaround - not sure why this is necessary.
-                if (!instance._requestManager.provider) {
-                    instance._requestManager.setProvider(web3.eth._provider);
-                }
-                readingInstance = instance;
-            });
-    }
-
-    function deployBiddingContract() {
-        return biddingContract.deploy({
-            data: biddingContractData,
-            arguments: [
-                tokenInstance._address,
-                escrowInstance._address,
-                readingInstance._address,
-            ],
-        })
-            .send({ from: accounts[0], gas: 3141592 })
-            .on('receipt', (receipt) => {
-                biddingDeploymentReceipt = receipt;
-            })
-            .then((instance) => {
-                // TODO: ugly workaround - not sure why this is necessary.
-                if (!instance._requestManager.provider) {
-                    instance._requestManager.setProvider(web3.eth._provider);
-                }
-                biddingInstance = instance;
-            });
-    }
-
-    function deployOtFingerprintContract() {
-        return otFingerprintContract.deploy({
-            data: otFingerprintContractData,
-        })
-            .send({ from: accounts[0], gas: 3141592 })
-            .on('receipt', (receipt) => {
-                otFingerprintDeploymentReceipt = receipt;
-            })
-            .then((instance) => {
-                // TODO: ugly workaround - not sure why this is necessary.
-                if (!instance._requestManager.provider) {
-                    instance._requestManager.setProvider(web3.eth._provider);
-                }
-                otFingerprintInstance = instance;
-            });
-    }
 
     before('Compile smart contracts source', async function compile() {
         this.timeout(15000);
@@ -276,11 +275,30 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
-        await deployTracTokenContract();
-        await deployEscrowContract();
-        await deployReadingContract();
-        await deployBiddingContract();
-        await deployOtFingerprintContract();
+        [tokenDeploymentReceipt, tokenInstance] = await deployContract(
+            web3, tokenContract, tokenContractData,
+            [accounts[7], accounts[8], accounts[9]], accounts[7],
+        );
+        [escrowDeploymentReceipt, escrowInstance] = await deployContract(
+            web3, escrowContract, escrowContractData,
+            [tokenInstance._address], accounts[7],
+        );
+        [readingDeploymentReceipt, readingInstance] = await deployContract(
+            web3, readingContract, readingContractData,
+            [escrowInstance._address], accounts[7],
+        );
+        [biddingDeploymentReceipt, biddingInstance] = await deployContract(
+            web3, biddingContract, biddingContractData,
+            [
+                tokenInstance._address,
+                escrowInstance._address,
+                readingInstance._address,
+            ], accounts[7],
+        );
+        [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
+            web3, otFingerprintContract, otFingerprintContractData,
+            undefined, accounts[7],
+        );
 
         await escrowInstance.methods.setBidding(biddingInstance._address);
         await escrowInstance.methods.setReading(readingInstance._address);
@@ -289,21 +307,23 @@ describe('Protocol tests', () => {
         await escrowInstance.methods.transferOwnership(biddingInstance._address);
 
         // Deploy tokens.
-        const amountToMint = 5e25;
+        const amountToMint = '50000000000000000000000000'; // 5e25
         const amounts = [];
         const recipients = [];
         for (let i = 0; i < accounts.length; i += 1) {
             amounts.push(amountToMint);
             recipients.push(accounts[i]);
         }
-        await tokenInstance.methods.mintMany(recipients, amounts);
-        await tokenInstance.methods.finishMinting();
+        await tokenInstance.methods.mintMany(recipients, amounts)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        await tokenInstance.methods.finishMinting()
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
     });
 
-    beforeEach('Recreate database', () => {
-        return Models.sequelize.sync({ force: true });
-        // TODO: Find solution how to seed the database.
-    });
+    beforeEach('Recreate database', () => recreateDatabase());
 
     beforeEach('Register container and build objects', () => {
         // DCService depends on: blockchain, challenger, graphStorage and logger.
@@ -324,6 +344,10 @@ describe('Protocol tests', () => {
                     gas_limit: 800000,
                     gas_price: 5000000000,
                 },
+                total_escrow_time_in_minutes: '1',
+                max_token_amount_per_dh: '1000000000000000000000', // 1e22 == 10000 tokens
+                dh_min_stake_amount: '100000000000000000', // 1e18 == 1 token
+                dh_min_reputation: '0',
             };
 
             const nodeWeb3 = new Web3(ganacheProvider);
@@ -337,6 +361,7 @@ describe('Protocol tests', () => {
                 config: awilix.asValue(config),
                 web3: awilix.asValue(nodeWeb3),
                 blockchain: awilix.asClass(Blockchain).singleton(),
+                network: awilix.asClass(MockNetwork).singleton(),
                 graphStorage: awilix.asValue(new MockGraphStorage()),
                 challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
                 logger: awilix.asValue(log),
@@ -346,26 +371,29 @@ describe('Protocol tests', () => {
             const blockchain = container.resolve('blockchain');
             const dcService = container.resolve('dcService');
 
-            // Set event listener
-            function listenBlockchainEvents() {
-                const delay = 10000;
-                let working = false;
-                let deadline = Date.now();
-                return setInterval(() => {
-                    if (!working && Date.now() > deadline) {
-                        working = true;
-                        blockchain.getAllPastEvents('BIDDING_CONTRACT');
-                        blockchain.getAllPastEvents('READING_CONTRACT');
-                        blockchain.getAllPastEvents('ESCROW_CONTRACT');
-                        deadline = Date.now() + delay;
-                        working = false;
-                    }
-                }, 500);
-            }
-
             testNode.container = container;
-            testNode.eventListener = listenBlockchainEvents();
         });
+
+        // Let only first node listen to events.
+        // TODO
+        // Set event listener
+        function listenBlockchainEvents(blockchain) {
+            const delay = 500;
+            let working = false;
+            let deadline = Date.now();
+            return setInterval(() => {
+                if (!working && Date.now() > deadline) {
+                    working = true;
+                    blockchain.getAllPastEvents('BIDDING_CONTRACT');
+                    blockchain.getAllPastEvents('READING_CONTRACT');
+                    blockchain.getAllPastEvents('ESCROW_CONTRACT');
+                    deadline = Date.now() + delay;
+                    working = false;
+                }
+            }, 500);
+        }
+
+        testNode1.eventListener = listenBlockchainEvents(testNode1.blockchain);
     });
 
     afterEach('Unregister container', async () => {
@@ -381,7 +409,9 @@ describe('Protocol tests', () => {
         });
     });
 
-    it('should successfully create profile', async () => {
+    it('should successfully create profile', async function createProfile() {
+        this.timeout(10000);
+
         let profileInfo = await testNode1.blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.false;
 
@@ -461,9 +491,9 @@ describe('Protocol tests', () => {
         });
 
 
-        it('should initiate replication for happy path and without predetermined bidders', async () => {
-            const dcService = testNode1.dcService;
-            const blockchain = testNode1.blockchain;
+        it('should initiate replication for happy path and without predetermined bidders', async function replication1() {
+            this.timeout(90000); // One minute is minimum time for a offer.
+            const { dcService, blockchain } = testNode1;
 
             const offerExternalId =
                 await dcService.createOffer(importId, rootHash, 1, vertices);
@@ -475,13 +505,17 @@ describe('Protocol tests', () => {
             expect(offer).to.include({
                 import_id: importId,
                 data_hash: rootHash,
-                dh_wallets: '[]',
-                dh_ids: '[]',
+                // TODO: find solution for testing arrays in 'expect'.
+                // dh_wallets: [],
+                // dh_ids: [],
                 status: 'PENDING',
                 external_id: offerExternalId,
             });
+            expect(offer.dh_wallets).to.be.an('array').deep.equal([]);
+            expect(offer.dh_ids).to.be.an('array').deep.equal([]);
 
-            await blockchain.subscribeToEvent('OfferCreated', importId, 1000);
+            const event = await blockchain.subscribeToEvent('OfferCreated', importId, 30000);
+            expect(event).to.exist;
 
             // Send one bid.
             testNode2.blockchain.addBid(importId, testNode2.identity);
@@ -500,8 +534,6 @@ describe('Protocol tests', () => {
             // expect(events[0].event).to.equal('ProfileCreated');
             // expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
             // expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
-
-
         });
     });
 

@@ -21,13 +21,14 @@
     "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-jsx-a11y": "^6.1.0",
     "eslint-plugin-react": "^7.9.1",
-    "ganache-core": "^2.1.3",
+    "ganache-core": "^2.1.5",
     "mocha": "^5.0.1",
     "nyc": "^11.9.0",
     "should": "^13.2.1",
     "sinon": "^4.5.0",
     "solc": "^0.4.24",
-    "supertest": "^3.0.0"
+    "supertest": "^3.0.0",
+    "umzug": "^2.1.0"
   },
   "repository": {
     "type": "git",
@@ -103,7 +104,6 @@
     "sqlite3": "^4.0.0",
     "superagent": "^3.8.3",
     "truffle-hdwallet-provider": "0.0.5",
-    "umzug": "^2.1.0",
     "underscore": "^1.9.0",
     "utf8-length": "latest",
     "uuid": "^3.3.2",
