@@ -91,17 +91,18 @@ class Importer {
 
         if (packKeys) {
             ImportUtilities.packKeys(vertices, edges);
-            vertices = await Promise.all(vertices.map(async (vertex) => {
-                const inserted = await this.graphStorage.addVertex(vertex);
-                vertex._key = inserted._key;
-                return vertex;
-            }));
-            edges = await Promise.all(edges.map(async (edge) => {
-                const inserted = await this.graphStorage.addEdge(edge);
-                edge._key = inserted._key;
-                return edge;
-            }));
         }
+
+        vertices = await Promise.all(vertices.map(async (vertex) => {
+            const inserted = await this.graphStorage.addVertex(vertex);
+            vertex._key = inserted._key;
+            return vertex;
+        }));
+        edges = await Promise.all(edges.map(async (edge) => {
+            const inserted = await this.graphStorage.addEdge(edge);
+            edge._key = inserted._key;
+            return edge;
+        }));
 
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
