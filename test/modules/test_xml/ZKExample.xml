@@ -6,7 +6,7 @@
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
             <sbdh:Sender><!-- Mandatory -->
                 <!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1ZK</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
                     <sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->
@@ -39,13 +39,13 @@
                 <VocabularyList>
                     <Vocabulary type="urn:ot:object:actor">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:object:actor:id:Company_1">
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_1ZK">
                                 <attribute id="urn:ot:object:actor:name">Company _1</attribute>
                                 <attribute id="urn:ot:object:actor:category">Company</attribute>
                                 <attribute id="urn:ot:object:actor:wallet">0x1fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
                                 <attribute id="urn:ot:object:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:ot:object:actor:id:Company_2">
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_2ZK">
                                 <attribute id="urn:ot:object:actor:name">Company _2</attribute>
                                 <attribute id="urn:ot:object:actor:category">Company</attribute>
                                 <attribute id="urn:ot:object:actor:wallet">0x4fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
@@ -59,7 +59,7 @@
                                     </private>
                                 </extension>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:ot:object:actor:id:Company_3">
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_3ZK">
                                 <attribute id="urn:ot:object:actor:name">Company _3</attribute>
                                 <attribute id="urn:ot:object:actor:category">Company</attribute>
                                 <attribute id="urn:ot:object:actor:wallet">0x0fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
@@ -104,21 +104,21 @@
                                 <attribute id="urn:ot:object:location:category">Physical location</attribute>
                                 <attribute id="urn:ot:object:location:description">Storage F13</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_1</attribute>
+                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_1ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_2">
                                 <attribute id="urn:ot:object:location:category">Physical location</attribute>
                                 <attribute id="urn:ot:object:location:description">Storage F12</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_2</attribute>
+                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_2ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_3">
                                 <attribute id="urn:ot:object:location:category">Physical location</attribute>
                                 <attribute id="urn:ot:object:location:description">Storage F14</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:actortId">urn:ot:object:actor:id:Company_3</attribute>
+                                    <attribute id="urn:ot:location:actortId">urn:ot:object:actor:id:Company_3ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                         </VocabularyElementList>
