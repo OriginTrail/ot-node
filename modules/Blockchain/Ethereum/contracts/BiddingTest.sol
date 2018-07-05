@@ -138,6 +138,7 @@ contract BiddingTest is Ownable{
 		// uint256 offer_creation_timestamp;
 
 		BidDefinition[] bid;
+
 		uint replication_modifier;
 	}
 
