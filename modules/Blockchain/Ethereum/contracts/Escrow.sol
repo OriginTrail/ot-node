@@ -142,7 +142,7 @@ library SafeMath {
 
      mapping(bytes32 => mapping(address => EscrowDefinition)) public escrow;
 
-     event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time_in_seconds);
+     event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time_in_minutes);
      event EscrowConfirmed(bytes32 import_id, address DH_wallet);
      event EscrowVerified(bytes32 import_id, address DH_wallet);
      event EscrowCanceled(bytes32 import_id, address DH_wallet);
