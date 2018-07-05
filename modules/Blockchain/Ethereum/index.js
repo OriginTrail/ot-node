@@ -71,7 +71,7 @@ class Ethereum {
      * Initializing Ethereum blockchain contracts
      */
     async initialize(emitter) {
-        const blockchainModel = await Storage.blockchain_data.findOne({
+        const blockchainModel = await Storage.models.blockchain_data.findOne({
             where: {
                 id: 1,
             },
