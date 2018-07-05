@@ -1,6 +1,4 @@
 // External modules
-const utilities = require('./Utilities');
-const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');

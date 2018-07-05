@@ -1,5 +1,6 @@
 const MerkleTree = require('./Merkle');
 const utilities = require('./Utilities');
+const uuidv4 = require('uuid/v4');
 
 /**
  * Import related utilities
@@ -14,13 +15,31 @@ class ImportUtilities {
         for (const vertex of vertices) {
             if (!vertex._dc_key) {
                 vertex._dc_key = vertex._key;
-                delete vertex._key;
+                vertex._key = uuidv4();
+            }
+        }
+        // map _from and _to
+        const find = (key) => {
+            const filtered = vertices.filter(v => v._dc_key === key);
+            if (filtered.length > 0) {
+                return filtered[0]._key;
+            }
+            return null;
+        };
+        for (const edge of edges) {
+            const from = find(edge._from);
+            if (from) {
+                edge._from = from;
+            }
+            const to = find(edge._to);
+            if (to) {
+                edge._to = to;
             }
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
                 edge._dc_key = edge._key;
-                delete edge._key;
+                edge._key = uuidv4();
             }
         }
     }
@@ -31,8 +50,10 @@ class ImportUtilities {
      * @param edges
      */
     static unpackKeys(vertices, edges) {
+        const mapping = {};
         for (const vertex of vertices) {
             if (vertex._dc_key) {
+                mapping[vertex._key] = vertex._dc_key;
                 vertex._key = vertex._dc_key;
                 delete vertex._dc_key;
             }
@@ -41,6 +62,13 @@ class ImportUtilities {
             if (edge._dc_key) {
                 edge._key = edge._dc_key;
                 delete edge._dc_key;
+
+                if (mapping[edge._from]) {
+                    edge._from = mapping[edge._from];
+                }
+                if (mapping[edge._to]) {
+                    edge._to = mapping[edge._to];
+                }
             }
         }
     }
