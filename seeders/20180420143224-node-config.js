@@ -44,11 +44,11 @@ module.exports = {
     },
     {
         key: 'max_token_amount_per_dh',
-        value: '14000000000000',  // ~ 20 TRAC per kB/day
+        value: '14000000000000', // ~ 20 TRAC per kB/day
     },
     {
         key: 'dh_min_stake_amount',
-        value: '3500000000000',  // ~ 5 TRAC per kB/day
+        value: '3500000000000', // ~ 5 TRAC per kB/day
     },
     {
         key: 'dh_min_reputation',
