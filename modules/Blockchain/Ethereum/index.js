@@ -1,7 +1,7 @@
 const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
-const Storage = require('../../Storage');
+const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
 
 class Ethereum {
@@ -447,7 +447,7 @@ class Ethereum {
             let fromBlock = 0;
 
             // Find last queried block if any.
-            const lastEvent = await Storage.models.events.findOne({
+            const lastEvent = await Models.events.findOne({
                 where: {
                     contract: contractName,
                 },
@@ -470,7 +470,7 @@ class Ethereum {
                 const event = events[i];
                 const timestamp = Date.now();
                 /* eslint-disable-next-line */
-                await Storage.models.events.create({
+                await Models.events.create({
                     id: event.id,
                     contract: contractName,
                     event: event.event,
@@ -485,7 +485,7 @@ class Ethereum {
             const twoWeeksAgo = new Date();
             twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
             // Delete old events
-            await Storage.models.events.destroy({
+            await Models.events.destroy({
                 where: {
                     timestamp: {
                         [Op.lt]: twoWeeksAgo.getTime(),
@@ -520,7 +520,7 @@ class Ethereum {
                 if (importId) {
                     where.import_id = importId;
                 }
-                Storage.models.events.findAll({
+                Models.events.findAll({
                     where,
                 }).then((events) => {
                     for (const eventData of events) {
@@ -574,7 +574,7 @@ class Ethereum {
                 finished: 0,
             };
 
-            const eventData = await Storage.models.events.findAll({ where });
+            const eventData = await Models.events.findAll({ where });
             if (eventData) {
                 eventData.forEach(async (data) => {
                     this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
@@ -623,7 +623,8 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.notify('Initiating escrow to add bid');
+        this.log.notify(`Adding bid for import ID ${importId}.`);
+        this.log.trace(`addBid(${importId}, ${dhNodeId})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [importId, Utilities.normalizeHex(dhNodeId)], options,
