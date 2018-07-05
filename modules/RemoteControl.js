@@ -227,8 +227,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(2);
-        }, 5000);
+            process.exit(1);
+        }, 2000);
     }
 
     /**

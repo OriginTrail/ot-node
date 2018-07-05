@@ -148,11 +148,12 @@ class Utilities {
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'blue',
+            job: 'cyan',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
+            debug: 'orange',
         };
 
         try {
@@ -187,9 +188,10 @@ class Utilities {
                     important: 1,
                     warn: 2,
                     info: 3,
-                    debug: 4,
+                    job: 4,
                     notify: 5,
                     trace: 6,
+                    debug: 7,
                 },
                 transports,
             });
