@@ -47,11 +47,11 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            remoteControl,
         } = this.ctx;
 
         this.apiEmitter.on('import-request', (data) => {
             importer.importXML(data.filepath, (response) => {
-                // emit response
             });
         });
 
@@ -187,7 +187,7 @@ class EventEmitter {
                             logger.info(`No offers for query ${queryId} handled.`);
                         } else {
                             logger.info(`Offers for query ${queryId} are collected`);
-                            // TODO: Fire socket event for Houston
+                            remoteControl.networkQueryOffersCollected();
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
@@ -370,6 +370,7 @@ class EventEmitter {
                 data.response.send({
                     message: `Failed to start offer. ${error}.`,
                 });
+                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
@@ -415,6 +416,7 @@ class EventEmitter {
         const {
             dhService,
             logger,
+            remoteControl,
         } = this.ctx;
 
         this.blockchainEmitter.on('eth-OfferCreated', async (eventData) => {

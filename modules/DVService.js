@@ -205,6 +205,18 @@ class DVService {
             this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
         }
+
+        this.remoteControl.networkQueryOfferArrived({
+            query: JSON.stringify(message.query),
+            query_id: queryId,
+            wallet: message.wallet,
+            node_id: message.nodeId,
+            imports: JSON.stringify(message.imports),
+            data_size: message.dataSize,
+            data_price: message.dataPrice,
+            stake_factor: message.stakeFactor,
+            reply_id: message.replyId,
+        });
     }
 
     async handleDataReadResponse(message) {

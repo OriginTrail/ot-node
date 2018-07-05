@@ -25,6 +25,7 @@ class DCService {
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.network = ctx.network;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -123,6 +124,7 @@ class DCService {
         this.blockchain.getRootHash(config.node_wallet, importId)
             .then(async (blockchainRootHash) => {
                 if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                    this.remoteControl.writingRootHash(importId);
                     await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
@@ -156,6 +158,7 @@ class DCService {
                     dhIds,
                 ).then(async () => {
                     this.log.info('Offer written to blockchain. Started bidding phase.');
+                    this.remoteControl.biddingStarted(importId);
                     offer.status = 'STARTED';
                     offer.save({ fields: ['status'] });
 
@@ -185,6 +188,7 @@ class DCService {
                                 .then(() => {
                                     const errorMsg = `Offer for import ${offer.import_id} finalized`;
                                     offer.status = 'FINALIZED';
+                                    this.remoteControl.offerFinalized(importId);
                                     offer.message = errorMsg;
                                     offer.save({ fields: ['status', 'message'] });
                                     this.log.info(errorMsg);

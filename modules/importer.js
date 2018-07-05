@@ -11,6 +11,7 @@ class Importer {
         this.wotImporter = ctx.wotImporter;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -100,7 +101,7 @@ class Importer {
      */
     async afterImport(result) {
         this.log.info('[DC] Import complete');
-
+        this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;

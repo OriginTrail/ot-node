@@ -5,11 +5,7 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
-const Web3 = require('web3');
 const Utilities = require('./Utilities');
-
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
-
 
 class RemoteControl {
     constructor(ctx) {
@@ -293,7 +289,7 @@ class RemoteControl {
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+        this.web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
             this.socket.emit('balance', balance);
         });
     }
@@ -318,6 +314,41 @@ class RemoteControl {
 
                 });
         }, 15000);
+    }
+
+    /**
+     * Get import request data
+     */
+    importRequestData() {
+        const message = '[DC] Import complete';
+        this.socket.emit('importRequestData', message);
+    }
+
+
+    /**
+     * Emmit collected offers for ODN Search
+     */
+    networkQueryOffersCollected(data) {
+        this.socket.emit('networkQueryOffersCollected', data);
+    }
+
+    biddingStarted() {
+        const message = 'Offer written to blockchain. Started bidding phase.';
+        this.socket.emit('biddingStarted', message);
+    }
+    offerFinalized(importId) {
+        const message = 'Offer status: finalized'
+        this.socket.emit('offerFinalized', { message, importId });
+    }
+
+    // nije bitan
+    preparingChallenges() {
+        const message = 'Data successfully verified, preparing to start challenges';
+        this.socket.emit('preparingChallenges', message);
+    }
+
+    failedToCreateOffer() {
+
     }
 }
 
