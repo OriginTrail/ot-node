@@ -305,12 +305,12 @@ describe('GS1 Importer tests', () => {
         let specificVertice;
 
         async function checkTransformationXmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:object:product:id:123AB');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Car.Engines', 'urn:ot:object:product:id:123AB');
             assert.equal(specificVertice.data.category, 'Engine');
             assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
             assert.equal(specificVertice.data.object_class_id, 'Product');
             assert.equal(specificVertice.vertex_type, 'PRODUCT');
-            assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Car.Engines');
             assert.equal(specificVertice.identifiers.id, 'urn:ot:object:product:id:123AB');
             assert.equal(specificVertice.identifiers.uid, 'urn:ot:object:product:id:123AB');
         }
@@ -362,13 +362,13 @@ describe('GS1 Importer tests', () => {
         }
 
         async function checkGraphExample2XmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Company _1', 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
             assert.equal(specificVertice.data.parent_id, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productId, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
             assert.equal(specificVertice.vertex_type, 'BATCH');
-            assert.equal(specificVertice.sender_id, 'SENDER_ID');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Company _1');
             assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgtin:Batch_2');
         }

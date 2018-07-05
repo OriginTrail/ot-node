@@ -243,6 +243,10 @@ class GS1Importer {
             });
         }
 
+        if (senderWallet == null) {
+            throw new Error('It is required for sender to have a valid wallet!');
+        }
+
         for (const product of products) {
             const { identifiers } = product;
             Object.assign(identifiers, {

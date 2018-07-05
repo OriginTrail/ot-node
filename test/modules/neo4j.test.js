@@ -42,7 +42,7 @@ const edgeOne = databaseData.edges[0];
 
 let testDb;
 
-describe('Neo4j module ', async () => {
+describe.skip('Neo4j module ', async () => {
     before('create and use testDb db', async () => {
         const log = Utilities.getLogger();
         testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port, log);
@@ -64,7 +64,8 @@ describe('Neo4j module ', async () => {
         });
     });
 
-    it('pass regular for vertex', async () => {
+    it('pass regular for vertex', async function passRegular() {
+        this.timeout(30000);
         await testDb.addVertex(vertexOne).then(() => {
             testDb.findVertices({ _key: vertexOne._key }).then((result) => {
                 assert.deepEqual(vertexOne, result[0]);

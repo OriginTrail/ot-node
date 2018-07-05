@@ -26,6 +26,7 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
+const TimeUtils = require('./modules/TimeUtils');
 
 const pjson = require('./package.json');
 
@@ -196,6 +197,7 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            timeUtils: awilix.asClass(TimeUtils).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -462,7 +464,7 @@ class OTNode {
                     response: res,
                 };
 
-                emitter.emit(`${importtype}-import-request`, queryObject);
+                emitter.emit(`api-${importtype}-import-request`, queryObject);
             } else if (req.body.importfile !== undefined) {
                 // Check if import data is provided in request body
                 const fileData = req.body.importfile;
@@ -480,7 +482,7 @@ class OTNode {
                         response: res,
                     };
 
-                    emitter.emit(`${importtype}-import-request`, queryObject);
+                    emitter.emit(`api-${importtype}-import-request`, queryObject);
                 });
             } else {
                 // No import data provided
@@ -511,7 +513,7 @@ class OTNode {
                     min_reputation: req.body.dh_min_reputation,
                     response: res,
                 };
-                emitter.emit('create-offer', queryObject);
+                emitter.emit('api-create-offer', queryObject);
             } else {
                 log.error('Invalid request');
                 res.status(400);
@@ -540,7 +542,7 @@ class OTNode {
                     external_id: externalId,
                     response: res,
                 };
-                emitter.emit('offer-status', queryObject);
+                emitter.emit('api-offer-status', queryObject);
             }
         });
 
@@ -551,7 +553,7 @@ class OTNode {
         server.get('/api/trail', (req, res) => {
             log.trace('GET Trail request received.');
             const queryObject = req.query;
-            emitter.emit('trail', {
+            emitter.emit('api-trail', {
                 query: queryObject,
                 response: res,
             });
@@ -563,7 +565,7 @@ class OTNode {
         server.get('/api/fingerprint', (req, res) => {
             log.trace('GET Fingerprint request received.');
             const queryObject = req.query;
-            emitter.emit('get_root_hash', {
+            emitter.emit('api-get_root_hash', {
                 query: queryObject,
                 response: res,
             });
@@ -578,7 +580,7 @@ class OTNode {
                 });
                 return;
             }
-            emitter.emit('network-query-status', {
+            emitter.emit('api-network-query-status', {
                 id: req.params.query_param,
                 response: res,
             });
@@ -593,7 +595,7 @@ class OTNode {
                 });
                 return;
             }
-            emitter.emit('network-query-responses', {
+            emitter.emit('api-network-query-responses', {
                 query_id: req.params.query_id,
                 response: res,
             });
@@ -610,7 +612,7 @@ class OTNode {
             }
             const { query } = req.body;
             if (query) {
-                emitter.emit('network-query', {
+                emitter.emit('api-network-query', {
                     query,
                     response: res,
                 });
@@ -638,7 +640,7 @@ class OTNode {
 
             // TODO: Decrypt returned vertices
             const queryObject = req.body.query;
-            emitter.emit('query', {
+            emitter.emit('api-query', {
                 query: queryObject,
                 response: res,
             });
@@ -655,7 +657,7 @@ class OTNode {
                 return;
             }
 
-            emitter.emit('api-get/api/import', {
+            emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
                 response: res,
             });
@@ -671,7 +673,7 @@ class OTNode {
             }
 
             const queryObject = req.body.query;
-            emitter.emit('get-imports', {
+            emitter.emit('api-get-imports', {
                 query: queryObject,
                 response: res,
             });
@@ -688,7 +690,7 @@ class OTNode {
             }
             const { query_id, reply_id } = req.body;
 
-            emitter.emit('choose-offer', {
+            emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
                 response: res,
