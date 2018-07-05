@@ -581,7 +581,7 @@ class EventEmitter {
             }
         });
 
-        this.blockchainEmitter.on('eth-EscrowVerified', async (eventData) => {
+        this._on('eth-EscrowVerified', async (eventData) => {
             logger.trace('Received eth-EscrowVerified');
             const {
                 import_id,
