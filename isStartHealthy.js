@@ -5,7 +5,7 @@ const fileToRead = process.argv[2];
 
 fs.readFile(`${fileToRead}.log`, (err, data) => {
     if (err) throw err;
-    if (data.indexOf('OT Node listening at') >= 0) {
+    if (data.indexOf('Trying to join the network') >= 0) {
         console.log('npm start is healthy!');
         process.exit(0);
     } else {
