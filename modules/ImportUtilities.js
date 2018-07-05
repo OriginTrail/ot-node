@@ -6,6 +6,46 @@ const utilities = require('./Utilities');
  */
 class ImportUtilities {
     /**
+     * Hides _key attributes
+     * @param vertices
+     * @param edges
+     */
+    static packKeys(vertices, edges) {
+        for (const vertex of vertices) {
+            if (!vertex._dc_key) {
+                vertex._dc_key = vertex._key;
+                delete vertex._key;
+            }
+        }
+        for (const edge of edges) {
+            if (!edge._dc_key) {
+                edge._dc_key = edge._key;
+                delete edge._key;
+            }
+        }
+    }
+
+    /**
+     * Restores _key attributes
+     * @param vertices
+     * @param edges
+     */
+    static unpackKeys(vertices, edges) {
+        for (const vertex of vertices) {
+            if (vertex._dc_key) {
+                vertex._key = vertex._dc_key;
+                delete vertex._dc_key;
+            }
+        }
+        for (const edge of edges) {
+            if (edge._dc_key) {
+                edge._key = edge._dc_key;
+                delete edge._dc_key;
+            }
+        }
+    }
+
+    /**
      * Creates Merkle tree from import data
      * @param vertices  Import vertices
      * @param edges     Import edges
@@ -54,11 +94,11 @@ class ImportUtilities {
         };
     }
 
-    static sort(documents) {
+    static sort(documents, key = '_key') {
         const sort = (a, b) => {
-            if (a._key < b._key) {
+            if (a[key] < b[key]) {
                 return -1;
-            } else if (a._key > b._key) {
+            } else if (a[key] > b[key]) {
                 return 1;
             }
             return 0;
