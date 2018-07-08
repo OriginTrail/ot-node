@@ -263,7 +263,7 @@ class DHService {
                 vertices: data.vertices,
                 edges: data.edges,
                 wallet: data.dc_wallet,
-            });
+            }, true);
 
             if (importResult.error) {
                 throw Error(importResult.error);
@@ -287,7 +287,7 @@ class DHService {
 
         try {
             const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-            ImportUtilities.sort(encryptedVertices);
+            ImportUtilities.sort(encryptedVertices, '_dc_key');
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
@@ -520,6 +520,8 @@ class DHService {
             const values = await Promise.all([verticesPromise, edgesPromise]);
             const vertices = values[0];
             const edges = values[1];
+
+            ImportUtilities.unpackKeys(vertices, edges);
 
             // Get replication key and then encrypt data.
             const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
