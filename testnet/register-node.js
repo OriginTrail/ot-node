@@ -120,7 +120,8 @@ class RegisterNode {
                 env.NODE_PRIVATE_KEY = pk;
             }
 
-            if (env.MACHNINE === 'local') {
+            console.log(process.env.INSTALLATION);
+            if (process.env.INSTALLATION === 'local') {
                 env.NODE_IP = '127.0.0.1';
             } else {
                 env.NODE_IP = await this.getExternalIp();
