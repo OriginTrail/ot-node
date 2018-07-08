@@ -2,7 +2,7 @@ const sleep = require('sleep');
 
 class TimeUtils {
     constructor() {
-        this._sleepRoutine = sleep;
+        this._sleepRoutine = sleep.msleep;
     }
 
     wait(milliseconds) {

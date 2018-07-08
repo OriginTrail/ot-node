@@ -13,6 +13,7 @@ const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
+const ImportUtilities = require('../../modules/ImportUtilities');
 
 function buildSelectedDatabaseParam(databaseName) {
     return {
@@ -38,6 +39,7 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_2.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -85,6 +87,29 @@ describe('GS1 Importer tests', () => {
                     async () => gs1.parseGS1(test.args[0]),
                 );
             }
+        });
+    });
+
+    describe('Parse and import XML file and test pack/unpak keys', () => {
+        inputXmlFiles.forEach(async (test) => {
+            it(
+                `should correctly pack keys for ${path.basename(test.args[0])}`,
+                // eslint-disable-next-line no-loop-func
+                async () => {
+                    const result = await gs1.parseGS1(test.args[0]);
+                    const { response } = await importer.importJSON(result, true);
+
+                    const { vertices, edges } = response;
+                    for (const doc of edges.concat(vertices)) {
+                        assert.isTrue(doc._dc_key != null);
+                    }
+
+                    ImportUtilities.unpackKeys(vertices, edges);
+                    for (const doc of edges.concat(vertices)) {
+                        assert.isTrue(doc._dc_key == null);
+                    }
+                },
+            );
         });
     });
 
@@ -436,6 +461,8 @@ describe('GS1 Importer tests', () => {
             } else if (xml === path.join(__dirname, 'test_xml/GraphExample_4.xml')) {
                 await checkGraphExample4XmlVerticeContent();
                 await checkGraphExample4XmlTraversalPath();
+            } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
+                // TODO checkZKExampleXmlVerticeContent();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }

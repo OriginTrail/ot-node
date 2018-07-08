@@ -168,6 +168,28 @@ class Ethereum {
     }
 
     /**
+     * Gets the index of the node's bid in the array of one offer
+     * @param importId Offer import id
+     * @param dhNodeId KADemplia ID of the DH node that wants to get index
+     * @returns {Promisse<any>} integer index in the array
+     */
+    getBidIndex(importId, nodeId) {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Get bid index for import ${importId}`);
+            this.biddingContract.methods.getBidIndex(
+                importId,
+                Utilities.normalizeHex(nodeId),
+            ).call({
+                from: this.config.wallet_address,
+            }).then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
      * @param pricePerByteMinute Price for byte per minute
@@ -627,6 +649,27 @@ class Ethereum {
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [importId, Utilities.normalizeHex(dhNodeId)], options,
+        );
+    }
+
+    /**
+     * Activates predetermined bid in the offer on Ethereum blockchain
+     * @param importId Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to activate bid
+     * @param bidIndex index of the bid in the array
+     * @returns {Promise<any>} Index of the bid.
+     */
+    activatePredeterminedBid(importId, dhNodeId, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        this.log.notify('Initiating escrow to activate predetermined bid');
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'activatePredeterminedBid',
+            [importId, Utilities.normalizeHex(dhNodeId), bidIndex], options,
         );
     }
 

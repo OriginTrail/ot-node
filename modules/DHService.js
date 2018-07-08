@@ -83,6 +83,7 @@ class DHService {
                 return;
             }
 
+            let bidEvent;
             // Check if predetermined bid was already added for me.
             // Possible race condition here.
             if (!predeterminedBid) {
@@ -95,21 +96,19 @@ class DHService {
                 });
 
                 if (eventModels) {
-                    let found = false;
+                    const found = false;
                     eventModels.forEach((eventModel) => {
                         const data = JSON.parse(eventModel.data);
                         if (data.DH_node_id.substring(2, 42) === this.config.identity &&
                             data.DH_wallet === this.config.node_wallet) {
                             // I'm chosen for predetermined bid.
-                            found = true;
+                            bidEvent = data;
+                            predeterminedBid = true;
                         }
                     });
-
-                    if (found) {
-                        return;
-                    }
                 }
             }
+
 
             // Check if already applied.
             let bidModel = await Models.bids.findOne({ where: { import_id: importId } });
@@ -160,12 +159,24 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            await this.blockchain.addBid(importId, this.config.identity);
-            // await blockchainc.increaseBiddingApproval(myStake);
-            const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            if (!predeterminedBid) {
+                await this.blockchain.addBid(importId, this.config.identity);
+                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            } else {
+                const myBidIndex = await this.blockchain.getBidIndex(
+                    importId,
+                    this.config.identity,
+                );
+                await this.blockchain.activatePredeterminedBid(
+                    importId,
+                    this.config.identity,
+                    myBidIndex,
+                );
+            }
+            // await blockchain.increaseBiddingApproval(myStake);
             const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
             this._saveBidToStorage(
-                addedBidEvent,
+                bidEvent, // TODO addedBidEvent alternative for predetermined bids
                 dcNodeId,
                 dcWallet,
                 myPrice,
@@ -173,6 +184,7 @@ class DHService {
                 myStake,
                 dataSizeBytes,
                 importId,
+                predeterminedBid,
             );
 
             await this.blockchain.subscribeToEvent('OfferFinalized', importId);
@@ -227,6 +239,7 @@ class DHService {
         stake,
         dataSizeBytes,
         importId,
+        predeterminedBid,
     ) {
         Models.bids.create({
             bid_index: event.bid_index,
@@ -237,6 +250,7 @@ class DHService {
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
+            pd_bid: predeterminedBid,
         }).then((bid) => {
             this.log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
         }).catch((err) => {
@@ -263,7 +277,7 @@ class DHService {
                 vertices: data.vertices,
                 edges: data.edges,
                 wallet: data.dc_wallet,
-            });
+            }, true);
 
             if (importResult.error) {
                 throw Error(importResult.error);
@@ -287,7 +301,7 @@ class DHService {
 
         try {
             const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-            ImportUtilities.sort(encryptedVertices);
+            ImportUtilities.sort(encryptedVertices, '_dc_key');
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
@@ -520,6 +534,8 @@ class DHService {
             const values = await Promise.all([verticesPromise, edgesPromise]);
             const vertices = values[0];
             const edges = values[1];
+
+            ImportUtilities.unpackKeys(vertices, edges);
 
             // Get replication key and then encrypt data.
             const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });

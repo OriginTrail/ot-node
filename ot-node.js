@@ -15,6 +15,7 @@ const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
+const BN = require('bn.js');
 
 const awilix = require('awilix');
 
@@ -231,6 +232,7 @@ class OTNode {
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Initialise API
         this.startRPC(emitter);
@@ -318,8 +320,8 @@ class OTNode {
         log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
-            config.dh_price,
-            config.dh_stake_factor,
+            new BN(config.dh_price, 10),
+            new BN(config.dh_stake_factor, 10),
             config.read_stake_factor,
             config.dh_max_time_mins,
         );
@@ -507,7 +509,7 @@ class OTNode {
                 Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
-                    total_escrow_time: req.body.total_escrow_time_in_minutes,
+                    total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
                     max_token_amount: req.body.max_token_amount_per_dh,
                     min_stake_amount: req.body.dh_min_stake_amount,
                     min_reputation: req.body.dh_min_reputation,
