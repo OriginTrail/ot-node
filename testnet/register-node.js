@@ -41,6 +41,8 @@ const umzug_seeders = new Umzug({
 
     storageOptions: {
         sequelize: Models.sequelize,
+        modelName: 'SeedsMeta',
+        tableName: 'SeedsMeta',
     },
 
     migrations: {
@@ -55,8 +57,14 @@ const umzug_seeders = new Umzug({
 
 class RegisterNode {
     constructor() {
-        this.generateWallet().then((result) => {
-            this.registerNode(result.ip, result.wallet);
+        this.setConfig().then((result) => {
+            web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+                if (balance <= 0) {
+                    this.registerNode(result.ip, result.wallet);
+                } else {
+                    this.runNode();
+                }
+            });
         });
     }
 
@@ -70,44 +78,8 @@ class RegisterNode {
 
     generateWallet() {
         return new Promise(async (resolve, reject) => {
-            const env = envfile.parseFileSync('.env');
-            if (!env.NODE_WALLET) {
-                const account = await web3.eth.accounts.create();
-                env.NODE_WALLET = account.address;
-                env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
-                if (env.MACHNINE === 'local') {
-                    env.NODE_IP = '127.0.0.1';
-                } else {
-                    env.NODE_IP = await this.getExternalIp();
-                }
-                env.DB_PASSWORD = 'root';
-                env.IMPORT_WHITELIST = '54.93.223.161';
-                env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
-
-                process.env.NODE_WALLET = account.address;
-                process.env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
-                process.env.NODE_IP = env.NODE_IP;
-                process.env.DB_PASSWORD = 'root';
-                process.env.IMPORT_WHITELIST = '54.93.223.161';
-                process.env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
-
-                const envF = envfile.stringifySync(env);
-                console.log(envF);
-
-                fs.writeFile('.env', envF, (err) => {
-                    umzug_migrations.up().then((migrations) => {
-                        umzug_seeders.up().then((migrations) => {
-                            console.log('Configuration loaded...');
-                            resolve({
-                                ip: env.NODE_IP,
-                                wallet: env.NODE_WALLET,
-                            });
-                        });
-                    });
-                });
-            } else {
-                this.runNode();
-            }
+            const account = await web3.eth.accounts.create();
+            resolve({ wallet: account.address, pk: account.privateKey.substr(2) });
         });
     }
 
@@ -136,6 +108,63 @@ class RegisterNode {
             }, 20000);
         }).catch((e) => {
             console.log(e);
+        });
+    }
+
+    setConfig() {
+        return new Promise(async (resolve, reject) => {
+            const env = envfile.parseFileSync('.env');
+            if (!env.NODE_WALLET) {
+                const { wallet, pk } = await this.generateWallet();
+                env.NODE_WALLET = wallet;
+                env.NODE_PRIVATE_KEY = pk;
+            }
+
+            if (env.MACHNINE === 'local') {
+                env.NODE_IP = '127.0.0.1';
+            } else {
+                env.NODE_IP = await this.getExternalIp();
+            }
+
+            env.DB_PASSWORD = 'root';
+            env.IMPORT_WHITELIST = '54.93.223.161,127.0.0.1';
+            env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
+
+            for (const prop in env) {
+                if (Object.prototype.hasOwnProperty.call(env, prop)) {
+                    process.env[prop] = env[prop];
+                }
+            }
+
+            const envF = envfile.stringifySync(env);
+            console.log(envF);
+
+            fs.writeFile('.env', envF, (err) => {
+                if (fs.existsSync('modules/Database/system.db')) {
+                    umzug_seeders.down({ to: 0 }).then((migrations) => {
+                        Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');
+                        Models.sequelize.query('delete from sqlite_sequence where name=\'blockchain_data\';');
+                        Models.sequelize.query('delete from sqlite_sequence where name=\'graph_database\';');
+                        umzug_seeders.up().then((migrations) => {
+                            console.log('Configuration loaded...');
+                            resolve({
+                                ip: env.NODE_IP,
+                                wallet: env.NODE_WALLET,
+                            });
+                        });
+                    });
+                } else {
+                    umzug_migrations.up().then((migrations) => {
+                        umzug_seeders.up().then((migrations) => {
+                            console.log('Configuration loaded...');
+                            resolve({
+                                ip: env.NODE_IP,
+                                wallet: env.NODE_WALLET,
+                            });
+                        });
+                    });
+                }
+            });
         });
     }
 
