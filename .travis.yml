@@ -11,7 +11,7 @@ env:
 sudo: enabled
 before_script:
   - cp .env.travis .env
-  - npm run install
+  - npm run bootstrap
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
