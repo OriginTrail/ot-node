@@ -444,7 +444,7 @@
       },
       {
         "indexed": false,
-        "name": "total_time_in_seconds",
+        "name": "total_time_in_minutes",
         "type": "uint256"
       }
     ],
