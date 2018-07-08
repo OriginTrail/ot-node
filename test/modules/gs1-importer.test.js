@@ -38,6 +38,7 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_2.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -436,6 +437,8 @@ describe('GS1 Importer tests', () => {
             } else if (xml === path.join(__dirname, 'test_xml/GraphExample_4.xml')) {
                 await checkGraphExample4XmlVerticeContent();
                 await checkGraphExample4XmlTraversalPath();
+            } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
+                // TODO checkZKExampleXmlVerticeContent();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }
