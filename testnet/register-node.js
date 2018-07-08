@@ -75,16 +75,20 @@ class RegisterNode {
                 const account = await web3.eth.accounts.create();
                 env.NODE_WALLET = account.address;
                 env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
-                env.NODE_IP = await this.getExternalIp();
+                if (env.MACHNINE === 'local') {
+                    env.NODE_IP = '127.0.0.1';
+                } else {
+                    env.NODE_IP = await this.getExternalIp();
+                }
                 env.DB_PASSWORD = 'root';
-                env.IMPORT_WHITELIST = '18.185.39.223';
+                env.IMPORT_WHITELIST = '54.93.223.161';
                 env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
 
                 process.env.NODE_WALLET = account.address;
                 process.env.NODE_PRIVATE_KEY = account.privateKey.substr(2);
                 process.env.NODE_IP = env.NODE_IP;
                 process.env.DB_PASSWORD = 'root';
-                process.env.IMPORT_WHITELIST = '18.185.39.223';
+                process.env.IMPORT_WHITELIST = '54.93.223.161';
                 process.env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
 
                 const envF = envfile.stringifySync(env);
