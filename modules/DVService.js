@@ -297,7 +297,7 @@ class DVService {
                 edges: message.encryptedData.edges,
                 import_id: importId,
                 wallet: data_provider_wallet,
-            });
+            }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
             networkQuery.status = 'FAILED';

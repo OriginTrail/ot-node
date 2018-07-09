@@ -1,6 +1,4 @@
 // External modules
-const utilities = require('./Utilities');
-const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');
@@ -50,9 +48,12 @@ class Importer {
         });
     }
 
-    async importJSON(json_document) {
+    async importJSON(json_document, packKeys = false) {
         try {
-            const result = await this._import('JSON', json_document);
+            const result = await this._import('JSON', {
+                packKeys,
+                json_document,
+            });
             return {
                 response: await this.afterImport(result),
                 error: null,
@@ -67,17 +68,40 @@ class Importer {
         }
     }
 
-    async _importJSON(json_document) {
+    async _importJSON(data) {
         this.log.info('Entering importJSON');
         const {
+            packKeys,
+            json_document,
+        } = data;
+
+        let {
             vertices,
             edges,
+        } = json_document;
+
+        const {
             import_id,
             wallet,
         } = json_document;
 
-        this.log.trace('Vertex importing');
+        this.log.trace('Import vertices and edges');
         ImportUtilities.deleteInternal(vertices);
+
+        if (packKeys) {
+            ImportUtilities.packKeys(vertices, edges);
+        }
+
+        vertices = await Promise.all(vertices.map(async (vertex) => {
+            const inserted = await this.graphStorage.addVertex(vertex);
+            vertex._key = inserted._key;
+            return vertex;
+        }));
+        edges = await Promise.all(edges.map(async (edge) => {
+            const inserted = await this.graphStorage.addEdge(edge);
+            edge._key = inserted._key;
+            return edge;
+        }));
 
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
