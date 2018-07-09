@@ -122,6 +122,10 @@ class RemoteControl {
             this.socket.on('get-network-query-responses', (queryId) => {
                 this.getNetworkQueryResponses(queryId);
             });
+
+            this.socket.on('get-bids', () => {
+                this.getBids();
+            });
         });
     }
 
@@ -223,8 +227,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(2);
-        }, 5000);
+            process.exit(1);
+        }, 2000);
     }
 
     /**
@@ -279,6 +283,16 @@ class RemoteControl {
     }
 
     /**
+     * Get bids data
+     */
+    getBids() {
+        Models.bids.findAll()
+            .then((rows) => {
+                this.socket.emit('bids', rows);
+            });
+    }
+
+    /**
      * Get wallet balance
      * @param wallet
      */
@@ -298,22 +312,19 @@ class RemoteControl {
      * Get network query responses
      */
     getNetworkQueryResponses(queryId) {
-        const interval = setInterval(() => {
-            Models.network_query_responses.findAll({
-                where: {
-                    query_id: queryId,
-                },
-            })
-                .then((rows) => {
-                    console.log(rows);
-                    if (rows.length > 0) {
-                        this.socket.emit('networkQueryResponses', rows);
-                        clearInterval(interval);
-                    }
-                }).catch((e) => {
+        Models.network_query_responses.findAll({
+            where: {
+                query_id: queryId,
+            },
+        })
+            .then((rows) => {
+                console.log(rows);
+                if (rows.length > 0) {
+                    this.socket.emit('networkQueryResponses', rows);
+                }
+            }).catch((e) => {
 
-                });
-        }, 15000);
+            });
     }
 
     /**
@@ -324,31 +335,79 @@ class RemoteControl {
         this.socket.emit('importRequestData', message);
     }
 
+    /**
+     * Get import data error
+     */
+    importFailed(data) {
+        this.socket.emit('importFailed', data);
+    }
+
+    /**
+     * Get import data - succeeded
+     */
+    importSucceeded(data) {
+        this.socket.emit('importSucceeded', data);
+    }
+
 
     /**
      * Emmit collected offers for ODN Search
      */
-    networkQueryOffersCollected(data) {
-        this.socket.emit('networkQueryOffersCollected', data);
+    networkQueryOffersCollected() {
+        this.socket.emit('networkQueryOffersCollected');
     }
 
-    biddingStarted() {
-        const message = 'Offer written to blockchain. Started bidding phase.';
-        this.socket.emit('biddingStarted', message);
+
+    /**
+     * DC events
+     */
+    failedToCreateOffer(data) {
+        this.socket.emit('failedToCreateOffer', data);
     }
+
+    writingRootHash(importId) {
+        this.socket.emit('writingRootHash', importId);
+    }
+
+    initializingOffer() {
+        this.socket.emit('initializingOffer');
+    }
+    cancelingOffer(data) {
+        this.socket.emit('cancelingOffer', data);
+    }
+
+    biddingStarted(importId) {
+        const message = 'Offer written to blockchain. Started bidding phase.';
+        this.socket.emit('biddingStarted', { message, importId });
+    }
+
+    biddingComplete() {
+        this.socket.emit('biddingComplete');
+    }
+
+    choosingBids() {
+        this.socket.emit('choosingBids');
+    }
+
+    bidChosen() {
+        this.socket.emit('bidChosen');
+    }
+
+    dcErrorHandling(error) {
+        this.socket.emit('dcErrorHandling', error);
+    }
+
     offerFinalized(importId) {
-        const message = 'Offer status: finalized'
+        const message = 'Offer status: finalized';
         this.socket.emit('offerFinalized', { message, importId });
     }
 
-    // nije bitan
-    preparingChallenges() {
-        const message = 'Data successfully verified, preparing to start challenges';
-        this.socket.emit('preparingChallenges', message);
+    challengeFailed(data) {
+        this.socket.emit('challengeFailed', data);
     }
 
-    failedToCreateOffer() {
-
+    replicationVerificationStatus(data) {
+        this.socket.emit('replicationVerificationStatus', data);
     }
 }
 

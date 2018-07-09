@@ -15,6 +15,7 @@ class Challenger {
         this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.remoteControl = ctx.remoteControl;
     }
 
     async startChallenging() {
@@ -85,6 +86,7 @@ class Challenger {
                             Challenge.completeTest(challenge.id);
                         } else {
                             this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                            this.remoteControl.challengeFailed(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
                             // TODO doktor: Handle promise.
                             Challenge.failTest(challenge.id);
                             this.initiateLitigation(challenge);

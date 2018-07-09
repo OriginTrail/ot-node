@@ -135,6 +135,7 @@ class DCService {
                 }
 
                 this.log.info('Fingerprint written on blockchain');
+                this.remoteControl.initializingOffer();
 
                 const profileBalance =
                 new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
@@ -165,6 +166,7 @@ class DCService {
                     this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
                         if (!event) {
                             this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+                            this.remoteControl.cancelingOffer(`Offer ${importId} not finalized. Canceling offer.`);
                             this.blockchain.cancelOffer(importId).then(() => {
                                 offer.status = 'CANCELLED';
                                 offer.message = 'Offer not finalized';
@@ -180,6 +182,8 @@ class DCService {
                         }
 
                         this.log.trace('Started choosing phase.');
+                        this.remoteControl.biddingComplete();
+                        this.remoteControl.choosingBids();
 
                         offer.status = 'FINALIZING';
                         offer.save({ fields: ['status'] });
@@ -188,7 +192,8 @@ class DCService {
                                 .then(() => {
                                     const errorMsg = `Offer for import ${offer.import_id} finalized`;
                                     offer.status = 'FINALIZED';
-                                    this.remoteControl.offerFinalized(importId);
+                                    this.remoteControl.bidChosen();
+                                    this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`);
                                     offer.message = errorMsg;
                                     offer.save({ fields: ['status', 'message'] });
                                     this.log.info(errorMsg);
@@ -198,6 +203,7 @@ class DCService {
                                     offer.message = errorMsg;
                                     offer.save({ fields: ['status', 'message'] });
                                     this.log.error(errorMsg);
+                                    this.remoteControl.dcErrorHandling(errorMsg);
                                 });
                         }).catch((err) => {
                             const errorMsg = `Failed to choose bids. ${err}`;
@@ -205,6 +211,7 @@ class DCService {
                             offer.message = errorMsg;
                             offer.save({ fields: ['status', 'message'] });
                             this.log.error(errorMsg);
+                            this.remoteControl.dcErrorHandling(errorMsg);
                         });
                     });
                 }).catch((err) => {
@@ -213,6 +220,7 @@ class DCService {
                     offer.message = errorMsg;
                     offer.save({ fields: ['status', 'message'] });
                     this.log.error(errorMsg);
+                    this.remoteControl.dcErrorHandling(errorMsg);
                 });
             }).catch((err) => {
                 const errorMsg = `Failed to fetch root hash for import ${importId}. ${err}.`;
@@ -220,6 +228,7 @@ class DCService {
                 offer.message = errorMsg;
                 offer.save({ fields: ['status', 'message'] });
                 this.log.error(errorMsg);
+                this.remoteControl.dcErrorHandling(errorMsg);
             });
         return offer.external_id;
     }
