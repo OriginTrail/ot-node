@@ -128,7 +128,6 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.IMPORT_WHITELIST = '54.93.223.161,127.0.0.1';
             env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
 
             for (const prop in env) {
