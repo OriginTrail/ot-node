@@ -301,10 +301,10 @@ class OTNode {
     async createProfile(blockchain) {
         const { identity } = config;
         const profileInfo = await blockchain.getProfile(config.node_wallet);
-        // if (profileInfo.active) {
-        //     log.info(`Profile has already been created for ${identity}`);
-        //     return;
-        // }
+        if (profileInfo.active) {
+            log.info(`Profile has already been created for ${identity}`);
+            return;
+        }
 
         log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
