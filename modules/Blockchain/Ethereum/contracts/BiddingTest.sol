@@ -207,9 +207,13 @@ contract BiddingTest is Ownable{
 		require(max_token_amount_per_byte_minute > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
 		require(this_offer.active == false);
 
-		require(profile[msg.sender].balance >= max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier)));
+		
 		uint256 max_total_token_amount = max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier));
 		max_total_token_amount = max_total_token_amount.mul(data_size_in_bytes).mul(total_escrow_time_in_minutes);
+		
+		require(profile[msg.sender].balance >= max_total_token_amount);
+		
+
 		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
