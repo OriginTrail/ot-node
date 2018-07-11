@@ -469,8 +469,8 @@ class EventEmitter {
                 import_id,
                 DC_node_id,
                 total_escrow_time_in_minutes,
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
+                max_token_amount_per_byte_minute,
+                min_stake_amount_per_byte_minute,
                 min_reputation,
                 data_hash,
                 data_size_in_bytes,
@@ -480,8 +480,8 @@ class EventEmitter {
                 import_id,
                 DC_node_id,
                 total_escrow_time_in_minutes,
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
+                max_token_amount_per_byte_minute,
+                min_stake_amount_per_byte_minute,
                 min_reputation,
                 data_size_in_bytes,
                 data_hash,
@@ -497,8 +497,8 @@ class EventEmitter {
                 DH_wallet,
                 DH_node_id,
                 total_escrow_time_in_minutes,
-                max_token_amount_per_DH,
-                min_stake_amount_per_DH,
+                max_token_amount_per_byte_minute,
+                min_stake_amount_per_byte_minute,
                 data_size_in_bytes,
             } = eventData;
 
@@ -530,8 +530,8 @@ class EventEmitter {
                     import_id,
                     createOfferEventData.DC_node_id.substring(2, 42),
                     total_escrow_time_in_minutes * 60000, // In ms.
-                    max_token_amount_per_DH,
-                    min_stake_amount_per_DH,
+                    max_token_amount_per_byte_minute,
+                    min_stake_amount_per_byte_minute,
                     createOfferEventData.min_reputation,
                     data_size_in_bytes,
                     createOfferEventData.data_hash,
@@ -608,7 +608,7 @@ class EventEmitter {
 
                     new Promise(async (accept, reject) => {
                         logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
-                        timeUtils.wait(bid.total_escrow_time);
+                        timeUtils.wait(bid.total_escrow_time * 60 * 1000);
 
                         try {
                             await blockchain.payOut(DH_wallet, import_id);
