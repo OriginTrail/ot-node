@@ -37,5 +37,5 @@ RUN rm testnet/start.sh
 COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
-EXPOSE 5278 80 443 5279 8900 8529 3000
+EXPOSE 5278 80 443 5279 8900 8529 3000 4043 3010
 CMD ["sh", "/ot-node/testnet/start.sh"]
