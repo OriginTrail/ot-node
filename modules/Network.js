@@ -87,7 +87,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -95,8 +95,12 @@ class Network {
             wallet: config.node_wallet,
         };
 
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
         // Initialize transport adapter
-        const transport = new kadence.HTTPTransport();
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -111,7 +115,7 @@ class Network {
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        // this.enableOnion();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
