@@ -118,8 +118,8 @@ contract BiddingTest is Ownable{
 		address DC_wallet;
 
 		//Parameters for DH filtering
-		uint max_token_amount_per_DH;
-		uint min_stake_amount_per_DH; 
+		uint max_token_amount_per_byte_minute;
+		uint min_stake_amount_per_byte_minute; 
 		uint min_reputation;
 
 		//Data holding parameters
@@ -177,10 +177,10 @@ contract BiddingTest is Ownable{
 	mapping(bytes32 => OfferDefinition) public offer; //offer[import_id] import_id
 	mapping(address => ProfileDefinition) public profile; //profile[wallet]
 
-	event OfferCreated(bytes32 import_id, bytes32 DC_node_id, uint total_escrow_time_in_minutes, uint max_token_amount_per_DH, uint min_stake_amount_per_DH, uint min_reputation, uint data_size_in_bytes, bytes32 data_hash);
+	event OfferCreated(bytes32 import_id, bytes32 DC_node_id, uint total_escrow_time_in_minutes, uint max_token_amount_per_byte_minute, uint min_stake_amount_per_byte_minute, uint min_reputation, uint data_size_in_bytes, bytes32 data_hash);
 	event OfferCanceled(bytes32 import_id);
 	event AddedBid(bytes32 import_id, address DH_wallet, bytes32 DH_node_id, uint bid_index);
-	event AddedPredeterminedBid(bytes32 import_id, address DH_wallet, bytes32 DH_node_id, uint bid_index, uint total_escrow_time_in_minutes, uint max_token_amount_per_DH, uint min_stake_amount_per_DH, uint data_size_in_bytes);
+	event AddedPredeterminedBid(bytes32 import_id, address DH_wallet, bytes32 DH_node_id, uint bid_index, uint total_escrow_time_in_minutes, uint max_token_amount_per_byte_minute, uint min_stake_amount_per_byte_minute, uint data_size_in_bytes);
 	event FinalizeOfferReady(bytes32 import_id);
 	event BidTaken(bytes32 import_id, address DH_wallet);
 	event OfferFinalized(bytes32 import_id);
@@ -192,8 +192,8 @@ contract BiddingTest is Ownable{
 		bytes32 DC_node_id,
 
 		uint total_escrow_time_in_minutes, 
-		uint max_token_amount_per_DH,
-		uint min_stake_amount_per_DH,
+		uint max_token_amount_per_byte_minute,
+		uint min_stake_amount_per_byte_minute,
 		uint min_reputation,
 
 		bytes32 data_hash,
@@ -204,18 +204,20 @@ contract BiddingTest is Ownable{
 	public {
 		OfferDefinition storage this_offer = offer[import_id];
 
-		require(max_token_amount_per_DH > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
+		require(max_token_amount_per_byte_minute > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
 		require(this_offer.active == false);
 
-		require(profile[msg.sender].balance >= max_token_amount_per_DH.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier)));
-		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_token_amount_per_DH.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier)));
+		require(profile[msg.sender].balance >= max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier)));
+		uint256 max_total_token_amount = max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier));
+		max_total_token_amount = max_total_token_amount.mul(data_size_in_bytes).mul(total_escrow_time_in_minutes);
+		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 
 		this_offer.DC_wallet = msg.sender;
 
 		this_offer.total_escrow_time_in_minutes = total_escrow_time_in_minutes;
-		this_offer.max_token_amount_per_DH = max_token_amount_per_DH;
-		this_offer.min_stake_amount_per_DH = min_stake_amount_per_DH;
+		this_offer.max_token_amount_per_byte_minute = max_token_amount_per_byte_minute;
+		this_offer.min_stake_amount_per_byte_minute = min_stake_amount_per_byte_minute;
 		this_offer.min_reputation = min_reputation;
 
 		this_offer.data_hash = data_hash;
@@ -234,10 +236,10 @@ contract BiddingTest is Ownable{
 		while(this_offer.bid.length < predetermined_DH_wallet.length) {
 			BidDefinition memory bid_def = BidDefinition(predetermined_DH_wallet[this_offer.bid.length], predetermined_DH_node_id[this_offer.bid.length], 0, 0, 0, 0, false, false);
 			this_offer.bid.push(bid_def);
-			emit AddedPredeterminedBid(import_id, bid_def.DH_wallet, bid_def.DH_node_id, this_offer.bid.length - 1, total_escrow_time_in_minutes, max_token_amount_per_DH, min_stake_amount_per_DH, data_size_in_bytes);
+			emit AddedPredeterminedBid(import_id, bid_def.DH_wallet, bid_def.DH_node_id, this_offer.bid.length - 1, total_escrow_time_in_minutes, max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute, data_size_in_bytes);
 		}
 
-		emit OfferCreated(import_id, DC_node_id, total_escrow_time_in_minutes, max_token_amount_per_DH, min_stake_amount_per_DH, min_reputation, data_size_in_bytes, data_hash);
+		emit OfferCreated(import_id, DC_node_id, total_escrow_time_in_minutes, max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute, min_reputation, data_size_in_bytes, data_hash);
 	}
 
 	//TODO Decide when and under which conditions DC can cancel an offer
@@ -247,7 +249,9 @@ contract BiddingTest is Ownable{
 		require(this_offer.active && this_offer.DC_wallet == msg.sender
 			&& this_offer.finalized == false);
 		this_offer.active = false;
-		uint max_total_token_amount = this_offer.max_token_amount_per_DH.mul(this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
+		uint256 max_total_token_amount = this_offer.max_token_amount_per_byte_minute.mul(this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
+		max_total_token_amount = max_total_token_amount.mul(this_offer.data_size_in_bytes).mul(this_offer.total_escrow_time_in_minutes);
+
 		profile[msg.sender].balance = profile[msg.sender].balance.add(max_total_token_amount);
 		emit BalanceModified(msg.sender, profile[msg.sender].balance);
 		emit OfferCanceled(import_id);
@@ -266,8 +270,8 @@ contract BiddingTest is Ownable{
 		//Check if the the DH meets the filters DC set for the offer
 		uint scope = this_offer.data_size_in_bytes * this_offer.total_escrow_time_in_minutes;
 		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes);
-		require(this_offer.max_token_amount_per_DH  >= this_DH.token_amount_per_byte_minute * scope);
-		require((this_offer.min_stake_amount_per_DH  <= this_DH.stake_amount_per_byte_minute * scope) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
+		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute * scope);
+		require((this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute * scope) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
 
 		//Write the required data for the bid
 		this_bid.token_amount_for_escrow = this_DH.token_amount_per_byte_minute * scope;
@@ -310,8 +314,8 @@ contract BiddingTest is Ownable{
 		//Check if the the DH meets the filters DC set for the offer
 		uint scope = this_offer.data_size_in_bytes * this_offer.total_escrow_time_in_minutes;
 		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes);
-		require(this_offer.max_token_amount_per_DH  >= this_DH.token_amount_per_byte_minute * scope);
-		require((this_offer.min_stake_amount_per_DH  <= this_DH.stake_amount_per_byte_minute * scope) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
+		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute);
+		require((this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
 		require(this_offer.min_reputation 	 <= profile[msg.sender].reputation);
 
 		//Create new bid in the list
@@ -384,7 +388,8 @@ contract BiddingTest is Ownable{
 		uint256 current_index = 0;
 
 		uint256 token_amount_sent = 0;
-		uint256 max_total_token_amount = this_offer.max_token_amount_per_DH.mul(this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
+		uint256 max_total_token_amount = this_offer.max_token_amount_per_byte_minute.mul(this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
+		max_total_token_amount = max_total_token_amount.mul(this_offer.data_size_in_bytes).mul(this_offer.total_escrow_time_in_minutes);
 
 		//Sending escrow requests to predetermined bids
 		for(i = 0; i < this_offer.replication_factor; i = i + 1){
@@ -576,17 +581,17 @@ contract BiddingTest is Ownable{
 	
 	// corrective_factor = 10^10;
 	// DH_stake = 10^20
-	// min_stake_amount_per_DH = 10^18
+	// min_stake_amount_per_byte_minute = 10^18
 	// data_hash = 1234567890
 	// DH_node_id = 123456789011
-	// max_token_amount_per_DH = 100000000
+	// max_token_amount_per_byte_minute = 100000000
 	// token_amount = 10000
 	// min_reputation = 10
 	// reputation = 60
 	// hash_difference = abs(data_hash - DH_node_id)
 	// hash_f = (data_hash * (2^128)) / (hash_difference + data_hash)
-	// price_f = corrective_factor - ((corrective_factor * token_amount) / max_token_amount_per_DH)
-	// stake_f = (corrective_factor - ((min_stake_amount_per_DH * corrective_factor) / DH_stake)) * data_hash / (hash_difference + data_hash)
+	// price_f = corrective_factor - ((corrective_factor * token_amount) / max_token_amount_per_byte_minute)
+	// stake_f = (corrective_factor - ((min_stake_amount_per_byte_minute * corrective_factor) / DH_stake)) * data_hash / (hash_difference + data_hash)
 	// rep_f = (corrective_factor - (min_reputation * corrective_factor / reputation))
 	// distance = ((hash_f * (corrective_factor + price_f + stake_`f + rep_f)) / 4) / corrective_factor 
 
@@ -611,8 +616,8 @@ contract BiddingTest is Ownable{
 		uint256 hash_difference = absoluteDifference(uint256(uint128(this_offer.data_hash)), uint256(uint128(keccak256(DH_wallet))));
 
 		uint256 hash_f = ((uint256(uint128(this_offer.data_hash)) * (2**128)) / (hash_difference + uint256(uint128(this_offer.data_hash))));
-		uint256 price_f = corrective_factor - ((corrective_factor * token_amount) / this_offer.max_token_amount_per_DH);
-		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_DH * corrective_factor) / stake_amount)) * uint256(uint128(this_offer.data_hash))) / (hash_difference + uint256(uint128(this_offer.data_hash)));
+		uint256 price_f = corrective_factor - ((corrective_factor * token_amount) / this_offer.max_token_amount_per_byte_minute);
+		uint256 stake_f = ((corrective_factor - ((this_offer.min_stake_amount_per_byte_minute * corrective_factor) / stake_amount)) * uint256(uint128(this_offer.data_hash))) / (hash_difference + uint256(uint128(this_offer.data_hash)));
 		uint256 rep_f = (corrective_factor - (this_offer.min_reputation * corrective_factor / reputation));
 		distance = ((hash_f * (corrective_factor + price_f + stake_f + rep_f)) / 4) / corrective_factor;
 	}
