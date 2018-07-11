@@ -118,6 +118,14 @@ class RemoteControl {
             this.socket.on('get-replicated', () => {
                 this.getReplicatedData();
             });
+
+            this.socket.on('get-total-stake', () => {
+                this.getStakedAmount();
+            });
+
+            this.socket.on('get-total-income', () => {
+                this.getTotalIncome();
+            });
         });
     }
 
@@ -288,6 +296,22 @@ class RemoteControl {
         web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
             this.socket.emit('balance', balance);
         });
+    }
+
+    /**
+     * Get total staked amount of tokens
+     */
+    async getStakedAmount() {
+        const stakedAmount = await this.blockchain.getTotalStakedAmount();
+        this.socket.emit('total_stake', stakedAmount);
+    }
+
+    /**
+     * Get total payments
+     */
+    async getTotalIncome() {
+        const stakedAmount = await this.blockchain.getTotalIncome();
+        this.socket.emit('total_income', stakedAmount);
     }
 }
 

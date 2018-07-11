@@ -458,6 +458,18 @@ class Ethereum {
         );
     }
 
+    getStakedAmount() {
+        return new Promise((resolve, reject) => {
+            // TODO: Get past events
+        });
+    }
+
+    getTotalIncome() {
+        return new Promise((resolve, reject) => {
+            // TODO: Get past events
+        });
+    }
+
     /**
      * Gets all past events for the contract
      * @param contractName
