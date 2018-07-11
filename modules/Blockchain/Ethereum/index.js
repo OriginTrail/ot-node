@@ -460,7 +460,7 @@ class Ethereum {
 
     async getStakedAmount() {
         const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            0,
+            fromBlock: 0,
             toBlock: 'latest',
         });
         let totalStake = 0;
@@ -481,7 +481,7 @@ class Ethereum {
 
     async getTotalIncome() {
         let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            0,
+            fromBlock: 0,
             toBlock: 'latest',
         });
         let totalAmount = 0;
@@ -491,7 +491,7 @@ class Ethereum {
             }
         }
         events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
-            0,
+            fromBlock: 0,
             toBlock: 'latest',
         });
         for (const event of events) {
