@@ -479,7 +479,7 @@ class EventEmitter {
             await dhService.handleOffer(
                 import_id,
                 DC_node_id,
-                total_escrow_time_in_minutes * 60000, // In ms.
+                total_escrow_time_in_minutes,
                 max_token_amount_per_DH,
                 min_stake_amount_per_DH,
                 min_reputation,

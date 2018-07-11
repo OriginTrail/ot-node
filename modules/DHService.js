@@ -120,7 +120,7 @@ class DHService {
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
             dataSizeBytes = new BN(dataSizeBytes);
-            const totalEscrowTimePerMinute = Math.round(totalEscrowTime / 60000);
+            const totalEscrowTimePerMinute = new BN(totalEscrowTime);
             maxTokenAmount = new BN(maxTokenAmount)
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
