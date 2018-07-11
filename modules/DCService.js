@@ -102,6 +102,7 @@ class DCService {
             }
         });
 
+        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
             total_escrow_time: totalEscrowTime.div(60000).toString(),
