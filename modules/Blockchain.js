@@ -248,11 +248,11 @@ class Blockchain {
             .getAllPastEvents(contractName);
     }
 
-    getStakedAmount() {
-        return this.blockchain.getStaketAmount();
+    async getStakedAmount() {
+        return this.blockchain.getStakedAmount();
     }
 
-    getTotalIncome() {
+    async getTotalIncome() {
         return this.blockchain.getTotalIncome();
     }
 

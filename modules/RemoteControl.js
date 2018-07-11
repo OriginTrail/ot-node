@@ -302,7 +302,7 @@ class RemoteControl {
      * Get total staked amount of tokens
      */
     async getStakedAmount() {
-        const stakedAmount = await this.blockchain.getTotalStakedAmount();
+        const stakedAmount = await this.blockchain.getStakedAmount();
         this.socket.emit('total_stake', stakedAmount);
     }
 

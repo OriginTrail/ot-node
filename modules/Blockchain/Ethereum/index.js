@@ -458,16 +458,48 @@ class Ethereum {
         );
     }
 
-    getStakedAmount() {
-        return new Promise((resolve, reject) => {
-            // TODO: Get past events
+    async getStakedAmount() {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            0,
+            toBlock: 'latest',
         });
+        let totalStake = 0;
+        const initiated = {};
+        for (const event of events) {
+            if (event.event === 'EscrowInitiated' && event.DH_wallet === this.config.wallet_address) {
+                initiated[event.import_id] = event.stake_amount;
+            }
+            if (event.event === 'EscrowVerified' && event.DH_wallet === this.config.wallet_address) {
+                totalStake += initiated[event.import_id];
+            }
+            if (event.event === 'EscrowCompleted' && event.DH_wallet === this.config.wallet_address) {
+                totalStake -= initiated[event.import_id];
+            }
+        }
+        return totalStake;
     }
 
-    getTotalIncome() {
-        return new Promise((resolve, reject) => {
-            // TODO: Get past events
+    async getTotalIncome() {
+        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            0,
+            toBlock: 'latest',
         });
+        let totalAmount = 0;
+        for (const event of events) {
+            if (event.event === 'Payment' && event.DH_wallet === this.config.wallet_address) {
+                totalAmount += event.amount;
+            }
+        }
+        events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+            0,
+            toBlock: 'latest',
+        });
+        for (const event of events) {
+            if (event.event === 'PurchasePayment' && event.DH_wallet === this.config.wallet_address) {
+                totalAmount += event.amount;
+            }
+        }
+        return totalAmount;
     }
 
     /**
