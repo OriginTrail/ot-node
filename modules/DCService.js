@@ -136,7 +136,10 @@ class DCService {
 
                 const profileBalance =
                 new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
-                const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
+                const condition = maxTokenAmount
+                    .mul(new BN((dhWallets.length * 2) + 1))
+                    .mul(importSizeInBytes)
+                    .mul(totalEscrowTime);
 
                 if (profileBalance.lt(condition)) {
                     await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
