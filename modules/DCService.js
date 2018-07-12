@@ -355,14 +355,11 @@ class DCService {
                 kadWallet,
             );
             this.log.important('Data successfully verified, preparing to start challenges');
-            // await this.challenger.startChallenging();
 
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',
                 import_id: importId,
-            }, nodeId), (response) => {
-                console.log('RESPONSE: ', response);
-            };
+            }, nodeId);
         });
     }
 }

@@ -752,7 +752,6 @@ class EventEmitter {
         // async
         this._on('kad-replication-finished', async () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
-            await challenger.startChallenging();
         });
 
         // sync
