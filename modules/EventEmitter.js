@@ -605,19 +605,6 @@ class EventEmitter {
                         logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
                         return;
                     }
-
-                    new Promise(async (accept, reject) => {
-                        logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
-                        timeUtils.wait(bid.total_escrow_time * 60 * 1000);
-
-                        try {
-                            await blockchain.payOut(DH_wallet, import_id);
-                        } catch (error) {
-                            reject(Error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`));
-                        }
-                        logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
-                        accept();
-                    }).catch(error => logger.error(error));
                 } catch (error) {
                     logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
                 }

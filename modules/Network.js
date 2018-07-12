@@ -395,6 +395,7 @@ class Network {
 
         // error handler
         this.node.use('kad-challenge-request', (err, request, response, next) => {
+            console.log(err);
             response.send({
                 error: 'kad-challenge-request error',
             });
