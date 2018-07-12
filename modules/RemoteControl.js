@@ -303,10 +303,34 @@ class RemoteControl {
     }
 
     /**
+     * Get amount of tokens currently staked in a job
+     */
+    async getStakedAmount(import_id) {
+        const stakedAmount = await this.blockchain.getStakedAmount(import_id);
+        this.socket.emit('job_stake', stakedAmount, import_id);
+    }
+
+    /**
+     * Get payments for one data holding job
+     */
+    async getHoldingIncome(import_id) {
+        const stakedAmount = await this.blockchain.getHoldingIncome(import_id);
+        this.socket.emit('holding_income', stakedAmount, import_id);
+    }
+
+    /**
+     * Get payments for one data reading job
+     */
+    async getPurchaseIncome(import_id, DV_wallet) {
+        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet);
+        this.socket.emit('purchase_income', stakedAmount, import_id, DV_wallet);
+    }
+
+    /**
      * Get total staked amount of tokens
      */
-    async getStakedAmount() {
-        const stakedAmount = await this.blockchain.getStakedAmount();
+    async getTotalStakedAmount() {
+        const stakedAmount = await this.blockchain.getTotalStakedAmount();
         this.socket.emit('total_stake', stakedAmount);
     }
 
