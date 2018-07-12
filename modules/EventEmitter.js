@@ -181,11 +181,11 @@ class EventEmitter {
                     data.response.status(200);
                 }
                 data.response.send(res);
-            }).catch((error) => {
+            }).catch(() => {
                 logger.error(`Failed to get vertices for query ${data.query}`);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: `Failed to get vertices for query ${data.query}`,
                 });
             });
         });
@@ -212,7 +212,7 @@ class EventEmitter {
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${data.query}`);
                 data.response.status(500);
-                data.response.send(500); // TODO rethink about status codes
+                data.response.send(`Failed to get root hash for query ${data.query}`); // TODO rethink about status codes
             });
         });
 
