@@ -623,7 +623,7 @@ class Ethereum {
             if (error.msg && !error.msg.includes('Invalid JSON RPC response')) {
                 this.log.warn(`Failed to get all passed events. ${error}.`);
             } else {
-                this.log.warn('Node failed to communicate with blockchain provider. Check internet connection');
+                this.log.trace('Node failed to communicate with blockchain provider. Check internet connection');
             }
         }
     }
