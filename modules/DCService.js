@@ -301,6 +301,7 @@ class DCService {
             const clonedVertices = Utilities.copyObject(vertices);
             Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
 
+            ImportUtilities.sort(clonedVertices);
             const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
