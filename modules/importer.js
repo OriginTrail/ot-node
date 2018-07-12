@@ -55,7 +55,7 @@ class Importer {
                 json_document,
             });
             return {
-                response: await this.afterImport(result),
+                response: await this.afterImport(result, packKeys),
                 error: null,
             };
         } catch (error) {
@@ -121,15 +121,20 @@ class Importer {
 
     /**
      * Process successfull import
+     * @param unpack  Unpack keys
      * @param result  Import result
      * @return {Promise<>}
      */
-    async afterImport(result) {
+    async afterImport(result, unpack = false) {
         this.log.info('[DC] Import complete');
         this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;
+
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
 
         const {
             import_id, wallet,
