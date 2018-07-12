@@ -24,6 +24,12 @@ class KademliaUtils {
             const address = msg.substr(21);
             msg = `Peer ${address} timed out`;
         }
+        if (msg.includes('HSDir')) {
+            return null;
+        }
+        if (msg.includes('servicesscrubbed.onion')) {
+            return null;
+        }
         return {
             level,
             msg,
