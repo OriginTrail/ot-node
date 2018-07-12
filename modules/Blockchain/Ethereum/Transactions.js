@@ -64,10 +64,11 @@ class Transactions {
 
         const balance = await this.web3.eth.getBalance(this.walletAddress);
         const currentBalance = new BN(Utilities.denormalizeHex(balance), 16);
+        const requiredAmount = new BN(300000).mul(new BN(newTransaction.options.gasPrice));
 
         // If current ballance not enough for 300000 gas notify low ETH balance
-        if (currentBalance.lt(new BN(300000).mul(new BN(newTransaction.options.gasPrice)))) {
-            this.log.warn('ETH balance running low!');
+        if (currentBalance.lt(requiredAmount)) {
+            this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
         }
 
         return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
