@@ -459,7 +459,67 @@ class Ethereum {
         );
     }
 
-    async getStakedAmount() {
+    async getStakedAmount(importId) {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalStake = new BN(0);
+        const initiated = {};
+        for (const event of events) {
+            const { import_id } = event.returnValues;
+            if (event.event === 'EscrowInitated'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
+            }
+            if (event.event === 'EscrowVerified'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.add(initiated[import_id]);
+            }
+            if (event.event === 'EscrowCompleted'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.sub(initiated[import_id]);
+            }
+        }
+        return totalStake.toString();
+    }
+
+    async getHoldingIncome(importId) {
+        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalAmount = new BN(0);
+        for (const event of events) {
+            if (event.event === 'Payment'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
+    }
+
+    async getPurchaseIncome(importId, dvWallet) {
+        let events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        for (const event of events) {
+            if (event.event === 'PurchasePayment'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DV_wallet === dvWallet
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
+    }
+
+    async getTotalStakedAmount() {
         const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
             fromBlock: 0,
             toBlock: 'latest',
