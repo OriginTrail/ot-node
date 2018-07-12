@@ -544,6 +544,11 @@
 			},
 			{
 				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
 				"name": "amount",
 				"type": "uint256"
 			}

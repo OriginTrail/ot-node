@@ -107,7 +107,7 @@ contract Reading is Ownable{
 	event EncryptedBlockSent(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseDisputed(bytes32 import_id, address DH_wallet, address DV_wallet);
 	event PurchaseDisputeCompleted(bytes32 import_id, address DH_wallet, address DV_wallet, bool proof_was_correct);
-    event PurchasePayment(bytes32 import_id, address DH_wallet, uint256 amount);
+    event PurchasePayment(bytes32 import_id, address DH_wallet, address DV_wallet, uint256 amount);
 
 	function Reading(address escrow_address)
 	public {
@@ -240,7 +240,7 @@ contract Reading is Ownable{
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor).add(this_purchase.token_amount));
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
-		emit PurchasePayment(import_id, msg.sender, this_purchase.token_amount);
+		emit PurchasePayment(import_id, msg.sender, DV_wallet, this_purchase.token_amount);
 
 		bidding.increaseBalance(msg.sender, this_purchase.token_amount.mul(this_purchase.stake_factor));
 		bidding.increaseBalance(DV_wallet, this_purchase.token_amount.mul(this_purchase.stake_factor));
@@ -272,7 +272,7 @@ contract Reading is Ownable{
 
 		if(commitment_proof == true && checksum_hash_proof == true) {
 			bidding.increaseBalance(msg.sender, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
-			emit PurchasePayment(import_id, msg.sender, SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor));
+			emit PurchasePayment(import_id, msg.sender, DV_wallet, SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor));
 			emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, true);
 		}
 		else {
