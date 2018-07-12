@@ -135,7 +135,7 @@ class DCService {
                 }
 
                 this.log.info('Fingerprint written on blockchain');
-                this.remoteControl.initializingOffer();
+                this.remoteControl.initializingOffer(importId);
 
                 const profileBalance =
                 new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
@@ -166,7 +166,7 @@ class DCService {
                     this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
                         if (!event) {
                             this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
-                            this.remoteControl.cancelingOffer(`Offer ${importId} not finalized. Canceling offer.`);
+                            this.remoteControl.cancelingOffer(`Offer ${importId} not finalized. Canceling offer.`, importId);
                             this.blockchain.cancelOffer(importId).then(() => {
                                 offer.status = 'CANCELLED';
                                 offer.message = 'Offer not finalized';
@@ -182,8 +182,8 @@ class DCService {
                         }
 
                         this.log.trace('Started choosing phase.');
-                        this.remoteControl.biddingComplete();
-                        this.remoteControl.choosingBids();
+                        this.remoteControl.biddingComplete(importId);
+                        this.remoteControl.choosingBids(importId);
 
                         offer.status = 'FINALIZING';
                         offer.save({ fields: ['status'] });
@@ -192,8 +192,8 @@ class DCService {
                                 .then(() => {
                                     const errorMsg = `Offer for import ${offer.import_id} finalized`;
                                     offer.status = 'FINALIZED';
-                                    this.remoteControl.bidChosen();
-                                    this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`);
+                                    this.remoteControl.bidChosen(importId);
+                                    this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
                                     offer.message = errorMsg;
                                     offer.save({ fields: ['status', 'message'] });
                                     this.log.info(errorMsg);

@@ -126,6 +126,10 @@ class RemoteControl {
             this.socket.on('get-bids', () => {
                 this.getBids();
             });
+
+            this.socket.on('get-local-data', (importId) => {
+                this.getLocalData(importId);
+            });
         });
     }
 
@@ -293,6 +297,23 @@ class RemoteControl {
     }
 
     /**
+     * Get local data
+     */
+    getLocalData(importId) {
+        Models.data_info.findAll({
+            where: {
+                import_id: importId,
+            },
+        })
+            .then((rows) => {
+                console.log(rows, 'redovi za local data');
+                this.socket.emit('localDataResponse', rows);
+            }).catch((e) => {
+
+            });
+    }
+
+    /**
      * Get wallet balance
      * @param wallet
      */
@@ -318,7 +339,6 @@ class RemoteControl {
             },
         })
             .then((rows) => {
-                console.log(rows);
                 if (rows.length > 0) {
                     this.socket.emit('networkQueryResponses', rows);
                 }
@@ -359,6 +379,52 @@ class RemoteControl {
 
 
     /**
+     * DV events
+     */
+    networkQueryOfferArrived(data) {
+        this.socket.emit('networkQueryOfferArrived', data);
+    }
+
+    purchaseFinished(data, importId) {
+        this.socket.emit('purchaseFinished', { data, importId });
+    }
+
+
+    /**
+     * DH events
+     */
+
+    replicationVerificationStatus(data) {
+        this.socket.emit('replicationVerificationStatus', data);
+    }
+
+    bidNotTaken(data) {
+        this.socket.emit('bidNotTaken', data);
+    }
+
+    replicationRequestSent(importId) {
+        const message = `Replication request send for ${importId}`;
+        this.socket.emit('replicationRequestSent', message);
+    }
+
+    replicationReqestFailed(data) {
+        this.socket.emit('replicationReqestFailed', data);
+    }
+
+    sendingRootHashes(data) {
+        this.socket.emit('sendingRootHashes', data);
+    }
+
+    dhReplicationFinished(data) {
+        this.socket.emit('dhReplicationFinished', data);
+    }
+
+    failedOfferHandle(data) {
+        this.socket.emit('failedOfferHandle', data);
+    }
+
+
+    /**
      * DC events
      */
     failedToCreateOffer(data) {
@@ -369,11 +435,11 @@ class RemoteControl {
         this.socket.emit('writingRootHash', importId);
     }
 
-    initializingOffer() {
-        this.socket.emit('initializingOffer');
+    initializingOffer(importId) {
+        this.socket.emit('initializingOffer', importId);
     }
-    cancelingOffer(data) {
-        this.socket.emit('cancelingOffer', data);
+    cancelingOffer(data, importId) {
+        this.socket.emit('cancelingOffer', { data, importId });
     }
 
     biddingStarted(importId) {
@@ -381,33 +447,32 @@ class RemoteControl {
         this.socket.emit('biddingStarted', { message, importId });
     }
 
-    biddingComplete() {
-        this.socket.emit('biddingComplete');
+    biddingComplete(importId) {
+        this.socket.emit('biddingComplete', importId);
     }
 
-    choosingBids() {
-        this.socket.emit('choosingBids');
+    addingBid(data) {
+        this.socket.emit('addingBid', data);
     }
 
-    bidChosen() {
-        this.socket.emit('bidChosen');
+    choosingBids(importId) {
+        this.socket.emit('choosingBids', importId);
+    }
+
+    bidChosen(importId) {
+        this.socket.emit('bidChosen', importId);
     }
 
     dcErrorHandling(error) {
         this.socket.emit('dcErrorHandling', error);
     }
 
-    offerFinalized(importId) {
-        const message = 'Offer status: finalized';
-        this.socket.emit('offerFinalized', { message, importId });
+    offerFinalized(data, importId) {
+        this.socket.emit('offerFinalized', { data, importId });
     }
 
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
-    }
-
-    replicationVerificationStatus(data) {
-        this.socket.emit('replicationVerificationStatus', data);
     }
 }
 

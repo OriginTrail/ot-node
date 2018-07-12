@@ -147,7 +147,7 @@ class DHService {
             }
 
             this.log.trace(`Adding a bid for offer ${importId}.`);
-            this.remoteControl.addingBid();
+            this.remoteControl.addingBid(`Adding a bid for offer ${importId}.`);
 
             // From smart contract:
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
@@ -210,7 +210,7 @@ class DHService {
 
             if (eventBidData.DH_wallet !== this.config.node_wallet) {
                 this.log.info(`Bid not taken for offer ${importId}.`);
-                this.remoteControl.bidNotTaken();
+                this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
                 return;
             }
 
@@ -226,12 +226,13 @@ class DHService {
                     if (err) {
                         this.log.warn(`Failed to send replication request ${err}`);
                         // TODO Cancel bid here.
-                        this.remoteControl.replicationReqestFailed();
+                        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
                 },
             );
         } catch (error) {
             this.log.error(`Failed to handle offer. ${error}`);
+            this.remoteControl.failedOfferHandle(`Failed to handle offer. ${error}`);
         }
     }
 

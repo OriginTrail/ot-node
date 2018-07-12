@@ -15,7 +15,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer, logger,
+        network, blockchain, web3, config, graphStorage, importer, logger, remoteControl
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -24,6 +24,7 @@ class DVService {
         this.graphStorage = graphStorage;
         this.importer = importer;
         this.log = logger;
+        this.remoteControl = remoteControl;
     }
 
     /**
@@ -497,6 +498,7 @@ class DVService {
             }
 
             this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
+            this.remoteControl.purchaseFinished(`[DV] Purchase ${importId} finished. Got key.`, importId);
         } else {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
