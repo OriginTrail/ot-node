@@ -3,6 +3,7 @@ const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Storage = require('../../Storage');
 const Op = require('sequelize/lib/operators');
+const BN = require('bn.js');
 
 class Ethereum {
     /**
@@ -380,7 +381,7 @@ class Ethereum {
      * @param {number} - importId
      * @returns {Promise}
      */
-    payOut(dcWallet, importId) {
+    payOut(importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -388,7 +389,7 @@ class Ethereum {
         };
 
         this.log.notify('Initiating escrow - payOut');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, importId], options);
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [importId], options);
     }
 
     /**
@@ -427,7 +428,7 @@ class Ethereum {
             [
                 importId,
                 Utilities.normalizeHex(nodeId),
-                Math.round(totalEscrowTime / 1000 / 60), // In minutestotalEscrowTime
+                Math.round(totalEscrowTime),
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
@@ -456,6 +457,51 @@ class Ethereum {
             this.biddingContractAbi, 'cancelOffer',
             [importId], options,
         );
+    }
+
+    async getStakedAmount() {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalStake = new BN(0);
+        const initiated = {};
+        for (const event of events) {
+            const { import_id } = event.returnValues;
+            if (event.event === 'EscrowInitated' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
+            }
+            if (event.event === 'EscrowVerified' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.add(initiated[import_id]);
+            }
+            if (event.event === 'EscrowCompleted' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.sub(initiated[import_id]);
+            }
+        }
+        return totalStake.toString();
+    }
+
+    async getTotalIncome() {
+        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalAmount = new BN(0);
+        for (const event of events) {
+            if (event.event === 'Payment' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        for (const event of events) {
+            if (event.event === 'PurchasePayment' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
     }
 
     /**

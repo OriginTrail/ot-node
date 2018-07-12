@@ -5,7 +5,11 @@ const Models = require('../models');
 const kadence = require('@kadenceproject/kadence');
 const pjson = require('../package.json');
 const Storage = require('./Storage');
+const Web3 = require('web3');
 const Utilities = require('./Utilities');
+
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+
 
 class RemoteControl {
     constructor(ctx) {
@@ -29,7 +33,7 @@ class RemoteControl {
                     callback(null, res.value === password);
                 });
             } catch (e) {
-                this.log.trace('Wrong pass');
+                // Error
             }
         });
     }
@@ -129,6 +133,18 @@ class RemoteControl {
 
             this.socket.on('get-local-data', (importId) => {
                 this.getLocalData(importId);
+            });
+
+            this.socket.on('get-total-stake', () => {
+                this.getStakedAmount();
+            });
+
+            this.socket.on('get-total-income', () => {
+                this.getTotalIncome();
+            });
+
+            this.socket.on('payout', (import_id) => {
+                this.payOut(import_id);
             });
         });
     }
@@ -231,8 +247,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(1);
-        }, 2000);
+            process.exit(2);
+        }, 5000);
     }
 
     /**
@@ -324,7 +340,7 @@ class RemoteControl {
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        this.web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
             this.socket.emit('balance', balance);
         });
     }
@@ -375,6 +391,10 @@ class RemoteControl {
      */
     networkQueryOffersCollected() {
         this.socket.emit('networkQueryOffersCollected');
+    }
+
+    noOffersForQuery(data) {
+        this.socket.emit('noOffersForQuery', data);
     }
 
 
@@ -473,6 +493,32 @@ class RemoteControl {
 
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
+    }
+
+    /**
+     * Get total staked amount of tokens
+     */
+    async getStakedAmount() {
+        const stakedAmount = await this.blockchain.getStakedAmount();
+        this.socket.emit('total_stake', stakedAmount);
+    }
+
+    /**
+     * Get total payments
+     */
+    async getTotalIncome() {
+        const stakedAmount = await this.blockchain.getTotalIncome();
+        this.socket.emit('total_income', stakedAmount);
+    }
+
+    /**
+     * Payout offer
+     * @param import_id
+     * @returns {Promise<void>}
+     */
+    async payOut(import_id) {
+        await this.blockchain.payOut(import_id);
+        this.socket.emit('payout_complete', import_id);
     }
 }
 

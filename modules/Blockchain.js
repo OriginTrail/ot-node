@@ -248,6 +248,14 @@ class Blockchain {
             .getAllPastEvents(contractName);
     }
 
+    async getStakedAmount() {
+        return this.blockchain.getStakedAmount();
+    }
+
+    async getTotalIncome() {
+        return this.blockchain.getTotalIncome();
+    }
+
     /**
      * Adds bid to the offer on Ethereum blockchain
      * @param importId Import ID

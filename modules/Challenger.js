@@ -22,7 +22,7 @@ class Challenger {
         const activeChallegesCount = await Models.replicated_data.findAndCountAll({
             where: {
                 status: {
-                    [Op.in]: ['ACTIVE', 'TESTING'],
+                    [Op.in]: ['ACTIVE'],
                 },
             },
         });
@@ -30,7 +30,7 @@ class Challenger {
             // TODO: temp solution to delay.
             // Should be started after replication-finished received.
             setTimeout(() => {
-                setInterval(this.intervalFunc, intervalMs, this, this.log);
+                setInterval(this.intervalFunc, intervalMs, this, this.network, this.log);
             }, 30000);
             this.log.info(`Started challenging timer at ${intervalMs}ms.`);
         }
@@ -42,59 +42,6 @@ class Challenger {
             this.timerId = undefined;
             this.log.info('stopped challenging timer.');
         }
-    }
-
-    sendChallenge(challenge) {
-        Models.replicated_data.findOne({
-            where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
-        }).then(async (replicatedData) => {
-            if (replicatedData.status === 'ACTIVE') {
-                replicatedData.status = 'TESTING';
-                replicatedData.save({ fields: ['status'] });
-
-                this.log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
-
-                const payload = {
-                    payload: {
-                        block_id: challenge.block_id,
-                        import_id: challenge.import_id,
-                    },
-                };
-                await this.network.kademlia().challengeRequest(
-                    payload, challenge.dh_id,
-                    (error, response) => {
-                        if (error) {
-                            this.log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
-                            return;
-                        }
-
-                        if (typeof response.status === 'undefined') {
-                            this.log.warn('challenge-request: Missing status');
-                            return;
-                        }
-
-                        if (response.status !== 'success') {
-                            this.log.trace('challenge-request: Response not successful.');
-                        }
-
-                        if (response.answer === challenge.answer) {
-                            this.log.trace('Successfully answered to challenge.');
-
-                            replicatedData.status = 'ACTIVE';
-                            replicatedData.save({ fields: ['status'] });
-
-                            Challenge.completeTest(challenge.id);
-                        } else {
-                            this.log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                            this.remoteControl.challengeFailed(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                            // TODO doktor: Handle promise.
-                            Challenge.failTest(challenge.id);
-                            this.initiateLitigation(challenge);
-                        }
-                    },
-                );
-            }
-        });
     }
 
     /**
@@ -152,14 +99,62 @@ class Challenger {
         await replicatedData.save({ fields: ['status'] });
     }
 
-    intervalFunc(challenger, log) {
+    intervalFunc(challenger, network, log) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
-            .then((challenges) => {
+            .then(async (challenges) => {
                 if (challenges.length > 0) {
-                    challenges.forEach(challenge => challenger.sendChallenge(challenge));
+                    for (const challenge of challenges) {
+                        const replicatedData = await Models.replicated_data.findOne({
+                            where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
+                        });
+
+                        if (replicatedData.status === 'ACTIVE') {
+                            log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
+
+                            const payload = {
+                                payload: {
+                                    block_id: challenge.block_id,
+                                    import_id: challenge.import_id,
+                                },
+                            };
+                            // eslint-disable-next-line no-await-in-loop
+                            await network.kademlia().challengeRequest(
+                                payload, challenge.dh_id,
+                                (error, response) => {
+                                    if (error) {
+                                        log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
+                                        return;
+                                    }
+
+                                    if (typeof response.status === 'undefined') {
+                                        log.warn('challenge-request: Missing status');
+                                        return;
+                                    }
+
+                                    if (response.status !== 'success') {
+                                        log.trace('challenge-request: Response not successful.');
+                                    }
+
+                                    if (response.answer === challenge.answer) {
+                                        log.trace('Successfully answered to challenge.');
+
+                                        replicatedData.status = 'ACTIVE';
+                                        replicatedData.save({ fields: ['status'] });
+
+                                        Challenge.completeTest(challenge.id);
+                                    } else {
+                                        log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                                        // TODO doktor: Handle promise.
+                                        Challenge.failTest(challenge.id);
+                                        challenger.initiateLitigation(challenge);
+                                    }
+                                },
+                            );
+                        }
+                    }
                 } else {
-                //  log.trace('No challenges found.');
+                    //  log.trace('No challenges found.');
                 }
             }).catch((err) => {
                 log.error(`Failed to get unanswered challenges. Error: ${err}.`);

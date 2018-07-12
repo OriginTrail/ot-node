@@ -147,6 +147,7 @@ library SafeMath {
      event EscrowVerified(bytes32 import_id, address DH_wallet);
      event EscrowCanceled(bytes32 import_id, address DH_wallet);
      event EscrowCompleted(bytes32 import_id, address DH_wallet);
+     event Payment(bytes32 import_id, address DH_wallet, uint256 amount);
 
      function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
      public onlyOwner{
@@ -236,6 +237,7 @@ library SafeMath {
           if(amount_to_send > 0) {
                this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
                bidding.increaseBalance(msg.sender, amount_to_send);
+               emit Payment(import_id, msg.sender, amount_to_send);
           }
      }
 
@@ -475,6 +477,7 @@ library SafeMath {
                if(amount_to_send > 0) {
                     this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
                     bidding.increaseBalance(msg.sender, amount_to_send);
+                    emit Payment(import_id, DH_wallet, amount_to_send);
                }
                //Calculate the amount to send back to DH and transfer the money back
                amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);

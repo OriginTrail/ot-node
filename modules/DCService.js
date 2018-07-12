@@ -75,13 +75,13 @@ class DCService {
         const dhIds = [];
         const dhWallets = [];
 
-        let totalEscrowTime = config.total_escrow_time_in_milliseconds;
+        let totalEscrowTime = new BN(config.total_escrow_time_in_milliseconds);
         let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
         let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
         let minReputation = config.dh_min_reputation;
 
         if (total_escrow_time) {
-            totalEscrowTime = total_escrow_time;
+            totalEscrowTime = new BN(total_escrow_time);
         }
 
         if (max_token_amount) {
@@ -103,10 +103,11 @@ class DCService {
             }
         });
 
+        totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
-            total_escrow_time: totalEscrowTime / 60000,
+            total_escrow_time: totalEscrowTime.toString(),
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
             min_reputation: minReputation,
@@ -139,7 +140,10 @@ class DCService {
 
                 const profileBalance =
                 new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
-                const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
+                const condition = maxTokenAmount
+                    .mul(new BN((dhWallets.length * 2) + 1))
+                    .mul(importSizeInBytes)
+                    .mul(totalEscrowTime);
 
                 if (profileBalance.lt(condition)) {
                     await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
@@ -310,6 +314,7 @@ class DCService {
             const clonedVertices = Utilities.copyObject(vertices);
             Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
 
+            ImportUtilities.sort(clonedVertices);
             const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
