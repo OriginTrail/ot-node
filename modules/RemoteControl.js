@@ -126,6 +126,10 @@ class RemoteControl {
             this.socket.on('get-total-income', () => {
                 this.getTotalIncome();
             });
+
+            this.socket.on('payout', (import_id) => {
+                this.payOut(import_id);
+            });
         });
     }
 
@@ -312,6 +316,16 @@ class RemoteControl {
     async getTotalIncome() {
         const stakedAmount = await this.blockchain.getTotalIncome();
         this.socket.emit('total_income', stakedAmount);
+    }
+
+    /**
+     * Payout offer
+     * @param import_id
+     * @returns {Promise<void>}
+     */
+    async payOut(import_id) {
+        await this.blockchain.payOut(import_id);
+        this.socket.emit('payout_complete', import_id);
     }
 }
 
