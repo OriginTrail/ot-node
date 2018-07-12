@@ -299,7 +299,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Answers litigation from DH side
      * @param importId
@@ -349,7 +348,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Cancel data holding escrow process on Ethereum blockchain
      * @param {string} - dhWallet

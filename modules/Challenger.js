@@ -111,7 +111,7 @@ class Challenger {
                             // eslint-disable-next-line no-await-in-loop
                             await network.kademlia().challengeRequest(
                                 payload, challenge.dh_id,
-                                (error, response) => {
+                                async (error, response) => {
                                     if (error) {
                                         log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
                                         return;
@@ -137,6 +137,10 @@ class Challenger {
                                         log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
                                         // TODO doktor: Handle promise.
                                         Challenge.failTest(challenge.id);
+
+                                        replicatedData.status = 'LITIGATION';
+                                        await replicatedData.save({ fields: ['status'] });
+
                                         challenger.initiateLitigation(challenge);
                                     }
                                 },
