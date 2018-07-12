@@ -95,6 +95,7 @@ class Challenger {
             .then(async (challenges) => {
                 if (challenges.length > 0) {
                     for (const challenge of challenges) {
+                        // eslint-disable-next-line no-await-in-loop
                         const replicatedData = await Models.replicated_data.findOne({
                             where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
                         });
