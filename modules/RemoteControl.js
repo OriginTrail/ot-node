@@ -322,7 +322,6 @@ class RemoteControl {
             },
         })
             .then((rows) => {
-                console.log(rows, 'redovi za local data');
                 this.socket.emit('localDataResponse', rows);
             }).catch((e) => {
 
