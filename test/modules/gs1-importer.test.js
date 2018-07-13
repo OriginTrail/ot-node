@@ -70,6 +70,10 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
+            remoteControl: awilix.asValue({
+                importRequestData: () => {
+                },
+            }),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
