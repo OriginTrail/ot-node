@@ -10,6 +10,27 @@ const Utilities = require('./Utilities');
 
 const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
+class SocketDecorator {
+    constructor() {
+        this.socket = null;
+    }
+
+    initialize(socket) {
+        this.socket = socket;
+    }
+
+    emit(event, data) {
+        if (this.socket && this.socket.connected) {
+            this.socket.emit(event, data);
+        }
+    }
+
+    on(event, callback) {
+        if (this.socket && this.socket.connected) {
+            this.socket.on(event, callback);
+        }
+    }
+}
 
 class RemoteControl {
     constructor(ctx) {
@@ -19,6 +40,7 @@ class RemoteControl {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.web3 = ctx.web3;
+        this.socket = new SocketDecorator();
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -62,7 +84,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
-            this.socket = socket;
+            this.socket.initialize(socket);
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
