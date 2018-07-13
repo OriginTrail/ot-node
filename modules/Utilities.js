@@ -127,7 +127,7 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
+        const logLevel = 'api';
 
         const customColors = {
             trace: 'grey',
@@ -137,6 +137,7 @@ class Utilities {
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
+            api: 'cyan',
         };
 
         try {
@@ -154,6 +155,7 @@ class Utilities {
                             'warn',
                             'important',
                             'error',
+                            'api',
                         ],
                     }),
                     new (winston.transports.File)({
@@ -183,6 +185,7 @@ class Utilities {
                     debug: 4,
                     notify: 5,
                     trace: 6,
+                    api: 7,
                 },
                 transports,
             });
