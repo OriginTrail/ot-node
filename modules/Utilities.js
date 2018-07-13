@@ -23,9 +23,6 @@ require('winston-loggly-bulk');
 
 
 class Utilities {
-    constructor() {
-        this.getLogger();
-    }
 
     /**
      * Creates new hash import ID.
@@ -123,6 +120,22 @@ class Utilities {
     }
 
     /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise(async (resolve, reject) => {
+            // eslint-disable-next-line
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            if (res) {
+                resolve(res);
+            }
+        });
+    }
+
+    /**
      * Returns winston logger
      * @returns {*} - log function
      */
@@ -132,11 +145,12 @@ class Utilities {
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'blue',
+            job: 'cyan',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
+            debug: 'orange',
         };
 
         try {
@@ -180,9 +194,10 @@ class Utilities {
                     important: 1,
                     warn: 2,
                     info: 3,
-                    debug: 4,
+                    job: 4,
                     notify: 5,
                     trace: 6,
+                    debug: 7,
                 },
                 transports,
             });
@@ -286,7 +301,7 @@ class Utilities {
                 }
                 break;
             default:
-                this.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -458,7 +473,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
-            const log = this.getLogger();
+            const log = Utilities.getLogger();
             log.info('Callback not defined!');
         }
     }
@@ -505,7 +520,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = this.getLogger();
+        const log = Utilities.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
@@ -870,6 +885,18 @@ class Utilities {
      */
     static validateNumberParameter(property) {
         if (property == null || parseInt(property, 10) > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Validates number property type and allows zero
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameterAllowZero(property) {
+        if (property == null || parseInt(property, 10) >= 0) {
             return true;
         }
         return false;

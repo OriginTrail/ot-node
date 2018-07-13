@@ -27,6 +27,7 @@ class DHService {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -150,6 +151,7 @@ class DHService {
             }
 
             this.log.trace(`Adding a bid for offer ${importId}.`);
+            this.remoteControl.addingBid(`Adding a bid for offer ${importId}.`);
 
             // From smart contract:
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
@@ -212,11 +214,13 @@ class DHService {
 
             if (eventBidData.DH_wallet !== this.config.node_wallet) {
                 this.log.info(`Bid not taken for offer ${importId}.`);
+                this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
                 return;
             }
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
+            this.remoteControl.replicationRequestSent(importId);
             await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
@@ -226,11 +230,13 @@ class DHService {
                     if (err) {
                         this.log.warn(`Failed to send replication request ${err}`);
                         // TODO Cancel bid here.
+                        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
                 },
             );
         } catch (error) {
             this.log.error(`Failed to handle offer. ${error}`);
+            this.remoteControl.failedOfferHandle(`Failed to handle offer. ${error}`);
         }
     }
 
@@ -303,6 +309,7 @@ class DHService {
 
         this.log.trace('[DH] Replication finished');
 
+
         try {
             const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
             ImportUtilities.sort(encryptedVertices, '_dc_key');
@@ -330,6 +337,7 @@ class DHService {
             const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
             this.log.important('Send root hashes and checksum to blockchain.');
+            this.remoteControl.sendingRootHashes('Sending import root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
                 importResult.import_id,
                 litigationRootHash,
@@ -353,6 +361,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
+            this.remoteControl.dhReplicationFinished('Replication finished. Sending data to DC for verification.');
             await this.network.kademlia().verifyImport({
                 epk,
                 importId: importResult.import_id,

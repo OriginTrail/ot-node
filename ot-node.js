@@ -34,6 +34,8 @@ const pjson = require('./package.json');
 const log = Utilities.getLogger();
 const Web3 = require('web3');
 
+global.__basedir = __dirname;
+
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
@@ -71,6 +73,15 @@ class OTNode {
         try {
             await Utilities.loadConfig();
             log.info('Loaded system config');
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
+        }
+
+        // check for Updates
+        try {
+            log.info('Checking for updates');
+            await Utilities.checkForUpdates();
         } catch (err) {
             console.log(err);
             process.exit(1);
@@ -400,7 +411,7 @@ class OTNode {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
 
-            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+            if (!remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',
@@ -496,7 +507,7 @@ class OTNode {
                 Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
                 Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
                 Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
+                Utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
                     total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,

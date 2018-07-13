@@ -83,7 +83,7 @@ module.exports = {
     },
     {
         key: 'onion_virtual_port',
-        value: '443',
+        value: '4043',
     }, {
         key: 'traverse_nat_enabled',
         value: process.env.TRAVERSE_NAT_ENABLED ? process.env.TRAVERSE_NAT_ENABLED : '0',
@@ -107,7 +107,7 @@ module.exports = {
         value: '',
     }, {
         key: 'onion_enabled',
-        value: '0',
+        value: '1',
     }, {
         key: 'test_network',
         value: process.env.TEST_NETWORK_ENABLED ? process.env.TEST_NETWORK_ENABLED : '1',
