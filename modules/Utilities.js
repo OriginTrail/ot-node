@@ -23,9 +23,6 @@ require('winston-loggly-bulk');
 
 
 class Utilities {
-    constructor() {
-        this.getLogger();
-    }
 
     /**
      * Creates new hash import ID.
@@ -304,7 +301,7 @@ class Utilities {
                 }
                 break;
             default:
-                this.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -476,7 +473,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
-            const log = this.getLogger();
+            const log = Utilities.getLogger();
             log.info('Callback not defined!');
         }
     }
@@ -523,7 +520,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = this.getLogger();
+        const log = Utilities.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
