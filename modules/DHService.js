@@ -120,6 +120,8 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
+            maxTokenAmount = new BN(maxTokenAmount);
+            minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
             const totalEscrowTimePerMinute = new BN(totalEscrowTime);
             maxTokenAmount = new BN(maxTokenAmount)
@@ -487,7 +489,7 @@ class DHService {
             replyId: networkReplyModel.id,
             wallet,
             nodeId,
-            imports: replicatedImportIds,
+            imports: importObjects,
             dataPrice,
             stakeFactor: this.config.read_stake_factor,
         };
