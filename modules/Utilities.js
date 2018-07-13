@@ -442,8 +442,8 @@ class Utilities {
     /**
      * Makes a copy of object
      *
-     * @param object Obj
      * @return object
+     * @param Obj
      */
     static copyObject(Obj) {
         return JSON.parse(JSON.stringify(Obj));
@@ -658,8 +658,8 @@ class Utilities {
             throw new Error(`Given input "${num}" is not a number.`);
         }
 
-        var number = Utilities.toBN(num);
-        var result = number.toString(16);
+        const number = Utilities.toBN(num);
+        const result = number.toString(16);
 
         return number.lt(new BN(0)) ? `-0x${result.substr(1)}` : `0x${result}`;
     }
@@ -869,10 +869,7 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || parseInt(property, 10) > 0) {
-            return true;
-        }
-        return false;
+        return property == null || parseInt(property, 10) > 0;
     }
 
     /**
@@ -881,10 +878,7 @@ class Utilities {
      * @returns {boolean}
      */
     static validateStringParameter(property) {
-        if (property == null || typeof property === 'string') {
-            return true;
-        }
-        return false;
+        return property == null || typeof property === 'string';
     }
 
     /**
