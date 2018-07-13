@@ -62,6 +62,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
+            this.log.important('This is Houston. Roger. Out.');
             this.socket = socket;
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
