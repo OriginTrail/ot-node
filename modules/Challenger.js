@@ -4,6 +4,7 @@ const Models = require('../models');
 const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
+const ImportUtilities = require('./ImportUtilities');
 
 const { Op } = Models.Sequelize;
 
@@ -53,6 +54,7 @@ class Challenger {
         const vertices = await this.graphStorage.findVerticesByImportId(importId);
         Graph.encryptVertices(vertices, replicatedData.data_private_key);
 
+        ImportUtilities.sort(vertices);
         const litigationBlocks = Challenge.getBlocks(vertices, 32);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
@@ -89,64 +91,73 @@ class Challenger {
         await replicatedData.save({ fields: ['status'] });
     }
 
+    async sendChallenge(challenge, challenger, network, log) {
+        if (challenge.sent) {
+            return;
+        }
+        const replicatedData = await Models.replicated_data.findOne({
+            where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
+        });
+
+        if (replicatedData.status === 'ACTIVE') {
+            log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
+
+            const payload = {
+                payload: {
+                    block_id: challenge.block_id,
+                    import_id: challenge.import_id,
+                },
+            };
+
+            challenge.sent = true;
+            await challenge.save({ fields: ['sent'] });
+            await network.kademlia().challengeRequest(
+                payload, challenge.dh_id,
+                async (error, response) => {
+                    if (error) {
+                        log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
+                        return;
+                    }
+
+                    if (typeof response.status === 'undefined') {
+                        log.warn('challenge-request: Missing status');
+                        return;
+                    }
+
+                    if (response.status !== 'success') {
+                        log.trace('challenge-request: Response not successful.');
+                    }
+
+                    if (response.answer === challenge.answer) {
+                        log.trace('Successfully answered to challenge.');
+
+                        replicatedData.status = 'ACTIVE';
+                        replicatedData.save({ fields: ['status'] });
+
+                        await Challenge.completeTest(challenge.id);
+                    } else {
+                        log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                        // TODO doktor: Handle promise.
+                        await Challenge.failTest(challenge.id);
+
+                        replicatedData.status = 'LITIGATION';
+                        await replicatedData.save({ fields: ['status'] });
+
+                        await challenger.initiateLitigation(challenge);
+                    }
+                },
+            );
+        }
+    }
+
     intervalFunc(challenger, network, log) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
             .then(async (challenges) => {
                 if (challenges.length > 0) {
                     for (const challenge of challenges) {
-                        // eslint-disable-next-line no-await-in-loop
-                        const replicatedData = await Models.replicated_data.findOne({
-                            where: { dh_id: challenge.dh_id, import_id: challenge.import_id },
-                        });
-
-                        if (replicatedData.status === 'ACTIVE') {
-                            log.trace(`Sending challenge to ${challenge.dh_id}. Import ID ${challenge.import_id}, block ID ${challenge.block_id}.`);
-
-                            const payload = {
-                                payload: {
-                                    block_id: challenge.block_id,
-                                    import_id: challenge.import_id,
-                                },
-                            };
-                            // eslint-disable-next-line no-await-in-loop
-                            await network.kademlia().challengeRequest(
-                                payload, challenge.dh_id,
-                                async (error, response) => {
-                                    if (error) {
-                                        log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
-                                        return;
-                                    }
-
-                                    if (typeof response.status === 'undefined') {
-                                        log.warn('challenge-request: Missing status');
-                                        return;
-                                    }
-
-                                    if (response.status !== 'success') {
-                                        log.trace('challenge-request: Response not successful.');
-                                    }
-
-                                    if (response.answer === challenge.answer) {
-                                        log.trace('Successfully answered to challenge.');
-
-                                        replicatedData.status = 'ACTIVE';
-                                        replicatedData.save({ fields: ['status'] });
-
-                                        Challenge.completeTest(challenge.id);
-                                    } else {
-                                        log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                                        // TODO doktor: Handle promise.
-                                        Challenge.failTest(challenge.id);
-
-                                        replicatedData.status = 'LITIGATION';
-                                        await replicatedData.save({ fields: ['status'] });
-
-                                        challenger.initiateLitigation(challenge);
-                                    }
-                                },
-                            );
-                        }
+                        // eslint-disable-next-line
+                        await challenger.sendChallenge(challenge, challenger, network, log);
                     }
                 } else {
                     //  log.trace('No challenges found.');
