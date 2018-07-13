@@ -254,7 +254,7 @@ contract BiddingTest is Ownable{
 	function cancelOffer(bytes32 import_id)
 	public{
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active, "Offer is not active")
+		require(this_offer.active, "Offer is not active");
 		require(this_offer.DC_wallet == msg.sender, "Only offer creator can call this function");
 		require(this_offer.finalized == false, "Offer is already finalized");
 		this_offer.active = false;
@@ -512,7 +512,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function depositToken(uint amount) public {
-		require(token.balanceOf(msg.sender) >= amount, "Sender has insuficient tokens for depositing")
+		require(token.balanceOf(msg.sender) >= amount, "Sender has insuficient tokens for depositing");
 		require(token.allowance(msg.sender, this) >= amount, "Insuficient allowance for depositing");
 		uint amount_to_transfer = amount;
 		amount = 0;

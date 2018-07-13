@@ -152,7 +152,7 @@ library SafeMath {
      function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
      public onlyOwner{
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
-          require(this_escrow.escrow_status == EscrowStatus.completed,
+          require(this_escrow.escrow_status == EscrowStatus.completed
                ||   this_escrow.escrow_status == EscrowStatus.inactive, "Escrow already in progress");
 
           require(total_time_in_minutes > 0, "Total time cannot be equal 0");
