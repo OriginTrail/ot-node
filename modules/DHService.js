@@ -468,6 +468,10 @@ class DHService {
             };
         });
 
+        if (importObjects.length === 0) {
+            return;
+        }
+
         const networkReplyModel = await Models.network_replies.create({
             data: {
                 id: message.id,
