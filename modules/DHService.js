@@ -54,9 +54,9 @@ class DHService {
             }
 
             dcNodeId = dcNodeId.substring(2, 42);
-            const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
+                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
                 return;
             }
 
@@ -421,11 +421,6 @@ class DHService {
             });
         }
 
-        if (imports.length !== replicatedImportIds.length) {
-            this.log.info(`Some of the imports aren't redistributable for query ${message.id}`);
-            return;
-        }
-
         /*
             dataLocationResponseObject = {
                 message: {
@@ -456,7 +451,7 @@ class DHService {
         const networkReplyModel = await Models.network_replies.create({
             data: {
                 id: message.id,
-                imports,
+                imports: replicatedImportIds,
                 dataSize,
                 dataPrice,
                 stakeFactor,
@@ -475,7 +470,7 @@ class DHService {
             replyId: networkReplyModel.id,
             wallet,
             nodeId,
-            imports,
+            imports: replicatedImportIds,
             dataSize,
             dataPrice,
             stakeFactor,

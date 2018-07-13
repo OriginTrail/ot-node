@@ -17,7 +17,7 @@ class Product {
      */
     getVertices(queryObject) {
         return new Promise((resolve, reject) => {
-            this.graphStorage.findVertices(queryObject).then((vertices) => {
+            this.graphStorage.findImportIds(queryObject).then((vertices) => {
                 resolve(vertices);
             }).catch((err) => {
                 reject(err);

@@ -161,9 +161,9 @@ class DCService {
                 ).then(async () => {
                     this.log.info('Offer written to blockchain. Started bidding phase.');
                     offer.status = 'STARTED';
-                    offer.save({ fields: ['status'] });
+                    await offer.save({ fields: ['status'] });
 
-                    this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
+                    await this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
                         if (!event) {
                             this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
                             this.blockchain.cancelOffer(importId).then(() => {
@@ -355,7 +355,6 @@ class DCService {
                 kadWallet,
             );
             this.log.important('Data successfully verified, preparing to start challenges');
-            await this.challenger.startChallenging();
 
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',

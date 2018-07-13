@@ -181,11 +181,11 @@ class EventEmitter {
                     data.response.status(200);
                 }
                 data.response.send(res);
-            }).catch((error) => {
+            }).catch(() => {
                 logger.error(`Failed to get vertices for query ${data.query}`);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: `Failed to get vertices for query ${data.query}`,
                 });
             });
         });
@@ -212,7 +212,7 @@ class EventEmitter {
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${data.query}`);
                 data.response.status(500);
-                data.response.send(500); // TODO rethink about status codes
+                data.response.send(`Failed to get root hash for query ${data.query}`); // TODO rethink about status codes
             });
         });
 
@@ -605,19 +605,6 @@ class EventEmitter {
                         logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
                         return;
                     }
-
-                    new Promise(async (accept, reject) => {
-                        logger.trace(`Escrow verified for import ID ${import_id}. Waiting for withdrawal.`);
-                        timeUtils.wait(bid.total_escrow_time * 60 * 1000);
-
-                        try {
-                            await blockchain.payOut(DH_wallet, import_id);
-                        } catch (error) {
-                            reject(Error(`Failed to withdraw tokens after escrow verification for import ID ${import_id}.`));
-                        }
-                        logger.info(`Successfully withdrawn tokens from escrow for import ID ${import_id}`);
-                        accept();
-                    }).catch(error => logger.error(error));
                 } catch (error) {
                     logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
                 }
@@ -765,7 +752,6 @@ class EventEmitter {
         // async
         this._on('kad-replication-finished', async () => {
             logger.warn('Notified of finished replication, preparing to start challenges');
-            await challenger.startChallenging();
         });
 
         // sync

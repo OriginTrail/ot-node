@@ -299,7 +299,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Answers litigation from DH side
      * @param importId
@@ -349,7 +348,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Cancel data holding escrow process on Ethereum blockchain
      * @param {string} - dhWallet
@@ -488,7 +486,7 @@ class Ethereum {
     }
 
     async getHoldingIncome(importId) {
-        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
             fromBlock: 0,
             toBlock: 'latest',
         });
@@ -504,10 +502,11 @@ class Ethereum {
     }
 
     async getPurchaseIncome(importId, dvWallet) {
-        let events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+        const events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
             fromBlock: 0,
             toBlock: 'latest',
         });
+        let totalAmount = new BN(0);
         for (const event of events) {
             if (event.event === 'PurchasePayment'
                 && event.returnValues.import_id === importId
@@ -625,7 +624,7 @@ class Ethereum {
             if (error.msg && !error.msg.includes('Invalid JSON RPC response')) {
                 this.log.warn(`Failed to get all passed events. ${error}.`);
             } else {
-                this.log.warn('Node failed to communicate with blockchain provider. Check internet connection');
+                this.log.trace('Node failed to communicate with blockchain provider. Check internet connection');
             }
         }
     }
