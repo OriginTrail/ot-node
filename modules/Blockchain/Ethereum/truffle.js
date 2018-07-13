@@ -4,6 +4,13 @@ var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-l
 var mnemonic = process.env.TRUFFLE_MNEMONIC;
 
 module.exports = {
+    solc: {
+        optimizer: {
+          enabled: true,
+          runs: 200,
+        }
+    },
+    
     networks: {
         development: {
             host: 'localhost',
