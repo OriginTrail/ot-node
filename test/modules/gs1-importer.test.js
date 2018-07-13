@@ -13,7 +13,6 @@ const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
-const ImportUtilities = require('../../modules/ImportUtilities');
 
 function buildSelectedDatabaseParam(databaseName) {
     return {
@@ -101,12 +100,7 @@ describe('GS1 Importer tests', () => {
 
                     const { vertices, edges } = response;
                     for (const doc of edges.concat(vertices)) {
-                        assert.isTrue(doc._dc_key != null);
-                    }
-
-                    ImportUtilities.unpackKeys(vertices, edges);
-                    for (const doc of edges.concat(vertices)) {
-                        assert.isTrue(doc._dc_key == null);
+                        assert.isFalse(doc._dc_key != null);
                     }
                 },
             );
