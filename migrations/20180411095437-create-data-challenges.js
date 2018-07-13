@@ -35,7 +35,7 @@ module.exports = {
             allowNull: false,
             type: Sequelize.BOOLEAN,
             default: false,
-        }
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('data_challenges'),
 };
