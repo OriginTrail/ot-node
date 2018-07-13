@@ -533,6 +533,33 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": false,
+				"name": "import_id",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "DH_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "DV_wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "PurchasePayment",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
 				"indexed": true,
 				"name": "previousOwner",
 				"type": "address"

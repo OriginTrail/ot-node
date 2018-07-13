@@ -122,6 +122,7 @@ class Challenge {
                     answer: test.answer,
                     dh_id: test.dhId,
                     import_id: test.importId,
+                    sent: false,
                 });
             }),
         ]);
@@ -161,7 +162,7 @@ class Challenge {
      */
     static async getUnansweredTest(startTime, endTime) {
         return Models.data_challenges.findAll({
-            attributes: ['id', 'time', 'block_id', 'answer', 'dh_id', 'import_id'],
+            attributes: ['id', 'time', 'block_id', 'answer', 'dh_id', 'import_id', 'sent'],
             where: {
                 time: {
                     [Op.between]: [startTime, endTime],

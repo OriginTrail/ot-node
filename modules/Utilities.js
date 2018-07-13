@@ -146,6 +146,15 @@ class Utilities {
                         colorize: 'all',
                         timestamp: false,
                         prettyPrint: object => JSON.stringify(object),
+                        stderrLevels: [
+                            'trace',
+                            'notify',
+                            'debug',
+                            'info',
+                            'warn',
+                            'important',
+                            'error',
+                        ],
                     }),
                     new (winston.transports.File)({
                         filename: 'node.log',
@@ -154,7 +163,7 @@ class Utilities {
                     }),
                 ];
 
-            if (process.env.SEND_LOGS) {
+            if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',

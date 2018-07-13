@@ -66,11 +66,11 @@
         "type": "uint256"
       },
       {
-        "name": "max_token_amount_per_DH",
+        "name": "max_token_amount_per_byte_minute",
         "type": "uint256"
       },
       {
-        "name": "min_stake_amount_per_DH",
+        "name": "min_stake_amount_per_byte_minute",
         "type": "uint256"
       },
       {
@@ -299,25 +299,6 @@
     "constant": true,
     "inputs": [
       {
-        "name": "wallet",
-        "type": "address"
-      }
-    ],
-    "name": "getReadStakeFactor",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
         "name": "",
         "type": "address"
       }
@@ -411,6 +392,20 @@
       }
     ],
     "name": "getBidIndex",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "replication_modifier",
     "outputs": [
       {
         "name": "",
@@ -522,11 +517,11 @@
         "type": "address"
       },
       {
-        "name": "max_token_amount_per_DH",
+        "name": "max_token_amount_per_byte_minute",
         "type": "uint256"
       },
       {
-        "name": "min_stake_amount_per_DH",
+        "name": "min_stake_amount_per_byte_minute",
         "type": "uint256"
       },
       {
@@ -554,16 +549,16 @@
         "type": "uint256"
       },
       {
-        "name": "replication_modifier",
-        "type": "uint256"
-      },
-      {
         "name": "active",
         "type": "bool"
       },
       {
         "name": "finalized",
         "type": "bool"
+      },
+      {
+        "name": "replication_modifier",
+        "type": "uint256"
       }
     ],
     "payable": false,
@@ -685,7 +680,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_modifier",
+        "name": "newModifier",
         "type": "uint256"
       }
     ],
@@ -748,12 +743,12 @@
       },
       {
         "indexed": false,
-        "name": "max_token_amount_per_DH",
+        "name": "max_token_amount_per_byte_minute",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "min_stake_amount_per_DH",
+        "name": "min_stake_amount_per_byte_minute",
         "type": "uint256"
       },
       {
@@ -844,12 +839,12 @@
       },
       {
         "indexed": false,
-        "name": "max_token_amount_per_DH",
+        "name": "max_token_amount_per_byte_minute",
         "type": "uint256"
       },
       {
         "indexed": false,
-        "name": "min_stake_amount_per_DH",
+        "name": "min_stake_amount_per_byte_minute",
         "type": "uint256"
       },
       {

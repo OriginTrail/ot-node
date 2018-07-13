@@ -3,20 +3,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "newInterval",
-        "type": "uint256"
-      }
-    ],
-    "name": "setLitigationInterval",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "DC_wallet",
         "type": "address"
       },
@@ -59,20 +45,6 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "litigation_interval_in_seconds",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -291,10 +263,6 @@
         "type": "uint256"
       },
       {
-        "name": "litigation_interval_in_seconds",
-        "type": "uint256"
-      },
-      {
         "name": "litigation_root_hash",
         "type": "bytes32"
       },
@@ -476,7 +444,7 @@
       },
       {
         "indexed": false,
-        "name": "total_time_in_seconds",
+        "name": "total_time_in_minutes",
         "type": "uint256"
       }
     ],
@@ -549,6 +517,28 @@
       }
     ],
     "name": "EscrowCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Payment",
     "type": "event"
   },
   {

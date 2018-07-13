@@ -3,7 +3,7 @@ const BN = require('bn.js');
 const crypto = require('crypto');
 
 class ZK {
-    constructor() {
+    constructor(ctx) {
         this.zero = new BN(0);
         this.one = new BN(1);
         this.p = new BN(941078291);
@@ -13,6 +13,8 @@ class ZK {
         this.red = BN.red(this.n);
         this.redSquare = BN.red(this.nSquare);
         this.g = this.n.add(this.one).toRed(this.redSquare);
+
+        this.log = ctx.logger;
     }
 
     encrypt(m, r) {
@@ -153,9 +155,9 @@ class ZK {
 
         // return res;
         if (res) {
-            console.log('ZK proof successfully created and validated for event: ', eventId);
+            this.log.debug('ZK proof successfully created and validated for event: ', eventId);
         } else {
-            console.log('ZK proof failed for event: ', eventId);
+            this.log.debug('ZK proof failed for event: ', eventId);
         }
         return zkObject;
     }

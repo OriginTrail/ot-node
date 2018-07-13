@@ -221,7 +221,6 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
-        const { data_provider_wallet } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -245,6 +244,7 @@ class DVService {
         const importId = JSON.parse(networkQueryResponse.imports)[0];
 
         // Calculate root hash and check is it the same on the SC.
+        const { data_provider_wallet } = message;
         const { vertices, edges } = message.encryptedData;
         const dhWallet = message.wallet;
 
@@ -284,7 +284,8 @@ class DVService {
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
-            });
+                wallet: data_provider_wallet,
+            }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
             networkQuery.status = 'FAILED';
@@ -294,7 +295,6 @@ class DVService {
 
         this.log.info(`Import ID ${importId} imported successfully.`);
 
-        // TODO: Maybe separate table is needed.
         Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,
@@ -322,7 +322,7 @@ class DVService {
         const profileBalance =
             new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
         const condition = new BN(networkQueryResponse.data_price)
-            .add(stakeAmount).add(new BN(1)); // Thanks Cookie.
+            .add(stakeAmount);
 
         if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
@@ -330,6 +330,7 @@ class DVService {
         }
 
         // Sign escrow.
+        this.log.notify(`Initiating purchase for import ${importId}`);
         await this.blockchain.initiatePurchase(
             importId,
             dhWallet,
@@ -337,7 +338,7 @@ class DVService {
             new BN(networkQueryResponse.stake_factor),
         );
 
-        this.log.info(`[DV] - Purchase initiated for import ID ${importId}.`);
+        this.log.important(`[DV] - Purchase initiated for import ID ${importId}.`);
 
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
@@ -514,10 +515,11 @@ class DVService {
             const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
             const publicKey = Encryption.unpackEPK(epk);
 
-            const holdingData = await Models.holding_data.create({
+            await Models.holding_data.create({
                 id: importId,
                 source_wallet: wallet,
                 data_public_key: publicKey,
+                distribution_public_key: publicKey,
                 epk,
             });
 

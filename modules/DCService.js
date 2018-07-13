@@ -33,6 +33,10 @@ class DCService {
      * @param rootHash
      * @param totalDocuments
      * @param vertices
+     * @param total_escrow_time
+     * @param max_token_amount
+     * @param min_stake_amount
+     * @param min_reputation
      * @return {Promise<external_id|{type, defaultValue}|offers.external_id|{type, allowNull}>}
      */
     async createOffer(
@@ -44,7 +48,6 @@ class DCService {
         max_token_amount,
         min_stake_amount,
         min_reputation,
-        replicationId,
     ) {
         // Check if offer already exists
         const oldOffer = await this.blockchain.getOffer(importId);
@@ -71,13 +74,13 @@ class DCService {
         const dhIds = [];
         const dhWallets = [];
 
-        let totalEscrowTime = config.total_escrow_time_in_minutes;
+        let totalEscrowTime = new BN(config.total_escrow_time_in_milliseconds);
         let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
         let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
         let minReputation = config.dh_min_reputation;
 
         if (total_escrow_time) {
-            totalEscrowTime = total_escrow_time;
+            totalEscrowTime = new BN(total_escrow_time);
         }
 
         if (max_token_amount) {
@@ -99,10 +102,11 @@ class DCService {
             }
         });
 
+        totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
-            total_escrow_time: totalEscrowTime,
+            total_escrow_time: totalEscrowTime.toString(),
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
             min_reputation: minReputation,
@@ -113,101 +117,111 @@ class DCService {
             message: 'Offer is pending',
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
-            external_id: replicationId,
         };
         const offer = await Models.offers.create(newOfferRow);
 
         // Check if root-hash already written.
-        const blockchainRootHash = await this.blockchain.getRootHash(config.node_wallet, importId);
-
-        if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
-                offer.status = 'FAILED';
-                offer.save({ fields: ['status'] });
-                throw Error(`Failed to write fingerprint on blockchain. ${err}`);
-            });
-        } else if (blockchainRootHash !== rootHash) {
-            throw Error(`Calculated roothash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
-        }
-
-        this.log.info('Fingerprint written on blockchain');
-
-        const profileBalance =
-            new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
-        const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
-
-        if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
-        }
-
-        this.blockchain.createOffer(
-            importId,
-            config.identity,
-            totalEscrowTime,
-            maxTokenAmount,
-            minStakeAmount,
-            minReputation,
-            rootHash,
-            importSizeInBytes,
-            dhWallets,
-            dhIds,
-        ).then(async () => {
-            this.log.info('Offer written to blockchain. Started bidding phase.');
-            offer.status = 'STARTED';
-            offer.save({ fields: ['status'] });
-
-            this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
-                if (!event) {
-                    this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
-                    this.blockchain.cancelOffer(importId).then(() => {
-                        offer.status = 'CANCELLED';
-                        offer.message = 'Offer not finalized';
-                        offer.save({ fields: ['status', 'message'] });
-                        this.log.trace(`Offer ${importId} canceled.`);
-                    }).catch((error) => {
-                        this.log.warn(`Failed to cancel offer ${importId}. ${error}.`);
-                        offer.status = 'STARTED';
-                        offer.message = 'Failed to cancel. Still opened';
-                        offer.save({ fields: ['status', 'message'] });
+        this.blockchain.getRootHash(config.node_wallet, importId)
+            .then(async (blockchainRootHash) => {
+                if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                    await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
+                        offer.status = 'FAILED';
+                        offer.save({ fields: ['status'] });
+                        throw Error(`Failed to write fingerprint on blockchain. ${err}`);
                     });
-                    return;
+                } else if (blockchainRootHash !== rootHash) {
+                    throw Error(`Calculated roothash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
                 }
 
-                this.log.trace('Started choosing phase.');
+                this.log.info('Fingerprint written on blockchain');
 
-                offer.status = 'FINALIZING';
-                offer.save({ fields: ['status'] });
-                this.chooseBids(offer.id, totalEscrowTime).then(() => {
-                    this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
-                        .then(() => {
-                            const errorMsg = `Offer for import ${offer.import_id} finalized`;
-                            offer.status = 'FINALIZED';
-                            offer.message = errorMsg;
-                            offer.save({ fields: ['status', 'message'] });
-                            this.log.info(errorMsg);
-                        }).catch((error) => {
-                            const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
+                const profileBalance =
+                new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
+                const condition = maxTokenAmount
+                    .mul(new BN((dhWallets.length * 2) + 1))
+                    .mul(importSizeInBytes)
+                    .mul(totalEscrowTime);
+
+                if (profileBalance.lt(condition)) {
+                    await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+                    await this.blockchain.depositToken(condition.sub(profileBalance));
+                }
+
+                this.blockchain.createOffer(
+                    importId,
+                    config.identity,
+                    totalEscrowTime,
+                    maxTokenAmount,
+                    minStakeAmount,
+                    minReputation,
+                    rootHash,
+                    importSizeInBytes,
+                    dhWallets,
+                    dhIds,
+                ).then(async () => {
+                    this.log.info('Offer written to blockchain. Started bidding phase.');
+                    offer.status = 'STARTED';
+                    await offer.save({ fields: ['status'] });
+
+                    await this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
+                        if (!event) {
+                            this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+                            this.blockchain.cancelOffer(importId).then(() => {
+                                offer.status = 'CANCELLED';
+                                offer.message = 'Offer not finalized';
+                                offer.save({ fields: ['status', 'message'] });
+                                this.log.trace(`Offer ${importId} canceled.`);
+                            }).catch((error) => {
+                                this.log.warn(`Failed to cancel offer for import ${importId}. ${error}.`);
+                                offer.status = 'STARTED';
+                                offer.message = 'Failed to cancel. Still opened';
+                                offer.save({ fields: ['status', 'message'] });
+                            });
+                            return;
+                        }
+
+                        this.log.trace('Started choosing phase.');
+
+                        offer.status = 'FINALIZING';
+                        offer.save({ fields: ['status'] });
+                        this.chooseBids(offer.id, totalEscrowTime).then(() => {
+                            this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
+                                .then(() => {
+                                    const errorMsg = `Offer for import ${offer.import_id} finalized`;
+                                    offer.status = 'FINALIZED';
+                                    offer.message = errorMsg;
+                                    offer.save({ fields: ['status', 'message'] });
+                                    this.log.info(errorMsg);
+                                }).catch((error) => {
+                                    const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
+                                    offer.status = 'FAILED';
+                                    offer.message = errorMsg;
+                                    offer.save({ fields: ['status', 'message'] });
+                                    this.log.error(errorMsg);
+                                });
+                        }).catch((err) => {
+                            const errorMsg = `Failed to choose bids. ${err}`;
                             offer.status = 'FAILED';
                             offer.message = errorMsg;
                             offer.save({ fields: ['status', 'message'] });
                             this.log.error(errorMsg);
                         });
+                    });
                 }).catch((err) => {
-                    const errorMsg = `Failed to choose bids. ${err}`;
+                    const errorMsg = `Failed to create offer. ${err}.`;
                     offer.status = 'FAILED';
                     offer.message = errorMsg;
                     offer.save({ fields: ['status', 'message'] });
                     this.log.error(errorMsg);
                 });
+            }).catch((err) => {
+                const errorMsg = `Failed to fetch root hash for import ${importId}. ${err}.`;
+                offer.status = 'FAILED';
+                offer.message = errorMsg;
+                offer.save({ fields: ['status', 'message'] });
+                this.log.error(errorMsg);
             });
-        }).catch((err) => {
-            const errorMsg = `Failed to create offer. ${err}.`;
-            offer.status = 'FAILED';
-            offer.message = errorMsg;
-            offer.save({ fields: ['status', 'message'] });
-            this.log.error(errorMsg);
-        });
+        return offer.external_id;
     }
 
     /**
@@ -287,6 +301,7 @@ class DCService {
             const clonedVertices = Utilities.copyObject(vertices);
             Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
 
+            ImportUtilities.sort(clonedVertices);
             const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
@@ -339,8 +354,7 @@ class DCService {
                 importId,
                 kadWallet,
             );
-            this.log.warn('Data successfully verified, preparing to start challenges');
-            await this.challenger.startChallenging();
+            this.log.important('Data successfully verified, preparing to start challenges');
 
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',

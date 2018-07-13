@@ -15,6 +15,7 @@ const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
+const BN = require('bn.js');
 
 const awilix = require('awilix');
 
@@ -26,6 +27,7 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
+const TimeUtils = require('./modules/TimeUtils');
 
 const pjson = require('./package.json');
 
@@ -34,7 +36,6 @@ const Web3 = require('web3');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
-        log.warn('Web3 failed to communicate with blockchain provider. Check internet connection');
         return;
     }
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
@@ -152,6 +153,7 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            timeUtils: awilix.asClass(TimeUtils).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -173,11 +175,19 @@ class OTNode {
             process.exit(1);
         }
 
+        // Fetching Houston access password
+        models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+            log.notify('================================================================');
+            log.notify(`Houston password: ${res.value}`);
+            log.notify('================================================================');
+        });
+
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
+        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
         await blockchain.initialize();
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
@@ -278,7 +288,7 @@ class OTNode {
                 deadline = Date.now() + delay;
                 working = false;
             }
-        }, 1000);
+        }, 5000);
     }
 
     /**
@@ -295,8 +305,8 @@ class OTNode {
         log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
-            config.dh_price,
-            config.dh_stake_factor,
+            new BN(config.dh_price, 10),
+            new BN(config.dh_stake_factor, 10),
             config.read_stake_factor,
             config.dh_max_time_mins,
         );
@@ -371,6 +381,7 @@ class OTNode {
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
+
         if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
             this.exposeAPIRoutes(server, emitter);
@@ -385,7 +396,7 @@ class OTNode {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
 
-            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+            if (!remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',
@@ -441,7 +452,7 @@ class OTNode {
                     response: res,
                 };
 
-                emitter.emit(`${importtype}-import-request`, queryObject);
+                emitter.emit(`api-${importtype}-import-request`, queryObject);
             } else if (req.body.importfile !== undefined) {
                 // Check if import data is provided in request body
                 const fileData = req.body.importfile;
@@ -459,7 +470,7 @@ class OTNode {
                         response: res,
                     };
 
-                    emitter.emit(`${importtype}-import-request`, queryObject);
+                    emitter.emit(`api-${importtype}-import-request`, queryObject);
                 });
             } else {
                 // No import data provided
@@ -484,13 +495,13 @@ class OTNode {
                 Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
-                    total_escrow_time: req.body.total_escrow_time_in_minutes,
+                    total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
                     max_token_amount: req.body.max_token_amount_per_dh,
                     min_stake_amount: req.body.dh_min_stake_amount,
                     min_reputation: req.body.dh_min_reputation,
                     response: res,
                 };
-                emitter.emit('create-offer', queryObject);
+                emitter.emit('api-create-offer', queryObject);
             } else {
                 log.error('Invalid request');
                 res.status(400);
@@ -519,7 +530,7 @@ class OTNode {
                     external_id: externalId,
                     response: res,
                 };
-                emitter.emit('offer-status', queryObject);
+                emitter.emit('api-offer-status', queryObject);
             }
         });
 
@@ -530,7 +541,7 @@ class OTNode {
         server.get('/api/trail', (req, res) => {
             log.trace('GET Trail request received.');
             const queryObject = req.query;
-            emitter.emit('trail', {
+            emitter.emit('api-trail', {
                 query: queryObject,
                 response: res,
             });
@@ -542,7 +553,7 @@ class OTNode {
         server.get('/api/fingerprint', (req, res) => {
             log.trace('GET Fingerprint request received.');
             const queryObject = req.query;
-            emitter.emit('get_root_hash', {
+            emitter.emit('api-get_root_hash', {
                 query: queryObject,
                 response: res,
             });
@@ -557,8 +568,23 @@ class OTNode {
                 });
                 return;
             }
-            emitter.emit('network-query-status', {
+            emitter.emit('api-network-query-status', {
                 id: req.params.query_param,
+                response: res,
+            });
+        });
+
+        server.get('/api/query/:query_id/responses', (req, res) => {
+            log.trace('GET Query responses');
+            if (!req.params.query_id) {
+                res.status(400);
+                res.send({
+                    message: 'Param query_id is required.',
+                });
+                return;
+            }
+            emitter.emit('api-network-query-responses', {
+                query_id: req.params.query_id,
                 response: res,
             });
         });
@@ -574,7 +600,7 @@ class OTNode {
             }
             const { query } = req.body;
             if (query) {
-                emitter.emit('network-query', {
+                emitter.emit('api-network-query', {
                     query,
                     response: res,
                 });
@@ -602,7 +628,7 @@ class OTNode {
 
             // TODO: Decrypt returned vertices
             const queryObject = req.body.query;
-            emitter.emit('query', {
+            emitter.emit('api-query', {
                 query: queryObject,
                 response: res,
             });
@@ -619,7 +645,7 @@ class OTNode {
                 return;
             }
 
-            emitter.emit('api-get/api/import', {
+            emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
                 response: res,
             });
@@ -635,7 +661,7 @@ class OTNode {
             }
 
             const queryObject = req.body.query;
-            emitter.emit('get-imports', {
+            emitter.emit('api-get-imports', {
                 query: queryObject,
                 response: res,
             });
@@ -652,7 +678,7 @@ class OTNode {
             }
             const { query_id, reply_id } = req.body;
 
-            emitter.emit('choose-offer', {
+            emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
                 response: res,

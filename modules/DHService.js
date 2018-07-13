@@ -54,9 +54,9 @@ class DHService {
             }
 
             dcNodeId = dcNodeId.substring(2, 42);
-            const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
+                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
                 return;
             }
 
@@ -75,14 +75,15 @@ class DHService {
                 return;
             }
 
-            const holdingData = await Models.holding_data.findOne({
-                where: { root_hash: dataHash },
+            const dataInfo = await Models.data_info.findOne({
+                where: { import_id: importId },
             });
-            if (holdingData) {
-                this.log.trace(`I've already stored data for root hash ${dataHash}. Ignoring.`);
+            if (dataInfo) {
+                this.log.trace(`I've already stored data for import ID ${importId}. Ignoring.`);
                 return;
             }
 
+            let bidEvent;
             // Check if predetermined bid was already added for me.
             // Possible race condition here.
             if (!predeterminedBid) {
@@ -95,21 +96,19 @@ class DHService {
                 });
 
                 if (eventModels) {
-                    let found = false;
+                    const found = false;
                     eventModels.forEach((eventModel) => {
                         const data = JSON.parse(eventModel.data);
                         if (data.DH_node_id.substring(2, 42) === this.config.identity &&
                             data.DH_wallet === this.config.node_wallet) {
                             // I'm chosen for predetermined bid.
-                            found = true;
+                            bidEvent = data;
+                            predeterminedBid = true;
                         }
                     });
-
-                    if (found) {
-                        return;
-                    }
                 }
             }
+
 
             // Check if already applied.
             let bidModel = await Models.bids.findOne({ where: { import_id: importId } });
@@ -120,10 +119,14 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
-            maxTokenAmount = new BN(maxTokenAmount);
-            minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
-            const totalEscrowTimePerMinute = Math.round(totalEscrowTime / 60000);
+            const totalEscrowTimePerMinute = new BN(totalEscrowTime);
+            maxTokenAmount = new BN(maxTokenAmount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
+            minStakeAmount = new BN(minStakeAmount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
             const myPrice = new BN(profile.token_amount_per_byte_minute)
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
@@ -132,7 +135,7 @@ class DHService {
                 .mul(new BN(totalEscrowTimePerMinute));
 
             if (maxTokenAmount.lt(myPrice)) {
-                this.log.info(`Offer ${importId} too expensive for me.`);
+                this.log.info(`Offer ${importId} too cheap for me.`);
                 return;
             }
 
@@ -160,12 +163,24 @@ class DHService {
                 await this.blockchain.depositToken(condition.sub(profileBalance));
             }
 
-            await this.blockchain.addBid(importId, this.config.identity);
-            // await blockchainc.increaseBiddingApproval(myStake);
-            const addedBidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            if (!predeterminedBid) {
+                await this.blockchain.addBid(importId, this.config.identity);
+                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+            } else {
+                const myBidIndex = await this.blockchain.getBidIndex(
+                    importId,
+                    this.config.identity,
+                );
+                await this.blockchain.activatePredeterminedBid(
+                    importId,
+                    this.config.identity,
+                    myBidIndex,
+                );
+            }
+            // await blockchain.increaseBiddingApproval(myStake);
             const dcWallet = await this.blockchain.getDcWalletFromOffer(importId);
             this._saveBidToStorage(
-                addedBidEvent,
+                bidEvent, // TODO addedBidEvent alternative for predetermined bids
                 dcNodeId,
                 dcWallet,
                 myPrice,
@@ -173,6 +188,7 @@ class DHService {
                 myStake,
                 dataSizeBytes,
                 importId,
+                predeterminedBid,
             );
 
             await this.blockchain.subscribeToEvent('OfferFinalized', importId);
@@ -227,6 +243,7 @@ class DHService {
         stake,
         dataSizeBytes,
         importId,
+        predeterminedBid,
     ) {
         Models.bids.create({
             bid_index: event.bid_index,
@@ -237,6 +254,7 @@ class DHService {
             total_escrow_time: totalEscrowTime.toString(),
             stake: stake.toString(),
             data_size_bytes: dataSizeBytes.toString(),
+            pd_bid: predeterminedBid,
         }).then((bid) => {
             this.log.info(`Created new bid for offer ${importId}. Waiting for reveal... `);
         }).catch((err) => {
@@ -256,30 +274,38 @@ class DHService {
             return;
         }
         const bid = bidModel.get({ plain: true });
+        let importResult;
         try {
-            await this.importer.importJSON(data);
+            importResult = await this.importer.importJSON({
+                import_id: data.import_id,
+                vertices: data.vertices,
+                edges: data.edges,
+                wallet: data.dc_wallet,
+            }, true);
+
+            if (importResult.error) {
+                throw Error(importResult.error);
+            }
+
+            importResult = importResult.response;
+
+            await Models.data_info.create({
+                import_id: importResult.import_id,
+                total_documents: importResult.vertices.length,
+                root_hash: importResult.root_hash,
+                data_provider_wallet: importResult.wallet,
+                import_timestamp: new Date(),
+            });
         } catch (err) {
-            this.log.warn(`Failed to import JSON successfully. ${err}.`);
+            this.log.warn(`Failed to import JSON. ${err}.`);
             return;
         }
-
-        data.edges = Graph.sortVertices(data.edges);
-        data.vertices = Graph.sortVertices(data.vertices);
-        data.vertices = data.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-
-        const merkle = await ImportUtilities.merkleStructure(
-            data.vertices,
-            data.edges,
-        );
-
-        const rootHash = merkle.tree.getRoot();
-        this.log.trace(`[DH] Root hash calculated. Root hash: ${rootHash}`);
 
         this.log.trace('[DH] Replication finished');
 
         try {
-            const encryptedVertices = data.vertices;
-            ImportUtilities.sort(encryptedVertices);
+            const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
+            ImportUtilities.sort(encryptedVertices, '_dc_key');
             const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
@@ -296,7 +322,7 @@ class DHService {
 
             const distributionMerkle = await ImportUtilities.merkleStructure(
                 decryptedVertices,
-                data.edges,
+                importResult.edges,
             );
             const distributionHash = distributionMerkle.tree.getRoot();
 
@@ -305,7 +331,7 @@ class DHService {
 
             this.log.important('Send root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
-                data.import_id,
+                importResult.import_id,
                 litigationRootHash,
                 distributionHash,
                 Utilities.normalizeHex(epkChecksum),
@@ -314,13 +340,11 @@ class DHService {
             // Store holding information and generate keys for eventual
             // data replication.
             const holdingData = await Models.holding_data.create({
-                id: data.import_id,
+                id: importResult.import_id,
                 source_wallet: bid.dc_wallet,
                 data_public_key: data.public_key,
                 distribution_public_key: keyPair.privateKey,
                 distribution_private_key: keyPair.privateKey,
-                root_hash: data.root_hash,
-                data_provider_wallet: data.data_provider_wallet,
                 epk,
             });
 
@@ -331,7 +355,7 @@ class DHService {
             this.log.important('Replication finished. Send data to DC for verification.');
             await this.network.kademlia().verifyImport({
                 epk,
-                importId: data.import_id,
+                importId: importResult.import_id,
                 encryptionKey: keyPair.privateKey,
             }, bid.dc_id);
         } catch (error) {
@@ -397,11 +421,6 @@ class DHService {
             });
         }
 
-        if (imports.length !== replicatedImportIds.length) {
-            this.log.info(`Some of the imports aren't redistributable for query ${message.id}`);
-            return;
-        }
-
         /*
             dataLocationResponseObject = {
                 message: {
@@ -432,7 +451,7 @@ class DHService {
         const networkReplyModel = await Models.network_replies.create({
             data: {
                 id: message.id,
-                imports,
+                imports: replicatedImportIds,
                 dataSize,
                 dataPrice,
                 stakeFactor,
@@ -451,7 +470,7 @@ class DHService {
             replyId: networkReplyModel.id,
             wallet,
             nodeId,
-            imports,
+            imports: replicatedImportIds,
             dataSize,
             dataPrice,
             stakeFactor,
@@ -515,6 +534,8 @@ class DHService {
             const vertices = values[0];
             const edges = values[1];
 
+            ImportUtilities.unpackKeys(vertices, edges);
+
             // Get replication key and then encrypt data.
             const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
 
@@ -522,6 +543,7 @@ class DHService {
                 throw Error(`Didn't find import with ID. ${importId}`);
             }
 
+            ImportUtilities.deleteInternal(vertices);
             const holdingData = holdingDataModel.get({ plain: true });
             const dataPublicKey = holdingData.data_public_key;
             const replicationPrivateKey = holdingData.distribution_private_key;
@@ -539,7 +561,7 @@ class DHService {
             // Make sure we have enough token balance before DV makes a purchase.
             // From smart contract:
             // require(DH_balance > stake_amount && DV_balance > token_amount.add(stake_amount));
-            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor)).add(new BN(1));
+            const condition = new BN(offer.dataPrice).mul(new BN(offer.stakeFactor));
             const profileBalance =
                 new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 
@@ -566,11 +588,21 @@ class DHService {
             }
              */
 
+            const dataInfo = await Models.data_info.findOne({
+                where: {
+                    import_id: importId,
+                },
+            });
+
+            if (!dataInfo) {
+                throw Error(`Failed to get data info for import ID ${importId}.`);
+            }
+
             const replyMessage = {
                 id,
                 wallet: this.config.node_wallet,
                 nodeId: this.config.identity,
-                data_provider_wallet: holdingDataModel.data_provider_wallet,
+                data_provider_wallet: dataInfo.data_provider_wallet,
                 agreementStatus: 'CONFIRMED',
                 encryptedData: {
                     vertices,
@@ -738,7 +770,7 @@ class DHService {
         this.listenPurchaseConfirmation(
             importId, wallet, networkReplyModel,
             selectedBlock, eHex,
-        ).then(() => this.log.info('Purchase confirmation completed'));
+        ).then(() => this.log.important('Purchase confirmation completed'));
     }
 
     /**
@@ -751,11 +783,11 @@ class DHService {
             // Everything is ok.
             this.log.warn(`Purchase not confirmed for ${importId}.`);
             await this.blockchain.cancelPurchase(importId, wallet, true);
-            this.log.info(`Purchase for import ${importId} canceled.`);
+            this.log.important(`Purchase for import ${importId} canceled.`);
             return;
         }
 
-        this.log.info(`[DH] Purchase confirmed for import ID ${importId}`);
+        this.log.important(`[DH] Purchase confirmed for import ID ${importId}`);
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
@@ -764,7 +796,7 @@ class DHService {
                 Utilities.denormalizeHex(eHex),
             )),
         );
-        this.log.info(`[DH] Encrypted block sent for import ID ${importId}`);
+        this.log.notify(`[DH] Encrypted block sent for import ID ${importId}`);
         this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
 
         // Call payOut() after 5 minutes. Requirement from contract.
@@ -864,7 +896,7 @@ class DHService {
         this.log.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
 
         let vertices = await this.graphStorage.findVerticesByImportId(importId);
-        ImportUtilities.sort(vertices);
+        ImportUtilities.sort(vertices, '_dc_key');
         // filter CLASS vertices
         vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
         const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
@@ -1000,7 +1032,13 @@ class DHService {
     }
 
     listenToBlockchainEvents() {
-        this.blockchain.subscribeToEventPermanent(['AddedPredeterminedBid', 'OfferCreated', 'LitigationInitiated', 'LitigationCompleted']);
+        this.blockchain.subscribeToEventPermanent([
+            'AddedPredeterminedBid',
+            'OfferCreated',
+            'LitigationInitiated',
+            'LitigationCompleted',
+            'EscrowVerified',
+        ]);
     }
 }
 

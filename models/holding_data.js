@@ -5,8 +5,6 @@ module.exports = (sequelize, DataTypes) => {
         data_public_key: DataTypes.STRING,
         distribution_public_key: DataTypes.STRING,
         distribution_private_key: DataTypes.STRING,
-        root_hash: DataTypes.STRING(40),
-        data_provider_wallet: DataTypes.STRING(42),
         epk: DataTypes.STRING,
     }, {
         tableName: 'holding_data',

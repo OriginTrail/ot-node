@@ -39,7 +39,7 @@ library SafeMath {
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-     constructor () public {
+     function Ownable () public {
           owner = msg.sender;
      }
 
@@ -56,9 +56,9 @@ library SafeMath {
      * @param newOwner The address to transfer ownership to.
      */
      function transferOwnership(address newOwner) public onlyOwner {
-     	require(newOwner != address(0));
-     	emit OwnershipTransferred(owner, newOwner);
-     	owner = newOwner;
+          require(newOwner != address(0));
+          emit OwnershipTransferred(owner, newOwner);
+          owner = newOwner;
      }
 
  }
@@ -97,20 +97,13 @@ library SafeMath {
      Bidding public bidding;
      Reading public reading;
 
-     uint public litigation_interval_in_seconds;
-
-     function setLitigationInterval(uint newInterval) public onlyOwner{
-          litigation_interval_in_seconds = newInterval;
-     }
-
-     constructor (address tokenAddress)
+     function EscrowHolder(address tokenAddress)
      public{
           require ( tokenAddress != address(0) );
           token = ERC20(tokenAddress);
-          litigation_interval_in_seconds = 600;
      }
 
-     function setBidding(address biddingAddress)
+     function setBidding(address biddingAddress) 
      public onlyOwner{
           require ( biddingAddress != address(0) );
           bidding = Bidding(biddingAddress);
@@ -139,7 +132,6 @@ library SafeMath {
           uint last_confirmation_time;
           uint end_time;
           uint total_time_in_seconds;
-          uint litigation_interval_in_seconds;
 
           bytes32 litigation_root_hash;
           bytes32 distribution_root_hash;
@@ -150,15 +142,15 @@ library SafeMath {
 
      mapping(bytes32 => mapping(address => EscrowDefinition)) public escrow;
 
-     event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time_in_seconds);
+     event EscrowInitated(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_amount,  uint total_time_in_minutes);
      event EscrowConfirmed(bytes32 import_id, address DH_wallet);
      event EscrowVerified(bytes32 import_id, address DH_wallet);
      event EscrowCanceled(bytes32 import_id, address DH_wallet);
      event EscrowCompleted(bytes32 import_id, address DH_wallet);
+     event Payment(bytes32 import_id, address DH_wallet, uint256 amount);
 
      function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
-     public {
-          require (msg.sender == address(bidding));
+     public onlyOwner{
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
           require(this_escrow.escrow_status == EscrowStatus.completed
                ||   this_escrow.escrow_status == EscrowStatus.inactive);
@@ -171,16 +163,14 @@ library SafeMath {
           this_escrow.last_confirmation_time = 0;
           this_escrow.end_time = 0;
           this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
-          this_escrow.litigation_interval_in_seconds = litigation_interval_in_seconds;
           this_escrow.escrow_status = EscrowStatus.initiated;
 
           emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
      }
 
- 	function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint256 checksum)
- 	public {
-          require(msg.sender != address(0));
- 		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
+     function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint256 checksum)
+     public {
+          EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
           require(this_escrow.escrow_status == EscrowStatus.initiated);
 
@@ -195,17 +185,16 @@ library SafeMath {
           emit EscrowConfirmed(import_id, msg.sender);
      }
 
- 	function verifyEscrow(bytes32 import_id, address DH_wallet)
- 	public {
-          require(msg.sender != address(0));
- 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+     function verifyEscrow(bytes32 import_id, address DH_wallet)
+     public {
+          EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
           require(this_escrow.DC_wallet == msg.sender
                && this_escrow.escrow_status == EscrowStatus.confirmed);
 
           bidding.addEscrow(msg.sender);
           bidding.addEscrow(DH_wallet);
-
+          
           this_escrow.last_confirmation_time = block.timestamp;
           this_escrow.end_time = SafeMath.add(block.timestamp, this_escrow.total_time_in_seconds);
 
@@ -215,11 +204,10 @@ library SafeMath {
           emit EscrowVerified(import_id, DH_wallet);
      }
 
- 	function payOut(bytes32 import_id)
- 	public {
-          require(msg.sender != address(0));
- 		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
- 		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
+     function payOut(bytes32 import_id)
+     public{
+          EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
+          LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
           require(this_escrow.escrow_status == EscrowStatus.active);
           require(this_litigation.litigation_status == LitigationStatus.inactive
@@ -245,16 +233,16 @@ library SafeMath {
                assert(amount_to_send.add(this_escrow.tokens_sent) <= this_escrow.token_amount);
                this_escrow.last_confirmation_time = current_time;
           }
-
+          
           if(amount_to_send > 0) {
                this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
                bidding.increaseBalance(msg.sender, amount_to_send);
+               emit Payment(import_id, msg.sender, amount_to_send);
           }
      }
 
      function cancelEscrow(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
      public {
-          require(msg.sender != address(0));
           address DH_wallet;
           address DC_wallet;
 
@@ -326,11 +314,10 @@ library SafeMath {
 
      mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
 
- 	function initiateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
- 	public returns (bool newLitigationInitiated) {
-          require (msg.sender != address(0));
- 		LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
- 		EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+     function initiateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
+     public returns (bool newLitigationInitiated){
+          LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
+          EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
           require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
           require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed);
@@ -345,15 +332,14 @@ library SafeMath {
           return true;
      }
 
- 	function answerLitigation(bytes32 import_id, bytes32 requested_data)
- 	public returns (bool answer_accepted) {
-          require (msg.sender != address(0));
- 		LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
- 		EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
+     function answerLitigation(bytes32 import_id, bytes32 requested_data)
+     public returns (bool answer_accepted){
+          LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
+          EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
           require(this_litigation.litigation_status == LitigationStatus.initiated);
 
-          if(block.timestamp > this_litigation.litigation_start_time + this_escrow.litigation_interval_in_seconds){
+          if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
                uint256 amount_to_send;
 
                uint cancelation_time = this_litigation.litigation_start_time;
@@ -398,12 +384,10 @@ library SafeMath {
      */
      function cancelInactiveLitigation(bytes32 import_id)
      public {
-          require(msg.sender != address(0));
           LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
-        EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
           require(this_litigation.litigation_status == LitigationStatus.answered
-               &&   this_litigation.answer_timestamp + this_escrow.litigation_interval_in_seconds <= block.timestamp);
+               &&   this_litigation.answer_timestamp + 15 minutes <= block.timestamp);
 
           this_litigation.litigation_status = LitigationStatus.completed;
           emit LitigationCompleted(import_id, msg.sender, false);
@@ -412,23 +396,22 @@ library SafeMath {
 
      function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
      public returns (bool DH_was_penalized){
-          require (msg.sender != address(0));
-     	LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
-     	EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
+          LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
+          EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-          require(this_escrow.DC_wallet == msg.sender &&
-               (this_litigation.litigation_status == LitigationStatus.initiated
+          require(this_escrow.DC_wallet == msg.sender && 
+               (this_litigation.litigation_status == LitigationStatus.initiated 
                     || this_litigation.litigation_status == LitigationStatus.answered));
 
           if (this_litigation.litigation_status == LitigationStatus.initiated){
-               require(this_litigation.litigation_start_time + this_escrow.litigation_interval_in_seconds <= block.timestamp);
+               require(this_litigation.litigation_start_time + 15 minutes <= block.timestamp);
 
                uint256 amount_to_send;
 
                uint cancelation_time = this_litigation.litigation_start_time;
                amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
 
-               //Transfer the amount_to_send to DC
+               //Transfer the amount_to_send to DC 
                if(amount_to_send > 0) {
                     this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
                     bidding.increaseBalance(msg.sender, amount_to_send);
@@ -455,8 +438,8 @@ library SafeMath {
 
           uint256 i = 0;
           uint256 one = 1;
-          bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);
-          // bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));
+          bytes32 proof_hash = keccak256(proof_data, this_litigation.requested_data_index);    
+          // bytes32 proof_hash = keccak256(abi.encodePacked(proof_data, this_litigation.requested_data_index));   
           bytes32 answer_hash = this_litigation.requested_data;
 
           // ako je bit 1 on je levo
@@ -490,10 +473,11 @@ library SafeMath {
                cancelation_time = this_litigation.litigation_start_time;
                amount_to_send = SafeMath.mul(this_escrow.token_amount, SafeMath.sub(this_escrow.end_time,cancelation_time)) / this_escrow.total_time_in_seconds;
 
-               //Transfer the amount_to_send to DC
+               //Transfer the amount_to_send to DC 
                if(amount_to_send > 0) {
                     this_escrow.tokens_sent = this_escrow.tokens_sent.add(amount_to_send);
                     bidding.increaseBalance(msg.sender, amount_to_send);
+                    emit Payment(import_id, DH_wallet, amount_to_send);
                }
                //Calculate the amount to send back to DH and transfer the money back
                amount_to_send = SafeMath.sub(this_escrow.token_amount, this_escrow.tokens_sent);

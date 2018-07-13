@@ -3,6 +3,7 @@ const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Storage = require('../../Storage');
 const Op = require('sequelize/lib/operators');
+const BN = require('bn.js');
 
 class Ethereum {
     /**
@@ -184,7 +185,7 @@ class Ethereum {
 
         const importIdHash = Utilities.sha3(importId);
 
-        this.log.warn('Writing root hash');
+        this.log.notify('Writing root hash to blockchain');
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
     }
 
@@ -262,8 +263,30 @@ class Ethereum {
      */
     getOffer(importId) {
         return new Promise((resolve, reject) => {
-            this.log.trace(`Get offer by importId ${importId}`);
+            this.log.trace(`Get offer for import ${importId}`);
             this.biddingContract.methods.offer(importId).call().then((res) => {
+                resolve(res);
+            }).catch((e) => {
+                reject(e);
+            });
+        });
+    }
+
+    /**
+     * Gets the index of the node's bid in the array of one offer
+     * @param importId Offer import id
+     * @param dhNodeId KADemplia ID of the DH node that wants to get index
+     * @returns {Promisse<any>} integer index in the array
+     */
+    getBidIndex(importId, nodeId) {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Get bid index for import ${importId}`);
+            this.biddingContract.methods.getBidIndex(
+                importId,
+                Utilities.normalizeHex(nodeId),
+            ).call({
+                from: this.config.wallet_address,
+            }).then((res) => {
                 resolve(res);
             }).catch((e) => {
                 reject(e);
@@ -290,7 +313,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.trace(`createProfile(${nodeId}, ${pricePerByteMinute} ${stakePerByteMinute}, ${readStakeFactor} ${maxTimeMins})`);
+        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute} ${stakePerByteMinute}, ${readStakeFactor} ${maxTimeMins})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
             [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
@@ -309,7 +332,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        this.log.warn('Increasing approval for escrow');
+        this.log.notify('Increasing approval for escrow');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
     }
 
@@ -324,7 +347,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        this.log.warn('Increasing bidding approval');
+        this.log.notify('Increasing bidding approval');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
     }
 
@@ -341,7 +364,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        this.log.warn(`Verifying escrow for import ${importId} and DH ${dhWallet}`);
+        this.log.notify(`Verify escrow for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'verifyEscrow',
@@ -367,7 +390,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
-        this.log.warn(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
+        this.log.important(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'initiateLitigation',
@@ -380,7 +403,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Answers litigation from DH side
      * @param importId
@@ -393,7 +415,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
-        this.log.warn(`Answer litigation for import ${importId}`);
+        this.log.important(`Answer litigation for import ${importId}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'answerLitigation',
@@ -418,7 +440,7 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
-        this.log.warn(`Prove litigation for import ${importId} and DH ${dhWallet}`);
+        this.log.important(`Prove litigation for import ${importId} and DH ${dhWallet}`);
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'proveLitigaiton',
@@ -430,7 +452,6 @@ class Ethereum {
             options,
         );
     }
-
     /**
      * Cancel data holding escrow process on Ethereum blockchain
      * @param {string} - dhWallet
@@ -444,7 +465,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        this.log.warn('Initiating escrow');
+        this.log.notify('Initiating escrow');
         return this.transactions.queueTransaction(
             this.escrowContractAbi,
             'cancelEscrow',
@@ -462,15 +483,15 @@ class Ethereum {
      * @param {number} - importId
      * @returns {Promise}
      */
-    payOut(dcWallet, importId) {
+    payOut(importId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.escrowContractAddress,
         };
 
-        this.log.warn('Initiating escrow - payOut');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [dcWallet, importId], options);
+        this.log.notify('Initiating escrow - payOut');
+        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [importId], options);
     }
 
     /**
@@ -503,14 +524,13 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.biddingContractAddress,
         };
-
-        this.log.warn('Calling - create offer on contract.');
+        this.log.trace(`createOffer (${importId}, ${nodeId}, ${totalEscrowTime}, ${maxTokenAmount}, ${MinStakeAmount}, ${minReputation}, ${dataHash}, ${dataSize}, ${predeterminedDhWallets}, ${predeterminedDhNodeIds}`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createOffer',
             [
                 importId,
                 Utilities.normalizeHex(nodeId),
-                Math.round(totalEscrowTime / 1000 / 60), // In minutes
+                Math.round(totalEscrowTime),
                 maxTokenAmount,
                 MinStakeAmount,
                 minReputation,
@@ -534,11 +554,117 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Initiating escrow - cancelOffer');
+        this.log.notify('Initiating escrow to cancel offer');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelOffer',
             [importId], options,
         );
+    }
+
+    async getStakedAmount(importId) {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalStake = new BN(0);
+        const initiated = {};
+        for (const event of events) {
+            const { import_id } = event.returnValues;
+            if (event.event === 'EscrowInitated'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
+            }
+            if (event.event === 'EscrowVerified'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.add(initiated[import_id]);
+            }
+            if (event.event === 'EscrowCompleted'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.sub(initiated[import_id]);
+            }
+        }
+        return totalStake.toString();
+    }
+
+    async getHoldingIncome(importId) {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalAmount = new BN(0);
+        for (const event of events) {
+            if (event.event === 'Payment'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
+    }
+
+    async getPurchaseIncome(importId, dvWallet) {
+        const events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalAmount = new BN(0);
+        for (const event of events) {
+            if (event.event === 'PurchasePayment'
+                && event.returnValues.import_id === importId
+                && event.returnValues.DV_wallet === dvWallet
+                && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
+    }
+
+    async getTotalStakedAmount() {
+        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalStake = new BN(0);
+        const initiated = {};
+        for (const event of events) {
+            const { import_id } = event.returnValues;
+            if (event.event === 'EscrowInitated' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
+            }
+            if (event.event === 'EscrowVerified' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.add(initiated[import_id]);
+            }
+            if (event.event === 'EscrowCompleted' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalStake = totalStake.sub(initiated[import_id]);
+            }
+        }
+        return totalStake.toString();
+    }
+
+    async getTotalIncome() {
+        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        let totalAmount = new BN(0);
+        for (const event of events) {
+            if (event.event === 'Payment' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
+            fromBlock: 0,
+            toBlock: 'latest',
+        });
+        for (const event of events) {
+            if (event.event === 'PurchasePayment' && event.returnValues.DH_wallet === this.config.wallet_address) {
+                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
+            }
+        }
+        return totalAmount.toString();
     }
 
     /**
@@ -599,7 +725,11 @@ class Ethereum {
                 },
             });
         } catch (error) {
-            this.log.error(`Failed to get all passed events. ${error}.`);
+            if (error.msg && !error.msg.includes('Invalid JSON RPC response')) {
+                this.log.warn(`Failed to get all passed events. ${error}.`);
+            } else {
+                this.log.trace('Node failed to communicate with blockchain provider. Check internet connection');
+            }
         }
     }
 
@@ -635,7 +765,6 @@ class Ethereum {
                             // eslint-disable-next-line
                             continue;
                         }
-                        this.emitter.emit(event, eventData.dataValues);
                         eventData.finished = true;
                         eventData.save().then(() => {
                             clearInterval(token);
@@ -725,10 +854,31 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Initiating escrow - addBid');
+        this.log.notify('Initiating escrow to add bid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [importId, Utilities.normalizeHex(dhNodeId)], options,
+        );
+    }
+
+    /**
+     * Activates predetermined bid in the offer on Ethereum blockchain
+     * @param importId Hash of the offer
+     * @param dhNodeId KADemlia ID of the DH node that wants to activate bid
+     * @param bidIndex index of the bid in the array
+     * @returns {Promise<any>} Index of the bid.
+     */
+    activatePredeterminedBid(importId, dhNodeId, bidIndex) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        this.log.notify('Initiating escrow to activate predetermined bid');
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'activatePredeterminedBid',
+            [importId, Utilities.normalizeHex(dhNodeId), bidIndex], options,
         );
     }
 
@@ -746,7 +896,7 @@ class Ethereum {
             to: this.escrowContractAddress,
         };
 
-        this.log.warn('Initiating escrow - cancelBid');
+        this.log.notify('Initiating escrow to cancel bid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'cancelBid',
             [dcWallet, importId, bidIndex], options,
@@ -765,7 +915,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Initiating escrow - chooseBid');
+        this.log.notify('Initiating escrow to choose bid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'chooseBids',
             [importId], options,
@@ -786,7 +936,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn('Initiating escrow - getBid');
+        this.log.notify('Initiating escrow to get bid');
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'getBid',
             [dcWallet, importId, bidIndex], options,
@@ -829,7 +979,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.warn(`Calling - depositToken(${amount.toString()})`);
+        this.log.trace(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'depositToken',
             [amount], options,
