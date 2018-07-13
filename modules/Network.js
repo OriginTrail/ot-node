@@ -25,6 +25,8 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
+        kadence.constants.T_RESPONSETIMEOUT = 30000;
+
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -250,10 +252,10 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
-            for (const node of nodes) {
-                // async fill buckets from some of the nodes
-                this.node.refresh(node);
-            }
+            setTimeout(() => {
+                this.node.refresh(this.node.router.getClosestBucket() + 1);
+            }, 5000);
+
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -393,6 +395,7 @@ class Network {
 
         // error handler
         this.node.use('kad-challenge-request', (err, request, response, next) => {
+            console.log(err);
             response.send({
                 error: 'kad-challenge-request error',
             });
@@ -427,17 +430,12 @@ class Network {
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = async (contactId, retry) => {
+            node.getContact = async (contactId) => {
                 let contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
-                await node.refresh(contactId, retry);
-                contact = this.node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    return contact;
-                }
-                this.log.trace(`Trying to fetch contact ${contactId} from peercache`);
+                this.log.trace(`Trying to fetch contact ${contactId} from cache`);
                 contact = await this.node.peercache.getExternalPeerInfo(contactId);
                 if (contact) {
                     const contactInfo = KadenceUtils.parseContactURL(contact);
@@ -450,49 +448,6 @@ class Network {
                 }
                 return this.node.router.getContactByNodeId(contactId);
             };
-
-            /**
-             * Tries to refresh buckets based on contact ID
-             * @param contactId
-             * @param retry
-             * @return {Promise}
-             */
-            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
-                const _refresh = () => new Promise((resolve, reject) => {
-                    this.node.iterativeFindNode(contactId, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            const contact = this.node.router.getContactByNodeId(contactId);
-                            if (contact && contact.hostname) {
-                                resolve(contact);
-                            } else {
-                                resolve(null);
-                            }
-                        }
-                    });
-                });
-
-                try {
-                    if (retry) {
-                        for (let i = 1; i <= 3; i += 1) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const contact = await _refresh();
-                            if (contact) {
-                                resolve(contact);
-                                return;
-                            }
-                            sleep.sleep(2 ** i);
-                        }
-                    } else {
-                        await _refresh(contactId, retry);
-                    }
-
-                    resolve(null);
-                } catch (e) {
-                    // failed to refresh buckets (should not happen)
-                }
-            });
 
             node.payloadRequest = async (message, contactId, callback) => {
                 const contact = await node.getContact(contactId);

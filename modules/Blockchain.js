@@ -248,6 +248,26 @@ class Blockchain {
             .getAllPastEvents(contractName);
     }
 
+    async getStakedAmount(importId) {
+        return this.blockchain.getStakedAmount(importId);
+    }
+
+    async getHoldingIncome(importId) {
+        return this.blockchain.getHoldingIncome(importId);
+    }
+
+    async getPurchaseIncome(importId, dvWallet) {
+        return this.blockchain.getPurchaseIncome(importId, dvWallet);
+    }
+
+    async getTotalStakedAmount() {
+        return this.blockchain.getTotalStakedAmount();
+    }
+
+    async getTotalIncome() {
+        return this.blockchain.getTotalIncome();
+    }
+
     /**
      * Adds bid to the offer on Ethereum blockchain
      * @param importId Import ID

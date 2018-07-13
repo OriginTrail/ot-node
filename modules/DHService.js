@@ -54,9 +54,9 @@ class DHService {
             }
 
             dcNodeId = dcNodeId.substring(2, 42);
-            const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.warn(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored`);
+                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
                 return;
             }
 
@@ -119,10 +119,14 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
-            maxTokenAmount = new BN(maxTokenAmount);
-            minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
-            const totalEscrowTimePerMinute = Math.round(totalEscrowTime / 60000);
+            const totalEscrowTimePerMinute = new BN(totalEscrowTime);
+            maxTokenAmount = new BN(maxTokenAmount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
+            minStakeAmount = new BN(minStakeAmount)
+                .mul(dataSizeBytes)
+                .mul(new BN(totalEscrowTimePerMinute));
             const myPrice = new BN(profile.token_amount_per_byte_minute)
                 .mul(dataSizeBytes)
                 .mul(new BN(totalEscrowTimePerMinute));
@@ -417,11 +421,6 @@ class DHService {
             });
         }
 
-        if (imports.length !== replicatedImportIds.length) {
-            this.log.info(`Some of the imports aren't redistributable for query ${message.id}`);
-            return;
-        }
-
         /*
             dataLocationResponseObject = {
                 message: {
@@ -452,7 +451,7 @@ class DHService {
         const networkReplyModel = await Models.network_replies.create({
             data: {
                 id: message.id,
-                imports,
+                imports: replicatedImportIds,
                 dataSize,
                 dataPrice,
                 stakeFactor,
@@ -471,7 +470,7 @@ class DHService {
             replyId: networkReplyModel.id,
             wallet,
             nodeId,
-            imports,
+            imports: replicatedImportIds,
             dataSize,
             dataPrice,
             stakeFactor,
@@ -897,7 +896,7 @@ class DHService {
         this.log.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
 
         let vertices = await this.graphStorage.findVerticesByImportId(importId);
-        ImportUtilities.sort(vertices);
+        ImportUtilities.sort(vertices, '_dc_key');
         // filter CLASS vertices
         vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
         const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
