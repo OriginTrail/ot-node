@@ -2,6 +2,8 @@ const Tx = require('ethereumjs-tx');
 const { txutils } = require('eth-lightwallet');
 const Queue = require('better-queue');
 const sleep = require('sleep');
+const BN = require('bn.js');
+const Utilities = require('../../Utilities.js');
 
 class Transactions {
     /**
@@ -11,6 +13,7 @@ class Transactions {
      * @param walletKey Wallet's private in Hex string without 0x at beginning
      */
     constructor(web3, wallet, walletKey) {
+        this.log = Utilities.getLogger();
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
@@ -58,6 +61,16 @@ class Transactions {
         transaction.sign(this.privateKey);
 
         const serializedTx = transaction.serialize().toString('hex');
+
+        const balance = await this.web3.eth.getBalance(this.walletAddress);
+        const currentBalance = new BN(Utilities.denormalizeHex(balance), 16);
+        const requiredAmount = new BN(300000).mul(new BN(newTransaction.options.gasPrice));
+
+        // If current ballance not enough for 300000 gas notify low ETH balance
+        if (currentBalance.lt(requiredAmount)) {
+            this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
+        }
+
         return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 

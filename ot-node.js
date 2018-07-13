@@ -400,7 +400,7 @@ class OTNode {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
 
-            if (remote_access.find(ip => Utilities.isIpEqual(ip, request_ip)) === undefined) {
+            if (!remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',

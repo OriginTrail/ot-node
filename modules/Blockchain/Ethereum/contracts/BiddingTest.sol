@@ -210,7 +210,6 @@ contract BiddingTest is Ownable{
 		require(this_offer.active == false,
 			"Offer is already active");
 
-		
 		uint256 max_total_token_amount = max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier));
 		max_total_token_amount = max_total_token_amount.mul(data_size_in_bytes).mul(total_escrow_time_in_minutes);
 		
