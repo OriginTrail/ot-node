@@ -765,7 +765,8 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
-                ImportUtilities.sort(vertices, '_dc_key');
+                ImportUtilities.unpackKeys(vertices, []);
+                ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
