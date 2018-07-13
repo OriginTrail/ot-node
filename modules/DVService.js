@@ -5,6 +5,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const Encryption = require('./Encryption');
+const bytes = require('utf8-length');
 
 /**
  * DV operations (querying network, etc.)
@@ -127,13 +128,14 @@ class DVService {
         });
     }
 
-    async handleReadOffer(offer) {
+    async handleReadOffer(offer, importId) {
         /*
             dataReadRequestObject = {
             message: {
                 id: REPLY_ID
                 wallet: DV_WALLET,
                 nodeId: KAD_ID,
+                import_id: IMPORT_ID,
             },
             messageSignature: {
                 c: …,
@@ -144,6 +146,7 @@ class DVService {
          */
         const message = {
             id: offer.reply_id,
+            import_id: importId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
         };
@@ -193,7 +196,6 @@ class DVService {
             wallet: message.wallet,
             node_id: message.nodeId,
             imports: JSON.stringify(message.imports),
-            data_size: message.dataSize,
             data_price: message.dataPrice,
             stake_factor: message.stakeFactor,
             reply_id: message.replyId,
@@ -279,8 +281,9 @@ class DVService {
             throw errorMessage;
         }
 
+        let importResult;
         try {
-            await this.importer.importJSON({
+            importResult = await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
@@ -295,12 +298,14 @@ class DVService {
 
         this.log.info(`Import ID ${importId} imported successfully.`);
 
-        Models.data_info.create({
+        const dataSize = bytes(JSON.stringify(importResult.vertices));
+        await Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
             data_provider_wallet,
             import_timestamp: new Date(),
+            data_size: dataSize,
         });
 
         // Check if enough tokens. From smart contract:

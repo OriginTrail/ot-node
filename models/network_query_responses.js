@@ -5,7 +5,6 @@ module.exports = (sequelize, DataTypes) => {
         wallet: DataTypes.STRING,
         node_id: DataTypes.STRING,
         imports: DataTypes.STRING,
-        data_size: DataTypes.STRING,
         data_price: DataTypes.STRING,
         stake_factor: DataTypes.STRING,
         reply_id: DataTypes.UUID,

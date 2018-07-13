@@ -222,7 +222,7 @@ class EventEmitter {
                     data.response.status(201);
                     data.response.send({
                         message: 'Query sent successfully.',
-                        data: queryId,
+                        query_id: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (!offer) {
@@ -244,7 +244,7 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id } = data;
+            const { query_id, reply_id, import_id } = data;
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -260,7 +260,7 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvService.handleReadOffer(offer);
+                await dvService.handleReadOffer(offer, import_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({

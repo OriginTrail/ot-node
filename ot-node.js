@@ -675,7 +675,8 @@ class OTNode {
         server.post('/api/read/network', (req, res) => {
             log.trace('POST Read request received.');
 
-            if (req.body == null || req.body.query_id == null || req.body.reply_id == null) {
+            if (req.body == null || req.body.query_id == null || req.body.reply_id == null
+              || req.body.import_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
                 return;
