@@ -894,6 +894,18 @@ class Utilities {
     }
 
     /**
+     * Validates number property type and allows zero
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameterAllowZero(property) {
+        if (property == null || parseInt(property, 10) >= 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Validates string property type
      * @param property
      * @returns {boolean}

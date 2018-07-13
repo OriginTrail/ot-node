@@ -507,7 +507,7 @@ class OTNode {
                 Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
                 Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
                 Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
+                Utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
                     total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
