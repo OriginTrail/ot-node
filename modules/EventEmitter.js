@@ -89,6 +89,7 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            remoteControl,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -227,9 +228,10 @@ class EventEmitter {
                     dvService.handleQuery(queryId).then((offer) => {
                         if (!offer) {
                             logger.info(`No offers for query ${queryId} handled.`);
+                            remoteControl.noOffersForQuery(`No offers for query ${queryId} handled.`);
                         } else {
                             logger.info(`Offers for query ${queryId} are collected`);
-                            // TODO: Fire socket event for Houston
+                            remoteControl.networkQueryOffersCollected();
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
@@ -308,6 +310,7 @@ class EventEmitter {
                 data.response.send({
                     message: error.message,
                 });
+                remoteControl.importFailed(error);
                 return;
             }
 
@@ -332,6 +335,7 @@ class EventEmitter {
                         data.response.send({
                             message: error,
                         });
+                        remoteControl.importFailed(error);
                     });
 
 
@@ -342,6 +346,7 @@ class EventEmitter {
                     data.response.send({
                         import_id,
                     });
+                    remoteControl.importSucceeded();
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
@@ -349,6 +354,7 @@ class EventEmitter {
                 data.response.send({
                     message: error,
                 });
+                remoteControl.importFailed(error);
             }
         };
 
@@ -412,6 +418,7 @@ class EventEmitter {
                 data.response.send({
                     message: `Failed to start offer. ${error}.`,
                 });
+                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
@@ -460,6 +467,7 @@ class EventEmitter {
             blockchain,
             config,
             timeUtils,
+            remoteControl,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -626,6 +634,7 @@ class EventEmitter {
             dataReplication,
             network,
             blockchain,
+            remoteControl,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -902,8 +911,10 @@ class EventEmitter {
             const { status, import_id } = request.params.message;
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
+                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
+                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
             }
         });
     }
