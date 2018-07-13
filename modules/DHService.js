@@ -292,7 +292,7 @@ class DHService {
 
             importResult = importResult.response;
 
-            const dataSize = bytes(JSON.stringify(data.vertices));
+            const dataSize = bytes(JSON.stringify(importResult.vertices));
             await Models.data_info.create({
                 import_id: importResult.import_id,
                 total_documents: importResult.vertices.length,

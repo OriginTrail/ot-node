@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const bytes = require('utf8-length');
 
 const events = require('events');
 
@@ -316,9 +317,11 @@ class EventEmitter {
                 root_hash,
                 total_documents,
                 wallet,
+                vertices,
             } = response;
 
             try {
+                const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
                         import_id,
@@ -326,6 +329,7 @@ class EventEmitter {
                         data_provider_wallet: wallet,
                         import_timestamp: new Date(),
                         total_documents,
+                        data_size: dataSize
                     }).catch((error) => {
                         logger.error(error);
                         data.response.status(500);

@@ -243,7 +243,8 @@ class DVService {
             throw Error('Read not confirmed');
         }
 
-        const importId = JSON.parse(networkQueryResponse.imports)[0];
+        const importObject = JSON.parse(networkQueryResponse.imports)[0];
+        const importId = importObject.import_id;
 
         // Calculate root hash and check is it the same on the SC.
         const { data_provider_wallet } = message;
@@ -298,7 +299,7 @@ class DVService {
 
         this.log.info(`Import ID ${importId} imported successfully.`);
 
-        const dataSize = bytes(JSON.stringify(importResult.vertices));
+        const dataSize = bytes(JSON.stringify(vertices));
         await Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,

@@ -681,11 +681,12 @@ class OTNode {
                 res.send({ message: 'Bad request' });
                 return;
             }
-            const { query_id, reply_id } = req.body;
+            const { query_id, reply_id, import_id } = req.body;
 
             emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
+                import_id,
                 response: res,
             });
         });
