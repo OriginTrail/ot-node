@@ -380,6 +380,7 @@ class DVService {
 
         const {
             id, wallet, nodeId, m1, m2, e, r1, r2, sd, blockNumber,
+            import_id,
         } = message;
 
         // Check if mine request.
@@ -397,7 +398,7 @@ class DVService {
             where: { id: networkQueryResponse.query_id },
         });
 
-        const importId = networkQueryResponse.import_id;
+        const importId = import_id;
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
