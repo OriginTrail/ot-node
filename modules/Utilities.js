@@ -23,7 +23,6 @@ require('winston-loggly-bulk');
 
 
 class Utilities {
-
     /**
      * Creates new hash import ID.
      * @returns {*}
