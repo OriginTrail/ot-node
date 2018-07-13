@@ -25,7 +25,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 60000;
+        kadence.constants.T_RESPONSETIMEOUT = 30000;
 
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
@@ -113,7 +113,7 @@ class Network {
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        // this.enableOnion();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -251,11 +251,6 @@ class Network {
 
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
-
-            for (const node of nodes) {
-                // async fill buckets from some of the nodes
-                this.node.refresh(node);
-            }
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -395,6 +390,7 @@ class Network {
 
         // error handler
         this.node.use('kad-challenge-request', (err, request, response, next) => {
+            console.log(err);
             response.send({
                 error: 'kad-challenge-request error',
             });
@@ -429,17 +425,12 @@ class Network {
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = async (contactId, retry) => {
+            node.getContact = async (contactId) => {
                 let contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
-                await node.refresh(contactId, retry);
-                contact = this.node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    return contact;
-                }
-                this.log.trace(`Trying to fetch contact ${contactId} from peercache`);
+                this.log.trace(`Trying to fetch contact ${contactId} from cache`);
                 contact = await this.node.peercache.getExternalPeerInfo(contactId);
                 if (contact) {
                     const contactInfo = KadenceUtils.parseContactURL(contact);

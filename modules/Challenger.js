@@ -15,25 +15,15 @@ class Challenger {
         this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
-        this.remoteControl = ctx.remoteControl;
     }
 
     async startChallenging() {
-        const activeChallegesCount = await Models.replicated_data.findAndCountAll({
-            where: {
-                status: {
-                    [Op.in]: ['ACTIVE'],
-                },
-            },
-        });
-        if (activeChallegesCount.count > 0 && this.timerId === undefined) {
-            // TODO: temp solution to delay.
-            // Should be started after replication-finished received.
-            setTimeout(() => {
-                setInterval(this.intervalFunc, intervalMs, this, this.network, this.log);
-            }, 30000);
-            this.log.info(`Started challenging timer at ${intervalMs}ms.`);
-        }
+        // TODO: temp solution to delay.
+        // Should be started after replication-finished received.
+        setTimeout(() => {
+            setInterval(this.intervalFunc, intervalMs, this, this.network, this.log);
+        }, 30000);
+        this.log.info(`Started challenging timer at ${intervalMs}ms.`);
     }
 
     stopChallenging() {

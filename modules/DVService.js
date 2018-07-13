@@ -115,6 +115,7 @@ class DVService {
 
                 if (!lowestOffer) {
                     this.log.info('Didn\'t find answer or no one replied.');
+                    this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });
                 } else {
