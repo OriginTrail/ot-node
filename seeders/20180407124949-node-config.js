@@ -163,9 +163,8 @@ module.exports = {
             process.env.NODE_REMOTE_CONTROL_PORT : 3000,
     },
     {
-        // dh_stake_amount_per_byte_minute
         key: 'dh_stake_factor',
-        value: '3500000000000', // ~ 5 TRAC per kB/day
+        value: '25000000', // [mTRAC / byte / min]
     },
     {
         key: 'read_stake_factor',
@@ -176,21 +175,20 @@ module.exports = {
         value: '100000',
     },
     {
-        // dh_token_amount_per_byte_minute
         key: 'dh_price',
-        value: '14000000000000', // ~ 20 TRAC per kB/day
+        value: '25000000', // [mTRAC / byte / min]
     },
     {
         key: 'total_escrow_time_in_milliseconds',
-        value: '600000',
+        value: '86400000',
     },
     {
         key: 'max_token_amount_per_dh',
-        value: '14000000000000', // ~ 20 TRAC per kB/day
+        value: '50000000', // [mTRAC / byte / min]
     },
     {
         key: 'dh_min_stake_amount',
-        value: '3500000000000', // ~ 5 TRAC per kB/day
+        value: '10000000', // [mTRAC / byte / min]
     },
     {
         key: 'dh_min_reputation',

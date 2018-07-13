@@ -252,11 +252,11 @@ class Blockchain {
         return this.blockchain.getStakedAmount(importId);
     }
 
-    async getHoldingIncome(importId){
+    async getHoldingIncome(importId) {
         return this.blockchain.getHoldingIncome(importId);
     }
 
-    async getPurchaseIncome(importId, dvWallet){
+    async getPurchaseIncome(importId, dvWallet) {
         return this.blockchain.getPurchaseIncome(importId, dvWallet);
     }
 

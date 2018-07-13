@@ -113,7 +113,7 @@ class Network {
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        // this.enableOnion();
+        this.enableOnion();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -251,6 +251,11 @@ class Network {
 
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+
+            setTimeout(() => {
+                this.node.refresh(this.node.router.getClosestBucket() + 1);
+            }, 5000);
+
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -443,49 +448,6 @@ class Network {
                 }
                 return this.node.router.getContactByNodeId(contactId);
             };
-
-            /**
-             * Tries to refresh buckets based on contact ID
-             * @param contactId
-             * @param retry
-             * @return {Promise}
-             */
-            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
-                const _refresh = () => new Promise((resolve, reject) => {
-                    this.node.iterativeFindNode(contactId, (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            const contact = this.node.router.getContactByNodeId(contactId);
-                            if (contact && contact.hostname) {
-                                resolve(contact);
-                            } else {
-                                resolve(null);
-                            }
-                        }
-                    });
-                });
-
-                try {
-                    if (retry) {
-                        for (let i = 1; i <= 3; i += 1) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const contact = await _refresh();
-                            if (contact) {
-                                resolve(contact);
-                                return;
-                            }
-                            sleep.sleep(2 ** i);
-                        }
-                    } else {
-                        await _refresh(contactId, retry);
-                    }
-
-                    resolve(null);
-                } catch (e) {
-                    // failed to refresh buckets (should not happen)
-                }
-            });
 
             node.payloadRequest = async (message, contactId, callback) => {
                 const contact = await node.getContact(contactId);
