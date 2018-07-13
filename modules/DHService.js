@@ -776,6 +776,7 @@ class DHService {
                 r2,
                 sd: epkChecksum,
                 blockNumber: selectedBlockNumber,
+                import_id: importId,
             },
         };
         encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
