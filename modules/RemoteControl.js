@@ -599,32 +599,6 @@ class RemoteControl {
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
     }
-
-    /**
-     * Get total staked amount of tokens
-     */
-    async getStakedAmount() {
-        const stakedAmount = await this.blockchain.getStakedAmount();
-        this.socket.emit('total_stake', stakedAmount);
-    }
-
-    /**
-     * Get total payments
-     */
-    async getTotalIncome() {
-        const stakedAmount = await this.blockchain.getTotalIncome();
-        this.socket.emit('total_income', stakedAmount);
-    }
-
-    /**
-     * Payout offer
-     * @param import_id
-     * @returns {Promise<void>}
-     */
-    async payOut(import_id) {
-        await this.blockchain.payOut(import_id);
-        this.socket.emit('payout_complete', import_id);
-    }
 }
 
 module.exports = RemoteControl;
