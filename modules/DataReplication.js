@@ -2,6 +2,7 @@ const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const config = require('./Config');
 const Models = require('../models');
+const ImportUtilities = require('./ImportUtilities');
 
 class DataReplication {
     /**
@@ -35,7 +36,7 @@ class DataReplication {
             total_time: 10 * 60000,
         };
 
-        data.vertices = Graph.sortVertices(data.vertices);
+        ImportUtilities.sort(data.vertices);
 
         // TODO: Move test generation outside sendPayload(.
         const tests = Challenge.generateTests(

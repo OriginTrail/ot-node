@@ -303,7 +303,7 @@ class OTNode {
                 deadline = Date.now() + delay;
                 working = false;
             }
-        }, 1000);
+        }, 5000);
     }
 
     /**
@@ -396,6 +396,7 @@ class OTNode {
         server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
+
         if (!Utilities.isBootstrapNode()) {
             // register API routes only if the node is not bootstrap
             this.exposeAPIRoutes(server, emitter);

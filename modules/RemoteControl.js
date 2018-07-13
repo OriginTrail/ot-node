@@ -127,6 +127,18 @@ class RemoteControl {
             this.socket.on('get-network-query-responses', (queryId) => {
                 this.getNetworkQueryResponses(queryId);
             });
+
+            this.socket.on('get-total-stake', () => {
+                this.getStakedAmount();
+            });
+
+            this.socket.on('get-total-income', () => {
+                this.getTotalIncome();
+            });
+
+            this.socket.on('payout', (import_id) => {
+                this.payOut(import_id);
+            });
         });
     }
 
@@ -319,6 +331,55 @@ class RemoteControl {
 
                 });
         }, 15000);
+    }
+    /**
+     * Get amount of tokens currently staked in a job
+     */
+    async getStakedAmount(import_id) {
+        const stakedAmount = await this.blockchain.getStakedAmount(import_id);
+        this.socket.emit('job_stake', stakedAmount, import_id);
+    }
+
+    /**
+     * Get payments for one data holding job
+     */
+    async getHoldingIncome(import_id) {
+        const stakedAmount = await this.blockchain.getHoldingIncome(import_id);
+        this.socket.emit('holding_income', stakedAmount, import_id);
+    }
+
+    /**
+     * Get payments for one data reading job
+     */
+    async getPurchaseIncome(import_id, DV_wallet) {
+        const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet);
+        this.socket.emit('purchase_income', stakedAmount, import_id, DV_wallet);
+    }
+
+    /**
+     * Get total staked amount of tokens
+     */
+    async getTotalStakedAmount() {
+        const stakedAmount = await this.blockchain.getTotalStakedAmount();
+        this.socket.emit('total_stake', stakedAmount);
+    }
+
+    /**
+     * Get total payments
+     */
+    async getTotalIncome() {
+        const stakedAmount = await this.blockchain.getTotalIncome();
+        this.socket.emit('total_income', stakedAmount);
+    }
+
+    /**
+     * Payout offer
+     * @param import_id
+     * @returns {Promise<void>}
+     */
+    async payOut(import_id) {
+        await this.blockchain.payOut(import_id);
+        this.socket.emit('payout_complete', import_id);
     }
 }
 
