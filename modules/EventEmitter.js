@@ -329,7 +329,7 @@ class EventEmitter {
                         data_provider_wallet: wallet,
                         import_timestamp: new Date(),
                         total_documents,
-                        data_size: dataSize
+                        data_size: dataSize,
                     }).catch((error) => {
                         logger.error(error);
                         data.response.status(500);
