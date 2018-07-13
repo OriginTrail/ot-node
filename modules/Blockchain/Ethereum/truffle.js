@@ -6,11 +6,10 @@ var mnemonic = process.env.TRUFFLE_MNEMONIC;
 module.exports = {
     solc: {
         optimizer: {
-          enabled: true,
-          runs: 200,
-        }
+            enabled: true,
+            runs: 200,
+        },
     },
-    
     networks: {
         development: {
             host: 'localhost',
