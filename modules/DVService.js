@@ -5,6 +5,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const Encryption = require('./Encryption');
+const bytes = require('utf8-length');
 
 /**
  * DV operations (querying network, etc.)
@@ -127,13 +128,14 @@ class DVService {
         });
     }
 
-    async handleReadOffer(offer) {
+    async handleReadOffer(offer, importId) {
         /*
             dataReadRequestObject = {
             message: {
                 id: REPLY_ID
                 wallet: DV_WALLET,
                 nodeId: KAD_ID,
+                import_id: IMPORT_ID,
             },
             messageSignature: {
                 c: …,
@@ -144,6 +146,7 @@ class DVService {
          */
         const message = {
             id: offer.reply_id,
+            import_id: importId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
         };
@@ -193,7 +196,6 @@ class DVService {
             wallet: message.wallet,
             node_id: message.nodeId,
             imports: JSON.stringify(message.imports),
-            data_size: message.dataSize,
             data_price: message.dataPrice,
             stake_factor: message.stakeFactor,
             reply_id: message.replyId,
@@ -241,7 +243,8 @@ class DVService {
             throw Error('Read not confirmed');
         }
 
-        const importId = JSON.parse(networkQueryResponse.imports)[0];
+        const importObject = JSON.parse(networkQueryResponse.imports)[0];
+        const importId = importObject.import_id;
 
         // Calculate root hash and check is it the same on the SC.
         const { data_provider_wallet } = message;
@@ -279,8 +282,9 @@ class DVService {
             throw errorMessage;
         }
 
+        let importResult;
         try {
-            await this.importer.importJSON({
+            importResult = await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
@@ -295,12 +299,14 @@ class DVService {
 
         this.log.info(`Import ID ${importId} imported successfully.`);
 
-        Models.data_info.create({
+        const dataSize = bytes(JSON.stringify(vertices));
+        await Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
             data_provider_wallet,
             import_timestamp: new Date(),
+            data_size: dataSize,
         });
 
         // Check if enough tokens. From smart contract:
@@ -368,11 +374,13 @@ class DVService {
                 r2,
                 sd, // epkChecksum
                 blockNumber,
+                import_id,
             }
          */
 
         const {
             id, wallet, nodeId, m1, m2, e, r1, r2, sd, blockNumber,
+            import_id,
         } = message;
 
         // Check if mine request.
@@ -390,7 +398,7 @@ class DVService {
             where: { id: networkQueryResponse.query_id },
         });
 
-        const importId = JSON.parse(networkQueryResponse.imports)[0];
+        const importId = import_id;
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
