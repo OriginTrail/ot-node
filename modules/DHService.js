@@ -10,6 +10,7 @@ const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
+const bytes = require('utf8-length');
 
 /**
  * DH operations (handling new offers, etc.)
@@ -119,6 +120,8 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
+            maxTokenAmount = new BN(maxTokenAmount);
+            minStakeAmount = new BN(minStakeAmount);
             dataSizeBytes = new BN(dataSizeBytes);
             const totalEscrowTimePerMinute = new BN(totalEscrowTime);
             maxTokenAmount = new BN(maxTokenAmount)
@@ -289,12 +292,14 @@ class DHService {
 
             importResult = importResult.response;
 
+            const dataSize = bytes(JSON.stringify(importResult.vertices));
             await Models.data_info.create({
                 import_id: importResult.import_id,
                 total_documents: importResult.vertices.length,
                 root_hash: importResult.root_hash,
                 data_provider_wallet: importResult.wallet,
                 import_timestamp: new Date(),
+                data_size: dataSize,
             });
         } catch (err) {
             this.log.warn(`Failed to import JSON. ${err}.`);
@@ -444,17 +449,35 @@ class DHService {
          */
         const wallet = this.config.node_wallet;
         const nodeId = this.config.identity;
-        const dataSize = 500; // TODO
-        const dataPrice = 100000; // TODO
-        const stakeFactor = 1000; // TODO
+        const dataPrice = 100000; // TODO add to configuration
+
+        const dataInfos = await Models.data_info.findAll({
+            where: {
+                import_id: {
+                    [Op.in]: replicatedImportIds,
+                },
+            },
+        });
+
+        const importObjects = replicatedImportIds.map((importId) => {
+            const size = dataInfos.find(di => di.import_id === importId).data_size;
+            return {
+                import_id: importId,
+                size,
+                calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
+            };
+        });
+
+        if (importObjects.length === 0) {
+            return;
+        }
 
         const networkReplyModel = await Models.network_replies.create({
             data: {
                 id: message.id,
-                imports: replicatedImportIds,
-                dataSize,
+                imports: importObjects,
                 dataPrice,
-                stakeFactor,
+                stakeFactor: this.config.read_stake_factor,
             },
             receiver_wallet: message.wallet,
             receiver_identity: message.nodeId,
@@ -470,10 +493,9 @@ class DHService {
             replyId: networkReplyModel.id,
             wallet,
             nodeId,
-            imports: replicatedImportIds,
-            dataSize,
+            imports: importObjects,
             dataPrice,
-            stakeFactor,
+            stakeFactor: this.config.read_stake_factor,
         };
 
         const messageResponseSignature =
@@ -495,20 +517,23 @@ class DHService {
     }
 
     /**
-     * Handles date read request from Kademlia
+     * Handles data read request from Kademlia
      * @return {Promise<void>}
      */
     async handleDataReadRequest(message) {
         /*
             message: {
-                id: REPLY_ID
+                id: REPLY_ID,
+                import_id: IMPORT_ID,
                 wallet: DH_WALLET,
                 nodeId: KAD_ID
             }
         */
 
         // TODO in order to avoid getting a different import.
-        const { nodeId, wallet, id } = message;
+        const {
+            nodeId, wallet, id, import_id,
+        } = message;
         try {
             // Check is it mine offer.
             const networkReplyModel = await Models.network_replies.find({ where: { id } });
@@ -525,7 +550,7 @@ class DHService {
 
             // TODO: Only one import ID used. Later we'll support replication from multiple imports.
             // eslint-disable-next-line
-            const importId = offer.imports[0];
+            const importId = import_id;
 
             const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
             const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
@@ -608,7 +633,7 @@ class DHService {
                     vertices,
                     edges,
                 },
-                importId, // TODO: Temporal. Remove it.
+                import_id: importId, // TODO: Temporal. Remove it.
             };
             const dataReadResponseObject = {
                 message: replyMessage,
@@ -751,6 +776,7 @@ class DHService {
                 r2,
                 sd: epkChecksum,
                 blockNumber: selectedBlockNumber,
+                import_id: importId,
             },
         };
         encryptedPaddedKeyObject.messageSignature = Utilities.generateRsvSignature(
