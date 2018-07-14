@@ -223,6 +223,7 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
+        const { import_id: importId } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -242,9 +243,6 @@ class DVService {
             await networkQuery.save({ fields: ['status'] });
             throw Error('Read not confirmed');
         }
-
-        const importObject = JSON.parse(networkQueryResponse.imports)[0];
-        const importId = importObject.import_id;
 
         // Calculate root hash and check is it the same on the SC.
         const { data_provider_wallet } = message;
