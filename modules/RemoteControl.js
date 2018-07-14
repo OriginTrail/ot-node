@@ -74,16 +74,10 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', (data) => {
-                let query = '';
-                for (var key in data) {
-                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
-                }
-                Storage.db.query(query).then(async (res) => {
+                this.updateConfigRow(data).then(async (res) => {
                     await this.updateProfile();
-                    this.socket.emit('update-complete');
                     this.restartNode();
-                }).catch((err) => {
-                    console.log(err);
+                    await this.socket.emit('updateComplete');
                 });
             });
 
@@ -155,6 +149,17 @@ class RemoteControl {
                 contact: this.node.contact,
                 peers,
             });
+        });
+    }
+    updateConfigRow(data) {
+        return new Promise((resolve, reject) => {
+            for (var key in data) {
+                const query = `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
+                Storage.db.query(query).then((res) => {
+
+                });
+            }
+            resolve();
         });
     }
 
