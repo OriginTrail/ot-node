@@ -78,7 +78,10 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
-            remoteControl: awilix.asClass(RemoteControl),
+            remoteControl: awilix.asValue({
+                importRequestData: () => {
+                },
+            }),
             network: awilix.asClass(Network),
             networkUtilities: awilix.asClass(NetworkUtilities),
             emitter: awilix.asClass(EventEmitter),
