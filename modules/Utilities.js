@@ -143,18 +143,18 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'api';
+        const logLevel = 'job';
 
         const customColors = {
             trace: 'grey',
             notify: 'green',
             debug: 'yellow',
-            job: 'cyan',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
             api: 'cyan',
+            job: 'cyan',
         };
 
         try {
@@ -198,13 +198,13 @@ class Utilities {
                 levels: {
                     error: 0,
                     important: 1,
-                    warn: 2,
-                    info: 3,
-                    debug: 4,
+                    job: 2,
+                    api: 3,
+                    warn: 4,
                     notify: 5,
-                    trace: 6,
-                    api: 7,
-                    job: 8,
+                    info: 6,
+                    debug: 7,
+                    trace: 8,
                 },
                 transports,
             });
