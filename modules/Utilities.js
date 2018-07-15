@@ -143,7 +143,7 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'job';
+        const logLevel = 'trace';
 
         const customColors = {
             trace: 'grey',
