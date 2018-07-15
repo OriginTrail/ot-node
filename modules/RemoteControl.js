@@ -10,6 +10,32 @@ const Utilities = require('./Utilities');
 
 const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
+class SocketDecorator {
+    constructor(log) {
+        this.log = log;
+        this.socket = null;
+    }
+
+    initialize(socket) {
+        this.socket = socket;
+    }
+
+    emit(event, data) {
+        if (this.socket && this.socket.connected) {
+            try {
+                this.socket.emit(event, data);
+            } catch (e) {
+                this.log.warn('Failed to emmit the event to the front end.');
+            }
+        }
+    }
+
+    on(event, callback) {
+        if (this.socket && this.socket.connected) {
+            this.socket.on(event, callback);
+        }
+    }
+}
 
 class RemoteControl {
     constructor(ctx) {
@@ -19,6 +45,7 @@ class RemoteControl {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.web3 = ctx.web3;
+        this.socket = new SocketDecorator(ctx.logger);
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -27,10 +54,14 @@ class RemoteControl {
             const regex = /password=([\w0-9-]+)/g;
             const match = regex.exec(request);
 
-            const password = match[1];
-            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-                callback(null, res.value === password);
-            });
+            try {
+                const password = match[1];
+                Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                    callback(null, res.value === password);
+                });
+            } catch (e) {
+                // Error
+            }
         });
     }
 
@@ -58,7 +89,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
-            this.socket = socket;
+            this.socket.initialize(socket);
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
@@ -113,8 +144,20 @@ class RemoteControl {
                 this.getReplicatedData();
             });
 
+            this.socket.on('get-network-query-responses', (queryId) => {
+                this.getNetworkQueryResponses(queryId);
+            });
+
+            this.socket.on('get-bids', () => {
+                this.getBids();
+            });
+
+            this.socket.on('get-local-data', (importId) => {
+                this.getLocalData(importId);
+            });
+
             this.socket.on('get-total-stake', () => {
-                this.getStakedAmount();
+                this.getTotalStakedAmount();
             });
 
             this.socket.on('get-total-income', () => {
@@ -123,6 +166,22 @@ class RemoteControl {
 
             this.socket.on('payout', (import_id) => {
                 this.payOut(import_id);
+            });
+
+            this.socket.on('get-stake-per-holding', (import_id) => {
+                this.getStakedAmount(import_id);
+            });
+
+            this.socket.on('get-income-per-holding', (import_id) => {
+                this.getHoldingIncome(import_id);
+            });
+
+            this.socket.on('get-local-query-responses', (importId) => {
+                this.getLocalQueryResponses(importId);
+            });
+
+            this.socket.on('get-purchase-income', (data) => {
+                this.getPurchaseIncome(data);
             });
         });
     }
@@ -292,6 +351,32 @@ class RemoteControl {
     }
 
     /**
+     * Get bids data
+     */
+    getBids() {
+        Models.bids.findAll()
+            .then((rows) => {
+                this.socket.emit('bids', rows);
+            });
+    }
+
+    /**
+     * Get local data
+     */
+    getLocalData(importId) {
+        Models.data_info.findAll({
+            where: {
+                import_id: importId,
+            },
+        })
+            .then((rows) => {
+                this.socket.emit('localDataResponse', rows);
+            }).catch((e) => {
+
+            });
+    }
+
+    /**
      * Get wallet balance
      * @param wallet
      */
@@ -312,27 +397,29 @@ class RemoteControl {
      */
     async getStakedAmount(import_id) {
         const stakedAmount = await this.blockchain.getStakedAmount(import_id);
-        this.socket.emit('job_stake', stakedAmount, import_id);
+        this.socket.emit('jobStake', { stakedAmount, import_id });
     }
 
     /**
      * Get payments for one data holding job
      */
     async getHoldingIncome(import_id) {
-        const stakedAmount = await this.blockchain.getHoldingIncome(import_id);
-        this.socket.emit('holding_income', stakedAmount, import_id);
+        const holdingIncome = await this.blockchain.getHoldingIncome(import_id);
+        this.socket.emit('holdingIncome', { holdingIncome, import_id });
     }
 
     /**
      * Get payments for one data reading job
      */
-    async getPurchaseIncome(import_id, DV_wallet) {
+    async getPurchaseIncome(data) {
+        const DV_wallet = data.sourceWalletPerHolding;
+        const import_id = data.importIdPerHolding;
         const stakedAmount = await this.blockchain.getPurchaseIncome(import_id, DV_wallet);
-        this.socket.emit('purchase_income', stakedAmount, import_id, DV_wallet);
+        this.socket.emit('purchaseIncome', { stakedAmount, import_id, DV_wallet });
     }
 
     /**
-     * Get total staked amount of tokens
+     * Get total staked amount of tokens - staked in total
      */
     async getTotalStakedAmount() {
         const stakedAmount = await this.blockchain.getTotalStakedAmount();
@@ -340,7 +427,7 @@ class RemoteControl {
     }
 
     /**
-     * Get total payments
+     * Get total payments - earning in total
      */
     async getTotalIncome() {
         const stakedAmount = await this.blockchain.getTotalIncome();
@@ -355,6 +442,173 @@ class RemoteControl {
     async payOut(import_id) {
         await this.blockchain.payOut(import_id);
         this.socket.emit('payout_complete', import_id);
+    }
+
+    /**
+     * Get network query responses
+     */
+    getNetworkQueryResponses(queryId) {
+        Models.network_query_responses.findAll({
+            where: {
+                query_id: queryId,
+            },
+        })
+            .then((rows) => {
+                if (rows.length > 0) {
+                    this.socket.emit('networkQueryResponses', rows);
+                }
+            }).catch((e) => {
+
+            });
+    }
+
+    /**
+     * Get import request data
+     */
+    importRequestData() {
+        const message = '[DC] Import complete';
+        this.socket.emit('importRequestData', message);
+    }
+
+    getLocalQueryResponses(importId) {
+        Models.data_info.findAll({
+            where: {
+                import_id: importId,
+            },
+        })
+            .then((rows) => {
+                this.socket.emit('localDataResponses', rows);
+            }).catch((e) => {
+
+            });
+    }
+
+    /**
+     * Get import data error
+     */
+    importFailed(data) {
+        this.socket.emit('importFailed', data);
+    }
+
+    /**
+     * Get import data - succeeded
+     */
+    importSucceeded(data) {
+        this.socket.emit('importSucceeded', data);
+    }
+
+
+    /**
+     * Emmit collected offers for ODN Search
+     */
+    networkQueryOffersCollected() {
+        this.socket.emit('networkQueryOffersCollected');
+    }
+
+    noOffersForQuery(data) {
+        this.socket.emit('noOffersForQuery', data);
+    }
+
+
+    /**
+     * DV events
+     */
+    networkQueryOfferArrived(data) {
+        this.socket.emit('networkQueryOfferArrived', data);
+    }
+
+    purchaseFinished(data, importId) {
+        this.socket.emit('purchaseFinished', { data, importId });
+    }
+
+    answerNotFound(data) {
+        this.socket.emit('answerNotFound', data);
+    }
+
+
+    /**
+     * DH events
+     */
+
+    replicationVerificationStatus(data) {
+        this.socket.emit('replicationVerificationStatus', data);
+    }
+
+    bidNotTaken(data) {
+        this.socket.emit('bidNotTaken', data);
+    }
+
+    replicationRequestSent(importId) {
+        const message = `Replication request send for ${importId}`;
+        this.socket.emit('replicationRequestSent', message);
+    }
+
+    replicationReqestFailed(data) {
+        this.socket.emit('replicationReqestFailed', data);
+    }
+
+    sendingRootHashes(data) {
+        this.socket.emit('sendingRootHashes', data);
+    }
+
+    dhReplicationFinished(data) {
+        this.socket.emit('dhReplicationFinished', data);
+    }
+
+    failedOfferHandle(data) {
+        this.socket.emit('failedOfferHandle', data);
+    }
+
+
+    /**
+     * DC events
+     */
+    failedToCreateOffer(data) {
+        this.socket.emit('failedToCreateOffer', data);
+    }
+
+    writingRootHash(importId) {
+        this.socket.emit('writingRootHash', importId);
+    }
+
+    initializingOffer(importId) {
+        this.socket.emit('initializingOffer', importId);
+    }
+    cancelingOffer(data, importId) {
+        this.socket.emit('cancelingOffer', { data, importId });
+    }
+
+    biddingStarted(importId) {
+        const message = 'Offer written to blockchain. Started bidding phase.';
+        this.socket.emit('biddingStarted', { message, importId });
+    }
+
+    biddingComplete(importId) {
+        this.socket.emit('biddingComplete', importId);
+    }
+
+    addingBid(data) {
+        this.socket.emit('addingBid', data);
+    }
+
+    choosingBids(importId) {
+        this.socket.emit('choosingBids', importId);
+    }
+
+    bidChosen(importId) {
+        this.socket.emit('bidChosen', importId);
+    }
+
+    dcErrorHandling(error) {
+        this.socket.emit('dcErrorHandling', error);
+    }
+
+    offerFinalized(data, importId) {
+        this.socket.emit('offerFinalized', { data, importId });
+    }
+
+    challengeFailed(data) {
+        this.socket.emit('challengeFailed', data);
     }
 }
 
