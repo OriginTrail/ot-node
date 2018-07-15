@@ -123,6 +123,22 @@ class Utilities {
     }
 
     /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise(async (resolve, reject) => {
+            // eslint-disable-next-line
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            if (res) {
+                resolve(res);
+            }
+        });
+    }
+
+    /**
      * Returns winston logger
      * @returns {*} - log function
      */
@@ -132,7 +148,8 @@ class Utilities {
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'blue',
+            debug: 'orange',
+            job: 'cyan',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
@@ -156,6 +173,7 @@ class Utilities {
                             'important',
                             'error',
                             'api',
+                            'job',
                         ],
                     }),
                     new (winston.transports.File)({
@@ -186,6 +204,7 @@ class Utilities {
                     notify: 5,
                     trace: 6,
                     api: 7,
+                    job: 8,
                 },
                 transports,
             });
@@ -289,7 +308,7 @@ class Utilities {
                 }
                 break;
             default:
-                this.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -508,7 +527,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = this.getLogger();
+        const log = Utilities.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
