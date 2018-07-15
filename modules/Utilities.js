@@ -148,7 +148,7 @@ class Utilities {
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'orange',
+            debug: 'yellow',
             job: 'cyan',
             info: 'white',
             warn: 'yellow',
@@ -891,10 +891,16 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || parseInt(property, 10) > 0) {
-            return true;
-        }
-        return false;
+        return property == null || parseInt(property, 10) > 0;
+    }
+
+    /**
+     * Validates number property type and allows zero
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameterAllowZero(property) {
+        return property == null || parseInt(property, 10) >= 0;
     }
 
     /**
@@ -903,10 +909,7 @@ class Utilities {
      * @returns {boolean}
      */
     static validateStringParameter(property) {
-        if (property == null || typeof property === 'string') {
-            return true;
-        }
-        return false;
+        return property == null || typeof property === 'string';
     }
 
     /**
