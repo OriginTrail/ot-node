@@ -11,7 +11,8 @@ const Utilities = require('./Utilities');
 const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
 class SocketDecorator {
-    constructor() {
+    constructor(log) {
+        this.log = log;
         this.socket = null;
     }
 
@@ -21,7 +22,11 @@ class SocketDecorator {
 
     emit(event, data) {
         if (this.socket && this.socket.connected) {
-            this.socket.emit(event, data);
+            try {
+                this.socket.emit(event, data);
+            } catch (e) {
+                this.log.warn('Failed to emmit the event to the front end.');
+            }
         }
     }
 
@@ -40,7 +45,7 @@ class RemoteControl {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.socket = new SocketDecorator();
+        this.socket = new SocketDecorator(ctx.logger);
 
 
         remote.set('authorization', (handshakeData, callback) => {
