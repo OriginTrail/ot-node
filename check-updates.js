@@ -4,6 +4,28 @@ var npm = require('npm-cmd');
 
 const log = Utilities.getLogger();
 
+const Umzug = require('umzug');
+
+const Models = require('./models');
+
+const umzug_migrations = new Umzug({
+
+    storage: 'sequelize',
+
+    storageOptions: {
+        sequelize: Models.sequelize,
+    },
+
+    migrations: {
+        params: [Models.sequelize.getQueryInterface(), Models.sequelize.constructor, () => {
+            throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
+        }],
+        path: './migrations',
+        pattern: /\.js$/,
+    },
+
+});
+
 class AutoUpdate {
     static update() {
         return new Promise(async (resolve, reject) => {
@@ -41,7 +63,9 @@ class AutoUpdate {
             });
             autoupdater.on('update.extracted', () => {
                 log.warn('Update extracted successfully!');
-
+                umzug_migrations.up().then((migrations) => {
+                    log.warn('Database migrated.');
+                });
 
                 npm.install([], {
                     cwd: '/ot-node',
