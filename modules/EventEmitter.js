@@ -101,7 +101,7 @@ class EventEmitter {
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
-            logger.info(`Query for network repsponse triggered with query ID ${query_id}`);
+            logger.info(`Query for network response triggered with query ID ${query_id}`);
 
             let responses = await Models.network_query_responses.findAll({
                 where: {
