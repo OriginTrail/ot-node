@@ -23,6 +23,10 @@ require('winston-loggly-bulk');
 
 
 class Utilities {
+    constructor() {
+        this.getLogger();
+    }
+
     /**
      * Creates new hash import ID.
      * @returns {*}
@@ -119,37 +123,21 @@ class Utilities {
     }
 
     /**
-     * Check if there is a new version of ot-node
-     * @returns {Promise<any>}
-     */
-
-    static checkForUpdates() {
-        return new Promise(async (resolve, reject) => {
-            // eslint-disable-next-line
-            const Update = require('../check-updates');
-            const res = await Update.update();
-            if (res) {
-                resolve(res);
-            }
-        });
-    }
-
-    /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
+        const logLevel = 'api';
 
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            job: 'cyan',
+            debug: 'blue',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
-            debug: 'orange',
+            api: 'cyan',
         };
 
         try {
@@ -167,6 +155,7 @@ class Utilities {
                             'warn',
                             'important',
                             'error',
+                            'api',
                         ],
                     }),
                     new (winston.transports.File)({
@@ -193,10 +182,10 @@ class Utilities {
                     important: 1,
                     warn: 2,
                     info: 3,
-                    job: 4,
+                    debug: 4,
                     notify: 5,
                     trace: 6,
-                    debug: 7,
+                    api: 7,
                 },
                 transports,
             });
@@ -300,7 +289,7 @@ class Utilities {
                 }
                 break;
             default:
-                Utilities.getLogger.error(config.database.database_system);
+                this.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -472,7 +461,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
-            const log = Utilities.getLogger();
+            const log = this.getLogger();
             log.info('Callback not defined!');
         }
     }
@@ -519,7 +508,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = Utilities.getLogger();
+        const log = this.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
@@ -884,18 +873,6 @@ class Utilities {
      */
     static validateNumberParameter(property) {
         if (property == null || parseInt(property, 10) > 0) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Validates number property type and allows zero
-     * @param property
-     * @returns {boolean}
-     */
-    static validateNumberParameterAllowZero(property) {
-        if (property == null || parseInt(property, 10) >= 0) {
             return true;
         }
         return false;

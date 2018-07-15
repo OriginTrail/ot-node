@@ -19,6 +19,9 @@ class KademliaUtils {
         if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
             return null; // skip logging
         }
+        if (msg.includes('gateway timeout')) {
+            return null; // skip logging
+        }
         if (msg.startsWith('connect econnrefused')) {
             level = 'trace';
             const address = msg.substr(21);

@@ -10,27 +10,6 @@ const Utilities = require('./Utilities');
 
 const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
-class SocketDecorator {
-    constructor() {
-        this.socket = null;
-    }
-
-    initialize(socket) {
-        this.socket = socket;
-    }
-
-    emit(event, data) {
-        if (this.socket && this.socket.connected) {
-            this.socket.emit(event, data);
-        }
-    }
-
-    on(event, callback) {
-        if (this.socket && this.socket.connected) {
-            this.socket.on(event, callback);
-        }
-    }
-}
 
 class RemoteControl {
     constructor(ctx) {
@@ -40,7 +19,6 @@ class RemoteControl {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.socket = new SocketDecorator();
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -49,14 +27,10 @@ class RemoteControl {
             const regex = /password=([\w0-9-]+)/g;
             const match = regex.exec(request);
 
-            try {
-                const password = match[1];
-                Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-                    callback(null, res.value === password);
-                });
-            } catch (e) {
-                this.log.trace('Wrong pass');
-            }
+            const password = match[1];
+            Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
+                callback(null, res.value === password);
+            });
         });
     }
 
@@ -84,8 +58,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
-            this.log.important('This is Houston. Roger. Out.');
-            this.socket.initialize(socket);
+            this.socket = socket;
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
@@ -101,16 +74,10 @@ class RemoteControl {
             });
 
             this.socket.on('config-update', (data) => {
-                let query = '';
-                for (var key in data) {
-                    query += `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
-                }
-                Storage.db.query(query).then(async (res) => {
+                this.updateConfigRow(data).then(async (res) => {
                     await this.updateProfile();
-                    this.socket.emit('update-complete');
                     this.restartNode();
-                }).catch((err) => {
-                    console.log(err);
+                    await this.socket.emit('updateComplete');
                 });
             });
 
@@ -146,18 +113,6 @@ class RemoteControl {
                 this.getReplicatedData();
             });
 
-            this.socket.on('get-network-query-responses', (queryId) => {
-                this.getNetworkQueryResponses(queryId);
-            });
-
-            this.socket.on('get-bids', () => {
-                this.getBids();
-            });
-
-            this.socket.on('get-local-data', (importId) => {
-                this.getLocalData(importId);
-            });
-
             this.socket.on('get-total-stake', () => {
                 this.getStakedAmount();
             });
@@ -168,22 +123,6 @@ class RemoteControl {
 
             this.socket.on('payout', (import_id) => {
                 this.payOut(import_id);
-            });
-
-            this.socket.on('get-total-stake', () => {
-                this.getStakedAmount();
-            });
-
-            this.socket.on('get-total-income', () => {
-                this.getTotalIncome();
-            });
-
-            this.socket.on('payout', (import_id) => {
-                this.payOut(import_id);
-            });
-
-            this.socket.on('get-local-query-responses', (importId) => {
-                this.getLocalQueryResponses(importId);
             });
         });
     }
@@ -210,6 +149,17 @@ class RemoteControl {
                 contact: this.node.contact,
                 peers,
             });
+        });
+    }
+    updateConfigRow(data) {
+        return new Promise((resolve, reject) => {
+            for (var key in data) {
+                const query = `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
+                Storage.db.query(query).then((res) => {
+
+                });
+            }
+            resolve();
         });
     }
 
@@ -286,8 +236,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(1);
-        }, 2000);
+            process.exit(2);
+        }, 5000);
     }
 
     /**
@@ -338,32 +288,6 @@ class RemoteControl {
         Models.replicated_data.findAll()
             .then((rows) => {
                 this.socket.emit('replicated', rows);
-            });
-    }
-
-    /**
-     * Get bids data
-     */
-    getBids() {
-        Models.bids.findAll()
-            .then((rows) => {
-                this.socket.emit('bids', rows);
-            });
-    }
-
-    /**
-     * Get local data
-     */
-    getLocalData(importId) {
-        Models.data_info.findAll({
-            where: {
-                import_id: importId,
-            },
-        })
-            .then((rows) => {
-                this.socket.emit('localDataResponse', rows);
-            }).catch((e) => {
-
             });
     }
 
@@ -431,174 +355,6 @@ class RemoteControl {
     async payOut(import_id) {
         await this.blockchain.payOut(import_id);
         this.socket.emit('payout_complete', import_id);
-    }
-
-    /**
-     * Get network query responses
-     */
-    getNetworkQueryResponses(queryId) {
-        Models.network_query_responses.findAll({
-            where: {
-                query_id: queryId,
-            },
-        })
-            .then((rows) => {
-                if (rows.length > 0) {
-                    this.socket.emit('networkQueryResponses', rows);
-                }
-            }).catch((e) => {
-
-            });
-    }
-
-    /**
-     * Get import request data
-     */
-    importRequestData() {
-        const message = '[DC] Import complete';
-        this.socket.emit('importRequestData', message);
-    }
-
-    getLocalQueryResponses(importId) {
-        Models.data_info.findAll({
-            where: {
-                import_id: importId,
-            },
-        })
-            .then((rows) => {
-                console.log(rows, 'rezultat');
-                this.socket.emit('localDataResponses', rows);
-            }).catch((e) => {
-
-            });
-    }
-
-    /**
-     * Get import data error
-     */
-    importFailed(data) {
-        this.socket.emit('importFailed', data);
-    }
-
-    /**
-     * Get import data - succeeded
-     */
-    importSucceeded(data) {
-        this.socket.emit('importSucceeded', data);
-    }
-
-
-    /**
-     * Emmit collected offers for ODN Search
-     */
-    networkQueryOffersCollected() {
-        this.socket.emit('networkQueryOffersCollected');
-    }
-
-    noOffersForQuery(data) {
-        this.socket.emit('noOffersForQuery', data);
-    }
-
-
-    /**
-     * DV events
-     */
-    networkQueryOfferArrived(data) {
-        this.socket.emit('networkQueryOfferArrived', data);
-    }
-
-    purchaseFinished(data, importId) {
-        this.socket.emit('purchaseFinished', { data, importId });
-    }
-
-    answerNotFound(data) {
-        this.socket.emit('answerNotFound', data);
-    }
-
-
-    /**
-     * DH events
-     */
-
-    replicationVerificationStatus(data) {
-        this.socket.emit('replicationVerificationStatus', data);
-    }
-
-    bidNotTaken(data) {
-        this.socket.emit('bidNotTaken', data);
-    }
-
-    replicationRequestSent(importId) {
-        const message = `Replication request send for ${importId}`;
-        this.socket.emit('replicationRequestSent', message);
-    }
-
-    replicationReqestFailed(data) {
-        this.socket.emit('replicationReqestFailed', data);
-    }
-
-    sendingRootHashes(data) {
-        this.socket.emit('sendingRootHashes', data);
-    }
-
-    dhReplicationFinished(data) {
-        this.socket.emit('dhReplicationFinished', data);
-    }
-
-    failedOfferHandle(data) {
-        this.socket.emit('failedOfferHandle', data);
-    }
-
-
-    /**
-     * DC events
-     */
-    failedToCreateOffer(data) {
-        this.socket.emit('failedToCreateOffer', data);
-    }
-
-    writingRootHash(importId) {
-        this.socket.emit('writingRootHash', importId);
-    }
-
-    initializingOffer(importId) {
-        this.socket.emit('initializingOffer', importId);
-    }
-    cancelingOffer(data, importId) {
-        this.socket.emit('cancelingOffer', { data, importId });
-    }
-
-    biddingStarted(importId) {
-        const message = 'Offer written to blockchain. Started bidding phase.';
-        this.socket.emit('biddingStarted', { message, importId });
-    }
-
-    biddingComplete(importId) {
-        this.socket.emit('biddingComplete', importId);
-    }
-
-    addingBid(data) {
-        this.socket.emit('addingBid', data);
-    }
-
-    choosingBids(importId) {
-        this.socket.emit('choosingBids', importId);
-    }
-
-    bidChosen(importId) {
-        this.socket.emit('bidChosen', importId);
-    }
-
-    dcErrorHandling(error) {
-        this.socket.emit('dcErrorHandling', error);
-    }
-
-    offerFinalized(data, importId) {
-        this.socket.emit('offerFinalized', { data, importId });
-    }
-
-    challengeFailed(data) {
-        this.socket.emit('challengeFailed', data);
     }
 }
 

@@ -192,11 +192,9 @@ module.exports = (deployer, network, accounts) => {
         const tokenAddress = '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882';
         const fingerprintAddress = '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d';
         deployer.deploy(EscrowHolder, tokenAddress, { gas: 6000000 })
-        .then(() => giveMeEscrowHolder())
         .then(async (result) => {
             escrow = result;
             await deployer.deploy(Reading, escrow.address, { gas: 6000000 })
-        .then(() => giveMeReading())
         .then(async (result) => {
             reading = result;
             await deployer.deploy(
@@ -206,7 +204,6 @@ module.exports = (deployer, network, accounts) => {
                 reading.address,
                 { gas: 6000000 },
             )
-        .then(() => giveMeBiddingTest())
         .then(async (result) => {
             bidding = result;
             console.log('Setting bidding address in escrow...');

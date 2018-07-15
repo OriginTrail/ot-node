@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const bytes = require('utf8-length');
 
 const events = require('events');
 
@@ -223,7 +224,7 @@ class EventEmitter {
                     data.response.status(201);
                     data.response.send({
                         message: 'Query sent successfully.',
-                        data: queryId,
+                        query_id: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (!offer) {
@@ -246,7 +247,7 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id } = data;
+            const { query_id, reply_id, import_id } = data;
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -262,7 +263,7 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvService.handleReadOffer(offer);
+                await dvService.handleReadOffer(offer, import_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
@@ -319,9 +320,11 @@ class EventEmitter {
                 root_hash,
                 total_documents,
                 wallet,
+                vertices,
             } = response;
 
             try {
+                const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
                         import_id,
@@ -329,6 +332,7 @@ class EventEmitter {
                         data_provider_wallet: wallet,
                         import_timestamp: new Date(),
                         total_documents,
+                        data_size: dataSize,
                     }).catch((error) => {
                         logger.error(error);
                         data.response.status(500);
@@ -770,7 +774,8 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
-                ImportUtilities.sort(vertices, '_dc_key');
+                ImportUtilities.unpackKeys(vertices, []);
+                ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
