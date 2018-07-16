@@ -901,7 +901,6 @@ class Utilities {
      */
     static validateNumberParameterAllowZero(property) {
         return property == null || parseInt(property, 10) >= 0;
-        return property == null || parseInt(property, 10) > 0;
     }
 
     /**
