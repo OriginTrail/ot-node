@@ -27,7 +27,6 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
-const TimeUtils = require('./modules/TimeUtils');
 
 const pjson = require('./package.json');
 
@@ -187,7 +186,6 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
-            timeUtils: awilix.asClass(TimeUtils).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -693,9 +691,18 @@ class OTNode {
     }
 }
 
-console.log('===========================================');
-console.log(`         OriginTrail Node v${pjson.version}`);
-console.log('===========================================');
+
+console.log(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
+console.log('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
+console.log('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
+console.log('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
+console.log('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
+console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+
+console.log('======================================================');
+console.log(`             OriginTrail Node v${pjson.version}`);
+console.log('======================================================');
+console.log('');
 
 const otNode = new OTNode();
 otNode.bootstrap().then(() => {

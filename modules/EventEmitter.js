@@ -470,7 +470,6 @@ class EventEmitter {
             logger,
             blockchain,
             config,
-            timeUtils,
             remoteControl,
         } = this.ctx;
 

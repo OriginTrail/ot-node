@@ -8,7 +8,7 @@ const config = require('./Config');
 const fs = require('fs');
 const utilities = require('./Utilities');
 const _ = require('lodash');
-const sleep = require('sleep');
+const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
 const PeerCache = require('./kademlia/PeerCache');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
@@ -145,8 +145,10 @@ class Network {
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
                 }
-                this.log.info(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
-                sleep.sleep(5);
+
+                this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
+                // eslint-disable-next-line
+                await sleep.sleep(retryPeriodSeconds * 1000);
             }
         });
     }
@@ -488,7 +490,8 @@ class Network {
                                 resolve(contact);
                                 return;
                             }
-                            sleep.sleep(2 ** i);
+                            // eslint-disable-next-line
+                            await sleep.sleep((2 ** i) * 1000);
                         }
                     } else {
                         await _refresh(contactId, retry);

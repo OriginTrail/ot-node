@@ -95,7 +95,7 @@
     "semaphore-async-await": "^1.5.1",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
-    "sleep": "^5.1.1",
+    "sleep-async": "^1.0.5",
     "socket.io": "^2.1.0",
     "socks": "^2.1.6",
     "solidity-sha3": "^0.4.1",
