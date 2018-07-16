@@ -146,7 +146,8 @@ class Network {
                     this.log.error(`Failed to join network ${e}`);
                 }
                 this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
-                await sleep.sleep(5);
+                // eslint-disable-next-line
+                await sleep.sleep(5000);
             }
         });
     }
@@ -488,7 +489,8 @@ class Network {
                                 resolve(contact);
                                 return;
                             }
-                            sleep.sleep(2 ** i);
+                            // eslint-disable-next-line
+                            await sleep.sleep((2 ** i) * 1000);
                         }
                     } else {
                         await _refresh(contactId, retry);
