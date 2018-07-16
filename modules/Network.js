@@ -145,7 +145,7 @@ class Network {
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
                 }
-                this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
+                this.log.info(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
                 sleep.sleep(5);
             }
         });
