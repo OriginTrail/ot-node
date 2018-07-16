@@ -134,6 +134,10 @@ module.exports = {
         value: process.env.SEND_LOGS ? process.env.SEND_LOGS : '1',
     },
     {
+        key: 'enable_debug_logs_level',
+        value: process.env.LOGS_LEVEL_DEBUG ? process.env.LOGS_LEVEL_DEBUG : '0',
+    },
+    {
         key: 'is_bootstrap_node',
         value: false,
     },

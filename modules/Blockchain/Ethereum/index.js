@@ -131,7 +131,7 @@ class Ethereum {
      */
     async getRootHash(dcWallet, importId) {
         const importIdHash = Utilities.sha3(importId.toString());
-        this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importId ${importIdHash}`);
+        this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importIdHash ${importIdHash}`);
         return this.otContract.methods.getFingerprintByBatchHash(dcWallet, importIdHash).call();
     }
 

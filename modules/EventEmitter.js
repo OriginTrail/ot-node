@@ -654,7 +654,7 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
-            logger.info('kad-data-location-request received');
+            logger.debug('kad-data-location-request received');
 
             const { message, messageSignature } = kadMessage;
 
@@ -815,7 +815,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-location-response', async (request) => {
-            logger.info('kad-data-location-response');
+            logger.debug('kad-data-location-response');
             try {
                 const dataLocationResponseObject = request.params.message;
                 const { message, messageSignature } = dataLocationResponseObject;
@@ -834,7 +834,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-request', async (request) => {
-            logger.info('kad-data-read-request');
+            logger.debug('kad-data-read-request');
 
             const dataReadRequestObject = request.params.message;
             const { message, messageSignature } = dataReadRequestObject;
@@ -849,7 +849,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-response', async (request) => {
-            logger.info('kad-data-read-response');
+            logger.debug('kad-data-read-response');
 
             if (request.params.status === 'FAIL') {
                 logger.warn(`Failed to send data-read-request. ${request.params.message}`);
@@ -872,7 +872,7 @@ class EventEmitter {
 
         // async
         this._on('kad-send-encrypted-key', async (request) => {
-            logger.info('kad-send-encrypted-key');
+            logger.debug('kad-send-encrypted-key');
 
             const encryptedPaddedKeyObject = request.params.message;
             const { message, messageSignature } = encryptedPaddedKeyObject;
@@ -909,7 +909,7 @@ class EventEmitter {
 
         // async
         this._on('kad-verify-import-request', async (request) => {
-            logger.info('kad-verify-import-request');
+            logger.debug('kad-verify-import-request');
 
             const { wallet: kadWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
