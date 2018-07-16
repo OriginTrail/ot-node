@@ -101,6 +101,7 @@ class EventEmitter {
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
+            logger.info(`Query for network response triggered with query ID ${query_id}`);
 
             let responses = await Models.network_query_responses.findAll({
                 where: {
@@ -121,6 +122,7 @@ class EventEmitter {
         });
 
         this._on('api-trail', (data) => {
+            logger.info(`Get trail triggered with query ${data.query}`);
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -139,7 +141,7 @@ class EventEmitter {
 
         this._on('api-query-local-import', async (data) => {
             const { import_id: importId } = data;
-
+            logger.info(`Get vertices trigered for import ID ${importId}`);
             try {
                 const result = await dhService.getVerticesForImport(importId);
 
@@ -159,6 +161,7 @@ class EventEmitter {
         });
 
         this._on('api-get-imports', (data) => {
+            logger.info(`Get imports triggered with query ${data.query}`);
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -176,6 +179,7 @@ class EventEmitter {
         });
 
         this._on('api-query', (data) => {
+            logger.info(`Get veritces triggered with query ${data.query}`);
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -209,6 +213,7 @@ class EventEmitter {
                 });
                 return;
             }
+            logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
@@ -219,6 +224,7 @@ class EventEmitter {
         });
 
         this._on('api-network-query', (data) => {
+            logger.info(`Network query handling triggered with query ID ${data.query}`);
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -248,6 +254,7 @@ class EventEmitter {
                 });
             };
             const { query_id, reply_id, import_id } = data;
+            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${import_id}`);
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -276,7 +283,7 @@ class EventEmitter {
 
         this._on('api-network-query-status', async (data) => {
             const { id, response } = data;
-
+            logger.info(`Query of network status triggered with ID ${id}`);
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
@@ -364,6 +371,7 @@ class EventEmitter {
 
         this._on('api-offer-status', async (data) => {
             const { external_id } = data;
+            logger.info(`Offer status for external ID ${external_id} triggered.`);
             const offer = await dcService.getOffer(external_id);
             if (offer) {
                 data.response.status(200);
@@ -390,6 +398,9 @@ class EventEmitter {
             } = data;
 
             try {
+                logger.info(`Create offer triggered with import_id ${import_id},
+                    total_escrow_time ${total_escrow_time}, max_token_amount ${max_token_amount},
+                    min_stake_amount ${min_stake_amount} and min_reputation ${min_reputation}.`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
@@ -429,6 +440,7 @@ class EventEmitter {
 
         this._on('api-gs1-import-request', async (data) => {
             try {
+                logger.info(`Gs1 import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -445,6 +457,7 @@ class EventEmitter {
 
         this._on('api-wot-import-request', async (data) => {
             try {
+                logger.info(`Wot import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
