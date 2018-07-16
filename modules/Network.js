@@ -145,6 +145,7 @@ class Network {
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
                 }
+
                 this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
                 // eslint-disable-next-line
                 await sleep.sleep(retryPeriodSeconds * 1000);
