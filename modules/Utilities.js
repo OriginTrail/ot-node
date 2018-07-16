@@ -680,8 +680,8 @@ class Utilities {
             throw new Error(`Given input "${num}" is not a number.`);
         }
 
-        var number = Utilities.toBN(num);
-        var result = number.toString(16);
+        const number = Utilities.toBN(num);
+        const result = number.toString(16);
 
         return number.lt(new BN(0)) ? `-0x${result.substr(1)}` : `0x${result}`;
     }
@@ -901,6 +901,7 @@ class Utilities {
      */
     static validateNumberParameterAllowZero(property) {
         return property == null || parseInt(property, 10) >= 0;
+        return property == null || parseInt(property, 10) > 0;
     }
 
     /**
