@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const bytes = require('utf8-length');
 
 const events = require('events');
 
@@ -89,6 +90,7 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            remoteControl,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -222,14 +224,15 @@ class EventEmitter {
                     data.response.status(201);
                     data.response.send({
                         message: 'Query sent successfully.',
-                        data: queryId,
+                        query_id: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (!offer) {
                             logger.info(`No offers for query ${queryId} handled.`);
+                            remoteControl.noOffersForQuery(`No offers for query ${queryId} handled.`);
                         } else {
                             logger.info(`Offers for query ${queryId} are collected`);
-                            // TODO: Fire socket event for Houston
+                            remoteControl.networkQueryOffersCollected();
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
@@ -244,7 +247,7 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id } = data;
+            const { query_id, reply_id, import_id } = data;
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -260,7 +263,7 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvService.handleReadOffer(offer);
+                await dvService.handleReadOffer(offer, import_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
@@ -308,6 +311,7 @@ class EventEmitter {
                 data.response.send({
                     message: error.message,
                 });
+                remoteControl.importFailed(error);
                 return;
             }
 
@@ -316,9 +320,11 @@ class EventEmitter {
                 root_hash,
                 total_documents,
                 wallet,
+                vertices,
             } = response;
 
             try {
+                const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
                         import_id,
@@ -326,12 +332,14 @@ class EventEmitter {
                         data_provider_wallet: wallet,
                         import_timestamp: new Date(),
                         total_documents,
+                        data_size: dataSize,
                     }).catch((error) => {
                         logger.error(error);
                         data.response.status(500);
                         data.response.send({
                             message: error,
                         });
+                        remoteControl.importFailed(error);
                     });
 
 
@@ -342,6 +350,7 @@ class EventEmitter {
                     data.response.send({
                         import_id,
                     });
+                    remoteControl.importSucceeded();
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
@@ -349,6 +358,7 @@ class EventEmitter {
                 data.response.send({
                     message: error,
                 });
+                remoteControl.importFailed(error);
             }
         };
 
@@ -412,6 +422,7 @@ class EventEmitter {
                 data.response.send({
                     message: `Failed to start offer. ${error}.`,
                 });
+                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
@@ -460,6 +471,7 @@ class EventEmitter {
             blockchain,
             config,
             timeUtils,
+            remoteControl,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -626,6 +638,7 @@ class EventEmitter {
             dataReplication,
             network,
             blockchain,
+            remoteControl,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -761,7 +774,8 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
-                ImportUtilities.sort(vertices, '_dc_key');
+                ImportUtilities.unpackKeys(vertices, []);
+                ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
@@ -902,8 +916,10 @@ class EventEmitter {
             const { status, import_id } = request.params.message;
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
+                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
+                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
             }
         });
     }
