@@ -487,7 +487,7 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            logger.info('eth-OfferCreated');
+            logger.info(`New offer has been created by ${eventData.DC_node_id} in OriginTrail decentralized network.`);
 
             const {
                 import_id,
@@ -514,7 +514,7 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            logger.info('eth-AddedPredeterminedBid');
+            logger.info('Predetermined bids announced.');
 
             const {
                 import_id,
@@ -567,11 +567,11 @@ class EventEmitter {
         });
 
         this._on('eth-offer-canceled', (event) => {
-            logger.info('eth-offer-canceled');
+            logger.info('Ongoing offer has been canceled.');
         });
 
         this._on('eth-bid-taken', (event) => {
-            logger.info('eth-bid-taken');
+            logger.info('Bid accepted.');
         });
 
         this._on('eth-LitigationInitiated', async (eventData) => {
