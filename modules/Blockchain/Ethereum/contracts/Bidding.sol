@@ -569,12 +569,12 @@ contract Bidding is Ownable{
 		return profile[wallet].balance;
 	}
 
-	function absoluteDifference(uint256 a, uint256 b) public senderNotZero pure returns (uint256) {
+	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {
 		if (a > b) return a-b;
 		else return b-a;
 	}
 
-	function log2(uint x) internal senderNotZero pure returns (uint y){
+	function log2(uint x) internal pure returns (uint y){
 		require(x > 0, "log(0) not allowed");
 		assembly {
 			let arg := x

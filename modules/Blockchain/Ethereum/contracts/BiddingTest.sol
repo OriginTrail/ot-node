@@ -101,7 +101,7 @@ contract BiddingTest is Ownable{
      }
 	
 	function BiddingTest(address token_address, address escrow_address, address reading_address)
-	public senderNotZero{
+	public senderNotZero {
 		require ( token_address != address(0) && escrow_address != address(0) && reading_address != address(0),
 			"No input addresses can be 0");
 		token = ERC20(token_address);
@@ -569,12 +569,12 @@ contract BiddingTest is Ownable{
 		return profile[wallet].balance;
 	}
 
-	function absoluteDifference(uint256 a, uint256 b) public senderNotZero pure returns (uint256) {
+	function absoluteDifference(uint256 a, uint256 b) public pure returns (uint256) {
 		if (a > b) return a-b;
 		else return b-a;
 	}
 
-	function log2(uint x) internal senderNotZero pure returns (uint y){
+	function log2(uint x) internal pure returns (uint y){
 		require(x > 0, "log(0) not allowed");
 		assembly {
 			let arg := x
