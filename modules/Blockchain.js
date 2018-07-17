@@ -435,6 +435,13 @@ class Blockchain {
     async payOutForReading(importId, dvWallet) {
         return this.blockchain.payOutForReading(importId, dvWallet);
     }
+
+    /**
+     * Get replication modifier
+     */
+    async getReplicationModifier() {
+        return this.blockchain.getReplicationModifier();
+    }
 }
 
 module.exports = Blockchain;
