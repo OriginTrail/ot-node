@@ -31,6 +31,7 @@ contract Bidding{
 	function decreaseBalance(address wallet, uint amount) public;
 	function increaseReputation(address wallet, uint amount) public;
 	function getBalance(address wallet) public view returns (uint256);
+	function getReadStakeFactor(address wallet)	public view returns (uint256);
 }
 
 /**
@@ -144,7 +145,7 @@ contract Reading is Ownable{
 		this_purchased_data.checksum = 0;
 	}
 
-	function initiatePurchase(bytes32 import_id, address DH_wallet, uint token_amount, uint stake_factor)
+	function initiatePurchase(bytes32 import_id, address DH_wallet, uint token_amount)
 	public senderNotZero{
 		PurchaseDefinition storage this_purchase = purchase[DH_wallet][msg.sender][import_id];
 		require(this_purchase.purchase_status == PurchaseStatus.inactive
@@ -152,6 +153,7 @@ contract Reading is Ownable{
 
 		uint256 DH_balance = bidding.getBalance(DH_wallet);
 		uint256 DV_balance = bidding.getBalance(msg.sender);
+		uint256 stake_factor = bidding.getReadStakeFactor(DH_wallet);
 		uint256 stake_amount = token_amount.mul(stake_factor);
 		require(DH_balance >= stake_amount && DV_balance >= token_amount.add(stake_amount));
 

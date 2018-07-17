@@ -574,6 +574,12 @@ class EventEmitter {
             logger.info('eth-bid-taken');
         });
 
+        this._on('eth-ContractsChanged', async (eventData) => {
+            logger.trace('eth-ContractsChanged');
+            blockchain.initialize();
+        });
+
+
         this._on('eth-LitigationInitiated', async (eventData) => {
             const {
                 import_id,

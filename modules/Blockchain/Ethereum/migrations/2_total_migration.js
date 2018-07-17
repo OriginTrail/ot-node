@@ -1,4 +1,6 @@
 /* eslint indent: 0 */
+var Hub = artifacts.require('ContractHub'); // eslint-disable-line no-undef
+
 var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
 var OTFingerprintStore = artifacts.require('OTFingerprintStore'); // eslint-disable-line no-undef
 
@@ -13,6 +15,10 @@ var MockReading = artifacts.require('MockReading'); // eslint-disable-line no-un
 
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
+const giveMeHub = async function giveMeHub() {
+    const hub = Hub.deployed();
+    return hub;
+};
 
 const giveMeTracToken = async function giveMeTracToken() {
     const token = TracToken.deployed();
@@ -22,7 +28,6 @@ const giveMeFingerprint = function giveMeFingerprint() {
     const fingerprint = OTFingerprintStore.deployed();
     return fingerprint;
 };
-
 
 const giveMeEscrowHolder = async function giveMeEscrowHolder() {
     const escrow = EscrowHolder.deployed();
@@ -54,6 +59,8 @@ const giveMeMockReading = async function giveMeMockReading() {
     const reading = MockReading.deployed();
     return reading;
 };
+
+var hub;
 
 var token;
 var escrow;
@@ -110,13 +117,26 @@ module.exports = (deployer, network, accounts) => {
             await token.mintMany(recepients, amounts, { from: accounts[0] })
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
-        .then(() => {
+        .then(async () => {
+            await deployer.deploy(
+                Hub,
+                fingerprint.address,
+                token.address,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache:');
+            console.log(`\t Hub contract address: \t ${hub.address}`); // eslint-disable-line
             console.log(`\t OT-fingerprint contract address: \t ${fingerprint.address}`); // eslint-disable-line
             console.log(`\t Token contract address: \t ${token.address}`); // eslint-disable-line
             console.log(`\t Escrow contract address: \t ${escrow.address}`); // eslint-disable-line
             console.log(`\t Bidding contract address: \t ${bidding.address}`); // eslint-disable-line
             console.log(`\t Reading contract address: \t ${reading.address}`); // eslint-disable-line
+        });
         });
         });
         });
@@ -168,8 +188,20 @@ module.exports = (deployer, network, accounts) => {
             await token.mintMany(recepients, amounts, { from: accounts[0] })
         .then(async () => {
             await token.finishMinting({ from: accounts[0] })
-        .then(() => {
+        .then(async () => {
+            await deployer.deploy(
+                Hub,
+                token.address, // Irrelevant, truffle tests don't use OT contract
+                token.address,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache (for testing):');
+            console.log(`\t Hub contract address: \t ${hub.address}`);
             console.log(`\t Token contract address: \t ${token.address}`);
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
@@ -186,15 +218,27 @@ module.exports = (deployer, network, accounts) => {
         });
         });
         });
+        });
         break;
     // eslint-disable-next-line
     case 'rinkeby':
-        const tokenAddress = '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882';
-        const fingerprintAddress = '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d';
-        deployer.deploy(EscrowHolder, tokenAddress, { gas: 6000000 })
+        Hub.at('0x423a3defb4849c96c7aa6aa974c29c37ae9738c9')
+        .then(async (result) => {
+            hub = result;
+            const tokenAddress = await hub.tokenAddress.call();
+            const fingerprintAddress = await hub.fingerprintAddress.call();
+        TracToken.at(tokenAddress)
+        .then(async (result) => {
+            token = result;
+        OTFingerprintStore.at(fingerprintAddress)
+        .then(async (result) => {
+            fingerprint = result;
+            deployer.deploy(EscrowHolder, token.address, { gas: 6000000 })
+        .then(() => giveMeEscrowHolder())
         .then(async (result) => {
             escrow = result;
             await deployer.deploy(Reading, escrow.address, { gas: 6000000 })
+        .then(() => giveMeReading())
         .then(async (result) => {
             reading = result;
             await deployer.deploy(
@@ -204,6 +248,7 @@ module.exports = (deployer, network, accounts) => {
                 reading.address,
                 { gas: 6000000 },
             )
+        .then(() => giveMeBiddingTest())
         .then(async (result) => {
             bidding = result;
             console.log('Setting bidding address in escrow...');
@@ -218,15 +263,27 @@ module.exports = (deployer, network, accounts) => {
             console.log('Transfering reading ownership to escrow...');
             await reading.transferOwnership(escrow.address)
         .then(async () => {
-            console.log('Transfering escrow ownership to bidding...');
-            await escrow.transferOwnership(bidding.address)
-        .then(() => {
+            await deployer.deploy(
+                Hub,
+                fingerprintAddress,
+                tokenAddress,
+                bidding.address,
+                escrow.address,
+                reading.address,
+            )
+        .then(() => giveMeHub())
+        .then(async (result) => {
+            hub = result;
             console.log('\n\n \t Contract adressess on ganache:');
+            console.log(`\t Hub contract address: \t ${hub.result} (unchanged)`);
             console.log(`\t OT-fingerprint contract address: \t ${fingerprintAddress} (unchanged)`);
             console.log(`\t Token contract address: \t ${tokenAddress} (unchanged)`);
             console.log(`\t Escrow contract address: \t ${escrow.address}`);
             console.log(`\t Bidding contract address: \t ${bidding.address}`);
             console.log(`\t Reading contract address: \t ${reading.address}`);
+        });
+        });
+        });
         });
         });
         });

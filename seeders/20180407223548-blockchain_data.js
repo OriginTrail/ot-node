@@ -17,6 +17,7 @@ module.exports = {
         escrow_contract_address: '0x679e464d5efe52632cd0747a31dbc05ea604f73e',
         bidding_contract_address: '0xb4b3a74018f3ee53ff435ccf8cbc018c54207a86',
         reading_contract_address: '0x2f6857cfb2c8830d70b3bb04e5bbdfb35c7dd4b1',
+        hub_contract_address: '0x423a3defb4849c96c7aa6aa974c29c37ae9738c9',
         rpc_node_host: 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt',
         rpc_node_port: '',
         wallet_address: process.env.NODE_WALLET,

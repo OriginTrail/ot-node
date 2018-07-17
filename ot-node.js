@@ -126,40 +126,6 @@ class OTNode {
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
-        // check does node_wallet has sufficient Ether and ATRAC tokens
-        if (process.env.NODE_ENV !== 'test') {
-            try {
-                const etherBalance = await Utilities.getBalanceInEthers(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                );
-                if (etherBalance <= 0) {
-                    console.log('Please get some ETH in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ETH: ${etherBalance}`)
-                    );
-                }
-
-                const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                    selectedBlockchain.token_contract_address,
-                );
-                if (atracBalance <= 0) {
-                    console.log('Please get some ATRAC in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
-                    );
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        }
-
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -220,6 +186,38 @@ class OTNode {
 
         await network.initialize();
         models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
+        await blockchain.initialize();
+
+        // check does node_wallet has sufficient Ether and ATRAC tokens
+        if (process.env.NODE_ENV !== 'test') {
+            try {
+                const etherBalance = await Utilities.getBalanceInEthers(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                );
+                if (etherBalance <= 0) {
+                    console.log('Please get some ETH in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ETH: ${etherBalance}`)
+                    );
+                }
+
+                const atracBalance = await blockchain.getAlphaTracTokenBalance();
+                if (atracBalance <= 0) {
+                    console.log('Please get some ATRAC in the node wallet before running ot-node');
+                    process.exit(1);
+                } else {
+                    (
+                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
+                    );
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
 
         // Initialise API
         this.startRPC(emitter);
@@ -287,6 +285,7 @@ class OTNode {
                 blockchain.getAllPastEvents('BIDDING_CONTRACT');
                 blockchain.getAllPastEvents('READING_CONTRACT');
                 blockchain.getAllPastEvents('ESCROW_CONTRACT');
+                blockchain.getAllPastEvents('HUB_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

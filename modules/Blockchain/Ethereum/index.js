@@ -25,66 +25,126 @@ class Ethereum {
             blockchainConfig.wallet_private_key,
         );
 
-        // Loading contracts
-        this.otContractAddress = blockchainConfig.ot_contract_address;
-        this.tokenContractAddress = blockchainConfig.token_contract_address;
-        this.escrowContractAddress = blockchainConfig.escrow_contract_address;
-        this.biddingContractAddress = blockchainConfig.bidding_contract_address;
-        this.readingContractAddress = blockchainConfig.reading_contract_address;
+        this.hubContractAddress = blockchainConfig.hub_contract_address;
+
+        // Hub contract data
+        const hubContractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/hub-contract/abi.json');
+        this.hubContractAbi = JSON.parse(hubContractAbiFile);
+        this.hubContract = new this.web3.eth.Contract(
+            this.hubContractAbi,
+            this.hubContractAddress,
+        );
+
+        this.hubContract.events.ContractsChanged()
+            .on('data', (event) => {
+                // console.log(event); // same results as the optional callback above
+                emitter.emit('eth-contracts-changed', event);
+            })
+            .on('error', this.log.warn);
 
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
         this.otContractAbi = JSON.parse(contractAbiFile);
-        this.otContract = new this.web3.eth.Contract(this.otContractAbi, this.otContractAddress);
 
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/token-contract/abi.json');
         this.tokenContractAbi = JSON.parse(tokenAbiFile);
-        this.tokenContract = new this.web3.eth.Contract(
-            this.tokenContractAbi,
-            this.tokenContractAddress,
-        );
 
         // Escrow contract data
         const escrowAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/escrow-contract/abi.json');
         this.escrowContractAbi = JSON.parse(escrowAbiFile);
-        this.escrowContract = new this.web3.eth.Contract(
-            this.escrowContractAbi,
-            this.escrowContractAddress,
-        );
 
         // Bidding contract data
         const biddingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/bidding-contract/abi.json');
         this.biddingContractAbi = JSON.parse(biddingAbiFile);
-        this.biddingContract = new this.web3.eth.Contract(
-            this.biddingContractAbi,
-            this.biddingContractAddress,
-        );
 
         // Reading contract data
         const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/reading-contract/abi.json');
         this.readingContractAbi = JSON.parse(readingAbiFile);
-        this.readingContract = new this.web3.eth.Contract(
-            this.readingContractAbi,
-            this.readingContractAddress,
-        );
+
+        // Storing config data
+        this.config = blockchainConfig;
+
+        this.log.info('Selected blockchain: Ethereum');
+    }
+
+    /**
+     * Initializing Ethereum blockchain contracts
+     */
+    async initialize(emitter) {
+        const blockchainModel = await Storage.models.blockchain_data.findOne({
+            where: {
+                id: 1,
+            },
+        });
+        blockchainModel.ot_contract_address = await this.getFingerprintAddress();
+        blockchainModel.token_contract_address = await this.getTokenAddress();
+        blockchainModel.bidding_contract_address = await this.getBiddingAddress();
+        blockchainModel.escrow_contract_address = await this.getEscrowAddress();
+        blockchainModel.reading_contract_address = await this.getReadingAddress();
+        await blockchainModel.save({
+            fields: [
+                'ot_contract_address',
+                'token_contract_address',
+                'bidding_contract_address',
+                'escrow_contract_address',
+                'reading_contract_address',
+            ],
+        });
+
+
+        try {
+            this.log.trace('Getting contracts from contract hub');
+            this.otContractAddress = await this.hubContract.methods.fingerprintAddress().call();
+            this.otContract = new this.web3.eth.Contract(
+                this.otContractAbi,
+                this.otContractAddress,
+            );
+
+            this.tokenContractAddress = await this.hubContract.methods.tokenAddress().call();
+            this.tokenContract = new this.web3.eth.Contract(
+                this.tokenContractAbi,
+                this.tokenContractAddress,
+            );
+
+            this.biddingContractAddress = await this.hubContract.methods.biddingAddress().call();
+            this.biddingContract = new this.web3.eth.Contract(
+                this.biddingContractAbi,
+                this.biddingContractAddress,
+            );
+
+            this.escrowContractAddress = await this.hubContract.methods.escrowAddress().call();
+            this.escrowContract = new this.web3.eth.Contract(
+                this.escrowContractAbi,
+                this.escrowContractAddress,
+            );
+
+            this.readingContractAddress = await this.hubContract.methods.readingAddress().call();
+            this.readingContract = new this.web3.eth.Contract(
+                this.readingContractAbi,
+                this.readingContractAddress,
+            );
+
+            this.log.info('Contracts initiated');
+        } catch (error) {
+            this.log.error(error);
+            process.exit(1);
+        }
 
 
         this.contractsByName = {
             BIDDING_CONTRACT: this.biddingContract,
             READING_CONTRACT: this.readingContract,
             ESCROW_CONTRACT: this.escrowContract,
+            HUB_CONTRACT: this.hubContract,
         };
-
-        // Storing config data
-        this.config = blockchainConfig;
 
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
                 console.log(event); // same results as the optional callback above
                 emitter.emit('eth-offer-created', event);
             })
-            .on('error', log.warn);
+            .on('error', this.log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
@@ -100,8 +160,14 @@ class Ethereum {
             })
             .on('error', this.log.warn);
 
+        this.contracsChangedHandle = this.subscribeToEventPermanent(['ContractsChanged']);
+    }
 
-        this.log.info('Selected blockchain: Ethereum');
+    /**
+     * Initializing Ethereum blockchain contracts
+     */
+    async deinitialize(emitter) {
+        this.unsubscribeToEventPermanent(this.contracsChangedHandle);
     }
 
     /**
@@ -150,6 +216,44 @@ class Ethereum {
                 reject(e);
             });
         });
+    }
+
+    async getFingerprintAddress() {
+        return this.hubContract.methods.fingerprintAddress().call();
+    }
+
+    async getTokenAddress() {
+        return this.hubContract.methods.tokenAddress().call();
+    }
+
+    async getEscrowAddress() {
+        return this.hubContract.methods.escrowAddress().call();
+    }
+
+    async getBiddingAddress() {
+        return this.hubContract.methods.biddingAddress().call();
+    }
+
+    async getReadingAddress() {
+        return this.hubContract.methods.readingAddress().call();
+    }
+
+
+    /**
+     * Gets TRAC token wallet
+     * @param wallet
+     */
+    async getAlphaTracTokenBalance() {
+        const wallet_address_minus0x = (this.config.wallet_address).substring(2);
+        // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
+        // var contractData = (`0x70a08231000000000000000000000000${wallet_address_minus0x}`);
+        const result = await this.tokenContract.methods.balanceOf(this.config.wallet_address).call({
+            from: this.config.wallet_address,
+        });
+
+        const tokensInWei = this.web3.utils.toBN(result).toString();
+        const tokensInEther = this.web3.utils.fromWei(tokensInWei, 'ether');
+        return (tokensInEther);
     }
 
     /**

@@ -43,6 +43,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        hub_contract_address: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         rpc_node_host: {
             allowNull: false,
             type: Sequelize.STRING,
