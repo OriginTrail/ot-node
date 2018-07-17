@@ -1,7 +1,6 @@
 const Models = require('../../models');
 
 const Command = require('../command/Command');
-const WriteRootHashCommand = require('../dc/WriteRootHashCommand');
 
 const { Op } = Models.Sequelize;
 
@@ -41,13 +40,7 @@ class CancelOfferCommand extends Command {
                 { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
             );
         }
-        return {
-            commands: [
-                WriteRootHashCommand.buildDefault({
-                    data: command.data,
-                }),
-            ],
-        };
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**

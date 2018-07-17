@@ -1,7 +1,7 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-class WaitFinalizeOfferReadyCommand extends Command {
+class FinalizeOfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -84,4 +84,4 @@ class WaitFinalizeOfferReadyCommand extends Command {
     }
 }
 
-module.exports = WaitFinalizeOfferReadyCommand;
+module.exports = FinalizeOfferReadyCommand;

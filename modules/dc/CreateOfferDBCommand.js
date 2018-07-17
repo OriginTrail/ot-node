@@ -6,7 +6,6 @@ const Encryption = require('../Encryption');
 const bytes = require('utf8-length');
 
 const Command = require('../command/Command');
-const CreateOfferBlockchainCommand = require('../dc/CreateOfferBlockchainCommand');
 
 class CreateOfferDBCommand extends Command {
     constructor(ctx) {
@@ -50,12 +49,12 @@ class CreateOfferDBCommand extends Command {
         }
 
         const vertices = await this.graphStorage.findVerticesByImportId(importId);
-        // vertices.forEach((vertex) => {
-        //     if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
-        //         dhWallets.push(vertex.data.wallet);
-        //         dhIds.push(vertex.data.node_id);
-        //     }
-        // });
+        vertices.forEach((vertex) => {
+            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+                dhWallets.push(vertex.data.wallet);
+                dhIds.push(vertex.data.node_id);
+            }
+        });
 
         totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
@@ -86,13 +85,7 @@ class CreateOfferDBCommand extends Command {
             importSizeInBytes,
             offerId: newOfferRow.id,
         });
-        return {
-            commands: [
-                CreateOfferBlockchainCommand.buildDefault({
-                    data,
-                }),
-            ],
-        };
+        return this.continueSequence(data, command.sequence);
     }
 
     /**

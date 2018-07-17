@@ -1,9 +1,7 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-const ChooseOfferBlockchainCommand = require('../dc/ChooseOfferBlockchainCommand');
-
-class WaitFinalizeOfferReadyCommand extends Command {
+class FinalizeOfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -34,13 +32,7 @@ class WaitFinalizeOfferReadyCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
             offer.status = 'FINALIZING';
             await offer.save({ fields: ['status'], transaction });
-            return {
-                commands: [
-                    ChooseOfferBlockchainCommand.buildDefault({
-                        data: command.data,
-                    }),
-                ],
-            };
+            return this.continueSequence(command.data, command.sequence);
         }
         return Command.repeat();
     }
@@ -82,4 +74,4 @@ class WaitFinalizeOfferReadyCommand extends Command {
     }
 }
 
-module.exports = WaitFinalizeOfferReadyCommand;
+module.exports = FinalizeOfferReadyCommand;

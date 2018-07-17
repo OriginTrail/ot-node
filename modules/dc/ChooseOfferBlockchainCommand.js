@@ -1,7 +1,5 @@
 const Models = require('../../models');
-
 const Command = require('../command/Command');
-const WaitOfferFinalizedCommand = require('../dc/WaitOfferFinalizedCommand');
 
 class ChooseOfferBlockchainCommand extends Command {
     constructor(ctx) {
@@ -19,13 +17,7 @@ class ChooseOfferBlockchainCommand extends Command {
         await this.blockchain.chooseBids(offer.import_id);
         this.logger.info(`Bids chosen for offer ID ${offer.id}, import ID ${offer.import_id}.`);
 
-        return {
-            commands: [
-                WaitOfferFinalizedCommand.buildDefault({
-                    data: command.data,
-                }),
-            ],
-        };
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**

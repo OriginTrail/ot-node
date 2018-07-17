@@ -1,8 +1,6 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-const CreateOfferDBCommand = require('../dc/CreateOfferDBCommand');
-
 class WriteRootHashCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -39,13 +37,7 @@ class WriteRootHashCommand extends Command {
             throw Error(`Calculated root hash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
         }
 
-        return {
-            commands: [
-                CreateOfferDBCommand.buildDefault({
-                    data: command.data,
-                }),
-            ],
-        };
+        return this.continueSequence(command.data, command.sequence);
     }
 
     /**

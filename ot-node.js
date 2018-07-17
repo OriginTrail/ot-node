@@ -38,8 +38,8 @@ const CancelOfferCommand = require('./modules/dc/CancelOfferCommand');
 const ChooseOfferBlockchainCommand = require('./modules/dc/ChooseOfferBlockchainCommand');
 const CreateOfferBlockchainCommand = require('./modules/dc/CreateOfferBlockchainCommand');
 const CreateOfferDBCommand = require('./modules/dc/CreateOfferDBCommand');
-const WaitFinalizeOfferReadyCommand = require('./modules/dc/WaitFinalizeOfferReadyCommand');
-const WaitOfferFinalizedCommand = require('./modules/dc/WaitOfferFinalizedCommand');
+const WaitFinalizeOfferReadyCommand = require('./modules/dc/FinalizeOfferReadyCommand');
+const WaitOfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
 const WriteRootHashCommand = require('./modules/dc/WriteRootHashCommand');
 
 process.on('unhandledRejection', (reason, p) => {
