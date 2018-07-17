@@ -74,7 +74,7 @@ class FinalizeOfferReadyCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'waitOfferFinalized',
+            name: 'offerFinalized',
             delay: 0,
             interval: 1000,
             transactional: true,

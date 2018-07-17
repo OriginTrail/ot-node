@@ -21,7 +21,7 @@ class CommandExecutor {
         this.ctx = ctx;
         this.logger = ctx.logger;
 
-        this.parallelism = 8;
+        this.parallelism = 1;
         this.queue = async.queue(async (command, callback) => {
             await this._execute(command);
             callback();

@@ -14,9 +14,8 @@ class CreateOfferBlockchainCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             importId,
             minStakeAmount,

@@ -16,15 +16,7 @@ class FinalizeOfferReadyCommand extends Command {
     async execute(command, transaction) {
         const { importId, offerId } = command.data;
 
-        const where = {
-            event: 'FinalizeOfferReady',
-            finished: 0,
-        };
-        if (importId) {
-            where.import_id = importId;
-        }
-
-        const event = await Models.events.findOne({ where: { event: 'FinalizeOfferReady', import_id: importId, finished: 0 } });
+        const event = await Models.events.findOne({ where: { event: 'FinalizeOfferReady', import_id: importId, finished: 0 }, transaction });
         if (event) {
             this.logger.trace(`Bidding completed for import ${importId}`);
             this.remoteControl.biddingComplete(importId);
@@ -64,7 +56,7 @@ class FinalizeOfferReadyCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'waitFinalizeOfferReady',
+            name: 'finalizeOfferReady',
             delay: 0,
             interval: 1000,
             transactional: true,

@@ -14,9 +14,8 @@ class CancelOfferCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const { importId } = command.data;
 
         // Check if offer already exists

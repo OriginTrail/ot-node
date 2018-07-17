@@ -8,7 +8,7 @@ class ChooseOfferBlockchainCommand extends Command {
         this.blockchain = ctx.blockchain;
     }
 
-    async execute(command, transaction) {
+    async execute(command) {
         const { offerId } = command.data;
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         this.logger.info(`Choose bids for offer ID ${offer.id}, import ID ${offer.import_id}.`);

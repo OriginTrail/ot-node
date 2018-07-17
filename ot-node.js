@@ -200,9 +200,9 @@ class OTNode {
             chooseOfferBlockchainCommand: awilix.asClass(ChooseOfferBlockchainCommand).singleton(),
             createOfferBlockchainCommand: awilix.asClass(CreateOfferBlockchainCommand).singleton(),
             createOfferDBCommand: awilix.asClass(CreateOfferDBCommand).singleton(),
-            waitFinalizeOfferReadyCommand: awilix.asClass(WaitFinalizeOfferReadyCommand)
+            finalizeOfferReadyCommand: awilix.asClass(WaitFinalizeOfferReadyCommand)
                 .singleton(),
-            waitOfferFinalizedCommand: awilix.asClass(WaitOfferFinalizedCommand).singleton(),
+            offerFinalizedCommand: awilix.asClass(WaitOfferFinalizedCommand).singleton(),
             writeRootHashCommand: awilix.asClass(WriteRootHashCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
