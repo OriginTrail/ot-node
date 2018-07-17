@@ -218,6 +218,7 @@ module.exports = (deployer, network, accounts) => {
         });
         });
         });
+        });
         break;
     // eslint-disable-next-line
     case 'rinkeby':
@@ -231,7 +232,7 @@ module.exports = (deployer, network, accounts) => {
             token = result;
         OTFingerprintStore.at(fingerprintAddress)
         .then(async (result) => {
-            fingerprint =result;
+            fingerprint = result;
             deployer.deploy(EscrowHolder, token.address, { gas: 6000000 })
         .then(() => giveMeEscrowHolder())
         .then(async (result) => {
