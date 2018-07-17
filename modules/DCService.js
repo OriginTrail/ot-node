@@ -140,8 +140,11 @@ class DCService {
 
                 const profileBalance =
                 new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
+
+                const replicationModifier = await this.blockchain.getReplicationModifier();
+
                 const condition = maxTokenAmount
-                    .mul(new BN((dhWallets.length * 2) + 1))
+                    .mul((new BN((dhWallets.length * 2)).add(new BN(replicationModifier, 10))))
                     .mul(importSizeInBytes)
                     .mul(totalEscrowTime);
 
