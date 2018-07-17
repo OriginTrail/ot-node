@@ -122,7 +122,7 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
-            const format = d3.formatPrefix(",.6~s", 1e6);
+            const format = d3.formatPrefix(',.6~s', 1e6);
             const maxPrice = new BN(maxTokenAmount).toString();
             const minStake = new BN(minStakeAmount).toString();
             const formatMaxPrice = format(maxPrice);
