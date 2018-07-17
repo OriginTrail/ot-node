@@ -132,7 +132,7 @@ class DCService {
                         throw Error(`Failed to write fingerprint on blockchain. ${err}`);
                     });
                 } else if (blockchainRootHash !== rootHash) {
-                    throw Error(`Calculated roothash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
+                    throw Error(`Calculated root hash (${rootHash}) differs from one on blockchain (${blockchainRootHash}).`);
                 }
 
                 this.log.info('Fingerprint written on blockchain');

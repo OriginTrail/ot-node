@@ -33,6 +33,15 @@ const pjson = require('./package.json');
 const log = Utilities.getLogger();
 const Web3 = require('web3');
 
+const CommandExecutor = require('./modules/command/CommandExecutor');
+const CancelOfferCommand = require('./modules/dc/CancelOfferCommand');
+const ChooseOfferBlockchainCommand = require('./modules/dc/ChooseOfferBlockchainCommand');
+const CreateOfferBlockchainCommand = require('./modules/dc/CreateOfferBlockchainCommand');
+const CreateOfferDBCommand = require('./modules/dc/CreateOfferDBCommand');
+const WaitFinalizeOfferReadyCommand = require('./modules/dc/WaitFinalizeOfferReadyCommand');
+const WaitOfferFinalizedCommand = require('./modules/dc/WaitOfferFinalizedCommand');
+const WriteRootHashCommand = require('./modules/dc/WriteRootHashCommand');
+
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
@@ -186,6 +195,15 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            commandExecutor: awilix.asClass(CommandExecutor).singleton(),
+            cancelOfferCommand: awilix.asClass(CancelOfferCommand).singleton(),
+            chooseOfferBlockchainCommand: awilix.asClass(ChooseOfferBlockchainCommand).singleton(),
+            createOfferBlockchainCommand: awilix.asClass(CreateOfferBlockchainCommand).singleton(),
+            createOfferDBCommand: awilix.asClass(CreateOfferDBCommand).singleton(),
+            waitFinalizeOfferReadyCommand: awilix.asClass(WaitFinalizeOfferReadyCommand)
+                .singleton(),
+            waitOfferFinalizedCommand: awilix.asClass(WaitOfferFinalizedCommand).singleton(),
+            writeRootHashCommand: awilix.asClass(WriteRootHashCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

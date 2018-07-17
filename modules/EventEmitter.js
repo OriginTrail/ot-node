@@ -91,6 +91,7 @@ class EventEmitter {
             product,
             logger,
             remoteControl,
+            commandExecutor,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -412,20 +413,35 @@ class EventEmitter {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = await dcService.createOffer(
-                    import_id,
-                    dataimport.root_hash,
-                    dataimport.total_documents,
-                    vertices,
-                    total_escrow_time,
-                    max_token_amount,
-                    min_stake_amount,
-                    min_reputation,
-                );
+                commandExecutor.add({
+                    name: 'cancelOffer',
+                    delay: 0,
+                    data: {
+                        importId: import_id,
+                        rootHash: dataimport.root_hash,
+                        totalDocuments: dataimport.total_documents,
+                        vertices,
+                        total_escrow_time,
+                        max_token_amount,
+                        min_stake_amount,
+                        min_reputation,
+                    },
+                    transactional: false,
+                });
+                // const replicationId = await dcService.createOffer(
+                //     import_id,
+                //     dataimport.root_hash,
+                //     dataimport.total_documents,
+                //     vertices,
+                //     total_escrow_time,
+                //     max_token_amount,
+                //     min_stake_amount,
+                //     min_reputation,
+                // );
 
                 data.response.status(201);
                 data.response.send({
-                    replication_id: replicationId,
+                    replication_id: 1,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
