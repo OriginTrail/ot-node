@@ -1040,7 +1040,7 @@ class Ethereum {
      * Get replication modifier
      */
     async getReplicationModifier() {
-        this.log.trace('Check if close enough ... ');
+        this.log.trace('Get replication modifier ... ');
         return this.biddingContract.methods.replication_modifier().call({
             from: this.config.wallet_address,
         });
