@@ -31,11 +31,6 @@ module.exports = {
             allowNull: true,
             type: Sequelize.INTEGER,
         },
-        sent: {
-            allowNull: false,
-            type: Sequelize.BOOLEAN,
-            default: false,
-        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('data_challenges'),
 };

@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const bytes = require('utf8-length');
 
 const events = require('events');
 
@@ -89,6 +90,7 @@ class EventEmitter {
             blockchain,
             product,
             logger,
+            remoteControl,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -99,6 +101,7 @@ class EventEmitter {
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
+            logger.info(`Query for network response triggered with query ID ${query_id}`);
 
             let responses = await Models.network_query_responses.findAll({
                 where: {
@@ -119,6 +122,7 @@ class EventEmitter {
         });
 
         this._on('api-trail', (data) => {
+            logger.info(`Get trail triggered with query ${data.query}`);
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -137,7 +141,7 @@ class EventEmitter {
 
         this._on('api-query-local-import', async (data) => {
             const { import_id: importId } = data;
-
+            logger.info(`Get vertices trigered for import ID ${importId}`);
             try {
                 const result = await dhService.getVerticesForImport(importId);
 
@@ -157,6 +161,7 @@ class EventEmitter {
         });
 
         this._on('api-get-imports', (data) => {
+            logger.info(`Get imports triggered with query ${data.query}`);
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -174,6 +179,7 @@ class EventEmitter {
         });
 
         this._on('api-query', (data) => {
+            logger.info(`Get veritces triggered with query ${data.query}`);
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -207,6 +213,7 @@ class EventEmitter {
                 });
                 return;
             }
+            logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
@@ -217,19 +224,21 @@ class EventEmitter {
         });
 
         this._on('api-network-query', (data) => {
+            logger.info(`Network query handling triggered with query ID ${data.query}`);
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
                     data.response.send({
                         message: 'Query sent successfully.',
-                        data: queryId,
+                        query_id: queryId,
                     });
                     dvService.handleQuery(queryId).then((offer) => {
                         if (!offer) {
                             logger.info(`No offers for query ${queryId} handled.`);
+                            remoteControl.noOffersForQuery(`No offers for query ${queryId} handled.`);
                         } else {
                             logger.info(`Offers for query ${queryId} are collected`);
-                            // TODO: Fire socket event for Houston
+                            remoteControl.networkQueryOffersCollected();
                         }
                     }).catch(error => logger.error(`Failed handle query. ${error}.`));
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
@@ -244,7 +253,8 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id } = data;
+            const { query_id, reply_id, import_id } = data;
+            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${import_id}`);
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -260,7 +270,7 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvService.handleReadOffer(offer);
+                await dvService.handleReadOffer(offer, import_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
@@ -273,7 +283,7 @@ class EventEmitter {
 
         this._on('api-network-query-status', async (data) => {
             const { id, response } = data;
-
+            logger.info(`Query of network status triggered with ID ${id}`);
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
@@ -308,6 +318,7 @@ class EventEmitter {
                 data.response.send({
                     message: error.message,
                 });
+                remoteControl.importFailed(error);
                 return;
             }
 
@@ -316,9 +327,11 @@ class EventEmitter {
                 root_hash,
                 total_documents,
                 wallet,
+                vertices,
             } = response;
 
             try {
+                const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
                         import_id,
@@ -326,12 +339,14 @@ class EventEmitter {
                         data_provider_wallet: wallet,
                         import_timestamp: new Date(),
                         total_documents,
+                        data_size: dataSize,
                     }).catch((error) => {
                         logger.error(error);
                         data.response.status(500);
                         data.response.send({
                             message: error,
                         });
+                        remoteControl.importFailed(error);
                     });
 
 
@@ -342,6 +357,7 @@ class EventEmitter {
                     data.response.send({
                         import_id,
                     });
+                    remoteControl.importSucceeded();
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
@@ -349,11 +365,13 @@ class EventEmitter {
                 data.response.send({
                     message: error,
                 });
+                remoteControl.importFailed(error);
             }
         };
 
         this._on('api-offer-status', async (data) => {
             const { external_id } = data;
+            logger.info(`Offer status for external ID ${external_id} triggered.`);
             const offer = await dcService.getOffer(external_id);
             if (offer) {
                 data.response.status(200);
@@ -380,6 +398,9 @@ class EventEmitter {
             } = data;
 
             try {
+                logger.info(`Create offer triggered with import_id ${import_id},
+                    total_escrow_time ${total_escrow_time}, max_token_amount ${max_token_amount},
+                    min_stake_amount ${min_stake_amount} and min_reputation ${min_reputation}.`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
@@ -412,12 +433,14 @@ class EventEmitter {
                 data.response.send({
                     message: `Failed to start offer. ${error}.`,
                 });
+                remoteControl.failedToCreateOffer(`Failed to start offer. ${error}.`);
             }
         });
 
 
         this._on('api-gs1-import-request', async (data) => {
             try {
+                logger.info(`Gs1 import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -434,6 +457,7 @@ class EventEmitter {
 
         this._on('api-wot-import-request', async (data) => {
             try {
+                logger.info(`Wot import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -459,7 +483,7 @@ class EventEmitter {
             logger,
             blockchain,
             config,
-            timeUtils,
+            remoteControl,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -632,6 +656,7 @@ class EventEmitter {
             dataReplication,
             network,
             blockchain,
+            remoteControl,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -767,7 +792,8 @@ class EventEmitter {
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
-                ImportUtilities.sort(vertices, '_dc_key');
+                ImportUtilities.unpackKeys(vertices, []);
+                ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
@@ -908,8 +934,10 @@ class EventEmitter {
             const { status, import_id } = request.params.message;
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
+                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
+                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
             }
         });
     }

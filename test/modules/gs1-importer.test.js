@@ -12,6 +12,12 @@ const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
+const RemoteControl = require('../../modules/RemoteControl');
+const Network = require('../../modules/Network');
+const NetworkUtilities = require('../../modules/NetworkUtilities');
+const EventEmitter = require('../../modules/EventEmitter');
+const Product = require('../../modules/Product');
+const Web3 = require('web3');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -61,6 +67,8 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+
         const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
@@ -70,6 +78,16 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
+            remoteControl: awilix.asValue({
+                importRequestData: () => {
+                },
+            }),
+            network: awilix.asClass(Network),
+            networkUtilities: awilix.asClass(NetworkUtilities),
+            emitter: awilix.asClass(EventEmitter),
+            product: awilix.asClass(Product),
+            web3: awilix.asValue(web3),
+            config: awilix.asValue(Utilities.loadConfig()),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
