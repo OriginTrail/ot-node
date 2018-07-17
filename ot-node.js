@@ -191,7 +191,10 @@ class OTNode {
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             try {
-                const etherBalance = await Utilities.getBalanceInEthers();
+                const etherBalance = await Utilities.getBalanceInEthers(
+                    web3,
+                    selectedBlockchain.wallet_address,
+                );
                 if (etherBalance <= 0) {
                     console.log('Please get some ETH in the node wallet before running ot-node');
                     process.exit(1);
