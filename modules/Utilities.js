@@ -885,6 +885,30 @@ class Utilities {
     }
 
     /**
+     * Converts minutes to milliseconds
+     * @param minutes
+     * @returns {*}
+     */
+    static convertToMilliseconds(minutes) {
+        if (BN.isBN(minutes)) {
+            return minutes.mul(new BN(60000));
+        }
+        return new BN(minutes).mul(new BN(60000));
+    }
+
+    /**
+     * Converts milliseconds to minutes
+     * @param milliseconds
+     * @returns {BN}
+     */
+    static convertToMinuntes(milliseconds) {
+        if (BN.isBN(milliseconds)) {
+            return milliseconds.div(new BN(60000));
+        }
+        return new BN(milliseconds).div(new BN(60000));
+    }
+
+    /**
      * Is bootstrap node?
      * @return {number}
      */
