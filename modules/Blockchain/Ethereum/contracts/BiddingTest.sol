@@ -1,4 +1,4 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 library SafeMath {
 	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -48,7 +48,7 @@ library SafeMath {
      * @dev Throws if called by any account other than the owner.
      */
      modifier onlyOwner() {
-          require(msg.sender == owner);
+          require(msg.sender == owner, "Only owner can execute this action");
           _;
      }
 
@@ -91,13 +91,19 @@ contract BiddingTest is Ownable{
 	uint public replication_modifier;
 
 	modifier onlyContracts() {
-		require(EscrowHolder(msg.sender) == escrow || msg.sender == reading);
+		require(EscrowHolder(msg.sender) == escrow || msg.sender == reading, "Only contracts can execute this function");
 		_;
 	}
+
+	modifier senderNotZero() {
+          require(msg.sender != address(0), "Sender address cannot be 0");
+          _;
+     }
 	
 	function BiddingTest(address token_address, address escrow_address, address reading_address)
-	public{
-		require ( token_address != address(0) && escrow_address != address(0) && reading_address != address(0));
+	public senderNotZero {
+		require ( token_address != address(0) && escrow_address != address(0) && reading_address != address(0),
+			"No input addresses can be 0");
 		token = ERC20(token_address);
 		escrow = EscrowHolder(escrow_address);
 		reading = reading_address;
@@ -106,7 +112,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function setReplicationModifier(uint newModifier)
-	public onlyOwner{
+	public onlyOwner senderNotZero{
 		replication_modifier = newModifier;
 	}
 
@@ -201,17 +207,19 @@ contract BiddingTest is Ownable{
 
 		address[] predetermined_DH_wallet,
 		bytes32[] predetermined_DH_node_id)
-	public {
+	public senderNotZero{
 		OfferDefinition storage this_offer = offer[import_id];
 
-		require(max_token_amount_per_byte_minute > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0);
-		require(this_offer.active == false);
+		require(max_token_amount_per_byte_minute > 0 && total_escrow_time_in_minutes > 0 && data_size_in_bytes > 0,
+			"Tokens, time and size cannot be 0");
+		require(this_offer.active == false,
+			"Offer is already active");
 
-		
 		uint256 max_total_token_amount = max_token_amount_per_byte_minute.mul(predetermined_DH_wallet.length.mul(2).add(replication_modifier));
 		max_total_token_amount = max_total_token_amount.mul(data_size_in_bytes).mul(total_escrow_time_in_minutes);
 		
-		require(profile[msg.sender].balance >= max_total_token_amount);
+		require(profile[msg.sender].balance >= max_total_token_amount,
+			"Sender does not have enough funds on profile for replication");
 		
 
 		profile[msg.sender].balance = profile[msg.sender].balance.sub(max_total_token_amount);
@@ -248,10 +256,11 @@ contract BiddingTest is Ownable{
 
 	//TODO Decide when and under which conditions DC can cancel an offer
 	function cancelOffer(bytes32 import_id)
-	public{
+	public senderNotZero{
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active && this_offer.DC_wallet == msg.sender
-			&& this_offer.finalized == false);
+		require(this_offer.active, "Offer is not active");
+		require(this_offer.DC_wallet == msg.sender, "Only offer creator can call this function");
+		require(this_offer.finalized == false, "Offer is already finalized");
 		this_offer.active = false;
 		uint256 max_total_token_amount = this_offer.max_token_amount_per_byte_minute.mul(this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
 		max_total_token_amount = max_total_token_amount.mul(this_offer.data_size_in_bytes).mul(this_offer.total_escrow_time_in_minutes);
@@ -262,20 +271,26 @@ contract BiddingTest is Ownable{
 	}
 
 	function activatePredeterminedBid(bytes32 import_id, bytes32 DH_node_id, uint bid_index)
-	public{
-		require(offer[import_id].active && !offer[import_id].finalized);
+	public senderNotZero{
+		require(offer[import_id].active && !offer[import_id].finalized, "Offer is inactive and/or finalized");
 
 		OfferDefinition storage this_offer = offer[import_id];
 		ProfileDefinition storage this_DH = profile[msg.sender];
 		BidDefinition storage this_bid = offer[import_id].bid[bid_index];
 
-		require(this_bid.DH_wallet == msg.sender && this_bid.DH_node_id == DH_node_id);
+		require(this_bid.DH_wallet == msg.sender, "Sender address not equal to selected predetermined bid address");
+		require(this_bid.DH_node_id == DH_node_id, "Sender identity not equal to selected predetermined bid identity");
 
 		//Check if the the DH meets the filters DC set for the offer
 		uint scope = this_offer.data_size_in_bytes * this_offer.total_escrow_time_in_minutes;
-		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes);
-		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute * scope);
-		require((this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute * scope) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
+		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes,
+			"Escrow time greater than senders max escrow time");
+		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute,
+			"Sender price too high");
+		require(this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute,
+			"Sender stake too low");
+		require(this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance,
+			"Sender has insuficient funds on profile for stake amount");
 
 		//Write the required data for the bid
 		this_bid.token_amount_for_escrow = this_DH.token_amount_per_byte_minute * scope;
@@ -284,7 +299,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function getDistanceParameters(bytes32 import_id)
-	public view returns (bytes32 node_hash, bytes32 data_hash, uint256 distance, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
+	public senderNotZero view returns (bytes32 node_hash, bytes32 data_hash, uint256 distance, uint256 current_ranking, uint256 required_bid_amount, uint256 active_nodes_){
 		OfferDefinition storage this_offer = offer[import_id];
 
 		node_hash = bytes32(uint128(keccak256(msg.sender)));
@@ -309,18 +324,24 @@ contract BiddingTest is Ownable{
 	}
 
 	function addBid(bytes32 import_id, bytes32 DH_node_id)
-	public returns (uint distance){
-		require(offer[import_id].active && !offer[import_id].finalized);
+	public senderNotZero returns (uint distance){
+		require(offer[import_id].active && !offer[import_id].finalized, "Offer inactive or finalized");
 
 		OfferDefinition storage this_offer = offer[import_id];
 		ProfileDefinition storage this_DH = profile[msg.sender];
 
 		//Check if the the DH meets the filters DC set for the offer
 		uint scope = this_offer.data_size_in_bytes * this_offer.total_escrow_time_in_minutes;
-		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes);
-		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute);
-		require((this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute) && (this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance));
-		require(this_offer.min_reputation 	 <= profile[msg.sender].reputation);
+		require(this_offer.total_escrow_time_in_minutes <= this_DH.max_escrow_time_in_minutes,
+			"Escrow time greater than senders max escrow time");
+		require(this_offer.max_token_amount_per_byte_minute  >= this_DH.token_amount_per_byte_minute,
+			"Sender price too high");
+		require(this_offer.min_stake_amount_per_byte_minute  <= this_DH.stake_amount_per_byte_minute,
+			"Sender stake too low");
+		require(this_DH.stake_amount_per_byte_minute * scope <= profile[msg.sender].balance,
+			"Sender has insuficient funds on profile for stake amount");
+		require(this_offer.min_reputation 	 <= profile[msg.sender].reputation,
+			"Sender reputation lower than required");
 
 		//Create new bid in the list
 		uint this_bid_index = this_offer.bid.length;
@@ -365,7 +386,7 @@ contract BiddingTest is Ownable{
 		// return this_bid_index;
 	}
 
-	function getBidIndex(bytes32 import_id, bytes32 DH_node_id) public view returns(uint){
+	function getBidIndex(bytes32 import_id, bytes32 DH_node_id) public senderNotZero view returns(uint){
 		OfferDefinition storage this_offer = offer[import_id];
 		uint256 i = 0;
 		while(i < this_offer.bid.length && (offer[import_id].bid[i].DH_wallet != msg.sender || offer[import_id].bid[i].DH_node_id != DH_node_id)) i = i + 1;
@@ -374,16 +395,18 @@ contract BiddingTest is Ownable{
 	}
 
 	function cancelBid(bytes32 import_id, uint bid_index)
-	public{
-		require(offer[import_id].bid[bid_index].DH_wallet == msg.sender);
+	public senderNotZero{
+		require(offer[import_id].bid[bid_index].DH_wallet == msg.sender,
+			"Selected bid not created by sender");
 		offer[import_id].bid[bid_index].active = false;
 	}
 
-	function chooseBids(bytes32 import_id) public returns (uint256[] chosen_data_holders){
+	function chooseBids(bytes32 import_id) public senderNotZero returns (uint256[] chosen_data_holders){
 
 		OfferDefinition storage this_offer = offer[import_id];
-		require(this_offer.active && !this_offer.finalized);
-		require(this_offer.replication_factor.mul(3).add(this_offer.replication_modifier) <= this_offer.bid.length);
+		require(this_offer.active && !this_offer.finalized, "Offer inactive or finalized");
+		require(this_offer.replication_factor.mul(3).add(this_offer.replication_modifier) <= this_offer.bid.length,
+			"Not enough bids");
 		// require(this_offer.offer_creation_timestamp + 5 minutes < block.timestamp);
 		
 		chosen_data_holders = new uint256[](this_offer.replication_factor.mul(2).add(this_offer.replication_modifier));
@@ -452,11 +475,11 @@ contract BiddingTest is Ownable{
 	}
 
 
-	function isBidChosen(bytes32 import_id, uint bid_index) public constant returns (bool _isBidChosen){
+	function isBidChosen(bytes32 import_id, uint bid_index) public senderNotZero constant returns (bool _isBidChosen){
 		return offer[import_id].bid[bid_index].chosen;
 	}
 
-	function getOfferStatus(bytes32 import_id) public constant returns (bool isOfferFinal){
+	function getOfferStatus(bytes32 import_id) public senderNotZero constant returns (bool isOfferFinal){
 		return offer[import_id].finalized;
 	}
 
@@ -466,7 +489,7 @@ contract BiddingTest is Ownable{
 	event BalanceModified(address wallet, uint new_balance);
 	event ReputationModified(address wallet, uint new_balance);
 
-	function createProfile(bytes32 node_id, uint price_per_byte_minute, uint stake_per_byte_minute, uint read_stake_factor, uint max_time_in_minutes) public{
+	function createProfile(bytes32 node_id, uint price_per_byte_minute, uint stake_per_byte_minute, uint read_stake_factor, uint max_time_in_minutes) public senderNotZero{
 		ProfileDefinition storage this_profile = profile[msg.sender];
 		if(!this_profile.active) active_nodes = active_nodes.add(1);
 
@@ -480,20 +503,21 @@ contract BiddingTest is Ownable{
 		emit ProfileCreated(msg.sender, node_id);
 	}
 
-	function setPrice(uint new_price_per_byte_minute) public {
+	function setPrice(uint new_price_per_byte_minute) public senderNotZero{
 		profile[msg.sender].token_amount_per_byte_minute = new_price_per_byte_minute;
 	}
 
-	function setStake(uint new_stake_per_byte_minute) public {
+	function setStake(uint new_stake_per_byte_minute) public senderNotZero{
 		profile[msg.sender].stake_amount_per_byte_minute = new_stake_per_byte_minute;
 	}
 
-	function setMaxTime(uint new_max_time_in_minutes) public {
+	function setMaxTime(uint new_max_time_in_minutes) public senderNotZero{
 		profile[msg.sender].max_escrow_time_in_minutes = new_max_time_in_minutes;
 	}
 
-	function depositToken(uint amount) public {
-		require(token.balanceOf(msg.sender) >= amount && token.allowance(msg.sender, this) >= amount);
+	function depositToken(uint amount) public senderNotZero{
+		require(token.balanceOf(msg.sender) >= amount, "Sender has insuficient tokens for depositing");
+		require(token.allowance(msg.sender, this) >= amount, "Insuficient allowance for depositing");
 		uint amount_to_transfer = amount;
 		amount = 0;
 		if(amount_to_transfer > 0) {
@@ -503,7 +527,7 @@ contract BiddingTest is Ownable{
 		}
 	}
 
-	function withdrawToken(uint amount) public {
+	function withdrawToken(uint amount) public senderNotZero{
 		uint256 amount_to_transfer;
 		if(profile[msg.sender].balance >= amount){
 			amount_to_transfer = amount;
@@ -520,23 +544,23 @@ contract BiddingTest is Ownable{
 		} 
 	}
 
-	function increaseBalance(address wallet, uint amount) public onlyContracts {
+	function increaseBalance(address wallet, uint amount) public onlyContracts senderNotZero{
 		profile[wallet].balance = profile[wallet].balance.add(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
-	function decreaseBalance(address wallet, uint amount) public onlyContracts {
-		require(profile[wallet].balance >= amount);
+	function decreaseBalance(address wallet, uint amount) public onlyContracts senderNotZero{
+		require(profile[wallet].balance >= amount, "Insuficient profile balance");
 		profile[wallet].balance = profile[wallet].balance.sub(amount);
 		emit BalanceModified(wallet, profile[wallet].balance);
 	}
 
-	function increaseReputation(address wallet, uint amount) public onlyContracts {
+	function increaseReputation(address wallet, uint amount) public onlyContracts senderNotZero{
 		profile[wallet].reputation = profile[wallet].reputation.add(amount);
 		emit ReputationModified(wallet, profile[wallet].reputation);
 	}
 
-	function addEscrow(address wallet) public onlyContracts {
+	function addEscrow(address wallet) public onlyContracts senderNotZero{
 		profile[wallet].number_of_escrows = profile[wallet].number_of_escrows.add(1);
 	}
 
@@ -551,7 +575,7 @@ contract BiddingTest is Ownable{
 	}
 
 	function log2(uint x) internal pure returns (uint y){
-		require(x > 0);
+		require(x > 0, "log(0) not allowed");
 		assembly {
 			let arg := x
 			x := sub(x,1)
@@ -603,7 +627,7 @@ contract BiddingTest is Ownable{
 	uint256 corrective_factor = 10**10;
 
 	function calculateDistance(bytes32 import_id, address DH_wallet)
-	public view returns (uint256 distance) {
+	public senderNotZero view returns (uint256 distance) {
 		OfferDefinition storage this_offer = offer[import_id];
 		ProfileDefinition storage this_DH = profile[DH_wallet];
 

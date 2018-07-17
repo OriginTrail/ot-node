@@ -27,7 +27,6 @@ const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
-const TimeUtils = require('./modules/TimeUtils');
 
 const pjson = require('./package.json');
 
@@ -187,7 +186,6 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
-            timeUtils: awilix.asClass(TimeUtils).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -418,7 +416,7 @@ class OTNode {
          * @param importtype - (GS1/WOT)
          */
         server.post('/api/import', (req, res) => {
-            log.trace('POST Import request received.');
+            log.api('POST: Import of data request received.');
 
             if (!authorize(req, res)) {
                 return;
@@ -486,7 +484,7 @@ class OTNode {
         });
 
         server.post('/api/replication', (req, res) => {
-            log.trace('POST Replication request received.');
+            log.api('POST: Replication of imported data request received.');
 
             if (!authorize(req, res)) {
                 return;
@@ -516,7 +514,7 @@ class OTNode {
         });
 
         server.get('/api/replication/:replication_id', (req, res) => {
-            log.trace('GET Replication status request received');
+            log.api('GET: Replication status request received');
 
             if (!authorize(req, res)) {
                 return;
@@ -543,7 +541,7 @@ class OTNode {
          * @param QueryObject - ex. {uid: abc:123}
          */
         server.get('/api/trail', (req, res) => {
-            log.trace('GET Trail request received.');
+            log.api('GET: Trail request received.');
             const queryObject = req.query;
             emitter.emit('api-trail', {
                 query: queryObject,
@@ -555,7 +553,7 @@ class OTNode {
          * @param Query params: dc_wallet, import_id
          */
         server.get('/api/fingerprint', (req, res) => {
-            log.trace('GET Fingerprint request received.');
+            log.api('GET: Fingerprint request received.');
             const queryObject = req.query;
             emitter.emit('api-get_root_hash', {
                 query: queryObject,
@@ -564,7 +562,7 @@ class OTNode {
         });
 
         server.get('/api/query/network/:query_param', (req, res) => {
-            log.trace('GET Query for status request received.');
+            log.api('GET: Query for status request received.');
             if (!req.params.query_param) {
                 res.status(400);
                 res.send({
@@ -579,7 +577,7 @@ class OTNode {
         });
 
         server.get('/api/query/:query_id/responses', (req, res) => {
-            log.trace('GET Query responses');
+            log.api('GET: Local query responses request received.');
             if (!req.params.query_id) {
                 res.status(400);
                 res.send({
@@ -594,7 +592,7 @@ class OTNode {
         });
 
         server.post('/api/query/network', (req, res) => {
-            log.trace('POST Query request received.');
+            log.api('POST: Network query request received.');
             if (!req.body) {
                 res.status(400);
                 res.send({
@@ -621,7 +619,7 @@ class OTNode {
          * @param queryObject
          */
         server.post('/api/query/local', (req, res) => {
-            log.trace('GET Query request received.');
+            log.api('GET: Local query request received.');
 
             if (req.body == null || req.body.query == null) {
                 res.status(400);
@@ -639,7 +637,7 @@ class OTNode {
         });
 
         server.get('/api/query/local/import/:import_id', (req, res) => {
-            log.trace('GET import request received.');
+            log.api('GET: Local import request received.');
 
             if (!req.params.import_id) {
                 res.status(400);
@@ -656,7 +654,7 @@ class OTNode {
         });
 
         server.post('/api/query/local/import', (req, res) => {
-            log.trace('GET Query request received.');
+            log.api('GET: Local query import request received.');
 
             if (req.body == null || req.body.query == null) {
                 res.status(400);
@@ -673,7 +671,7 @@ class OTNode {
 
 
         server.post('/api/read/network', (req, res) => {
-            log.trace('POST Read request received.');
+            log.api('POST: Network read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null
               || req.body.import_id == null) {
@@ -693,12 +691,20 @@ class OTNode {
     }
 }
 
-console.log('===========================================');
-console.log(`         OriginTrail Node v${pjson.version}`);
-console.log('===========================================');
+
+console.log(' ██████╗ ████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗');
+console.log('██╔═══██╗╚══██╔══╝████╗  ██║██╔═══██╗██╔══██╗██╔════╝');
+console.log('██║   ██║   ██║   ██╔██╗ ██║██║   ██║██║  ██║█████╗');
+console.log('██║   ██║   ██║   ██║╚██╗██║██║   ██║██║  ██║██╔══╝');
+console.log('╚██████╔╝   ██║   ██║ ╚████║╚██████╔╝██████╔╝███████╗');
+console.log(' ╚═════╝    ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝');
+
+console.log('======================================================');
+console.log(`             OriginTrail Node v${pjson.version}`);
+console.log('======================================================');
+console.log('');
 
 const otNode = new OTNode();
 otNode.bootstrap().then(() => {
     log.info('OT Node started');
 });
-

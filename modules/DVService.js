@@ -16,7 +16,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer, logger,
+        network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -25,6 +25,7 @@ class DVService {
         this.graphStorage = graphStorage;
         this.importer = importer;
         this.log = logger;
+        this.remoteControl = remoteControl;
     }
 
     /**
@@ -115,6 +116,7 @@ class DVService {
 
                 if (!lowestOffer) {
                     this.log.info('Didn\'t find answer or no one replied.');
+                    this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });
                 } else {
@@ -207,6 +209,18 @@ class DVService {
             this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
         }
+
+        this.remoteControl.networkQueryOfferArrived({
+            query: JSON.stringify(message.query),
+            query_id: queryId,
+            wallet: message.wallet,
+            node_id: message.nodeId,
+            imports: JSON.stringify(message.imports),
+            data_size: message.dataSize,
+            data_price: message.dataPrice,
+            stake_factor: message.stakeFactor,
+            reply_id: message.replyId,
+        });
     }
 
     async handleDataReadResponse(message) {
@@ -491,6 +505,7 @@ class DVService {
             }
 
             this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
+            this.remoteControl.purchaseFinished(`[DV] Purchase ${importId} finished. Got key.`, importId);
         } else {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
