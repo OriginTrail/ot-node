@@ -514,8 +514,6 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            logger.info('Predetermined bids announced.');
-
             const {
                 import_id,
                 DH_wallet,
@@ -531,6 +529,8 @@ class EventEmitter {
                 // Offer not for me.
                 return;
             }
+
+            logger.info(`Added as predetermined for import ${import_id}`);
 
             // TODO: This is a hack. DH doesn't know with whom to sign the offer.
             // Try to dig it from events.
@@ -567,11 +567,16 @@ class EventEmitter {
         });
 
         this._on('eth-offer-canceled', (event) => {
-            logger.info('Ongoing offer has been canceled.');
+            logger.info(`Ongoing offer ${event.import_id} canceled`);
         });
 
         this._on('eth-bid-taken', (event) => {
-            logger.info('Bid accepted.');
+            if (event.DH_wallet !== config.node_wallet) {
+                logger.notify(`Bid not accepted for offer ${event.import_id}`);
+                // Offer not for me.
+                return;
+            }
+            logger.notify(`Bid accepted for offer ${event.import_id}`);
         });
 
         this._on('eth-LitigationInitiated', async (eventData) => {
