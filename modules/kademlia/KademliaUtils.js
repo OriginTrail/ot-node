@@ -13,6 +13,9 @@ class KademliaUtils {
         if (msg.startsWith('negotiation error')) {
             return null; // skip logging
         }
+        if (msg.includes('received late or invalid response')) {
+            return null; // skip logging
+        }
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
