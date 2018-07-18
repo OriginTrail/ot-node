@@ -1035,6 +1035,16 @@ class Ethereum {
             [importId, dvWallet], options,
         );
     }
+
+    /**
+     * Get replication modifier
+     */
+    async getReplicationModifier() {
+        this.log.trace('Get replication modifier ... ');
+        return this.biddingContract.methods.replication_modifier().call({
+            from: this.config.wallet_address,
+        });
+    }
 }
 
 module.exports = Ethereum;
