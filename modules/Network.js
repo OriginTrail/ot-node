@@ -252,10 +252,9 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
-            for (const node of nodes) {
-                // async fill buckets from some of the nodes
-                this.node.refresh(node);
-            }
+            setTimeout(() => {
+                this.node.refresh(0);
+            }, 5000);
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -449,7 +448,7 @@ class Network {
                     return contact;
                 }
 
-                await node.refresh(contactId, retry);
+                await node.refreshContact(contactId, retry);
                 contact = this.node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
@@ -463,7 +462,7 @@ class Network {
              * @param retry
              * @return {Promise}
              */
-            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+            node.refreshContact = async (contactId, retry) => new Promise(async (resolve) => {
                 const _refresh = () => new Promise((resolve, reject) => {
                     this.node.iterativeFindNode(contactId, (err, res) => {
                         if (err) {
