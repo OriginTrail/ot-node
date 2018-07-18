@@ -140,7 +140,7 @@ class RegisterNode {
 
             fs.writeFile('.env', envF, (err) => {
                 if (fs.existsSync('modules/Database/system.db')) {
-                    if (process.env.UPDATE) {
+                    if (process.env.UPDATE !== undefined) {
                         umzug_seeders.down({ to: 0 }).then((migrations) => {
                             Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');
                             Models.sequelize.query('delete from sqlite_sequence where name=\'blockchain_data\';');
@@ -152,6 +152,12 @@ class RegisterNode {
                                     wallet: env.NODE_WALLET,
                                 });
                             });
+                        });
+                    } else {
+                        console.log('Configuration not changed...');
+                        resolve({
+                            ip: env.NODE_IP,
+                            wallet: env.NODE_WALLET,
                         });
                     }
                 } else {
