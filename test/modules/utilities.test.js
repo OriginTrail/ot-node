@@ -13,7 +13,7 @@ const databaseData = require('./test_data/arangodb-data.js');
 
 let myConfig;
 
-describe('Utilities module', () => {
+describe.only('Utilities module', () => {
     before('loadConfig() should populate myConfig object', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
 
@@ -305,12 +305,12 @@ describe('Utilities module', () => {
     });
 
     it('check unionArrays()', () => {
-        const firstArray = ['a', 'b', 'c', 'd', 'e'];
+        const firstArray = ['1', '2', 'c', 'd', 'e'];
         const secondArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
         const result = Utilities.unionArrays(firstArray, secondArray);
         assert.includeMembers(result, firstArray);
         assert.includeMembers(result, secondArray);
-        assert.equal(result.length, 7);
+        assert.equal(result.length, 9);
     });
 
     // enable after() step after above .skip()ed tests are fixed
