@@ -124,6 +124,22 @@ class Utilities {
 
 
     /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise(async (resolve, reject) => {
+            // eslint-disable-next-line
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            if (res) {
+                resolve(res);
+            }
+        });
+    }
+
+    /**
      * Returns winston logger
      * @returns {*} - log function
      */
