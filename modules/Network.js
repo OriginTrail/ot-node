@@ -253,7 +253,7 @@ class Network {
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
             setTimeout(() => {
-                this.node.refresh(0);
+                this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
             return true;
         } else if (utilities.isBootstrapNode()) {
