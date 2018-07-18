@@ -25,8 +25,6 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 60000;
-
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -257,7 +255,6 @@ class Network {
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
-
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -451,7 +448,7 @@ class Network {
                     return contact;
                 }
 
-                await node.refresh(contactId, retry);
+                await node.refreshContact(contactId, retry);
                 contact = this.node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
@@ -465,7 +462,7 @@ class Network {
              * @param retry
              * @return {Promise}
              */
-            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+            node.refreshContact = async (contactId, retry) => new Promise(async (resolve) => {
                 const _refresh = () => new Promise((resolve, reject) => {
                     this.node.iterativeFindNode(contactId, (err, res) => {
                         if (err) {

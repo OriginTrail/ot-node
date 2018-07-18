@@ -210,23 +210,30 @@ class DHService {
             await this.blockchain.subscribeToEvent('OfferFinalized', importId);
             // Now check if bid taken.
             // emit BidTaken(bytes32 import_id, address DH_wallet);
-            const eventModelBid = await Models.events.findOne({
+            const eventModelBids = await Models.events.findAll({
                 where:
                     {
                         event: 'BidTaken',
                         import_id: importId,
                     },
             });
-            if (!eventModelBid) {
+            if (!eventModelBids) {
                 // Probably contract failed since no event fired.
                 this.log.info(`BidTaken not received for offer ${importId}.`);
                 return;
             }
 
-            const eventBid = eventModelBid.get({ plain: true });
-            const eventBidData = JSON.parse(eventBid.data);
+            let bidTakenEvent = null;
+            for (const e of eventModelBids) {
+                const eventBidData = JSON.parse(e.data);
 
-            if (eventBidData.DH_wallet !== this.config.node_wallet) {
+                if (eventBidData.DH_wallet === this.config.node_wallet) {
+                    bidTakenEvent = e;
+                    break;
+                }
+            }
+
+            if (!bidTakenEvent) {
                 this.log.info(`Bid not taken for offer ${importId}.`);
                 this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
                 return;
