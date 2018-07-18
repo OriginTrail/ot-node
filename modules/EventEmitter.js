@@ -654,9 +654,8 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
-            logger.debug('kad-data-location-request received');
-
             const { message, messageSignature } = kadMessage;
+            logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
                 logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
@@ -673,7 +672,7 @@ class EventEmitter {
 
         // async
         this._on('kad-payload-request', async (request) => {
-            logger.trace(`kad-payload-request arrived from ${request.contact[0]}`);
+            logger.info(`Data for replication arrived from ${request.contact[0]}`);
             await dhService.handleImport(request.params.message.payload);
 
             // TODO: send fail in case of fail.
@@ -681,7 +680,7 @@ class EventEmitter {
 
         // sync
         this._on('kad-replication-request', async (request) => {
-            logger.trace('kad-replication-request received');
+            logger.info('Request for replication of data received');
 
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
@@ -776,13 +775,13 @@ class EventEmitter {
 
         // async
         this._on('kad-replication-finished', async () => {
-            logger.warn('Notified of finished replication, preparing to start challenges');
+            logger.notify('Replication finished, preparing to start challenges');
         });
 
         // sync
         // TODO this call should be refactored to be async
         this._on('kad-challenge-request', (request, response) => {
-            logger.trace(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
+            logger.info(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
@@ -810,12 +809,12 @@ class EventEmitter {
         });
 
         this._on('kad-bidding-won', (message) => {
-            logger.info('Wow I won bidding. Let\'s get into it.');
+            logger.notify('Wow I won bidding. Let\'s get into it.');
         });
 
         // async
         this._on('kad-data-location-response', async (request) => {
-            logger.debug('kad-data-location-response');
+            logger.info('DH confirms possesion of required data');
             try {
                 const dataLocationResponseObject = request.params.message;
                 const { message, messageSignature } = dataLocationResponseObject;
@@ -834,7 +833,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-request', async (request) => {
-            logger.debug('kad-data-read-request');
+            logger.info('Request for data read received');
 
             const dataReadRequestObject = request.params.message;
             const { message, messageSignature } = dataReadRequestObject;
@@ -849,7 +848,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-response', async (request) => {
-            logger.debug('kad-data-read-response');
+            logger.info('Ecrypted data received');
 
             if (request.params.status === 'FAIL') {
                 logger.warn(`Failed to send data-read-request. ${request.params.message}`);
@@ -872,7 +871,7 @@ class EventEmitter {
 
         // async
         this._on('kad-send-encrypted-key', async (request) => {
-            logger.debug('kad-send-encrypted-key');
+            logger.info('Initial info received to unlock data');
 
             const encryptedPaddedKeyObject = request.params.message;
             const { message, messageSignature } = encryptedPaddedKeyObject;
@@ -901,15 +900,15 @@ class EventEmitter {
         this._on('kad-encrypted-key-process-result', async (request) => {
             const { status } = request.params.message;
             if (status === 'SUCCESS') {
-                logger.important(`DV ${request.contact[0]} successfully processed the encrypted key`);
+                logger.notify(`DV ${request.contact[0]} successfully processed the encrypted key`);
             } else {
-                logger.important(`DV ${request.contact[0]} failed to process the encrypted key`);
+                logger.notify(`DV ${request.contact[0]} failed to process the encrypted key`);
             }
         });
 
         // async
         this._on('kad-verify-import-request', async (request) => {
-            logger.debug('kad-verify-import-request');
+            logger.info('Request to verify encryption key of replicated data received');
 
             const { wallet: kadWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
@@ -923,8 +922,6 @@ class EventEmitter {
 
         // async
         this._on('kad-verify-import-response', async (request) => {
-            logger.info('kad-verify-import-response');
-
             const { status, import_id } = request.params.message;
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
