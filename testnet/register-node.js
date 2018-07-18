@@ -120,7 +120,6 @@ class RegisterNode {
                 env.NODE_PRIVATE_KEY = pk;
             }
 
-            console.log(process.env.INSTALLATION);
             if (process.env.INSTALLATION === 'local') {
                 env.NODE_IP = '127.0.0.1';
             } else {
@@ -141,18 +140,20 @@ class RegisterNode {
 
             fs.writeFile('.env', envF, (err) => {
                 if (fs.existsSync('modules/Database/system.db')) {
-                    umzug_seeders.down({ to: 0 }).then((migrations) => {
-                        Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');
-                        Models.sequelize.query('delete from sqlite_sequence where name=\'blockchain_data\';');
-                        Models.sequelize.query('delete from sqlite_sequence where name=\'graph_database\';');
-                        umzug_seeders.up().then((migrations) => {
-                            console.log('Configuration loaded...');
-                            resolve({
-                                ip: env.NODE_IP,
-                                wallet: env.NODE_WALLET,
+                    if (process.env.UPDATE) {
+                        umzug_seeders.down({ to: 0 }).then((migrations) => {
+                            Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');
+                            Models.sequelize.query('delete from sqlite_sequence where name=\'blockchain_data\';');
+                            Models.sequelize.query('delete from sqlite_sequence where name=\'graph_database\';');
+                            umzug_seeders.up().then((migrations) => {
+                                console.log('Configuration loaded...');
+                                resolve({
+                                    ip: env.NODE_IP,
+                                    wallet: env.NODE_WALLET,
+                                });
                             });
                         });
-                    });
+                    }
                 } else {
                     umzug_migrations.up().then((migrations) => {
                         umzug_seeders.up().then((migrations) => {
