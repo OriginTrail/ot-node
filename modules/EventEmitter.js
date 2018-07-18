@@ -272,6 +272,7 @@ class EventEmitter {
             try {
                 await dvService.handleReadOffer(offer, import_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
+                remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
                 data.response.send({
                     message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,

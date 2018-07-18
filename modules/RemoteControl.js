@@ -610,6 +610,14 @@ class RemoteControl {
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
     }
+
+    offerInitiated(data) {
+        this.socket.emit('offerInitiated', data);
+    }
+
+    readNotification(data) {
+        this.socket.emit('readNotification', data);
+    }
 }
 
 module.exports = RemoteControl;
