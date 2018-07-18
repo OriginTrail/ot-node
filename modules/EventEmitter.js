@@ -848,7 +848,7 @@ class EventEmitter {
 
         // async
         this._on('kad-data-read-response', async (request) => {
-            logger.info('Ecrypted data received');
+            logger.info('Encrypted data received');
 
             if (request.params.status === 'FAIL') {
                 logger.warn(`Failed to send data-read-request. ${request.params.message}`);
