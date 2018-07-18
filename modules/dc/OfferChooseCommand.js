@@ -1,7 +1,7 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-class ChooseOfferBlockchainCommand extends Command {
+class OfferChooseCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -33,13 +33,13 @@ class ChooseOfferBlockchainCommand extends Command {
     }
 
     /**
-     * Builds default ChooseOfferBlockchainCommand
+     * Builds default OfferChooseCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     static buildDefault(map) {
         const command = {
-            name: 'chooseOfferBlockchain',
+            name: 'offerChoose',
             delay: 0,
             transactional: false,
         };
@@ -48,4 +48,4 @@ class ChooseOfferBlockchainCommand extends Command {
     }
 }
 
-module.exports = ChooseOfferBlockchainCommand;
+module.exports = OfferChooseCommand;

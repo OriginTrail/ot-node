@@ -34,13 +34,13 @@ const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 const CommandExecutor = require('./modules/command/CommandExecutor');
-const CancelOfferCommand = require('./modules/dc/CancelOfferCommand');
-const ChooseOfferBlockchainCommand = require('./modules/dc/ChooseOfferBlockchainCommand');
-const CreateOfferBlockchainCommand = require('./modules/dc/CreateOfferBlockchainCommand');
-const CreateOfferDBCommand = require('./modules/dc/CreateOfferDBCommand');
-const WaitFinalizeOfferReadyCommand = require('./modules/dc/FinalizeOfferReadyCommand');
-const WaitOfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
-const WriteRootHashCommand = require('./modules/dc/WriteRootHashCommand');
+const OfferCancelCommand = require('./modules/dc/OfferCancelCommand');
+const OfferChooseCommand = require('./modules/dc/OfferChooseCommand');
+const OfferCreateBlockchainCommand = require('./modules/dc/OfferCreateBlockchainCommand');
+const OfferCreateDBCommand = require('./modules/dc/OfferCreateDBCommand');
+const OfferReadyCommand = require('./modules/dc/OfferReadyCommand');
+const OfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
+const OfferRootHashCommand = require('./modules/dc/OfferRootHashCommand');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -196,14 +196,13 @@ class OTNode {
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             commandExecutor: awilix.asClass(CommandExecutor).singleton(),
-            cancelOfferCommand: awilix.asClass(CancelOfferCommand).singleton(),
-            chooseOfferBlockchainCommand: awilix.asClass(ChooseOfferBlockchainCommand).singleton(),
-            createOfferBlockchainCommand: awilix.asClass(CreateOfferBlockchainCommand).singleton(),
-            createOfferDBCommand: awilix.asClass(CreateOfferDBCommand).singleton(),
-            finalizeOfferReadyCommand: awilix.asClass(WaitFinalizeOfferReadyCommand)
-                .singleton(),
-            offerFinalizedCommand: awilix.asClass(WaitOfferFinalizedCommand).singleton(),
-            writeRootHashCommand: awilix.asClass(WriteRootHashCommand).singleton(),
+            offerCancelCommand: awilix.asClass(OfferCancelCommand).singleton(),
+            offerChooseCommand: awilix.asClass(OfferChooseCommand).singleton(),
+            offerCreateBlockchainCommand: awilix.asClass(OfferCreateBlockchainCommand).singleton(),
+            offerCreateDBCommand: awilix.asClass(OfferCreateDBCommand).singleton(),
+            offerReadyCommand: awilix.asClass(OfferReadyCommand).singleton(),
+            offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
+            offerRootHashCommand: awilix.asClass(OfferRootHashCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

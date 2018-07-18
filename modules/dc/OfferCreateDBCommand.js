@@ -7,7 +7,7 @@ const bytes = require('utf8-length');
 
 const Command = require('../command/Command');
 
-class CreateOfferDBCommand extends Command {
+class OfferCreateDBCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -49,12 +49,12 @@ class CreateOfferDBCommand extends Command {
         }
 
         const vertices = await this.graphStorage.findVerticesByImportId(importId);
-        vertices.forEach((vertex) => {
-            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
-                dhWallets.push(vertex.data.wallet);
-                dhIds.push(vertex.data.node_id);
-            }
-        });
+        // vertices.forEach((vertex) => {
+        //     if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+        //         dhWallets.push(vertex.data.wallet);
+        //         dhIds.push(vertex.data.node_id);
+        //     }
+        // });
 
         totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
@@ -107,7 +107,7 @@ class CreateOfferDBCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'createOfferDB',
+            name: 'offerCreateDB',
             delay: 0,
             transactional: true,
         };
@@ -116,4 +116,4 @@ class CreateOfferDBCommand extends Command {
     }
 }
 
-module.exports = CreateOfferDBCommand;
+module.exports = OfferCreateDBCommand;

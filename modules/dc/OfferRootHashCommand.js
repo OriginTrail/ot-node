@@ -1,7 +1,7 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-class WriteRootHashCommand extends Command {
+class OfferRootHashCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -47,7 +47,7 @@ class WriteRootHashCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'writeRootHash',
+            name: 'offerRootHash',
             delay: 0,
             transactional: false,
         };
@@ -56,4 +56,4 @@ class WriteRootHashCommand extends Command {
     }
 }
 
-module.exports = WriteRootHashCommand;
+module.exports = OfferRootHashCommand;

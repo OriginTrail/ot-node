@@ -43,9 +43,9 @@ class FinalizeOfferReadyCommand extends Command {
      * @param err
      */
     async recover(command, err, transaction) {
-        const { externalId } = command.data;
+        const { offerId } = command.data;
 
-        const offer = await Models.offers.findOne({ where: { external_id: externalId } });
+        const offer = await Models.offers.findOne({ where: { id: offerId } });
         const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
         offer.status = 'FAILED';
         offer.message = message;
@@ -64,7 +64,14 @@ class FinalizeOfferReadyCommand extends Command {
      * @param command
      */
     async expired(command, transaction) {
-        this.logger('OfferFinalized expired');
+        const { offerId } = command.data;
+
+        this.logger.warn('OfferFinalized command expired.');
+        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        offer.status = 'FAILED';
+        offer.message = 'OfferFinalized command expired.';
+        await offer.save({ fields: ['status', 'message'], transaction });
+
     }
 
     /**

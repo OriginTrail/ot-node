@@ -414,9 +414,11 @@ class EventEmitter {
                 }
 
                 commandExecutor.add({
-                    name: 'cancelOffer',
+                    name: 'offerCancel',
                     sequence: [
-                        'writeRootHash', 'createOfferDB', 'createOfferBlockchain', 'finalizeOfferReady', 'chooseOfferBlockchain', 'offerFinalized',
+                        'offerRootHash', 'offerCreateDB',
+                        'offerCreateBlockchain', 'offerReady',
+                        'offerChoose', 'offerFinalized',
                     ],
                     delay: 0,
                     data: {

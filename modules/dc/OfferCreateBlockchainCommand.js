@@ -2,7 +2,7 @@ const BN = require('bn.js');
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-class CreateOfferBlockchainCommand extends Command {
+class OfferCreateBlockchainCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -73,7 +73,7 @@ class CreateOfferBlockchainCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'createOfferBlockchain',
+            name: 'offerCreateBlockchain',
             delay: 0,
             transactional: false,
         };
@@ -82,4 +82,4 @@ class CreateOfferBlockchainCommand extends Command {
     }
 }
 
-module.exports = CreateOfferBlockchainCommand;
+module.exports = OfferCreateBlockchainCommand;

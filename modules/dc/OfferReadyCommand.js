@@ -1,7 +1,7 @@
 const Models = require('../../models');
 const Command = require('../command/Command');
 
-class FinalizeOfferReadyCommand extends Command {
+class OfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -56,7 +56,7 @@ class FinalizeOfferReadyCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'finalizeOfferReady',
+            name: 'offerReady',
             delay: 0,
             interval: 1000,
             transactional: true,
@@ -66,4 +66,4 @@ class FinalizeOfferReadyCommand extends Command {
     }
 }
 
-module.exports = FinalizeOfferReadyCommand;
+module.exports = OfferReadyCommand;
