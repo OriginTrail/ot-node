@@ -1,4 +1,5 @@
 const BN = require('bn.js');
+const d3 = require('d3-format');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -121,8 +122,14 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
-            maxTokenAmount = new BN(maxTokenAmount);
-            minStakeAmount = new BN(minStakeAmount);
+            const format = d3.formatPrefix(',.6~s', 1e6);
+            const maxPrice = new BN(maxTokenAmount).toString();
+            const minStake = new BN(minStakeAmount).toString();
+            const formatMaxPrice = format(maxPrice);
+            const formatMinStake = format(minStake);
+            const formatMyPrice = format(profile.token_amount_per_byte_minute);
+            const formatMyStake = format(profile.stake_amount_per_byte_minute);
+
             dataSizeBytes = new BN(dataSizeBytes);
             const totalEscrowTimePerMinute = new BN(totalEscrowTime);
             maxTokenAmount = new BN(maxTokenAmount)
@@ -140,11 +147,15 @@ class DHService {
 
             if (maxTokenAmount.lt(myPrice)) {
                 this.log.info(`Offer ${importId} too cheap for me.`);
+                this.log.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
+                this.log.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
                 return;
             }
 
             if (minStakeAmount.gt(myStake)) {
                 this.log.info(`Skipping offer ${importId}. Stake too high.`);
+                this.log.info(`Minimum stake required ${formatMinStake}[mATRAC] per byte/min`);
+                this.log.info(`My stake ${formatMyStake}[mATRAC] per byte/min`);
                 return;
             }
 
