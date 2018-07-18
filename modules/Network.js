@@ -25,6 +25,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
+        kadence.constants.T_RESPONSETIMEOUT = 20000;
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -298,7 +299,7 @@ class Network {
 
         // async
         this.node.use('kad-payload-request', (request, response, next) => {
-            this.log.info('kad-payload-request received');
+            this.log.debug('kad-payload-request received');
             this.emitter.emit('kad-payload-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -307,7 +308,7 @@ class Network {
 
         // async
         this.node.use('kad-replication-request', (request, response, next) => {
-            this.log.info('kad-replication-request received');
+            this.log.debug('kad-replication-request received');
             this.emitter.emit('kad-replication-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -316,7 +317,7 @@ class Network {
 
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
-            this.log.info('kad-replication-finished received');
+            this.log.debug('kad-replication-finished received');
             this.emitter.emit('kad-replication-finished', request);
             response.send({
                 status: 'RECEIVED',
@@ -325,7 +326,7 @@ class Network {
 
         // async
         this.node.use('kad-data-location-response', (request, response, next) => {
-            this.log.info('kad-data-location-response received');
+            this.log.debug('kad-data-location-response received');
             this.emitter.emit('kad-data-location-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -334,7 +335,7 @@ class Network {
 
         // async
         this.node.use('kad-data-read-request', (request, response, next) => {
-            this.log.info('kad-data-read-request received');
+            this.log.debug('kad-data-read-request received');
             this.emitter.emit('kad-data-read-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -343,7 +344,7 @@ class Network {
 
         // async
         this.node.use('kad-data-read-response', (request, response, next) => {
-            this.log.info('kad-data-read-response received');
+            this.log.debug('kad-data-read-response received');
             this.emitter.emit('kad-data-read-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -352,7 +353,7 @@ class Network {
 
         // async
         this.node.use('kad-send-encrypted-key', (request, response, next) => {
-            this.log.info('kad-send-encrypted-key received');
+            this.log.debug('kad-send-encrypted-key received');
             this.emitter.emit('kad-send-encrypted-key', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -361,7 +362,7 @@ class Network {
 
         // async
         this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
-            this.log.info('kad-encrypted-key-process-result received');
+            this.log.debug('kad-encrypted-key-process-result received');
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -370,7 +371,7 @@ class Network {
 
         // async
         this.node.use('kad-verify-import-request', (request, response, next) => {
-            this.log.info('kad-verify-import-request received');
+            this.log.debug('kad-verify-import-request received');
             this.emitter.emit('kad-verify-import-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -379,7 +380,7 @@ class Network {
 
         // async
         this.node.use('kad-verify-import-response', (request, response, next) => {
-            this.log.info('kad-verify-import-response received');
+            this.log.debug('kad-verify-import-response received');
             this.emitter.emit('kad-verify-import-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -388,7 +389,7 @@ class Network {
 
         // sync
         this.node.use('kad-challenge-request', (request, response, next) => {
-            this.log.info('kad-challenge-request received');
+            this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
         });
 

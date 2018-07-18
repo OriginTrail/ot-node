@@ -122,28 +122,16 @@ class Utilities {
         return msg;
     }
 
-    /**
-     * Check if there is a new version of ot-node
-     * @returns {Promise<any>}
-     */
-
-    static checkForUpdates() {
-        return new Promise(async (resolve, reject) => {
-            // eslint-disable-next-line
-            const Update = require('../check-updates');
-            const res = await Update.update();
-            if (res) {
-                resolve(res);
-            }
-        });
-    }
 
     /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
+        let logLevel = 'trace';
+        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+            logLevel = 'debug';
+        }
 
         const customColors = {
             trace: 'grey',
@@ -203,8 +191,8 @@ class Utilities {
                     warn: 4,
                     notify: 5,
                     info: 6,
-                    debug: 7,
-                    trace: 8,
+                    trace: 7,
+                    debug: 8,
                 },
                 transports,
             });
