@@ -13,7 +13,7 @@ const databaseData = require('./test_data/arangodb-data.js');
 
 let myConfig;
 
-describe('Utilities module', () => {
+describe.only('Utilities module', () => {
     before('loadConfig() should populate myConfig object', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
 
@@ -216,7 +216,7 @@ describe('Utilities module', () => {
         }
     });
 
-    it('flattenObject() regular', async () => {
+    it('flattenObject() regular', () => {
         const regularObj = {
             name: 'fiiv',
             birthYear: 1986,
@@ -243,17 +243,17 @@ describe('Utilities module', () => {
         assert.deepEqual(flattened, expectedFlattened);
     });
 
-    it('flattenObject() null', async () => {
+    it('flattenObject() null', () => {
         const flattened = Utilities.flattenObject(null);
         assert.deepEqual(flattened, null);
     });
 
-    it('flattenObject() empty', async () => {
+    it('flattenObject() empty', () => {
         const flattened = Utilities.flattenObject({});
         assert.deepEqual(flattened, {});
     });
 
-    it('objectDistance() test 1', async () => {
+    it('objectDistance() test 1', () => {
         const obj1 = {
             a: 'abc',
         };
@@ -265,7 +265,7 @@ describe('Utilities module', () => {
         assert.equal(distance, 100);
     });
 
-    it('objectDistance() test 2', async () => {
+    it('objectDistance() test 2', () => {
         const obj1 = {
             a: 'abc',
         };
@@ -277,7 +277,7 @@ describe('Utilities module', () => {
         assert.equal(distance, 0);
     });
 
-    it('objectDistance() test 3', async () => {
+    it('objectDistance() test 3', () => {
         const obj1 = {
             a: {
                 b: {
@@ -297,26 +297,43 @@ describe('Utilities module', () => {
         assert.equal(distance, 100);
     });
 
-    after('cleanup', () => {
-        const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
-        const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
-        const prvKeyToDelete = `${__dirname}/../../keys/${myConfig.private_extended_key_path}`;
-
-        try {
-            fs.unlinkSync(keyToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        try {
-            fs.unlinkSync(certToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        try {
-            fs.unlinkSync(prvKeyToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        myConfig = {};
+    it('check shuffle() ', () => {
+        const UnShuffledArray = ['a', 'b', 'c', 'd', 'e'];
+        const ShuffledArray = Utilities.shuffle(UnShuffledArray);
+        assert.sameMembers(UnShuffledArray, ShuffledArray, 'No blind passangers allowed on this boat');
+        assert.equal(UnShuffledArray.length, ShuffledArray.length, 'Both arrays should have same lengths');
     });
+
+    it('check unionArrays()', () => {
+        const firstArray = ['1', '2', 'c', 'd', 'e'];
+        const secondArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+        const result = Utilities.unionArrays(firstArray, secondArray);
+        assert.includeMembers(result, firstArray);
+        assert.includeMembers(result, secondArray);
+        assert.equal(result.length, 9);
+    });
+
+    // enable after() step after above .skip()ed tests are fixed
+    // after('cleanup', () => {
+    //     const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
+    //     const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
+    //     const prvKeyToDelete = `${__dirname}/../../keys/${myConfig.private_extended_key_path}`;
+
+    //     try {
+    //         fs.unlinkSync(keyToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     try {
+    //         fs.unlinkSync(certToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     try {
+    //         fs.unlinkSync(prvKeyToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     myConfig = {};
+    // });
 });
