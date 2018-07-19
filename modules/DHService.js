@@ -71,7 +71,7 @@ class DHService {
             const k = distanceParams[4];
             const numNodes = distanceParams[5];
 
-            if (this.amIClose(k, numNodes, dataHash, nodeHash, 20000)) {
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 10000)) {
                 this.log.notify('Close enough to take bid');
             } else {
                 this.log.notify('Not close enough to take bid');
@@ -180,8 +180,12 @@ class DHService {
             }
 
             if (!predeterminedBid) {
-                await this.blockchain.addBid(importId, this.config.identity);
-                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                try {
+                    await this.blockchain.addBid(importId, this.config.identity);
+                    bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                } catch (err) {
+                    this.log.info('Bid not added, your bid was probably too late and the offer has been closed');
+                }
             } else {
                 const myBidIndex = await this.blockchain.getBidIndex(
                     importId,
