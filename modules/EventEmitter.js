@@ -441,7 +441,7 @@ class EventEmitter {
 
         this._on('api-gs1-import-request', async (data) => {
             try {
-                logger.info(`Gs1 import with ${data.filepath} triggered.`);
+                logger.info(`GS1 import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -458,7 +458,7 @@ class EventEmitter {
 
         this._on('api-wot-import-request', async (data) => {
             try {
-                logger.info(`Wot import with ${data.filepath} triggered.`);
+                logger.info(`WOT import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -482,14 +482,10 @@ class EventEmitter {
         const {
             dhService,
             logger,
-            blockchain,
             config,
-            remoteControl,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            logger.info(`New offer has been created by ${eventData.DC_node_id} in OriginTrail decentralized network.`);
-
             const {
                 import_id,
                 DC_node_id,

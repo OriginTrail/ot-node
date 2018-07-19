@@ -48,20 +48,20 @@ class DHService {
         predeterminedBid,
     ) {
         try {
-            // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
-            if (offerModel) {
-                const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
-                return;
-            }
-
             dcNodeId = dcNodeId.substring(2, 42);
             const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
+                // wait until peers are synced
                 return;
             }
+
+            // Check if mine offer and if so ignore it.
+            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
+            if (offerModel) {
+                return;
+            }
+
+            this.log.info(`New offer has been created by ${dcNodeId}.`);
 
             const distanceParams = await this.blockchain.getDistanceParameters(importId);
 

@@ -259,6 +259,14 @@ class Network {
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
 
+            const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
+            for (const url of nodesFromCache) {
+                const contactInfo = kadence.utils.parseContactURL(url);
+                if (contactInfo) {
+                    this.node.router.addContactByNodeId(contactInfo[0], contactInfo[1]);
+                }
+            }
+
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
