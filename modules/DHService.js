@@ -249,7 +249,7 @@ class DHService {
                 },
                 bid.dc_id, (err) => {
                     if (err) {
-                        this.log.warn(`Failed to send replication request ${err}`);
+                        this.log.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
                         // TODO Cancel bid here.
                         this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
