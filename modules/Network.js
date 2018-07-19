@@ -174,7 +174,7 @@ class Network {
                 FetchDirInfoEarly: 1,
                 FetchDirInfoExtraEarly: 1,
             },
-            passthroughLoggingEnabled: 0,
+            passthroughLoggingEnabled: 1,
         }));
         this.log.info('Onion initialised');
     }
@@ -195,13 +195,12 @@ class Network {
         if (utilities.isBootstrapNode()) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
-            this.log.info(`Trying to contact ${nodes.length} peers`);
         } else {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
-            this.log.info(`Trying to join the network from ${nodes.length} unique seeds`);
         }
 
+        this.log.info(`Trying to sync with peers from ${nodes.length} unique seeds`);
         if (nodes.length === 0) {
             this.log.info('No bootstrap seeds provided and no known profiles');
             this.log.info('Running in seed mode (waiting for connections)');
@@ -220,7 +219,7 @@ class Network {
 
         const func = url => new Promise((resolve, reject) => {
             try {
-                this.log.info(`Joining via ${url}`);
+                this.log.info(`Syncing with peers via ${url}`);
                 const contact = kadence.utils.parseContactURL(url);
 
                 this._join(contact, (err) => {
@@ -253,11 +252,7 @@ class Network {
         }
 
         if (result) {
-            this.log.important('Joined the network');
-            const contact = kadence.utils.parseContactURL(result);
-
-            this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
-            this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+            this.log.important('Initial sync with other peers done');
 
             const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
             for (const url of nodesFromCache) {
