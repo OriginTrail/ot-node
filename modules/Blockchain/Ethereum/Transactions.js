@@ -23,8 +23,8 @@ class Transactions {
             const { transaction, future } = args;
             try {
                 const delta = (Date.now() - this.lastTransactionTime);
-                if (delta < 5000) {
-                    await sleep.sleep(5000);
+                if (delta < 2000) {
+                    await sleep.sleep(2000);
                 }
                 const result = await this._sendTransaction(transaction);
                 if (result.status === '0x0') {
