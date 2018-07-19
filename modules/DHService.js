@@ -183,9 +183,9 @@ class DHService {
                 try {
                     await this.blockchain.addBid(importId, this.config.identity);
                     bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
-                    return;
                 } catch (err) {
                     this.log.info('Bid not added, your bid was probably too late and the offer has been closed');
+                    return;
                 }
             } else {
                 const myBidIndex = await this.blockchain.getBidIndex(
