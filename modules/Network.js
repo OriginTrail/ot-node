@@ -254,14 +254,6 @@ class Network {
         if (result) {
             this.log.important('Initial sync with other peers done');
 
-            const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
-            for (const url of nodesFromCache) {
-                const contactInfo = kadence.utils.parseContactURL(url);
-                if (contactInfo) {
-                    this.node.router.addContactByNodeId(contactInfo[0], contactInfo[1]);
-                }
-            }
-
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
