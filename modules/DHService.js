@@ -61,7 +61,7 @@ class DHService {
                 return;
             }
 
-            this.log.info(`New offer has been created by ${dcNodeId}.`);
+            this.log.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
 
             const distanceParams = await this.blockchain.getDistanceParameters(importId);
 
