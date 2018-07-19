@@ -25,7 +25,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
+        kadence.constants.T_RESPONSETIMEOUT = 40000;
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -162,13 +162,19 @@ class Network {
             virtualPort: config.onion_virtual_port,
             localMapping: `127.0.0.1:${config.node_port}`,
             torrcEntries: {
-                CircuitBuildTimeout: 10,
-                KeepalivePeriod: 60,
-                NewCircuitPeriod: 60,
-                NumEntryGuards: 8,
-                Log: 'notice stdout',
+                LearnCircuitBuildTimeout: 0,
+                CircuitBuildTimeout: 40,
+                CircuitStreamTimeout: 30,
+                MaxCircuitDirtiness: 7200,
+                MaxClientCircuitsPending: 1024,
+                SocksTimeout: 41,
+                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
+                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
+                SafeLogging: 0,
+                FetchDirInfoEarly: 1,
+                FetchDirInfoExtraEarly: 1,
             },
-            passthroughLoggingEnabled: 1,
+            passthroughLoggingEnabled: 0,
         }));
         this.log.info('Onion initialised');
     }
@@ -252,6 +258,14 @@ class Network {
 
             this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
             this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+
+            const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
+            for (const url of nodesFromCache) {
+                const contactInfo = kadence.utils.parseContactURL(url);
+                if (contactInfo) {
+                    this.node.router.addContactByNodeId(contactInfo[0], contactInfo[1]);
+                }
+            }
 
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
