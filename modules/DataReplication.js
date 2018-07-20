@@ -31,7 +31,7 @@ class DataReplication {
             import_id: data.import_id,
             amount: data.vertices.length + data.edges.length,
             start_time: currentUnixTime,
-            total_time: config.total_escrow_time_in_milliseconds,
+            total_time: parseInt(config.total_escrow_time_in_milliseconds, 10), // TODO introduce BN
         };
 
         ImportUtilities.sort(data.vertices);
