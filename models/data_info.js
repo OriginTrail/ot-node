@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         total_documents: DataTypes.INTEGER,
         root_hash: DataTypes.STRING(40),
         import_timestamp: DataTypes.DATE,
+        data_size: DataTypes.INTEGER,
     }, {
         tableName: 'data_info',
     });

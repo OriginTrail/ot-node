@@ -5,6 +5,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const Encryption = require('./Encryption');
+const bytes = require('utf8-length');
 
 /**
  * DV operations (querying network, etc.)
@@ -15,7 +16,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer, logger,
+        network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -24,6 +25,7 @@ class DVService {
         this.graphStorage = graphStorage;
         this.importer = importer;
         this.log = logger;
+        this.remoteControl = remoteControl;
     }
 
     /**
@@ -114,6 +116,7 @@ class DVService {
 
                 if (!lowestOffer) {
                     this.log.info('Didn\'t find answer or no one replied.');
+                    this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });
                 } else {
@@ -127,13 +130,14 @@ class DVService {
         });
     }
 
-    async handleReadOffer(offer) {
+    async handleReadOffer(offer, importId) {
         /*
             dataReadRequestObject = {
             message: {
                 id: REPLY_ID
                 wallet: DV_WALLET,
                 nodeId: KAD_ID,
+                import_id: IMPORT_ID,
             },
             messageSignature: {
                 c: …,
@@ -144,6 +148,7 @@ class DVService {
          */
         const message = {
             id: offer.reply_id,
+            import_id: importId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
         };
@@ -193,7 +198,6 @@ class DVService {
             wallet: message.wallet,
             node_id: message.nodeId,
             imports: JSON.stringify(message.imports),
-            data_size: message.dataSize,
             data_price: message.dataPrice,
             stake_factor: message.stakeFactor,
             reply_id: message.replyId,
@@ -205,6 +209,18 @@ class DVService {
             this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
         }
+
+        this.remoteControl.networkQueryOfferArrived({
+            query: JSON.stringify(message.query),
+            query_id: queryId,
+            wallet: message.wallet,
+            node_id: message.nodeId,
+            imports: JSON.stringify(message.imports),
+            data_size: message.dataSize,
+            data_price: message.dataPrice,
+            stake_factor: message.stakeFactor,
+            reply_id: message.replyId,
+        });
     }
 
     async handleDataReadResponse(message) {
@@ -221,7 +237,7 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
-        const { data_provider_wallet } = message;
+        const { import_id: importId } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -242,9 +258,8 @@ class DVService {
             throw Error('Read not confirmed');
         }
 
-        const importId = JSON.parse(networkQueryResponse.imports)[0];
-
         // Calculate root hash and check is it the same on the SC.
+        const { data_provider_wallet } = message;
         const { vertices, edges } = message.encryptedData;
         const dhWallet = message.wallet;
 
@@ -279,12 +294,14 @@ class DVService {
             throw errorMessage;
         }
 
+        let importResult;
         try {
-            await this.importer.importJSON({
+            importResult = await this.importer.importJSON({
                 vertices: message.encryptedData.vertices,
                 edges: message.encryptedData.edges,
                 import_id: importId,
-            });
+                wallet: data_provider_wallet,
+            }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
             networkQuery.status = 'FAILED';
@@ -293,14 +310,16 @@ class DVService {
         }
 
         this.log.info(`Import ID ${importId} imported successfully.`);
+        this.remoteControl.readNotification(`Import ID ${importId} imported successfully.`);
 
-        // TODO: Maybe separate table is needed.
-        Models.data_info.create({
+        const dataSize = bytes(JSON.stringify(vertices));
+        await Models.data_info.create({
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
             data_provider_wallet,
             import_timestamp: new Date(),
+            data_size: dataSize,
         });
 
         // Check if enough tokens. From smart contract:
@@ -339,6 +358,7 @@ class DVService {
         );
 
         this.log.important(`[DV] - Purchase initiated for import ID ${importId}.`);
+        this.remoteControl.readNotification(`[DV] - Purchase initiated for import ID ${importId}.`);
 
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
@@ -368,11 +388,13 @@ class DVService {
                 r2,
                 sd, // epkChecksum
                 blockNumber,
+                import_id,
             }
          */
 
         const {
             id, wallet, nodeId, m1, m2, e, r1, r2, sd, blockNumber,
+            import_id,
         } = message;
 
         // Check if mine request.
@@ -390,7 +412,7 @@ class DVService {
             where: { id: networkQueryResponse.query_id },
         });
 
-        const importId = JSON.parse(networkQueryResponse.imports)[0];
+        const importId = import_id;
 
         const m1Checksum = Utilities.normalizeHex(Encryption.calculateDataChecksum(m1, r1, r2));
         const m2Checksum =
@@ -485,6 +507,7 @@ class DVService {
             }
 
             this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
+            this.remoteControl.purchaseFinished(`[DV] Purchase ${importId} finished. Got key.`, importId);
         } else {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
@@ -515,10 +538,11 @@ class DVService {
             const epk = m1 + Encryption.xor(purchase.encrypted_block, e) + m2;
             const publicKey = Encryption.unpackEPK(epk);
 
-            const holdingData = await Models.holding_data.create({
+            await Models.holding_data.create({
                 id: importId,
                 source_wallet: wallet,
                 data_public_key: publicKey,
+                distribution_public_key: publicKey,
                 epk,
             });
 

@@ -11,46 +11,54 @@ env:
 sudo: enabled
 before_script:
   - cp .env.travis .env
-  - npm run config
+  - npm run bootstrap
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
   - ./setup_arangodb.sh &> /dev/null
   - rm -rf ArangoDB-3.2.2.tar.gz
-  - npm install -g ganache-cli &> /dev/null
+  - npm install -g ganache-cli@6.1.5 &> /dev/null
   - npm install -g truffle &> /dev/null
 script:
   - npm run lint
-  # checks for angangodb based solution
-  - npm test
+  # checks for arangodb based solution
+  - npm test 2> mocha-logs.log
   - npm start &>arangodb.log &
   - sleep 10
   - jobs
   - kill %1
   # make sure previous deamon is really terminated
-  - jobs
-  - kill $(lsof -t -i:8900)
+  # - jobs
+  #  - kill $(lsof -t -i:8900)
   # switches graph database in .env
-  - node switchDatabase.js
+  # - node switchDatabase.js
   # checks for neo4j based solution
-  - npm run config &> /dev/null
-  - npm start &>neo4jdb.log &
-  - sleep 10
-  - jobs
-  - kill %1
+  # - npm run config > run-config.log
+  # - npm start &>neo4jdb.log &
+  # - sleep 10
+  # - jobs
+  # - kill %1
   # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
   - cd modules/Blockchain/Ethereum
-  - truffle test --network test
-  - rm -rf build && truffle migrate --reset --compile-all --network ganache
+  - truffle test --network test > ../../../truffle-test.log
+  - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log
   - cd ../../../
   - jobs
   - kill %1
 after_script:
+  - cat mocha-logs.log
+  - rm -f mocha-logs.log
+  # - cat run-config.log
+  # - rm -f run-config.log
   - cat arangodb.log
   - rm -f arangodb.log
-  - cat neo4jdb.log
-  - rm -f neo4jdb.log
+  # - cat neo4jdb.log
+  # - rm -f neo4jdb.log
+  - cat truffle-test.log
+  - rm -f truffle-test.log
+  - cat truffle-migrate.log
+  - rm -f truffle-migrate.log
   # enable line bellow in case you are interested in reading ganache-cli logs
   # - cat ganache.log
   - rm -f ganache.log

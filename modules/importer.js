@@ -1,6 +1,4 @@
 // External modules
-const utilities = require('./Utilities');
-const MerkleTree = require('./Merkle');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');
@@ -11,6 +9,7 @@ class Importer {
         this.wotImporter = ctx.wotImporter;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -49,15 +48,60 @@ class Importer {
         });
     }
 
-    async importJSON(json_document) {
-        return this._import('JSON', json_document);
+    async importJSON(json_document, packKeys = false) {
+        try {
+            const result = await this._import('JSON', {
+                packKeys,
+                json_document,
+            });
+            return {
+                response: await this.afterImport(result, packKeys),
+                error: null,
+            };
+        } catch (error) {
+            this.log.error(`Import error: ${error}.`);
+            const errorObject = { message: error.toString(), status: error.status };
+            return {
+                response: null,
+                error: errorObject,
+            };
+        }
     }
 
-    async _importJSON(json_document) {
+    async _importJSON(data) {
         this.log.info('Entering importJSON');
-        const { vertices, edges, import_id } = json_document;
+        const {
+            packKeys,
+            json_document,
+        } = data;
 
-        this.log.trace('Vertex importing');
+        let {
+            vertices,
+            edges,
+        } = json_document;
+
+        const {
+            import_id,
+            wallet,
+        } = json_document;
+
+        this.log.trace('Import vertices and edges');
+        ImportUtilities.deleteInternal(vertices);
+
+        if (packKeys) {
+            ImportUtilities.packKeys(vertices, edges);
+        }
+
+        vertices = await Promise.all(vertices.map(async (vertex) => {
+            const inserted = await this.graphStorage.addVertex(vertex);
+            vertex._key = inserted._key;
+            return vertex;
+        }));
+        edges = await Promise.all(edges.map(async (edge) => {
+            const inserted = await this.graphStorage.addEdge(edge);
+            edge._key = inserted._key;
+            return edge;
+        }));
 
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
@@ -66,19 +110,31 @@ class Importer {
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
 
         this.log.info('JSON import complete');
+
+        return {
+            vertices,
+            edges,
+            import_id,
+            wallet,
+        };
     }
 
     /**
      * Process successfull import
+     * @param unpack  Unpack keys
      * @param result  Import result
      * @return {Promise<>}
      */
-    async afterImport(result) {
+    async afterImport(result, unpack = false) {
         this.log.info('[DC] Import complete');
-
+        this.remoteControl.importRequestData();
         let {
             vertices, edges,
         } = result;
+
+        if (unpack) {
+            ImportUtilities.unpackKeys(vertices, edges);
+        }
 
         const {
             import_id, wallet,

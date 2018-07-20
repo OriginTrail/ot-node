@@ -12,6 +12,12 @@ const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
+const RemoteControl = require('../../modules/RemoteControl');
+const Network = require('../../modules/Network');
+const NetworkUtilities = require('../../modules/NetworkUtilities');
+const EventEmitter = require('../../modules/EventEmitter');
+const Product = require('../../modules/Product');
+const Web3 = require('web3');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -38,6 +44,7 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_2.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -60,6 +67,8 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+
         const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
@@ -69,6 +78,16 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
+            remoteControl: awilix.asValue({
+                importRequestData: () => {
+                },
+            }),
+            network: awilix.asClass(Network),
+            networkUtilities: awilix.asClass(NetworkUtilities),
+            emitter: awilix.asClass(EventEmitter),
+            product: awilix.asClass(Product),
+            web3: awilix.asValue(web3),
+            config: awilix.asValue(Utilities.loadConfig()),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
@@ -85,6 +104,24 @@ describe('GS1 Importer tests', () => {
                     async () => gs1.parseGS1(test.args[0]),
                 );
             }
+        });
+    });
+
+    describe('Parse and import XML file and test pack/unpak keys', () => {
+        inputXmlFiles.forEach(async (test) => {
+            it(
+                `should correctly pack keys for ${path.basename(test.args[0])}`,
+                // eslint-disable-next-line no-loop-func
+                async () => {
+                    const result = await gs1.parseGS1(test.args[0]);
+                    const { response } = await importer.importJSON(result, true);
+
+                    const { vertices, edges } = response;
+                    for (const doc of edges.concat(vertices)) {
+                        assert.isFalse(doc._dc_key != null);
+                    }
+                },
+            );
         });
     });
 
@@ -305,12 +342,12 @@ describe('GS1 Importer tests', () => {
         let specificVertice;
 
         async function checkTransformationXmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('CARENGINES_PROVIDER_ID', 'urn:ot:object:product:id:123AB');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Car.Engines', 'urn:ot:object:product:id:123AB');
             assert.equal(specificVertice.data.category, 'Engine');
             assert.equal(specificVertice.data.description, 'Airplane Engine for Boing');
             assert.equal(specificVertice.data.object_class_id, 'Product');
             assert.equal(specificVertice.vertex_type, 'PRODUCT');
-            assert.equal(specificVertice.sender_id, 'CARENGINES_PROVIDER_ID');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Car.Engines');
             assert.equal(specificVertice.identifiers.id, 'urn:ot:object:product:id:123AB');
             assert.equal(specificVertice.identifiers.uid, 'urn:ot:object:product:id:123AB');
         }
@@ -362,13 +399,13 @@ describe('GS1 Importer tests', () => {
         }
 
         async function checkGraphExample2XmlVerticeContent() {
-            specificVertice = await graphStorage.findVertexWithMaxVersion('SENDER_ID', 'urn:epc:id:sgtin:Batch_2');
+            specificVertice = await graphStorage.findVertexWithMaxVersion('urn:ot:object:actor:id:Company _1', 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.data.expirationdate, '2018-04-03T00:01:54Z');
             assert.equal(specificVertice.data.parent_id, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productId, 'urn:ot:object:product:id:Product_1');
             assert.equal(specificVertice.data.productiondate, '2018-03-03T00:01:54Z');
             assert.equal(specificVertice.vertex_type, 'BATCH');
-            assert.equal(specificVertice.sender_id, 'SENDER_ID');
+            assert.equal(specificVertice.sender_id, 'urn:ot:object:actor:id:Company _1');
             assert.equal(specificVertice.identifiers.id, 'urn:epc:id:sgtin:Batch_2');
             assert.equal(specificVertice.identifiers.uid, 'urn:epc:id:sgtin:Batch_2');
         }
@@ -436,6 +473,8 @@ describe('GS1 Importer tests', () => {
             } else if (xml === path.join(__dirname, 'test_xml/GraphExample_4.xml')) {
                 await checkGraphExample4XmlVerticeContent();
                 await checkGraphExample4XmlTraversalPath();
+            } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
+                // TODO checkZKExampleXmlVerticeContent();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }

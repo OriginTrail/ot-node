@@ -444,7 +444,7 @@
       },
       {
         "indexed": false,
-        "name": "total_time_in_seconds",
+        "name": "total_time_in_minutes",
         "type": "uint256"
       }
     ],
@@ -517,6 +517,28 @@
       }
     ],
     "name": "EscrowCompleted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "name": "import_id",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "DH_wallet",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Payment",
     "type": "event"
   },
   {

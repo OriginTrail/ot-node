@@ -6,7 +6,7 @@
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
             <sbdh:Sender><!-- Mandatory -->
                 <!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-                <sbdh:Identifier Authority="OriginTrail">CARENGINES_PROVIDER_ID</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1ZK</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
                 <sbdh:ContactInformation> <!-- Mandatory-->
                     <sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
                     <sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->
@@ -37,19 +37,19 @@
         <extension>
             <EPCISMasterData>
                 <VocabularyList>
-                    <Vocabulary type="urn:ot:mda:actor">
+                    <Vocabulary type="urn:ot:object:actor">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Company_1">
-                                <attribute id="urn:ot:mda:actor:person:id:name">Company _1</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Company</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0x1fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_1ZK">
+                                <attribute id="urn:ot:object:actor:name">Company _1</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0x1fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">b5fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Company_2">
-                                <attribute id="urn:ot:mda:actor:person:id:name">Company _2</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Company</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0x4fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">b1fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_2ZK">
+                                <attribute id="urn:ot:object:actor:name">Company _2</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0x4fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">b1fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
                                 <extension>
                                     <private>
                                         <key1>value1</key1>
@@ -59,66 +59,66 @@
                                     </private>
                                 </extension>
                             </VocabularyElement>
-                            <VocabularyElement id="urn:ot:mda:actor:id:Company_3">
-                                <attribute id="urn:ot:mda:actor:person:id:name">Company _3</attribute>
-                                <attribute id="urn:ot:mda:actor:category">Company</attribute>
-                                <attribute id="urn:ot:mda:actor:wallet">0x0fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
-                                <attribute id="urn:ot:mda:actor:node_id">b2fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_3ZK">
+                                <attribute id="urn:ot:object:actor:name">Company _3</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0x0fDDAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+                                <attribute id="urn:ot:object:actor:node_id">b2fd41d2cca3b0a79720670e5b3da7054751245a</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
-                    <Vocabulary type="urn:ot:mda:product">
+                    <Vocabulary type="urn:ot:object:product">
                         <VocabularyElementList>
-                            <VocabularyElement id="urn:ot:mda:product:id:123AB">
-                                <attribute id="urn:ot:mda:product:category">Fruit</attribute>
-                                <attribute id="urn:ot:mda:product:description">Box of fruit</attribute>
+                            <VocabularyElement id="urn:ot:object:product:id:123AB">
+                                <attribute id="urn:ot:object:product:category">Fruit</attribute>
+                                <attribute id="urn:ot:object:product:description">Box of fruit</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
-                    <Vocabulary type="urn:ot:mda:batch">
+                    <Vocabulary type="urn:ot:object:batch">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgtin:Batch_1">
-                                <attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:123AB</attribute>
-                                <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:03:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:123AB</attribute>
+                                <attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:Batch_1.00002">
-                                <attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:123AB</attribute>
-                                <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:01:54Z</attribute>
-                                <attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:123AB</attribute>
+                                <attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:01:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:01:54Z</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:Batch_1.00003">
-                                <attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:123AB</attribute>
-                                <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:02:54Z</attribute>
-                                <attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:123AB</attribute>
+                                <attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:02:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:02:54Z</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgtin:Batch_1.00004">
-                                <attribute id="urn:ot:mda:batch:productid">urn:ot:mda:product:id:123AB</attribute>
-                                <attribute id="urn:ot:mda:batch:productiondate">2018-03-03T00:03:54Z</attribute>
-                                <attribute id="urn:ot:mda:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:123AB</attribute>
+                                <attribute id="urn:ot:object:product:batch:productiondate">2018-03-03T00:03:54Z</attribute>
+                                <attribute id="urn:ot:object:product:batch:expirationdate">2018-04-03T00:03:54Z</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
-                    <Vocabulary type="urn:ot:mda:location">
+                    <Vocabulary type="urn:ot:object:location">
                         <VocabularyElementList>
                             <VocabularyElement id="urn:epc:id:sgln:Building_1">
-                                <attribute id="urn:ot:mda:location:category">Physical location</attribute>
-                                <attribute id="urn:ot:mda:location:description">Storage F13</attribute>
+                                <attribute id="urn:ot:object:location:category">Physical location</attribute>
+                                <attribute id="urn:ot:object:location:description">Storage F13</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_1</attribute>
+                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_1ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_2">
-                                <attribute id="urn:ot:mda:location:category">Physical location</attribute>
-                                <attribute id="urn:ot:mda:location:description">Storage F12</attribute>
+                                <attribute id="urn:ot:object:location:category">Physical location</attribute>
+                                <attribute id="urn:ot:object:location:description">Storage F12</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_2</attribute>
+                                    <attribute id="urn:ot:location:actorId">urn:ot:object:actor:id:Company_2ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                             <VocabularyElement id="urn:epc:id:sgln:Building_3">
-                                <attribute id="urn:ot:mda:location:category">Physical location</attribute>
-                                <attribute id="urn:ot:mda:location:description">Storage F14</attribute>
+                                <attribute id="urn:ot:object:location:category">Physical location</attribute>
+                                <attribute id="urn:ot:object:location:description">Storage F14</attribute>
                                 <extension>
-                                    <attribute id="urn:ot:location:participantId">urn:ot:mda:actor:id:Company_3</attribute>
+                                    <attribute id="urn:ot:location:actortId">urn:ot:object:actor:id:Company_3ZK</attribute>
                                 </extension>
                             </VocabularyElement>
                         </VocabularyElementList>
@@ -155,8 +155,8 @@
                     </quantityList>
                     <extension>
                         <documentId>144</documentId>
-                        <OTEventClass>ot:event:Transport</OTEventClass>
-                        <OTEventClass>ot:event:Ownership</OTEventClass>
+                        <OTEventClass>urn:ot:event:Transport</OTEventClass>
+                        <OTEventClass>urn:ot:event:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_1</source>
@@ -212,7 +212,7 @@
                     <transformationID>BOM12345PO987</transformationID> <!-- Mandatory-->
                     <bizStep>urn:epcglobal:cbv:bizstep:hash</bizStep> <!-- Optional -->
                     <extension>
-                        <OTEventClass>ot:event:Transformation</OTEventClass>
+                        <OTEventClass>urn:ot:event:Transformation</OTEventClass>
                         <OTEventType>Unpacking</OTEventType>
                     </extension>
                 </TransformationEvent>
@@ -243,8 +243,8 @@
                     </quantityList>
                     <extension>
                         <documentId>1123</documentId>
-                        <OTEventClass>ot:event:Transport</OTEventClass>
-                        <OTEventClass>ot:event:Ownership</OTEventClass>
+                        <OTEventClass>urn:ot:event:Transport</OTEventClass>
+                        <OTEventClass>urn:ot:event:Ownership</OTEventClass>
                         <OTEventType>Purchase</OTEventType>
                         <sourceList>
                             <source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_2</source>

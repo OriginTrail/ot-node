@@ -23,10 +23,6 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_size: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
         data_price: {
             allowNull: false,
             type: Sequelize.STRING,

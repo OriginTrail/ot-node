@@ -1,7 +1,9 @@
 const Tx = require('ethereumjs-tx');
-const EventEmitter = require('events');
 const { txutils } = require('eth-lightwallet');
-const { Lock } = require('semaphore-async-await');
+const Queue = require('better-queue');
+const sleep = require('sleep-async')().Promise;
+const BN = require('bn.js');
+const Utilities = require('../../Utilities.js');
 
 class Transactions {
     /**
@@ -11,11 +13,31 @@ class Transactions {
      * @param walletKey Wallet's private in Hex string without 0x at beginning
      */
     constructor(web3, wallet, walletKey) {
+        this.log = Utilities.getLogger();
         this.web3 = web3;
-        this.transactionEventEmmiter = new EventEmitter();
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
-        this.lock = new Lock();
+        this.lastTransactionTime = Date.now();
+
+        this.queue = new Queue((async (args, cb) => {
+            const { transaction, future } = args;
+            try {
+                const delta = (Date.now() - this.lastTransactionTime);
+                if (delta < 2000) {
+                    await sleep.sleep(2000);
+                }
+                const result = await this._sendTransaction(transaction);
+                if (result.status === '0x0') {
+                    future.reject(result);
+                } else {
+                    future.resolve(result);
+                }
+            } catch (e) {
+                future.reject(e);
+            }
+            this.lastTransactionTime = Date.now();
+            cb();
+        }), { concurrent: 1 });
     }
 
     /**
@@ -23,7 +45,7 @@ class Transactions {
      * @returns {PromiEvent<TransactionReceipt>}
      * @param newTransaction
      */
-    async sendTransaction(newTransaction) {
+    async _sendTransaction(newTransaction) {
         await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
         });
@@ -39,14 +61,17 @@ class Transactions {
         transaction.sign(this.privateKey);
 
         const serializedTx = transaction.serialize().toString('hex');
-        return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
-    }
 
-    /**
-     * Signal that queue is ready for next transaction
-     */
-    signalNextInQueue() {
-        this.lock.release();
+        const balance = await this.web3.eth.getBalance(this.walletAddress);
+        const currentBalance = new BN(Utilities.denormalizeHex(balance), 16);
+        const requiredAmount = new BN(300000).mul(new BN(newTransaction.options.gasPrice));
+
+        // If current ballance not enough for 300000 gas notify low ETH balance
+        if (currentBalance.lt(requiredAmount)) {
+            this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
+        }
+
+        return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 
     /**
@@ -59,26 +84,16 @@ class Transactions {
      */
     queueTransaction(contractAbi, method, args, options) {
         return new Promise((async (resolve, reject) => {
-            const newTransaction = {
+            const transaction = {
                 contractAbi, method, args, options,
             };
 
-            await this.lock.acquire();
-
-            this.sendTransaction(newTransaction)
-                .then((response) => {
-                    this.signalNextInQueue();
-                    if (response.status === '0x0') {
-                        reject(response);
-                    } else {
-                        resolve(response);
-                    }
-                })
-                .catch((err) => {
-                    // log.warn(err);
-                    this.signalNextInQueue();
-                    reject(err);
-                });
+            this.queue.push({
+                transaction,
+                future: {
+                    resolve, reject,
+                },
+            });
         }));
     }
 }

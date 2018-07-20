@@ -7,6 +7,7 @@ const ZK = require('./ZK');
 class Product {
     constructor(ctx) {
         this.graphStorage = ctx.graphStorage;
+        this.ctx = ctx;
     }
 
     /**
@@ -16,7 +17,7 @@ class Product {
      */
     getVertices(queryObject) {
         return new Promise((resolve, reject) => {
-            this.graphStorage.findVertices(queryObject).then((vertices) => {
+            this.graphStorage.findImportIds(queryObject).then((vertices) => {
                 resolve(vertices);
             }).catch((err) => {
                 reject(err);
@@ -86,7 +87,7 @@ class Product {
      */
     zeroKnowledge(virtualGraph) {
         const graph = virtualGraph.data;
-        const zk = new ZK();
+        const zk = new ZK(this.ctx);
 
         for (const key in graph) {
             const vertex = graph[key];
