@@ -417,7 +417,7 @@ class EventEmitter {
             } = data;
 
             try {
-                logger.info(`Creating offer for import ${import_id}`);
+                logger.info(`Preparing to create offer for import ${import_id}`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
