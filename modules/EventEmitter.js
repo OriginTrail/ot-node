@@ -682,11 +682,11 @@ class EventEmitter {
 
         // sync
         this._on('kad-replication-request', async (request) => {
-            logger.info('Request for replication of data received');
-
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
             const kadIdentity = request.contact[0];
+
+            logger.info(`Request for replication of ${import_id} received. Sender ${kadIdentity}`);
 
             if (!import_id || !wallet) {
                 logger.warn('Asked replication without providing import ID or wallet.');
@@ -756,7 +756,7 @@ class EventEmitter {
 
             const dataInfo = Models.data_info.find({ where: { import_id } });
 
-            logger.info('[DC] Preparing to enter sendPayload');
+            logger.notify(`Preparing to send payload for ${import_id} to ${kadIdentity}`);
             const data = {
                 contact: kadIdentity,
                 vertices,
@@ -769,7 +769,7 @@ class EventEmitter {
             };
 
             dataReplication.sendPayload(data).then(() => {
-                logger.info(`[DC] Payload sent. Replication ID ${replicatedData.id}.`);
+                logger.notify(`Payload for ${import_id} sent to ${kadIdentity}.`);
             }).catch((error) => {
                 logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });

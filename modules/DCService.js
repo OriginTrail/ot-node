@@ -165,7 +165,7 @@ class DCService {
                     dhWallets,
                     dhIds,
                 ).then(async () => {
-                    this.log.info('Offer written to blockchain. Started bidding phase.');
+                    this.log.important(`Offer ${importId} written to blockchain. Started bidding phase.`);
                     this.remoteControl.biddingStarted(importId);
                     offer.status = 'STARTED';
                     await offer.save({ fields: ['status'] });
@@ -275,10 +275,10 @@ class DCService {
                     .then(() => {
                         this.blockchain.chooseBids(offer.import_id)
                             .then(() => {
-                                this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
+                                this.log.important(`Bids chosen for offer ${offer.import_id},`);
                                 resolve();
                             }).catch((err) => {
-                                this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
+                                this.log.warn(`Failed call choose bids for offer ${offer.import_id}. ${err}`);
                                 reject(err);
                             });
                     }).catch((err) => {
@@ -370,7 +370,7 @@ class DCService {
                 importId,
                 kadWallet,
             );
-            this.log.important('Data successfully verified, preparing to start challenges');
+            this.log.important(`Holding data for offer ${importId} and contact ${kadWallet} successfully verified. Challenges taking place...`);
 
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',

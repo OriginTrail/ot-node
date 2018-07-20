@@ -200,7 +200,7 @@ class Network {
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
         }
 
-        this.log.info(`Trying to sync with peers from ${nodes.length} unique seeds`);
+        this.log.info(`Trying to sync with peers from ${nodes.length} unique peers`);
         if (nodes.length === 0) {
             this.log.info('No bootstrap seeds provided and no known profiles');
             this.log.info('Running in seed mode (waiting for connections)');
