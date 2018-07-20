@@ -119,7 +119,7 @@ class Ethereum {
 
         const importIdHash = Utilities.sha3(importId);
 
-        this.log.notify('Writing root hash to blockchain');
+        this.log.notify(`Writing root hash to blockchain for import ${importId}`);
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
     }
 
@@ -1040,7 +1040,7 @@ class Ethereum {
      * Get replication modifier
      */
     async getReplicationModifier() {
-        this.log.trace('Get replication modifier ... ');
+        this.log.trace('Get replication modifier from blockchain');
         return this.biddingContract.methods.replication_modifier().call({
             from: this.config.wallet_address,
         });

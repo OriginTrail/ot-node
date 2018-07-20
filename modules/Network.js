@@ -200,7 +200,7 @@ class Network {
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
         }
 
-        this.log.info(`Trying to sync with peers from ${nodes.length} unique seeds`);
+        this.log.info(`Sync with network from ${nodes.length} unique peers`);
         if (nodes.length === 0) {
             this.log.info('No bootstrap seeds provided and no known profiles');
             this.log.info('Running in seed mode (waiting for connections)');
@@ -219,7 +219,7 @@ class Network {
 
         const func = url => new Promise((resolve, reject) => {
             try {
-                this.log.info(`Syncing with peers via ${url}`);
+                this.log.info(`Syncing with peers via ${url}.`);
                 const contact = kadence.utils.parseContactURL(url);
 
                 this._join(contact, (err) => {
@@ -253,14 +253,6 @@ class Network {
 
         if (result) {
             this.log.important('Initial sync with other peers done');
-
-            const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
-            for (const url of nodesFromCache) {
-                const contactInfo = kadence.utils.parseContactURL(url);
-                if (contactInfo) {
-                    this.node.router.addContactByNodeId(contactInfo[0], contactInfo[1]);
-                }
-            }
 
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);

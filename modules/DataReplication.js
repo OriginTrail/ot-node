@@ -25,8 +25,6 @@ class DataReplication {
      * @return object response
      */
     async sendPayload(data) {
-        this.log.info('Entering sendPayload');
-
         const currentUnixTime = Date.now();
         const options = {
             dh_wallet: config.dh_wallet,
