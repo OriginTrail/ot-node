@@ -91,6 +91,7 @@ class EventEmitter {
             product,
             logger,
             remoteControl,
+            config,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -225,6 +226,13 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network query handling triggered with query ID ${data.query}`);
+            if (!config.enoughFunds) {
+                data.response.status(400);
+                data.response.send({
+                    message: 'Insufficient funds',
+                });
+                return;
+            }
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -245,6 +253,9 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
+            if (!config.enoughFunds) {
+                return;
+            }
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
@@ -390,6 +401,13 @@ class EventEmitter {
         });
 
         this._on('api-create-offer', async (data) => {
+            if (!config.enoughFunds) {
+                data.response.status(400);
+                data.response.send({
+                    message: 'Insufficient funds',
+                });
+                return;
+            }
             const {
                 import_id,
                 total_escrow_time,
@@ -486,6 +504,9 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
+            if (!config.enoughFunds) {
+                return;
+            }
             const {
                 import_id,
                 DC_node_id,
@@ -511,6 +532,9 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
+            if (!config.enoughFunds) {
+                return;
+            }
             const {
                 import_id,
                 DH_wallet,

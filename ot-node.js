@@ -45,19 +45,23 @@ process.on('unhandledRejection', (reason, p) => {
  * Main node object
  */
 class OTNode {
-    async getBalances(Utilities, selectedBlockchain, web3) {
+    async getBalances(Utilities, selectedBlockchain, web3, config, initial) {
+        let enoughETH = false;
+        let enoughtTRAC = false;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 web3,
                 selectedBlockchain.wallet_address,
             );
             if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet before running ot-node');
-                process.exit(1);
+                console.log('Please get some ETH in the node wallet fore running ot-node');
+                enoughETH = false;
+                if (initial) {
+                    process.exit(1);
+                }
             } else {
-                (
-                    log.info(`Balance of ETH: ${etherBalance}`)
-                );
+                enoughETH = true;
+                log.info(`Balance of ETH: ${etherBalance}`);
             }
 
             const atracBalance = await Utilities.getAlphaTracTokenBalance(
@@ -66,16 +70,19 @@ class OTNode {
                 selectedBlockchain.token_contract_address,
             );
             if (atracBalance <= 0) {
-                console.log('Please get some ATRAC in the node wallet before running ot-node');
-                process.exit(1);
+                enoughtTRAC = false;
+                console.log('Please get some ATRAC in the node wallet fore running ot-node');
+                if (initial) {
+                    process.exit(1);
+                }
             } else {
-                (
-                    log.info(`Balance of ATRAC: ${atracBalance}`)
-                );
+                enoughtTRAC = true;
+                log.info(`Balance of ATRAC: ${atracBalance}`);
             }
         } catch (error) {
             console.log(error);
         }
+        config.enoughFunds = enoughETH && enoughtTRAC;
     }
     /**
      * OriginTrail node system bootstrap function
@@ -161,10 +168,10 @@ class OTNode {
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
-            await this.getBalances(Utilities, selectedBlockchain, web3);
+            await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
             setInterval(async () => {
-                await this.getBalances(Utilities, selectedBlockchain, web3);
-            }, 60000);
+                await this.getBalances(Utilities, selectedBlockchain, web3, config);
+            }, 300000);
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
@@ -235,13 +242,13 @@ class OTNode {
         this.listenBlockchainEvents(blockchain);
         dhService.listenToBlockchainEvents();
 
-        try {
-            await this.createProfile(blockchain);
-        } catch (e) {
-            log.error('Failed to create profile');
-            console.log(e);
-            process.exit(1);
-        }
+        // try {
+        //     await this.createProfile(blockchain);
+        // } catch (e) {
+        //     log.error('Failed to create profile');
+        //     console.log(e);
+        //     process.exit(1);
+        // }
 
         await network.start();
 
