@@ -172,6 +172,8 @@ class OTNode {
             setInterval(async () => {
                 await this.getBalances(Utilities, selectedBlockchain, web3, config);
             }, 300000);
+        } else {
+            config.enoughFunds = true;
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
