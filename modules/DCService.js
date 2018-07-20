@@ -271,18 +271,12 @@ class DCService {
             Models.offers.findOne({ where: { id: offerId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
                 this.log.info(`Choose bids for offer ID ${offerId}, import ID ${offer.import_id}.`);
-                this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
+                this.blockchain.chooseBids(offer.import_id)
                     .then(() => {
-                        this.blockchain.chooseBids(offer.import_id)
-                            .then(() => {
-                                this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
-                                resolve();
-                            }).catch((err) => {
-                                this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
-                                reject(err);
-                            });
+                        this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
+                        resolve();
                     }).catch((err) => {
-                        this.log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
                         reject(err);
                     });
             }).catch((err) => {
