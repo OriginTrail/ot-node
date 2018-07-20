@@ -20,7 +20,7 @@ class EventEmitter {
         this.graphStorage = ctx.graphStorage;
 
         this._MAPPINGS = {};
-        this._MAX_LISTENERS = 10; // limits the number of listeners in order to detect memory leaks
+        this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
     }
 
     /**
@@ -756,7 +756,7 @@ class EventEmitter {
 
             const dataInfo = Models.data_info.find({ where: { import_id } });
 
-            logger.notify(`Preparing to send payload for ${import_id} to ${kadIdentity}`);
+            logger.info(`Preparing to send payload for ${import_id} to ${kadIdentity}`);
             const data = {
                 contact: kadIdentity,
                 vertices,
@@ -769,7 +769,7 @@ class EventEmitter {
             };
 
             dataReplication.sendPayload(data).then(() => {
-                logger.notify(`Payload for ${import_id} sent to ${kadIdentity}.`);
+                logger.info(`Payload for ${import_id} sent to ${kadIdentity}.`);
             }).catch((error) => {
                 logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });
