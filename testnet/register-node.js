@@ -127,7 +127,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'http://ou66zqo3r7nxmmnuvnvdoqjm662aem3nef4zsyxekdzjv3ngwue7hqyd.onion:443/#fd0fb28ecedf298f70218abf3947c81b50064d41';
+            env.BOOTSTRAP_NODE = 'http://l7j34pimur6qllxr2uyhuujpsmx4ga4olve5em4igbjnmfokllj4bead.onion:443/#694085c1f0379dad80b917ab747ed80cd2c2ed04,http://bev4uwc77b7ag66pkwijry5hfgxmpnehiw63mhgjv4qquxedsnrxoeid.onion:443/#a3405151e3adaff757e3bef2e928143e2b3d3f97';
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
