@@ -97,11 +97,17 @@ class RegisterNode {
             ip, wallet,
         }).then((result) => {
             console.log(result.data);
+            let counter = 0;
             const checkBalanceInterval = setInterval(() => {
                 web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
                     if (balance > 0) {
                         clearInterval(checkBalanceInterval);
                         this.runNode();
+                    } else {
+                        counter += 1;
+                        if (counter > 20) {
+                            process.kill(1);
+                        }
                     }
                 });
             }, 20000);
