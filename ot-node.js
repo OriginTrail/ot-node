@@ -244,13 +244,13 @@ class OTNode {
         this.listenBlockchainEvents(blockchain);
         dhService.listenToBlockchainEvents();
 
-        // try {
-        //     await this.createProfile(blockchain);
-        // } catch (e) {
-        //     log.error('Failed to create profile');
-        //     console.log(e);
-        //     process.exit(1);
-        // }
+        try {
+            await this.createProfile(blockchain);
+        } catch (e) {
+            log.error('Failed to create profile');
+            console.log(e);
+            process.exit(1);
+        }
 
         await network.start();
 
