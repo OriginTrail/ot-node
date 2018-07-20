@@ -1,6 +1,7 @@
 const AutoUpdater = require('auto-updater');
+const rimraf = require('rimraf');
+const npm = require('npm-cmd');
 const Utilities = require('./modules/Utilities');
-var npm = require('npm-cmd');
 
 const log = Utilities.getLogger();
 
@@ -63,10 +64,6 @@ class AutoUpdate {
             });
             autoupdater.on('update.extracted', () => {
                 log.warn('Update extracted successfully!');
-                umzug_migrations.up().then((migrations) => {
-                    log.warn('Database migrated.');
-                });
-
                 npm.install([], {
                     cwd: '/ot-node',
                     save: true,
@@ -77,7 +74,12 @@ class AutoUpdate {
                     } else {
                         log.info('Installation succeeded!');
                         log.warn('RESTARTING THE APP!');
-                        this.restartNode();
+                        umzug_migrations.up().then((migrations) => {
+                            log.warn('Database migrated.');
+                            rimraf.sync('./data/*');
+                            rimraf.sync('./keys/*');
+                            this.restartNode();
+                        });
                     }
                 });
             });
