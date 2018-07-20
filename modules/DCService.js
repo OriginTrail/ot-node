@@ -139,7 +139,7 @@ class DCService {
                 this.remoteControl.initializingOffer(importId);
 
                 const profileBalance =
-                new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
+                    new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
 
                 const replicationModifier = await this.blockchain.getReplicationModifier();
 
@@ -165,7 +165,7 @@ class DCService {
                     dhWallets,
                     dhIds,
                 ).then(async () => {
-                    this.log.important(`Offer ${importId} written to blockchain. Started bidding phase.`);
+                    this.log.info('Offer written to blockchain. Started bidding phase.');
                     this.remoteControl.biddingStarted(importId);
                     offer.status = 'STARTED';
                     await offer.save({ fields: ['status'] });
@@ -264,7 +264,7 @@ class DCService {
     /**
      * Chose DHs
      * @param offerId Offer identifier
-     * @param totalEscrowTime   Total escrow time
+     * @param totalEscrowTime Total escrow time
      */
     chooseBids(offerId, totalEscrowTime) {
         return new Promise((resolve, reject) => {

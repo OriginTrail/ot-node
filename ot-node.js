@@ -45,6 +45,38 @@ process.on('unhandledRejection', (reason, p) => {
  * Main node object
  */
 class OTNode {
+    async getBalances(Utilities, selectedBlockchain, web3) {
+        try {
+            const etherBalance = await Utilities.getBalanceInEthers(
+                web3,
+                selectedBlockchain.wallet_address,
+            );
+            if (etherBalance <= 0) {
+                console.log('Please get some ETH in the node wallet before running ot-node');
+                process.exit(1);
+            } else {
+                (
+                    log.info(`Balance of ETH: ${etherBalance}`)
+                );
+            }
+
+            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                web3,
+                selectedBlockchain.wallet_address,
+                selectedBlockchain.token_contract_address,
+            );
+            if (atracBalance <= 0) {
+                console.log('Please get some ATRAC in the node wallet before running ot-node');
+                process.exit(1);
+            } else {
+                (
+                    log.info(`Balance of ATRAC: ${atracBalance}`)
+                );
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
     /**
      * OriginTrail node system bootstrap function
      */
@@ -129,36 +161,10 @@ class OTNode {
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
-            try {
-                const etherBalance = await Utilities.getBalanceInEthers(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                );
-                if (etherBalance <= 0) {
-                    console.log('Please get some ETH in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ETH: ${etherBalance}`)
-                    );
-                }
-
-                const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                    selectedBlockchain.token_contract_address,
-                );
-                if (atracBalance <= 0) {
-                    console.log('Please get some ATRAC in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
-                    );
-                }
-            } catch (error) {
-                console.log(error);
-            }
+            await this.getBalances(Utilities, selectedBlockchain, web3);
+            setInterval(async () => {
+                await this.getBalances(Utilities, selectedBlockchain, web3);
+            }, 60000);
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
