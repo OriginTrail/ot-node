@@ -775,7 +775,7 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
-                status: 'ACTIVE',
+                status: 'PENDING',
             });
 
             const dataInfo = Models.data_info.find({ where: { import_id } });

@@ -369,6 +369,9 @@ class DCService {
             );
             this.log.important('Data successfully verified, preparing to start challenges');
 
+            replicatedData.status = 'ACTIVE';
+            await replicatedData.save({ fields: ['status'] });
+
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',
                 import_id: importId,
