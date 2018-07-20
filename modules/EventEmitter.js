@@ -20,7 +20,7 @@ class EventEmitter {
         this.graphStorage = ctx.graphStorage;
 
         this._MAPPINGS = {};
-        this._MAX_LISTENERS = 10; // limits the number of listeners in order to detect memory leaks
+        this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
     }
 
     /**
@@ -91,6 +91,7 @@ class EventEmitter {
             product,
             logger,
             remoteControl,
+            config,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -225,6 +226,13 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network query handling triggered with query ID ${data.query}`);
+            if (!config.enoughFunds) {
+                data.response.status(400);
+                data.response.send({
+                    message: 'Insufficient funds',
+                });
+                return;
+            }
             dvService.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
@@ -245,6 +253,9 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
+            if (!config.enoughFunds) {
+                return;
+            }
             const failFunction = (error) => {
                 logger.warn(error);
                 data.response.status(400);
@@ -390,6 +401,13 @@ class EventEmitter {
         });
 
         this._on('api-create-offer', async (data) => {
+            if (!config.enoughFunds) {
+                data.response.status(400);
+                data.response.send({
+                    message: 'Insufficient funds',
+                });
+                return;
+            }
             const {
                 import_id,
                 total_escrow_time,
@@ -399,9 +417,7 @@ class EventEmitter {
             } = data;
 
             try {
-                logger.info(`Create offer triggered with import_id ${import_id},
-                    total_escrow_time ${total_escrow_time}, max_token_amount ${max_token_amount},
-                    min_stake_amount ${min_stake_amount} and min_reputation ${min_reputation}.`);
+                logger.info(`Preparing to create offer for import ${import_id}`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
@@ -441,7 +457,7 @@ class EventEmitter {
 
         this._on('api-gs1-import-request', async (data) => {
             try {
-                logger.info(`Gs1 import with ${data.filepath} triggered.`);
+                logger.info(`GS1 import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importXMLgs1(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -458,7 +474,7 @@ class EventEmitter {
 
         this._on('api-wot-import-request', async (data) => {
             try {
-                logger.info(`Wot import with ${data.filepath} triggered.`);
+                logger.info(`WOT import with ${data.filepath} triggered.`);
                 const responseObject = await importer.importWOT(data.filepath);
                 const { error } = responseObject;
                 const { response } = responseObject;
@@ -482,14 +498,13 @@ class EventEmitter {
         const {
             dhService,
             logger,
-            blockchain,
             config,
-            remoteControl,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            logger.info(`New offer has been created by ${eventData.DC_node_id} in OriginTrail decentralized network.`);
-
+            if (!config.enoughFunds) {
+                return;
+            }
             const {
                 import_id,
                 DC_node_id,
@@ -515,6 +530,9 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
+            if (!config.enoughFunds) {
+                return;
+            }
             const {
                 import_id,
                 DH_wallet,
@@ -612,7 +630,6 @@ class EventEmitter {
         });
 
         this._on('eth-EscrowVerified', async (eventData) => {
-            logger.trace('Received eth-EscrowVerified');
             const {
                 import_id,
                 DH_wallet,
@@ -620,6 +637,7 @@ class EventEmitter {
 
             if (config.node_wallet === DH_wallet) {
                 // Event is for me.
+                logger.trace(`Escrow for import ${import_id} verified`);
                 try {
                     // TODO: Possible race condition if another bid for same import came meanwhile.
                     const bid = await Models.bids.findOne({
@@ -686,11 +704,11 @@ class EventEmitter {
 
         // sync
         this._on('kad-replication-request', async (request) => {
-            logger.info('Request for replication of data received');
-
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
             const kadIdentity = request.contact[0];
+
+            logger.info(`Request for replication of ${import_id} received. Sender ${kadIdentity}`);
 
             if (!import_id || !wallet) {
                 logger.warn('Asked replication without providing import ID or wallet.');
@@ -755,12 +773,12 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
-                status: 'ACTIVE',
+                status: 'PENDING',
             });
 
             const dataInfo = Models.data_info.find({ where: { import_id } });
 
-            logger.info('[DC] Preparing to enter sendPayload');
+            logger.info(`Preparing to send payload for ${import_id} to ${kadIdentity}`);
             const data = {
                 contact: kadIdentity,
                 vertices,
@@ -773,7 +791,7 @@ class EventEmitter {
             };
 
             dataReplication.sendPayload(data).then(() => {
-                logger.info(`[DC] Payload sent. Replication ID ${replicatedData.id}.`);
+                logger.info(`Payload for ${import_id} sent to ${kadIdentity}.`);
             }).catch((error) => {
                 logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
             });
