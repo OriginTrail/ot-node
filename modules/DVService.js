@@ -16,7 +16,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer, logger,
+        network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -25,6 +25,7 @@ class DVService {
         this.graphStorage = graphStorage;
         this.importer = importer;
         this.log = logger;
+        this.remoteControl = remoteControl;
     }
 
     /**
@@ -115,6 +116,7 @@ class DVService {
 
                 if (!lowestOffer) {
                     this.log.info('Didn\'t find answer or no one replied.');
+                    this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });
                 } else {
@@ -207,6 +209,18 @@ class DVService {
             this.log.error(`Failed to add query response. ${message}.`);
             throw Error('Internal error.');
         }
+
+        this.remoteControl.networkQueryOfferArrived({
+            query: JSON.stringify(message.query),
+            query_id: queryId,
+            wallet: message.wallet,
+            node_id: message.nodeId,
+            imports: JSON.stringify(message.imports),
+            data_size: message.dataSize,
+            data_price: message.dataPrice,
+            stake_factor: message.stakeFactor,
+            reply_id: message.replyId,
+        });
     }
 
     async handleDataReadResponse(message) {
@@ -223,6 +237,7 @@ class DVService {
 
         // Is it the chosen one?
         const replyId = message.id;
+        const { import_id: importId } = message;
 
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
@@ -242,9 +257,6 @@ class DVService {
             await networkQuery.save({ fields: ['status'] });
             throw Error('Read not confirmed');
         }
-
-        const importObject = JSON.parse(networkQueryResponse.imports)[0];
-        const importId = importObject.import_id;
 
         // Calculate root hash and check is it the same on the SC.
         const { data_provider_wallet } = message;
@@ -298,6 +310,7 @@ class DVService {
         }
 
         this.log.info(`Import ID ${importId} imported successfully.`);
+        this.remoteControl.readNotification(`Import ID ${importId} imported successfully.`);
 
         const dataSize = bytes(JSON.stringify(vertices));
         await Models.data_info.create({
@@ -345,6 +358,7 @@ class DVService {
         );
 
         this.log.important(`[DV] - Purchase initiated for import ID ${importId}.`);
+        this.remoteControl.readNotification(`[DV] - Purchase initiated for import ID ${importId}.`);
 
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);
@@ -493,6 +507,7 @@ class DVService {
             }
 
             this.log.info(`[DV] Purchase ${importId} finished. Got key.`);
+            this.remoteControl.purchaseFinished(`[DV] Purchase ${importId} finished. Got key.`, importId);
         } else {
             // Didn't sign escrow. Cancel it.
             this.log.info(`DH didn't sign the escrow. Canceling it. Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);

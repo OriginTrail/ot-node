@@ -47,7 +47,7 @@ library SafeMath {
      * @dev Throws if called by any account other than the owner.
      */
      modifier onlyOwner() {
-          require(msg.sender == owner);
+          require(msg.sender == owner, "Only owner can execute function");
           _;
      }
 
@@ -56,7 +56,7 @@ library SafeMath {
      * @param newOwner The address to transfer ownership to.
      */
      function transferOwnership(address newOwner) public onlyOwner {
-          require(newOwner != address(0));
+          require(newOwner != address(0), "Owner address cannot be 0");
           emit OwnershipTransferred(owner, newOwner);
           owner = newOwner;
      }
@@ -97,21 +97,26 @@ library SafeMath {
      Bidding public bidding;
      Reading public reading;
 
+     modifier senderNotZero() {
+          require(msg.sender != address(0), "Sender address cannot be 0");
+          _;
+     }
+
      function EscrowHolder(address tokenAddress)
-     public{
-          require ( tokenAddress != address(0) );
+     public senderNotZero{
+          require ( tokenAddress != address(0), "Token address cannot be 0");
           token = ERC20(tokenAddress);
      }
 
      function setBidding(address biddingAddress) 
-     public onlyOwner{
-          require ( biddingAddress != address(0) );
+     public onlyOwner senderNotZero{
+          require ( biddingAddress != address(0), "Token address cannot be 0");
           bidding = Bidding(biddingAddress);
      }
 
      function setReading(address readingAddress)
-     public onlyOwner{
-          require ( readingAddress != address(0));
+     public onlyOwner senderNotZero{
+          require ( readingAddress != address(0), "Token address cannot be 0");
           reading = Reading(readingAddress);
      }
 
@@ -150,12 +155,12 @@ library SafeMath {
      event Payment(bytes32 import_id, address DH_wallet, uint256 amount);
 
      function initiateEscrow(address DC_wallet, address DH_wallet, bytes32 import_id, uint token_amount, uint stake_amount, uint total_time_in_minutes)
-     public onlyOwner{
+     public onlyOwner senderNotZero{
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
           require(this_escrow.escrow_status == EscrowStatus.completed
-               ||   this_escrow.escrow_status == EscrowStatus.inactive);
+               ||   this_escrow.escrow_status == EscrowStatus.inactive, "Escrow already in progress");
 
-          require(total_time_in_minutes > 0);
+          require(total_time_in_minutes > 0, "Total time cannot be equal 0");
           this_escrow.DC_wallet = DC_wallet;
           this_escrow.token_amount = token_amount;
           this_escrow.tokens_sent = 0;
@@ -169,10 +174,10 @@ library SafeMath {
      }
 
      function addRootHashAndChecksum(bytes32 import_id, bytes32 litigation_root_hash, bytes32 distribution_root_hash, uint256 checksum)
-     public {
+     public senderNotZero{
           EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
-          require(this_escrow.escrow_status == EscrowStatus.initiated);
+          require(this_escrow.escrow_status == EscrowStatus.initiated, "Escrow not initiated");
 
           this_escrow.litigation_root_hash = litigation_root_hash;
           this_escrow.distribution_root_hash = distribution_root_hash;
@@ -186,11 +191,11 @@ library SafeMath {
      }
 
      function verifyEscrow(bytes32 import_id, address DH_wallet)
-     public {
+     public senderNotZero{
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-          require(this_escrow.DC_wallet == msg.sender
-               && this_escrow.escrow_status == EscrowStatus.confirmed);
+          require(this_escrow.DC_wallet == msg.sender, "Only DC can call this function");
+          require(this_escrow.escrow_status == EscrowStatus.confirmed, "Escrow not confirmed");
 
           bidding.addEscrow(msg.sender);
           bidding.addEscrow(DH_wallet);
@@ -205,13 +210,14 @@ library SafeMath {
      }
 
      function payOut(bytes32 import_id)
-     public{
+     public senderNotZero{
           EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
           LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
-          require(this_escrow.escrow_status == EscrowStatus.active);
+          require(this_escrow.escrow_status == EscrowStatus.active, "Escrow status not equal active");
           require(this_litigation.litigation_status == LitigationStatus.inactive
-               ||  this_litigation.litigation_status == LitigationStatus.completed);
+               ||  this_litigation.litigation_status == LitigationStatus.completed,
+               "Cannot call function while a litigation is in progress");
 
           uint256 amount_to_send;
 
@@ -242,7 +248,7 @@ library SafeMath {
      }
 
      function cancelEscrow(bytes32 import_id, address correspondent_wallet, bool sender_is_DH)
-     public {
+     public senderNotZero{
           address DH_wallet;
           address DC_wallet;
 
@@ -257,10 +263,11 @@ library SafeMath {
 
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-          require(msg.sender == DH_wallet || msg.sender == this_escrow.DC_wallet);
+          require(msg.sender == DH_wallet || msg.sender == this_escrow.DC_wallet, "Only DC or DH can call this function");
 
           require(this_escrow.escrow_status == EscrowStatus.initiated
-               || this_escrow.escrow_status == EscrowStatus.confirmed);
+               || this_escrow.escrow_status == EscrowStatus.confirmed,
+               "Escrow status not equal initiated or confirmed");
 
           uint256 amount_to_send = this_escrow.token_amount;
           this_escrow.token_amount = 0;
@@ -315,13 +322,15 @@ library SafeMath {
      mapping(bytes32 => mapping ( address => LitigationDefinition)) public litigation;
 
      function initiateLitigation(bytes32 import_id, address DH_wallet, uint requested_data_index, bytes32[] hash_array)
-     public returns (bool newLitigationInitiated){
+     public senderNotZero returns (bool newLitigationInitiated){
           LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-          require(this_escrow.DC_wallet == msg.sender && this_escrow.escrow_status == EscrowStatus.active);
-          require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed);
-          require(block.timestamp < this_escrow.end_time);
+          require(this_escrow.DC_wallet == msg.sender, "Only DC can call this function");
+          require(this_escrow.escrow_status == EscrowStatus.active, "Escrow status not active");
+          require(this_litigation.litigation_status == LitigationStatus.inactive || this_litigation.litigation_status == LitigationStatus.completed,
+               "Litigation already in progress");
+          require(block.timestamp < this_escrow.end_time, "Function cannot be called after escrow end time");
 
           this_litigation.requested_data_index = requested_data_index;
           this_litigation.hash_array = hash_array;
@@ -333,11 +342,11 @@ library SafeMath {
      }
 
      function answerLitigation(bytes32 import_id, bytes32 requested_data)
-     public returns (bool answer_accepted){
+     public senderNotZero returns (bool answer_accepted){
           LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
           EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
 
-          require(this_litigation.litigation_status == LitigationStatus.initiated);
+          require(this_litigation.litigation_status == LitigationStatus.initiated, "Litigation status must be initiated");
 
           if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
                uint256 amount_to_send;
@@ -383,11 +392,12 @@ library SafeMath {
      * Used only when DC is inactive after DH sent litigation answer.
      */
      function cancelInactiveLitigation(bytes32 import_id)
-     public {
+     public senderNotZero{
           LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
 
-          require(this_litigation.litigation_status == LitigationStatus.answered
-               &&   this_litigation.answer_timestamp + 15 minutes <= block.timestamp);
+          require(this_litigation.litigation_status == LitigationStatus.answered, "Litigation status must be answered");
+          require(this_litigation.answer_timestamp + 15 minutes <= block.timestamp,
+          "Function cannot be called within 15 minutes after answering litigation");
 
           this_litigation.litigation_status = LitigationStatus.completed;
           emit LitigationCompleted(import_id, msg.sender, false);
@@ -395,16 +405,17 @@ library SafeMath {
      }
 
      function proveLitigaiton(bytes32 import_id, address DH_wallet, bytes32 proof_data)
-     public returns (bool DH_was_penalized){
+     public senderNotZero returns (bool DH_was_penalized){
           LitigationDefinition storage this_litigation = litigation[import_id][DH_wallet];
           EscrowDefinition storage this_escrow = escrow[import_id][DH_wallet];
 
-          require(this_escrow.DC_wallet == msg.sender && 
-               (this_litigation.litigation_status == LitigationStatus.initiated 
-                    || this_litigation.litigation_status == LitigationStatus.answered));
+          require(this_escrow.DC_wallet == msg.sender, "Only DC can call this function");
+          require(this_litigation.litigation_status == LitigationStatus.initiated 
+                    || this_litigation.litigation_status == LitigationStatus.answered, "Litigation status not initiated or answered");
 
           if (this_litigation.litigation_status == LitigationStatus.initiated){
-               require(this_litigation.litigation_start_time + 15 minutes <= block.timestamp);
+               require(this_litigation.litigation_start_time + 15 minutes <= block.timestamp,
+                    "Function cannot be called within 15 minutes after initiating litigation");
 
                uint256 amount_to_send;
 

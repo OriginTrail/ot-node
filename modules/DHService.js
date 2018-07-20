@@ -1,4 +1,5 @@
 const BN = require('bn.js');
+const d3 = require('d3-format');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
@@ -28,6 +29,7 @@ class DHService {
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -46,20 +48,20 @@ class DHService {
         predeterminedBid,
     ) {
         try {
-            // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
-            if (offerModel) {
-                const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
+            dcNodeId = dcNodeId.substring(2, 42);
+            const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
+            if (dcContact == null || dcContact.hostname == null) {
+                // wait until peers are synced
                 return;
             }
 
-            dcNodeId = dcNodeId.substring(2, 42);
-            const dcContact = await this.network.kademlia().getContact(dcNodeId);
-            if (dcContact == null || dcContact.hostname == null) {
-                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
+            // Check if mine offer and if so ignore it.
+            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
+            if (offerModel) {
                 return;
             }
+
+            this.log.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
 
             const distanceParams = await this.blockchain.getDistanceParameters(importId);
 
@@ -69,7 +71,7 @@ class DHService {
             const k = distanceParams[4];
             const numNodes = distanceParams[5];
 
-            if (this.amIClose(k, numNodes, dataHash, nodeHash, 200000)) {
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 10000)) {
                 this.log.notify('Close enough to take bid');
             } else {
                 this.log.notify('Not close enough to take bid');
@@ -120,8 +122,14 @@ class DHService {
 
             const profile = await this.blockchain.getProfile(this.config.node_wallet);
 
-            maxTokenAmount = new BN(maxTokenAmount);
-            minStakeAmount = new BN(minStakeAmount);
+            const format = d3.formatPrefix(',.6~s', 1e6);
+            const maxPrice = new BN(maxTokenAmount).toString();
+            const minStake = new BN(minStakeAmount).toString();
+            const formatMaxPrice = format(maxPrice);
+            const formatMinStake = format(minStake);
+            const formatMyPrice = format(profile.token_amount_per_byte_minute);
+            const formatMyStake = format(profile.stake_amount_per_byte_minute);
+
             dataSizeBytes = new BN(dataSizeBytes);
             const totalEscrowTimePerMinute = new BN(totalEscrowTime);
             maxTokenAmount = new BN(maxTokenAmount)
@@ -139,11 +147,15 @@ class DHService {
 
             if (maxTokenAmount.lt(myPrice)) {
                 this.log.info(`Offer ${importId} too cheap for me.`);
+                this.log.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
+                this.log.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
                 return;
             }
 
             if (minStakeAmount.gt(myStake)) {
                 this.log.info(`Skipping offer ${importId}. Stake too high.`);
+                this.log.info(`Minimum stake required ${formatMinStake}[mATRAC] per byte/min`);
+                this.log.info(`My stake ${formatMyStake}[mATRAC] per byte/min`);
                 return;
             }
 
@@ -153,6 +165,7 @@ class DHService {
             }
 
             this.log.trace(`Adding a bid for offer ${importId}.`);
+            this.remoteControl.addingBid(`Adding a bid for offer ${importId}.`);
 
             // From smart contract:
             // uint scope = this_offer.data_size * this_offer.total_escrow_time;
@@ -167,8 +180,13 @@ class DHService {
             }
 
             if (!predeterminedBid) {
-                await this.blockchain.addBid(importId, this.config.identity);
-                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                try {
+                    await this.blockchain.addBid(importId, this.config.identity);
+                    bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                } catch (err) {
+                    this.log.info('Bid not added, your bid was probably too late and the offer has been closed');
+                    return;
+                }
             } else {
                 const myBidIndex = await this.blockchain.getBidIndex(
                     importId,
@@ -197,29 +215,38 @@ class DHService {
             await this.blockchain.subscribeToEvent('OfferFinalized', importId);
             // Now check if bid taken.
             // emit BidTaken(bytes32 import_id, address DH_wallet);
-            const eventModelBid = await Models.events.findOne({
+            const eventModelBids = await Models.events.findAll({
                 where:
                     {
                         event: 'BidTaken',
                         import_id: importId,
                     },
             });
-            if (!eventModelBid) {
+            if (!eventModelBids) {
                 // Probably contract failed since no event fired.
                 this.log.info(`BidTaken not received for offer ${importId}.`);
                 return;
             }
 
-            const eventBid = eventModelBid.get({ plain: true });
-            const eventBidData = JSON.parse(eventBid.data);
+            let bidTakenEvent = null;
+            for (const e of eventModelBids) {
+                const eventBidData = JSON.parse(e.data);
 
-            if (eventBidData.DH_wallet !== this.config.node_wallet) {
+                if (eventBidData.DH_wallet === this.config.node_wallet) {
+                    bidTakenEvent = e;
+                    break;
+                }
+            }
+
+            if (!bidTakenEvent) {
                 this.log.info(`Bid not taken for offer ${importId}.`);
+                this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
                 return;
             }
 
             bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
+            this.remoteControl.replicationRequestSent(importId);
             await this.network.kademlia().replicationRequest(
                 {
                     import_id: importId,
@@ -227,13 +254,15 @@ class DHService {
                 },
                 bid.dc_id, (err) => {
                     if (err) {
-                        this.log.warn(`Failed to send replication request ${err}`);
+                        this.log.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
                         // TODO Cancel bid here.
+                        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
                 },
             );
         } catch (error) {
             this.log.error(`Failed to handle offer. ${error}`);
+            this.remoteControl.failedOfferHandle(`Failed to handle offer. ${error}`);
         }
     }
 
@@ -308,6 +337,7 @@ class DHService {
 
         this.log.trace('[DH] Replication finished');
 
+
         try {
             const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
             ImportUtilities.sort(encryptedVertices, '_dc_key');
@@ -335,6 +365,7 @@ class DHService {
             const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
             this.log.important('Send root hashes and checksum to blockchain.');
+            this.remoteControl.sendingRootHashes('Sending import root hashes and checksum to blockchain.');
             await this.blockchain.addRootHashAndChecksum(
                 importResult.import_id,
                 litigationRootHash,
@@ -358,6 +389,7 @@ class DHService {
             }
 
             this.log.important('Replication finished. Send data to DC for verification.');
+            this.remoteControl.dhReplicationFinished('Replication finished. Sending data to DC for verification.');
             await this.network.kademlia().verifyImport({
                 epk,
                 importId: importResult.import_id,

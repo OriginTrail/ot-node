@@ -13,10 +13,16 @@ class KademliaUtils {
         if (msg.startsWith('negotiation error')) {
             return null; // skip logging
         }
+        if (msg.includes('received late or invalid response')) {
+            return null; // skip logging
+        }
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
         if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
+            return null; // skip logging
+        }
+        if (msg.includes('gateway timeout')) {
             return null; // skip logging
         }
         if (msg.startsWith('connect econnrefused')) {
