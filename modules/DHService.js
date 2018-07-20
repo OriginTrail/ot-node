@@ -48,20 +48,20 @@ class DHService {
         predeterminedBid,
     ) {
         try {
-            // Check if mine offer and if so ignore it.
-            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
-            if (offerModel) {
-                const offer = offerModel.get({ plain: true });
-                this.log.trace(`Mine offer (ID ${offer.data_hash}). Offer ignored`);
-                return;
-            }
-
             dcNodeId = dcNodeId.substring(2, 42);
             const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
             if (dcContact == null || dcContact.hostname == null) {
-                this.log.trace(`Unknown DC contact ${dcNodeId} for import ${importId}. Offer ignored.`);
+                // wait until peers are synced
                 return;
             }
+
+            // Check if mine offer and if so ignore it.
+            const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
+            if (offerModel) {
+                return;
+            }
+
+            this.log.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
 
             const distanceParams = await this.blockchain.getDistanceParameters(importId);
 
@@ -71,7 +71,7 @@ class DHService {
             const k = distanceParams[4];
             const numNodes = distanceParams[5];
 
-            if (this.amIClose(k, numNodes, dataHash, nodeHash, 20000)) {
+            if (this.amIClose(k, numNodes, dataHash, nodeHash, 10000)) {
                 this.log.notify('Close enough to take bid');
             } else {
                 this.log.notify('Not close enough to take bid');
@@ -180,8 +180,13 @@ class DHService {
             }
 
             if (!predeterminedBid) {
-                await this.blockchain.addBid(importId, this.config.identity);
-                bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                try {
+                    await this.blockchain.addBid(importId, this.config.identity);
+                    bidEvent = await this.blockchain.subscribeToEvent('AddedBid', importId);
+                } catch (err) {
+                    this.log.info('Bid not added, your bid was probably too late and the offer has been closed');
+                    return;
+                }
             } else {
                 const myBidIndex = await this.blockchain.getBidIndex(
                     importId,
@@ -249,7 +254,7 @@ class DHService {
                 },
                 bid.dc_id, (err) => {
                     if (err) {
-                        this.log.warn(`Failed to send replication request ${err}`);
+                        this.log.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
                         // TODO Cancel bid here.
                         this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
