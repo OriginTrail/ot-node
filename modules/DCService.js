@@ -165,7 +165,7 @@ class DCService {
                     dhWallets,
                     dhIds,
                 ).then(async () => {
-                    this.log.info('Offer written to blockchain. Started bidding phase.');
+                    this.log.important(`Offer ${importId} written to blockchain. Started bidding phase.`);
                     this.remoteControl.biddingStarted(importId);
                     offer.status = 'STARTED';
                     await offer.save({ fields: ['status'] });
@@ -367,7 +367,7 @@ class DCService {
                 importId,
                 kadWallet,
             );
-            this.log.important('Data successfully verified, preparing to start challenges');
+            this.log.important(`Holding data for offer ${importId} and contact ${kadWallet} successfully verified. Challenges taking place...`);
 
             replicatedData.status = 'ACTIVE';
             await replicatedData.save({ fields: ['status'] });

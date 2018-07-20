@@ -417,9 +417,7 @@ class EventEmitter {
             } = data;
 
             try {
-                logger.info(`Create offer triggered with import_id ${import_id},
-                    total_escrow_time ${total_escrow_time}, max_token_amount ${max_token_amount},
-                    min_stake_amount ${min_stake_amount} and min_reputation ${min_reputation}.`);
+                logger.info(`Preparing to create offer for import ${import_id}`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
@@ -632,7 +630,6 @@ class EventEmitter {
         });
 
         this._on('eth-EscrowVerified', async (eventData) => {
-            logger.trace('Received eth-EscrowVerified');
             const {
                 import_id,
                 DH_wallet,
@@ -640,6 +637,7 @@ class EventEmitter {
 
             if (config.node_wallet === DH_wallet) {
                 // Event is for me.
+                logger.trace(`Escrow for import ${import_id} verified`);
                 try {
                     // TODO: Possible race condition if another bid for same import came meanwhile.
                     const bid = await Models.bids.findOne({
