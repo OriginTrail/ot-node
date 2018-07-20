@@ -107,6 +107,7 @@ class RegisterNode {
             }, 20000);
         }).catch((e) => {
             console.log(e);
+            process.kill(1);
         });
     }
 
