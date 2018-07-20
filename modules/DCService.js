@@ -188,38 +188,41 @@ class DCService {
                             return;
                         }
 
-                        this.log.trace('Started choosing phase.');
-                        this.remoteControl.biddingComplete(importId);
-                        this.remoteControl.choosingBids(importId);
+                        setTimeout(() => {
+                            this.log.trace('Started choosing phase.');
+                            this.remoteControl.biddingComplete(importId);
+                            this.remoteControl.choosingBids(importId);
 
-                        offer.status = 'FINALIZING';
-                        offer.save({ fields: ['status'] });
-                        this.chooseBids(offer.id, totalEscrowTime).then(() => {
-                            this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
-                                .then(() => {
-                                    const errorMsg = `Offer for import ${offer.import_id} finalized`;
-                                    offer.status = 'FINALIZED';
-                                    this.remoteControl.bidChosen(importId);
-                                    this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
-                                    offer.message = errorMsg;
-                                    offer.save({ fields: ['status', 'message'] });
-                                    this.log.info(errorMsg);
-                                }).catch((error) => {
-                                    const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
-                                    offer.status = 'FAILED';
-                                    offer.message = errorMsg;
-                                    offer.save({ fields: ['status', 'message'] });
-                                    this.log.error(errorMsg);
-                                    this.remoteControl.dcErrorHandling(errorMsg);
-                                });
-                        }).catch((err) => {
-                            const errorMsg = `Failed to choose bids. ${err}`;
-                            offer.status = 'FAILED';
-                            offer.message = errorMsg;
-                            offer.save({ fields: ['status', 'message'] });
-                            this.log.error(errorMsg);
-                            this.remoteControl.dcErrorHandling(errorMsg);
-                        });
+                            offer.status = 'FINALIZING';
+                            offer.save({ fields: ['status'] });
+
+                            this.chooseBids(offer.id, totalEscrowTime).then(() => {
+                                this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
+                                    .then(() => {
+                                        const errorMsg = `Offer for import ${offer.import_id} finalized`;
+                                        offer.status = 'FINALIZED';
+                                        this.remoteControl.bidChosen(importId);
+                                        this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
+                                        offer.message = errorMsg;
+                                        offer.save({ fields: ['status', 'message'] });
+                                        this.log.info(errorMsg);
+                                    }).catch((error) => {
+                                        const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
+                                        offer.status = 'FAILED';
+                                        offer.message = errorMsg;
+                                        offer.save({ fields: ['status', 'message'] });
+                                        this.log.error(errorMsg);
+                                        this.remoteControl.dcErrorHandling(errorMsg);
+                                    });
+                            }).catch((err) => {
+                                const errorMsg = `Failed to choose bids. ${err}`;
+                                offer.status = 'FAILED';
+                                offer.message = errorMsg;
+                                offer.save({ fields: ['status', 'message'] });
+                                this.log.error(errorMsg);
+                                this.remoteControl.dcErrorHandling(errorMsg);
+                            });
+                        }, 30000);
                     });
                 }).catch((err) => {
                     const errorMsg = `Failed to create offer. ${err}.`;
