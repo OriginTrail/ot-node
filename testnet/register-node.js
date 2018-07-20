@@ -97,7 +97,7 @@ class RegisterNode {
         axios.post('https://station.origintrail.io/api/node/register', {
             ip, wallet,
         }).then((result) => {
-            // console.log(result.data);
+            console.log(result.data);
             const checkBalanceInterval = setInterval(() => {
                 web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
                     if (balance > 0) {
