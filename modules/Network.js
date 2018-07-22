@@ -25,7 +25,6 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 40000;
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -88,7 +87,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -96,8 +95,12 @@ class Network {
             wallet: config.node_wallet,
         };
 
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
         // Initialize transport adapter
-        const transport = new kadence.HTTPTransport();
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -112,7 +115,14 @@ class Network {
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialized');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
+        this.enableNatTraversal();
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -152,31 +162,17 @@ class Network {
         });
     }
 
-    /**
-     * Enables Onion client
-     */
-    enableOnion() {
-        this.log.info('Use Tor for an anonymous overlay');
-        this.node.onion = this.node.plugin(kadence.onion({
-            dataDirectory: `${__dirname}/../data/hidden_service`,
-            virtualPort: config.onion_virtual_port,
-            localMapping: `127.0.0.1:${config.node_port}`,
-            torrcEntries: {
-                LearnCircuitBuildTimeout: 0,
-                CircuitBuildTimeout: 40,
-                CircuitStreamTimeout: 30,
-                MaxCircuitDirtiness: 7200,
-                MaxClientCircuitsPending: 1024,
-                SocksTimeout: 41,
-                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
-                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
-                SafeLogging: 0,
-                FetchDirInfoEarly: 1,
-                FetchDirInfoExtraEarly: 1,
-            },
-            passthroughLoggingEnabled: 1,
-        }));
-        this.log.info('Onion initialised');
+    enableNatTraversal() {
+        this.log.info('Trying NAT traversal');
+        this.node.traverse = this.node.plugin(kadence.traverse([
+            new kadence.traverse.ReverseTunnelStrategy({
+                remoteAddress: 'tunnel.bookch.in',
+                remotePort: 8443,
+                privateKey: this.node.spartacus.privateKey,
+                secureLocalConnection: true,
+                verboseLogging: false,
+            }),
+        ]));
     }
 
     /**
