@@ -123,6 +123,10 @@ class Network {
         ));
         this.log.info('Spartacus initialized');
 
+        if (parseInt(config.onion_enabled, 10)) {
+            this.enableOnion();
+        }
+
         if (parseInt(config.traverse_nat_enabled, 10)) {
             this.enableNatTraversal();
         }
@@ -176,6 +180,31 @@ class Network {
                 verboseLogging: false,
             }),
         ]));
+    }
+
+    /**
+     * Enables Onion client
+     */
+    enableOnion() {
+        this.log.info('Use Tor for an anonymous overlay');
+        this.node.onion = this.node.plugin(kadence.onion({
+            dataDirectory: `${__dirname}/../data/hidden_service`,
+            virtualPort: config.onion_virtual_port,
+            localMapping: `127.0.0.1:${config.node_port}`,
+            torrcEntries: {
+                LearnCircuitBuildTimeout: 0,
+                CircuitBuildTimeout: 40,
+                CircuitStreamTimeout: 30,
+                MaxCircuitDirtiness: 7200,
+                MaxClientCircuitsPending: 1024,
+                SocksTimeout: 41,
+                SafeLogging: 0,
+                FetchDirInfoEarly: 1,
+                FetchDirInfoExtraEarly: 1,
+            },
+            passthroughLoggingEnabled: 1,
+        }));
+        this.log.info('Onion initialised');
     }
 
     /**
