@@ -25,7 +25,6 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 40000;
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -88,7 +87,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -96,8 +95,12 @@ class Network {
             wallet: config.node_wallet,
         };
 
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
         // Initialize transport adapter
-        const transport = new kadence.HTTPTransport();
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -108,11 +111,25 @@ class Network {
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
         this.log.info('Starting OT Node...');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialized');
+
+        if (parseInt(config.onion_enabled, 10)) {
+            this.enableOnion();
+        }
+
+        if (parseInt(config.traverse_nat_enabled, 10)) {
+            this.enableNatTraversal();
+        }
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -152,6 +169,19 @@ class Network {
         });
     }
 
+    enableNatTraversal() {
+        this.log.info('Trying NAT traversal');
+        this.node.traverse = this.node.plugin(kadence.traverse([
+            new kadence.traverse.ReverseTunnelStrategy({
+                remoteAddress: 'tunnel.bookch.in',
+                remotePort: 8443,
+                privateKey: this.node.spartacus.privateKey,
+                secureLocalConnection: true,
+                verboseLogging: false,
+            }),
+        ]));
+    }
+
     /**
      * Enables Onion client
      */
@@ -168,8 +198,6 @@ class Network {
                 MaxCircuitDirtiness: 7200,
                 MaxClientCircuitsPending: 1024,
                 SocksTimeout: 41,
-                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
-                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
                 SafeLogging: 0,
                 FetchDirInfoEarly: 1,
                 FetchDirInfoExtraEarly: 1,
@@ -200,7 +228,7 @@ class Network {
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
         }
 
-        this.log.info(`Trying to sync with peers from ${nodes.length} unique seeds`);
+        this.log.info(`Sync with network from ${nodes.length} unique peers`);
         if (nodes.length === 0) {
             this.log.info('No bootstrap seeds provided and no known profiles');
             this.log.info('Running in seed mode (waiting for connections)');
@@ -219,7 +247,7 @@ class Network {
 
         const func = url => new Promise((resolve, reject) => {
             try {
-                this.log.info(`Syncing with peers via ${url}`);
+                this.log.info(`Syncing with peers via ${url}.`);
                 const contact = kadence.utils.parseContactURL(url);
 
                 this._join(contact, (err) => {
@@ -253,14 +281,6 @@ class Network {
 
         if (result) {
             this.log.important('Initial sync with other peers done');
-
-            const nodesFromCache = await peercachePlugin.getBootstrapCandidates();
-            for (const url of nodesFromCache) {
-                const contactInfo = kadence.utils.parseContactURL(url);
-                if (contactInfo) {
-                    this.node.router.addContactByNodeId(contactInfo[0], contactInfo[1]);
-                }
-            }
 
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);

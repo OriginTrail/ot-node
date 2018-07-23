@@ -19,6 +19,9 @@ class KademliaUtils {
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
+        if (msg.includes('client cannot service request at this time')) {
+            return null; // skip logging
+        }
         if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
             return null; // skip logging
         }
