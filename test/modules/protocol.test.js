@@ -73,10 +73,11 @@ describe('Protocol tests', () => {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from, gas: 3141592 })
+                .send({ from, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
                 })
+                .on('error', error => reject(error))
                 .then((instance) => {
                     // TODO: ugly workaround - not sure why this is necessary.
                     if (!instance._requestManager.provider) {

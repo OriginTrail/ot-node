@@ -12,6 +12,12 @@ const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
+const RemoteControl = require('../../modules/RemoteControl');
+const Network = require('../../modules/Network');
+const NetworkUtilities = require('../../modules/NetworkUtilities');
+const EventEmitter = require('../../modules/EventEmitter');
+const Product = require('../../modules/Product');
+const Web3 = require('web3');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -38,6 +44,7 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_2.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
+        { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
 
     beforeEach('Setup DB', async () => {
@@ -60,6 +67,8 @@ describe('GS1 Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+
         const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
         container.register({
@@ -69,6 +78,16 @@ describe('GS1 Importer tests', () => {
             graphStorage: awilix.asValue(graphStorage),
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
+            remoteControl: awilix.asValue({
+                importRequestData: () => {
+                },
+            }),
+            network: awilix.asClass(Network),
+            networkUtilities: awilix.asClass(NetworkUtilities),
+            emitter: awilix.asClass(EventEmitter),
+            product: awilix.asClass(Product),
+            web3: awilix.asValue(web3),
+            config: awilix.asValue(Utilities.loadConfig()),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
@@ -85,6 +104,24 @@ describe('GS1 Importer tests', () => {
                     async () => gs1.parseGS1(test.args[0]),
                 );
             }
+        });
+    });
+
+    describe('Parse and import XML file and test pack/unpak keys', () => {
+        inputXmlFiles.forEach(async (test) => {
+            it(
+                `should correctly pack keys for ${path.basename(test.args[0])}`,
+                // eslint-disable-next-line no-loop-func
+                async () => {
+                    const result = await gs1.parseGS1(test.args[0]);
+                    const { response } = await importer.importJSON(result, true);
+
+                    const { vertices, edges } = response;
+                    for (const doc of edges.concat(vertices)) {
+                        assert.isFalse(doc._dc_key != null);
+                    }
+                },
+            );
         });
     });
 
@@ -436,6 +473,8 @@ describe('GS1 Importer tests', () => {
             } else if (xml === path.join(__dirname, 'test_xml/GraphExample_4.xml')) {
                 await checkGraphExample4XmlVerticeContent();
                 await checkGraphExample4XmlTraversalPath();
+            } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
+                // TODO checkZKExampleXmlVerticeContent();
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }

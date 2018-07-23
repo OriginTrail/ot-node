@@ -83,7 +83,7 @@ module.exports = {
     },
     {
         key: 'onion_virtual_port',
-        value: '443',
+        value: '4043',
     }, {
         key: 'traverse_nat_enabled',
         value: process.env.TRAVERSE_NAT_ENABLED ? process.env.TRAVERSE_NAT_ENABLED : '0',
@@ -107,7 +107,7 @@ module.exports = {
         value: '',
     }, {
         key: 'onion_enabled',
-        value: '0',
+        value: '1',
     }, {
         key: 'test_network',
         value: process.env.TEST_NETWORK_ENABLED ? process.env.TEST_NETWORK_ENABLED : '1',
@@ -134,12 +134,73 @@ module.exports = {
         value: process.env.SEND_LOGS ? process.env.SEND_LOGS : '1',
     },
     {
+        key: 'enable_debug_logs_level',
+        value: process.env.LOGS_LEVEL_DEBUG ? process.env.LOGS_LEVEL_DEBUG : '1',
+    },
+    {
         key: 'is_bootstrap_node',
         value: false,
     },
     {
         key: 'houston_password',
         value: uuidv4(),
+    },
+    {
+        key: 'dh_min_price',
+        value: '10',
+    },
+    {
+        key: 'dh_max_price',
+        value: '1000',
+    },
+    {
+        key: 'dh_max_stake',
+        value: '1000',
+    },
+    {
+        key: 'remote_control_enabled',
+        value: '1',
+    },
+    {
+        key: 'remote_control_port',
+        value: process.env.NODE_REMOTE_CONTROL_PORT ?
+            process.env.NODE_REMOTE_CONTROL_PORT : 3000,
+    },
+    {
+        key: 'dh_stake_factor',
+        value: '25000000', // [mTRAC / byte / min]
+    },
+    {
+        key: 'read_stake_factor',
+        value: '1',
+    },
+    {
+        key: 'dh_max_time_mins',
+        value: '100000',
+    },
+    {
+        key: 'dh_price',
+        value: '25000000', // [mTRAC / byte / min]
+    },
+    {
+        key: 'total_escrow_time_in_milliseconds',
+        value: '86400000',
+    },
+    {
+        key: 'max_token_amount_per_dh',
+        value: '50000000', // [mTRAC / byte / min]
+    },
+    {
+        key: 'dh_min_stake_amount',
+        value: '10000000', // [mTRAC / byte / min]
+    },
+    {
+        key: 'dh_min_reputation',
+        value: 0,
+    },
+    {
+        key: 'probability_threshold',
+        value: '10',
     },
     ], {}),
 

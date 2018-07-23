@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         total_escrow_time: DataTypes.INTEGER,
         stake: DataTypes.STRING,
         data_size_bytes: DataTypes.STRING,
+        pd_bid: DataTypes.INTEGER,
     }, {});
     bids.associate = function (models) {
     // associations can be defined here

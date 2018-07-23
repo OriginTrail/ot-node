@@ -122,21 +122,43 @@ class Utilities {
         return msg;
     }
 
+
+    /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise(async (resolve, reject) => {
+            // eslint-disable-next-line
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            if (res) {
+                resolve(res);
+            }
+        });
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'trace';
+        let logLevel = 'trace';
+        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+            logLevel = 'debug';
+        }
 
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'blue',
+            debug: 'yellow',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
+            api: 'cyan',
+            job: 'cyan',
         };
 
         try {
@@ -154,6 +176,8 @@ class Utilities {
                             'warn',
                             'important',
                             'error',
+                            'api',
+                            'job',
                         ],
                     }),
                     new (winston.transports.File)({
@@ -178,11 +202,13 @@ class Utilities {
                 levels: {
                     error: 0,
                     important: 1,
-                    warn: 2,
-                    info: 3,
-                    debug: 4,
+                    job: 2,
+                    api: 3,
+                    warn: 4,
                     notify: 5,
-                    trace: 6,
+                    info: 6,
+                    trace: 7,
+                    debug: 8,
                 },
                 transports,
             });
@@ -286,7 +312,7 @@ class Utilities {
                 }
                 break;
             default:
-                this.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -505,7 +531,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = this.getLogger();
+        const log = Utilities.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
@@ -658,8 +684,8 @@ class Utilities {
             throw new Error(`Given input "${num}" is not a number.`);
         }
 
-        var number = Utilities.toBN(num);
-        var result = number.toString(16);
+        const number = Utilities.toBN(num);
+        const result = number.toString(16);
 
         return number.lt(new BN(0)) ? `-0x${result.substr(1)}` : `0x${result}`;
     }
@@ -869,10 +895,16 @@ class Utilities {
      * @returns {boolean}
      */
     static validateNumberParameter(property) {
-        if (property == null || parseInt(property, 10) > 0) {
-            return true;
-        }
-        return false;
+        return property == null || parseInt(property, 10) > 0;
+    }
+
+    /**
+     * Validates number property type and allows zero
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameterAllowZero(property) {
+        return property == null || parseInt(property, 10) >= 0;
     }
 
     /**
@@ -881,10 +913,31 @@ class Utilities {
      * @returns {boolean}
      */
     static validateStringParameter(property) {
-        if (property == null || typeof property === 'string') {
-            return true;
+        return property == null || typeof property === 'string';
+    }
+
+    /**
+     * Converts minutes to milliseconds
+     * @param minutes
+     * @returns {*}
+     */
+    static convertToMilliseconds(minutes) {
+        if (BN.isBN(minutes)) {
+            return minutes.mul(new BN(60000));
         }
-        return false;
+        return new BN(minutes).mul(new BN(60000));
+    }
+
+    /**
+     * Converts milliseconds to minutes
+     * @param milliseconds
+     * @returns {BN}
+     */
+    static convertToMinuntes(milliseconds) {
+        if (BN.isBN(milliseconds)) {
+            return milliseconds.div(new BN(60000));
+        }
+        return new BN(milliseconds).div(new BN(60000));
     }
 
     /**

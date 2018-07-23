@@ -25,6 +25,7 @@ class DCService {
         this.log = ctx.logger;
         this.config = ctx.config;
         this.network = ctx.network;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -74,13 +75,13 @@ class DCService {
         const dhIds = [];
         const dhWallets = [];
 
-        let totalEscrowTime = this.config.total_escrow_time_in_minutes;
+        let totalEscrowTime = new BN(this.config.total_escrow_time_in_milliseconds);
         let maxTokenAmount = new BN(this.config.max_token_amount_per_dh, 10);
         let minStakeAmount = new BN(this.config.dh_min_stake_amount, 10);
         let minReputation = this.config.dh_min_reputation;
 
         if (total_escrow_time) {
-            totalEscrowTime = total_escrow_time;
+            totalEscrowTime = new BN(total_escrow_time);
         }
 
         if (max_token_amount) {
@@ -102,10 +103,11 @@ class DCService {
             }
         });
 
+        totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
         const newOfferRow = {
             import_id: importId,
-            total_escrow_time: totalEscrowTime,
+            total_escrow_time: totalEscrowTime.toString(),
             max_token_amount: maxTokenAmount.toString(),
             min_stake_amount: minStakeAmount.toString(),
             min_reputation: minReputation,
@@ -123,6 +125,7 @@ class DCService {
         this.blockchain.getRootHash(this.config.node_wallet, importId)
             .then(async (blockchainRootHash) => {
                 if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+                    this.remoteControl.writingRootHash(importId);
                     await this.blockchain.writeRootHash(importId, rootHash).catch((err) => {
                         offer.status = 'FAILED';
                         offer.save({ fields: ['status'] });
@@ -133,10 +136,17 @@ class DCService {
                 }
 
                 this.log.info('Fingerprint written on blockchain');
+                this.remoteControl.initializingOffer(importId);
 
                 const profileBalance =
-                new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
-                const condition = maxTokenAmount.mul(new BN((dhWallets.length * 2) + 1));
+                    new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
+
+                const replicationModifier = await this.blockchain.getReplicationModifier();
+
+                const condition = maxTokenAmount
+                    .mul((new BN((dhWallets.length * 2)).add(new BN(replicationModifier, 10))))
+                    .mul(importSizeInBytes)
+                    .mul(totalEscrowTime);
 
                 if (profileBalance.lt(condition)) {
                     await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
@@ -155,13 +165,15 @@ class DCService {
                     dhWallets,
                     dhIds,
                 ).then(async () => {
-                    this.log.info('Offer written to blockchain. Started bidding phase.');
+                    this.log.important(`Offer ${importId} written to blockchain. Started bidding phase.`);
+                    this.remoteControl.biddingStarted(importId);
                     offer.status = 'STARTED';
-                    offer.save({ fields: ['status'] });
+                    await offer.save({ fields: ['status'] });
 
-                    this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
+                    await this.blockchain.subscribeToEvent('FinalizeOfferReady', null, finalizeWaitTime, null, event => event.import_id === importId).then((event) => {
                         if (!event) {
                             this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+                            this.remoteControl.cancelingOffer(`Offer ${importId} not finalized. Canceling offer.`, importId);
                             this.blockchain.cancelOffer(importId).then(() => {
                                 offer.status = 'CANCELLED';
                                 offer.message = 'Offer not finalized';
@@ -176,32 +188,41 @@ class DCService {
                             return;
                         }
 
-                        this.log.trace('Started choosing phase.');
+                        setTimeout(() => {
+                            this.log.trace('Started choosing phase.');
+                            this.remoteControl.biddingComplete(importId);
+                            this.remoteControl.choosingBids(importId);
 
-                        offer.status = 'FINALIZING';
-                        offer.save({ fields: ['status'] });
-                        this.chooseBids(offer.id, totalEscrowTime).then(() => {
-                            this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
-                                .then(() => {
-                                    const errorMsg = `Offer for import ${offer.import_id} finalized`;
-                                    offer.status = 'FINALIZED';
-                                    offer.message = errorMsg;
-                                    offer.save({ fields: ['status', 'message'] });
-                                    this.log.info(errorMsg);
-                                }).catch((error) => {
-                                    const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
-                                    offer.status = 'FAILED';
-                                    offer.message = errorMsg;
-                                    offer.save({ fields: ['status', 'message'] });
-                                    this.log.error(errorMsg);
-                                });
-                        }).catch((err) => {
-                            const errorMsg = `Failed to choose bids. ${err}`;
-                            offer.status = 'FAILED';
-                            offer.message = errorMsg;
-                            offer.save({ fields: ['status', 'message'] });
-                            this.log.error(errorMsg);
-                        });
+                            offer.status = 'FINALIZING';
+                            offer.save({ fields: ['status'] });
+
+                            this.chooseBids(offer.id, totalEscrowTime).then(() => {
+                                this.blockchain.subscribeToEvent('OfferFinalized', offer.import_id)
+                                    .then(() => {
+                                        const errorMsg = `Offer for import ${offer.import_id} finalized`;
+                                        offer.status = 'FINALIZED';
+                                        this.remoteControl.bidChosen(importId);
+                                        this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
+                                        offer.message = errorMsg;
+                                        offer.save({ fields: ['status', 'message'] });
+                                        this.log.info(errorMsg);
+                                    }).catch((error) => {
+                                        const errorMsg = `Failed to get offer for import ${offer.import_id}). ${error}.`;
+                                        offer.status = 'FAILED';
+                                        offer.message = errorMsg;
+                                        offer.save({ fields: ['status', 'message'] });
+                                        this.log.error(errorMsg);
+                                        this.remoteControl.dcErrorHandling(errorMsg);
+                                    });
+                            }).catch((err) => {
+                                const errorMsg = `Failed to choose bids. ${err}`;
+                                offer.status = 'FAILED';
+                                offer.message = errorMsg;
+                                offer.save({ fields: ['status', 'message'] });
+                                this.log.error(errorMsg);
+                                this.remoteControl.dcErrorHandling(errorMsg);
+                            });
+                        }, 30000);
                     });
                 }).catch((err) => {
                     const errorMsg = `Failed to create offer. ${err}.`;
@@ -209,6 +230,7 @@ class DCService {
                     offer.message = errorMsg;
                     offer.save({ fields: ['status', 'message'] });
                     this.log.error(errorMsg);
+                    this.remoteControl.dcErrorHandling(errorMsg);
                 });
             }).catch((err) => {
                 const errorMsg = `Failed to fetch root hash for import ${importId}. ${err}.`;
@@ -216,6 +238,7 @@ class DCService {
                 offer.message = errorMsg;
                 offer.save({ fields: ['status', 'message'] });
                 this.log.error(errorMsg);
+                this.remoteControl.dcErrorHandling(errorMsg);
             });
         return offer.external_id;
     }
@@ -244,25 +267,19 @@ class DCService {
     /**
      * Chose DHs
      * @param offerId Offer identifier
-     * @param totalEscrowTime   Total escrow time
+     * @param totalEscrowTime Total escrow time
      */
     chooseBids(offerId, totalEscrowTime) {
         return new Promise((resolve, reject) => {
             Models.offers.findOne({ where: { id: offerId } }).then((offerModel) => {
                 const offer = offerModel.get({ plain: true });
                 this.log.info(`Choose bids for offer ID ${offerId}, import ID ${offer.import_id}.`);
-                this.blockchain.increaseApproval(offer.max_token_amount * offer.replication_number)
+                this.blockchain.chooseBids(offer.import_id)
                     .then(() => {
-                        this.blockchain.chooseBids(offer.import_id)
-                            .then(() => {
-                                this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
-                                resolve();
-                            }).catch((err) => {
-                                this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
-                                reject(err);
-                            });
+                        this.log.info(`Bids chosen for offer ID ${offerId}, import ID ${offer.import_id}.`);
+                        resolve();
                     }).catch((err) => {
-                        this.log.warn(`Failed to increase allowance. ${JSON.stringify(err)}`);
+                        this.log.warn(`Failed call choose bids for offer ID ${offerId}, import ID ${offer.import_id}. ${err}`);
                         reject(err);
                     });
             }).catch((err) => {
@@ -297,6 +314,7 @@ class DCService {
             const clonedVertices = Utilities.copyObject(vertices);
             Graph.encryptVertices(clonedVertices, replicatedData.data_private_key);
 
+            ImportUtilities.sort(clonedVertices);
             const litigationBlocks = Challenge.getBlocks(clonedVertices, 32);
             const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
             const litigationRootHash = litigationBlocksMerkleTree.getRoot();
@@ -349,8 +367,10 @@ class DCService {
                 importId,
                 kadWallet,
             );
-            this.log.important('Data successfully verified, preparing to start challenges');
-            await this.challenger.startChallenging();
+            this.log.important(`Holding data for offer ${importId} and contact ${kadWallet} successfully verified. Challenges taking place...`);
+
+            replicatedData.status = 'ACTIVE';
+            await replicatedData.save({ fields: ['status'] });
 
             await this.network.kademlia().sendVerifyImportResponse({
                 status: 'success',

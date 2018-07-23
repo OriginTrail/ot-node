@@ -59,6 +59,16 @@ class Blockchain {
     }
 
     /**
+     * Gets the index of the node's bid in the array of one offer
+     * @param importId Offer import id
+     * @param dhNodeId KADemplia ID of the DH node that wants to get index
+     * @returns {Promisse<any>} integer index in the array
+     */
+    getBidIndex(importId, nodeId) {
+        return this.blockchain.getBidIndex(importId, nodeId);
+    }
+
+    /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
      * @param pricePerByteMinute Price for byte per minute
@@ -238,6 +248,26 @@ class Blockchain {
             .getAllPastEvents(contractName);
     }
 
+    async getStakedAmount(importId) {
+        return this.blockchain.getStakedAmount(importId);
+    }
+
+    async getHoldingIncome(importId) {
+        return this.blockchain.getHoldingIncome(importId);
+    }
+
+    async getPurchaseIncome(importId, dvWallet) {
+        return this.blockchain.getPurchaseIncome(importId, dvWallet);
+    }
+
+    async getTotalStakedAmount() {
+        return this.blockchain.getTotalStakedAmount();
+    }
+
+    async getTotalIncome() {
+        return this.blockchain.getTotalIncome();
+    }
+
     /**
      * Adds bid to the offer on Ethereum blockchain
      * @param importId Import ID
@@ -246,6 +276,17 @@ class Blockchain {
      */
     addBid(importId, dhNodeId) {
         return this.blockchain.addBid(importId, dhNodeId);
+    }
+
+    /**
+     * Activates predetermined bid to the offer on Ethereum blockchain
+     * @param importId Import ID
+     * @param dhNodeId KADemlia ID of the DH node that wants to activate bid
+     * @param bidIndex index of the bid
+     * @returns {Promise<any>} Index of the bid.
+     */
+    activatePredeterminedBid(importId, dhNodeId, bidIndex) {
+        return this.blockchain.activatePredeterminedBid(importId, dhNodeId, bidIndex);
     }
 
     /**
@@ -362,6 +403,13 @@ class Blockchain {
      */
     async payOutForReading(importId, dvWallet) {
         return this.blockchain.payOutForReading(importId, dvWallet);
+    }
+
+    /**
+     * Get replication modifier
+     */
+    async getReplicationModifier() {
+        return this.blockchain.getReplicationModifier();
     }
 }
 
