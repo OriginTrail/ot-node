@@ -111,6 +111,7 @@ class Network {
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
         this.log.info('Starting OT Node...');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
@@ -121,8 +122,10 @@ class Network {
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
         this.log.info('Spartacus initialized');
-        this.node.eclipse = this.node.plugin(kadence.eclipse());
-        this.enableNatTraversal();
+
+        if (parseInt(config.traverse_nat_enabled, 10)) {
+            this.enableNatTraversal();
+        }
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
