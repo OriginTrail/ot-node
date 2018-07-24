@@ -45,6 +45,9 @@ class KademliaUtils {
         if (msg.includes('socket hang up')) {
             return null;
         }
+        if (msg.includes('getaddrinfo')) {
+            return null;
+        }
         return {
             level,
             msg,
