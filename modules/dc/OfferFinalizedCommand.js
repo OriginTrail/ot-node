@@ -71,7 +71,6 @@ class FinalizeOfferReadyCommand extends Command {
         offer.status = 'FAILED';
         offer.message = 'OfferFinalized command expired.';
         await offer.save({ fields: ['status', 'message'], transaction });
-
     }
 
     /**

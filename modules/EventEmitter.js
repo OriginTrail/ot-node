@@ -5,6 +5,7 @@ const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 const bytes = require('utf8-length');
+const uuidv4 = require('uuid/v4');
 
 const events = require('events');
 
@@ -419,16 +420,13 @@ class EventEmitter {
 
             try {
                 logger.info(`Preparing to create offer for import ${import_id}`);
-                let vertices = await this.graphStorage.findVerticesByImportId(import_id);
-                vertices = vertices.map((vertex) => {
-                    delete vertex.private;
-                    return vertex;
-                });
 
                 const dataimport = await Models.data_info.findOne({ where: { import_id } });
                 if (dataimport == null) {
                     throw new Error('This import does not exist in the database');
                 }
+
+                const replicationId = uuidv4();
 
                 commandExecutor.add({
                     name: 'offerCancel',
@@ -440,9 +438,9 @@ class EventEmitter {
                     delay: 0,
                     data: {
                         importId: import_id,
+                        replicationId,
                         rootHash: dataimport.root_hash,
                         totalDocuments: dataimport.total_documents,
-                        vertices,
                         total_escrow_time,
                         max_token_amount,
                         min_stake_amount,
@@ -450,20 +448,10 @@ class EventEmitter {
                     },
                     transactional: false,
                 });
-                // const replicationId = await dcService.createOffer(
-                //     import_id,
-                //     dataimport.root_hash,
-                //     dataimport.total_documents,
-                //     vertices,
-                //     total_escrow_time,
-                //     max_token_amount,
-                //     min_stake_amount,
-                //     min_reputation,
-                // );
 
                 data.response.status(201);
                 data.response.send({
-                    replication_id: 1,
+                    replication_id: replicationId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);

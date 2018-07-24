@@ -31,12 +31,13 @@ class OfferCreateBlockchainCommand extends Command {
 
         this.remoteControl.initializingOffer(importId);
 
-        const numberOfReplications = new BN((dhWallets.length * 2) + 1);
         const profile = await this.blockchain.getProfile(this.config.node_wallet);
-
         const profileBalance = new BN(profile.balance, 10);
+
+        const replicationModifier = await this.blockchain.getReplicationModifier();
+
         const condition = maxTokenAmount
-            .mul(numberOfReplications)
+            .mul((new BN((dhWallets.length * 2)).add(new BN(replicationModifier, 10))))
             .mul(importSizeInBytes)
             .mul(totalEscrowTime);
 
@@ -57,7 +58,7 @@ class OfferCreateBlockchainCommand extends Command {
             dhWallets,
             dhIds,
         );
-        this.logger.info('Offer written to blockchain.');
+        this.logger.important(`Offer ${importId} written to blockchain. Started bidding phase.`);
         this.remoteControl.biddingStarted(importId);
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });

@@ -17,6 +17,7 @@ class OfferCreateDBCommand extends Command {
     async execute(command, transaction) {
         const {
             importId,
+            replicationId,
             rootHash,
             total_escrow_time,
             max_token_amount,
@@ -69,6 +70,7 @@ class OfferCreateDBCommand extends Command {
             dh_wallets: dhWallets,
             dh_ids: dhIds,
             message: 'Offer is pending',
+            external_id: replicationId,
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
         };

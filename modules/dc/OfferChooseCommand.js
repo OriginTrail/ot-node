@@ -27,8 +27,8 @@ class OfferChooseCommand extends Command {
      * @param err
      */
     async recover(command, err, transaction) {
-        const { externalId } = command.data;
-        const offer = await Models.offers.findOne({ where: { external_id: externalId } });
+        const { offerId } = command.data;
+        const offer = await Models.offers.findOne({ where: { id: offerId } });
         this.logger.warn(`Failed call choose bids for offer ID ${offer.id}, import ID ${offer.import_id}. ${err}`);
     }
 
@@ -40,7 +40,7 @@ class OfferChooseCommand extends Command {
     static buildDefault(map) {
         const command = {
             name: 'offerChoose',
-            delay: 0,
+            delay: 30000,
             transactional: false,
         };
         Object.assign(command, map);

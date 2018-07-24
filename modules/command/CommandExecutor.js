@@ -14,6 +14,12 @@ const STATUS = {
 };
 
 /**
+ * How many commands will run in parallel
+ * @type {number}
+ */
+const QUEUE_PARALLELISM = 4;
+
+/**
  * Queues and processes commands
  */
 class CommandExecutor {
@@ -21,7 +27,7 @@ class CommandExecutor {
         this.ctx = ctx;
         this.logger = ctx.logger;
 
-        this.parallelism = 1;
+        this.parallelism = QUEUE_PARALLELISM;
         this.queue = async.queue(async (command, callback) => {
             await this._execute(command);
             callback();
