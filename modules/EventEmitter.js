@@ -679,7 +679,7 @@ class EventEmitter {
             dhService,
             dvService,
             logger,
-            challenger,
+            commandExecutor,
             dataReplication,
             network,
             blockchain,
@@ -943,14 +943,21 @@ class EventEmitter {
         this._on('kad-verify-import-request', async (request) => {
             logger.info('Request to verify encryption key of replicated data received');
 
-            const { wallet: kadWallet } = request.contact[1];
+            const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
-            // TODO: Add guard for fake replations.
-            await dcService.verifyImport(
-                epk,
-                importId, encryptionKey, kadWallet, request.contact[0],
-            );
+            await commandExecutor.add({
+                name: 'offerKeyVerification',
+                delay: 0,
+                data: {
+                    dhNodeId: request.contact[0],
+                    dhWallet,
+                    epk,
+                    importId,
+                    encryptionKey,
+                },
+                transactional: false,
+            });
         });
 
         // async

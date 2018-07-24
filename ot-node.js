@@ -43,6 +43,7 @@ const OfferCreateDBCommand = require('./modules/dc/OfferCreateDBCommand');
 const OfferReadyCommand = require('./modules/dc/OfferReadyCommand');
 const OfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
 const OfferRootHashCommand = require('./modules/dc/OfferRootHashCommand');
+const OfferKeyVerificationCommand = require('./modules/dc/OfferKeyVerificationCommand');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -230,6 +231,7 @@ class OTNode {
             offerReadyCommand: awilix.asClass(OfferReadyCommand).singleton(),
             offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
             offerRootHashCommand: awilix.asClass(OfferRootHashCommand).singleton(),
+            offerKeyVerificationCommand: awilix.asClass(OfferKeyVerificationCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
