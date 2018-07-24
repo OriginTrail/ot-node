@@ -153,6 +153,23 @@ class Ethereum {
     }
 
     /**
+     * Gets profile balance by wallet
+     * @param wallet
+     * @returns {Promise}
+     */
+    getProfileBalance(wallet) {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Getting profile balance by wallet ${wallet}`);
+            this.biddingContract.methods.getBalance(wallet).call()
+                .then((res) => {
+                    resolve(res);
+                }).catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
+    /**
      * Get offer by importId
      * @param importId
      * @returns {Promise}

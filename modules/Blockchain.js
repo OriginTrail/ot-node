@@ -333,6 +333,10 @@ class Blockchain {
         return this.blockchain.getDcWalletFromOffer(importId);
     }
 
+    getProfileBalance(wallet) {
+        return this.blockchain.getProfileBalance(wallet);
+    }
+
     async depositToken(amount) {
         return this.blockchain.depositToken(amount);
     }
