@@ -51,7 +51,7 @@ module.exports = {
     },
     {
         key: 'request_timeout',
-        value: '10000',
+        value: '20000',
     },
     {
         key: 'ssl_keypath',
@@ -201,6 +201,14 @@ module.exports = {
     {
         key: 'probability_threshold',
         value: '10',
+    },
+    {
+        key: 'reverse_tunnel_address',
+        value: 'diglet.origintrail.io',
+    },
+    {
+        key: 'reverse_tunnel_port',
+        value: '8443',
     },
     ], {}),
 
