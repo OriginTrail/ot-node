@@ -282,7 +282,7 @@ describe('Protocol tests', () => {
     let testNode3;
 
     before('Compile smart contracts source', async function compile() {
-        this.timeout(15000);
+        this.timeout(20000);
 
         accounts = await web3.eth.getAccounts();
 
@@ -532,8 +532,9 @@ describe('Protocol tests', () => {
         let rootHash;
         let mockGraphStorage;
 
-        beforeEach('Create session profiles', () =>
-            Promise.all([
+        beforeEach('Create session profiles', function createSessionProfiles() {
+            this.timeout(6000);
+            return Promise.all([
                 testNode1.blockchain.createProfile(
                     testNode1.identity,
                     '100000000000000000',
@@ -548,7 +549,8 @@ describe('Protocol tests', () => {
                     '100000',
                     '100000',
                 ),
-            ]));
+            ]);
+        });
 
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
@@ -643,7 +645,7 @@ describe('Protocol tests', () => {
             }
         });
 
-        it('should do something', async function replication2() {
+        it('should do something', async () => {
             const { dcService, blockchain } = testNode1;
 
             const offerExternalId =
@@ -663,6 +665,6 @@ describe('Protocol tests', () => {
 
     after('Clean', () => {
         // Temporary solution to avoid unterminated promises.
-        process.exit();
+        // process.exit();
     });
 });
