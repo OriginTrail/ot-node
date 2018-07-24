@@ -204,6 +204,8 @@ class Network {
                 MaxCircuitDirtiness: 7200,
                 MaxClientCircuitsPending: 1024,
                 SocksTimeout: 41,
+                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
+                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
                 SafeLogging: 0,
                 FetchDirInfoEarly: 1,
                 FetchDirInfoExtraEarly: 1,
