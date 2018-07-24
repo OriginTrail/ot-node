@@ -11,6 +11,7 @@ const solc = require('solc');
 const fs = require('fs');
 const Umzug = require('umzug');
 const BN = require('bn.js');
+const sleep = require('sleep-async')().Promise;
 
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
@@ -134,6 +135,18 @@ describe('Protocol tests', () => {
         }
     }
 
+    class MockRemoteControl {
+        writingRootHash() {}
+        initializingOffer() {}
+        biddingStarted() {}
+        cancelingOffer() {}
+        biddingComplete() {}
+        choosingBids() {}
+        bidChosen() {}
+        offerFinalized() {}
+        dcErrorHandling() {}
+    }
+
     class TestNode {
         constructor(identity, wallet, walletPrivateKey) {
             this.identity = identity;
@@ -164,6 +177,39 @@ describe('Protocol tests', () => {
         get logger() {
             return this.container.resolve('logger');
         }
+    }
+
+    function waitForEvent(contract, eventName, importId, timeout = 5000) {
+        return new Promise((accept, reject) => {
+            const startTime = Date.now();
+            const timerHandle = setInterval(async () => {
+                if (Date.now() - startTime > timeout) {
+                    reject(Error(`Event ${eventName} (${importId}) didn't arrive.`));
+                    return;
+                }
+
+                const events = await contract.getPastEvents('allEvents', {
+                    fromBlock: 0,
+                    toBlock: 'latest',
+                });
+
+                for (let i = 0; i < events.length; i += 1) {
+                    const event = events[i];
+                    if (event.event === eventName && !importId) {
+                        clearTimeout(timerHandle);
+                        accept(event);
+                        return;
+                    } else if (
+                        event.event === eventName && importId &&
+                        event.returnValues.import_id === importId
+                    ) {
+                        clearTimeout(timerHandle);
+                        accept(event);
+                        return;
+                    }
+                }
+            }, 1000);
+        });
     }
 
     const accountPrivateKeys = [
@@ -301,11 +347,21 @@ describe('Protocol tests', () => {
             undefined, accounts[7],
         );
 
-        await escrowInstance.methods.setBidding(biddingInstance._address);
-        await escrowInstance.methods.setReading(readingInstance._address);
-        await readingInstance.methods.setBidding(biddingInstance._address);
-        await readingInstance.methods.transferOwnership(escrowInstance._address);
-        await escrowInstance.methods.transferOwnership(biddingInstance._address);
+        await escrowInstance.methods.setBidding(biddingInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+        await escrowInstance.methods.setReading(readingInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+        await readingInstance.methods.setBidding(biddingInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+        await readingInstance.methods.transferOwnership(escrowInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+        await escrowInstance.methods.transferOwnership(biddingInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
 
         // Deploy tokens.
         const amountToMint = '50000000000000000000000000'; // 5e25
@@ -345,7 +401,7 @@ describe('Protocol tests', () => {
                     gas_limit: 800000,
                     gas_price: 5000000000,
                 },
-                total_escrow_time_in_minutes: '1',
+                total_escrow_time_in_milliseconds: '60000',
                 max_token_amount_per_dh: '1000000000000000000000', // 1e22 == 10000 tokens
                 dh_min_stake_amount: '100000000000000000', // 1e18 == 1 token
                 dh_min_reputation: '0',
@@ -367,6 +423,7 @@ describe('Protocol tests', () => {
                 challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
                 logger: awilix.asValue(log),
                 dcService: awilix.asClass(DCService),
+                remoteControl: awilix.asClass(MockRemoteControl),
             });
 
             const blockchain = container.resolve('blockchain');
@@ -477,8 +534,20 @@ describe('Protocol tests', () => {
 
         beforeEach('Create session profiles', () =>
             Promise.all([
-                testNode1.blockchain.createProfile(testNode1.identity, 2, '1', '1', '100000'),
-                testNode2.blockchain.createProfile(testNode2.identity, 2, '1', '1', '100000'),
+                testNode1.blockchain.createProfile(
+                    testNode1.identity,
+                    '100000000000000000',
+                    '100000000000000000',
+                    '100000',
+                    '100000',
+                ),
+                testNode2.blockchain.createProfile(
+                    testNode2.identity,
+                    '100000000000000000',
+                    '100000000000000000',
+                    '100000',
+                    '100000',
+                ),
             ]));
 
         beforeEach('Create one import', async () => {
@@ -515,26 +584,73 @@ describe('Protocol tests', () => {
             expect(offer.dh_wallets).to.be.an('array').deep.equal([]);
             expect(offer.dh_ids).to.be.an('array').deep.equal([]);
 
-            const event = await blockchain.subscribeToEvent('OfferCreated', importId, 30000);
+            const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
             expect(event).to.exist;
 
             // Send one bid.
-            testNode2.blockchain.addBid(importId, testNode2.identity);
+            const bidderDeposit = new BN('100000000000000000', 10)
+                .mul(new BN(testNode2.dcService._calculateImportSize(vertices)));
+            await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
+            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.addBid(importId, testNode2.identity);
 
-            await blockchain.subscribeToEvent('FinalizeOfferReady', importId, 1000);
+            await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
 
             // Check for events in the contract.
-            const events = await biddingInstance.getPastEvents('allEvents', {
+            let events = await biddingInstance.getPastEvents('allEvents', {
                 fromBlock: 0,
                 toBlock: 'latest',
             });
 
-            expect(events).to.be.an('arrary').that.includes({ event: 'FinalizeOfferReady', import_id: importId });
+            expect(events).to.be.an('array');
+            const finalizeOfferReadyEvent = events.find(event => event.event === 'FinalizeOfferReady');
+            expect(finalizeOfferReadyEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
 
-            // expect(events).to.have.lengthOf(1);
-            // expect(events[0].event).to.equal('ProfileCreated');
-            // expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
-            // expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
+            await waitForEvent(biddingInstance, 'OfferFinalized', importId, 60000);
+            events = await biddingInstance.getPastEvents('allEvents', {
+                fromBlock: 0,
+                toBlock: 'latest',
+            });
+
+            expect(events).to.be.an('array');
+            const offerFinalizedEvent = events.find(event => event.event === 'OfferFinalized');
+            expect(finalizeOfferReadyEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
+
+            await waitForEvent(biddingInstance, 'BidTaken', importId, 10000);
+            events = await biddingInstance.getPastEvents('allEvents', {
+                fromBlock: 0,
+                toBlock: 'latest',
+            });
+
+            expect(events).to.be.an('array');
+            const bidTakenEvent = events.find(event => event.event === 'BidTaken');
+            console.log(JSON.stringify(events));
+            expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
+            expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
+
+            for (;;) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({ where: { import_id: importId } });
+
+                if (offer.status === 'FINALIZED') {
+                    return;
+                }
+                if (offer.status === 'FAILED') {
+                    throw Error('Failed to create offer.');
+                }
+                // eslint-disable-next-line no-await-in-loop
+                await sleep.sleep(500);
+            }
+        });
+
+        it('should do something', async function replication2() {
+            const { dcService, blockchain } = testNode1;
+
+            const offerExternalId =
+                await dcService.createOffer(importId, rootHash, 1, vertices);
+
+            // const event = await blockchain.subscribeToEvent('OfferCreated', importId, 30000);
+            // expect(event).to.exist;
         });
     });
 
@@ -544,4 +660,9 @@ describe('Protocol tests', () => {
     //
     //     await dcService.createOffer('0x00', 'dafa', 100, { vertices: {}, edges: {} });
     // });
+
+    after('Clean', () => {
+        // Temporary solution to avoid unterminated promises.
+        process.exit();
+    });
 });
