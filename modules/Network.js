@@ -171,10 +171,14 @@ class Network {
 
     enableNatTraversal() {
         this.log.info('Trying NAT traversal');
+
+        const remoteAddress = config.reverse_tunnel_address;
+        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+
         this.node.traverse = this.node.plugin(kadence.traverse([
             new kadence.traverse.ReverseTunnelStrategy({
-                remoteAddress: 'tunnel.bookch.in',
-                remotePort: 8443,
+                remotePort,
+                remoteAddress,
                 privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
