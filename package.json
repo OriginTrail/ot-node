@@ -29,7 +29,8 @@
     "sinon": "^4.5.0",
     "solc": "^0.4.24",
     "supertest": "^3.0.0",
-    "umzug": "^2.1.0"
+    "umzug": "^2.1.0",
+    "wtfnode": "^0.7.0"
   },
   "repository": {
     "type": "git",

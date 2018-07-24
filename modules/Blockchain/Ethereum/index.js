@@ -639,6 +639,7 @@ class Ethereum {
     */
     subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
         return new Promise((resolve, reject) => {
+            let clearToken;
             const token = setInterval(() => {
                 const where = {
                     event,
@@ -663,6 +664,7 @@ class Ethereum {
                         }
                         eventData.finished = true;
                         eventData.save().then(() => {
+                            clearTimeout(clearToken);
                             clearInterval(token);
                             resolve(parsedData);
                         }).catch((err) => {
@@ -673,7 +675,7 @@ class Ethereum {
                     }
                 });
             }, 2000);
-            setTimeout(() => {
+            clearToken = setTimeout(() => {
                 if (endCallback) {
                     endCallback();
                 }

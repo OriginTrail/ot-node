@@ -22,7 +22,7 @@ const sequelizeConfig = require('./../../config/config.json').development;
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
-process.removeAllListeners('uncaughtException');
+// process.removeAllListeners('uncaughtException');
 
 describe('Protocol tests', () => {
 // Global functions.
@@ -644,27 +644,5 @@ describe('Protocol tests', () => {
                 await sleep.sleep(500);
             }
         });
-
-        it('should do something', async () => {
-            const { dcService, blockchain } = testNode1;
-
-            const offerExternalId =
-                await dcService.createOffer(importId, rootHash, 1, vertices);
-
-            // const event = await blockchain.subscribeToEvent('OfferCreated', importId, 30000);
-            // expect(event).to.exist;
-        });
-    });
-
-    // it('should do something', async () => {
-    //     console.log('base fucking test', tokenInstance._address);
-    //     const dcService = container.resolve('dcService');
-    //
-    //     await dcService.createOffer('0x00', 'dafa', 100, { vertices: {}, edges: {} });
-    // });
-
-    after('Clean', () => {
-        // Temporary solution to avoid unterminated promises.
-        // process.exit();
     });
 });
