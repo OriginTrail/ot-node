@@ -39,6 +39,12 @@ class KademliaUtils {
         if (msg.includes('servicesscrubbed.onion')) {
             return null;
         }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
         return {
             level,
             msg,

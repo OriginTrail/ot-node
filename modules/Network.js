@@ -25,7 +25,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 20000;
+        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -147,7 +147,7 @@ class Network {
         }
 
         this.node.listen(parseInt(config.node_port, 10), async () => {
-            this.log.notify(`OT Node listening at http://${this.node.contact.hostname}:${this.node.contact.port}`);
+            this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
             this.networkUtilities.registerControlInterface(config, this.node);
 
             const connected = false;
@@ -172,13 +172,18 @@ class Network {
 
     enableNatTraversal() {
         this.log.info('Trying NAT traversal');
+
+        const remoteAddress = config.reverse_tunnel_address;
+        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+
         this.node.traverse = this.node.plugin(kadence.traverse([
             new kadence.traverse.ReverseTunnelStrategy({
-                remoteAddress: 'tunnel.bookch.in',
-                remotePort: 8443,
+                remotePort,
+                remoteAddress,
                 privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
+                logger: this.log,
             }),
         ]));
     }
@@ -199,6 +204,8 @@ class Network {
                 MaxCircuitDirtiness: 7200,
                 MaxClientCircuitsPending: 1024,
                 SocksTimeout: 41,
+                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
+                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
                 SafeLogging: 0,
                 FetchDirInfoEarly: 1,
                 FetchDirInfoExtraEarly: 1,
