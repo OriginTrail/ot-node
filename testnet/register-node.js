@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('newrelic');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
@@ -97,17 +96,24 @@ class RegisterNode {
         axios.post('https://station.origintrail.io/api/node/register', {
             ip, wallet,
         }).then((result) => {
-            // console.log(result.data);
+            console.log(result.data);
+            let counter = 0;
             const checkBalanceInterval = setInterval(() => {
                 web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
                     if (balance > 0) {
                         clearInterval(checkBalanceInterval);
                         this.runNode();
+                    } else {
+                        counter += 1;
+                        if (counter > 20) {
+                            process.kill(1);
+                        }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
+            process.kill(1);
         });
     }
 
@@ -127,9 +133,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://178.128.68.5:5278/#405d6155a6e0f9948a8145fd4a9428961d91a4dd';
-
-            env.TRAVERSE_NAT_ENABLED = '1';
+            env.BOOTSTRAP_NODE = 'http://l7j34pimur6qllxr2uyhuujpsmx4ga4olve5em4igbjnmfokllj4bead.onion:443/#694085c1f0379dad80b917ab747ed80cd2c2ed04,http://bev4uwc77b7ag66pkwijry5hfgxmpnehiw63mhgjv4qquxedsnrxoeid.onion:443/#a3405151e3adaff757e3bef2e928143e2b3d3f97';
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
