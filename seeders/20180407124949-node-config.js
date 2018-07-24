@@ -51,7 +51,7 @@ module.exports = {
     },
     {
         key: 'request_timeout',
-        value: '10000',
+        value: '20000',
     },
     {
         key: 'ssl_keypath',
@@ -83,7 +83,7 @@ module.exports = {
     },
     {
         key: 'onion_virtual_port',
-        value: '443',
+        value: '4043',
     }, {
         key: 'traverse_nat_enabled',
         value: process.env.TRAVERSE_NAT_ENABLED ? process.env.TRAVERSE_NAT_ENABLED : '0',
@@ -132,6 +132,10 @@ module.exports = {
     {
         key: 'send_logs_to_origintrail',
         value: process.env.SEND_LOGS ? process.env.SEND_LOGS : '1',
+    },
+    {
+        key: 'enable_debug_logs_level',
+        value: process.env.LOGS_LEVEL_DEBUG ? process.env.LOGS_LEVEL_DEBUG : '1',
     },
     {
         key: 'is_bootstrap_node',
@@ -197,6 +201,14 @@ module.exports = {
     {
         key: 'probability_threshold',
         value: '10',
+    },
+    {
+        key: 'reverse_tunnel_address',
+        value: 'diglet.origintrail.io',
+    },
+    {
+        key: 'reverse_tunnel_port',
+        value: '8443',
     },
     ], {}),
 

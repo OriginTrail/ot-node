@@ -33,6 +33,8 @@ const pjson = require('./package.json');
 const log = Utilities.getLogger();
 const Web3 = require('web3');
 
+global.__basedir = __dirname;
+
 const CommandExecutor = require('./modules/command/CommandExecutor');
 const OfferCancelCommand = require('./modules/dc/OfferCancelCommand');
 const OfferChooseCommand = require('./modules/dc/OfferChooseCommand');
@@ -54,6 +56,45 @@ process.on('unhandledRejection', (reason, p) => {
  * Main node object
  */
 class OTNode {
+    async getBalances(Utilities, selectedBlockchain, web3, config, initial) {
+        let enoughETH = false;
+        let enoughtTRAC = false;
+        try {
+            const etherBalance = await Utilities.getBalanceInEthers(
+                web3,
+                selectedBlockchain.wallet_address,
+            );
+            if (etherBalance <= 0) {
+                console.log('Please get some ETH in the node wallet fore running ot-node');
+                enoughETH = false;
+                if (initial) {
+                    process.exit(1);
+                }
+            } else {
+                enoughETH = true;
+                log.info(`Balance of ETH: ${etherBalance}`);
+            }
+
+            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                web3,
+                selectedBlockchain.wallet_address,
+                selectedBlockchain.token_contract_address,
+            );
+            if (atracBalance <= 0) {
+                enoughtTRAC = false;
+                console.log('Please get some ATRAC in the node wallet fore running ot-node');
+                if (initial) {
+                    process.exit(1);
+                }
+            } else {
+                enoughtTRAC = true;
+                log.info(`Balance of ATRAC: ${atracBalance}`);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+        config.enoughFunds = enoughETH && enoughtTRAC;
+    }
     /**
      * OriginTrail node system bootstrap function
      */
@@ -84,6 +125,15 @@ class OTNode {
             process.exit(1);
         }
 
+        // check for Updates
+        try {
+            log.info('Checking for updates');
+            await Utilities.checkForUpdates();
+        } catch (err) {
+            console.log(err);
+            process.exit(1);
+        }
+
         if (Utilities.isBootstrapNode()) {
             await this.startBootstrapNode();
             this.startRPC();
@@ -96,6 +146,7 @@ class OTNode {
                 const responseFromArango = await Utilities.getArangoDbVersion();
                 log.info(`Arango server version ${responseFromArango.version} is up and running`);
             } catch (err) {
+                log.error('Please make sure Arango server is up and running');
                 console.log(err);
                 process.exit(1);
             }
@@ -137,36 +188,12 @@ class OTNode {
 
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
-            try {
-                const etherBalance = await Utilities.getBalanceInEthers(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                );
-                if (etherBalance <= 0) {
-                    console.log('Please get some ETH in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ETH: ${etherBalance}`)
-                    );
-                }
-
-                const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                    web3,
-                    selectedBlockchain.wallet_address,
-                    selectedBlockchain.token_contract_address,
-                );
-                if (atracBalance <= 0) {
-                    console.log('Please get some ATRAC in the node wallet before running ot-node');
-                    process.exit(1);
-                } else {
-                    (
-                        log.info(`Initial balance of ATRAC: ${atracBalance}`)
-                    );
-                }
-            } catch (error) {
-                console.log(error);
-            }
+            await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
+            setInterval(async () => {
+                await this.getBalances(Utilities, selectedBlockchain, web3, config);
+            }, 300000);
+        } else {
+            config.enoughFunds = true;
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
@@ -511,7 +538,7 @@ class OTNode {
                 Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
                 Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
                 Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameter(req.body.dh_min_reputation)) {
+                Utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
                 const queryObject = {
                     import_id: req.body.import_id,
                     total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,

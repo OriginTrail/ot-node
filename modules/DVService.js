@@ -310,6 +310,7 @@ class DVService {
         }
 
         this.log.info(`Import ID ${importId} imported successfully.`);
+        this.remoteControl.readNotification(`Import ID ${importId} imported successfully.`);
 
         const dataSize = bytes(JSON.stringify(vertices));
         await Models.data_info.create({
@@ -357,6 +358,7 @@ class DVService {
         );
 
         this.log.important(`[DV] - Purchase initiated for import ID ${importId}.`);
+        this.remoteControl.readNotification(`[DV] - Purchase initiated for import ID ${importId}.`);
 
         // Wait for event from blockchain.
         // event: CommitmentSent(import_id, msg.sender, DV_wallet);

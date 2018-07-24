@@ -119,7 +119,7 @@ class Ethereum {
 
         const importIdHash = Utilities.sha3(importId);
 
-        this.log.notify('Writing root hash to blockchain');
+        this.log.notify(`Writing root hash to blockchain for import ${importId}`);
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
     }
 
@@ -131,7 +131,7 @@ class Ethereum {
      */
     async getRootHash(dcWallet, importId) {
         const importIdHash = Utilities.sha3(importId.toString());
-        this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importId ${importIdHash}`);
+        this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importIdHash ${importIdHash}`);
         return this.otContract.methods.getFingerprintByBatchHash(dcWallet, importIdHash).call();
     }
 
@@ -1034,6 +1034,16 @@ class Ethereum {
             this.readingContractAbi, 'payOut',
             [importId, dvWallet], options,
         );
+    }
+
+    /**
+     * Get replication modifier
+     */
+    async getReplicationModifier() {
+        this.log.trace('get replication modifier from blockchain');
+        return this.biddingContract.methods.replication_modifier().call({
+            from: this.config.wallet_address,
+        });
     }
 }
 

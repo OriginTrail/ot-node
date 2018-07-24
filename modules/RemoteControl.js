@@ -89,6 +89,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
+            this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
@@ -295,8 +296,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(2);
-        }, 5000);
+            process.exit(1);
+        }, 2000);
     }
 
     /**
@@ -609,6 +610,14 @@ class RemoteControl {
 
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
+    }
+
+    offerInitiated(data) {
+        this.socket.emit('offerInitiated', data);
+    }
+
+    readNotification(data) {
+        this.socket.emit('readNotification', data);
     }
 }
 

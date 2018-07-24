@@ -773,11 +773,17 @@ class GS1Importer {
                 if (to.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
                     const vertex = await this.db.findVertexWithMaxVersion(senderId, to.substring(EDGE_KEY_TEMPLATE.length));
+                    if (!vertex) {
+                        this.helper.handleError(`Failed to create edge with non-existent vertex ${to.substring(EDGE_KEY_TEMPLATE.length)}`, 400);
+                    }
                     edge._to = `${vertex._key}`;
                 }
                 if (from.startsWith(EDGE_KEY_TEMPLATE)) {
                     // eslint-disable-next-line
                     const vertex = await this.db.findVertexWithMaxVersion(senderId, from.substring(EDGE_KEY_TEMPLATE.length));
+                    if (!vertex) {
+                        this.helper.handleError(`Failed to create edge with non-existent vertex ${to.substring(EDGE_KEY_TEMPLATE.length)}`, 400);
+                    }
                     edge._from = `${vertex._key}`;
                 }
             }

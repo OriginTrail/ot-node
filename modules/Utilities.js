@@ -122,22 +122,43 @@ class Utilities {
         return msg;
     }
 
+
+    /**
+     * Check if there is a new version of ot-node
+     * @returns {Promise<any>}
+     */
+
+    static checkForUpdates() {
+        return new Promise(async (resolve, reject) => {
+            // eslint-disable-next-line
+            const Update = require('../check-updates');
+            const res = await Update.update();
+            if (res) {
+                resolve(res);
+            }
+        });
+    }
+
     /**
      * Returns winston logger
      * @returns {*} - log function
      */
     static getLogger() {
-        const logLevel = 'api';
+        let logLevel = 'trace';
+        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+            logLevel = 'debug';
+        }
 
         const customColors = {
             trace: 'grey',
             notify: 'green',
-            debug: 'blue',
+            debug: 'yellow',
             info: 'white',
             warn: 'yellow',
             important: 'magenta',
             error: 'red',
             api: 'cyan',
+            job: 'cyan',
         };
 
         try {
@@ -156,6 +177,7 @@ class Utilities {
                             'important',
                             'error',
                             'api',
+                            'job',
                         ],
                     }),
                     new (winston.transports.File)({
@@ -180,12 +202,13 @@ class Utilities {
                 levels: {
                     error: 0,
                     important: 1,
-                    warn: 2,
-                    info: 3,
-                    debug: 4,
+                    job: 2,
+                    api: 3,
+                    warn: 4,
                     notify: 5,
-                    trace: 6,
-                    api: 7,
+                    info: 6,
+                    trace: 7,
+                    debug: 8,
                 },
                 transports,
             });
@@ -289,7 +312,7 @@ class Utilities {
                 }
                 break;
             default:
-                this.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.database_system);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -445,8 +468,8 @@ class Utilities {
     /**
      * Makes a copy of object
      *
+     * @param object Obj
      * @return object
-     * @param Obj
      */
     static copyObject(Obj) {
         return JSON.parse(JSON.stringify(Obj));
@@ -508,7 +531,7 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = this.getLogger();
+        const log = Utilities.getLogger();
         try {
             if (!fs.existsSync(`${__dirname}/../keys`)) {
                 fs.mkdirSync(`${__dirname}/../keys`);
@@ -876,12 +899,45 @@ class Utilities {
     }
 
     /**
+     * Validates number property type and allows zero
+     * @param property
+     * @returns {boolean}
+     */
+    static validateNumberParameterAllowZero(property) {
+        return property == null || parseInt(property, 10) >= 0;
+    }
+
+    /**
      * Validates string property type
      * @param property
      * @returns {boolean}
      */
     static validateStringParameter(property) {
         return property == null || typeof property === 'string';
+    }
+
+    /**
+     * Converts minutes to milliseconds
+     * @param minutes
+     * @returns {*}
+     */
+    static convertToMilliseconds(minutes) {
+        if (BN.isBN(minutes)) {
+            return minutes.mul(new BN(60000));
+        }
+        return new BN(minutes).mul(new BN(60000));
+    }
+
+    /**
+     * Converts milliseconds to minutes
+     * @param milliseconds
+     * @returns {BN}
+     */
+    static convertToMinuntes(milliseconds) {
+        if (BN.isBN(milliseconds)) {
+            return milliseconds.div(new BN(60000));
+        }
+        return new BN(milliseconds).div(new BN(60000));
     }
 
     /**
