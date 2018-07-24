@@ -79,34 +79,26 @@ class OfferKeyVerificationCommand extends Command {
         }
 
         if (failed) {
-            await this.blockchain.cancelEscrow(
-                dhWallet,
-                importId,
-            );
-            await this.network.kademlia().sendVerifyImportResponse({
-                status: 'fail',
-                import_id: importId,
-            }, dhNodeId);
             return {
-                commands: [],
+                commands: [
+                    {
+                        name: 'escrowCancel',
+                        delay: 0,
+                        data: { importId, dhWallet, dhNodeId },
+                        transactional: false,
+                    },
+                ],
             };
         }
-        await this.blockchain.verifyEscrow(
-            importId,
-            dhWallet,
-        );
-        this.logger.important(`Holding data for offer ${importId} and contact ${dhWallet} successfully verified. Challenges taking place...`);
-
-        replicatedData.status = 'ACTIVE';
-        await replicatedData.save({ fields: ['status'] });
-
-        await this.network.kademlia().sendVerifyImportResponse({
-            status: 'success',
-            import_id: importId,
-        }, dhNodeId);
-
         return {
-            commands: [],
+            commands: [
+                {
+                    name: 'escrowVerify',
+                    delay: 0,
+                    data: { importId, dhWallet, dhNodeId },
+                    transactional: false,
+                },
+            ],
         };
     }
 

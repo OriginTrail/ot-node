@@ -23,7 +23,6 @@ const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const DataReplication = require('./modules/DataReplication');
@@ -44,6 +43,8 @@ const OfferReadyCommand = require('./modules/dc/OfferReadyCommand');
 const OfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
 const OfferRootHashCommand = require('./modules/dc/OfferRootHashCommand');
 const OfferKeyVerificationCommand = require('./modules/dc/OfferKeyVerificationCommand');
+const EscrowVerifyCommand = require('./modules/dc/EscrowVerifyCommand');
+const EscrowCancelCommand = require('./modules/dc/EscrowCancelCommand');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -208,7 +209,6 @@ class OTNode {
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
-            dcService: awilix.asClass(DCService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             config: awilix.asValue(config),
             web3: awilix.asValue(web3),
@@ -232,6 +232,8 @@ class OTNode {
             offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
             offerRootHashCommand: awilix.asClass(OfferRootHashCommand).singleton(),
             offerKeyVerificationCommand: awilix.asClass(OfferKeyVerificationCommand).singleton(),
+            escrowCancelCommand: awilix.asClass(EscrowCancelCommand).singleton(),
+            escrowVerifyCommand: awilix.asClass(EscrowVerifyCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

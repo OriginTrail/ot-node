@@ -84,7 +84,6 @@ class EventEmitter {
      */
     _initializeAPIEmitter() {
         const {
-            dcService,
             dhService,
             dvService,
             importer,
@@ -386,7 +385,7 @@ class EventEmitter {
         this._on('api-offer-status', async (data) => {
             const { external_id } = data;
             logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await dcService.getOffer(external_id);
+            const offer = await Models.offers.findOne({ where: { external_id } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
@@ -675,7 +674,6 @@ class EventEmitter {
      */
     _initializeKadEmitter() {
         const {
-            dcService,
             dhService,
             dvService,
             logger,

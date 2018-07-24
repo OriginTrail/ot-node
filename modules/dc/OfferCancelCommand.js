@@ -1,5 +1,4 @@
 const Models = require('../../models');
-
 const Command = require('../command/Command');
 
 const { Op } = Models.Sequelize;
