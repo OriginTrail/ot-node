@@ -4,7 +4,7 @@
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "scripts": {
-    "test": "nyc mocha --recursive test/modules/*.test.js test/api/*.test.js",
+    "test": "nyc mocha --recursive test/modules/*.test.js test/api/*.test.js test/protocol/*.test.js",
     "test:unit": "nyc mocha --recursive test/modules/*.test.js",
     "test:api": "nyc mocha --recursive test/api/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
