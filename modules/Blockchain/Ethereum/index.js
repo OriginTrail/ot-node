@@ -81,22 +81,19 @@ class Ethereum {
 
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-offer-created', event);
+                // emitter.emit('eth-offer-created', event);
             })
             .on('error', log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-offer-canceled', event);
+                // emitter.emit('eth-offer-canceled', event);
             })
             .on('error', this.log.warn);
 
         this.biddingContract.events.BidTaken()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-bid-taken', event);
+                // emitter.emit('eth-bid-taken', event);
             })
             .on('error', this.log.warn);
 

@@ -35,7 +35,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'migrations',
             },
-            logging: console.log,
+            logging: Utilities.getLogger().debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../migrations`,
@@ -49,7 +49,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'seeders',
             },
-            logging: console.log,
+            logging: Utilities.getLogger().debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../seeders`,
