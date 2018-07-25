@@ -38,6 +38,7 @@ class OfferCancelCommand extends Command {
                 { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
             );
         }
+        this.logger.notify(`Offer ${importId} successfully cancelled.`);
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 

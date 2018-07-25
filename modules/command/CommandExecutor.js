@@ -30,7 +30,13 @@ class CommandExecutor {
 
         this.parallelism = QUEUE_PARALLELISM;
         this.queue = async.queue(async (command, callback) => {
-            await this._execute(command);
+            try {
+                await this._execute(command);
+            } catch (e) {
+                this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
+                process.exit(-1);
+            }
+
             callback();
         }, this.parallelism);
     }

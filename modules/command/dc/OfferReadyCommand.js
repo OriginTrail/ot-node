@@ -49,14 +49,15 @@ class OfferReadyCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { importId, externalId } = command.data;
-        this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
+        const { importId, offerId } = command.data;
+        this.logger.notify(`Offer ${importId} not finalized. Canceling offer.`);
 
         return {
             commands: [{
-                name: 'cancelOffer',
+                name: 'offerCancel',
                 data: {
-                    externalId,
+                    importId,
+                    offerId,
                 },
                 parent: command.data.id,
             }],
