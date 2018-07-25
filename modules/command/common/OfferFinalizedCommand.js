@@ -47,7 +47,7 @@ class FinalizeOfferReadyCommand extends Command {
             });
             if (!eventModelBids) {
                 // Probably contract failed since no event fired.
-                this.log.info(`BidTaken not received for offer ${importId}.`);
+                this.logger.info(`BidTaken not received for offer ${importId}.`);
                 return;
             }
 
@@ -62,7 +62,7 @@ class FinalizeOfferReadyCommand extends Command {
             }
 
             if (!bidTakenEvent) {
-                this.log.info(`Bid not taken for offer ${importId}.`);
+                this.logger.info(`Bid not taken for offer ${importId}.`);
                 this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
                 return;
             }
@@ -77,7 +77,7 @@ class FinalizeOfferReadyCommand extends Command {
                 },
                 bid.dc_id, (err) => {
                     if (err) {
-                        this.log.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
+                        this.logger.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
                         // TODO Cancel bid here.
                         this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
                     }
