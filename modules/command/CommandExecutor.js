@@ -51,7 +51,7 @@ class CommandExecutor {
                 status: STATUS.expired,
             });
             try {
-                await Models.sequelize.transaction(async t => handler.expired(command, t));
+                await handler.expired(command);
             } catch (e) {
                 this.logger.warn(`Failed to handle expired callback for command ${command.name} and ID ${command.id}`);
             }
@@ -106,10 +106,10 @@ class CommandExecutor {
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
+            console.log(e);
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}`);
             try {
-                await Models.sequelize.transaction(async t =>
-                    this._handleError(command, handler, e, t));
+                await this._handleError(command, handler, e);
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
             }
@@ -165,11 +165,10 @@ class CommandExecutor {
      * @param command
      * @param handler
      * @param err
-     * @param transaction
      * @return {Promise<void>}
      * @private
      */
-    async _handleError(command, handler, err, transaction) {
+    async _handleError(command, handler, err) {
         if (command.retries > 0) {
             await CommandExecutor._update(command, {
                 retries: command.retries - 1,
@@ -181,7 +180,7 @@ class CommandExecutor {
                     status: STATUS.failed,
                     message: err.message,
                 });
-                await handler.recover(command, err, transaction);
+                await handler.recover(command, err);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
             }

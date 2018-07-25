@@ -48,7 +48,7 @@ class OfferBidAddCommand extends Command {
      * @param transaction
      * @param err
      */
-    recover(command, err, transaction) {
+    recover(command, err) {
         this.logger.info('Bid not added, your bid was probably too late and the offer has been closed');
     }
 

@@ -58,7 +58,7 @@ class OfferBidAddedCommand extends Command {
      * @param transaction
      * @param command
      */
-    async expired(command, transaction) {
+    async expired(command) {
         const { importId } = command.data;
         this.logger.info(`Bid for ${importId} not added, your bid was probably too late and the offer has been closed`);
 

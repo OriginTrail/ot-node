@@ -93,10 +93,9 @@ class FinalizeOfferReadyCommand extends Command {
     /**
      * Recover system from failure
      * @param command
-     * @param transaction
      * @param err
      */
-    async recover(command, err, transaction) {
+    async recover(command, err) {
         if (command.data.side === 'DC') {
             const { offerId } = command.data;
 
@@ -104,7 +103,7 @@ class FinalizeOfferReadyCommand extends Command {
             const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
             offer.status = 'FAILED';
             offer.message = message;
-            await offer.save({ fields: ['status', 'message'], transaction });
+            await offer.save({ fields: ['status', 'message'] });
             this.logger.error(message);
             this.remoteControl.dcErrorHandling(message);
         }
@@ -115,17 +114,16 @@ class FinalizeOfferReadyCommand extends Command {
 
     /**
      * Execute strategy when event is too late
-     * @param transaction
      * @param command
      */
-    async expired(command, transaction) {
+    async expired(command) {
         const { offerId } = command.data;
 
         this.logger.warn('OfferFinalized command expired.');
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'FAILED';
         offer.message = 'OfferFinalized command expired.';
-        await offer.save({ fields: ['status', 'message'], transaction });
+        await offer.save({ fields: ['status', 'message'] });
     }
 
     /**

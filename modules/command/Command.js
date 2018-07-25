@@ -14,18 +14,16 @@ class Command {
     /**
      * Recover system from failure
      * @param command
-     * @param transaction
      * @param err
      */
-    async recover(command, err, transaction) {
+    async recover(command, err) {
     }
 
     /**
      * Execute strategy when event is too late
-     * @param transaction
      * @param command
      */
-    async expired(command, transaction) {
+    async expired(command) {
     }
 
     /**

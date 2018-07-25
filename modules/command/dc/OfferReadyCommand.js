@@ -31,10 +31,9 @@ class OfferReadyCommand extends Command {
 
     /**
      * Execute strategy when event is too late
-     * @param transaction
      * @param command
      */
-    async expired(command, transaction) {
+    async expired(command) {
         const { importId, externalId } = command.data;
         this.log.notify(`Offer ${importId} not finalized. Canceling offer.`);
 

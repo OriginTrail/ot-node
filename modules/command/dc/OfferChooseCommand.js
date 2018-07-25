@@ -23,10 +23,9 @@ class OfferChooseCommand extends Command {
     /**
      * Recover system from failure
      * @param command
-     * @param transaction
      * @param err
      */
-    async recover(command, err, transaction) {
+    async recover(command, err) {
         const { offerId } = command.data;
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         this.logger.warn(`Failed call choose bids for offer ID ${offer.id}, import ID ${offer.import_id}. ${err}`);
