@@ -89,6 +89,7 @@ class OfferReadyCommand extends Command {
             name: 'offerReady',
             delay: 0,
             period: 5000,
+            deadline_at: Date.now() + (5 * 60 * 1000),
             transactional: true,
         };
         Object.assign(command, map);
