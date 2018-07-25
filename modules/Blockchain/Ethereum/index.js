@@ -663,6 +663,7 @@ class Ethereum {
                             continue;
                         }
                         eventData.finished = true;
+                        // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
                             clearTimeout(clearToken);
                             clearInterval(token);
