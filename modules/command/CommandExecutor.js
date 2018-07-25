@@ -85,17 +85,15 @@ class CommandExecutor {
                     };
                 }
 
-                let children = result.commands;
-                await CommandExecutor._update(command, {
-                    status: STATUS.completed,
-                }, transaction);
-
-                children = children.map((c) => {
+                const children = result.commands.map((c) => {
                     c.parent_id = command.id;
                     return c;
                 });
 
                 await Promise.all(children.map(e => CommandExecutor._insert(e, transaction)));
+                await CommandExecutor._update(command, {
+                    status: STATUS.completed,
+                }, transaction);
                 return {
                     children,
                 };
@@ -248,14 +246,26 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async replay() {
-        const commandModels = await Models.commands.findAll({
+        const pendingCommands = await Models.commands.findAll({
             where: {
                 status: 'PENDING',
-                parent_id: null,
             },
         });
+
+        const commands = pendingCommands.filter(async (pc) => {
+            if (!pc.parent_id) {
+                return true;
+            }
+            const parent = await Models.commands.findOne({
+                where: {
+                    id: pc.parent_id,
+                },
+            });
+            return !parent || parent.status === 'COMPLETED';
+        });
+
         const adds = [];
-        for (const commandModel of commandModels) {
+        for (const commandModel of commands) {
             const command = {
                 id: commandModel.id,
                 name: commandModel.name,
