@@ -735,6 +735,24 @@ class OTNode {
                 return;
             };
         });
+
+
+        server.post('/api/withdraw', (req, res) => {
+            log.api('POST: Withdraw tokens request received.');
+
+            if (req.body !== null && typeof req.body.atrac_amount === 'number'
+                && req.body.atrac_amount > 0) {
+                const { atrac_amount } = req.body;
+                emitter.emit('api-withdraw-tokens', {
+                    atrac_amount,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+                return;
+            };
+        });
     }
 }
 

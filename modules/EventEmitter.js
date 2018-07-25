@@ -494,14 +494,14 @@ class EventEmitter {
             const { atrac_amount } = data;
 
             try {
-                logger.info('Deposit tokens to profile triggered');
+                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
 
                 await profileService.depositToken(atrac_amount);
-                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited on you profile`);
+                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully deposited ${atrac_amount} ATRAC`,
+                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
                 });
             } catch (error) {
                 logger.error(`Failed to deposit tokens. ${error}.`);
@@ -510,6 +510,29 @@ class EventEmitter {
                     message: `Failed to deposit tokens. ${error}.`,
                 });
                 remoteControl.tokensDepositFailed(`Failed to deposit tokens. ${error}.`);
+            }
+        });
+
+        this._on('api-withdraw-tokens', async (data) => {
+            const { atrac_amount } = data;
+
+            try {
+                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+
+                await profileService.withdrawToken(atrac_amount);
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                });
+                // TODO remoteControl
+            } catch (error) {
+                logger.error(`Failed to withdraw tokens. ${error}.`);
+                data.response.status(400);
+                data.response.send({
+                    message: `Failed to withdraw tokens. ${error}.`,
+                });
+                // TODO remoteControl
             }
         });
     }

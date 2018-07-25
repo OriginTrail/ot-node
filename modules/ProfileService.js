@@ -22,7 +22,7 @@ class ProfileService {
         );
 
         if (amount > parseFloat(walletBalance)) {
-            throw new Error('Insufficient funds on your wallet');
+            throw new Error(`Wallet balance: ${walletBalance} ATRAC`);
         }
 
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
@@ -30,7 +30,26 @@ class ProfileService {
         await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
         await this.blockchain.depositToken(new BN(mATRAC));
 
-        this.logger.info(`${amount} ATRAC deposited on you profile`);
+        this.logger.trace(`${amount} ATRAC deposited on you profile`);
+
+        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Profile balance: ${balanceInATRAC} ATRAC`);
+    }
+
+    async withdrawToken(amount) {
+        const profileBalance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+
+        if (amount > parseFloat(profileBalanceInATRAC)) {
+            throw new Error(`Profile balance: ${profileBalanceInATRAC} ATRAC`);
+        }
+
+        const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
+
+        await this.blockchain.withdrawToken(new BN(mATRAC));
+
+        this.logger.trace(`${amount} ATRAC withdrawn to your wallet`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');

@@ -341,6 +341,10 @@ class Blockchain {
         return this.blockchain.depositToken(amount);
     }
 
+    async withdrawToken(amount) {
+        return this.blockchain.withdrawToken(amount);
+    }
+
     async getRootHash(dcWallet, dataId) {
         return this.blockchain.getRootHash(dcWallet, dataId);
     }

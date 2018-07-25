@@ -899,6 +899,19 @@ class Ethereum {
         );
     }
 
+    async withdrawToken(amount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        this.log.trace(`Calling - withdrawToken(${amount.toString()})`);
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'withdrawToken',
+            [amount], options,
+        );
+    }
     async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
