@@ -9,6 +9,7 @@ class Command {
      * @param transaction
      */
     async execute(command, transaction) {
+        return Command.empty();
     }
 
     /**
@@ -17,6 +18,7 @@ class Command {
      * @param err
      */
     async recover(command, err) {
+        return Command.empty();
     }
 
     /**
@@ -24,6 +26,7 @@ class Command {
      * @param command
      */
     async expired(command) {
+        return Command.empty();
     }
 
     /**
@@ -49,9 +52,7 @@ class Command {
      */
     continueSequence(data, sequence) {
         if (!sequence || sequence.length === 0) {
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
         const [name] = sequence;
         sequence = sequence.slice(1);
@@ -61,6 +62,16 @@ class Command {
                 data,
                 sequence,
             })],
+        };
+    }
+
+    /**
+     * Halt execution
+     * @returns {{repeat: boolean, commands: Array}}
+     */
+    static empty() {
+        return {
+            commands: [],
         };
     }
 

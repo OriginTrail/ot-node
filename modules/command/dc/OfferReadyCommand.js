@@ -25,17 +25,23 @@ class OfferReadyCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
             offer.status = 'FINALIZING';
             await offer.save({ fields: ['status'], transaction });
-
-            const { data } = command;
-            Object.assign(data, {
-                totalEscrowTime: data.totalEscrowTime.toString(),
-                maxTokenAmount: data.maxTokenAmount.toString(),
-                minStakeAmount: data.minStakeAmount.toString(),
-                importSizeInBytes: data.importSizeInBytes.toString(),
-            });
-            return this.continueSequence(data, command.sequence);
+            return this.continueSequence(this.pack(command.data), command.sequence);
         }
         return Command.repeat();
+    }
+
+    /**
+     * Pack data for DB
+     * @param data
+     */
+    pack(data) {
+        Object.assign(data, {
+            totalEscrowTime: data.totalEscrowTime.toString(10),
+            maxTokenAmount: data.maxTokenAmount.toString(10),
+            minStakeAmount: data.minStakeAmount.toString(10),
+            importSizeInBytes: data.importSizeInBytes.toString(10),
+        });
+        return data;
     }
 
     /**

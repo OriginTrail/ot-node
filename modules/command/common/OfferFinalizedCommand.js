@@ -33,9 +33,7 @@ class FinalizeOfferReadyCommand extends Command {
                 offer.message = message;
                 await offer.save({ fields: ['status', 'message'], transaction });
                 this.logger.info(message);
-                return {
-                    commands: [],
-                };
+                return Command.empty();
             }
 
             const eventModelBids = await Models.events.findAll({
@@ -48,7 +46,7 @@ class FinalizeOfferReadyCommand extends Command {
             if (!eventModelBids) {
                 // Probably contract failed since no event fired.
                 this.logger.info(`BidTaken not received for offer ${importId}.`);
-                return;
+                return Command.empty();
             }
 
             let bidTakenEvent = null;
@@ -64,7 +62,7 @@ class FinalizeOfferReadyCommand extends Command {
             if (!bidTakenEvent) {
                 this.logger.info(`Bid not taken for offer ${importId}.`);
                 this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
-                return;
+                return Command.empty();
             }
 
             const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
@@ -83,9 +81,7 @@ class FinalizeOfferReadyCommand extends Command {
                     }
                 },
             );
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
         return Command.repeat();
     }
@@ -107,9 +103,7 @@ class FinalizeOfferReadyCommand extends Command {
             this.logger.error(message);
             this.remoteControl.dcErrorHandling(message);
         }
-        return {
-            commands: [],
-        };
+        return Command.empty();
     }
 
     /**

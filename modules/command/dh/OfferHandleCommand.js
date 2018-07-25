@@ -39,17 +39,13 @@ class OfferCancelCommand extends Command {
         const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             // wait until peers are synced
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         // Check if mine offer and if so ignore it.
         const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
         if (offerModel) {
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
@@ -66,9 +62,7 @@ class OfferCancelCommand extends Command {
             this.logger.notify('Close enough to take bid');
         } else {
             this.logger.notify('Not close enough to take bid');
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         const dataInfo = await Models.data_info.findOne({
@@ -76,9 +70,7 @@ class OfferCancelCommand extends Command {
         });
         if (dataInfo) {
             this.logger.trace(`I've already stored data for import ID ${importId}. Ignoring.`);
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         let bidEvent;
@@ -110,9 +102,7 @@ class OfferCancelCommand extends Command {
         const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
         if (bidModel) {
             this.logger.info(`I already sent my bid for offer: ${importId}.`);
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         const profile = await this.blockchain.getProfile(this.config.node_wallet);
@@ -144,25 +134,19 @@ class OfferCancelCommand extends Command {
             this.logger.info(`Offer ${importId} too cheap for me.`);
             this.logger.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
             this.logger.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         if (minStakeAmount.gt(myStake)) {
             this.logger.info(`Skipping offer ${importId}. Stake too high.`);
             this.logger.info(`Minimum stake required ${formatMinStake}[mATRAC] per byte/min`);
             this.logger.info(`My stake ${formatMyStake}[mATRAC] per byte/min`);
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
             this.logger.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
-            return {
-                commands: [],
-            };
+            return Command.empty();
         }
 
         this.logger.trace(`Adding a bid for offer ${importId}.`);
@@ -172,10 +156,9 @@ class OfferCancelCommand extends Command {
 
         const { data } = command;
         Object.assign(data, {
-            myPrice,
-            myStake,
+            myPrice: myPrice.toString(),
+            myStake: myStake.toString(),
             dcNodeId,
-            condition: myStake,
             profileBalance,
             predetermined: predeterminedBid,
         });
@@ -199,6 +182,9 @@ class OfferCancelCommand extends Command {
             commands: [
                 {
                     name: predeterminedBid ? 'offerBidAddPredetermined' : 'offerBidAdd',
+                    delay: 0,
+                    data,
+                    transactional: false,
                 },
             ],
         };

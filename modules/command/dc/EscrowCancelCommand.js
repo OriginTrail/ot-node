@@ -22,7 +22,7 @@ class EscrowCancelCommand extends Command {
             status: 'fail',
             import_id: importId,
         }, dhNodeId);
-        return this.continueSequence(command.data, command.sequence);
+        return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
     /**

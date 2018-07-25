@@ -66,13 +66,21 @@ class OfferCreateBlockchainCommand extends Command {
         await offer.save({ fields: ['status'] });
 
         const { data } = command;
+        return this.continueSequence(this.pack(data), command.sequence);
+    }
+
+    /**
+     * Pack data for DB
+     * @param data
+     */
+    pack(data) {
         Object.assign(data, {
-            totalEscrowTime: totalEscrowTime.toString(10),
-            maxTokenAmount: maxTokenAmount.toString(10),
-            minStakeAmount: minStakeAmount.toString(10),
-            importSizeInBytes: importSizeInBytes.toString(10),
+            totalEscrowTime: data.totalEscrowTime.toString(10),
+            maxTokenAmount: data.maxTokenAmount.toString(10),
+            minStakeAmount: data.minStakeAmount.toString(10),
+            importSizeInBytes: data.importSizeInBytes.toString(10),
         });
-        return this.continueSequence(data, command.sequence);
+        return data;
     }
 
     /**

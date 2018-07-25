@@ -41,10 +41,7 @@ class OfferReplicationParametersSaveCommand extends Command {
             importId,
             encryptionKey: distributionPrivateKey,
         }, bid.dc_id);
-
-        return {
-            commands: [],
-        };
+        return Command.empty();
     }
 
     /**

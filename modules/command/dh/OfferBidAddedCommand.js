@@ -1,5 +1,6 @@
-const Models = require('../../../models/index');
 const Command = require('../Command');
+const Models = require('../../../models/index');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 class OfferBidAddedCommand extends Command {
     constructor(ctx) {
@@ -45,12 +46,38 @@ class OfferBidAddedCommand extends Command {
                 commands: [
                     {
                         name: 'offerFinalized',
-                        data,
+                        data: this.pack(data),
                     },
                 ],
             };
         }
         return Command.repeat();
+    }
+
+    /**
+     * Pack data for DB
+     * @param data
+     */
+    pack(data) {
+        Object.assign(data, {
+            myStake: data.myStake.toString(10),
+            myPrice: data.myPrice.toString(10),
+        });
+        return data;
+    }
+
+    /**
+     * Unpack data from database
+     * @param data
+     * @returns {Promise<*>}
+     */
+    unpack(data) {
+        const parsed = data;
+        Object.assign(parsed, {
+            myStake: new BN(data.myStake, 10),
+            myPrice: new BN(data.myPrice, 10),
+        });
+        return parsed;
     }
 
     /**
@@ -61,10 +88,7 @@ class OfferBidAddedCommand extends Command {
     async expired(command) {
         const { importId } = command.data;
         this.logger.info(`Bid for ${importId} not added, your bid was probably too late and the offer has been closed`);
-
-        return {
-            commands: [],
-        };
+        return Command.empty();
     }
 
     /**

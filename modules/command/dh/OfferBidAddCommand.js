@@ -1,4 +1,5 @@
 const Command = require('../Command');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 class OfferBidAddCommand extends Command {
     constructor(ctx) {
@@ -35,11 +36,37 @@ class OfferBidAddCommand extends Command {
             commands: [
                 {
                     name: 'offerBidAdded',
-                    data: command.data,
+                    data: this.pack(command.data),
                     delay: 0,
                 },
             ],
         };
+    }
+
+    /**
+     * Pack data for DB
+     * @param data
+     */
+    pack(data) {
+        Object.assign(data, {
+            myStake: data.myStake.toString(10),
+            myPrice: data.myPrice.toString(10),
+        });
+        return data;
+    }
+
+    /**
+     * Unpack data from database
+     * @param data
+     * @returns {Promise<*>}
+     */
+    unpack(data) {
+        const parsed = data;
+        Object.assign(parsed, {
+            myStake: new BN(data.myStake, 10),
+            myPrice: new BN(data.myPrice, 10),
+        });
+        return parsed;
     }
 
     /**

@@ -1,5 +1,6 @@
 const async = require('async');
 const Models = require('../../models');
+const Command = require('./Command');
 
 /**
  * Command statuses
@@ -83,10 +84,7 @@ class CommandExecutor {
                         status: STATUS.pending,
                     }, transaction);
                     await this.add(command, command.period, false);
-                    return {
-                        repeat: true,
-                        command: [],
-                    };
+                    return Command.repeat();
                 }
 
                 const children = result.commands.map((c) => {
