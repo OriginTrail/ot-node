@@ -1,11 +1,11 @@
-const Models = require('../../models');
-const Command = require('../command/Command');
-const Utilities = require('../Utilities');
-const ImportUtilities = require('../ImportUtilities');
-const Graph = require('../Graph');
-const Challenge = require('../Challenge');
-const Encryption = require('../Encryption');
-const MerkleTree = require('../Merkle');
+const Models = require('../../../models/index');
+const Command = require('../Command');
+const Utilities = require('../../Utilities');
+const ImportUtilities = require('../../ImportUtilities');
+const Graph = require('../../Graph');
+const Challenge = require('../../Challenge');
+const Encryption = require('../../Encryption');
+const MerkleTree = require('../../Merkle');
 
 class OfferKeyVerificationCommand extends Command {
     constructor(ctx) {

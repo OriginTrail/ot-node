@@ -99,7 +99,6 @@ class DHService {
                 });
 
                 if (eventModels) {
-                    const found = false;
                     eventModels.forEach((eventModel) => {
                         const data = JSON.parse(eventModel.data);
                         if (data.DH_node_id.substring(2, 42) === this.config.identity &&

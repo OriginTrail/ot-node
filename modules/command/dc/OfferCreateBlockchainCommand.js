@@ -1,6 +1,6 @@
-const BN = require('bn.js');
-const Models = require('../../models');
-const Command = require('../command/Command');
+const BN = require('../../../node_modules/bn.js/lib/bn');
+const Models = require('../../../models/index');
+const Command = require('../Command');
 
 class OfferCreateBlockchainCommand extends Command {
     constructor(ctx) {

@@ -35,16 +35,27 @@ const Web3 = require('web3');
 global.__basedir = __dirname;
 
 const CommandExecutor = require('./modules/command/CommandExecutor');
-const OfferCancelCommand = require('./modules/dc/OfferCancelCommand');
-const OfferChooseCommand = require('./modules/dc/OfferChooseCommand');
-const OfferCreateBlockchainCommand = require('./modules/dc/OfferCreateBlockchainCommand');
-const OfferCreateDBCommand = require('./modules/dc/OfferCreateDBCommand');
-const OfferReadyCommand = require('./modules/dc/OfferReadyCommand');
-const OfferFinalizedCommand = require('./modules/dc/OfferFinalizedCommand');
-const OfferRootHashCommand = require('./modules/dc/OfferRootHashCommand');
-const OfferKeyVerificationCommand = require('./modules/dc/OfferKeyVerificationCommand');
-const EscrowVerifyCommand = require('./modules/dc/EscrowVerifyCommand');
-const EscrowCancelCommand = require('./modules/dc/EscrowCancelCommand');
+
+const BiddingApprovalIncreaseCommand = require('./modules/command/common/BiddingApprovalIncreaseCommand');
+const DepositTokenCommand = require('./modules/command/common/DepositTokenCommand');
+const OfferFinalizedCommand = require('./modules/command/common/OfferFinalizedCommand');
+
+const OfferCancelCommand = require('./modules/command/dc/OfferCancelCommand');
+const OfferChooseCommand = require('./modules/command/dc/OfferChooseCommand');
+const OfferCreateBlockchainCommand = require('./modules/command/dc/OfferCreateBlockchainCommand');
+const OfferCreateDBCommand = require('./modules/command/dc/OfferCreateDBCommand');
+const OfferReadyCommand = require('./modules/command/dc/OfferReadyCommand');
+const OfferRootHashCommand = require('./modules/command/dc/OfferRootHashCommand');
+const OfferKeyVerificationCommand = require('./modules/command/dc/OfferKeyVerificationCommand');
+const EscrowVerifyCommand = require('./modules/command/dc/EscrowVerifyCommand');
+const EscrowCancelCommand = require('./modules/command/dc/EscrowCancelCommand');
+
+const OfferBidAddCommand = require('./modules/command/dh/OfferBidAddCommand');
+const OfferBidAddedCommand = require('./modules/command/dh/OfferBidAddedCommand');
+const OfferHandleCommand = require('./modules/command/dh/OfferHandleCommand');
+const OfferHandleImportCommand = require('./modules/command/dh/OfferHandleImportCommand');
+const OfferReplicationParametersCommand = require('./modules/command/dh/OfferReplicationParametersCommand');
+const OfferReplicationParametersSaveCommand = require('./modules/command/dh/OfferReplicationParametersSaveCommand');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -234,6 +245,14 @@ class OTNode {
             offerKeyVerificationCommand: awilix.asClass(OfferKeyVerificationCommand).singleton(),
             escrowCancelCommand: awilix.asClass(EscrowCancelCommand).singleton(),
             escrowVerifyCommand: awilix.asClass(EscrowVerifyCommand).singleton(),
+            offerBidAddCommand: awilix.asClass(OfferBidAddCommand).singleton(),
+            offerBidAddedCommand: awilix.asClass(OfferBidAddedCommand).singleton(),
+            offerHandleCommand: awilix.asClass(OfferHandleCommand).singleton(),
+            offerHandleImportCommand: awilix.asClass(OfferHandleImportCommand).singleton(),
+            offerReplicationParametersCommand: awilix.asClass(OfferReplicationParametersCommand).singleton(),
+            offerReplicationParametersSaveCommand: awilix.asClass(OfferReplicationParametersSaveCommand).singleton(),
+            biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand).singleton(),
+            depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

@@ -1,10 +1,9 @@
-const Command = require('../command/Command');
+const Command = require('../Command');
 
-class EscrowCancelCommand extends Command {
+class DepositTokenCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
         this.blockchain = ctx.blockchain;
     }
 
@@ -13,15 +12,8 @@ class EscrowCancelCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { importId, dhWallet, dhNodeId } = command.data;
-        await this.blockchain.cancelEscrow(
-            dhWallet,
-            importId,
-        );
-        await this.network.kademlia().sendVerifyImportResponse({
-            status: 'fail',
-            import_id: importId,
-        }, dhNodeId);
+        const { condition, profileBalance } = command.data;
+        await this.blockchain.depositToken(condition.sub(profileBalance));
         return this.continueSequence(command.data, command.sequence);
     }
 
@@ -32,7 +24,7 @@ class EscrowCancelCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'escrowCancel',
+            name: 'depositToken',
             delay: 0,
             transactional: false,
         };
@@ -41,4 +33,4 @@ class EscrowCancelCommand extends Command {
     }
 }
 
-module.exports = EscrowCancelCommand;
+module.exports = DepositTokenCommand;

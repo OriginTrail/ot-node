@@ -444,6 +444,7 @@ class EventEmitter {
                         max_token_amount,
                         min_stake_amount,
                         min_reputation,
+                        side: 'DC',
                     },
                     transactional: false,
                 });
@@ -507,6 +508,7 @@ class EventEmitter {
             dhService,
             logger,
             config,
+            commandExecutor,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -524,17 +526,22 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            await dhService.handleOffer(
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                min_reputation,
-                data_size_in_bytes,
-                data_hash,
-                false,
-            );
+            await commandExecutor.add({
+                name: 'offerHandle',
+                delay: 0,
+                data: {
+                    importId: import_id,
+                    dcNodeId: DC_node_id,
+                    totalEscrowTime: total_escrow_time_in_minutes,
+                    maxTokenAmount: max_token_amount_per_byte_minute,
+                    minStakeAmount: min_stake_amount_per_byte_minute,
+                    minReputation: min_reputation,
+                    dataSizeBytes: data_size_in_bytes,
+                    dataHash: data_hash,
+                    predeterminedBid: false,
+                },
+                transactional: false,
+            });
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {

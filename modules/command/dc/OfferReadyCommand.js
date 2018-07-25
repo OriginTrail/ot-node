@@ -1,5 +1,5 @@
-const Models = require('../../models');
-const Command = require('../command/Command');
+const Models = require('../../../models/index');
+const Command = require('../Command');
 
 class OfferReadyCommand extends Command {
     constructor(ctx) {

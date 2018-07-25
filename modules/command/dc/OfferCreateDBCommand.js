@@ -1,11 +1,11 @@
-const BN = require('bn.js');
-const Models = require('../../models');
+const BN = require('../../../node_modules/bn.js/lib/bn');
+const Models = require('../../../models/index');
 
-const Graph = require('../Graph');
-const Encryption = require('../Encryption');
+const Graph = require('../../Graph');
+const Encryption = require('../../Encryption');
 const bytes = require('utf8-length');
 
-const Command = require('../command/Command');
+const Command = require('../Command');
 
 class OfferCreateDBCommand extends Command {
     constructor(ctx) {

@@ -1,0 +1,66 @@
+const Models = require('../../../models/index');
+const Command = require('../Command');
+
+class OfferReplicationParametersSaveCommand extends Command {
+    constructor(ctx) {
+        super(ctx);
+        this.logger = ctx.logger;
+    }
+
+    /**
+     * Executes command and produces one or more events
+     * @param command
+     * @param transaction
+     */
+    async execute(command, transaction) {
+        const {
+            importId, publicKey, distributionPublicKey,
+            distributionPrivateKey, epk,
+        } = command.data;
+
+        const bid = await Models.bids.findOne({ where: { import_id: importId } });
+
+        // Store holding information and generate keys for eventual data replication.
+        const holdingData = await Models.holding_data.create({
+            id: importId,
+            source_wallet: bid.dc_wallet,
+            data_public_key: publicKey,
+            distribution_public_key: distributionPublicKey,
+            distribution_private_key: distributionPrivateKey,
+            epk,
+        }, { transaction });
+
+        if (!holdingData) {
+            this.log.warn('Failed to store holding data info.');
+        }
+
+        this.log.important('Replication finished. Send data to DC for verification.');
+        this.remoteControl.dhReplicationFinished('Replication finished. Sending data to DC for verification.');
+        await this.network.kademlia().verifyImport({
+            epk,
+            importId,
+            encryptionKey: distributionPrivateKey,
+        }, bid.dc_id);
+
+        return {
+            commands: [],
+        };
+    }
+
+    /**
+     * Builds default AddCommand
+     * @param map
+     * @returns {{add, data: *, delay: *, deadline: *}}
+     */
+    static buildDefault(map) {
+        const command = {
+            name: 'offerReplicationParametersSave',
+            delay: 0,
+            transactional: true,
+        };
+        Object.assign(command, map);
+        return command;
+    }
+}
+
+module.exports = OfferReplicationParametersSaveCommand;
