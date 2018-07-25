@@ -27,10 +27,18 @@ class Command {
     }
 
     /**
-     * Parse data from database
+     * Pack data for DB
      * @param data
      */
-    parse(data) {
+    pack(data) {
+        return data;
+    }
+
+    /**
+     * Unpack data from DB
+     * @param data
+     */
+    unpack(data) {
         return data;
     }
 

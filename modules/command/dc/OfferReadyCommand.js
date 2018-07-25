@@ -25,7 +25,15 @@ class OfferReadyCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
             offer.status = 'FINALIZING';
             await offer.save({ fields: ['status'], transaction });
-            return this.continueSequence(command.data, command.sequence);
+
+            const { data } = command;
+            Object.assign(data, {
+                totalEscrowTime: data.totalEscrowTime.toString(),
+                maxTokenAmount: data.maxTokenAmount.toString(),
+                minStakeAmount: data.minStakeAmount.toString(),
+                importSizeInBytes: data.importSizeInBytes.toString(),
+            });
+            return this.continueSequence(data, command.sequence);
         }
         return Command.repeat();
     }
@@ -50,11 +58,11 @@ class OfferReadyCommand extends Command {
     }
 
     /**
-     * Parse data from database
+     * Unpack data from database
      * @param data
      * @returns {Promise<*>}
      */
-    parse(data) {
+    unpack(data) {
         const parsed = data;
         Object.assign(parsed, {
             totalEscrowTime: new BN(data.totalEscrowTime, 10),

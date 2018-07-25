@@ -17,7 +17,14 @@ class OfferChooseCommand extends Command {
         await this.blockchain.chooseBids(offer.import_id);
         this.logger.info(`Bids chosen for offer ID ${offer.id}, import ID ${offer.import_id}.`);
 
-        return this.continueSequence(command.data, command.sequence);
+        const { data } = command;
+        Object.assign(data, {
+            totalEscrowTime: data.totalEscrowTime.toString(),
+            maxTokenAmount: data.maxTokenAmount.toString(),
+            minStakeAmount: data.minStakeAmount.toString(),
+            importSizeInBytes: data.importSizeInBytes.toString(),
+        });
+        return this.continueSequence(data, command.sequence);
     }
 
     /**

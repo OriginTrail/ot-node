@@ -64,15 +64,23 @@ class OfferCreateBlockchainCommand extends Command {
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'STARTED';
         await offer.save({ fields: ['status'] });
-        return this.continueSequence(command.data, command.sequence);
+
+        const { data } = command;
+        Object.assign(data, {
+            totalEscrowTime: totalEscrowTime.toString(10),
+            maxTokenAmount: maxTokenAmount.toString(10),
+            minStakeAmount: minStakeAmount.toString(10),
+            importSizeInBytes: importSizeInBytes.toString(10),
+        });
+        return this.continueSequence(data, command.sequence);
     }
 
     /**
-     * Parse data from database
+     * Unpack data from database
      * @param data
      * @returns {Promise<*>}
      */
-    parse(data) {
+    unpack(data) {
         const parsed = data;
         Object.assign(parsed, {
             totalEscrowTime: new BN(data.totalEscrowTime, 10),

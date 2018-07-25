@@ -76,7 +76,7 @@ class CommandExecutor {
                     status: STATUS.started,
                 }, transaction);
 
-                command.data = handler.parse(command.data);
+                command.data = handler.unpack(command.data);
                 const result = await handler.execute(command, transaction);
                 if (result.repeat) {
                     await CommandExecutor._update(command, {
