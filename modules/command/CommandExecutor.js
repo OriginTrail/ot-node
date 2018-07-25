@@ -44,6 +44,8 @@ class CommandExecutor {
             started_at: now,
         });
 
+        this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
+
         const handler = this.resolve(command);
         if (command.deadline_at && now > command.deadline_at) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
@@ -242,6 +244,40 @@ class CommandExecutor {
             update,
             opts,
         );
+    }
+
+    /**
+     * Replays pending commands from the database
+     * @returns {Promise<void>}
+     */
+    async replay() {
+        const commandModels = await Models.commands.findAll({
+            where: {
+                status: 'PENDING',
+                parent_id: null,
+            },
+        });
+        const adds = [];
+        for (const commandModel of commandModels) {
+            const command = {
+                id: commandModel.id,
+                name: commandModel.name,
+                data: commandModel.data,
+                ready_at: commandModel.ready_at,
+                delay: commandModel.delay,
+                started_at: commandModel.started_at,
+                deadline_at: commandModel.deadline_at,
+                period: commandModel.period,
+                status: commandModel.status,
+                message: commandModel.message,
+                parent_id: commandModel.parent_id,
+                duration: commandModel.duration,
+                transactional: commandModel.transactional,
+                retries: commandModel.retries,
+            };
+            adds.push(this.add(command, 0, false));
+        }
+        await Promise.all(adds);
     }
 }
 module.exports = CommandExecutor;

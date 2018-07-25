@@ -312,6 +312,9 @@ class OTNode {
 
         const challenger = container.resolve('challenger');
         await challenger.startChallenging();
+
+        const commandExecutor = container.resolve('commandExecutor');
+        await commandExecutor.replay();
     }
 
     /**
