@@ -39,13 +39,17 @@ class OfferCancelCommand extends Command {
         const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             // wait until peers are synced
-            return;
+            return {
+                commands: [],
+            };
         }
 
         // Check if mine offer and if so ignore it.
         const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
         if (offerModel) {
-            return;
+            return {
+                commands: [],
+            };
         }
 
         this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
