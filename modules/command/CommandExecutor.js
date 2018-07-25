@@ -84,11 +84,16 @@ class CommandExecutor {
                     };
                 }
 
-                const children = result.commands;
+                let children = result.commands;
                 await CommandExecutor._update(command, {
                     status: STATUS.completed,
                     duration: Date.now() - command.started_at,
                 }, transaction);
+
+                children = children.map((c) => {
+                    c.parent_id = command.id;
+                    return c;
+                });
 
                 await Promise.all(children.map(e => CommandExecutor._insert(e, transaction)));
                 return {
@@ -104,7 +109,7 @@ class CommandExecutor {
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}`);
             try {
                 await Models.sequelize.transaction(async t =>
-                    handler._handleError(command, handler, t));
+                    this._handleError(command, handler, e, t));
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
             }
@@ -160,10 +165,11 @@ class CommandExecutor {
      * @param command
      * @param handler
      * @param err
+     * @param transaction
      * @return {Promise<void>}
      * @private
      */
-    async _handleError(command, handler, err) {
+    async _handleError(command, handler, err, transaction) {
         if (command.retries > 0) {
             await CommandExecutor._update(command, {
                 retries: command.retries - 1,
@@ -175,7 +181,7 @@ class CommandExecutor {
                     status: STATUS.failed,
                     message: err.message,
                 });
-                await Models.sequelize.transaction(async t => handler.recover(command, err, t));
+                await handler.recover(command, err, transaction);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
             }
@@ -196,6 +202,12 @@ class CommandExecutor {
         }
         if (!command.ready_at) {
             command.ready_at = Date.now();
+        }
+        if (!command.delay) {
+            command.delay = 0;
+        }
+        if (!command.transactional) {
+            command.transactional = 0;
         }
         command.status = STATUS.pending;
         const opts = {

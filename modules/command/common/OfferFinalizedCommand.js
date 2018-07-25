@@ -83,6 +83,9 @@ class FinalizeOfferReadyCommand extends Command {
                     }
                 },
             );
+            return {
+                commands: [],
+            };
         }
         return Command.repeat();
     }
@@ -94,16 +97,17 @@ class FinalizeOfferReadyCommand extends Command {
      * @param err
      */
     async recover(command, err, transaction) {
-        const { offerId } = command.data;
+        if (command.data.side === 'DC') {
+            const { offerId } = command.data;
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
-        const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
-        offer.status = 'FAILED';
-        offer.message = message;
-        await offer.save({ fields: ['status', 'message'], transaction });
-        this.logger.error(message);
-        this.remoteControl.dcErrorHandling(message);
-
+            const offer = await Models.offers.findOne({ where: { id: offerId } });
+            const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
+            offer.status = 'FAILED';
+            offer.message = message;
+            await offer.save({ fields: ['status', 'message'], transaction });
+            this.logger.error(message);
+            this.remoteControl.dcErrorHandling(message);
+        }
         return {
             commands: [],
         };
