@@ -77,7 +77,6 @@ class CommandExecutor {
                 if (result.repeat) {
                     await CommandExecutor._update(command, {
                         status: STATUS.pending,
-                        duration: Date.now() - command.started_at,
                     }, transaction);
                     await this.add(command, command.period, false);
                     return {
@@ -89,7 +88,6 @@ class CommandExecutor {
                 let children = result.commands;
                 await CommandExecutor._update(command, {
                     status: STATUS.completed,
-                    duration: Date.now() - command.started_at,
                 }, transaction);
 
                 children = children.map((c) => {
@@ -108,7 +106,6 @@ class CommandExecutor {
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
-            console.log(e);
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}`);
             try {
                 await this._handleError(command, handler, e);
@@ -271,7 +268,6 @@ class CommandExecutor {
                 status: commandModel.status,
                 message: commandModel.message,
                 parent_id: commandModel.parent_id,
-                duration: commandModel.duration,
                 transactional: commandModel.transactional,
                 retries: commandModel.retries,
             };

@@ -49,10 +49,6 @@ module.exports = {
             type: Sequelize.INTEGER,
             allowNull: true,
         },
-        duration: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
-        },
         transactional: {
             type: Sequelize.INTEGER,
             allowNull: false,
