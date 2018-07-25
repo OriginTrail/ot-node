@@ -38,6 +38,8 @@ class OfferBidAddCommand extends Command {
                     name: 'offerBidAdded',
                     data: this.pack(command.data),
                     delay: 0,
+                    period: 5000,
+                    transactional: true,
                 },
             ],
         };
@@ -51,6 +53,7 @@ class OfferBidAddCommand extends Command {
         Object.assign(data, {
             myStake: data.myStake.toString(10),
             myPrice: data.myPrice.toString(10),
+            profileBalance: data.profileBalance.toString(10),
         });
         return data;
     }
@@ -65,6 +68,7 @@ class OfferBidAddCommand extends Command {
         Object.assign(parsed, {
             myStake: new BN(data.myStake, 10),
             myPrice: new BN(data.myPrice, 10),
+            profileBalance: new BN(data.profileBalance, 10),
         });
         return parsed;
     }

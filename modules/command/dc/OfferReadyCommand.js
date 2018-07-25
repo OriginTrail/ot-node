@@ -88,7 +88,7 @@ class OfferReadyCommand extends Command {
         const command = {
             name: 'offerReady',
             delay: 0,
-            interval: 5000,
+            period: 5000,
             transactional: true,
         };
         Object.assign(command, map);

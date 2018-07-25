@@ -36,7 +36,7 @@ class OfferBidAddedCommand extends Command {
                 stake: myStake.toString(),
                 data_size_bytes: dataSizeBytes.toString(),
                 pd_bid: predeterminedBid,
-            });
+            }, { transaction });
 
             const { data } = command;
             Object.assign(data, {
@@ -47,6 +47,8 @@ class OfferBidAddedCommand extends Command {
                     {
                         name: 'offerFinalized',
                         data: this.pack(data),
+                        period: 5000,
+                        transactional: true,
                     },
                 ],
             };
@@ -62,6 +64,7 @@ class OfferBidAddedCommand extends Command {
         Object.assign(data, {
             myStake: data.myStake.toString(10),
             myPrice: data.myPrice.toString(10),
+            profileBalance: data.profileBalance.toString(10),
         });
         return data;
     }
@@ -76,13 +79,13 @@ class OfferBidAddedCommand extends Command {
         Object.assign(parsed, {
             myStake: new BN(data.myStake, 10),
             myPrice: new BN(data.myPrice, 10),
+            profileBalance: new BN(data.profileBalance, 10),
         });
         return parsed;
     }
 
     /**
      * Execute strategy when event is too late
-     * @param transaction
      * @param command
      */
     async expired(command) {
@@ -100,7 +103,7 @@ class OfferBidAddedCommand extends Command {
         const command = {
             name: 'offerBidAdded',
             delay: 0,
-            interval: 1000,
+            period: 5000,
             transactional: true,
         };
         Object.assign(command, map);

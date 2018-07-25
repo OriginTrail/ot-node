@@ -38,10 +38,10 @@ class FinalizeOfferReadyCommand extends Command {
 
             const eventModelBids = await Models.events.findAll({
                 where:
-                        {
-                            event: 'BidTaken',
-                            import_id: importId,
-                        },
+                    {
+                        event: 'BidTaken',
+                        import_id: importId,
+                    },
             });
             if (!eventModelBids) {
                 // Probably contract failed since no event fired.
@@ -129,7 +129,7 @@ class FinalizeOfferReadyCommand extends Command {
         const command = {
             name: 'offerFinalized',
             delay: 0,
-            interval: 5000,
+            period: 5000,
             transactional: true,
         };
         Object.assign(command, map);

@@ -13,8 +13,8 @@ class BiddingApprovalIncreaseCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { condition, profileBalance } = command.data;
-        await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+        const { myStake, profileBalance } = command.data;
+        await this.blockchain.increaseBiddingApproval(myStake.sub(profileBalance));
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
@@ -26,6 +26,7 @@ class BiddingApprovalIncreaseCommand extends Command {
         Object.assign(data, {
             myStake: data.myStake.toString(10),
             myPrice: data.myPrice.toString(10),
+            profileBalance: data.profileBalance.toString(10),
         });
         return data;
     }
@@ -40,6 +41,7 @@ class BiddingApprovalIncreaseCommand extends Command {
         Object.assign(parsed, {
             myStake: new BN(data.myStake, 10),
             myPrice: new BN(data.myPrice, 10),
+            profileBalance: new BN(data.profileBalance, 10),
         });
         return parsed;
     }

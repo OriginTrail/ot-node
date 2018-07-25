@@ -251,6 +251,7 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async replay() {
+        this.logger.notify('Replay pending/started commands from the database...');
         const pendingCommands = await Models.commands.findAll({
             where: {
                 status: { [Models.Sequelize.Op.in]: [STATUS.pending, STATUS.started] },

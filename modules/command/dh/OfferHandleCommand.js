@@ -156,10 +156,10 @@ class OfferCancelCommand extends Command {
 
         const { data } = command;
         Object.assign(data, {
-            myPrice: myPrice.toString(),
-            myStake: myStake.toString(),
+            myPrice: myPrice.toString(10),
+            myStake: myStake.toString(10),
             dcNodeId,
-            profileBalance,
+            profileBalance: profileBalance.toString(10),
             predetermined: predeterminedBid,
         });
         if (profileBalance.lt(myStake)) {
