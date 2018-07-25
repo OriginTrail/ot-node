@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         name: DataTypes.STRING,
         data: DataTypes.JSON,
+        sequence: DataTypes.JSON,
         ready_at: DataTypes.INTEGER,
         delay: DataTypes.INTEGER,
         started_at: DataTypes.INTEGER,

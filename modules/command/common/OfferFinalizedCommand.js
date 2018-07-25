@@ -135,7 +135,7 @@ class FinalizeOfferReadyCommand extends Command {
         const command = {
             name: 'offerFinalized',
             delay: 0,
-            interval: 1000,
+            interval: 5000,
             transactional: true,
         };
         Object.assign(command, map);

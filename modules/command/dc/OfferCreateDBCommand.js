@@ -50,12 +50,12 @@ class OfferCreateDBCommand extends Command {
         }
 
         const vertices = await this.graphStorage.findVerticesByImportId(importId);
-        vertices.forEach((vertex) => {
-            if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
-                dhWallets.push(vertex.data.wallet);
-                dhIds.push(vertex.data.node_id);
-            }
-        });
+        // vertices.forEach((vertex) => {
+        //     if (vertex.data && vertex.data.wallet && vertex.data.node_id) {
+        //         dhWallets.push(vertex.data.wallet);
+        //         dhIds.push(vertex.data.node_id);
+        //     }
+        // });
 
         totalEscrowTime = totalEscrowTime.div(new BN(60000));
         const importSizeInBytes = new BN(this._calculateImportSize(vertices));
@@ -80,11 +80,11 @@ class OfferCreateDBCommand extends Command {
         Object.assign(data, {
             dhIds,
             dhWallets,
-            totalEscrowTime,
-            maxTokenAmount,
-            minStakeAmount,
+            totalEscrowTime: totalEscrowTime.toString(10),
+            maxTokenAmount: maxTokenAmount.toString(10),
+            minStakeAmount: minStakeAmount.toString(10),
             minReputation,
-            importSizeInBytes,
+            importSizeInBytes: importSizeInBytes.toString(10),
             offerId: newOfferRow.id,
         });
         return this.continueSequence(data, command.sequence);

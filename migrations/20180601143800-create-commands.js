@@ -13,6 +13,10 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        sequence: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
         ready_at: {
             type: Sequelize.INTEGER,
             allowNull: false,

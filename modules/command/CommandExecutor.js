@@ -53,7 +53,10 @@ class CommandExecutor {
                 status: STATUS.expired,
             });
             try {
-                await handler.expired(command);
+                const result = await handler.expired(command);
+                if (result && result.commands) {
+                    result.commands.forEach(c => this.add(c, c.delay, true));
+                }
             } catch (e) {
                 this.logger.warn(`Failed to handle expired callback for command ${command.name} and ID ${command.id}`);
             }
@@ -73,6 +76,7 @@ class CommandExecutor {
                     status: STATUS.started,
                 }, transaction);
 
+                command.data = handler.parse(command.data);
                 const result = await handler.execute(command, transaction);
                 if (result.repeat) {
                     await CommandExecutor._update(command, {
@@ -106,7 +110,10 @@ class CommandExecutor {
         } catch (e) {
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}`);
             try {
-                await this._handleError(command, handler, e);
+                const result = await this._handleError(command, handler, e);
+                if (result && result.commands) {
+                    result.commands.forEach(c => this.add(c, c.delay, true));
+                }
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
             }
@@ -248,7 +255,7 @@ class CommandExecutor {
     async replay() {
         const pendingCommands = await Models.commands.findAll({
             where: {
-                status: 'PENDING',
+                status: { [Models.Sequelize.Op.in]: [STATUS.pending, STATUS.started] },
             },
         });
 
@@ -280,6 +287,7 @@ class CommandExecutor {
                 parent_id: commandModel.parent_id,
                 transactional: commandModel.transactional,
                 retries: commandModel.retries,
+                sequence: commandModel.sequence,
             };
             adds.push(this.add(command, 0, false));
         }

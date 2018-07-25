@@ -68,6 +68,22 @@ class OfferCreateBlockchainCommand extends Command {
     }
 
     /**
+     * Parse data from database
+     * @param data
+     * @returns {Promise<*>}
+     */
+    parse(data) {
+        const parsed = data;
+        Object.assign(parsed, {
+            totalEscrowTime: new BN(data.totalEscrowTime, 10),
+            maxTokenAmount: new BN(data.maxTokenAmount, 10),
+            minStakeAmount: new BN(data.minStakeAmount, 10),
+            importSizeInBytes: new BN(data.importSizeInBytes, 10),
+        });
+        return parsed;
+    }
+
+    /**
      * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}

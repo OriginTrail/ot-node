@@ -27,6 +27,14 @@ class Command {
     }
 
     /**
+     * Parse data from database
+     * @param data
+     */
+    parse(data) {
+        return data;
+    }
+
+    /**
      * Makes command from sequence and continues it
      * @param data
      * @param sequence
