@@ -512,6 +512,19 @@ class RemoteControl {
 
 
     /**
+     * Deposit tokens - succeeded
+     */
+    tokenDepositSucceeded(data) {
+        this.socket.emit('tokenDepositSucceeded', data);
+    }
+    /**
+     * Deposit tokens - failed
+     */
+    tokensDepositFailed(data) {
+        this.socket.emit('tokensDepositFailed', data);
+    }
+
+    /**
      * DV events
      */
     networkQueryOfferArrived(data) {
