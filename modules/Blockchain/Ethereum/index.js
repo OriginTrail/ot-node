@@ -150,6 +150,23 @@ class Ethereum {
     }
 
     /**
+     * Gets profile balance by wallet
+     * @param wallet
+     * @returns {Promise}
+     */
+    getProfileBalance(wallet) {
+        return new Promise((resolve, reject) => {
+            this.log.trace(`Getting profile balance by wallet ${wallet}`);
+            this.biddingContract.methods.getBalance(wallet).call()
+                .then((res) => {
+                    resolve(res);
+                }).catch((e) => {
+                    reject(e);
+                });
+        });
+    }
+
+    /**
      * Get offer by importId
      * @param importId
      * @returns {Promise}
@@ -869,6 +886,11 @@ class Ethereum {
         });
     }
 
+    /**
+     * Deposit tokens to profile
+     * @param {number} - amount
+     * @returns {Promise<any>}
+     */
     async depositToken(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -883,6 +905,24 @@ class Ethereum {
         );
     }
 
+    /**
+     * Withdraw tokens from profile to wallet
+     * @param {number} - amount
+     * @returns {Promise<any>}
+     */
+    async withdrawToken(amount) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.biddingContractAddress,
+        };
+
+        this.log.trace(`Calling - withdrawToken(${amount.toString()})`);
+        return this.transactions.queueTransaction(
+            this.biddingContractAbi, 'withdrawToken',
+            [amount], options,
+        );
+    }
     async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
