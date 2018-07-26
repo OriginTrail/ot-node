@@ -7,11 +7,11 @@ class ProfileService {
      * @param ctx
      */
     constructor(ctx) {
-       this.blockchain = ctx.blockchain;
-       this.web3 = ctx.web3;
-       this.remoteControl = ctx.remoteControl;
-       this.config = ctx.config;
-       this.logger = ctx.logger;
+        this.blockchain = ctx.blockchain;
+        this.web3 = ctx.web3;
+        this.remoteControl = ctx.remoteControl;
+        this.config = ctx.config;
+        this.logger = ctx.logger;
     }
 
     async depositToken(amount) {

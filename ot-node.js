@@ -732,8 +732,7 @@ class OTNode {
             } else {
                 res.status(400);
                 res.send({ message: 'Bad request' });
-                return;
-            };
+            }
         });
 
 
@@ -750,8 +749,7 @@ class OTNode {
             } else {
                 res.status(400);
                 res.send({ message: 'Bad request' });
-                return;
-            };
+            }
         });
     }
 }
