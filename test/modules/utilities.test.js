@@ -13,7 +13,7 @@ const databaseData = require('./test_data/arangodb-data.js');
 
 let myConfig;
 
-describe.only('Utilities module', () => {
+describe('Utilities module', () => {
     before('loadConfig() should populate myConfig object', async () => {
         Storage.models = deasync(models.sequelize.sync()).models;
 

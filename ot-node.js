@@ -25,6 +25,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
+const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
@@ -221,6 +222,7 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
+            profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
@@ -757,6 +759,40 @@ class OTNode {
                 import_id,
                 response: res,
             });
+        });
+
+
+        server.post('/api/deposit', (req, res) => {
+            log.api('POST: Deposit tokens request received.');
+
+            if (req.body !== null && typeof req.body.atrac_amount === 'number'
+                && req.body.atrac_amount > 0) {
+                const { atrac_amount } = req.body;
+                emitter.emit('api-deposit-tokens', {
+                    atrac_amount,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+        });
+
+
+        server.post('/api/withdraw', (req, res) => {
+            log.api('POST: Withdraw tokens request received.');
+
+            if (req.body !== null && typeof req.body.atrac_amount === 'number'
+                && req.body.atrac_amount > 0) {
+                const { atrac_amount } = req.body;
+                emitter.emit('api-withdraw-tokens', {
+                    atrac_amount,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
         });
     }
 }
