@@ -14,6 +14,11 @@ class ProfileService {
         this.logger = ctx.logger;
     }
 
+    /**
+     * Deposit token to profile
+     * @param amount
+     * @returns {Promise<void>}
+     */
     async depositToken(amount) {
         const walletBalance = await Utilities.getAlphaTracTokenBalance(
             this.web3,
@@ -37,6 +42,11 @@ class ProfileService {
         this.logger.info(`Profile balance: ${balanceInATRAC} ATRAC`);
     }
 
+    /**
+     * Withdraw tokens from profile to wallet
+     * @param amount
+     * @returns {Promise<void>}
+     */
     async withdrawToken(amount) {
         const profileBalance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');

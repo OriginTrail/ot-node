@@ -885,6 +885,11 @@ class Ethereum {
         });
     }
 
+    /**
+     * Deposit tokens to profile
+     * @param amount
+     * @returns {Promise<any>}
+     */
     async depositToken(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
@@ -899,6 +904,11 @@ class Ethereum {
         );
     }
 
+    /**
+     * Withdraw tokens from profile to wallet
+     * @param amount
+     * @returns {Promise<any>}
+     */
     async withdrawToken(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
