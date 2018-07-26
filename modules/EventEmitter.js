@@ -525,14 +525,14 @@ class EventEmitter {
                 data.response.send({
                     message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
                 });
-                // TODO remoteControl
+                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 data.response.status(400);
                 data.response.send({
                     message: `Failed to withdraw tokens. ${error}.`,
                 });
-                // TODO remoteControl
+                remoteControl.tokensWithdrawFailed(`Failed to withdraw tokens. ${error}.`);
             }
         });
     }

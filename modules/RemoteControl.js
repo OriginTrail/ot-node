@@ -524,6 +524,14 @@ class RemoteControl {
         this.socket.emit('tokensDepositFailed', data);
     }
 
+    tokensWithdrawSucceeded(data) {
+        this.socket.emit('tokensWithdrawSucceeded', data);
+    }
+
+    tokensWithdrawFailed(data) {
+        this.socket.emit('tokensWithdrawFailed', data);
+    }
+
     /**
      * DV events
      */
