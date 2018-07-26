@@ -178,10 +178,13 @@ class OfferCancelCommand extends Command {
             };
         }
 
+        Object.assign(data, {
+            predetermined: true,
+        });
         return {
             commands: [
                 {
-                    name: predeterminedBid ? 'offerBidAddPredetermined' : 'offerBidAdd',
+                    name: 'offerBidAdd',
                     delay: 0,
                     data,
                     transactional: false,

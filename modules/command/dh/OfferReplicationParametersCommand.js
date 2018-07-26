@@ -13,6 +13,7 @@ class OfferReplicationParametersCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
     }
 
@@ -49,7 +50,7 @@ class OfferReplicationParametersCommand extends Command {
         const epk = Encryption.packEPK(keyPair.publicKey);
         const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
-        this.log.important('Send root hashes and checksum to blockchain.');
+        this.logger.important('Send root hashes and checksum to blockchain.');
         this.remoteControl.sendingRootHashes('Sending import root hashes and checksum to blockchain.');
         await this.blockchain.addRootHashAndChecksum(
             importId,
@@ -65,7 +66,7 @@ class OfferReplicationParametersCommand extends Command {
                         importId,
                         publicKey,
                         distributionPublicKey: keyPair.publicKey,
-                        distributionPrivateKey: keyPair.private,
+                        distributionPrivateKey: keyPair.privateKey,
                         epk,
                     },
                 },

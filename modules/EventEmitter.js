@@ -584,17 +584,22 @@ class EventEmitter {
                 const createOfferEvent = createOfferEventEventModel.get({ plain: true });
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
-                await dhService.handleOffer(
-                    import_id,
-                    createOfferEventData.DC_node_id.substring(2, 42),
-                    total_escrow_time_in_minutes * 60000, // In ms.
-                    max_token_amount_per_byte_minute,
-                    min_stake_amount_per_byte_minute,
-                    createOfferEventData.min_reputation,
-                    data_size_in_bytes,
-                    createOfferEventData.data_hash,
-                    true,
-                );
+                await commandExecutor.add({
+                    name: 'offerHandle',
+                    delay: 0,
+                    data: {
+                        importId: import_id,
+                        dcNodeId: createOfferEventData.DC_node_id.substring(2, 42),
+                        totalEscrowTime: total_escrow_time_in_minutes * 60000,
+                        maxTokenAmount: max_token_amount_per_byte_minute,
+                        minStakeAmount: min_stake_amount_per_byte_minute,
+                        minReputation: createOfferEventData.min_reputation,
+                        dataSizeBytes: data_size_in_bytes,
+                        dataHash: createOfferEventData.data_hash,
+                        predeterminedBid: true,
+                    },
+                    transactional: false,
+                });
             } catch (error) {
                 logger.error(`Failed to handle predetermined bid. ${error}.`);
             }
@@ -711,7 +716,16 @@ class EventEmitter {
         // async
         this._on('kad-payload-request', async (request) => {
             logger.info(`Data for replication arrived from ${request.contact[0]}`);
-            await dhService.handleImport(request.params.message.payload);
+
+            await commandExecutor.add({
+                name: 'offerHandleImport',
+                delay: 0,
+                data: {
+                    data: request.params,
+                },
+                transactional: false,
+            });
+            // await dhService.handleImport(request.params.message.payload);
 
             // TODO: send fail in case of fail.
         });

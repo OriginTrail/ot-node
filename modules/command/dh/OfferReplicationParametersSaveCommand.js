@@ -5,6 +5,8 @@ class OfferReplicationParametersSaveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.network = ctx.network;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -31,10 +33,10 @@ class OfferReplicationParametersSaveCommand extends Command {
         }, { transaction });
 
         if (!holdingData) {
-            this.log.warn('Failed to store holding data info.');
+            this.logger.warn('Failed to store holding data info.');
         }
 
-        this.log.important('Replication finished. Send data to DC for verification.');
+        this.logger.important('Replication finished. Send data to DC for verification.');
         this.remoteControl.dhReplicationFinished('Replication finished. Sending data to DC for verification.');
         await this.network.kademlia().verifyImport({
             epk,

@@ -3,7 +3,7 @@ const Command = require('../Command');
 
 const bytes = require('utf8-length');
 
-class OfferCancelCommand extends Command {
+class OfferHandleImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -21,12 +21,12 @@ class OfferCancelCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { data } = command.data;
+        const data = command.data.data.message.payload;
 
         const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
         if (!bidModel) {
-            this.log.warn(`Couldn't find bid for import ID ${data.import_id}.`);
-            return;
+            this.logger.warn(`Couldn't find bid for import ID ${data.import_id}.`);
+            return Command.empty();
         }
         let importResult = await this.importer.importJSON({
             import_id: data.import_id,
@@ -51,13 +51,15 @@ class OfferCancelCommand extends Command {
             data_size: dataSize,
         });
 
-        this.log.trace(`[DH] Replication finished for ${data.import_id}`);
+        this.logger.trace(`[DH] Replication finished for ${data.import_id}`);
         return {
             commands: [
                 {
                     name: 'offerReplicationParameters',
                     data: {
                         importId: data.import_id,
+                        importResult,
+                        publicKey: data.public_key,
                     },
                 },
             ],
@@ -80,4 +82,4 @@ class OfferCancelCommand extends Command {
     }
 }
 
-module.exports = OfferCancelCommand;
+module.exports = OfferHandleImportCommand;
