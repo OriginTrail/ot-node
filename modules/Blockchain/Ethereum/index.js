@@ -1,7 +1,7 @@
 const fs = require('fs');
 const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
-const Storage = require('../../Storage');
+const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
 const BN = require('bn.js');
 
@@ -81,22 +81,19 @@ class Ethereum {
 
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-offer-created', event);
+                // emitter.emit('eth-offer-created', event);
             })
             .on('error', log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-offer-canceled', event);
+                // emitter.emit('eth-offer-canceled', event);
             })
             .on('error', this.log.warn);
 
         this.biddingContract.events.BidTaken()
             .on('data', (event) => {
-                console.log(event); // same results as the optional callback above
-                emitter.emit('eth-bid-taken', event);
+                // emitter.emit('eth-bid-taken', event);
             })
             .on('error', this.log.warn);
 
@@ -574,7 +571,7 @@ class Ethereum {
             let fromBlock = 0;
 
             // Find last queried block if any.
-            const lastEvent = await Storage.models.events.findOne({
+            const lastEvent = await Models.events.findOne({
                 where: {
                     contract: contractName,
                 },
@@ -597,7 +594,7 @@ class Ethereum {
                 const event = events[i];
                 const timestamp = Date.now();
                 /* eslint-disable-next-line */
-                await Storage.models.events.create({
+                await Models.events.create({
                     id: event.id,
                     contract: contractName,
                     event: event.event,
@@ -612,7 +609,7 @@ class Ethereum {
             const twoWeeksAgo = new Date();
             twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
             // Delete old events
-            await Storage.models.events.destroy({
+            await Models.events.destroy({
                 where: {
                     timestamp: {
                         [Op.lt]: twoWeeksAgo.getTime(),
@@ -621,10 +618,10 @@ class Ethereum {
                 },
             });
         } catch (error) {
-            if (error.msg && !error.msg.includes('Invalid JSON RPC response')) {
-                this.log.warn(`Failed to get all passed events. ${error}.`);
+            if (error.msg && error.msg.includes('Invalid JSON RPC response')) {
+                this.log.warn('Node failed to communicate with blockchain provider. Check internet connection');
             } else {
-                this.log.trace('Node failed to communicate with blockchain provider. Check internet connection');
+                this.log.trace(`Failed to get all passed events. ${error}.`);
             }
         }
     }
@@ -639,6 +636,7 @@ class Ethereum {
     */
     subscribeToEvent(event, importId, endMs = 5 * 60 * 1000, endCallback, filterFn) {
         return new Promise((resolve, reject) => {
+            let clearToken;
             const token = setInterval(() => {
                 const where = {
                     event,
@@ -647,7 +645,7 @@ class Ethereum {
                 if (importId) {
                     where.import_id = importId;
                 }
-                Storage.models.events.findAll({
+                Models.events.findAll({
                     where,
                 }).then((events) => {
                     for (const eventData of events) {
@@ -662,7 +660,9 @@ class Ethereum {
                             continue;
                         }
                         eventData.finished = true;
+                        // eslint-disable-next-line no-loop-func
                         eventData.save().then(() => {
+                            clearTimeout(clearToken);
                             clearInterval(token);
                             resolve(parsedData);
                         }).catch((err) => {
@@ -673,7 +673,7 @@ class Ethereum {
                     }
                 });
             }, 2000);
-            setTimeout(() => {
+            clearToken = setTimeout(() => {
                 if (endCallback) {
                     endCallback();
                 }
@@ -701,7 +701,7 @@ class Ethereum {
                 finished: 0,
             };
 
-            const eventData = await Storage.models.events.findAll({ where });
+            const eventData = await Models.events.findAll({ where });
             if (eventData) {
                 eventData.forEach(async (data) => {
                     this.emitter.emit(`eth-${data.event}`, JSON.parse(data.dataValues.data));
@@ -750,7 +750,8 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.notify('Initiating escrow to add bid');
+        this.log.notify(`Adding bid for import ID ${importId}.`);
+        this.log.trace(`addBid(${importId}, ${dhNodeId})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'addBid',
             [importId, Utilities.normalizeHex(dhNodeId)], options,
