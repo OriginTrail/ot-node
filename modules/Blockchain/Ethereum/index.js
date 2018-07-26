@@ -887,7 +887,7 @@ class Ethereum {
 
     /**
      * Deposit tokens to profile
-     * @param amount
+     * @param {number} - amount
      * @returns {Promise<any>}
      */
     async depositToken(amount) {
@@ -906,7 +906,7 @@ class Ethereum {
 
     /**
      * Withdraw tokens from profile to wallet
-     * @param amount
+     * @param {number} - amount
      * @returns {Promise<any>}
      */
     async withdrawToken(amount) {
