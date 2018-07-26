@@ -5,7 +5,7 @@ const Graph = require('../../Graph');
 const Encryption = require('../../Encryption');
 const bytes = require('utf8-length');
 
-const Command = require('../Command');
+const Command = require('../command');
 
 class OfferCreateDBCommand extends Command {
     constructor(ctx) {

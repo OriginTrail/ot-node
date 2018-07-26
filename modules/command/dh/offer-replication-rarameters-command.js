@@ -5,7 +5,7 @@ const Challenge = require('../../Challenge');
 const Utilities = require('../../Utilities');
 
 const ImportUtilities = require('../../ImportUtilities');
-const Command = require('../Command');
+const Command = require('../command');
 
 class OfferReplicationParametersCommand extends Command {
     constructor(ctx) {

@@ -1,5 +1,5 @@
 const Models = require('../../../models/index');
-const Command = require('../Command');
+const Command = require('../command');
 const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');

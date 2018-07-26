@@ -1,6 +1,6 @@
 const async = require('async');
 const Models = require('../../models');
-const Command = require('./Command');
+const Command = require('./command');
 
 /**
  * Command statuses

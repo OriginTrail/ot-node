@@ -1,5 +1,5 @@
 const Models = require('../../../models/index');
-const Command = require('../Command');
+const Command = require('../command');
 const Utilities = require('../../Utilities');
 
 const BN = require('../../../node_modules/bn.js/lib/bn');

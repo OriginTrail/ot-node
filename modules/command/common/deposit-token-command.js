@@ -1,4 +1,4 @@
-const Command = require('../Command');
+const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
 class DepositTokenCommand extends Command {

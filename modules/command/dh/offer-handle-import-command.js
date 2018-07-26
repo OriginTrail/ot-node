@@ -1,5 +1,5 @@
 const Models = require('../../../models/index');
-const Command = require('../Command');
+const Command = require('../command');
 
 const bytes = require('utf8-length');
 
