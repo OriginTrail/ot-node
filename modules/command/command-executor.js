@@ -264,6 +264,7 @@ class CommandExecutor {
             },
         });
 
+        // TODO consider JOIN instead
         const commands = pendingCommands.filter(async (pc) => {
             if (!pc.parent_id) {
                 return true;
