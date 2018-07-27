@@ -63,8 +63,30 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
+});
+
+process.on('uncaughtException', (err) => {
+    if (process.env.NODE_ENV === 'test') {
+        log.error(`Caught exception: ${err}\n`);
+        process.exit(1);
+    }
+    log.error(`Caught exception: ${err}\n`);
+});
+
+process.on('warning', (warning) => {
+    log.warn(warning.name);
+    log.warn(warning.message);
+    log.warn(warning.stack);
+});
+
+process.on('exit', (code) => {
+    if (code !== 0) {
+        log.error(`Whoops, terminating with code: ${code}`);
+    } else {
+        log.debug(`Normal exiting with code: ${code}`);
+    }
 });
 
 /**
@@ -379,10 +401,24 @@ class OTNode {
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
             log.info(`Profile has already been created for ${identity}`);
-            return;
+            if (
+                (new BN(profileInfo.token_amount_per_byte_minute)
+                    .eq(new BN(config.dh_price))) &&
+                (new BN(profileInfo.stake_amount_per_byte_minute)
+                    .eq(new BN(config.dh_stake_factor))) &&
+                (new BN(profileInfo.read_stake_factor)
+                    .eq(new BN(config.read_stake_factor))) &&
+                (new BN(profileInfo.max_escrow_time_in_minutes)
+                    .eq(new BN(config.dh_max_time_mins)))
+            ) {
+                return;
+            }
+
+            log.notify('Profile\'s config differs. Updating profile...');
+        } else {
+            log.notify(`Profile is being created for ${identity}. This could take a while...`);
         }
 
-        log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
             new BN(config.dh_price, 10),
