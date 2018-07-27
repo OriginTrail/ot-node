@@ -19,6 +19,9 @@ class KademliaUtils {
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
+        if (msg.includes('client cannot service request at this time')) {
+            return null; // skip logging
+        }
         if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
             return null; // skip logging
         }
@@ -34,6 +37,15 @@ class KademliaUtils {
             return null;
         }
         if (msg.includes('servicesscrubbed.onion')) {
+            return null;
+        }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
+        if (msg.includes('getaddrinfo')) {
             return null;
         }
         return {

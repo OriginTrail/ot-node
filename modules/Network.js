@@ -25,7 +25,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 40000;
+        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -88,7 +88,7 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
@@ -96,8 +96,12 @@ class Network {
             wallet: config.node_wallet,
         };
 
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
         // Initialize transport adapter
-        const transport = new kadence.HTTPTransport();
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -108,11 +112,25 @@ class Network {
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
         this.log.info('Starting OT Node...');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialized');
+
+        if (parseInt(config.onion_enabled, 10)) {
+            this.enableOnion();
+        }
+
+        if (parseInt(config.traverse_nat_enabled, 10)) {
+            this.enableNatTraversal();
+        }
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -129,7 +147,7 @@ class Network {
         }
 
         this.node.listen(parseInt(config.node_port, 10), async () => {
-            this.log.notify(`OT Node listening at http://${this.node.contact.hostname}:${this.node.contact.port}`);
+            this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
             this.networkUtilities.registerControlInterface(config, this.node);
 
             const connected = false;
@@ -150,6 +168,24 @@ class Network {
                 await sleep.sleep(retryPeriodSeconds * 1000);
             }
         });
+    }
+
+    enableNatTraversal() {
+        this.log.info('Trying NAT traversal');
+
+        const remoteAddress = config.reverse_tunnel_address;
+        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+
+        this.node.traverse = this.node.plugin(kadence.traverse([
+            new kadence.traverse.ReverseTunnelStrategy({
+                remotePort,
+                remoteAddress,
+                privateKey: this.node.spartacus.privateKey,
+                secureLocalConnection: true,
+                verboseLogging: false,
+                logger: this.log,
+            }),
+        ]));
     }
 
     /**
