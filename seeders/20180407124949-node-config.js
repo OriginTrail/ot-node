@@ -51,7 +51,7 @@ module.exports = {
     },
     {
         key: 'request_timeout',
-        value: '10000',
+        value: '20000',
     },
     {
         key: 'ssl_keypath',
@@ -107,7 +107,7 @@ module.exports = {
         value: '',
     }, {
         key: 'onion_enabled',
-        value: '1',
+        value: '0',
     }, {
         key: 'test_network',
         value: process.env.TEST_NETWORK_ENABLED ? process.env.TEST_NETWORK_ENABLED : '1',
@@ -168,7 +168,7 @@ module.exports = {
     },
     {
         key: 'dh_stake_factor',
-        value: '25000000', // [mTRAC / byte / min]
+        value: '250000000000', // [mTRAC / byte / min]
     },
     {
         key: 'read_stake_factor',
@@ -180,7 +180,7 @@ module.exports = {
     },
     {
         key: 'dh_price',
-        value: '25000000', // [mTRAC / byte / min]
+        value: '250000000000', // [mTRAC / byte / min]
     },
     {
         key: 'total_escrow_time_in_milliseconds',
@@ -188,11 +188,11 @@ module.exports = {
     },
     {
         key: 'max_token_amount_per_dh',
-        value: '50000000', // [mTRAC / byte / min]
+        value: '500000000000', // [mTRAC / byte / min]
     },
     {
         key: 'dh_min_stake_amount',
-        value: '10000000', // [mTRAC / byte / min]
+        value: '100000000000', // [mTRAC / byte / min]
     },
     {
         key: 'dh_min_reputation',
@@ -201,6 +201,14 @@ module.exports = {
     {
         key: 'probability_threshold',
         value: '10',
+    },
+    {
+        key: 'reverse_tunnel_address',
+        value: 'diglet.origintrail.io',
+    },
+    {
+        key: 'reverse_tunnel_port',
+        value: '8443',
     },
     ], {}),
 
