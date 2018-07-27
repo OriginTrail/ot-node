@@ -1,11 +1,12 @@
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
-class DepositTokenCommand extends Command {
+class OfferBidAddPredeterminedCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.logger = ctx.logger;
+        this.config = ctx.config;
         this.blockchain = ctx.blockchain;
+        this.logger = ctx.logger;
     }
 
     /**
@@ -13,9 +14,31 @@ class DepositTokenCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { myStake, profileBalance } = command.data;
-        await this.blockchain.depositToken(myStake.sub(profileBalance));
-        return this.continueSequence(this.pack(command.data), command.sequence);
+        const {
+            importId,
+        } = command.data;
+
+        const myBidIndex = await this.blockchain.getBidIndex(
+            importId,
+            this.config.identity,
+        );
+        await this.blockchain.activatePredeterminedBid(
+            importId,
+            this.config.identity,
+            myBidIndex,
+        );
+
+        return {
+            commands: [
+                {
+                    name: 'offerBidAdded',
+                    data: this.pack(command.data),
+                    delay: 0,
+                    period: 5000,
+                    transactional: true,
+                },
+            ],
+        };
     }
 
     /**
@@ -47,13 +70,22 @@ class DepositTokenCommand extends Command {
     }
 
     /**
-     * Builds default command
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    recover(command, err) {
+        this.logger.info('Bid not added, your bid was probably too late and the offer has been closed');
+    }
+
+    /**
+     * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     static buildDefault(map) {
         const command = {
-            name: 'depositToken',
+            name: 'offerBidAddPredetermined',
             delay: 0,
             transactional: false,
         };
@@ -62,4 +94,4 @@ class DepositTokenCommand extends Command {
     }
 }
 
-module.exports = DepositTokenCommand;
+module.exports = OfferBidAddPredeterminedCommand;

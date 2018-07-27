@@ -156,38 +156,32 @@ class OfferCancelCommand extends Command {
 
         const { data } = command;
         Object.assign(data, {
-            myPrice: myPrice.toString(10),
-            myStake: myStake.toString(10),
+            myPrice: myPrice.toString(),
+            myStake: myStake.toString(),
             dcNodeId,
-            profileBalance: profileBalance.toString(10),
-            predetermined: predeterminedBid,
+            profileBalance: profileBalance.toString(),
         });
+
+        const addBidCommand = predeterminedBid ? 'offerBidAddPredetermined' : 'offerBidAdd';
         if (profileBalance.lt(myStake)) {
             return {
                 commands: [
                     {
                         name: 'biddingApprovalIncrease',
                         sequence: [
-                            'depositToken', 'offerBidAdd',
+                            'depositToken', addBidCommand,
                         ],
-                        delay: 0,
                         data,
-                        transactional: false,
                     },
                 ],
             };
         }
 
-        Object.assign(data, {
-            predetermined: true,
-        });
         return {
             commands: [
                 {
-                    name: 'offerBidAdd',
-                    delay: 0,
+                    name: addBidCommand,
                     data,
-                    transactional: false,
                 },
             ],
         };

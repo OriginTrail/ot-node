@@ -52,6 +52,7 @@ const EscrowVerifyCommand = require('./modules/command/dc/escrow-verify-command'
 const EscrowCancelCommand = require('./modules/command/dc/escrow-cancel-command');
 
 const OfferBidAddCommand = require('./modules/command/dh/offer-bid-add-command');
+const OfferBidAddPredeterminedCommand = require('./modules/command/dh/offer-bid-add-predetermined-command');
 const OfferBidAddedCommand = require('./modules/command/dh/offer-bid-added-command');
 const OfferHandleCommand = require('./modules/command/dh/offer-handle-command');
 const OfferHandleImportCommand = require('./modules/command/dh/offer-handle-import-command');
@@ -254,6 +255,7 @@ class OTNode {
             offerReplicationParametersCommand: awilix.asClass(OfferReplicationParametersCommand).singleton(),
             offerReplicationParametersSaveCommand: awilix.asClass(OfferReplicationParametersSaveCommand).singleton(),
             biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand).singleton(),
+            offerBidAddPredeterminedCommand: awilix.asClass(OfferBidAddPredeterminedCommand).singleton(),
             depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
         });
         const emitter = container.resolve('emitter');

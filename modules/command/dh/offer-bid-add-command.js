@@ -19,15 +19,7 @@ class OfferBidAddCommand extends Command {
         } = command.data;
 
         if (predetermined) {
-            const myBidIndex = await this.blockchain.getBidIndex(
-                importId,
-                this.config.identity,
-            );
-            await this.blockchain.activatePredeterminedBid(
-                importId,
-                this.config.identity,
-                myBidIndex,
-            );
+
         } else {
             await this.blockchain.addBid(importId, this.config.identity);
         }
@@ -76,7 +68,6 @@ class OfferBidAddCommand extends Command {
     /**
      * Recover system from failure
      * @param command
-     * @param transaction
      * @param err
      */
     recover(command, err) {
