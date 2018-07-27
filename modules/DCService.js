@@ -1,4 +1,3 @@
-const config = require('./Config');
 const Encryption = require('./Encryption');
 const Graph = require('./Graph');
 const bytes = require('utf8-length');
@@ -24,6 +23,7 @@ class DCService {
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
+        this.config = ctx.config;
         this.network = ctx.network;
         this.remoteControl = ctx.remoteControl;
     }
@@ -75,10 +75,10 @@ class DCService {
         const dhIds = [];
         const dhWallets = [];
 
-        let totalEscrowTime = new BN(config.total_escrow_time_in_milliseconds);
-        let maxTokenAmount = new BN(config.max_token_amount_per_dh, 10);
-        let minStakeAmount = new BN(config.dh_min_stake_amount, 10);
-        let minReputation = config.dh_min_reputation;
+        let totalEscrowTime = new BN(this.config.total_escrow_time_in_milliseconds);
+        let maxTokenAmount = new BN(this.config.max_token_amount_per_dh, 10);
+        let minStakeAmount = new BN(this.config.dh_min_stake_amount, 10);
+        let minReputation = this.config.dh_min_reputation;
 
         if (total_escrow_time) {
             totalEscrowTime = new BN(total_escrow_time);
@@ -122,7 +122,7 @@ class DCService {
         const offer = await Models.offers.create(newOfferRow);
 
         // Check if root-hash already written.
-        this.blockchain.getRootHash(config.node_wallet, importId)
+        this.blockchain.getRootHash(this.config.node_wallet, importId)
             .then(async (blockchainRootHash) => {
                 if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
                     this.remoteControl.writingRootHash(importId);
@@ -139,7 +139,7 @@ class DCService {
                 this.remoteControl.initializingOffer(importId);
 
                 const profileBalance =
-                    new BN((await this.blockchain.getProfile(config.node_wallet)).balance, 10);
+                    new BN((await this.blockchain.getProfile(this.config.node_wallet)).balance, 10);
 
                 const replicationModifier = await this.blockchain.getReplicationModifier();
 
@@ -155,7 +155,7 @@ class DCService {
 
                 this.blockchain.createOffer(
                     importId,
-                    config.identity,
+                    this.config.identity,
                     totalEscrowTime,
                     maxTokenAmount,
                     minStakeAmount,

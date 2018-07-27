@@ -92,6 +92,7 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
+            profileService,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -486,6 +487,52 @@ class EventEmitter {
                 }
             } catch (error) {
                 await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-deposit-tokens', async (data) => {
+            const { atrac_amount } = data;
+
+            try {
+                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
+
+                await profileService.depositToken(atrac_amount);
+                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
+                });
+            } catch (error) {
+                logger.error(`Failed to deposit tokens. ${error}.`);
+                data.response.status(400);
+                data.response.send({
+                    message: `Failed to deposit tokens. ${error}.`,
+                });
+                remoteControl.tokensDepositFailed(`Failed to deposit tokens. ${error}.`);
+            }
+        });
+
+        this._on('api-withdraw-tokens', async (data) => {
+            const { atrac_amount } = data;
+
+            try {
+                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+
+                await profileService.withdrawToken(atrac_amount);
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                });
+                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
+            } catch (error) {
+                logger.error(`Failed to withdraw tokens. ${error}.`);
+                data.response.status(400);
+                data.response.send({
+                    message: `Failed to withdraw tokens. ${error}.`,
+                });
+                remoteControl.tokensWithdrawFailed(`Failed to withdraw tokens. ${error}.`);
             }
         });
     }

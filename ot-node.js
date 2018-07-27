@@ -26,6 +26,7 @@ const EventEmitter = require('./modules/EventEmitter');
 const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
+const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
@@ -39,8 +40,30 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
     // application specific logging, throwing an error, or other logic here
+});
+
+process.on('uncaughtException', (err) => {
+    if (process.env.NODE_ENV === 'test') {
+        log.error(`Caught exception: ${err}\n`);
+        process.exit(1);
+    }
+    log.error(`Caught exception: ${err}\n`);
+});
+
+process.on('warning', (warning) => {
+    log.warn(warning.name);
+    log.warn(warning.message);
+    log.warn(warning.stack);
+});
+
+process.on('exit', (code) => {
+    if (code !== 0) {
+        log.error(`Whoops, terminating with code: ${code}`);
+    } else {
+        log.debug(`Normal exiting with code: ${code}`);
+    }
 });
 
 /**
@@ -200,6 +223,7 @@ class OTNode {
             dhService: awilix.asClass(DHService).singleton(),
             dcService: awilix.asClass(DCService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
+            profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
@@ -328,10 +352,24 @@ class OTNode {
         const profileInfo = await blockchain.getProfile(config.node_wallet);
         if (profileInfo.active) {
             log.info(`Profile has already been created for ${identity}`);
-            return;
+            if (
+                (new BN(profileInfo.token_amount_per_byte_minute)
+                    .eq(new BN(config.dh_price))) &&
+                (new BN(profileInfo.stake_amount_per_byte_minute)
+                    .eq(new BN(config.dh_stake_factor))) &&
+                (new BN(profileInfo.read_stake_factor)
+                    .eq(new BN(config.read_stake_factor))) &&
+                (new BN(profileInfo.max_escrow_time_in_minutes)
+                    .eq(new BN(config.dh_max_time_mins)))
+            ) {
+                return;
+            }
+
+            log.notify('Profile\'s config differs. Updating profile...');
+        } else {
+            log.notify(`Profile is being created for ${identity}. This could take a while...`);
         }
 
-        log.notify(`Profile is being created for ${identity}. This could take a while...`);
         await blockchain.createProfile(
             config.identity,
             new BN(config.dh_price, 10),
@@ -714,6 +752,40 @@ class OTNode {
                 import_id,
                 response: res,
             });
+        });
+
+
+        server.post('/api/deposit', (req, res) => {
+            log.api('POST: Deposit tokens request received.');
+
+            if (req.body !== null && typeof req.body.atrac_amount === 'number'
+                && req.body.atrac_amount > 0) {
+                const { atrac_amount } = req.body;
+                emitter.emit('api-deposit-tokens', {
+                    atrac_amount,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+        });
+
+
+        server.post('/api/withdraw', (req, res) => {
+            log.api('POST: Withdraw tokens request received.');
+
+            if (req.body !== null && typeof req.body.atrac_amount === 'number'
+                && req.body.atrac_amount > 0) {
+                const { atrac_amount } = req.body;
+                emitter.emit('api-withdraw-tokens', {
+                    atrac_amount,
+                    response: res,
+                });
+            } else {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
         });
     }
 }

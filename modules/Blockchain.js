@@ -333,8 +333,31 @@ class Blockchain {
         return this.blockchain.getDcWalletFromOffer(importId);
     }
 
+    /**
+     * Gets balance from the profile
+     * @param wallet
+     * @returns {Promise}
+     */
+    getProfileBalance(wallet) {
+        return this.blockchain.getProfileBalance(wallet);
+    }
+
+    /**
+     * Deposits tokens to the profile
+     * @param amount
+     * @returns {Promise<any>}
+     */
     async depositToken(amount) {
         return this.blockchain.depositToken(amount);
+    }
+
+    /**
+     * Withdraws tokens from profile to wallet
+     * @param amount
+     * @returns {Promise<any>}
+     */
+    async withdrawToken(amount) {
+        return this.blockchain.withdrawToken(amount);
     }
 
     async getRootHash(dcWallet, dataId) {
