@@ -1,6 +1,7 @@
+const Models = require('../../../models/index');
 const Command = require('../command');
 
-class EscrowCancelCommand extends Command {
+class DCEscrowVerifyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -14,14 +15,24 @@ class EscrowCancelCommand extends Command {
      */
     async execute(command) {
         const { importId, dhWallet, dhNodeId } = command.data;
-        await this.blockchain.cancelEscrow(
-            dhWallet,
+        await this.blockchain.verifyEscrow(
             importId,
+            dhWallet,
         );
+        this.logger.important(`Holding data for offer ${importId} and contact ${dhWallet} successfully verified. Challenges taking place...`);
+
+        const replicatedData = await Models.replicated_data.findOne({
+            where: { dh_id: dhNodeId, import_id: importId },
+        });
+
+        replicatedData.status = 'ACTIVE';
+        await replicatedData.save({ fields: ['status'] });
+
         await this.network.kademlia().sendVerifyImportResponse({
-            status: 'fail',
+            status: 'success',
             import_id: importId,
         }, dhNodeId);
+
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
@@ -32,7 +43,7 @@ class EscrowCancelCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'escrowCancel',
+            name: 'dcEscrowVerify',
             delay: 0,
             transactional: false,
         };
@@ -41,4 +52,4 @@ class EscrowCancelCommand extends Command {
     }
 }
 
-module.exports = EscrowCancelCommand;
+module.exports = DCEscrowVerifyCommand;

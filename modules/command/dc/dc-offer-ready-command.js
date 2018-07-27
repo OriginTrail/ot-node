@@ -2,7 +2,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
-class OfferReadyCommand extends Command {
+class DCOfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -54,7 +54,7 @@ class OfferReadyCommand extends Command {
 
         return {
             commands: [{
-                name: 'offerCancel',
+                name: 'dcOfferCancel',
                 data: {
                     importId,
                     offerId,
@@ -87,7 +87,7 @@ class OfferReadyCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerReady',
+            name: 'dcOfferReady',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
@@ -98,4 +98,4 @@ class OfferReadyCommand extends Command {
     }
 }
 
-module.exports = OfferReadyCommand;
+module.exports = DCOfferReadyCommand;

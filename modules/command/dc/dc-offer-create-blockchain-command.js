@@ -1,8 +1,8 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
-const Models = require('../../../models/index');
 const Command = require('../command');
+const Models = require('../../../models/index');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
-class OfferCreateBlockchainCommand extends Command {
+class DCOfferCreateBlockchainCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -106,7 +106,7 @@ class OfferCreateBlockchainCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerCreateBlockchain',
+            name: 'dcOfferCreateBlockchain',
             delay: 0,
             transactional: false,
         };
@@ -115,4 +115,4 @@ class OfferCreateBlockchainCommand extends Command {
     }
 }
 
-module.exports = OfferCreateBlockchainCommand;
+module.exports = DCOfferCreateBlockchainCommand;

@@ -7,7 +7,7 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Command = require('../command');
 
-class OfferReplicationParametersCommand extends Command {
+class DHOfferReplicationParametersCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -61,7 +61,7 @@ class OfferReplicationParametersCommand extends Command {
         return {
             commands: [
                 {
-                    name: 'offerReplicationParametersSave',
+                    name: 'dhOfferReplicationParametersSave',
                     data: {
                         importId,
                         publicKey,
@@ -81,7 +81,7 @@ class OfferReplicationParametersCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerReplicationParameters',
+            name: 'dhOfferReplicationParameters',
             delay: 0,
             transactional: false,
         };
@@ -90,4 +90,4 @@ class OfferReplicationParametersCommand extends Command {
     }
 }
 
-module.exports = OfferReplicationParametersCommand;
+module.exports = DHOfferReplicationParametersCommand;

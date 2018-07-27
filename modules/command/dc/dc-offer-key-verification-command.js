@@ -7,7 +7,7 @@ const Challenge = require('../../Challenge');
 const Encryption = require('../../Encryption');
 const MerkleTree = require('../../Merkle');
 
-class OfferKeyVerificationCommand extends Command {
+class DCOfferKeyVerificationCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -82,7 +82,7 @@ class OfferKeyVerificationCommand extends Command {
             return {
                 commands: [
                     {
-                        name: 'escrowCancel',
+                        name: 'dcEscrowCancel',
                         delay: 0,
                         data: { importId, dhWallet, dhNodeId },
                         transactional: false,
@@ -93,7 +93,7 @@ class OfferKeyVerificationCommand extends Command {
         return {
             commands: [
                 {
-                    name: 'escrowVerify',
+                    name: 'dcEscrowVerify',
                     delay: 0,
                     data: { importId, dhWallet, dhNodeId },
                     transactional: false,
@@ -109,7 +109,7 @@ class OfferKeyVerificationCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerKeyVerificationCommand',
+            name: 'dcOfferKeyVerificationCommand',
             delay: 0,
             transactional: false,
         };
@@ -118,4 +118,4 @@ class OfferKeyVerificationCommand extends Command {
     }
 }
 
-module.exports = OfferKeyVerificationCommand;
+module.exports = DCOfferKeyVerificationCommand;

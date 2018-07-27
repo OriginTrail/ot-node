@@ -1,7 +1,7 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
-class OfferChooseCommand extends Command {
+class DCOfferChooseCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -45,13 +45,13 @@ class OfferChooseCommand extends Command {
     }
 
     /**
-     * Builds default OfferChooseCommand
+     * Builds default DcOfferChooseCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerChoose',
+            name: 'dcOfferChoose',
             delay: 30000,
             transactional: false,
         };
@@ -60,4 +60,4 @@ class OfferChooseCommand extends Command {
     }
 }
 
-module.exports = OfferChooseCommand;
+module.exports = DCOfferChooseCommand;

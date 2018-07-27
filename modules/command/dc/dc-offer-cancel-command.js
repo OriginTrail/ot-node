@@ -3,7 +3,7 @@ const Command = require('../command');
 
 const { Op } = Models.Sequelize;
 
-class OfferCancelCommand extends Command {
+class DCOfferCancelCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -49,7 +49,7 @@ class OfferCancelCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerCancel',
+            name: 'dcOfferCancel',
             delay: 0,
             transactional: false,
         };
@@ -58,4 +58,4 @@ class OfferCancelCommand extends Command {
     }
 }
 
-module.exports = OfferCancelCommand;
+module.exports = DCOfferCancelCommand;

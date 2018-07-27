@@ -1,7 +1,7 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
-class OfferReplicationParametersSaveCommand extends Command {
+class DHOfferReplicationParametersSaveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -53,7 +53,7 @@ class OfferReplicationParametersSaveCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerReplicationParametersSave',
+            name: 'dhOfferReplicationParametersSave',
             delay: 0,
             transactional: true,
         };
@@ -62,4 +62,4 @@ class OfferReplicationParametersSaveCommand extends Command {
     }
 }
 
-module.exports = OfferReplicationParametersSaveCommand;
+module.exports = DHOfferReplicationParametersSaveCommand;

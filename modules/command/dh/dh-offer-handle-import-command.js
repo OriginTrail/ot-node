@@ -3,7 +3,7 @@ const Command = require('../command');
 
 const bytes = require('utf8-length');
 
-class OfferHandleImportCommand extends Command {
+class DHOfferHandleImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -55,7 +55,7 @@ class OfferHandleImportCommand extends Command {
         return {
             commands: [
                 {
-                    name: 'offerReplicationParameters',
+                    name: 'dhOfferReplicationParameters',
                     data: {
                         importId: data.import_id,
                         importResult,
@@ -73,7 +73,7 @@ class OfferHandleImportCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerHandle',
+            name: 'dhOfferHandle',
             delay: 0,
             transactional: false,
         };
@@ -82,4 +82,4 @@ class OfferHandleImportCommand extends Command {
     }
 }
 
-module.exports = OfferHandleImportCommand;
+module.exports = DHOfferHandleImportCommand;

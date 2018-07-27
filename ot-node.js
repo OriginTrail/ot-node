@@ -41,23 +41,23 @@ const BiddingApprovalIncreaseCommand = require('./modules/command/common/bidding
 const DepositTokenCommand = require('./modules/command/common/deposit-token-command');
 const OfferFinalizedCommand = require('./modules/command/common/offer-finalized-command');
 
-const OfferCancelCommand = require('./modules/command/dc/offer-cancel-command');
-const OfferChooseCommand = require('./modules/command/dc/offer-choose-command');
-const OfferCreateBlockchainCommand = require('./modules/command/dc/offer-create-blockchain-command');
-const OfferCreateDBCommand = require('./modules/command/dc/offer-create-db-command');
-const OfferReadyCommand = require('./modules/command/dc/offer-ready-command');
-const OfferRootHashCommand = require('./modules/command/dc/offer-root-hash-command');
-const OfferKeyVerificationCommand = require('./modules/command/dc/offer-key-verification-command');
-const EscrowVerifyCommand = require('./modules/command/dc/escrow-verify-command');
-const EscrowCancelCommand = require('./modules/command/dc/escrow-cancel-command');
+const DCOfferCancelCommand = require('./modules/command/dc/dc-offer-cancel-command');
+const DCOfferChooseCommand = require('./modules/command/dc/dc-offer-choose-command');
+const DCOfferCreateBlockchainCommand = require('./modules/command/dc/dc-offer-create-blockchain-command');
+const DCOfferCreateDBCommand = require('./modules/command/dc/dc-offer-create-db-command');
+const DCOfferReadyCommand = require('./modules/command/dc/dc-offer-ready-command');
+const DCOfferRootHashCommand = require('./modules/command/dc/dc-offer-root-hash-command');
+const DCOfferKeyVerificationCommand = require('./modules/command/dc/dc-offer-key-verification-command');
+const DCEscrowVerifyCommand = require('./modules/command/dc/dc-escrow-verify-command');
+const DCEscrowCancelCommand = require('./modules/command/dc/dc-escrow-cancel-command');
 
-const OfferBidAddCommand = require('./modules/command/dh/offer-bid-add-command');
-const OfferBidAddPredeterminedCommand = require('./modules/command/dh/offer-bid-add-predetermined-command');
-const OfferBidAddedCommand = require('./modules/command/dh/offer-bid-added-command');
-const OfferHandleCommand = require('./modules/command/dh/offer-handle-command');
-const OfferHandleImportCommand = require('./modules/command/dh/offer-handle-import-command');
-const OfferReplicationParametersCommand = require('./modules/command/dh/offer-replication-rarameters-command');
-const OfferReplicationParametersSaveCommand = require('./modules/command/dh/offer-replication-parameters-save-command');
+const DHOfferBidAddCommand = require('./modules/command/dh/dh-offer-bid-add-command');
+const DHOfferBidAddPredeterminedCommand = require('./modules/command/dh/dh-offer-bid-add-predetermined-command');
+const DHOfferBidAddedCommand = require('./modules/command/dh/dh-offer-bid-added-command');
+const DHOfferHandleCommand = require('./modules/command/dh/dh-offer-handle-command');
+const DHOfferHandleImportCommand = require('./modules/command/dh/dh-offer-handle-import-command');
+const DHOfferReplicationParametersCommand = require('./modules/command/dh/dh-offer-replication-rarameters-command');
+const DHOfferReplicationParametersSaveCommand = require('./modules/command/dh/dh-offer-replication-parameters-save-command');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -238,25 +238,29 @@ class OTNode {
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             commandExecutor: awilix.asClass(CommandExecutor).singleton(),
-            offerCancelCommand: awilix.asClass(OfferCancelCommand).singleton(),
-            offerChooseCommand: awilix.asClass(OfferChooseCommand).singleton(),
-            offerCreateBlockchainCommand: awilix.asClass(OfferCreateBlockchainCommand).singleton(),
-            offerCreateDBCommand: awilix.asClass(OfferCreateDBCommand).singleton(),
-            offerReadyCommand: awilix.asClass(OfferReadyCommand).singleton(),
-            offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
-            offerRootHashCommand: awilix.asClass(OfferRootHashCommand).singleton(),
-            offerKeyVerificationCommand: awilix.asClass(OfferKeyVerificationCommand).singleton(),
-            escrowCancelCommand: awilix.asClass(EscrowCancelCommand).singleton(),
-            escrowVerifyCommand: awilix.asClass(EscrowVerifyCommand).singleton(),
-            offerBidAddCommand: awilix.asClass(OfferBidAddCommand).singleton(),
-            offerBidAddedCommand: awilix.asClass(OfferBidAddedCommand).singleton(),
-            offerHandleCommand: awilix.asClass(OfferHandleCommand).singleton(),
-            offerHandleImportCommand: awilix.asClass(OfferHandleImportCommand).singleton(),
-            offerReplicationParametersCommand: awilix.asClass(OfferReplicationParametersCommand).singleton(),
-            offerReplicationParametersSaveCommand: awilix.asClass(OfferReplicationParametersSaveCommand).singleton(),
-            biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand).singleton(),
-            offerBidAddPredeterminedCommand: awilix.asClass(OfferBidAddPredeterminedCommand).singleton(),
+            dcOfferCancelCommand: awilix.asClass(DCOfferCancelCommand).singleton(),
+            dcOfferChooseCommand: awilix.asClass(DCOfferChooseCommand).singleton(),
+            dcOfferCreateDBCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
+            dcOfferReadyCommand: awilix.asClass(DCOfferReadyCommand).singleton(),
+            dcOfferRootHashCommand: awilix.asClass(DCOfferRootHashCommand).singleton(),
+            dcEscrowCancelCommand: awilix.asClass(DCEscrowCancelCommand).singleton(),
+            dcEscrowVerifyCommand: awilix.asClass(DCEscrowVerifyCommand).singleton(),
+            dhOfferBidAddCommand: awilix.asClass(DHOfferBidAddCommand).singleton(),
+            dhOfferBidAddedCommand: awilix.asClass(DHOfferBidAddedCommand).singleton(),
+            dhOfferHandleCommand: awilix.asClass(DHOfferHandleCommand).singleton(),
             depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
+            offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
+            dhOfferHandleImportCommand: awilix.asClass(DHOfferHandleImportCommand).singleton(),
+            dcOfferKeyVerificationCommand: awilix.asClass(DCOfferKeyVerificationCommand)
+                .singleton(),
+            dcOfferCreateBlockchainCommand: awilix.asClass(DCOfferCreateBlockchainCommand)
+                .singleton(),
+            biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
+                .singleton(),
+            dhOfferReplicationParametersCommand: awilix.asClass(DHOfferReplicationParametersCommand)
+                .singleton(),
+            dhOfferReplicationParametersSaveCommand: awilix.asClass(DHOfferReplicationParametersSaveCommand)
+                .singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

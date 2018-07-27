@@ -7,7 +7,7 @@ const bytes = require('utf8-length');
 
 const Command = require('../command');
 
-class OfferCreateDBCommand extends Command {
+class DCOfferCreateDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -109,7 +109,7 @@ class OfferCreateDBCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerCreateDB',
+            name: 'dcOfferCreateDB',
             delay: 0,
             transactional: true,
         };
@@ -118,4 +118,4 @@ class OfferCreateDBCommand extends Command {
     }
 }
 
-module.exports = OfferCreateDBCommand;
+module.exports = DCOfferCreateDbCommand;

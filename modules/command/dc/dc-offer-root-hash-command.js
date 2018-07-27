@@ -1,7 +1,7 @@
-const Models = require('../../../models/index');
 const Command = require('../command');
+const Models = require('../../../models/index');
 
-class OfferRootHashCommand extends Command {
+class DCOfferRootHashCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -47,7 +47,7 @@ class OfferRootHashCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerRootHash',
+            name: 'dcOfferRootHash',
             delay: 0,
             transactional: false,
         };
@@ -56,4 +56,4 @@ class OfferRootHashCommand extends Command {
     }
 }
 
-module.exports = OfferRootHashCommand;
+module.exports = DCOfferRootHashCommand;

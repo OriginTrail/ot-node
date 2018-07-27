@@ -5,7 +5,7 @@ const Utilities = require('../../Utilities');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 const d3 = require('d3-format');
 
-class OfferCancelCommand extends Command {
+class DHOfferHandleCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -162,7 +162,7 @@ class OfferCancelCommand extends Command {
             profileBalance: profileBalance.toString(),
         });
 
-        const addBidCommand = predeterminedBid ? 'offerBidAddPredetermined' : 'offerBidAdd';
+        const addBidCommand = predeterminedBid ? 'dhOfferBidAddPredetermined' : 'dhOfferBidAdd';
         if (profileBalance.lt(myStake)) {
             return {
                 commands: [
@@ -233,13 +233,13 @@ class OfferCancelCommand extends Command {
     }
 
     /**
-     * Builds default AddCommand
+     * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerHandle',
+            name: 'dhOfferHandle',
             delay: 0,
             transactional: false,
         };
@@ -248,4 +248,4 @@ class OfferCancelCommand extends Command {
     }
 }
 
-module.exports = OfferCancelCommand;
+module.exports = DHOfferHandleCommand;

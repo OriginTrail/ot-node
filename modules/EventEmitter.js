@@ -429,11 +429,11 @@ class EventEmitter {
                 const replicationId = uuidv4();
 
                 commandExecutor.add({
-                    name: 'offerCancel',
+                    name: 'dcOfferCancel',
                     sequence: [
-                        'offerRootHash', 'offerCreateDB',
-                        'offerCreateBlockchain', 'offerReady',
-                        'offerChoose', 'offerFinalized',
+                        'dcOfferRootHash', 'dcOfferCreateDB',
+                        'dcOfferCreateBlockchain', 'dcOfferReady',
+                        'dcOfferChoose', 'offerFinalized',
                     ],
                     delay: 0,
                     data: {
@@ -574,7 +574,7 @@ class EventEmitter {
             } = eventData;
 
             await commandExecutor.add({
-                name: 'offerHandle',
+                name: 'dhOfferHandle',
                 delay: 0,
                 data: {
                     importId: import_id,
@@ -632,7 +632,7 @@ class EventEmitter {
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
                 await commandExecutor.add({
-                    name: 'offerHandle',
+                    name: 'dhOfferHandle',
                     delay: 0,
                     data: {
                         importId: import_id,
@@ -765,7 +765,7 @@ class EventEmitter {
             logger.info(`Data for replication arrived from ${request.contact[0]}`);
 
             await commandExecutor.add({
-                name: 'offerHandleImport',
+                name: 'dhOfferHandleImport',
                 delay: 0,
                 data: {
                     data: request.params,
@@ -1013,7 +1013,7 @@ class EventEmitter {
             const { epk, importId, encryptionKey } = request.params.message;
 
             await commandExecutor.add({
-                name: 'offerKeyVerification',
+                name: 'dcOfferKeyVerification',
                 delay: 0,
                 data: {
                     dhNodeId: request.contact[0],

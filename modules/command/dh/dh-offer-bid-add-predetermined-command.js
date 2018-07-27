@@ -1,7 +1,7 @@
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
-class OfferBidAddCommand extends Command {
+class DHOfferBidAddPredeterminedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -15,19 +15,23 @@ class OfferBidAddCommand extends Command {
      */
     async execute(command) {
         const {
-            importId, predetermined,
+            importId,
         } = command.data;
 
-        if (predetermined) {
-
-        } else {
-            await this.blockchain.addBid(importId, this.config.identity);
-        }
+        const myBidIndex = await this.blockchain.getBidIndex(
+            importId,
+            this.config.identity,
+        );
+        await this.blockchain.activatePredeterminedBid(
+            importId,
+            this.config.identity,
+            myBidIndex,
+        );
 
         return {
             commands: [
                 {
-                    name: 'offerBidAdded',
+                    name: 'dhOfferBidAdded',
                     data: this.pack(command.data),
                     delay: 0,
                     period: 5000,
@@ -43,9 +47,9 @@ class OfferBidAddCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            myStake: data.myStake.toString(10),
-            myPrice: data.myPrice.toString(10),
-            profileBalance: data.profileBalance.toString(10),
+            myStake: data.myStake.toString(),
+            myPrice: data.myPrice.toString(),
+            profileBalance: data.profileBalance.toString(),
         });
         return data;
     }
@@ -81,7 +85,7 @@ class OfferBidAddCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerBidAdd',
+            name: 'dhOfferBidAddPredetermined',
             delay: 0,
             transactional: false,
         };
@@ -90,4 +94,4 @@ class OfferBidAddCommand extends Command {
     }
 }
 
-module.exports = OfferBidAddCommand;
+module.exports = DHOfferBidAddPredeterminedCommand;

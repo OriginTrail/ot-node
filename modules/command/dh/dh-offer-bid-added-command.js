@@ -2,7 +2,7 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
-class OfferBidAddedCommand extends Command {
+class DHOfferBidAddedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -101,7 +101,7 @@ class OfferBidAddedCommand extends Command {
      */
     static buildDefault(map) {
         const command = {
-            name: 'offerBidAdded',
+            name: 'dhOfferBidAdded',
             delay: 0,
             period: 5000,
             transactional: true,
@@ -111,4 +111,4 @@ class OfferBidAddedCommand extends Command {
     }
 }
 
-module.exports = OfferBidAddedCommand;
+module.exports = DHOfferBidAddedCommand;
