@@ -60,7 +60,7 @@ process.on('warning', (warning) => {
 
 process.on('exit', (code) => {
     if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`)
+        log.error(`Whoops, terminating with code: ${code}`);
     } else {
         log.debug(`Normal exiting with code: ${code}`);
     }
