@@ -1,0 +1,7 @@
+files:
+  - /ot-node/node.log
+  - /ot-node/complete-node.log
+destination:
+  host: logs4.papertrailapp.com
+  port: 39178
+  protocol: tls

@@ -92,6 +92,7 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
+            profileService,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -417,9 +418,7 @@ class EventEmitter {
             } = data;
 
             try {
-                logger.info(`Create offer triggered with import_id ${import_id},
-                    total_escrow_time ${total_escrow_time}, max_token_amount ${max_token_amount},
-                    min_stake_amount ${min_stake_amount} and min_reputation ${min_reputation}.`);
+                logger.info(`Preparing to create offer for import ${import_id}`);
                 let vertices = await this.graphStorage.findVerticesByImportId(import_id);
                 vertices = vertices.map((vertex) => {
                     delete vertex.private;
@@ -488,6 +487,52 @@ class EventEmitter {
                 }
             } catch (error) {
                 await processImport(null, error, data);
+            }
+        });
+
+        this._on('api-deposit-tokens', async (data) => {
+            const { atrac_amount } = data;
+
+            try {
+                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
+
+                await profileService.depositToken(atrac_amount);
+                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
+                });
+            } catch (error) {
+                logger.error(`Failed to deposit tokens. ${error}.`);
+                data.response.status(400);
+                data.response.send({
+                    message: `Failed to deposit tokens. ${error}.`,
+                });
+                remoteControl.tokensDepositFailed(`Failed to deposit tokens. ${error}.`);
+            }
+        });
+
+        this._on('api-withdraw-tokens', async (data) => {
+            const { atrac_amount } = data;
+
+            try {
+                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+
+                await profileService.withdrawToken(atrac_amount);
+
+                data.response.status(200);
+                data.response.send({
+                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                });
+                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
+            } catch (error) {
+                logger.error(`Failed to withdraw tokens. ${error}.`);
+                data.response.status(400);
+                data.response.send({
+                    message: `Failed to withdraw tokens. ${error}.`,
+                });
+                remoteControl.tokensWithdrawFailed(`Failed to withdraw tokens. ${error}.`);
             }
         });
     }
@@ -632,7 +677,6 @@ class EventEmitter {
         });
 
         this._on('eth-EscrowVerified', async (eventData) => {
-            logger.trace('Received eth-EscrowVerified');
             const {
                 import_id,
                 DH_wallet,
@@ -640,6 +684,7 @@ class EventEmitter {
 
             if (config.node_wallet === DH_wallet) {
                 // Event is for me.
+                logger.trace(`Escrow for import ${import_id} verified`);
                 try {
                     // TODO: Possible race condition if another bid for same import came meanwhile.
                     const bid = await Models.bids.findOne({
@@ -775,7 +820,7 @@ class EventEmitter {
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
                 data_public_key: keyPair.publicKey,
-                status: 'ACTIVE',
+                status: 'PENDING',
             });
 
             const dataInfo = Models.data_info.find({ where: { import_id } });
