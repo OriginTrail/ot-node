@@ -115,6 +115,7 @@ class RegisterNode {
         }).catch((e) => {
             console.log(e);
             process.kill(3);
+        });
     }
 
     setConfig() {
