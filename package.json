@@ -7,6 +7,7 @@
     "test": "nyc mocha --recursive test/modules/*.test.js test/api/*.test.js test/protocol/*.test.js",
     "test:unit": "nyc mocha --recursive test/modules/*.test.js",
     "test:api": "nyc mocha --recursive test/api/*.test.js",
+    "test:protocol": "nyc mocha --recursive test/protocol/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
     "config": "sqlite3 modules/Database/system.db 'DELETE FROM node_config; DELETE FROM graph_database; DELETE FROM blockchain_data; UPDATE sqlite_sequence SET seq=0 WHERE name=\"graph_database\" OR name=\"blockchain_data\" OR name=\"node_config\"; VACUUM;' && ./node_modules/.bin/sequelize db:seed:all",
     "bootstrap": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
