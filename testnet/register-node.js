@@ -105,16 +105,16 @@ class RegisterNode {
                         this.runNode();
                     } else {
                         counter += 1;
+                        console.log(`Counting ${counter}`); 
                         if (counter > 20) {
-                            process.kill(1);
+                            process.kill(3);
                         }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
-            process.kill(1);
-        });
+            process.kill(3);
     }
 
     setConfig() {
