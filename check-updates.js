@@ -119,7 +119,7 @@ class AutoUpdate {
                     stdio: 'inherit',
                 });
             });
-            process.exit(0);
+            process.exit(3);
         }, 5000);
     }
 }
