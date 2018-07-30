@@ -133,7 +133,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://178.128.65.84:5278/#a3405151e3adaff757e3bef2e928143e2b3d3f97';
+            env.BOOTSTRAP_NODE = 'https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d';
 
             env.TRAVERSE_NAT_ENABLED = '1';
 
