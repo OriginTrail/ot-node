@@ -123,6 +123,6 @@
   },
   "auto-updater": {
     "repo": "origintrail/ot-node",
-    "branch": "docker"
+    "branch": "stable"
   }
 }
