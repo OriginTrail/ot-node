@@ -2,10 +2,9 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 
 /**
- * Checks whether offer is finalized
- * Note: handles both DC and DH sides
+ * Checks whether offer is finalized from the DH side
  */
-class FinalizeOfferReadyCommand extends Command {
+class DHOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -26,19 +25,6 @@ class FinalizeOfferReadyCommand extends Command {
         if (event) {
             event.finished = true;
             await event.save({ fields: ['finished'], transaction });
-
-            if (side === 'DC') {
-                const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
-
-                const message = `Offer for import ${offer.import_id} finalized`;
-                offer.status = 'FINALIZED';
-                this.remoteControl.bidChosen(importId);
-                this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
-                offer.message = message;
-                await offer.save({ fields: ['status', 'message'], transaction });
-                this.logger.info(message);
-                return Command.empty();
-            }
 
             const eventModelBids = await Models.events.findAll({
                 where:
@@ -91,47 +77,13 @@ class FinalizeOfferReadyCommand extends Command {
     }
 
     /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
-        if (command.data.side === 'DC') {
-            const { offerId } = command.data;
-
-            const offer = await Models.offers.findOne({ where: { id: offerId } });
-            const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
-            offer.status = 'FAILED';
-            offer.message = message;
-            await offer.save({ fields: ['status', 'message'] });
-            this.logger.error(message);
-            this.remoteControl.dcErrorHandling(message);
-        }
-        return Command.empty();
-    }
-
-    /**
-     * Execute strategy when event is too late
-     * @param command
-     */
-    async expired(command) {
-        const { offerId } = command.data;
-
-        this.logger.warn('OfferFinalized command expired.');
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
-        offer.status = 'FAILED';
-        offer.message = 'OfferFinalized command expired.';
-        await offer.save({ fields: ['status', 'message'] });
-    }
-
-    /**
      * Builds default FinalizeOfferReadyCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'offerFinalized',
+            name: 'dhOfferFinalized',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
@@ -142,4 +94,4 @@ class FinalizeOfferReadyCommand extends Command {
     }
 }
 
-module.exports = FinalizeOfferReadyCommand;
+module.exports = DHOfferFinalizedCommand;

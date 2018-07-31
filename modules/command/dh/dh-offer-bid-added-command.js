@@ -41,13 +41,9 @@ class DHOfferBidAddedCommand extends Command {
                 pd_bid: predeterminedBid,
             }, { transaction });
 
-            const { data } = command;
-            Object.assign(data, {
-                side: 'DH',
-            });
             return {
                 commands: [
-                    this.build('offerFinalized', this.pack(command.data), null),
+                    this.build('dhOfferFinalized', this.pack(command.data), null),
                 ],
             };
         }

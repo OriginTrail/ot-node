@@ -433,7 +433,7 @@ class EventEmitter {
                     sequence: [
                         'dcOfferRootHash', 'dcOfferCreateDB',
                         'dcOfferCreateBlockchain', 'dcOfferReady',
-                        'dcOfferChoose', 'offerFinalized',
+                        'dcOfferChoose', 'dcOfferFinalized',
                     ],
                     delay: 0,
                     data: {
@@ -445,7 +445,6 @@ class EventEmitter {
                         max_token_amount,
                         min_stake_amount,
                         min_reputation,
-                        side: 'DC',
                     },
                     transactional: false,
                 });

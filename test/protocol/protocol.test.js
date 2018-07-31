@@ -25,7 +25,6 @@ const CommandExecutor = require('../../modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bidding-approval-increase-command');
 const DepositTokenCommand = require('../../modules/command/common/deposit-token-command');
-const OfferFinalizedCommand = require('../../modules/command/common/offer-finalized-command');
 
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command');
@@ -36,12 +35,14 @@ const DCOfferRootHashCommand = require('../../modules/command/dc/dc-offer-root-h
 const DCOfferKeyVerificationCommand = require('../../modules/command/dc/dc-offer-key-verification-command');
 const DCEscrowVerifyCommand = require('../../modules/command/dc/dc-escrow-verify-command');
 const DCEscrowCancelCommand = require('../../modules/command/dc/dc-escrow-cancel-command');
+const DCOfferFinalizedCommand = require('../../modules/command/dc/dc-offer-finalized-command');
 
 const DHOfferBidAddCommand = require('../../modules/command/dh/dh-offer-bid-add-command');
 const DHOfferBidAddPredeterminedCommand = require('../../modules/command/dh/dh-offer-bid-add-predetermined-command');
 const DHOfferBidAddedCommand = require('../../modules/command/dh/dh-offer-bid-added-command');
 const DHOfferHandleCommand = require('../../modules/command/dh/dh-offer-handle-command');
 const DHOfferHandleImportCommand = require('../../modules/command/dh/dh-offer-handle-import-command');
+const DHOfferFinalizedCommand = require('../../modules/command/dh/dh-offer-finalized-command');
 const DHOfferReplicationParametersCommand = require('../../modules/command/dh/dh-offer-replication-rarameters-command');
 const DHOfferReplicationParametersSaveCommand = require('../../modules/command/dh/dh-offer-replication-parameters-save-command');
 
@@ -458,7 +459,8 @@ describe('Protocol tests', () => {
                 dhOfferBidAddedCommand: awilix.asClass(DHOfferBidAddedCommand).singleton(),
                 dhOfferHandleCommand: awilix.asClass(DHOfferHandleCommand).singleton(),
                 depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
-                offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
+                dhOfferFinalizedCommand: awilix.asClass(DHOfferFinalizedCommand).singleton(),
+                dcOfferFinalizedCommand: awilix.asClass(DCOfferFinalizedCommand).singleton(),
                 dhOfferHandleImportCommand: awilix.asClass(DHOfferHandleImportCommand).singleton(),
                 dcOfferKeyVerificationCommand: awilix.asClass(DCOfferKeyVerificationCommand)
                     .singleton(),
@@ -622,7 +624,7 @@ describe('Protocol tests', () => {
                 sequence: [
                     'dcOfferRootHash', 'dcOfferCreateDB',
                     'dcOfferCreateBlockchain', 'dcOfferReady',
-                    'dcOfferChoose', 'offerFinalized',
+                    'dcOfferChoose', 'dcOfferFinalized',
                 ],
                 delay: 0,
                 data: {

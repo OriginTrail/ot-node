@@ -40,7 +40,6 @@ const CommandExecutor = require('./modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('./modules/command/common/bidding-approval-increase-command');
 const DepositTokenCommand = require('./modules/command/common/deposit-token-command');
-const OfferFinalizedCommand = require('./modules/command/common/offer-finalized-command');
 
 const DCOfferCancelCommand = require('./modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('./modules/command/dc/dc-offer-choose-command');
@@ -51,6 +50,7 @@ const DCOfferRootHashCommand = require('./modules/command/dc/dc-offer-root-hash-
 const DCOfferKeyVerificationCommand = require('./modules/command/dc/dc-offer-key-verification-command');
 const DCEscrowVerifyCommand = require('./modules/command/dc/dc-escrow-verify-command');
 const DCEscrowCancelCommand = require('./modules/command/dc/dc-escrow-cancel-command');
+const DCOfferFinalizedCommand = require('./modules/command/dc/dc-offer-finalized-command');
 
 const DHOfferBidAddCommand = require('./modules/command/dh/dh-offer-bid-add-command');
 const DHOfferBidAddPredeterminedCommand = require('./modules/command/dh/dh-offer-bid-add-predetermined-command');
@@ -59,6 +59,7 @@ const DHOfferHandleCommand = require('./modules/command/dh/dh-offer-handle-comma
 const DHOfferHandleImportCommand = require('./modules/command/dh/dh-offer-handle-import-command');
 const DHOfferReplicationParametersCommand = require('./modules/command/dh/dh-offer-replication-rarameters-command');
 const DHOfferReplicationParametersSaveCommand = require('./modules/command/dh/dh-offer-replication-parameters-save-command');
+const DHOfferFinalizedCommand = require('./modules/command/dh/dh-offer-finalized-command');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -273,7 +274,8 @@ class OTNode {
             dhOfferBidAddedCommand: awilix.asClass(DHOfferBidAddedCommand).singleton(),
             dhOfferHandleCommand: awilix.asClass(DHOfferHandleCommand).singleton(),
             depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
-            offerFinalizedCommand: awilix.asClass(OfferFinalizedCommand).singleton(),
+            dcOfferFinalizedCommand: awilix.asClass(DCOfferFinalizedCommand).singleton(),
+            dhOfferFinalizedCommand: awilix.asClass(DHOfferFinalizedCommand).singleton(),
             dhOfferHandleImportCommand: awilix.asClass(DHOfferHandleImportCommand).singleton(),
             dcOfferKeyVerificationCommand: awilix.asClass(DCOfferKeyVerificationCommand)
                 .singleton(),
