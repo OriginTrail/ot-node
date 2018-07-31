@@ -228,7 +228,7 @@ class OTNode {
             await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
             setInterval(async () => {
                 await this.getBalances(Utilities, selectedBlockchain, web3, config);
-            }, 300000);
+            }, 1800000);
         } else {
             config.enoughFunds = true;
         }
