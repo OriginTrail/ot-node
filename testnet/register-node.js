@@ -105,15 +105,16 @@ class RegisterNode {
                         this.runNode();
                     } else {
                         counter += 1;
+                        console.log(`Counting ${counter}`);
                         if (counter > 20) {
-                            process.kill(1);
+                            process.kill(3);
                         }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
-            process.kill(1);
+            process.kill(3);
         });
     }
 
@@ -133,7 +134,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://178.128.68.5:5278/#405d6155a6e0f9948a8145fd4a9428961d91a4dd';
+            env.BOOTSTRAP_NODE = 'https://178.128.65.84:5278/#a3405151e3adaff757e3bef2e928143e2b3d3f97';
 
             env.TRAVERSE_NAT_ENABLED = '1';
 

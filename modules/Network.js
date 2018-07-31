@@ -183,7 +183,6 @@ class Network {
                 privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
-                logger: this.log,
             }),
         ]));
     }
