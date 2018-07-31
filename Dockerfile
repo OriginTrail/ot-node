@@ -25,8 +25,8 @@ RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/re
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD testnet/papertrail.yml /etc/log_files.yml
 #Clone the project
-RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/docker-staging && echo "       "
-RUN unzip docker-staging -d . && rm docker-staging && mv ot-node-docker-staging ot-node
+RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/develop
+RUN unzip develop -d . && rm develop && mv ot-node-develop ot-node
 
 RUN cp -a /tmp/node_modules /ot-node
 
@@ -36,5 +36,5 @@ RUN cp .env.example .env
 COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
-EXPOSE 5278 5279 8900 3000 4043 3010
+EXPOSE 5278 8900 3000 4043 3010
 CMD ["sh", "/ot-node/testnet/start.sh"]
