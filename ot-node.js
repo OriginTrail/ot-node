@@ -65,7 +65,10 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    console.log(p);
+    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    if (process.env.NODE_ENV === 'test') {
+        console.log(p);
+    }
     // application specific logging, throwing an error, or other logic here
 });
 
