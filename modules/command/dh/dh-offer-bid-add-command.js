@@ -18,15 +18,10 @@ class DHOfferBidAddCommand extends Command {
      */
     async execute(command) {
         const {
-            importId, predetermined,
+            importId,
         } = command.data;
 
-        if (predetermined) {
-
-        } else {
-            await this.blockchain.addBid(importId, this.config.identity);
-        }
-
+        await this.blockchain.addBid(importId, this.config.identity);
         return {
             commands: [
                 this.build('dhOfferBidAdded', this.pack(command.data), null),
