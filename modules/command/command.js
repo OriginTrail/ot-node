@@ -1,3 +1,6 @@
+/**
+ * Describes one command handler
+ */
 class Command {
     constructor(ctx) {
         this.commandResolver = ctx.commandResolver;

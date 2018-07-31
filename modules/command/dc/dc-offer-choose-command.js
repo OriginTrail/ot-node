@@ -1,6 +1,9 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
+/**
+ * Chooses bids for particular offer
+ */
 class DCOfferChooseCommand extends Command {
     constructor(ctx) {
         super(ctx);

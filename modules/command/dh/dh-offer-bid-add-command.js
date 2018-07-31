@@ -1,6 +1,9 @@
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
+/**
+ * Adds bid for offer
+ */
 class DHOfferBidAddCommand extends Command {
     constructor(ctx) {
         super(ctx);

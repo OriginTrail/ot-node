@@ -5,6 +5,9 @@ const Utilities = require('../../Utilities');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 const d3 = require('d3-format');
 
+/**
+ * Handles new offer from the DH side
+ */
 class DHOfferHandleCommand extends Command {
     constructor(ctx) {
         super(ctx);

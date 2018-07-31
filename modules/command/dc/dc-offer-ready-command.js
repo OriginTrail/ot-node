@@ -2,6 +2,9 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
+/**
+ * Repeatable command that checks whether offer is ready or not
+ */
 class DCOfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);

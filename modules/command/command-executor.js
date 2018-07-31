@@ -176,7 +176,7 @@ class CommandExecutor {
                     status: STATUS.failed,
                     message: err.message,
                 });
-                await handler.recover(command, err);
+                return await handler.recover(command, err);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
             }

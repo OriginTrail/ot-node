@@ -1,5 +1,8 @@
 const Command = require('../command');
 
+/**
+ * Cancels Escrow on blockchain
+ */
 class DCEscrowCancelCommand extends Command {
     constructor(ctx) {
         super(ctx);

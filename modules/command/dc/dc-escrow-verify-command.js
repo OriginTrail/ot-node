@@ -1,6 +1,9 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
+/**
+ * Verifies Escrow on blockchain
+ */
 class DCEscrowVerifyCommand extends Command {
     constructor(ctx) {
         super(ctx);

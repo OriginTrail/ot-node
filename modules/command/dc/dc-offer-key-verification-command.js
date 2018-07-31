@@ -7,6 +7,9 @@ const Challenge = require('../../Challenge');
 const Encryption = require('../../Encryption');
 const MerkleTree = require('../../Merkle');
 
+/**
+ * Verifies DH keys created during replication
+ */
 class DCOfferKeyVerificationCommand extends Command {
     constructor(ctx) {
         super(ctx);

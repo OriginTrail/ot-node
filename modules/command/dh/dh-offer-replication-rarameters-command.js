@@ -7,6 +7,9 @@ const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Command = require('../command');
 
+/**
+ * Generates DH replication parameters and writes them to blockchain
+ */
 class DHOfferReplicationParametersCommand extends Command {
     constructor(ctx) {
         super(ctx);

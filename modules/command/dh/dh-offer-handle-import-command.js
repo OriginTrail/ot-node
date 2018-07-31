@@ -3,6 +3,9 @@ const Command = require('../command');
 
 const bytes = require('utf8-length');
 
+/**
+ * Imports data for replication
+ */
 class DHOfferHandleImportCommand extends Command {
     constructor(ctx) {
         super(ctx);

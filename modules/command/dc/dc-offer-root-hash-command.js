@@ -1,6 +1,9 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 
+/**
+ * Writes root hash to blockchain
+ */
 class DCOfferRootHashCommand extends Command {
     constructor(ctx) {
         super(ctx);

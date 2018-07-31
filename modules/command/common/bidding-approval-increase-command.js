@@ -1,6 +1,9 @@
 const Command = require('../command');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
+/**
+ * Increases approval for Bidding contract on blockchain
+ */
 class BiddingApprovalIncreaseCommand extends Command {
     constructor(ctx) {
         super(ctx);

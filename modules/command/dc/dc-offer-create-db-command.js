@@ -1,12 +1,12 @@
 const BN = require('../../../node_modules/bn.js/lib/bn');
 const Models = require('../../../models/index');
 
-const Graph = require('../../Graph');
-const Encryption = require('../../Encryption');
-const bytes = require('utf8-length');
-
 const Command = require('../command');
+const ImportUtilities = require('../../ImportUtilities');
 
+/**
+ * Creates offer in the database
+ */
 class DCOfferCreateDbCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -58,7 +58,7 @@ class DCOfferCreateDbCommand extends Command {
         });
 
         totalEscrowTime = totalEscrowTime.div(new BN(60000));
-        const importSizeInBytes = new BN(this._calculateImportSize(vertices));
+        const importSizeInBytes = new BN(ImportUtilities.calculateEncryptedImportSize(vertices));
         let newOfferRow = {
             import_id: importId,
             total_escrow_time: totalEscrowTime.toString(),
@@ -88,18 +88,6 @@ class DCOfferCreateDbCommand extends Command {
             offerId: newOfferRow.id,
         });
         return this.continueSequence(data, command.sequence);
-    }
-
-    /**
-     * Calculates more or less accurate size of the import
-     * @param vertices   Collection of vertices
-     * @returns {number} Size in bytes
-     * @private
-     */
-    _calculateImportSize(vertices) {
-        const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
-        Graph.encryptVertices(vertices, keyPair.privateKey);
-        return bytes(JSON.stringify(vertices));
     }
 
     /**

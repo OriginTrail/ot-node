@@ -2,6 +2,9 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const BN = require('../../../node_modules/bn.js/lib/bn');
 
+/**
+ * Checks whether bid is successfully added
+ */
 class DHOfferBidAddedCommand extends Command {
     constructor(ctx) {
         super(ctx);

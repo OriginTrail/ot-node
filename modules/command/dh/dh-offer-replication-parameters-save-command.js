@@ -1,6 +1,9 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
+/**
+ * Saves generated parameters to the DB
+ */
 class DHOfferReplicationParametersSaveCommand extends Command {
     constructor(ctx) {
         super(ctx);

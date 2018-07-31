@@ -1,6 +1,10 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
+/**
+ * Checks whether offer is finalized
+ * Note: handles both DC and DH sides
+ */
 class FinalizeOfferReadyCommand extends Command {
     constructor(ctx) {
         super(ctx);

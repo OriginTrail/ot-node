@@ -3,6 +3,9 @@ const Command = require('../command');
 
 const { Op } = Models.Sequelize;
 
+/**
+ * Cancels offer on blockchain if there is one
+ */
 class DCOfferCancelCommand extends Command {
     constructor(ctx) {
         super(ctx);

@@ -1,3 +1,6 @@
+/**
+ * Resolves command handlers based on command names
+ */
 class CommandResolver {
     constructor(ctx) {
         this.ctx = ctx;
