@@ -121,15 +121,16 @@ class FinalizeOfferReadyCommand extends Command {
     }
 
     /**
-     * Builds default AddCommand
+     * Builds default FinalizeOfferReadyCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'offerFinalized',
             delay: 0,
             period: 5000,
+            deadline_at: Date.now() + (5 * 60 * 1000),
             transactional: true,
         };
         Object.assign(command, map);

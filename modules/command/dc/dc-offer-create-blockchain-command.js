@@ -100,11 +100,11 @@ class DCOfferCreateBlockchainCommand extends Command {
     }
 
     /**
-     * Builds default AddCommand
+     * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dcOfferCreateBlockchain',
             delay: 0,

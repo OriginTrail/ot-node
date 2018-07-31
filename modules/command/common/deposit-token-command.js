@@ -51,7 +51,7 @@ class DepositTokenCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'depositToken',
             delay: 0,

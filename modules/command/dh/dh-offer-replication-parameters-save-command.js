@@ -51,7 +51,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dhOfferReplicationParametersSave',
             delay: 0,

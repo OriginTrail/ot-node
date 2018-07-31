@@ -58,10 +58,36 @@ class Command {
         sequence = sequence.slice(1);
         const handler = this.ctx[`${name}Command`];
         return {
-            commands: [handler.constructor.buildDefault({
+            commands: [handler.default({
                 data,
                 sequence,
             })],
+        };
+    }
+
+    /**
+     * Builds command
+     * @param name
+     * @param data
+     * @param sequence
+     * @returns {*}
+     */
+    build(name, data, sequence) {
+        const command = this.ctx[name].default();
+        Object.assign(command, {
+            data,
+            sequence,
+        });
+        return command;
+    }
+
+    /**
+     * Builds default command
+     * @param map
+     * @returns {{add, data: *, delay: *, deadline: *}}
+     */
+    default(map) {
+        return {
         };
     }
 

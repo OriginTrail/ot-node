@@ -49,7 +49,7 @@ class DCOfferChooseCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dcOfferChoose',
             delay: 30000,

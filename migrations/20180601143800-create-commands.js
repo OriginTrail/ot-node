@@ -10,11 +10,11 @@ module.exports = {
             allowNull: false,
         },
         data: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: false,
         },
         sequence: {
-            type: Sequelize.STRING,
+            type: Sequelize.JSON,
             allowNull: true,
         },
         ready_at: {

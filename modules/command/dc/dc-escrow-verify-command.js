@@ -41,7 +41,7 @@ class DCEscrowVerifyCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dcEscrowVerify',
             delay: 0,

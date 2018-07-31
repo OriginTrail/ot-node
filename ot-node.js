@@ -63,7 +63,7 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    console.log(p);
     // application specific logging, throwing an error, or other logic here
 });
 
@@ -281,7 +281,10 @@ class OTNode {
                 .singleton(),
             dhOfferReplicationParametersCommand: awilix.asClass(DHOfferReplicationParametersCommand)
                 .singleton(),
-            dhOfferReplicationParametersSaveCommand: awilix.asClass(DHOfferReplicationParametersSaveCommand)
+            dhOfferBidAddPredetermined: awilix.asClass(DHOfferBidAddPredeterminedCommand)
+                .singleton(),
+            dhOfferReplicationParametersSaveCommand: awilix
+                .asClass(DHOfferReplicationParametersSaveCommand)
                 .singleton(),
         });
         const emitter = container.resolve('emitter');

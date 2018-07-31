@@ -47,7 +47,7 @@ class DCOfferCancelCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dcOfferCancel',
             delay: 0,

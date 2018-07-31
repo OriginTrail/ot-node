@@ -51,7 +51,7 @@ class BiddingApprovalIncreaseCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'biddingApprovalIncrease',
             delay: 0,

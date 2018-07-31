@@ -44,12 +44,7 @@ class DHOfferBidAddedCommand extends Command {
             });
             return {
                 commands: [
-                    {
-                        name: 'offerFinalized',
-                        data: this.pack(data),
-                        period: 5000,
-                        transactional: true,
-                    },
+                    this.build('offerFinalized', this.pack(command.data), null),
                 ],
             };
         }
@@ -99,7 +94,7 @@ class DHOfferBidAddedCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dhOfferBidAdded',
             delay: 0,

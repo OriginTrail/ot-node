@@ -60,16 +60,13 @@ class DHOfferReplicationParametersCommand extends Command {
         );
         return {
             commands: [
-                {
-                    name: 'dhOfferReplicationParametersSave',
-                    data: {
-                        importId,
-                        publicKey,
-                        distributionPublicKey: keyPair.publicKey,
-                        distributionPrivateKey: keyPair.privateKey,
-                        epk,
-                    },
-                },
+                this.build('dhOfferReplicationParametersSave', {
+                    importId,
+                    publicKey,
+                    distributionPublicKey: keyPair.publicKey,
+                    distributionPrivateKey: keyPair.privateKey,
+                    epk,
+                }, null),
             ],
         };
     }
@@ -79,7 +76,7 @@ class DHOfferReplicationParametersCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dhOfferReplicationParameters',
             delay: 0,

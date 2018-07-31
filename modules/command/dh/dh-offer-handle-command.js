@@ -166,23 +166,14 @@ class DHOfferHandleCommand extends Command {
         if (profileBalance.lt(myStake)) {
             return {
                 commands: [
-                    {
-                        name: 'biddingApprovalIncrease',
-                        sequence: [
-                            'depositToken', addBidCommand,
-                        ],
-                        data,
-                    },
+                    this.build('biddingApprovalIncrease', this.pack(command.data), ['depositToken', addBidCommand]),
                 ],
             };
         }
 
         return {
             commands: [
-                {
-                    name: addBidCommand,
-                    data,
-                },
+                this.build(addBidCommand, this.pack(data), null),
             ],
         };
     }
@@ -237,7 +228,7 @@ class DHOfferHandleCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dhOfferHandle',
             delay: 0,

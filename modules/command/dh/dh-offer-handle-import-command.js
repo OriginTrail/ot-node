@@ -54,14 +54,11 @@ class DHOfferHandleImportCommand extends Command {
         this.logger.trace(`[DH] Replication finished for ${data.import_id}`);
         return {
             commands: [
-                {
-                    name: 'dhOfferReplicationParameters',
-                    data: {
-                        importId: data.import_id,
-                        importResult,
-                        publicKey: data.public_key,
-                    },
-                },
+                this.build('dhOfferReplicationParameters', {
+                    importId: data.import_id,
+                    importResult,
+                    publicKey: data.public_key,
+                }, null),
             ],
         };
     }
@@ -71,7 +68,7 @@ class DHOfferHandleImportCommand extends Command {
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
-    static buildDefault(map) {
+    default(map) {
         const command = {
             name: 'dhOfferHandle',
             delay: 0,
