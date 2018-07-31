@@ -1,6 +1,6 @@
 class Command {
     constructor(ctx) {
-        this.ctx = ctx;
+        this.commandResolver = ctx.commandResolver;
     }
 
     /**
@@ -56,7 +56,7 @@ class Command {
         }
         const [name] = sequence;
         sequence = sequence.slice(1);
-        const handler = this.ctx[`${name}Command`];
+        const handler = this.commandResolver.resolve(name);
         return {
             commands: [handler.default({
                 data,
@@ -73,7 +73,7 @@ class Command {
      * @returns {*}
      */
     build(name, data, sequence) {
-        const command = this.ctx[name].default();
+        const command = this.commandResolver.resolve(name).default();
         Object.assign(command, {
             data,
             sequence,

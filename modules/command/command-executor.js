@@ -27,6 +27,7 @@ class CommandExecutor {
     constructor(ctx) {
         this.ctx = ctx;
         this.logger = ctx.logger;
+        this.commandResolver = ctx.commandResolver;
 
         this.parallelism = QUEUE_PARALLELISM;
         this.queue = async.queue(async (command, callback) => {
@@ -53,7 +54,7 @@ class CommandExecutor {
 
         this.logger.trace(`Command ${command.name} and ID ${command.id} started.`);
 
-        const handler = this.resolve(command);
+        const handler = this.commandResolver.resolve(command.name);
         if (command.deadline_at && now > command.deadline_at) {
             this.logger.warn(`Command ${command.name} and ID ${command.id} is too late...`);
             await CommandExecutor._update(command, {
@@ -152,19 +153,6 @@ class CommandExecutor {
             setTimeout(command => this.queue.push(command), delay, command);
         } else {
             this.queue.push(command);
-        }
-    }
-
-    /**
-     * Gets command handler based on command name
-     * @param command
-     * @return {*}
-     */
-    resolve(command) {
-        try {
-            return this.ctx[`${command.name}Command`];
-        } catch (e) {
-            throw new Error(`No handler defined for command '${command.name}'`);
         }
     }
 

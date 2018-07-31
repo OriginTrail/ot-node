@@ -35,6 +35,7 @@ const Web3 = require('web3');
 
 global.__basedir = __dirname;
 
+const CommandResolver = require('./modules/command/command-resolver');
 const CommandExecutor = require('./modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('./modules/command/common/bidding-approval-increase-command');
@@ -260,6 +261,7 @@ class OTNode {
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             commandExecutor: awilix.asClass(CommandExecutor).singleton(),
+            commandResolver: awilix.asClass(CommandResolver).singleton(),
             dcOfferCancelCommand: awilix.asClass(DCOfferCancelCommand).singleton(),
             dcOfferChooseCommand: awilix.asClass(DCOfferChooseCommand).singleton(),
             dcOfferCreateDBCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
