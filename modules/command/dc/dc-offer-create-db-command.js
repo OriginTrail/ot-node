@@ -1,4 +1,4 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 const Models = require('../../../models/index');
 
 const Command = require('../command');
@@ -80,11 +80,11 @@ class DCOfferCreateDbCommand extends Command {
         Object.assign(data, {
             dhIds,
             dhWallets,
-            totalEscrowTime: totalEscrowTime.toString(10),
-            maxTokenAmount: maxTokenAmount.toString(10),
-            minStakeAmount: minStakeAmount.toString(10),
+            totalEscrowTime: totalEscrowTime.toString(),
+            maxTokenAmount: maxTokenAmount.toString(),
+            minStakeAmount: minStakeAmount.toString(),
             minReputation,
-            importSizeInBytes: importSizeInBytes.toString(10),
+            importSizeInBytes: importSizeInBytes.toString(),
             offerId: newOfferRow.id,
         });
         return this.continueSequence(data, command.sequence);

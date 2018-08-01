@@ -2,7 +2,7 @@ const Models = require('../../../models/index');
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 const d3 = require('d3-format');
 
 /**

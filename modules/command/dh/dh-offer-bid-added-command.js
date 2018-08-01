@@ -1,6 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 
 /**
  * Checks whether bid is successfully added
@@ -56,9 +56,9 @@ class DHOfferBidAddedCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            myStake: data.myStake.toString(10),
-            myPrice: data.myPrice.toString(10),
-            profileBalance: data.profileBalance.toString(10),
+            myStake: data.myStake.toString(),
+            myPrice: data.myPrice.toString(),
+            profileBalance: data.profileBalance.toString(),
         });
         return data;
     }

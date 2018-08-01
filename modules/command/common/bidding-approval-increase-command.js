@@ -1,5 +1,5 @@
 const Command = require('../command');
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 
 /**
  * Increases approval for Bidding contract on blockchain
@@ -27,9 +27,9 @@ class BiddingApprovalIncreaseCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            myStake: data.myStake.toString(10),
-            myPrice: data.myPrice.toString(10),
-            profileBalance: data.profileBalance.toString(10),
+            myStake: data.myStake.toString(),
+            myPrice: data.myPrice.toString(),
+            profileBalance: data.profileBalance.toString(),
         });
         return data;
     }

@@ -1,6 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 
 /**
  * Creates offer on blockchain
@@ -78,10 +78,10 @@ class DCOfferCreateBlockchainCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            totalEscrowTime: data.totalEscrowTime.toString(10),
-            maxTokenAmount: data.maxTokenAmount.toString(10),
-            minStakeAmount: data.minStakeAmount.toString(10),
-            importSizeInBytes: data.importSizeInBytes.toString(10),
+            totalEscrowTime: data.totalEscrowTime.toString(),
+            maxTokenAmount: data.maxTokenAmount.toString(),
+            minStakeAmount: data.minStakeAmount.toString(),
+            importSizeInBytes: data.importSizeInBytes.toString(),
         });
         return data;
     }

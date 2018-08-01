@@ -1,5 +1,5 @@
 const Command = require('../command');
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 
 /**
  * Adds predetermined bid for offer
