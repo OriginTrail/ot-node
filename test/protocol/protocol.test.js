@@ -46,7 +46,7 @@ const DHOfferFinalizedCommand = require('../../modules/command/dh/dh-offer-final
 const DHOfferReplicationParametersCommand = require('../../modules/command/dh/dh-offer-replication-rarameters-command');
 const DHOfferReplicationParametersSaveCommand = require('../../modules/command/dh/dh-offer-replication-parameters-save-command');
 
-const DCController = require('../../modules/controller/DCController');
+const DCController = require('../../modules/controller/dc-controller');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.

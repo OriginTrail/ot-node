@@ -62,7 +62,7 @@ const DHOfferReplicationParametersCommand = require('./modules/command/dh/dh-off
 const DHOfferReplicationParametersSaveCommand = require('./modules/command/dh/dh-offer-replication-parameters-save-command');
 const DHOfferFinalizedCommand = require('./modules/command/dh/dh-offer-finalized-command');
 
-const DCController = require('./modules/controller/DCController');
+const DCController = require('./modules/controller/dc-controller');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
