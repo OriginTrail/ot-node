@@ -75,6 +75,7 @@
     "externalip": "^1.0.2",
     "github-release-notes": "^0.16.0",
     "hdkey": "^0.8.0",
+    "ip": "^1.1.5",
     "ipaddr.js": "^1.8.0",
     "js-levenshtein": "^1.1.3",
     "json-stable-stringify": "^1.0.1",
