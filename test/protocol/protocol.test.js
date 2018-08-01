@@ -46,6 +46,8 @@ const DHOfferFinalizedCommand = require('../../modules/command/dh/dh-offer-final
 const DHOfferReplicationParametersCommand = require('../../modules/command/dh/dh-offer-replication-rarameters-command');
 const DHOfferReplicationParametersSaveCommand = require('../../modules/command/dh/dh-offer-replication-parameters-save-command');
 
+const DCController = require('../../modules/controller/DCController');
+
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
 // process.removeAllListeners('uncaughtException');
@@ -476,10 +478,12 @@ describe('Protocol tests', () => {
                 dhOfferReplicationParametersSaveCommand: awilix
                     .asClass(DHOfferReplicationParametersSaveCommand)
                     .singleton(),
+                dcController: awilix.asClass(DCController).singleton(),
             });
 
             testNode.blockchain = container.resolve('blockchain');
             testNode.commandExecutor = container.resolve('commandExecutor');
+            testNode.dcController = container.resolve('dcController');
             testNode.container = container;
         });
 
@@ -616,26 +620,9 @@ describe('Protocol tests', () => {
 
         it('should initiate replication for happy path and without predetermined bidders', async function replication1() {
             this.timeout(90000); // One minute is minimum time for a offer.
-            const { commandExecutor, blockchain } = testNode1;
+            const { dcController, blockchain } = testNode1;
 
-            const replicationId = uuidv4();
-            commandExecutor.add({
-                name: 'dcOfferCancel',
-                sequence: [
-                    'dcOfferRootHash', 'dcOfferCreateDB',
-                    'dcOfferCreateBlockchain', 'dcOfferReady',
-                    'dcOfferChoose', 'dcOfferFinalized',
-                ],
-                delay: 0,
-                data: {
-                    importId,
-                    rootHash,
-                    totalDocuments: 1,
-                    replicationId,
-                    vertices,
-                },
-                transactional: false,
-            });
+            const replicationId = await dcController.createOffer(importId, rootHash, 1);
 
             const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
             expect(event).to.exist;
