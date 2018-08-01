@@ -138,7 +138,7 @@ class Network {
             // Simulate node's "super._updateContact(identity, contact)".
             this.node.constructor.prototype.constructor.prototype
                 ._updateContact.call(this.node, identity, contact);
-        }
+        };
 
         this.log.info('Starting OT Node...');
         this.node.eclipse = this.node.plugin(kadence.eclipse());
