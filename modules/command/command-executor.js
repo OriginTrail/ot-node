@@ -2,6 +2,8 @@ const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
 
+const cleaner_command_name = require('./common/cleaner-command').name;
+
 /**
  * Command statuses
  * @type {{failed: string, expired: string, started: string, pending: string, completed: string}}
@@ -40,6 +42,14 @@ class CommandExecutor {
 
             callback();
         }, this.parallelism);
+    }
+
+    /**
+     * Initialize executor
+     * @returns {Promise<void>}
+     */
+    async init() {
+        await this.startCleaner();
     }
 
     /**
@@ -87,9 +97,6 @@ class CommandExecutor {
                 command.data = handler.unpack(command.data);
                 const result = await handler.execute(command, transaction);
                 if (result.repeat) {
-                    await CommandExecutor._update(command, {
-                        status: STATUS.pending,
-                    }, transaction);
                     await this.add(command, command.period, false);
                     return Command.repeat();
                 }
@@ -137,6 +144,16 @@ class CommandExecutor {
             return Models.sequelize.transaction(async t => execFn(t));
         }
         return execFn(null);
+    }
+
+    /**
+     * Start cleaner command
+     * @returns {Promise<void>}
+     */
+    async startCleaner() {
+        await CommandExecutor._delete(cleaner_command_name);
+        const handler = this.commandResolver.resolve(cleaner_command_name);
+        await this.add(handler.default(), 0, true);
     }
 
     /**
@@ -216,6 +233,20 @@ class CommandExecutor {
     }
 
     /**
+     * Delete command from database
+     * @param name
+     * @returns {Promise<void>}
+     * @private
+     */
+    static async _delete(name) {
+        await Models.commands.destroy({
+            where: {
+                name: { [Models.Sequelize.Op.eq]: name },
+            },
+        });
+    }
+
+    /**
      * Updates command in the db
      * @param command
      * @param update
@@ -249,6 +280,7 @@ class CommandExecutor {
         const pendingCommands = await Models.commands.findAll({
             where: {
                 status: { [Models.Sequelize.Op.in]: [STATUS.pending, STATUS.started] },
+                name: { [Models.Sequelize.Op.notIn]: [cleaner_command_name] },
             },
         });
 

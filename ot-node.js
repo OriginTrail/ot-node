@@ -40,6 +40,7 @@ const CommandExecutor = require('./modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('./modules/command/common/bidding-approval-increase-command');
 const DepositTokenCommand = require('./modules/command/common/deposit-token-command');
+const CleanerCommand = require('./modules/command/common/cleaner-command').clazz;
 
 const DCOfferCancelCommand = require('./modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('./modules/command/dc/dc-offer-choose-command');
@@ -266,6 +267,7 @@ class OTNode {
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             commandExecutor: awilix.asClass(CommandExecutor).singleton(),
             commandResolver: awilix.asClass(CommandResolver).singleton(),
+            cleanerCommand: awilix.asClass(CleanerCommand).singleton(),
             dcOfferCancelCommand: awilix.asClass(DCOfferCancelCommand).singleton(),
             dcOfferChooseCommand: awilix.asClass(DCOfferChooseCommand).singleton(),
             dcOfferCreateDBCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
@@ -354,6 +356,7 @@ class OTNode {
         await challenger.startChallenging();
 
         const commandExecutor = container.resolve('commandExecutor');
+        await commandExecutor.init();
         await commandExecutor.replay();
     }
 
