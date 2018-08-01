@@ -24,18 +24,24 @@ class DHOfferHandleImportCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const data = command.data.data.message.payload;
+        const {
+            importId,
+            vertices,
+            edges,
+            dcWallet,
+            publicKey,
+        } = command.data;
 
-        const bidModel = await Models.bids.findOne({ where: { import_id: data.import_id } });
+        const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
         if (!bidModel) {
-            this.logger.warn(`Couldn't find bid for import ID ${data.import_id}.`);
+            this.logger.warn(`Couldn't find bid for import ID ${importId}.`);
             return Command.empty();
         }
         let importResult = await this.importer.importJSON({
-            import_id: data.import_id,
-            vertices: data.vertices,
-            edges: data.edges,
-            wallet: data.dc_wallet,
+            import_id: importId,
+            vertices,
+            edges,
+            wallet: dcWallet,
         }, true);
 
         if (importResult.error) {
@@ -54,13 +60,13 @@ class DHOfferHandleImportCommand extends Command {
             data_size: dataSize,
         });
 
-        this.logger.trace(`[DH] Replication finished for ${data.import_id}`);
+        this.logger.trace(`[DH] Replication finished for ${importId}`);
         return {
             commands: [
                 this.build('dhOfferReplicationParameters', {
-                    importId: data.import_id,
+                    importId,
                     importResult,
-                    publicKey: data.public_key,
+                    publicKey,
                 }, null),
             ],
         };

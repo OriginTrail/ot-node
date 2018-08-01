@@ -63,6 +63,7 @@ const DHOfferReplicationParametersSaveCommand = require('./modules/command/dh/dh
 const DHOfferFinalizedCommand = require('./modules/command/dh/dh-offer-finalized-command');
 
 const DCController = require('./modules/controller/dc-controller');
+const DHController = require('./modules/controller/dh-controller');
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -298,6 +299,7 @@ class OTNode {
                 .asClass(DHOfferReplicationParametersSaveCommand)
                 .singleton(),
             dcController: awilix.asClass(DCController).singleton(),
+            dhController: awilix.asClass(DHController).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

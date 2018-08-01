@@ -47,6 +47,7 @@ const DHOfferReplicationParametersCommand = require('../../modules/command/dh/dh
 const DHOfferReplicationParametersSaveCommand = require('../../modules/command/dh/dh-offer-replication-parameters-save-command');
 
 const DCController = require('../../modules/controller/dc-controller');
+const DHController = require('../../modules/controller/dh-controller');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
@@ -479,6 +480,7 @@ describe('Protocol tests', () => {
                     .asClass(DHOfferReplicationParametersSaveCommand)
                     .singleton(),
                 dcController: awilix.asClass(DCController).singleton(),
+                dhController: awilix.asClass(DHController).singleton(),
             });
 
             testNode.blockchain = container.resolve('blockchain');

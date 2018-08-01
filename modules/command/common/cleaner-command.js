@@ -44,7 +44,6 @@ class CleanerCommand extends Command {
     }
 }
 
-module.exports = CleanerCommand;
 module.exports = {
     name: 'cleaner',
     clazz: CleanerCommand,

@@ -535,7 +535,7 @@ class EventEmitter {
             dhService,
             logger,
             config,
-            commandExecutor,
+            dhController,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -553,22 +553,11 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            await commandExecutor.add({
-                name: 'dhOfferHandle',
-                delay: 0,
-                data: {
-                    importId: import_id,
-                    dcNodeId: DC_node_id,
-                    totalEscrowTime: total_escrow_time_in_minutes,
-                    maxTokenAmount: max_token_amount_per_byte_minute,
-                    minStakeAmount: min_stake_amount_per_byte_minute,
-                    minReputation: min_reputation,
-                    dataSizeBytes: data_size_in_bytes,
-                    dataHash: data_hash,
-                    predeterminedBid: false,
-                },
-                transactional: false,
-            });
+            await dhController.handleOffer(
+                import_id, DC_node_id, total_escrow_time_in_minutes,
+                max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
+                min_reputation, data_size_in_bytes, data_hash, false,
+            );
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
@@ -611,22 +600,13 @@ class EventEmitter {
                 const createOfferEvent = createOfferEventEventModel.get({ plain: true });
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
-                await commandExecutor.add({
-                    name: 'dhOfferHandle',
-                    delay: 0,
-                    data: {
-                        importId: import_id,
-                        dcNodeId: createOfferEventData.DC_node_id.substring(2, 42),
-                        totalEscrowTime: total_escrow_time_in_minutes * 60000,
-                        maxTokenAmount: max_token_amount_per_byte_minute,
-                        minStakeAmount: min_stake_amount_per_byte_minute,
-                        minReputation: createOfferEventData.min_reputation,
-                        dataSizeBytes: data_size_in_bytes,
-                        dataHash: createOfferEventData.data_hash,
-                        predeterminedBid: true,
-                    },
-                    transactional: false,
-                });
+                const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
+                await dhController.handleOffer(
+                    import_id, dcNodeId, total_escrow_time_in_minutes,
+                    max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
+                    createOfferEventData.min_reputation, data_size_in_bytes,
+                    createOfferEventData.data_hash, true,
+                );
             } catch (error) {
                 logger.error(`Failed to handle predetermined bid. ${error}.`);
             }
@@ -721,6 +701,7 @@ class EventEmitter {
             network,
             blockchain,
             remoteControl,
+            dhController,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -744,15 +725,16 @@ class EventEmitter {
         this._on('kad-payload-request', async (request) => {
             logger.info(`Data for replication arrived from ${request.contact[0]}`);
 
-            await commandExecutor.add({
-                name: 'dhOfferHandleImport',
-                delay: 0,
-                data: {
-                    data: request.params,
-                },
-                transactional: false,
-            });
-            // await dhService.handleImport(request.params.message.payload);
+            const importId = request.params.message.payload.import_id;
+            const { vertices } = request.params.message.payload;
+            const { edges } = request.params.message.payload;
+            const wallet = request.params.message.payload.dc_wallet;
+            const publicKey = request.params.message.payload.public_key;
+
+            await dhController.handleReplicationImport(
+                importId, vertices,
+                edges, wallet, publicKey,
+            );
 
             // TODO: send fail in case of fail.
         });
