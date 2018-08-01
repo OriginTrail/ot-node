@@ -18,7 +18,7 @@ class CleanerCommand extends Command {
     async execute(command, transaction) {
         await Models.commands.destroy({
             where: {
-                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED'] },
+                status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED', 'EXPIRED'] },
                 started_at: { [Models.Sequelize.Op.lte]: Date.now() },
             },
             transaction,
