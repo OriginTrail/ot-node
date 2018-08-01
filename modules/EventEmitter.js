@@ -5,7 +5,6 @@ const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 const bytes = require('utf8-length');
-const uuidv4 = require('uuid/v4');
 
 const events = require('events');
 
@@ -92,7 +91,6 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
-            commandExecutor,
             profileService,
             dcController,
         } = this.ctx;
