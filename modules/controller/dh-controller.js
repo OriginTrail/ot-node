@@ -63,3 +63,5 @@ class DHController {
         });
     }
 }
+
+module.exports = DHController;
