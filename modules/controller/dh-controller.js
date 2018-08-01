@@ -45,18 +45,18 @@ class DHController {
      * @param importId
      * @param vertices
      * @param edges
-     * @param wallet
+     * @param dcWallet
      * @param publicKey
      * @returns {Promise<void>}
      */
-    async handleReplicationImport(importId, vertices, edges, wallet, publicKey) {
+    async handleReplicationImport(importId, vertices, edges, dcWallet, publicKey) {
         await this.commandExecutor.add({
             name: 'dhOfferHandleImport',
             data: {
                 importId,
                 vertices,
                 edges,
-                wallet,
+                dcWallet,
                 publicKey,
             },
             transactional: false,
