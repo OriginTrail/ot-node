@@ -1,3 +1,6 @@
+/**
+ * Encapsulates DH related methods
+ */
 class DHController {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -6,15 +9,15 @@ class DHController {
 
     /**
      * Handle one offer
-     * @param importId
-     * @param dcNodeId
-     * @param totalEscrowTime
-     * @param maxTokenAmount
-     * @param minStakeAmount
-     * @param minReputation
-     * @param dataSizeBytes
-     * @param dataHash
-     * @param predeterminedBid
+     * @param importId  - Import ID
+     * @param dcNodeId  - DC node ID
+     * @param totalEscrowTime - Total escrow time
+     * @param maxTokenAmount - Max token amount per DH
+     * @param minStakeAmount - Min stake amount per DH
+     * @param minReputation - DH min reputation
+     * @param dataSizeBytes - Data size of the import in bytes
+     * @param dataHash  - Import root hash
+     * @param predeterminedBid  - Is predetermined or not?
      * @returns {Promise<void>}
      */
     async handleOffer(
@@ -42,11 +45,11 @@ class DHController {
 
     /**
      * Handle one replication payload
-     * @param importId
-     * @param vertices
-     * @param edges
-     * @param dcWallet
-     * @param publicKey
+     * @param importId  - Import ID
+     * @param vertices  - Encrypted import vertices
+     * @param edges     - Import edges
+     * @param dcWallet  - DC wallet
+     * @param publicKey - Decryption key
      * @returns {Promise<void>}
      */
     async handleReplicationImport(importId, vertices, edges, dcWallet, publicKey) {
