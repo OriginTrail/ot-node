@@ -14,6 +14,7 @@ const STATUS = {
     started: 'STARTED',
     pending: 'PENDING',
     completed: 'COMPLETED',
+    repeating: 'REPEATING',
 };
 
 /**
@@ -97,6 +98,9 @@ class CommandExecutor {
                 command.data = handler.unpack(command.data);
                 const result = await handler.execute(command, transaction);
                 if (result.repeat) {
+                    await CommandExecutor._update(command, {
+                        status: STATUS.repeating,
+                    }, transaction);
                     await this.add(command, command.period, false);
                     return Command.repeat();
                 }
@@ -186,7 +190,7 @@ class CommandExecutor {
             await CommandExecutor._update(command, {
                 retries: command.retries - 1,
             });
-            await this.add(command, command.delay, false);
+            await this.add(command, 0, false);
         } else {
             try {
                 await CommandExecutor._update(command, {
@@ -279,7 +283,12 @@ class CommandExecutor {
         this.logger.notify('Replay pending/started commands from the database...');
         const pendingCommands = await Models.commands.findAll({
             where: {
-                status: { [Models.Sequelize.Op.in]: [STATUS.pending, STATUS.started] },
+                status: {
+                    [Models.Sequelize.Op.in]: [
+                        STATUS.pending,
+                        STATUS.started,
+                        STATUS.repeating],
+                },
                 name: { [Models.Sequelize.Op.notIn]: [cleaner_command_name] },
             },
         });
