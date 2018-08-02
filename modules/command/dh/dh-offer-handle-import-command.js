@@ -79,7 +79,7 @@ class DHOfferHandleImportCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferHandleCommand',
+            name: 'dhOfferHandleImportCommand',
             delay: 0,
             transactional: false,
         };
