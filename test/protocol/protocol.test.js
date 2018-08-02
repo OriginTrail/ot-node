@@ -471,6 +471,7 @@ describe('Protocol tests', () => {
     });
 
     afterEach('Unregister container', async () => {
+        console.debug('Goodbye!');
         testNodes.forEach((testNode) => {
             if (testNode.container) {
                 testNode.container.dispose(); // Promise.
@@ -629,6 +630,23 @@ describe('Protocol tests', () => {
                 // eslint-disable-next-line no-await-in-loop
                 await sleep.sleep(500);
             }
+        });
+
+        it('rootHash for already imported data should exist on blockchain', async function () {
+            this.timeout(90000); // One minute is minimum time for a offer.
+            const { dcService, blockchain } = testNode1;
+
+            const offerExternalId =
+                await dcService.createOffer(importId, rootHash, 1, vertices);
+
+            const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
+
+            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+            expect(Utilities.isHexStrict(result2)).to.be.true;
+
+            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result1).to.be.equal(result2);
         });
     });
 });
