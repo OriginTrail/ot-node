@@ -56,7 +56,7 @@ class BiddingApprovalIncreaseCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'biddingApprovalIncrease',
+            name: 'biddingApprovalIncreaseCommand',
             delay: 0,
             transactional: false,
         };

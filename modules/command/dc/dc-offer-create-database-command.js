@@ -7,7 +7,7 @@ const ImportUtilities = require('../../ImportUtilities');
 /**
  * Creates offer in the database
  */
-class DCOfferCreateDbCommand extends Command {
+class DCOfferCreateDatabaseCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -97,7 +97,7 @@ class DCOfferCreateDbCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferCreateDB',
+            name: 'dcOfferCreateDatabaseCommand',
             delay: 0,
             transactional: true,
         };
@@ -106,4 +106,4 @@ class DCOfferCreateDbCommand extends Command {
     }
 }
 
-module.exports = DCOfferCreateDbCommand;
+module.exports = DCOfferCreateDatabaseCommand;

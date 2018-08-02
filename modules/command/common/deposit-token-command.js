@@ -56,7 +56,7 @@ class DepositTokenCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'depositToken',
+            name: 'depositTokenCommand',
             delay: 0,
             transactional: false,
         };

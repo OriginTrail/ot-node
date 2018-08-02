@@ -63,7 +63,7 @@ class DHOfferReplicationParametersCommand extends Command {
         );
         return {
             commands: [
-                this.build('dhOfferReplicationParametersSave', {
+                this.build('dhOfferReplicationParametersSaveCommand', {
                     importId,
                     publicKey,
                     distributionPublicKey: keyPair.publicKey,
@@ -81,7 +81,7 @@ class DHOfferReplicationParametersCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferReplicationParameters',
+            name: 'dhOfferReplicationParametersCommand',
             delay: 0,
             transactional: false,
         };

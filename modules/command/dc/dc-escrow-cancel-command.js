@@ -35,7 +35,7 @@ class DCEscrowCancelCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcEscrowCancel',
+            name: 'dcEscrowCancelCommand',
             delay: 0,
             transactional: false,
         };

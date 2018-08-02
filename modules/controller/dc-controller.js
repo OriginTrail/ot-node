@@ -27,11 +27,11 @@ class DCController {
         const replicationId = uuidv4();
 
         await this.commandExecutor.add({
-            name: 'dcOfferCancel',
+            name: 'dcOfferCancelCommand',
             sequence: [
-                'dcOfferRootHash', 'dcOfferCreateDB',
-                'dcOfferCreateBlockchain', 'dcOfferReady',
-                'dcOfferChoose', 'dcOfferFinalized',
+                'dcOfferRootHashCommand', 'dcOfferCreateDatabaseCommand',
+                'dcOfferCreateBlockchainCommand', 'dcOfferReadyCommand',
+                'dcOfferChooseCommand', 'dcOfferFinalizedCommand',
             ],
             delay: 0,
             data: {
@@ -61,7 +61,7 @@ class DCController {
      */
     async verifyKeys(importId, dhNodeId, dhWallet, epk, encryptionKey) {
         await this.commandExecutor.add({
-            name: 'dcOfferKeyVerification',
+            name: 'dcOfferKeyVerificationCommand',
             delay: 0,
             data: {
                 dhNodeId,

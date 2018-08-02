@@ -52,7 +52,7 @@ class DCOfferCancelCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferCancel',
+            name: 'dcOfferCancelCommand',
             delay: 0,
             transactional: false,
         };

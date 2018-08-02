@@ -24,7 +24,7 @@ class DHOfferBidAddCommand extends Command {
         await this.blockchain.addBid(importId, this.config.identity);
         return {
             commands: [
-                this.build('dhOfferBidAdded', this.pack(command.data), null),
+                this.build('dhOfferBidAddedCommand', this.pack(command.data), null),
             ],
         };
     }
@@ -73,7 +73,7 @@ class DHOfferBidAddCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferBidAdd',
+            name: 'dhOfferBidAddCommand',
             delay: 0,
             transactional: false,
         };

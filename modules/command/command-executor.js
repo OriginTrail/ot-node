@@ -2,8 +2,6 @@ const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
 
-const cleaner_command_name = require('./common/cleaner-command').name;
-
 /**
  * Command statuses
  * @type {{failed: string, expired: string, started: string, pending: string, completed: string}}
@@ -155,8 +153,8 @@ class CommandExecutor {
      * @returns {Promise<void>}
      */
     async startCleaner() {
-        await CommandExecutor._delete(cleaner_command_name);
-        const handler = this.commandResolver.resolve(cleaner_command_name);
+        await CommandExecutor._delete('cleanerCommand');
+        const handler = this.commandResolver.resolve('cleanerCommand');
         await this.add(handler.default(), 0, true);
     }
 
@@ -289,7 +287,7 @@ class CommandExecutor {
                         STATUS.started,
                         STATUS.repeating],
                 },
-                name: { [Models.Sequelize.Op.notIn]: [cleaner_command_name] },
+                name: { [Models.Sequelize.Op.notIn]: ['cleanerCommand'] },
             },
         });
 

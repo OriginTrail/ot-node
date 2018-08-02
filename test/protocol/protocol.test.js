@@ -29,7 +29,7 @@ const DepositTokenCommand = require('../../modules/command/common/deposit-token-
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command');
 const DCOfferCreateBlockchainCommand = require('../../modules/command/dc/dc-offer-create-blockchain-command');
-const DCOfferCreateDBCommand = require('../../modules/command/dc/dc-offer-create-db-command');
+const DCOfferCreateDBCommand = require('../../modules/command/dc/dc-offer-create-database-command');
 const DCOfferReadyCommand = require('../../modules/command/dc/dc-offer-ready-command');
 const DCOfferRootHashCommand = require('../../modules/command/dc/dc-offer-root-hash-command');
 const DCOfferKeyVerificationCommand = require('../../modules/command/dc/dc-offer-key-verification-command');
@@ -37,17 +37,7 @@ const DCEscrowVerifyCommand = require('../../modules/command/dc/dc-escrow-verify
 const DCEscrowCancelCommand = require('../../modules/command/dc/dc-escrow-cancel-command');
 const DCOfferFinalizedCommand = require('../../modules/command/dc/dc-offer-finalized-command');
 
-const DHOfferBidAddCommand = require('../../modules/command/dh/dh-offer-bid-add-command');
-const DHOfferBidAddPredeterminedCommand = require('../../modules/command/dh/dh-offer-bid-add-predetermined-command');
-const DHOfferBidAddedCommand = require('../../modules/command/dh/dh-offer-bid-added-command');
-const DHOfferHandleCommand = require('../../modules/command/dh/dh-offer-handle-command');
-const DHOfferHandleImportCommand = require('../../modules/command/dh/dh-offer-handle-import-command');
-const DHOfferFinalizedCommand = require('../../modules/command/dh/dh-offer-finalized-command');
-const DHOfferReplicationParametersCommand = require('../../modules/command/dh/dh-offer-replication-rarameters-command');
-const DHOfferReplicationParametersSaveCommand = require('../../modules/command/dh/dh-offer-replication-parameters-save-command');
-
 const DCController = require('../../modules/controller/dc-controller');
-const DHController = require('../../modules/controller/dh-controller');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
@@ -453,34 +443,20 @@ describe('Protocol tests', () => {
                 commandResolver: awilix.asClass(CommandResolver).singleton(),
                 dcOfferCancelCommand: awilix.asClass(DCOfferCancelCommand).singleton(),
                 dcOfferChooseCommand: awilix.asClass(DCOfferChooseCommand).singleton(),
-                dcOfferCreateDBCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
+                dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
                 dcOfferReadyCommand: awilix.asClass(DCOfferReadyCommand).singleton(),
                 dcOfferRootHashCommand: awilix.asClass(DCOfferRootHashCommand).singleton(),
                 dcEscrowCancelCommand: awilix.asClass(DCEscrowCancelCommand).singleton(),
                 dcEscrowVerifyCommand: awilix.asClass(DCEscrowVerifyCommand).singleton(),
-                dhOfferBidAddCommand: awilix.asClass(DHOfferBidAddCommand).singleton(),
-                dhOfferBidAddedCommand: awilix.asClass(DHOfferBidAddedCommand).singleton(),
-                dhOfferHandleCommand: awilix.asClass(DHOfferHandleCommand).singleton(),
                 depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
-                dhOfferFinalizedCommand: awilix.asClass(DHOfferFinalizedCommand).singleton(),
                 dcOfferFinalizedCommand: awilix.asClass(DCOfferFinalizedCommand).singleton(),
-                dhOfferHandleImportCommand: awilix.asClass(DHOfferHandleImportCommand).singleton(),
                 dcOfferKeyVerificationCommand: awilix.asClass(DCOfferKeyVerificationCommand)
                     .singleton(),
                 dcOfferCreateBlockchainCommand: awilix.asClass(DCOfferCreateBlockchainCommand)
                     .singleton(),
                 biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
                     .singleton(),
-                dhOfferReplicationParametersCommand: awilix
-                    .asClass(DHOfferReplicationParametersCommand)
-                    .singleton(),
-                dhOfferBidAddPredetermined: awilix.asClass(DHOfferBidAddPredeterminedCommand)
-                    .singleton(),
-                dhOfferReplicationParametersSaveCommand: awilix
-                    .asClass(DHOfferReplicationParametersSaveCommand)
-                    .singleton(),
                 dcController: awilix.asClass(DCController).singleton(),
-                dhController: awilix.asClass(DHController).singleton(),
             });
 
             testNode.blockchain = container.resolve('blockchain');

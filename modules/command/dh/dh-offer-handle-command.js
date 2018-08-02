@@ -165,11 +165,11 @@ class DHOfferHandleCommand extends Command {
             profileBalance: profileBalance.toString(),
         });
 
-        const addBidCommand = predeterminedBid ? 'dhOfferBidAddPredetermined' : 'dhOfferBidAdd';
+        const addBidCommand = predeterminedBid ? 'dhOfferBidAddPredeterminedCommand' : 'dhOfferBidAddCommand';
         if (profileBalance.lt(myStake)) {
             return {
                 commands: [
-                    this.build('biddingApprovalIncrease', this.pack(command.data), ['depositToken', addBidCommand]),
+                    this.build('biddingApprovalIncreaseCommand', this.pack(command.data), ['depositTokenCommand', addBidCommand]),
                 ],
             };
         }
@@ -233,7 +233,7 @@ class DHOfferHandleCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferHandle',
+            name: 'dhOfferHandleCommand',
             delay: 0,
             transactional: false,
         };

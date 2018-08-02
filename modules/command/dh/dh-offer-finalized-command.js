@@ -83,7 +83,7 @@ class DHOfferFinalizedCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferFinalized',
+            name: 'dhOfferFinalizedCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),

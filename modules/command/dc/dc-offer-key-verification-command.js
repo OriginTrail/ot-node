@@ -85,7 +85,7 @@ class DCOfferKeyVerificationCommand extends Command {
             return {
                 commands: [
                     {
-                        name: 'dcEscrowCancel',
+                        name: 'dcEscrowCancelCommand',
                         delay: 0,
                         data: { importId, dhWallet, dhNodeId },
                         transactional: false,
@@ -96,7 +96,7 @@ class DCOfferKeyVerificationCommand extends Command {
         return {
             commands: [
                 {
-                    name: 'dcEscrowVerify',
+                    name: 'dcEscrowVerifyCommand',
                     delay: 0,
                     data: { importId, dhWallet, dhNodeId },
                     transactional: false,

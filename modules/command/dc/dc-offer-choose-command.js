@@ -54,7 +54,7 @@ class DCOfferChooseCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferChoose',
+            name: 'dcOfferChooseCommand',
             delay: 30000,
             transactional: false,
         };

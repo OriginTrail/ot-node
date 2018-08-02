@@ -79,7 +79,7 @@ class DCOfferFinalizedCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferFinalized',
+            name: 'dcOfferFinalizedCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),

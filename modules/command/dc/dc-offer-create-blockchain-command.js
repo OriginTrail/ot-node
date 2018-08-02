@@ -109,7 +109,7 @@ class DCOfferCreateBlockchainCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferCreateBlockchain',
+            name: 'dcOfferCreateBlockchainCommand',
             delay: 0,
             transactional: false,
         };

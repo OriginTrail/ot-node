@@ -57,7 +57,7 @@ class DCOfferReadyCommand extends Command {
 
         return {
             commands: [{
-                name: 'dcOfferCancel',
+                name: 'dcOfferCancelCommand',
                 data: {
                     importId,
                     offerId,
@@ -90,7 +90,7 @@ class DCOfferReadyCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferReady',
+            name: 'dcOfferReadyCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),

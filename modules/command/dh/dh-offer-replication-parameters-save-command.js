@@ -56,7 +56,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferReplicationParametersSave',
+            name: 'dhOfferReplicationParametersSaveCommand',
             delay: 0,
             transactional: true,
         };

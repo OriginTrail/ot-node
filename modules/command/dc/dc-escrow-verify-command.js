@@ -46,7 +46,7 @@ class DCEscrowVerifyCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcEscrowVerify',
+            name: 'dcEscrowVerifyCommand',
             delay: 0,
             transactional: false,
         };

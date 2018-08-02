@@ -33,7 +33,7 @@ class CleanerCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'cleaner',
+            name: 'cleanerCommand',
             data: {
             },
             period: 60 * 60 * 1000,
@@ -44,7 +44,4 @@ class CleanerCommand extends Command {
     }
 }
 
-module.exports = {
-    name: 'cleaner',
-    clazz: CleanerCommand,
-};
+module.exports = CleanerCommand;

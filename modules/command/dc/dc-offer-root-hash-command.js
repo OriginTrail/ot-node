@@ -50,7 +50,7 @@ class DCOfferRootHashCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferRootHash',
+            name: 'dcOfferRootHashCommand',
             delay: 0,
             transactional: false,
         };

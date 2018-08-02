@@ -26,7 +26,7 @@ class DHController {
         dataSizeBytes, dataHash, predeterminedBid,
     ) {
         await this.commandExecutor.add({
-            name: 'dhOfferHandle',
+            name: 'dhOfferHandleCommand',
             delay: 0,
             data: {
                 importId,
@@ -54,7 +54,7 @@ class DHController {
      */
     async handleReplicationImport(importId, vertices, edges, dcWallet, publicKey) {
         await this.commandExecutor.add({
-            name: 'dhOfferHandleImport',
+            name: 'dhOfferHandleImportCommand',
             data: {
                 importId,
                 vertices,

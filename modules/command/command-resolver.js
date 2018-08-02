@@ -13,7 +13,7 @@ class CommandResolver {
      */
     resolve(name) {
         try {
-            return this.ctx[`${name}Command`];
+            return this.ctx[`${name}`];
         } catch (e) {
             throw new Error(`No handler defined for command '${name}'`);
         }
