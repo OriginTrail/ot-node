@@ -1,7 +1,8 @@
-/* eslint-disable no-unused-expressions, max-len */
+/* eslint-disable no-unused-expressions, max-len, no-console */
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
+const protocolData = require('./protocol-data.js');
 const { expect } = require('chai');
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
@@ -42,6 +43,9 @@ const DCController = require('../../modules/controller/dc-controller');
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
 // process.removeAllListeners('uncaughtException');
+
+// disable debug logs, comment out if you want to see debug logs in travis
+console.debug = function () {};
 
 describe('Protocol tests', () => {
 // Global functions.
@@ -96,7 +100,7 @@ describe('Protocol tests', () => {
                 .send({ from: deployerAddress, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
-                    console.log(deploymentReceipt.contractAddress); // contains the new contract address
+                    console.debug(deploymentReceipt.contractAddress); // contains the new contract address
                 })
                 .on('error', error => reject(error))
                 .then((instance) => {
@@ -306,7 +310,7 @@ describe('Protocol tests', () => {
         for (let i = 0; i < 10; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             accountBalance = await web3.eth.getBalance(accounts[i]);
-            console.log(`${accounts[i]} with wei balance: ${accountBalance} is available`);
+            console.debug(`${accounts[i]} with wei balance: ${accountBalance} is available`);
         }
 
         testNodes.push(
@@ -345,22 +349,22 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
-        console.log('Deploying tokenContract');
+        console.debug('Deploying tokenContract');
         [tokenDeploymentReceipt, tokenInstance] = await deployContract(
             web3, tokenContract, tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
-        console.log('Deploying escrowContract');
+        console.debug('Deploying escrowContract');
         [escrowDeploymentReceipt, escrowInstance] = await deployContract(
             web3, escrowContract, escrowContractData,
             [tokenInstance._address], accounts[7],
         );
-        console.log('Deploying readingContract');
+        console.debug('Deploying readingContract');
         [readingDeploymentReceipt, readingInstance] = await deployContract(
             web3, readingContract, readingContractData,
             [escrowInstance._address], accounts[7],
         );
-        console.log('Deploying biddingContract');
+        console.debug('Deploying biddingContract');
         [biddingDeploymentReceipt, biddingInstance] = await deployContract(
             web3, biddingContract, biddingContractData,
             [
@@ -369,7 +373,7 @@ describe('Protocol tests', () => {
                 readingInstance._address,
             ], accounts[7],
         );
-        console.log('Deploying otFingerprintContract');
+        console.debug('Deploying otFingerprintContract');
         [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
             web3, otFingerprintContract, otFingerprintContractData,
             undefined, accounts[7],
@@ -540,43 +544,7 @@ describe('Protocol tests', () => {
     });
 
     describe('DC replication', () => {
-        const vertices = [
-            {
-                _id: '247d8e3809b448fe8f5b67495801e246',
-                _key: '247d8e3809b448fe8f5b67495801e246',
-                identifiers: {
-                    id: 'urn:epc:id:sgln:Building_2',
-                    uid: 'urn:epc:id:sgln:Building_2',
-                },
-                data: {
-                    category: 'Building _2b',
-                    description: 'Description of building _2b',
-                    object_class_id: 'Location',
-                },
-                private: {},
-                vertex_type: 'LOCATION',
-                sender_id: 'urn:ot:object:actor:id:Company_2',
-                version: 1,
-                imports: [],
-            },
-            {
-                _id: 'Location',
-                _key: 'Location',
-                vertex_type: 'CLASS',
-            },
-        ];
-
-        const edges = [
-            {
-                _id: 'af54d5a366006fa21dcbf4df50421165',
-                _key: '_key:af54d5a366006fa21dcbf4df50421165',
-                _from: '247d8e3809b448fe8f5b67495801e246',
-                _to: 'Location',
-                edge_type: 'IS',
-                sender_id: 'urn:ot:object:actor:id:Company_2',
-                imports: [],
-            },
-        ];
+        const { vertices, edges } = protocolData;
 
         let importId;
         let rootHash;
@@ -605,6 +573,7 @@ describe('Protocol tests', () => {
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
             importId = Utilities.createImportId();
+            console.debug(importId);
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
             mockGraphStorage.imports[importId] = { vertices, edges };
@@ -675,7 +644,7 @@ describe('Protocol tests', () => {
 
             expect(events).to.be.an('array');
             const bidTakenEvent = events.find(event => event.event === 'BidTaken');
-            console.log(JSON.stringify(events));
+            console.debug(JSON.stringify(events));
             expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
             expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
 
