@@ -696,12 +696,12 @@ class EventEmitter {
             dhService,
             dvService,
             logger,
-            commandExecutor,
             dataReplication,
             network,
             blockchain,
             remoteControl,
             dhController,
+            dcController,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -974,18 +974,8 @@ class EventEmitter {
             const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
-            await commandExecutor.add({
-                name: 'dcOfferKeyVerification',
-                delay: 0,
-                data: {
-                    dhNodeId: request.contact[0],
-                    dhWallet,
-                    epk,
-                    importId,
-                    encryptionKey,
-                },
-                transactional: false,
-            });
+            const dcNodeId = request.contact[0];
+            await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
         });
 
         // async

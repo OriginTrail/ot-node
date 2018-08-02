@@ -46,6 +46,30 @@ class DCController {
 
         return replicationId;
     }
+
+    /**
+     * Verify DH keys generated on replication
+     * @param importId
+     * @param dhNodeId
+     * @param dhWallet
+     * @param epk
+     * @param encryptionKey
+     * @returns {Promise<void>}
+     */
+    async verifyKeys(importId, dhNodeId, dhWallet, epk, encryptionKey) {
+        await this.commandExecutor.add({
+            name: 'dcOfferKeyVerification',
+            delay: 0,
+            data: {
+                dhNodeId,
+                dhWallet,
+                epk,
+                importId,
+                encryptionKey,
+            },
+            transactional: false,
+        });
+    }
 }
 
 module.exports = DCController;
