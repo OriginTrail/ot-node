@@ -525,51 +525,6 @@ class DHService {
     }
 
     /**
-     * Checking if node Hash is close enugh to respond to bid
-     * @param k - Number of required data holders
-     * @param numNodes - Number of registered nodes on ODN network
-     * @param dataHash - Import hash
-     * @param nodeHash - DH node hash
-     * @param correctionFactor
-     */
-    amIClose(k, numNodes, dataHash, nodeHash, correctionFactor = 100) {
-        const two = new BN(2);
-        const deg128 = two.pow(new BN(128));
-        const intervalBn = deg128.div(new BN(numNodes, 10));
-
-        const marginBn = intervalBn.mul(new BN(k, 10)).div(two);
-
-        const dataHashBn = new BN(Utilities.denormalizeHex(dataHash), 16);
-
-        let intervalTo;
-        let higherMargin = marginBn;
-
-        if (dataHashBn.lt(marginBn)) {
-            intervalTo = (two).mul(marginBn);
-            higherMargin = intervalTo.sub(dataHashBn);
-        }
-
-
-        if ((dataHashBn.add(marginBn)).gte(deg128)) {
-            higherMargin = dataHashBn.add(marginBn).sub(deg128).add(marginBn);
-        }
-
-        const nodeHashBn = new BN(Utilities.denormalizeHex(nodeHash), 16);
-
-        let distance;
-        if (dataHashBn.gt(nodeHashBn)) {
-            distance = dataHashBn.sub(nodeHashBn);
-        } else {
-            distance = nodeHashBn.sub(dataHashBn);
-        }
-
-        if (distance.lt(higherMargin.mul(new BN(correctionFactor)).div(new BN(100)))) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
      * Handles litigation initiation from DC side
      * @param importId
      * @param dhWallet
