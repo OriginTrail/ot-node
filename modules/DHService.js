@@ -1,17 +1,14 @@
 const BN = require('bn.js');
-const d3 = require('d3-format');
 
 const Utilities = require('./Utilities');
 const Models = require('../models');
 const Op = require('sequelize/lib/operators');
 const Encryption = require('./Encryption');
-const MerkleTree = require('./Merkle');
 const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
-const bytes = require('utf8-length');
 
 /**
  * DH operations (handling new offers, etc.)
