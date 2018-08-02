@@ -44,6 +44,9 @@ const DCController = require('../../modules/controller/dc-controller');
 // This removes solc's overzealous uncaughtException event handler.
 // process.removeAllListeners('uncaughtException');
 
+// disable debug logs, comment out if you want to see debug logs in travis
+console.debug = function () {};
+
 describe('Protocol tests', () => {
 // Global functions.
     function recreateDatabase() {
