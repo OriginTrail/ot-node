@@ -23,7 +23,6 @@ const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const ProfileService = require('./modules/ProfileService');
@@ -41,6 +40,9 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    if (process.env.NODE_ENV === 'test') {
+        console.log(p);
+    }
     // application specific logging, throwing an error, or other logic here
 });
 
@@ -215,13 +217,20 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asClass(EventEmitter).singleton(),
             network: awilix.asClass(Network).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
-            dcService: awilix.asClass(DCService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
@@ -296,6 +305,10 @@ class OTNode {
 
         const challenger = container.resolve('challenger');
         await challenger.startChallenging();
+
+        const commandExecutor = container.resolve('commandExecutor');
+        await commandExecutor.init();
+        await commandExecutor.replay();
     }
 
     /**

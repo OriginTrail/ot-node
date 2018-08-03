@@ -83,7 +83,6 @@ class EventEmitter {
      */
     _initializeAPIEmitter() {
         const {
-            dcService,
             dhService,
             dvService,
             importer,
@@ -93,6 +92,7 @@ class EventEmitter {
             remoteControl,
             config,
             profileService,
+            dcController,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -385,7 +385,7 @@ class EventEmitter {
         this._on('api-offer-status', async (data) => {
             const { external_id } = data;
             logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await dcService.getOffer(external_id);
+            const offer = await Models.offers.findOne({ where: { external_id } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
@@ -419,26 +419,15 @@ class EventEmitter {
 
             try {
                 logger.info(`Preparing to create offer for import ${import_id}`);
-                let vertices = await this.graphStorage.findVerticesByImportId(import_id);
-                vertices = vertices.map((vertex) => {
-                    delete vertex.private;
-                    return vertex;
-                });
 
                 const dataimport = await Models.data_info.findOne({ where: { import_id } });
                 if (dataimport == null) {
                     throw new Error('This import does not exist in the database');
                 }
 
-                const replicationId = await dcService.createOffer(
-                    import_id,
-                    dataimport.root_hash,
-                    dataimport.total_documents,
-                    vertices,
-                    total_escrow_time,
-                    max_token_amount,
-                    min_stake_amount,
-                    min_reputation,
+                const replicationId = await dcController.createOffer(
+                    import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
+                    max_token_amount, min_stake_amount, min_reputation,
                 );
 
                 data.response.status(201);
@@ -546,6 +535,7 @@ class EventEmitter {
             dhService,
             logger,
             config,
+            dhController,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -563,16 +553,10 @@ class EventEmitter {
                 data_size_in_bytes,
             } = eventData;
 
-            await dhService.handleOffer(
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                min_reputation,
-                data_size_in_bytes,
-                data_hash,
-                false,
+            await dhController.handleOffer(
+                import_id, DC_node_id, total_escrow_time_in_minutes,
+                max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
+                min_reputation, data_size_in_bytes, data_hash, false,
             );
         });
 
@@ -616,16 +600,12 @@ class EventEmitter {
                 const createOfferEvent = createOfferEventEventModel.get({ plain: true });
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
-                await dhService.handleOffer(
-                    import_id,
-                    createOfferEventData.DC_node_id.substring(2, 42),
-                    total_escrow_time_in_minutes * 60000, // In ms.
-                    max_token_amount_per_byte_minute,
-                    min_stake_amount_per_byte_minute,
-                    createOfferEventData.min_reputation,
-                    data_size_in_bytes,
-                    createOfferEventData.data_hash,
-                    true,
+                const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
+                await dhController.handleOffer(
+                    import_id, dcNodeId, total_escrow_time_in_minutes,
+                    max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
+                    createOfferEventData.min_reputation, data_size_in_bytes,
+                    createOfferEventData.data_hash, true,
                 );
             } catch (error) {
                 logger.error(`Failed to handle predetermined bid. ${error}.`);
@@ -713,15 +693,15 @@ class EventEmitter {
      */
     _initializeKadEmitter() {
         const {
-            dcService,
             dhService,
             dvService,
             logger,
-            challenger,
             dataReplication,
             network,
             blockchain,
             remoteControl,
+            dhController,
+            dcController,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -744,7 +724,17 @@ class EventEmitter {
         // async
         this._on('kad-payload-request', async (request) => {
             logger.info(`Data for replication arrived from ${request.contact[0]}`);
-            await dhService.handleImport(request.params.message.payload);
+
+            const importId = request.params.message.payload.import_id;
+            const { vertices } = request.params.message.payload;
+            const { edges } = request.params.message.payload;
+            const wallet = request.params.message.payload.dc_wallet;
+            const publicKey = request.params.message.payload.public_key;
+
+            await dhController.handleReplicationImport(
+                importId, vertices,
+                edges, wallet, publicKey,
+            );
 
             // TODO: send fail in case of fail.
         });
@@ -981,14 +971,11 @@ class EventEmitter {
         this._on('kad-verify-import-request', async (request) => {
             logger.info('Request to verify encryption key of replicated data received');
 
-            const { wallet: kadWallet } = request.contact[1];
+            const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
-            // TODO: Add guard for fake replations.
-            await dcService.verifyImport(
-                epk,
-                importId, encryptionKey, kadWallet, request.contact[0],
-            );
+            const dcNodeId = request.contact[0];
+            await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
         });
 
         // async
