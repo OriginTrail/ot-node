@@ -44,6 +44,9 @@ const DCController = require('../../modules/controller/dc-controller');
 // This removes solc's overzealous uncaughtException event handler.
 // process.removeAllListeners('uncaughtException');
 
+// disabling debug logs, comment out if you want to see debug logs
+console.debug = function () {};
+
 describe('Protocol tests', () => {
 // Global functions.
     function recreateDatabase() {
@@ -663,16 +666,16 @@ describe('Protocol tests', () => {
 
         it('rootHash for already imported data should exist on blockchain', async function () {
             this.timeout(90000); // One minute is minimum time for a offer.
-            const { dcService, blockchain } = testNode1;
+            const { dcController, blockchain } = testNode1;
 
             const offerExternalId =
-                await dcService.createOffer(importId, rootHash, 1, vertices);
+                await dcController.createOffer(importId, rootHash, 1, vertices);
 
             const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
 
             // Send one bid.
             const bidderDeposit = new BN('100000000000000000', 10)
-                .mul(new BN(testNode2.dcService._calculateImportSize(vertices)));
+                .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
             await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
             await testNode2.blockchain.depositToken(bidderDeposit);
             await testNode2.blockchain.addBid(importId, testNode2.identity);
