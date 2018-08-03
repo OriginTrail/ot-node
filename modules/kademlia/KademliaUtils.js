@@ -16,6 +16,12 @@ class KademliaUtils {
         if (msg.includes('received late or invalid response')) {
             return null; // skip logging
         }
+        if (msg.includes('error with remote connection')) {
+            return null;
+        }
+        if (msg.includes('remote connection encountered error')) {
+            return null;
+        }
         if (msg.startsWith('updating peer profile')) {
             return null; // skip logging
         }
