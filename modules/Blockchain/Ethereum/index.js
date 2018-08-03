@@ -123,7 +123,7 @@ class Ethereum {
     /**
      * Gets root hash for import
      * @param dcWallet DC wallet
-     * @param dataId   Import ID
+     * @param importId   Import ID
      * @return {Promise<any>}
      */
     async getRootHash(dcWallet, importId) {
@@ -207,10 +207,10 @@ class Ethereum {
     /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
-     * @param pricePerByteMinute Price for byte per minute
-     * @param stakePerByteMinute Stake for byte per minute
-     * @param readStakeFactor Read stake factor
-     * @param maxTimeMins   Max time in minutes
+     * @param {string} pricePerByteMinute Price for byte per minute
+     * @param {string} stakePerByteMinute Stake for byte per minute
+     * @param {string} readStakeFactor Read stake factor
+     * @param {string} maxTimeMins   Max time in minutes
      * @return {Promise<any>}
      */
     createProfile(
@@ -223,7 +223,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute} ${stakePerByteMinute}, ${readStakeFactor} ${maxTimeMins})`);
+        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute}, ${stakePerByteMinute}, ${readStakeFactor}, ${maxTimeMins})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
             [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
