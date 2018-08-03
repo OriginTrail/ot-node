@@ -714,7 +714,13 @@ class EventEmitter {
             }
 
             try {
-                await dhService.handleDataLocationRequest(message);
+                const {
+                    id: msgId,
+                    nodeId: msgNodeId,
+                    wallet: msgWallet,
+                    query: msgQuery,
+                } = message;
+                await dhController.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);

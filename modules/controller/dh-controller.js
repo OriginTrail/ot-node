@@ -65,6 +65,27 @@ class DHController {
             transactional: false,
         });
     }
+
+    /**
+     * Handle one read request (checks whether node satisfies query)
+     * @param msgId       - Message ID
+     * @param msgNodeId   - Message node ID
+     * @param msgWallet   - Message wallet
+     * @param msgQuery    - Message query
+     * @returns {Promise<void>}
+     */
+    async handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery) {
+        await this.commandExecutor.add({
+            name: 'dhReadDataLocationRequestCommand',
+            transactional: true,
+            data: {
+                msgId,
+                msgNodeId,
+                msgWallet,
+                msgQuery,
+            },
+        });
+    }
 }
 
 module.exports = DHController;
