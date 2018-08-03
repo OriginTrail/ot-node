@@ -105,7 +105,7 @@ class RegisterNode {
                         this.runNode();
                     } else {
                         counter += 1;
-                        console.log(`Counting ${counter}`); 
+                        console.log(`Counting ${counter}`);
                         if (counter > 20) {
                             process.kill(3);
                         }
