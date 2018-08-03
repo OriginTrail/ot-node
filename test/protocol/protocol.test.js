@@ -670,6 +670,28 @@ describe('Protocol tests', () => {
 
             const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
 
+            // Send one bid.
+            const bidderDeposit = new BN('100000000000000000', 10)
+                .mul(new BN(testNode2.dcService._calculateImportSize(vertices)));
+            await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
+            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.addBid(importId, testNode2.identity);
+
+            await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
+            await waitForEvent(biddingInstance, 'OfferFinalized', importId, 60000);
+            await waitForEvent(biddingInstance, 'BidTaken', importId, 10000);
+
+            for (;;) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({ where: { import_id: importId } });
+
+                if (offer.status === 'FINALIZED' || offer.status === 'FAILED') {
+                    break;
+                }
+                // eslint-disable-next-line no-await-in-loop
+                await sleep.sleep(500);
+            }
+
             const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
             expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
             expect(Utilities.isHexStrict(result2)).to.be.true;
