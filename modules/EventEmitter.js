@@ -93,6 +93,7 @@ class EventEmitter {
             config,
             profileService,
             dcController,
+            dvController,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -226,7 +227,7 @@ class EventEmitter {
         });
 
         this._on('api-network-query', (data) => {
-            logger.info(`Network query handling triggered with query ID ${data.query}`);
+            logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
             if (!config.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
@@ -234,22 +235,15 @@ class EventEmitter {
                 });
                 return;
             }
-            dvService.queryNetwork(data.query)
+
+            dvController.queryNetwork(data.query)
                 .then((queryId) => {
                     data.response.status(201);
                     data.response.send({
                         message: 'Query sent successfully.',
                         query_id: queryId,
                     });
-                    dvService.handleQuery(queryId).then((offer) => {
-                        if (!offer) {
-                            logger.info(`No offers for query ${queryId} handled.`);
-                            remoteControl.noOffersForQuery(`No offers for query ${queryId} handled.`);
-                        } else {
-                            logger.info(`Offers for query ${queryId} are collected`);
-                            remoteControl.networkQueryOffersCollected();
-                        }
-                    }).catch(error => logger.error(`Failed handle query. ${error}.`));
+                    dvController.handleQuery(queryId, 60000);
                 }).catch(error => logger.error(`Failed query network. ${error}.`));
         });
 
