@@ -276,7 +276,7 @@ class EventEmitter {
                 return;
             }
             try {
-                await dvService.handleReadOffer(offer, import_id);
+                dvController.handleDataReadRequest(query_id, import_id, reply_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
@@ -696,6 +696,7 @@ class EventEmitter {
             remoteControl,
             dhController,
             dcController,
+            dvController,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -886,7 +887,7 @@ class EventEmitter {
                     return;
                 }
 
-                await dvService.handleDataLocationResponse(message);
+                await dvController.handleDataLocationResponse(message);
             } catch (error) {
                 logger.error(`Failed to process location response. ${error}.`);
             }
