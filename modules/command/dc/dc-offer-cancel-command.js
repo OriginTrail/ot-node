@@ -26,10 +26,12 @@ class DCOfferCancelCommand extends Command {
             if (oldOffer.finalized) {
                 throw new Error(`Offer for ${importId} already exists. Offer is finalized therefore cannot be cancelled.`);
             }
-            this.logger.info(`Offer for ${importId} already exists. Cancelling offer...`);
-            await this.blockchain.cancelOffer(importId).catch((error) => {
-                throw new Error(`Cancelling offer failed. ${error}.`);
-            });
+            if (oldOffer.active) {
+                this.logger.info(`Offer for ${importId} already exists. Cancelling offer...`);
+                await this.blockchain.cancelOffer(importId).catch((error) => {
+                    throw new Error(`Cancelling offer failed. ${error}.`);
+                });
+            }
             // cancel challenges for cancelled offer
             await Models.replicated_data.update(
                 { status: 'CANCELLED' },
