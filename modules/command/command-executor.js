@@ -108,7 +108,7 @@ class CommandExecutor {
                     return c;
                 });
 
-                await Promise.all(children.map(e => CommandExecutor._insert(e, transaction)));
+                await Promise.all(children.map(e => this._insert(e, transaction)));
                 await CommandExecutor._update(command, {
                     status: STATUS.completed,
                 }, transaction);
@@ -122,7 +122,7 @@ class CommandExecutor {
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
-            this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}`);
+            this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
@@ -166,7 +166,7 @@ class CommandExecutor {
      */
     async add(command, delay = 0, insert = true) {
         if (insert) {
-            command = await CommandExecutor._insert(command);
+            command = await this._insert(command);
         }
         if (delay) {
             setTimeout(command => this.queue.push(command), delay, command);
@@ -209,7 +209,7 @@ class CommandExecutor {
      * @return {Promise<void>}
      * @private
      */
-    static async _insert(command, transaction) {
+    async _insert(command, transaction) {
         if (!command.name) {
             [command.name] = command.sequence;
             command.sequence = command.sequence.slice(1);
@@ -222,6 +222,10 @@ class CommandExecutor {
         }
         if (!command.transactional) {
             command.transactional = 0;
+        }
+        if (!command.data) {
+            const commandInstance = this.commandResolver.resolve(command.name);
+            command.data = commandInstance.pack(command.data);
         }
         command.status = STATUS.pending;
         const opts = {

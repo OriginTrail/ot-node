@@ -8,8 +8,8 @@ class Command {
 
     /**
      * Executes command and produces one or more events
-     * @param command
-     * @param transaction
+     * @param command - Command object
+     * @param [transaction] - Optional database transaction
      */
     async execute(command, transaction) {
         return Command.empty();
@@ -50,37 +50,51 @@ class Command {
 
     /**
      * Makes command from sequence and continues it
-     * @param data
-     * @param sequence
+     * @param data  -  Command data
+     * @param [sequence] - Optional command sequence
+     * @param [opts] - Optional command options
      */
-    continueSequence(data, sequence) {
+    continueSequence(data, sequence, opts) {
         if (!sequence || sequence.length === 0) {
             return Command.empty();
         }
         const [name] = sequence;
         sequence = sequence.slice(1);
+
         const handler = this.commandResolver.resolve(name);
+        const command = handler.default();
+
+        const commandData = command.data ? command.data : {};
+        Object.assign(command, {
+            data: Object.assign(commandData, data),
+            sequence,
+        });
+        if (opts) {
+            Object.assign(command, opts);
+        }
         return {
-            commands: [handler.default({
-                data,
-                sequence,
-            })],
+            commands: [command],
         };
     }
 
     /**
      * Builds command
-     * @param name
-     * @param data
-     * @param sequence
+     * @param name  - Command name
+     * @param data  - Command data
+     * @param [sequence] - Optional command sequence
+     * @param [opts] - Optional command options
      * @returns {*}
      */
-    build(name, data, sequence) {
+    build(name, data, sequence, opts) {
         const command = this.commandResolver.resolve(name).default();
+        const commandData = command.data ? command.data : {};
         Object.assign(command, {
-            data,
+            data: Object.assign(commandData, data),
             sequence,
         });
+        if (opts) {
+            Object.assign(command, opts);
+        }
         return command;
     }
 
