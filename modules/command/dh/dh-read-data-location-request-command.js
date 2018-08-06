@@ -14,6 +14,9 @@ class DHReadDataLocationRequestCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.graphStorage = ctx.graphStorage;
+        this.config = ctx.config;
+        this.web3 = ctx.web3;
+        this.network = ctx.network;
     }
 
     /**
@@ -29,7 +32,7 @@ class DHReadDataLocationRequestCommand extends Command {
         // Check if mine publish.
         if (msgNodeId === this.config.identity && msgWallet === this.config.node_wallet) {
             this.log.trace('Received mine publish. Ignoring.');
-            return;
+            Command.empty();
         }
 
         // Handle query here.
@@ -37,7 +40,7 @@ class DHReadDataLocationRequestCommand extends Command {
         if (imports.length === 0) {
             // I don't want to participate
             this.log.trace(`No imports found for request ${msgId}`);
-            return;
+            Command.empty();
         }
 
         // Check if the import came from network. In more details I can only
@@ -80,7 +83,8 @@ class DHReadDataLocationRequestCommand extends Command {
         });
 
         if (importObjects.length === 0) {
-            return;
+            this.logger.warn(`Zero import size for IDs ${JSON.stringify(replicatedImportIds)}.`);
+            return Command.empty();
         }
 
         const networkReplyModel = await Models.network_replies.create({
@@ -92,7 +96,7 @@ class DHReadDataLocationRequestCommand extends Command {
             },
             receiver_wallet: msgWallet,
             receiver_identity: msgNodeId,
-        });
+        }, { transaction });
 
         if (!networkReplyModel) {
             this.log.error('Failed to create new network reply model.');

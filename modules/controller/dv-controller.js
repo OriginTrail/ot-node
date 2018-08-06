@@ -87,7 +87,6 @@ class DVController {
             name: 'dvDataLocationResponseCommand',
             delay: 0,
             data: {
-                query: message.query,
                 queryId,
                 wallet: message.wallet,
                 nodeId: message.nodeId,

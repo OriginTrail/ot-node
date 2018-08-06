@@ -121,7 +121,7 @@ class Network {
                     if (config.local_network_only && ip.isPublic(contact.hostname)) {
                         this.log.debug(`Ignored contact ${identity} from remote address: ${contact.hostname}.`);
                         return;
-                    } else if (ip.isPrivate(contact.hostname)) {
+                    } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
                         this.log.debug(`Ignored contact ${identity} from local address: ${contact.hostname}.`);
                         return;
                     }

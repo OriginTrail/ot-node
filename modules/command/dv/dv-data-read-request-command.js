@@ -21,7 +21,7 @@ class DVDataReadRequestCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        const { offerId, importId, replyId } = command.data;
+        const { queryId, importId, replyId } = command.data;
         /*
             dataReadRequestObject = {
             message: {
@@ -40,7 +40,7 @@ class DVDataReadRequestCommand extends Command {
 
         const offer = await Models.network_query_responses.findOne({
             where: {
-                query_id: offerId,
+                query_id: queryId,
                 reply_id: replyId,
             },
         });

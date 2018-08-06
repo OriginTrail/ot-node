@@ -22,7 +22,6 @@ class DVDataLocationResponseCommand extends Command {
     async execute(command, transaction) {
         const {
             queryId,
-            query,
             wallet,
             nodeId,
             imports,
@@ -32,11 +31,18 @@ class DVDataLocationResponseCommand extends Command {
             replyId,
         } = command.data;
 
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: queryId },
+        });
+
+        if (!networkQuery) {
+            throw Error(`Didn't find query with ID ${queryId}.`);
+        }
+
         // Store the offer.
         const networkQueryResponse = await Models.network_query_responses.findOrCreate({
             where: { query_id: queryId, reply_id: replyId },
             defaults: {
-                query: JSON.stringify(query),
                 query_id: queryId,
                 wallet,
                 node_id: nodeId,
@@ -55,7 +61,7 @@ class DVDataLocationResponseCommand extends Command {
         }
 
         this.remoteControl.networkQueryOfferArrived({
-            query: JSON.stringify(query),
+            query: JSON.stringify(networkQuery.query),
             query_id: queryId,
             wallet,
             node_id: nodeId,
@@ -67,32 +73,6 @@ class DVDataLocationResponseCommand extends Command {
         });
 
         return Command.empty();
-    }
-
-    /**
-     * Pack data for DB
-     * @param data
-     */
-    pack(data) {
-        Object.assign(data, {
-            query: JSON.stringify(data.query),
-            imports: JSON.stringify(data.imports),
-        });
-        return data;
-    }
-
-    /**
-     * Unpack data from database
-     * @param data
-     * @returns {Promise<*>}
-     */
-    unpack(data) {
-        const parsed = data;
-        Object.assign(parsed, {
-            query: JSON.parse(data.query),
-            imports: JSON.parse(data.imports),
-        });
-        return parsed;
     }
 
     /**
