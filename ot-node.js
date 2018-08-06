@@ -39,19 +39,16 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
-    if (process.env.NODE_ENV === 'test') {
-        console.log(p);
-    }
+    log.error(`Unhandled Rejection:\n${reason.stack}`);
     // application specific logging, throwing an error, or other logic here
 });
 
 process.on('uncaughtException', (err) => {
     if (process.env.NODE_ENV === 'test') {
-        log.error(`Caught exception: ${err}\n`);
+        log.error(`Caught exception: ${err}.\n ${err.stack}`);
         process.exit(1);
     }
-    log.error(`Caught exception: ${err}\n`);
+    log.error(`Caught exception: ${err}.\n ${err.stack}`);
 });
 
 process.on('warning', (warning) => {
