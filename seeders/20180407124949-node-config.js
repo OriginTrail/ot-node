@@ -21,7 +21,6 @@ if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
     throw Error(error);
 }
 
-const selected_database = (process.env.GRAPH_DATABASE === 'neo4j') ? 2 : 1;
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'node_wallet',
@@ -43,7 +42,7 @@ module.exports = {
     },
     {
         key: 'selected_graph_database',
-        value: selected_database,
+        value: 1,
     },
     {
         key: 'selected_blockchain',

@@ -1,6 +1,5 @@
 const Utilities = require('../Utilities');
 const ArangoJS = require('./Arangojs');
-const Neo4j = require('./Neo4j');
 
 class GraphStorage {
     /**
@@ -39,22 +38,6 @@ class GraphStorage {
                         resolve(this.db);
                     } catch (error) {
                         console.log(error);
-                        reject(Error('Unable to connect to graph database'));
-                    }
-                    break;
-                case 'neo4j':
-                    try {
-                        this.db = new Neo4j(
-                            this.selectedDatabase.username,
-                            this.selectedDatabase.password,
-                            this.selectedDatabase.database,
-                            this.selectedDatabase.host,
-                            this.selectedDatabase.port,
-                            this.logger,
-                        );
-                        await this.__initDatabase__();
-                        resolve(this.db);
-                    } catch (error) {
                         reject(Error('Unable to connect to graph database'));
                     }
                     break;
@@ -399,8 +382,6 @@ class GraphStorage {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
-            } else if (this.db.identify === 'Neo4j') {
-                reject(Error('Method not implemented for Neo4j database yet'));
             } else {
                 this.db.getDocumentsCount(collectionName).then((result) => {
                     resolve(result);

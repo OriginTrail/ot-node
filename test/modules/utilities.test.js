@@ -145,9 +145,6 @@ describe('Utilities module', () => {
             'host', 'port', 'max_path_length', 'database']);
         if (process.env.GRAPH_DATABASE === 'arangodb') {
             assert.equal(myResult.database_system, 'arango_db');
-        } else if (process.env.GRAPH_DATABASE === 'neo4j') {
-            assert.equal(myResult.database_system, 'neo4j');
-        }
     });
 
 
