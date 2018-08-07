@@ -145,6 +145,7 @@ describe('Utilities module', () => {
             'host', 'port', 'max_path_length', 'database']);
         if (process.env.GRAPH_DATABASE === 'arangodb') {
             assert.equal(myResult.database_system, 'arango_db');
+        }
     });
 
 

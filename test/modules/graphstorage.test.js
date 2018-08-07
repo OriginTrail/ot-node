@@ -43,6 +43,7 @@ describe('GraphStorage module', () => {
                 myDatabaseName,
                 [{ username: myUserName, passwd: myPassword, active: true }],
             );
+        }
 
         myGraphStorage = new GraphStorage(selectedDatabase);
         expect(myGraphStorage).to.be.an.instanceof(GraphStorage);
@@ -65,12 +66,14 @@ describe('GraphStorage module', () => {
             } catch (err) {
                 console.log('Oops, having difficulties creating collections');
             }
+        }
     });
 
     it('identify()', async () => {
         if (selectedDatabase.database_system === 'arango_db') {
             assert.equal(myGraphStorage.identify(), 'ArangoJS');
             assert.equal(myGraphStorage.db.identify(), 'ArangoJS');
+        }
     });
 
     it('Unable to connect to graph database scenario', async () => {
@@ -180,5 +183,6 @@ describe('GraphStorage module', () => {
             systemDb = new Database();
             systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
             await systemDb.dropDatabase(myDatabaseName);
+        }
     });
 });
