@@ -12,7 +12,6 @@ const randomString = require('randomstring');
 const Web3 = require('web3');
 const request = require('superagent');
 const { Database } = require('arangojs');
-const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 const KademliaUtils = require('./kademlia/KademliaUtils');
@@ -294,23 +293,6 @@ class Utilities {
                     reject(error);
                 });
             }
-                break;
-            case 'neo4j':
-                try {
-                    // TODO
-                    const host = process.env.NEO_HOST;
-                    const port = process.env.NEO_PORT;
-                    const user = process.env.NEO_USERNAME;
-                    const pass = process.env.NEO_PASSWORD;
-                    const driver = neo4j.driver(`bolt://${host}:${port}`, neo4j.auth.basic(user, 'nijePASS'));
-                    const session = driver.session();
-                    const a = session.run('match (n) return n');
-                    session.close();
-                    driver.close();
-                    resolve();
-                } catch (error) {
-                    reject(error);
-                }
                 break;
             default:
                 Utilities.getLogger.error(config.database.database_system);
