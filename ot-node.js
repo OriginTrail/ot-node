@@ -46,6 +46,8 @@ process.on('unhandledRejection', (reason, p) => {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
 
         bugsnag.notify(
             reason,
