@@ -16,6 +16,7 @@ const sleep = require('sleep-async')().Promise;
 const uuidv4 = require('uuid/v4');
 
 const Utilities = require('../../modules/Utilities');
+const log = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 
@@ -44,9 +45,6 @@ const DCController = require('../../modules/controller/dc-controller');
 // This removes solc's overzealous uncaughtException event handler.
 // process.removeAllListeners('uncaughtException');
 
-// disabling debug logs, comment out if you want to see debug logs
-console.debug = function () {};
-
 describe('Protocol tests', () => {
 // Global functions.
     function recreateDatabase() {
@@ -58,7 +56,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'migrations',
             },
-            logging: Utilities.getLogger().debug,
+            logging: log.debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../migrations`,
@@ -72,7 +70,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'seeders',
             },
-            logging: Utilities.getLogger().debug,
+            logging: log.debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../seeders`,
@@ -100,7 +98,7 @@ describe('Protocol tests', () => {
                 .send({ from: deployerAddress, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
-                    console.debug(deploymentReceipt.contractAddress); // contains the new contract address
+                    log.debug(deploymentReceipt.contractAddress); // contains the new contract address
                 })
                 .on('error', error => reject(error))
                 .then((instance) => {
@@ -305,13 +303,7 @@ describe('Protocol tests', () => {
     before('Compile smart contracts source', async function compile() {
         this.timeout(20000);
 
-        let accountBalance;
         accounts = await web3.eth.getAccounts();
-        for (let i = 0; i < 10; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            accountBalance = await web3.eth.getBalance(accounts[i]);
-            console.debug(`${accounts[i]} with wei balance: ${accountBalance} is available`);
-        }
 
         testNodes.push(
             new TestNode('d55b78943898105a0d1cddb140f8aeef6d81cfe0', accounts[0], accountPrivateKeys[0]),
@@ -349,22 +341,22 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
-        console.debug('Deploying tokenContract');
+        log.debug('Deploying tokenContract');
         [tokenDeploymentReceipt, tokenInstance] = await deployContract(
             web3, tokenContract, tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
-        console.debug('Deploying escrowContract');
+        log.debug('Deploying escrowContract');
         [escrowDeploymentReceipt, escrowInstance] = await deployContract(
             web3, escrowContract, escrowContractData,
             [tokenInstance._address], accounts[7],
         );
-        console.debug('Deploying readingContract');
+        log.debug('Deploying readingContract');
         [readingDeploymentReceipt, readingInstance] = await deployContract(
             web3, readingContract, readingContractData,
             [escrowInstance._address], accounts[7],
         );
-        console.debug('Deploying biddingContract');
+        log.debug('Deploying biddingContract');
         [biddingDeploymentReceipt, biddingInstance] = await deployContract(
             web3, biddingContract, biddingContractData,
             [
@@ -373,7 +365,7 @@ describe('Protocol tests', () => {
                 readingInstance._address,
             ], accounts[7],
         );
-        console.debug('Deploying otFingerprintContract');
+        log.debug('Deploying otFingerprintContract');
         [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
             web3, otFingerprintContract, otFingerprintContractData,
             undefined, accounts[7],
@@ -504,7 +496,7 @@ describe('Protocol tests', () => {
     });
 
     afterEach('Unregister container', async () => {
-        console.debug('Goodbye!');
+        log.debug('Goodbye!');
         testNodes.forEach((testNode) => {
             if (testNode.container) {
                 testNode.container.dispose(); // Promise.
@@ -574,7 +566,6 @@ describe('Protocol tests', () => {
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
             importId = Utilities.createImportId();
-            console.debug(importId);
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
             mockGraphStorage.imports[importId] = { vertices, edges };
@@ -645,7 +636,7 @@ describe('Protocol tests', () => {
 
             expect(events).to.be.an('array');
             const bidTakenEvent = events.find(event => event.event === 'BidTaken');
-            console.debug(JSON.stringify(events));
+            log.debug(JSON.stringify(events));
             expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
             expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
 
