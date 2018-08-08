@@ -1,5 +1,4 @@
 require('dotenv').config();
-require('newrelic');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
@@ -135,7 +134,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
+            env.BOOTSTRAP_NODE = 'https://142.93.168.56:5278/#efd4213c017b1e5b1d5e6f42c6936f19d30097aa';
 
             env.TRAVERSE_NAT_ENABLED = '0';
 

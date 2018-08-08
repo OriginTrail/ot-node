@@ -99,28 +99,6 @@ process.on('exit', (code) => {
     }
 });
 
-process.on('uncaughtException', (err) => {
-    if (process.env.NODE_ENV === 'test') {
-        log.error(`Caught exception: ${err}\n`);
-        process.exit(1);
-    }
-    log.error(`Caught exception: ${err}\n`);
-});
-
-process.on('warning', (warning) => {
-    log.warn(warning.name);
-    log.warn(warning.message);
-    log.warn(warning.stack);
-});
-
-process.on('exit', (code) => {
-    if (code !== 0) {
-        log.error(`Whoops, terminating with code: ${code}`);
-    } else {
-        log.debug(`Normal exiting with code: ${code}`);
-    }
-});
-
 /**
  * Main node object
  */
