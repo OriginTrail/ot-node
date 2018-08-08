@@ -210,6 +210,10 @@ module.exports = {
         key: 'reverse_tunnel_port',
         value: '8443',
     },
+    {
+        key: 'network_id',
+        value: process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development',
+    },
     ], {}),
 
     down: (queryInterface, Sequelize) => queryInterface.bulkDelete('node_config', null, {}),
