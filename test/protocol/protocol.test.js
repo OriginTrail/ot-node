@@ -2,7 +2,6 @@
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
-const protocolData = require('./protocol-data.js');
 const { expect } = require('chai');
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
@@ -16,7 +15,8 @@ const sleep = require('sleep-async')().Promise;
 const uuidv4 = require('uuid/v4');
 
 const Utilities = require('../../modules/Utilities');
-const log = Utilities.getLogger();
+
+const logger = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 
@@ -56,7 +56,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'migrations',
             },
-            logging: log.debug,
+            logging: Utilities.getLogger().debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../migrations`,
@@ -70,7 +70,7 @@ describe('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'seeders',
             },
-            logging: log.debug,
+            logging: Utilities.getLogger().debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../seeders`,
@@ -98,7 +98,7 @@ describe('Protocol tests', () => {
                 .send({ from: deployerAddress, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
-                    log.debug(deploymentReceipt.contractAddress); // contains the new contract address
+                    logger.debug(deploymentReceipt.contractAddress); // contains the new contract address
                 })
                 .on('error', error => reject(error))
                 .then((instance) => {
@@ -341,22 +341,22 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
-        log.debug('Deploying tokenContract');
+        logger.debug('Deploying tokenContract');
         [tokenDeploymentReceipt, tokenInstance] = await deployContract(
             web3, tokenContract, tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
-        log.debug('Deploying escrowContract');
+        logger.debug('Deploying escrowContract');
         [escrowDeploymentReceipt, escrowInstance] = await deployContract(
             web3, escrowContract, escrowContractData,
             [tokenInstance._address], accounts[7],
         );
-        log.debug('Deploying readingContract');
+        logger.debug('Deploying readingContract');
         [readingDeploymentReceipt, readingInstance] = await deployContract(
             web3, readingContract, readingContractData,
             [escrowInstance._address], accounts[7],
         );
-        log.debug('Deploying biddingContract');
+        logger.debug('Deploying biddingContract');
         [biddingDeploymentReceipt, biddingInstance] = await deployContract(
             web3, biddingContract, biddingContractData,
             [
@@ -365,7 +365,7 @@ describe('Protocol tests', () => {
                 readingInstance._address,
             ], accounts[7],
         );
-        log.debug('Deploying otFingerprintContract');
+        logger.debug('Deploying otFingerprintContract');
         [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
             web3, otFingerprintContract, otFingerprintContractData,
             undefined, accounts[7],
@@ -496,7 +496,7 @@ describe('Protocol tests', () => {
     });
 
     afterEach('Unregister container', async () => {
-        log.debug('Goodbye!');
+        logger.debug('Goodbye!');
         testNodes.forEach((testNode) => {
             if (testNode.container) {
                 testNode.container.dispose(); // Promise.
@@ -537,7 +537,42 @@ describe('Protocol tests', () => {
     });
 
     describe('DC replication', () => {
-        const { vertices, edges } = protocolData;
+        const vertices = [
+            {
+                _id: '247d8e3809b448fe8f5b67495801e246',
+                _key: '247d8e3809b448fe8f5b67495801e246',
+                identifiers: {
+                    id: 'urn:epc:id:sgln:Building_2',
+                    uid: 'urn:epc:id:sgln:Building_2',
+                },
+                data: {
+                    category: 'Building _2b',
+                    description: 'Description of building _2b',
+                    object_class_id: 'Location',
+                },
+                private: {},
+                vertex_type: 'LOCATION',
+                sender_id: 'urn:ot:object:actor:id:Company_2',
+                version: 1,
+                imports: [],
+            },
+            {
+                _id: 'Location',
+                _key: 'Location',
+                vertex_type: 'CLASS',
+            },
+        ];
+        const edges = [
+            {
+                _id: 'af54d5a366006fa21dcbf4df50421165',
+                _key: '_key:af54d5a366006fa21dcbf4df50421165',
+                _from: '247d8e3809b448fe8f5b67495801e246',
+                _to: 'Location',
+                edge_type: 'IS',
+                sender_id: 'urn:ot:object:actor:id:Company_2',
+                imports: [],
+            },
+        ];
 
         let importId;
         let rootHash;
@@ -636,7 +671,7 @@ describe('Protocol tests', () => {
 
             expect(events).to.be.an('array');
             const bidTakenEvent = events.find(event => event.event === 'BidTaken');
-            log.debug(JSON.stringify(events));
+            logger.debug(JSON.stringify(events));
             expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
             expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
 
@@ -659,10 +694,8 @@ describe('Protocol tests', () => {
             this.timeout(90000); // One minute is minimum time for a offer.
             const { dcController, blockchain } = testNode1;
 
-            const offerExternalId =
-                await dcController.createOffer(importId, rootHash, 1, vertices);
-
-            const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
+            await dcController.createOffer(importId, rootHash, 1, vertices);
+            await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
 
             // Send one bid.
             const bidderDeposit = new BN('100000000000000000', 10)
