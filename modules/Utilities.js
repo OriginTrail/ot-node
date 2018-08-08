@@ -166,7 +166,8 @@ class Utilities {
                 [
                     new (winston.transports.Console)({
                         colorize: 'all',
-                        timestamp: false,
+                        timestamp: true,
+                        formatter: this.formatFileLogs,
                         prettyPrint: object => JSON.stringify(object),
                         stderrLevels: [
                             'trace',

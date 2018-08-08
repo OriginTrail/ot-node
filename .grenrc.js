@@ -1,11 +1,12 @@
 module.exports = {
-    "dataSource": "commits",
+    "dataSource": "prs",
     "prefix": "",
     "includeMessages": "merges",
     "changelogFilename": "CHANGELOG.md",
     "ignore-labels": "minor",
     "groupBy": {
-        "Improvements:": ["enhancement", "internal"],
+        "Features": ["enhancement"],
+        "Chore:": ["chore", "internal"],
         "Bug Fixes:": ["bug"]
     }
 }
