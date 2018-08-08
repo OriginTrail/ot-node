@@ -136,7 +136,7 @@ class RegisterNode {
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://178.128.65.84:5278/#a3405151e3adaff757e3bef2e928143e2b3d3f97';
 
-            env.TRAVERSE_NAT_ENABLED = '1';
+            env.TRAVERSE_NAT_ENABLED = '0';
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
