@@ -64,7 +64,7 @@ class DataReplication {
 
         // send payload to DH
         await this.network.kademlia().payloadRequest(payload, data.contact, () => {
-            this.log.info('Payload request sent');
+            this.log.info(`Payload for import ${data.import_id} sent to ${data.contact}.`);
         });
     }
 }
