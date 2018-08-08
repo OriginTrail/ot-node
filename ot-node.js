@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason, p) => {
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
 
-    if (!process.env.NODE_ENV === 'test' && !process.env.NODE_ENV === 'development') {
+    if (!process.env.NODE_ENV === 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
@@ -63,7 +63,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 process.on('uncaughtException', (err) => {
-    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development') {
         log.error(`Caught exception: ${err}.\n ${err.stack}`);
         process.exit(1);
     }
@@ -146,7 +146,7 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
-        if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
+        if (process.env.NODE_ENV !== 'development') {
             bugsnag.register(
                 pjson.config.bugsnagkey,
                 {
@@ -165,9 +165,9 @@ class OTNode {
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
-            log.info('npm modules dependences check done');
+            log.info('npm modules dependencies check done');
 
-            // Checking root folder stucture
+            // Checking root folder structure
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
         } catch (err) {
