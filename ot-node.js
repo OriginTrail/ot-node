@@ -16,6 +16,7 @@ const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 const BN = require('bn.js');
+const bugsnag = require('bugsnag');
 
 const awilix = require('awilix');
 
@@ -40,15 +41,46 @@ process.on('unhandledRejection', (reason, p) => {
         return;
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
-    // application specific logging, throwing an error, or other logic here
+
+    if (!process.env.NODE_ENV === 'test' && !process.env.NODE_ENV === 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+
+        bugsnag.notify(
+            reason,
+            {
+                user: {
+                    id: config.node_wallet,
+                    identity: config.node_kademlia_id,
+                    config: cleanConfig,
+                },
+            },
+        );
+    }
 });
 
 process.on('uncaughtException', (err) => {
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
         log.error(`Caught exception: ${err}.\n ${err.stack}`);
         process.exit(1);
     }
     log.error(`Caught exception: ${err}.\n ${err.stack}`);
+
+    const cleanConfig = Object.assign({}, config);
+    delete cleanConfig.node_private_key;
+    delete cleanConfig.houston_password;
+
+    bugsnag.notify(
+        err,
+        {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+        },
+    );
 });
 
 process.on('warning', (warning) => {
@@ -112,6 +144,22 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
+        if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
+            bugsnag.register(
+                pjson.config.bugsnagkey,
+                {
+                    appVersion: pjson.version,
+                    autoNotify: false,
+                    sendCode: true,
+                    logger: {
+                        info: log.info,
+                        warn: log.warn,
+                        error: log.error,
+                    },
+                },
+            );
+        }
+
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
