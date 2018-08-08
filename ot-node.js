@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason, p) => {
     }
     log.error(`Unhandled Rejection:\n${reason.stack}`);
 
-    if (!process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
         delete cleanConfig.houston_password;
