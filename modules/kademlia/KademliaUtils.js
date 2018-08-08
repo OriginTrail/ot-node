@@ -13,7 +13,19 @@ class KademliaUtils {
         if (msg.startsWith('negotiation error')) {
             return null; // skip logging
         }
+        if (msg.includes('received late or invalid response')) {
+            return null; // skip logging
+        }
+        if (msg.includes('error with remote connection')) {
+            return null;
+        }
+        if (msg.includes('remote connection encountered error')) {
+            return null;
+        }
         if (msg.startsWith('updating peer profile')) {
+            return null; // skip logging
+        }
+        if (msg.includes('client cannot service request at this time')) {
             return null; // skip logging
         }
         if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
@@ -31,6 +43,15 @@ class KademliaUtils {
             return null;
         }
         if (msg.includes('servicesscrubbed.onion')) {
+            return null;
+        }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
+        if (msg.includes('getaddrinfo')) {
             return null;
         }
         return {

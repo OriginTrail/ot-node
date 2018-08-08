@@ -115,7 +115,7 @@ class Challenger {
                 payload, challenge.dh_id,
                 async (error, response) => {
                     if (error) {
-                        log.warn(`challenge-request: failed to get answer. Error: ${error}.`);
+                        log.warn(`failed to get challenge answer from ${challenge.dh_id}. ${error}.`);
                         return;
                     }
 

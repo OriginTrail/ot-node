@@ -89,6 +89,7 @@ class RemoteControl {
         this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
+            this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.getProtocolInfo().then((res) => {
                 socket.emit('system', { info: res });
@@ -295,8 +296,8 @@ class RemoteControl {
                     stdio: 'inherit',
                 });
             });
-            process.exit(2);
-        }, 5000);
+            process.exit(1);
+        }, 2000);
     }
 
     /**
@@ -511,6 +512,37 @@ class RemoteControl {
 
 
     /**
+     * Deposit tokens - succeeded
+     * @param data
+     */
+    tokenDepositSucceeded(data) {
+        this.socket.emit('tokenDepositSucceeded', data);
+    }
+    /**
+     * Deposit tokens - failed
+     * @param data
+     */
+    tokensDepositFailed(data) {
+        this.socket.emit('tokensDepositFailed', data);
+    }
+
+    /**
+     * Withdraw tokens - succeeded
+     * @param data
+     */
+    tokensWithdrawSucceeded(data) {
+        this.socket.emit('tokensWithdrawSucceeded', data);
+    }
+
+    /**
+     * Withdraw tokens - failed
+     * @param data
+     */
+    tokensWithdrawFailed(data) {
+        this.socket.emit('tokensWithdrawFailed', data);
+    }
+
+    /**
      * DV events
      */
     networkQueryOfferArrived(data) {
@@ -609,6 +641,14 @@ class RemoteControl {
 
     challengeFailed(data) {
         this.socket.emit('challengeFailed', data);
+    }
+
+    offerInitiated(data) {
+        this.socket.emit('offerInitiated', data);
+    }
+
+    readNotification(data) {
+        this.socket.emit('readNotification', data);
     }
 }
 

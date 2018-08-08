@@ -30,7 +30,9 @@ describe('Utilities module', () => {
                 'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
                 'dh_min_price', 'dh_max_price', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
                 'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
-                'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds', 'is_bootstrap_node', 'houston_password'],
+                'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
+                'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
+                'network_id'],
             'Some config items are missing in node_config',
         );
     });
@@ -216,7 +218,7 @@ describe('Utilities module', () => {
         }
     });
 
-    it('flattenObject() regular', async () => {
+    it('flattenObject() regular', () => {
         const regularObj = {
             name: 'fiiv',
             birthYear: 1986,
@@ -243,17 +245,17 @@ describe('Utilities module', () => {
         assert.deepEqual(flattened, expectedFlattened);
     });
 
-    it('flattenObject() null', async () => {
+    it('flattenObject() null', () => {
         const flattened = Utilities.flattenObject(null);
         assert.deepEqual(flattened, null);
     });
 
-    it('flattenObject() empty', async () => {
+    it('flattenObject() empty', () => {
         const flattened = Utilities.flattenObject({});
         assert.deepEqual(flattened, {});
     });
 
-    it('objectDistance() test 1', async () => {
+    it('objectDistance() test 1', () => {
         const obj1 = {
             a: 'abc',
         };
@@ -265,7 +267,7 @@ describe('Utilities module', () => {
         assert.equal(distance, 100);
     });
 
-    it('objectDistance() test 2', async () => {
+    it('objectDistance() test 2', () => {
         const obj1 = {
             a: 'abc',
         };
@@ -277,7 +279,7 @@ describe('Utilities module', () => {
         assert.equal(distance, 0);
     });
 
-    it('objectDistance() test 3', async () => {
+    it('objectDistance() test 3', () => {
         const obj1 = {
             a: {
                 b: {
@@ -297,26 +299,43 @@ describe('Utilities module', () => {
         assert.equal(distance, 100);
     });
 
-    after('cleanup', () => {
-        const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
-        const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
-        const prvKeyToDelete = `${__dirname}/../../keys/${myConfig.private_extended_key_path}`;
-
-        try {
-            fs.unlinkSync(keyToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        try {
-            fs.unlinkSync(certToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        try {
-            fs.unlinkSync(prvKeyToDelete);
-        } catch (error) {
-            console.log(error);
-        }
-        myConfig = {};
+    it('check shuffle() ', () => {
+        const UnShuffledArray = ['a', 'b', 'c', 'd', 'e'];
+        const ShuffledArray = Utilities.shuffle(UnShuffledArray);
+        assert.sameMembers(UnShuffledArray, ShuffledArray, 'No blind passangers allowed on this boat');
+        assert.equal(UnShuffledArray.length, ShuffledArray.length, 'Both arrays should have same lengths');
     });
+
+    it('check unionArrays()', () => {
+        const firstArray = ['1', '2', 'c', 'd', 'e'];
+        const secondArray = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+        const result = Utilities.unionArrays(firstArray, secondArray);
+        assert.includeMembers(result, firstArray);
+        assert.includeMembers(result, secondArray);
+        assert.equal(result.length, 9);
+    });
+
+    // enable after() step after above .skip()ed tests are fixed
+    // after('cleanup', () => {
+    //     const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
+    //     const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;
+    //     const prvKeyToDelete = `${__dirname}/../../keys/${myConfig.private_extended_key_path}`;
+
+    //     try {
+    //         fs.unlinkSync(keyToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     try {
+    //         fs.unlinkSync(certToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     try {
+    //         fs.unlinkSync(prvKeyToDelete);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    //     myConfig = {};
+    // });
 });

@@ -123,8 +123,8 @@
 					</quantityList>
 					<extension>
 						<documentId>1</documentId>
-						<OTEventClass>urn:ot:events:Transport</OTEventClass>
-						<OTEventClass>urn:ot:events:Ownership</OTEventClass>
+						<OTEventClass>urn:ot:event:Transport</OTEventClass>
+						<OTEventClass>urn:ot:event:Ownership</OTEventClass>
 						<OTEventType>Sales</OTEventType>
 						<sourceList>
 							<source	type="urn:epcglobal:cbv:sdt:owning_party">urn:epc:id:sgln:Building_Green</source>

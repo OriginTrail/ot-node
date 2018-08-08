@@ -8,10 +8,11 @@ const config = require('./Config');
 const fs = require('fs');
 const utilities = require('./Utilities');
 const _ = require('lodash');
-const sleep = require('sleep');
+const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
 const PeerCache = require('./kademlia/PeerCache');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const ip = require('ip');
 
 /**
  * DHT module (Kademlia)
@@ -25,8 +26,7 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
 
-        kadence.constants.T_RESPONSETIMEOUT = 60000;
-
+        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -89,16 +89,21 @@ class Network {
         // Initialize public contact data
         const contact = {
             hostname: config.node_rpc_ip,
-            protocol: 'http:',
+            protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
             wallet: config.node_wallet,
+            network_id: config.network_id,
         };
 
+        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+
         // Initialize transport adapter
-        const transport = new kadence.HTTPTransport();
+        const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
         // Initialize protocol implementation
         this.node = new kadence.KademliaNode({
@@ -108,12 +113,53 @@ class Network {
             contact,
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
+
+        // Override node's _updateContact method to filter contacts.
+        this.node._updateContact = (identity, contact) => {
+            try {
+                if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
+                    if (config.local_network_only && ip.isPublic(contact.hostname)) {
+                        this.log.debug(`Ignored contact ${identity} from remote address: ${contact.hostname}.`);
+                        return;
+                    } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
+                        this.log.debug(`Ignored contact ${identity} from local address: ${contact.hostname}.`);
+                        return;
+                    }
+                }
+                if (!contact.network_id || contact.network_id !== config.network_id) {
+                    this.log.debug(`Ignored contact ${identity}. Invalid network ID.`);
+                    return;
+                }
+            } catch (err) {
+                this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                return;
+            }
+
+            // Simulate node's "super._updateContact(identity, contact)".
+            this.node.constructor.prototype.constructor.prototype
+                ._updateContact.call(this.node, identity, contact);
+        };
+
         this.log.info('Starting OT Node...');
+        this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
         this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
-        this.enableOnion();
+        this.node.spartacus = this.node.plugin(kadence.spartacus(
+            this.xprivkey,
+            parseInt(config.child_derivation_index, 10),
+            kadence.constants.HD_KEY_DERIVATION_PATH,
+        ));
+        this.log.info('Spartacus initialized');
+
+        if (parseInt(config.onion_enabled, 10)) {
+            this.enableOnion();
+        }
+
+        if (parseInt(config.traverse_nat_enabled, 10)) {
+            this.enableNatTraversal();
+        }
 
         // Use verbose logging if enabled
         if (parseInt(config.verbose_logging, 10)) {
@@ -130,7 +176,7 @@ class Network {
         }
 
         this.node.listen(parseInt(config.node_port, 10), async () => {
-            this.log.notify(`OT Node listening at http://${this.node.contact.hostname}:${this.node.contact.port}`);
+            this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
             this.networkUtilities.registerControlInterface(config, this.node);
 
             const connected = false;
@@ -145,10 +191,29 @@ class Network {
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
                 }
+
                 this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
-                sleep.sleep(5);
+                // eslint-disable-next-line
+                await sleep.sleep(retryPeriodSeconds * 1000);
             }
         });
+    }
+
+    enableNatTraversal() {
+        this.log.info('Trying NAT traversal');
+
+        const remoteAddress = config.reverse_tunnel_address;
+        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+
+        this.node.traverse = this.node.plugin(kadence.traverse([
+            new kadence.traverse.ReverseTunnelStrategy({
+                remotePort,
+                remoteAddress,
+                privateKey: this.node.spartacus.privateKey,
+                secureLocalConnection: true,
+                verboseLogging: false,
+            }),
+        ]));
     }
 
     /**
@@ -161,11 +226,17 @@ class Network {
             virtualPort: config.onion_virtual_port,
             localMapping: `127.0.0.1:${config.node_port}`,
             torrcEntries: {
-                CircuitBuildTimeout: 10,
-                KeepalivePeriod: 60,
-                NewCircuitPeriod: 60,
-                NumEntryGuards: 8,
-                Log: 'notice stdout',
+                LearnCircuitBuildTimeout: 0,
+                CircuitBuildTimeout: 40,
+                CircuitStreamTimeout: 30,
+                MaxCircuitDirtiness: 7200,
+                MaxClientCircuitsPending: 1024,
+                SocksTimeout: 41,
+                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
+                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
+                SafeLogging: 0,
+                FetchDirInfoEarly: 1,
+                FetchDirInfoExtraEarly: 1,
             },
             passthroughLoggingEnabled: 1,
         }));
@@ -188,13 +259,12 @@ class Network {
         if (utilities.isBootstrapNode()) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
-            this.log.info(`Trying to contact ${nodes.length} peers`);
         } else {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
-            this.log.info(`Trying to join the network from ${nodes.length} unique seeds`);
         }
 
+        this.log.info(`Sync with network from ${nodes.length} unique peers`);
         if (nodes.length === 0) {
             this.log.info('No bootstrap seeds provided and no known profiles');
             this.log.info('Running in seed mode (waiting for connections)');
@@ -213,7 +283,7 @@ class Network {
 
         const func = url => new Promise((resolve, reject) => {
             try {
-                this.log.info(`Joining via ${url}`);
+                this.log.info(`Syncing with peers via ${url}.`);
                 const contact = kadence.utils.parseContactURL(url);
 
                 this._join(contact, (err) => {
@@ -246,16 +316,11 @@ class Network {
         }
 
         if (result) {
-            this.log.important('Joined the network');
-            const contact = kadence.utils.parseContactURL(result);
-
-            this.log.info(`Connected to network via ${contact[0]} (http://${contact[1].hostname}:${contact[1].port})`);
-            this.log.info(`Discovered ${this.node.router.size} peers from seed`);
+            this.log.important('Initial sync with other peers done');
 
             setTimeout(() => {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
-
             return true;
         } else if (utilities.isBootstrapNode()) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
@@ -299,7 +364,7 @@ class Network {
 
         // async
         this.node.use('kad-payload-request', (request, response, next) => {
-            this.log.info('kad-payload-request received');
+            this.log.debug('kad-payload-request received');
             this.emitter.emit('kad-payload-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -308,7 +373,7 @@ class Network {
 
         // async
         this.node.use('kad-replication-request', (request, response, next) => {
-            this.log.info('kad-replication-request received');
+            this.log.debug('kad-replication-request received');
             this.emitter.emit('kad-replication-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -317,7 +382,7 @@ class Network {
 
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
-            this.log.info('kad-replication-finished received');
+            this.log.debug('kad-replication-finished received');
             this.emitter.emit('kad-replication-finished', request);
             response.send({
                 status: 'RECEIVED',
@@ -326,7 +391,7 @@ class Network {
 
         // async
         this.node.use('kad-data-location-response', (request, response, next) => {
-            this.log.info('kad-data-location-response received');
+            this.log.debug('kad-data-location-response received');
             this.emitter.emit('kad-data-location-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -335,7 +400,7 @@ class Network {
 
         // async
         this.node.use('kad-data-read-request', (request, response, next) => {
-            this.log.info('kad-data-read-request received');
+            this.log.debug('kad-data-read-request received');
             this.emitter.emit('kad-data-read-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -344,7 +409,7 @@ class Network {
 
         // async
         this.node.use('kad-data-read-response', (request, response, next) => {
-            this.log.info('kad-data-read-response received');
+            this.log.debug('kad-data-read-response received');
             this.emitter.emit('kad-data-read-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -353,7 +418,7 @@ class Network {
 
         // async
         this.node.use('kad-send-encrypted-key', (request, response, next) => {
-            this.log.info('kad-send-encrypted-key received');
+            this.log.debug('kad-send-encrypted-key received');
             this.emitter.emit('kad-send-encrypted-key', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -362,7 +427,7 @@ class Network {
 
         // async
         this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
-            this.log.info('kad-encrypted-key-process-result received');
+            this.log.debug('kad-encrypted-key-process-result received');
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -371,7 +436,7 @@ class Network {
 
         // async
         this.node.use('kad-verify-import-request', (request, response, next) => {
-            this.log.info('kad-verify-import-request received');
+            this.log.debug('kad-verify-import-request received');
             this.emitter.emit('kad-verify-import-request', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -380,7 +445,7 @@ class Network {
 
         // async
         this.node.use('kad-verify-import-response', (request, response, next) => {
-            this.log.info('kad-verify-import-response received');
+            this.log.debug('kad-verify-import-response received');
             this.emitter.emit('kad-verify-import-response', request, response);
             response.send({
                 status: 'RECEIVED',
@@ -389,7 +454,7 @@ class Network {
 
         // sync
         this.node.use('kad-challenge-request', (request, response, next) => {
-            this.log.info('kad-challenge-request received');
+            this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
         });
 
@@ -449,7 +514,7 @@ class Network {
                     return contact;
                 }
 
-                await node.refresh(contactId, retry);
+                await node.refreshContact(contactId, retry);
                 contact = this.node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
@@ -463,7 +528,7 @@ class Network {
              * @param retry
              * @return {Promise}
              */
-            node.refresh = async (contactId, retry) => new Promise(async (resolve) => {
+            node.refreshContact = async (contactId, retry) => new Promise(async (resolve) => {
                 const _refresh = () => new Promise((resolve, reject) => {
                     this.node.iterativeFindNode(contactId, (err, res) => {
                         if (err) {
@@ -488,7 +553,8 @@ class Network {
                                 resolve(contact);
                                 return;
                             }
-                            sleep.sleep(2 ** i);
+                            // eslint-disable-next-line
+                            await sleep.sleep((2 ** i) * 1000);
                         }
                     } else {
                         await _refresh(contactId, retry);

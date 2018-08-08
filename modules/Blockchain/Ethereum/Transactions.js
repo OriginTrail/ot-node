@@ -1,7 +1,7 @@
 const Tx = require('ethereumjs-tx');
 const { txutils } = require('eth-lightwallet');
 const Queue = require('better-queue');
-const sleep = require('sleep');
+const sleep = require('sleep-async')().Promise;
 const BN = require('bn.js');
 const Utilities = require('../../Utilities.js');
 
@@ -22,9 +22,9 @@ class Transactions {
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
             try {
-                const delta = (Date.now() - this.lastTransactionTime) / 1000;
-                if (delta < 10) {
-                    sleep.sleep(10);
+                const delta = (Date.now() - this.lastTransactionTime);
+                if (delta < 2000) {
+                    await sleep.sleep(2000);
                 }
                 const result = await this._sendTransaction(transaction);
                 if (result.status === '0x0') {

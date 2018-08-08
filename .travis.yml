@@ -1,9 +1,6 @@
 language: node_js
 node_js:
   - "9"
-cache:
-  directories:
-    - "node_modules"
 services:
   - neo4j
 env:
@@ -17,7 +14,7 @@ before_script:
   - chmod +x setup_arangodb.sh
   - ./setup_arangodb.sh &> /dev/null
   - rm -rf ArangoDB-3.2.2.tar.gz
-  - npm install -g ganache-cli &> /dev/null
+  - npm install -g ganache-cli@6.1.5 &> /dev/null
   - npm install -g truffle &> /dev/null
 script:
   - npm run lint

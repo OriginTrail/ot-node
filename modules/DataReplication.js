@@ -25,22 +25,20 @@ class DataReplication {
      * @return object response
      */
     async sendPayload(data) {
-        this.log.info('Entering sendPayload');
-
         const currentUnixTime = Date.now();
         const options = {
             dh_wallet: config.dh_wallet,
             import_id: data.import_id,
             amount: data.vertices.length + data.edges.length,
             start_time: currentUnixTime,
-            total_time: 10 * 60000,
+            total_time: parseInt(config.total_escrow_time_in_milliseconds, 10), // TODO introduce BN
         };
 
         ImportUtilities.sort(data.vertices);
 
         // TODO: Move test generation outside sendPayload(.
         const tests = Challenge.generateTests(
-            data.contact, options.import_id.toString(), 10,
+            data.contact, options.import_id.toString(), 20,
             options.start_time, options.start_time + options.total_time,
             32, data.vertices,
         );
@@ -66,7 +64,7 @@ class DataReplication {
 
         // send payload to DH
         await this.network.kademlia().payloadRequest(payload, data.contact, () => {
-            this.log.info('Payload request sent');
+            this.log.info(`Payload for import ${data.import_id} sent to ${data.contact}.`);
         });
     }
 }
