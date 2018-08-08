@@ -16,6 +16,7 @@ const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 const BN = require('bn.js');
+const bugsnag = require('bugsnag');
 
 const awilix = require('awilix');
 
@@ -23,7 +24,6 @@ const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const ProfileService = require('./modules/ProfileService');
@@ -40,8 +40,63 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
-    // application specific logging, throwing an error, or other logic here
+    log.error(`Unhandled Rejection:\n${reason.stack}`);
+
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        bugsnag.notify(
+            reason,
+            {
+                user: {
+                    id: config.node_wallet,
+                    identity: config.node_kademlia_id,
+                    config: cleanConfig,
+                },
+            },
+        );
+    }
+});
+
+process.on('uncaughtException', (err) => {
+    if (process.env.NODE_ENV === 'development') {
+        log.error(`Caught exception: ${err}.\n ${err.stack}`);
+        process.exit(1);
+    }
+    log.error(`Caught exception: ${err}.\n ${err.stack}`);
+
+    const cleanConfig = Object.assign({}, config);
+    delete cleanConfig.node_private_key;
+    delete cleanConfig.houston_password;
+
+    bugsnag.notify(
+        err,
+        {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+        },
+    );
+});
+
+process.on('warning', (warning) => {
+    log.warn(warning.name);
+    log.warn(warning.message);
+    log.warn(warning.stack);
+});
+
+process.on('exit', (code) => {
+    if (code !== 0) {
+        log.error(`Whoops, terminating with code: ${code}`);
+    } else {
+        log.debug(`Normal exiting with code: ${code}`);
+    }
 });
 
 process.on('uncaughtException', (err) => {
@@ -113,12 +168,28 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
+        if (process.env.NODE_ENV !== 'development') {
+            bugsnag.register(
+                pjson.config.bugsnagkey,
+                {
+                    appVersion: pjson.version,
+                    autoNotify: false,
+                    sendCode: true,
+                    logger: {
+                        info: log.info,
+                        warn: log.warn,
+                        error: log.error,
+                    },
+                },
+            );
+        }
+
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
-            log.info('npm modules dependences check done');
+            log.info('npm modules dependencies check done');
 
-            // Checking root folder stucture
+            // Checking root folder structure
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
         } catch (err) {
@@ -205,7 +276,7 @@ class OTNode {
             await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
             setInterval(async () => {
                 await this.getBalances(Utilities, selectedBlockchain, web3, config);
-            }, 300000);
+            }, 1800000);
         } else {
             config.enoughFunds = true;
         }
@@ -215,13 +286,20 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asClass(EventEmitter).singleton(),
             network: awilix.asClass(Network).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
-            dcService: awilix.asClass(DCService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
@@ -296,6 +374,10 @@ class OTNode {
 
         const challenger = container.resolve('challenger');
         await challenger.startChallenging();
+
+        const commandExecutor = container.resolve('commandExecutor');
+        await commandExecutor.init();
+        await commandExecutor.replay();
     }
 
     /**
