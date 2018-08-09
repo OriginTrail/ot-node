@@ -25,7 +25,7 @@ RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/re
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD testnet/papertrail.yml /etc/log_files.yml
 #Clone the project
-RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/master && echo "       "
+RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/master
 RUN unzip master -d . && rm master && mv ot-node-master ot-node
 
 RUN cp -a /tmp/node_modules /ot-node
