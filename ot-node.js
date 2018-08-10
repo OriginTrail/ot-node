@@ -155,7 +155,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: 'development',
+                    releaseStage: 'staging',
                     logger: {
                         info: log.info,
                         warn: log.warn,
