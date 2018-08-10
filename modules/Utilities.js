@@ -195,7 +195,7 @@ class Utilities {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: ['DEVELOPMENT', networkID, pjson.version],
+                    tags: ['development', networkID, pjson.version],
                     json: true,
                 }));
             }
