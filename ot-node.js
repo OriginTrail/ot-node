@@ -72,6 +72,8 @@ process.on('uncaughtException', (err) => {
     const cleanConfig = Object.assign({}, config);
     delete cleanConfig.node_private_key;
     delete cleanConfig.houston_password;
+    delete cleanConfig.database;
+    delete cleanConfig.blockchain;
 
     bugsnag.notify(
         err,
@@ -153,6 +155,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
+                    releaseStage: 'staging',
                     logger: {
                         info: log.info,
                         warn: log.warn,
