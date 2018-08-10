@@ -139,7 +139,7 @@ module.exports = {
     },
     {
         key: 'is_bootstrap_node',
-        value: false,
+        value: process.env.IS_BOOTSTRAP_NODE ? process.env.IS_BOOTSTRAP_NODE : '0',
     },
     {
         key: 'houston_password',

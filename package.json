@@ -1,6 +1,6 @@
 {
   "name": "origintrail-node",
-  "version": "1.3.2",
+  "version": "1.3.4",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -128,6 +128,6 @@
   },
   "auto-updater": {
     "repo": "origintrail/ot-node",
-    "branch": "docker"
+    "branch": "master"
   }
 }
