@@ -11,6 +11,7 @@ class DCOfferCancelCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -26,6 +27,7 @@ class DCOfferCancelCommand extends Command {
             if (oldOffer.active && !oldOffer.finalized) {
                 this.logger.info(`Offer for ${importId} exists. Cancelling offer...`);
                 await this.blockchain.cancelOffer(importId).catch((error) => {
+                    this.notifyError(error);
                     throw new Error(`Cancelling offer failed. ${error}.`);
                 });
             } else if (oldOffer.finalized) {
