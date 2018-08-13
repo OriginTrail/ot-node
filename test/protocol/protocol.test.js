@@ -457,6 +457,7 @@ describe('Protocol tests', () => {
                 biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
                     .singleton(),
                 dcController: awilix.asClass(DCController).singleton(),
+                notifyError: awilix.asFunction(() => {}),
             });
 
             testNode.blockchain = container.resolve('blockchain');

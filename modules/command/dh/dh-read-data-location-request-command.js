@@ -31,7 +31,7 @@ class DHReadDataLocationRequestCommand extends Command {
 
         // Check if mine publish.
         if (msgNodeId === this.config.identity && msgWallet === this.config.node_wallet) {
-            this.logger.trace('Received mine publish. Ignoring.');
+            this.log.trace('Received mine publish. Ignoring.');
             Command.empty();
         }
 
@@ -39,7 +39,7 @@ class DHReadDataLocationRequestCommand extends Command {
         const imports = await this.graphStorage.findImportIds(msgQuery);
         if (imports.length === 0) {
             // I don't want to participate
-            this.logger.trace(`No imports found for request ${msgId}`);
+            this.log.trace(`No imports found for request ${msgId}`);
             Command.empty();
         }
 
@@ -99,7 +99,7 @@ class DHReadDataLocationRequestCommand extends Command {
         }, { transaction });
 
         if (!networkReplyModel) {
-            this.logger.error('Failed to create new network reply model.');
+            this.log.error('Failed to create new network reply model.');
             throw Error('Internal error.');
         }
 

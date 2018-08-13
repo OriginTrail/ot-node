@@ -17,6 +17,7 @@ class NetworkUtilities {
     constructor(ctx) {
         this.solvers = [];
         this.log = ctx.logger;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -62,6 +63,7 @@ class NetworkUtilities {
         } catch (err) {
             this.log.error(err.message.toLowerCase());
             this.log.info(`Delete/move ${config.private_extended_key_path} and restart`);
+            this.notifyError(err);
             process.exit(1);
         }
 

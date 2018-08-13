@@ -10,6 +10,7 @@ class Importer {
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -60,6 +61,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -169,6 +171,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -190,6 +193,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
