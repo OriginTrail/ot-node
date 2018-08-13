@@ -36,5 +36,5 @@ RUN cp .env.example .env
 COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
-EXPOSE 5278 8900 3000 4043 3010
+EXPOSE 5278 5279 8900 3000 4043 3010
 CMD ["sh", "/ot-node/testnet/start.sh"]

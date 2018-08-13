@@ -139,7 +139,7 @@ module.exports = {
     },
     {
         key: 'is_bootstrap_node',
-        value: false,
+        value: process.env.IS_BOOTSTRAP_NODE ? process.env.IS_BOOTSTRAP_NODE : '0',
     },
     {
         key: 'houston_password',
@@ -209,6 +209,10 @@ module.exports = {
     {
         key: 'reverse_tunnel_port',
         value: '8443',
+    },
+    {
+        key: 'network_id',
+        value: process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development',
     },
     ], {}),
 

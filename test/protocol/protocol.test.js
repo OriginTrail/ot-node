@@ -12,13 +12,32 @@ const fs = require('fs');
 const Umzug = require('umzug');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
+const uuidv4 = require('uuid/v4');
 
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
-const DCService = require('../../modules/DCService');
 
 const sequelizeConfig = require('./../../config/config.json').development;
+
+const CommandResolver = require('../../modules/command/command-resolver');
+const CommandExecutor = require('../../modules/command/command-executor');
+
+const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bidding-approval-increase-command');
+const DepositTokenCommand = require('../../modules/command/common/deposit-token-command');
+
+const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
+const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command');
+const DCOfferCreateBlockchainCommand = require('../../modules/command/dc/dc-offer-create-blockchain-command');
+const DCOfferCreateDBCommand = require('../../modules/command/dc/dc-offer-create-database-command');
+const DCOfferReadyCommand = require('../../modules/command/dc/dc-offer-ready-command');
+const DCOfferRootHashCommand = require('../../modules/command/dc/dc-offer-root-hash-command');
+const DCOfferKeyVerificationCommand = require('../../modules/command/dc/dc-offer-key-verification-command');
+const DCEscrowVerifyCommand = require('../../modules/command/dc/dc-escrow-verify-command');
+const DCEscrowCancelCommand = require('../../modules/command/dc/dc-escrow-cancel-command');
+const DCOfferFinalizedCommand = require('../../modules/command/dc/dc-offer-finalized-command');
+
+const DCController = require('../../modules/controller/dc-controller');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
@@ -117,7 +136,7 @@ describe('Protocol tests', () => {
         }
 
         findVerticesByImportId(importId) {
-            return this.imports[importId].edgeds;
+            return this.imports[importId].edges;
         }
     }
 
@@ -145,6 +164,7 @@ describe('Protocol tests', () => {
         bidChosen() {}
         offerFinalized() {}
         dcErrorHandling() {}
+        bidNotTaken() {}
     }
 
     class TestNode {
@@ -160,10 +180,6 @@ describe('Protocol tests', () => {
 
         get blockchain() {
             return this.container.resolve('blockchain');
-        }
-
-        get dcService() {
-            return this.container.resolve('dcService');
         }
 
         get graphStorage() {
@@ -422,13 +438,31 @@ describe('Protocol tests', () => {
                 graphStorage: awilix.asValue(new MockGraphStorage()),
                 challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
                 logger: awilix.asValue(log),
-                dcService: awilix.asClass(DCService),
                 remoteControl: awilix.asClass(MockRemoteControl),
+                commandExecutor: awilix.asClass(CommandExecutor).singleton(),
+                commandResolver: awilix.asClass(CommandResolver).singleton(),
+                dcOfferCancelCommand: awilix.asClass(DCOfferCancelCommand).singleton(),
+                dcOfferChooseCommand: awilix.asClass(DCOfferChooseCommand).singleton(),
+                dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDBCommand).singleton(),
+                dcOfferReadyCommand: awilix.asClass(DCOfferReadyCommand).singleton(),
+                dcOfferRootHashCommand: awilix.asClass(DCOfferRootHashCommand).singleton(),
+                dcEscrowCancelCommand: awilix.asClass(DCEscrowCancelCommand).singleton(),
+                dcEscrowVerifyCommand: awilix.asClass(DCEscrowVerifyCommand).singleton(),
+                depositTokenCommand: awilix.asClass(DepositTokenCommand).singleton(),
+                dcOfferFinalizedCommand: awilix.asClass(DCOfferFinalizedCommand).singleton(),
+                dcOfferKeyVerificationCommand: awilix.asClass(DCOfferKeyVerificationCommand)
+                    .singleton(),
+                dcOfferCreateBlockchainCommand: awilix.asClass(DCOfferCreateBlockchainCommand)
+                    .singleton(),
+                biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
+                    .singleton(),
+                dcController: awilix.asClass(DCController).singleton(),
+                notifyError: awilix.asFunction(() => {}),
             });
 
-            const blockchain = container.resolve('blockchain');
-            const dcService = container.resolve('dcService');
-
+            testNode.blockchain = container.resolve('blockchain');
+            testNode.commandExecutor = container.resolve('commandExecutor');
+            testNode.dcController = container.resolve('dcController');
             testNode.container = container;
         });
 
@@ -565,10 +599,12 @@ describe('Protocol tests', () => {
 
         it('should initiate replication for happy path and without predetermined bidders', async function replication1() {
             this.timeout(90000); // One minute is minimum time for a offer.
-            const { dcService, blockchain } = testNode1;
+            const { dcController, blockchain } = testNode1;
 
-            const offerExternalId =
-                await dcService.createOffer(importId, rootHash, 1, vertices);
+            const replicationId = await dcController.createOffer(importId, rootHash, 1);
+
+            const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
+            expect(event).to.exist;
 
             // Check for offer in db.
             const offers = await Models.offers.findAll({ where: { import_id: importId } });
@@ -580,18 +616,15 @@ describe('Protocol tests', () => {
                 // TODO: find solution for testing arrays in 'expect'.
                 // dh_wallets: [],
                 // dh_ids: [],
-                status: 'PENDING',
-                external_id: offerExternalId,
+                status: 'STARTED',
+                external_id: replicationId,
             });
             expect(offer.dh_wallets).to.be.an('array').deep.equal([]);
             expect(offer.dh_ids).to.be.an('array').deep.equal([]);
 
-            const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
-            expect(event).to.exist;
-
             // Send one bid.
             const bidderDeposit = new BN('100000000000000000', 10)
-                .mul(new BN(testNode2.dcService._calculateImportSize(vertices)));
+                .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
             await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
             await testNode2.blockchain.depositToken(bidderDeposit);
             await testNode2.blockchain.addBid(importId, testNode2.identity);

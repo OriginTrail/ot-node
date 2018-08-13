@@ -1,4 +1,7 @@
 const MerkleTree = require('./Merkle');
+const Graph = require('./Graph');
+const Encryption = require('./Encryption');
+const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
 
@@ -145,6 +148,17 @@ class ImportUtilities {
             }
         }
         return true;
+    }
+
+    /**
+     * Calculates more or less accurate size of the import
+     * @param vertices   Collection of vertices
+     * @returns {number} Size in bytes
+     */
+    static calculateEncryptedImportSize(vertices) {
+        const keyPair = Encryption.generateKeyPair(); // generate random pair of keys
+        Graph.encryptVertices(vertices, keyPair.privateKey);
+        return bytes(JSON.stringify(vertices));
     }
 
     /**

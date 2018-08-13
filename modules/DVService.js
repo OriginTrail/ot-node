@@ -17,6 +17,7 @@ class DVService {
      */
     constructor({
         network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
+        notifyError,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -26,201 +27,7 @@ class DVService {
         this.importer = importer;
         this.log = logger;
         this.remoteControl = remoteControl;
-    }
-
-    /**
-     * Sends query to the network
-     * @param query
-     * @returns {Promise<void>}
-     */
-    async queryNetwork(query) {
-        /*
-            Expected dataLocationRequestObject:
-            dataLocationRequestObject = {
-                message: {
-                    id: ID,
-                    wallet: DV_WALLET,
-                    nodeId: KAD_ID
-                    query: [
-                              {
-                                path: _path,
-                                value: _value,
-                                opcode: OPCODE
-                              },
-                              ...
-                    ]
-                }
-                messageSignature: {
-                    v: …,
-                    r: …,
-                    s: …
-                }
-             }
-         */
-
-        const networkQueryModel = await Models.network_queries.create({ query });
-
-        const dataLocationRequestObject = {
-            message: {
-                id: networkQueryModel.dataValues.id,
-                wallet: this.config.node_wallet,
-                nodeId: this.config.identity,
-                query,
-            },
-        };
-
-        dataLocationRequestObject.messageSignature =
-            Utilities.generateRsvSignature(
-                JSON.stringify(dataLocationRequestObject.message),
-                this.web3,
-                this.config.node_private_key,
-            );
-
-        this.network.kademlia().quasar.quasarPublish(
-            'kad-data-location-request',
-            dataLocationRequestObject,
-            {},
-            async () => {
-                this.log.info(`Published query to the network. Query ID ${networkQueryModel.id}.`);
-            },
-        );
-
-        return networkQueryModel.id;
-    }
-
-    /**
-     * Handles network queries and chose lowest offer.
-     * @param queryId
-     * @param totalTime
-     * @returns {Promise} Lowest offer. May be null.
-     */
-    handleQuery(queryId, totalTime = 60000) {
-        return new Promise((resolve, reject) => {
-            setTimeout(async () => {
-                // Check for all offers.
-                const responseModels = await Models.network_query_responses.findAll({
-                    where: { query_id: queryId },
-                });
-
-                this.log.trace(`Finalizing query ID ${queryId}. Got ${responseModels.length} offer(s).`);
-
-                let lowestOffer = null;
-                responseModels.forEach((response) => {
-                    const price = new BN(response.data_price, 10);
-                    if (lowestOffer == null || price.lt(new BN(lowestOffer.data_price, 10))) {
-                        lowestOffer = response.get({ plain: true });
-                    }
-                });
-
-                const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
-
-                if (!lowestOffer) {
-                    this.log.info('Didn\'t find answer or no one replied.');
-                    this.remoteControl.answerNotFound('Didn\'t find answer or no one replied.');
-                    networkQuery.status = 'FINISHED';
-                    await networkQuery.save({ fields: ['status'] });
-                } else {
-                    // Finish auction.
-                    networkQuery.status = 'PROCESSING';
-                    await networkQuery.save({ fields: ['status'] });
-                }
-
-                resolve(lowestOffer);
-            }, totalTime);
-        });
-    }
-
-    async handleReadOffer(offer, importId) {
-        /*
-            dataReadRequestObject = {
-            message: {
-                id: REPLY_ID
-                wallet: DV_WALLET,
-                nodeId: KAD_ID,
-                import_id: IMPORT_ID,
-            },
-            messageSignature: {
-                c: …,
-                r: …,
-                s: …
-            }
-            }
-         */
-        const message = {
-            id: offer.reply_id,
-            import_id: importId,
-            wallet: this.config.node_wallet,
-            nodeId: this.config.identity,
-        };
-
-        const dataReadRequestObject = {
-            message,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
-                this.web3,
-                this.config.node_private_key,
-            ),
-        };
-
-        await this.network.kademlia().dataReadRequest(
-            dataReadRequestObject,
-            offer.node_id,
-            (err) => {
-                if (err) {
-                    this.log.warn(`Data request failed for reply_id ${message.id}. ${err}`);
-                } else {
-                    this.log.info(`Data request sent for reply_id ${message.id}.`);
-                }
-            },
-        );
-    }
-
-    async handleDataLocationResponse(message) {
-        const queryId = message.id;
-
-        // Find the query.
-        const networkQuery = await Models.network_queries.findOne({
-            where: { id: queryId },
-        });
-
-        if (!networkQuery) {
-            throw Error(`Didn't find query with ID ${queryId}.`);
-        }
-
-        if (networkQuery.status !== 'OPEN') {
-            throw Error('Too late. Query closed.');
-        }
-
-        // Store the offer.
-        const networkQueryResponse = await Models.network_query_responses.create({
-            query: JSON.stringify(message.query),
-            query_id: queryId,
-            wallet: message.wallet,
-            node_id: message.nodeId,
-            imports: JSON.stringify(message.imports),
-            data_price: message.dataPrice,
-            stake_factor: message.stakeFactor,
-            reply_id: message.replyId,
-        });
-
-        // TODO: Fire socket notification for Houston
-
-        if (!networkQueryResponse) {
-            this.log.error(`Failed to add query response. ${message}.`);
-            throw Error('Internal error.');
-        }
-
-        this.remoteControl.networkQueryOfferArrived({
-            query: JSON.stringify(message.query),
-            query_id: queryId,
-            wallet: message.wallet,
-            node_id: message.nodeId,
-            imports: JSON.stringify(message.imports),
-            data_size: message.dataSize,
-            data_price: message.dataPrice,
-            stake_factor: message.stakeFactor,
-            reply_id: message.replyId,
-        });
+        this.notifyError = notifyError;
     }
 
     async handleDataReadResponse(message) {
@@ -304,6 +111,7 @@ class DVService {
             }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
+            this.notifyError(error);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             return;
@@ -496,6 +304,7 @@ class DVService {
                 await networkQuery.save({ fields: ['status'] });
             } catch (err) {
                 this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+                this.notifyError(err);
                 if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });

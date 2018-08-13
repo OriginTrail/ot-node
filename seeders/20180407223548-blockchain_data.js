@@ -1,7 +1,7 @@
 require('dotenv').config();
 const log = require('../modules/Utilities').getLogger();
 
-if (process.env.NODE_ENV !== 'test' && !(process.env.NODE_WALLET && process.env.NODE_PRIVATE_KEY)) {
+if (!(process.env.NODE_WALLET && process.env.NODE_PRIVATE_KEY)) {
     log.error('You have to set node wallet and private key in .env');
     process.kill(0);
 }
