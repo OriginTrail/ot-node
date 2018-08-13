@@ -75,7 +75,7 @@ class Challenger {
         this.log.debug(`Sending proof for litigation, Import ${importId}. Answer for block ${blockId} is ${block}`);
         await this.blockchain.proveLitigation(importId, dhWallet, block);
 
-        const waitForLitigationEnd = 5 * 60 * 1000;
+        const waitForLitigationEnd = 15 * 60 * 1000;
         const eventData = await this.blockchain.subscribeToEvent('LitigationCompleted', importId, waitForLitigationEnd);
         const {
             DH_wallet,
