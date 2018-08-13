@@ -17,6 +17,7 @@ class DVService {
      */
     constructor({
         network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
+        notifyError,
     }) {
         this.network = network;
         this.blockchain = blockchain;
@@ -26,6 +27,7 @@ class DVService {
         this.importer = importer;
         this.log = logger;
         this.remoteControl = remoteControl;
+        this.notifyError = notifyError;
     }
 
     async handleDataReadResponse(message) {
@@ -109,6 +111,7 @@ class DVService {
             }, true);
         } catch (error) {
             this.log.warn(`Failed to import JSON. ${error}.`);
+            this.notifyError(error);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             return;
@@ -301,6 +304,7 @@ class DVService {
                 await networkQuery.save({ fields: ['status'] });
             } catch (err) {
                 this.log.warn(`Invalid purchase decryption key, Reply ID ${id}, wallet ${wallet}, import ID ${importId}.`);
+                this.notifyError(err);
                 if (await this._litigatePurchase(importId, wallet, nodeId, m1, m2, e)) {
                     networkQuery.status = 'FINISHED';
                     await networkQuery.save({ fields: ['status'] });

@@ -101,6 +101,32 @@ process.on('exit', (code) => {
     }
 });
 
+function notifyBugsnag(error, subsystem) {
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        const options = {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+        };
+
+        if (subsystem) {
+            options.subsystem = {
+                name: subsystem,
+            };
+        }
+
+        bugsnag.notify(error, options);
+    }
+}
+
 /**
  * Main node object
  */
@@ -141,6 +167,7 @@ class OTNode {
             }
         } catch (error) {
             console.log(error);
+            notifyBugsnag(error);
         }
         config.enoughFunds = enoughETH && enoughtTRAC;
     }
@@ -175,6 +202,7 @@ class OTNode {
             log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -188,6 +216,7 @@ class OTNode {
             log.info('Loaded system config');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -197,6 +226,7 @@ class OTNode {
             await Utilities.checkForUpdates();
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -214,6 +244,7 @@ class OTNode {
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);
+                notifyBugsnag(err);
                 process.exit(1);
             }
         }
@@ -226,6 +257,7 @@ class OTNode {
             config.database = selectedDatabase;
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -235,6 +267,7 @@ class OTNode {
             log.info('Storage database check done');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -246,6 +279,7 @@ class OTNode {
             config.blockchain = selectedBlockchain;
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -296,6 +330,7 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -314,6 +349,7 @@ class OTNode {
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -343,6 +379,7 @@ class OTNode {
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
+            notifyBugsnag(e);
             process.exit(1);
         }
 

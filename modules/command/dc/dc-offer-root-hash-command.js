@@ -11,6 +11,7 @@ class DCOfferRootHashCommand extends Command {
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     async execute(command) {
@@ -34,6 +35,7 @@ class DCOfferRootHashCommand extends Command {
             } catch (err) {
                 offer.status = 'FAILED';
                 await offer.save({ fields: ['status'] });
+                this.notifyError(err);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);
             }
         } else if (blockchainRootHash !== rootHash) {
