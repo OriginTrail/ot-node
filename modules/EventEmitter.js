@@ -94,6 +94,7 @@ class EventEmitter {
             profileService,
             dcController,
             dvController,
+            notifyError,
         } = this.ctx;
 
         this._on('api-import-request', (data) => {
@@ -135,6 +136,7 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((error) => {
                 logger.error(`Failed to get trail for query ${data.query}`);
+                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -156,6 +158,7 @@ class EventEmitter {
                 data.response.send(result);
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
+                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -174,6 +177,7 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((error) => {
                 logger.error(`Failed to get imports for query ${data.query}`);
+                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -190,8 +194,9 @@ class EventEmitter {
                     data.response.status(200);
                 }
                 data.response.send(res);
-            }).catch(() => {
+            }).catch((error) => {
                 logger.error(`Failed to get vertices for query ${data.query}`);
+                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: `Failed to get vertices for query ${data.query}`,
@@ -221,6 +226,7 @@ class EventEmitter {
                 data.response.send(res);
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${data.query}`);
+                notifyError(err);
                 data.response.status(500);
                 data.response.send(`Failed to get root hash for query ${data.query}`); // TODO rethink about status codes
             });
@@ -244,7 +250,10 @@ class EventEmitter {
                         query_id: queryId,
                     });
                     dvController.handleQuery(queryId, 60000);
-                }).catch(error => logger.error(`Failed query network. ${error}.`));
+                }).catch((error) => {
+                    logger.error(`Failed query network. ${error}.`);
+                    notifyError(error);
+                });
         });
 
         this._on('api-choose-offer', async (data) => {
@@ -285,6 +294,7 @@ class EventEmitter {
                 });
             } catch (e) {
                 failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`);
+                notifyError(e);
             }
         });
 
@@ -304,6 +314,7 @@ class EventEmitter {
                     });
                 } catch (error) {
                     logger.info(`Failed to process network query status for ID ${id}. ${error}.`);
+                    notifyError(error);
                     response.status(500);
                     response.send({
                         error: 'Fail to process.',
@@ -326,6 +337,7 @@ class EventEmitter {
                     message: error.message,
                 });
                 remoteControl.importFailed(error);
+                notifyError(error);
                 return;
             }
 
@@ -349,6 +361,7 @@ class EventEmitter {
                         data_size: dataSize,
                     }).catch((error) => {
                         logger.error(error);
+                        notifyError(error);
                         data.response.status(500);
                         data.response.send({
                             message: error,
@@ -368,6 +381,7 @@ class EventEmitter {
                 }
             } catch (error) {
                 logger.error(`Failed to register import. Error ${error}.`);
+                notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -430,6 +444,7 @@ class EventEmitter {
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
+                notifyError(error);
                 data.response.status(405);
                 data.response.send({
                     message: `Failed to start offer. ${error}.`,
@@ -488,6 +503,7 @@ class EventEmitter {
                 });
             } catch (error) {
                 logger.error(`Failed to deposit tokens. ${error}.`);
+                notifyError(error);
                 data.response.status(400);
                 data.response.send({
                     message: `Failed to deposit tokens. ${error}.`,
@@ -511,6 +527,7 @@ class EventEmitter {
                 remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
+                notifyError(error);
                 data.response.status(400);
                 data.response.send({
                     message: `Failed to withdraw tokens. ${error}.`,
@@ -530,6 +547,7 @@ class EventEmitter {
             logger,
             config,
             dhController,
+            notifyError,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
@@ -603,6 +621,7 @@ class EventEmitter {
                 );
             } catch (error) {
                 logger.error(`Failed to handle predetermined bid. ${error}.`);
+                notifyError(error);
             }
         });
 
@@ -634,6 +653,7 @@ class EventEmitter {
                 );
             } catch (error) {
                 logger.error(`Failed to handle predetermined bid. ${error}.`);
+                notifyError(error);
             }
         });
 
@@ -676,6 +696,7 @@ class EventEmitter {
                     }
                 } catch (error) {
                     logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
+                    notifyError(error);
                 }
             }
         });
@@ -697,6 +718,7 @@ class EventEmitter {
             dhController,
             dcController,
             dvController,
+            notifyError,
         } = this.ctx;
 
         this._on('kad-data-location-request', async (kadMessage) => {
@@ -719,6 +741,7 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);
+                notifyError(error);
             }
         });
 
@@ -832,6 +855,7 @@ class EventEmitter {
                 logger.info(`Payload for ${import_id} sent to ${kadIdentity}.`);
             }).catch((error) => {
                 logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
+                notifyError(error);
             });
         });
 
@@ -861,6 +885,7 @@ class EventEmitter {
                 });
             }).catch((error) => {
                 logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
 
                 response.send({
                     status: 'fail',
@@ -890,6 +915,7 @@ class EventEmitter {
                 await dvController.handleDataLocationResponse(message);
             } catch (error) {
                 logger.error(`Failed to process location response. ${error}.`);
+                notifyError(error);
             }
         });
 
@@ -928,6 +954,7 @@ class EventEmitter {
                 await dvService.handleDataReadResponse(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
+                notifyError(error);
             }
         });
 
@@ -951,6 +978,7 @@ class EventEmitter {
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
+                notifyError(error);
                 await network.kademlia().sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,

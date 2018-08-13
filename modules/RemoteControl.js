@@ -46,6 +46,7 @@ class RemoteControl {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
+        this.notifyError = ctx.notifyError;
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -60,7 +61,7 @@ class RemoteControl {
                     callback(null, res.value === password);
                 });
             } catch (e) {
-                // Error
+                this.notifyError(e);
             }
         });
     }
@@ -373,7 +374,7 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponse', rows);
             }).catch((e) => {
-
+                this.notifyError(e);
             });
     }
 
@@ -459,7 +460,7 @@ class RemoteControl {
                     this.socket.emit('networkQueryResponses', rows);
                 }
             }).catch((e) => {
-
+                this.notifyError(e);
             });
     }
 
@@ -480,7 +481,7 @@ class RemoteControl {
             .then((rows) => {
                 this.socket.emit('localDataResponses', rows);
             }).catch((e) => {
-
+                this.notifyError(e);
             });
     }
 

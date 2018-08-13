@@ -288,4 +288,4 @@ describe('Challenge tests', () => {
             expect(Challenge.answerTestQuestion(4, vertexData, byteSize)).to.be.equal('nim ad minim veniam, quis nostru');
         });
     });
-});
+}).timeout(5000);
