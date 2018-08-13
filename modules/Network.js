@@ -12,6 +12,7 @@ const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
 const PeerCache = require('./kademlia/PeerCache');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const ip = require('ip');
 
 /**
  * DHT module (Kademlia)
@@ -24,6 +25,7 @@ class Network {
         this.log = ctx.logger;
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
+        this.notifyError = ctx.notifyError;
 
         kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
@@ -94,6 +96,7 @@ class Network {
             index: parseInt(config.child_derivation_index, 10),
             agent: kadence.version.protocol,
             wallet: config.node_wallet,
+            network_id: config.network_id,
         };
 
         const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
@@ -111,6 +114,33 @@ class Network {
             contact,
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
+
+        // Override node's _updateContact method to filter contacts.
+        this.node._updateContact = (identity, contact) => {
+            try {
+                if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
+                    if (config.local_network_only && ip.isPublic(contact.hostname)) {
+                        this.log.debug(`Ignored contact ${identity} from remote address: ${contact.hostname}.`);
+                        return;
+                    } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
+                        this.log.debug(`Ignored contact ${identity} from local address: ${contact.hostname}.`);
+                        return;
+                    }
+                }
+                if (!contact.network_id || contact.network_id !== config.network_id) {
+                    this.log.debug(`Ignored contact ${identity}. Invalid network ID.`);
+                    return;
+                }
+            } catch (err) {
+                this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                return;
+            }
+
+            // Simulate node's "super._updateContact(identity, contact)".
+            this.node.constructor.prototype.constructor.prototype
+                ._updateContact.call(this.node, identity, contact);
+        };
+
         this.log.info('Starting OT Node...');
         this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
@@ -161,6 +191,7 @@ class Network {
                     }
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
+                    this.notifyError(e);
                 }
 
                 this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
@@ -534,6 +565,7 @@ class Network {
                     resolve(null);
                 } catch (e) {
                     // failed to refresh buckets (should not happen)
+                    this.notifyError(e);
                 }
             });
 

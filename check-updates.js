@@ -109,7 +109,7 @@ class AutoUpdate {
             autoupdater.fire('check');
         });
     }
-    restartNode() {
+    static restartNode() {
         setTimeout(() => {
             process.on('exit', () => {
                 /* eslint-disable-next-line */
@@ -119,7 +119,7 @@ class AutoUpdate {
                     stdio: 'inherit',
                 });
             });
-            process.exit(0);
+            process.exit(3);
         }, 5000);
     }
 }

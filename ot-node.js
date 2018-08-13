@@ -16,6 +16,7 @@ const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 const BN = require('bn.js');
+const bugsnag = require('bugsnag');
 
 const awilix = require('awilix');
 
@@ -23,7 +24,6 @@ const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DCService = require('./modules/DCService');
 const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const ProfileService = require('./modules/ProfileService');
@@ -40,16 +40,51 @@ process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
     }
-    log.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
-    // application specific logging, throwing an error, or other logic here
+    log.error(`Unhandled Rejection:\n${reason.stack}`);
+
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        bugsnag.notify(
+            reason,
+            {
+                user: {
+                    id: config.node_wallet,
+                    identity: config.node_kademlia_id,
+                    config: cleanConfig,
+                },
+            },
+        );
+    }
 });
 
 process.on('uncaughtException', (err) => {
-    if (process.env.NODE_ENV === 'test') {
-        log.error(`Caught exception: ${err}\n`);
+    if (process.env.NODE_ENV === 'development') {
+        log.error(`Caught exception: ${err}.\n ${err.stack}`);
         process.exit(1);
     }
-    log.error(`Caught exception: ${err}\n`);
+    log.error(`Caught exception: ${err}.\n ${err.stack}`);
+
+    const cleanConfig = Object.assign({}, config);
+    delete cleanConfig.node_private_key;
+    delete cleanConfig.houston_password;
+    delete cleanConfig.database;
+    delete cleanConfig.blockchain;
+
+    bugsnag.notify(
+        err,
+        {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+        },
+    );
 });
 
 process.on('warning', (warning) => {
@@ -65,6 +100,32 @@ process.on('exit', (code) => {
         log.debug(`Normal exiting with code: ${code}`);
     }
 });
+
+function notifyBugsnag(error, subsystem) {
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        const options = {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+        };
+
+        if (subsystem) {
+            options.subsystem = {
+                name: subsystem,
+            };
+        }
+
+        bugsnag.notify(error, options);
+    }
+}
 
 /**
  * Main node object
@@ -106,6 +167,7 @@ class OTNode {
             }
         } catch (error) {
             console.log(error);
+            notifyBugsnag(error);
         }
         config.enoughFunds = enoughETH && enoughtTRAC;
     }
@@ -113,16 +175,34 @@ class OTNode {
      * OriginTrail node system bootstrap function
      */
     async bootstrap() {
+        if (process.env.NODE_ENV !== 'development') {
+            bugsnag.register(
+                pjson.config.bugsnagkey,
+                {
+                    appVersion: pjson.version,
+                    autoNotify: false,
+                    sendCode: true,
+                    releaseStage: 'development',
+                    logger: {
+                        info: log.info,
+                        warn: log.warn,
+                        error: log.error,
+                    },
+                },
+            );
+        }
+
         try {
             // check if all dependencies are installed
             await Utilities.checkInstalledDependencies();
-            log.info('npm modules dependences check done');
+            log.info('npm modules dependencies check done');
 
-            // Checking root folder stucture
+            // Checking root folder structure
             Utilities.checkOtNodeDirStructure();
             log.info('ot-node folder structure check done');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -136,6 +216,7 @@ class OTNode {
             log.info('Loaded system config');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -145,6 +226,7 @@ class OTNode {
             await Utilities.checkForUpdates();
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -162,6 +244,7 @@ class OTNode {
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
                 console.log(err);
+                notifyBugsnag(err);
                 process.exit(1);
             }
         }
@@ -174,6 +257,7 @@ class OTNode {
             config.database = selectedDatabase;
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -183,6 +267,7 @@ class OTNode {
             log.info('Storage database check done');
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -194,6 +279,7 @@ class OTNode {
             config.blockchain = selectedBlockchain;
         } catch (err) {
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -215,13 +301,20 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asClass(EventEmitter).singleton(),
             network: awilix.asClass(Network).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
-            dcService: awilix.asClass(DCService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
@@ -237,6 +330,7 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -255,6 +349,7 @@ class OTNode {
         } catch (err) {
             log.error(`Failed to connect to the graph database: ${graphStorage.identify()}`);
             console.log(err);
+            notifyBugsnag(err);
             process.exit(1);
         }
 
@@ -284,6 +379,7 @@ class OTNode {
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
+            notifyBugsnag(e);
             process.exit(1);
         }
 
@@ -296,6 +392,10 @@ class OTNode {
 
         const challenger = container.resolve('challenger');
         await challenger.startChallenging();
+
+        const commandExecutor = container.resolve('commandExecutor');
+        await commandExecutor.init();
+        await commandExecutor.replay();
     }
 
     /**

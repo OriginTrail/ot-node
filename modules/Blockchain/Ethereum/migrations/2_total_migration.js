@@ -190,7 +190,7 @@ module.exports = (deployer, network, accounts) => {
     // eslint-disable-next-line
     case 'rinkeby':
         const tokenAddress = '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882';
-        const fingerprintAddress = '0x8126e8a02bcae11a631d4413b9bd4f01f14e045d';
+        const fingerprintAddress = '0x826b0e0b03f22c5e58557456bd8b8ede318c2e0a';
         deployer.deploy(EscrowHolder, tokenAddress, { gas: 6000000 })
         .then(async (result) => {
             escrow = result;

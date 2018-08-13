@@ -18,6 +18,8 @@ const BN = require('bn.js');
 const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
 
+const pjson = require('../package.json');
+
 require('dotenv').config();
 require('winston-loggly-bulk');
 
@@ -166,7 +168,8 @@ class Utilities {
                 [
                     new (winston.transports.Console)({
                         colorize: 'all',
-                        timestamp: false,
+                        timestamp: true,
+                        formatter: this.formatFileLogs,
                         prettyPrint: object => JSON.stringify(object),
                         stderrLevels: [
                             'trace',
@@ -187,11 +190,12 @@ class Utilities {
                     }),
                 ];
 
+            const networkID = process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development';
             if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: ['OT-Node'],
+                    tags: ['development', networkID, pjson.version],
                     json: true,
                 }));
             }
