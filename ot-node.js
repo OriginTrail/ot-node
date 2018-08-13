@@ -330,7 +330,7 @@ class OTNode {
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
-            notifyError: awilix.asFunction(notifyBugsnag),
+            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
