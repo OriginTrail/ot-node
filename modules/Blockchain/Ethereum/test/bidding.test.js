@@ -732,4 +732,61 @@ contract('Bidding testing', async (accounts) => {
             'Read status not equal confirmed',
         );
     });
+
+    // eslint-disable-next-line no-undef
+    it('Should send encrypted block', async () => {
+        // Get instances of contracts used in the test
+        const reading = await Reading.deployed();
+
+        let encryptedBlock = 1235; // This is only for testing, not a valid value
+
+        let tx = await reading.sendEncryptedBlock(
+            import_id,
+            accounts[reader],
+            encryptedBlock,
+            { from: accounts[seller] },
+        );
+
+        console.log(`\t Gas Used for sending encrypted block: ${tx.receipt.gasUsed}`);
+
+        let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        var actual_encrypted_block = response[3].toNumber();
+        var actual_status = response[5].toNumber();
+        assert.equal(
+            actual_encrypted_block,
+            encryptedBlock,
+            'Encrypted block value not valid',
+        );
+        assert.equal(
+            actual_status,
+            4,
+            'Read status not equal sent',
+        );
+    });
+
+    // THIS TEST IS NOT USED BECAUSE THE TIMEOUT SET ON PAYOUT WOULD EXCEED THE MAX TIME ALLOWED FOR A TEST
+
+    // // eslint-disable-next-line no-undef
+    // it('Should payout seller for data purchase', async () => {
+    //     // Get instances of contracts used in the test
+    //     const reading = await Reading.deployed();
+
+    //     await new Promise(resolve => setTimeout(resolve, 305000));
+
+    //     let tx = await reading.payOut(
+    //         import_id,
+    //         accounts[reader],
+    //         { from: accounts[seller] },
+    //     );
+
+    //     console.log(`\t Gas Used for purchase payment: ${tx.receipt.gasUsed}`);
+
+    //     let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+    //     var actual_status = response[5].toNumber();
+    //     assert.equal(
+    //         actual_status,
+    //         7,
+    //         'Read status not equal completed',
+    //     );
+    // });
 });
