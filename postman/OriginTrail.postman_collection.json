@@ -1,0 +1,419 @@
+{
+	"info": {
+		"_postman_id": "ccb96309-f511-4335-99ed-9d23fad79a03",
+		"name": "OriginTrail",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/api/import",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ed9219f5-1661-4e6f-b15b-dcc3532d1792",
+						"type": "text/javascript",
+						"exec": [
+							"var data = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"import_id\", data.import_id);"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "data_id",
+							"value": "0x653fc4bca63f6de06a1bd47a2434545db4f95af3c1d1d6593aff72b4a11bbba5",
+							"type": "text",
+							"disabled": true
+						},
+						{
+							"key": "importtype",
+							"value": "{{importtype}}",
+							"type": "text"
+						},
+						{
+							"key": "importfile",
+							"type": "file"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/import?",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"import"
+					],
+					"query": [
+						{
+							"key": "data_id",
+							"value": "0x174ff26aa6d6c6be0e8cbcb1d14a1f82924f6afa9425dfdf16b971e12b3bbd04",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/trail",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/trail?vertex_type={{vertex_type}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"trail"
+					],
+					"query": [
+						{
+							"key": "uid",
+							"value": "{{uid}}",
+							"disabled": true
+						},
+						{
+							"key": "vertex_type",
+							"value": "{{vertex_type}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local/import",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local/import",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local",
+						"import"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/replication",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "2b457da8-3339-415a-b249-e34366d01bf3",
+						"type": "text/javascript",
+						"exec": [
+							"var data = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"replication_id\", data.replication_id);"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "import_id",
+							"value": "{{import_id}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/replication",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"replication"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/replication/:{replication_id}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "import_id",
+							"value": "0xa3f2b70718bbc5f4a136fda16ef77e5af568c33e1ccfeabee979cc90d88553b1",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/replication/{{replication_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"replication",
+						"{{replication_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/network",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/network",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"network"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/{query_id}/responses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/{query_id}/responses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"{query_id}",
+						"responses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api/query/network/{query_param} ",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}api/query/network/{query_param}",
+					"host": [
+						"{{baseUrl}}api"
+					],
+					"path": [
+						"query",
+						"network",
+						"{query_param}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local/import",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local/import",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local",
+						"import"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local/import:{import_id}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local/import/{{import_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local",
+						"import",
+						"{{import_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/fingerprint",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/fingerprint?dc_wallet={{dc_wallet}}&import_id={{import_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"fingerprint"
+					],
+					"query": [
+						{
+							"key": "dc_wallet",
+							"value": "{{dc_wallet}}"
+						},
+						{
+							"key": "import_id",
+							"value": "{{import_id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/deposit",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\t\"atrac_amount\": 10\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/deposit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"deposit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/withdraw",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\t\"atrac_amount\": 10\n\t\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/withdraw",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"withdraw"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
