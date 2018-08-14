@@ -617,8 +617,8 @@ contract('Bidding testing', async (accounts) => {
 
     var read_token_amount = 10e10;
     var read_stake_factor = 2;
-    let reader = 1;
-    let seller = 2;
+    const reader = 1;
+    const seller = 2;
 
     // eslint-disable-next-line no-undef
     it('Should initiate reading between acc[2] and acc[1]', async () => {
@@ -644,7 +644,7 @@ contract('Bidding testing', async (accounts) => {
             'Purchased data - checksum not matching',
         );
 
-        let tx = await reading.initiatePurchase(
+        const tx = await reading.initiatePurchase(
             import_id,
             accounts[seller],
             read_token_amount,
@@ -683,9 +683,9 @@ contract('Bidding testing', async (accounts) => {
         const reading = await Reading.deployed();
         const util = await TestingUtilities.deployed();
 
-        let commitment = await util.keccakString.call("This is only a test");
+        const commitment = await util.keccakString.call('This only a test');
 
-        let tx = await reading.sendCommitment(
+        const tx = await reading.sendCommitment(
             import_id,
             accounts[reader],
             commitment,
@@ -694,7 +694,7 @@ contract('Bidding testing', async (accounts) => {
 
         console.log(`\t Gas Used for sending commitment: ${tx.receipt.gasUsed}`);
 
-        let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
         var actual_commitment = response[2];
         var actual_status = response[5].toNumber();
 
@@ -715,7 +715,7 @@ contract('Bidding testing', async (accounts) => {
         // Get instances of contracts used in the test
         const reading = await Reading.deployed();
 
-        let tx = await reading.confirmPurchase(
+        const tx = await reading.confirmPurchase(
             import_id,
             accounts[seller],
             { from: accounts[reader] },
@@ -723,7 +723,7 @@ contract('Bidding testing', async (accounts) => {
 
         console.log(`\t Gas Used for confirming purchase: ${tx.receipt.gasUsed}`);
 
-        let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
         var actual_status = response[5].toNumber();
 
         assert.equal(
@@ -738,9 +738,9 @@ contract('Bidding testing', async (accounts) => {
         // Get instances of contracts used in the test
         const reading = await Reading.deployed();
 
-        let encryptedBlock = 1235; // This is only for testing, not a valid value
+        const encryptedBlock = 1235; // This is only for testing, not a valid value
 
-        let tx = await reading.sendEncryptedBlock(
+        const tx = await reading.sendEncryptedBlock(
             import_id,
             accounts[reader],
             encryptedBlock,
@@ -749,7 +749,7 @@ contract('Bidding testing', async (accounts) => {
 
         console.log(`\t Gas Used for sending encrypted block: ${tx.receipt.gasUsed}`);
 
-        let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
         var actual_encrypted_block = response[3].toNumber();
         var actual_status = response[5].toNumber();
         assert.equal(
@@ -764,7 +764,8 @@ contract('Bidding testing', async (accounts) => {
         );
     });
 
-    // THIS TEST IS NOT USED BECAUSE THE TIMEOUT SET ON PAYOUT WOULD EXCEED THE MAX TIME ALLOWED FOR A TEST
+    // THIS TEST IS NOT USED
+    // BECAUSE THE TIMEOUT SET ON PAYOUT WOULD EXCEED THE MAX TIME ALLOWED FOR A TEST
 
     // // eslint-disable-next-line no-undef
     // it('Should payout seller for data purchase', async () => {
@@ -781,7 +782,12 @@ contract('Bidding testing', async (accounts) => {
 
     //     console.log(`\t Gas Used for purchase payment: ${tx.receipt.gasUsed}`);
 
-    //     let response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+
+    //     let response = await reading.purchase.call(
+    //             accounts[seller],
+    //             accounts[reader],
+    //             import_id,
+    //        );
     //     var actual_status = response[5].toNumber();
     //     assert.equal(
     //         actual_status,
