@@ -12,8 +12,8 @@
     "test:api": "nyc mocha --recursive test/api/*.test.js",
     "test:protocol": "nyc mocha --recursive test/protocol/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
-    "config": "sqlite3 modules/Database/system.db 'DELETE FROM node_config; DELETE FROM graph_database; DELETE FROM blockchain_data; UPDATE sqlite_sequence SET seq=0 WHERE name=\"graph_database\" OR name=\"blockchain_data\" OR name=\"node_config\"; VACUUM;' && ./node_modules/.bin/sequelize db:seed:all",
-    "bootstrap": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize db:migrate; ./node_modules/.bin/sequelize db:seed:all",
+    "config": "sqlite3 modules/Database/system.db 'DELETE FROM node_config; DELETE FROM graph_database; DELETE FROM blockchain_data; UPDATE sqlite_sequence SET seq=0 WHERE name=\"graph_database\" OR name=\"blockchain_data\" OR name=\"node_config\"; VACUUM;' && ./node_modules/.bin/sequelize --config=./config/sequelize.json db:seed:all",
+    "bootstrap": "rm modules/Database/system.db &> /dev/null || true && touch modules/Database/system.db; ./node_modules/.bin/sequelize --config=./config/sequelize.json db:migrate; ./node_modules/.bin/sequelize --config=./config/sequelize.json db:seed:all",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js add_db_backup.js check-updates.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
     "db_backup": " node add_db_backup.js"
@@ -100,6 +100,7 @@
     "pem": "^1.12.3",
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
+    "rc": "^1.2.8",
     "restify": "^7.2.1",
     "restify-cors-middleware": "^1.1.1",
     "rimraf": "^2.6.2",

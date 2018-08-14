@@ -588,7 +588,7 @@ describe('Protocol tests', () => {
 
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
-            importId = Utilities.createImportId();
+            importId = Utilities.createImportId(testNode1.wallet);
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
             mockGraphStorage.imports[importId] = { vertices, edges };

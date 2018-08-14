@@ -1,40 +1,66 @@
 {
   "development": {
-    "database": "main",
-    "host": "127.0.0.1",
-    "dialect": "sqlite",
-    "storage": "./modules/Database/system.db",
-    "migrationStorageTableName": "sequelize_meta",
-    "logging": false,
-    "operatorsAliases": false,
-    "define": {
-      "underscored": true,
-      "timestamps": false
+    "identity": null,
+    "houston_password": null,
+    "node_ip": "127.0.0.1",
+    "node_port": 5278,
+    "node_rpc_port": 8900,
+    "node_remote_control_port": 3000,
+    "import_whitelist": ["54.93.223.161", "127.0.0.1"],
+    "remote_access_whitelist": [],
+    "network_bootstrap_nodes": ["https://46.101.38.216:5278/#e5aa5d1e26a91d07ace18f2b25ef4d49a335c1c1"],
+    "test_network_enabled": true,
+    "is_bootstrap_node": false,
+    "send_logs": false,
+    "logs_level_debug": true,
+    "network_id": "DevnetV1.0.0",
+    "request_timeout": 20000,
+    "ssl_keypath": "kademlia.key",
+    "ssl_certificate_path": "kademlia.crt",
+    "private_extended_key_path": "kademlia.prv",
+    "child_derivation_index": null,
+    "cpus": 1,
+    "embedded_wallet_directory": "wallet.dat",
+    "embedded_peercache_path": "peercache",
+    "onion_virtual_port": "4043",
+    "traverse_nat_enabled": false,
+    "traverse_port_forward_ttl": 0,
+    "verbose_logging": false,
+    "control_port_enabled": false,
+    "control_port": "5279",
+    "control_sock_enabled": "peercache",
+    "control_sock": "",
+    "onion_enabled": false,
+    "test_network": true,
+    "ssl_authority_paths": [],
+    "database": {
+      "provider": "arangodb",
+      "username": "root",
+      "password": "",
+      "port": 8529,
+      "database": "origintrail",
+      "host": "localhost"
+    },
+    "blockchain": {
+      "blockchain_title": "Ethereum",
+      "network_id": "rinkeby",
+      "gas_limit": "800000",
+      "gas_price": "5000000000",
+      "ot_contract_address": "0x826b0e0b03f22c5e58557456bd8b8ede318c2e0a",
+      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
+      "escrow_contract_address": "0xd5b0c40a179a35bad10ad52e6ee9fbf0df86f09d",
+      "bidding_contract_address": "0xd82e889ec14db740ca8898675511acc0c787359d",
+      "reading_contract_address": "0xb92bfecbcdb6af8d089ff90db6e20b199fbdd04f",
+      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
+      "rpc_node_port": ""
     }
+  },
+  "staging": {
+  },
+  "stable": {
   },
   "test": {
-    "database": "main",
-    "host": "127.0.0.1",
-    "dialect": "sqlite",
-    "storage": "./modules/Database/system.db",
-    "migrationStorageTableName": "sequelize_meta",
-    "logging": false,
-    "operatorsAliases": false,
-    "define": {
-      "underscored": true,
-      "timestamps": false
-    }
   },
   "production": {
-    "database": "main",
-    "host": "127.0.0.1",
-    "dialect": "sqlite",
-    "storage": "./modules/Database/system.db",
-    "migrationStorageTableName": "sequelize_meta",
-    "logging": false,
-    "define": {
-      "underscored": true,
-      "timestamps": false
-    }
   }
 }

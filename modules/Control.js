@@ -1,9 +1,12 @@
 const CT = require('@kadenceproject/kadence').Control;
-const config = require('./Config');
 
 class Control extends CT {
+    constructor(node, config) {
+        super(node);
+        this.config = config;
+    }
     getConfigParams(callback) {
-        if (!config) {
+        if (!this.config) {
             callback('Unable to read config');
         }
         callback(null, config);

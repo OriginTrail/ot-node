@@ -18,6 +18,7 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.appState = ctx.appState;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -91,6 +92,7 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
+            appState,
             profileService,
             dcController,
             dvController,
@@ -234,7 +236,7 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -257,7 +259,7 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const failFunction = (error) => {
@@ -410,7 +412,7 @@ class EventEmitter {
         });
 
         this._on('api-create-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -546,12 +548,13 @@ class EventEmitter {
             dhService,
             logger,
             config,
+            appState,
             dhController,
             notifyError,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const {
@@ -573,7 +576,7 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const {

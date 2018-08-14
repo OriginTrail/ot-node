@@ -4,7 +4,6 @@ const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
-const config = require('./Config');
 const fs = require('fs');
 const utilities = require('./Utilities');
 const _ = require('lodash');
@@ -26,18 +25,18 @@ class Network {
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
         this.notifyError = ctx.notifyError;
+        this.config = ctx.config;
 
-        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
-        if (parseInt(config.test_network, 10)) {
+        kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
+        if (this.config.test_network) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
-            process.env.kadence_TestNetworkEnabled = config.test_network;
             kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
             kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
         }
-        this.index = parseInt(config.child_derivation_index, 10);
+        this.index = this.config.child_derivation_index;
 
         // Initialize private extended key
-        utilities.createPrivateExtendedKey(kadence);
+        utilities.createPrivateExtendedKey(kadence, this.config);
     }
 
     /**
@@ -46,13 +45,13 @@ class Network {
      */
     async initialize() {
         // Check config
-        this.networkUtilities.verifyConfiguration(config);
+        this.networkUtilities.verifyConfiguration(this.config);
 
         this.log.info('Checking SSL certificate');
-        await this.networkUtilities.setSelfSignedCertificate(config);
+        await this.networkUtilities.setSelfSignedCertificate();
 
         this.log.info('Getting the identity');
-        this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
+        this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${this.config.private_extended_key_path}`).toString();
         this.identity = new kadence.eclipse.EclipseIdentity(
             this.xprivkey,
             this.index,
@@ -66,12 +65,12 @@ class Network {
         const { childKey } = this.networkUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
-            parseInt(config.child_derivation_index, 10),
+            this.config.child_derivation_index,
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
         this.log.notify(`My identity: ${this.identity}`);
-        config.identity = this.identity;
+        this.config.identity = this.identity;
     }
 
     /**
@@ -84,24 +83,24 @@ class Network {
         const { parentKey } = this.networkUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
-            parseInt(config.child_derivation_index, 10),
+            this.config.child_derivation_index,
         );
 
         // Initialize public contact data
         const contact = {
-            hostname: config.node_rpc_ip,
+            hostname: this.config.node_rpc_ip,
             protocol: 'https:',
-            port: parseInt(config.node_port, 10),
+            port: this.config.node_port,
             xpub: parentKey.publicExtendedKey,
-            index: parseInt(config.child_derivation_index, 10),
+            index: this.config.child_derivation_index,
             agent: kadence.version.protocol,
-            wallet: config.node_wallet,
-            network_id: config.network_id,
+            wallet: this.config.node_wallet,
+            network_id: this.config.network_id,
         };
 
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+        const key = fs.readFileSync(`${__dirname}/../keys/${this.config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../keys/${this.config.ssl_certificate_path}`);
+        const ca = this.config.ssl_authority_paths.map(fs.readFileSync);
 
         // Initialize transport adapter
         const transport = new kadence.HTTPSTransport({ key, cert, ca });
@@ -119,15 +118,15 @@ class Network {
         this.node._updateContact = (identity, contact) => {
             try {
                 if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
-                    if (config.local_network_only && ip.isPublic(contact.hostname)) {
+                    if (this.config.local_network_only && ip.isPublic(contact.hostname)) {
                         this.log.debug(`Ignored contact ${identity} from remote address: ${contact.hostname}.`);
                         return;
-                    } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
+                    } else if (!this.config.local_network_only && ip.isPrivate(contact.hostname)) {
                         this.log.debug(`Ignored contact ${identity} from local address: ${contact.hostname}.`);
                         return;
                     }
                 }
-                if (!contact.network_id || contact.network_id !== config.network_id) {
+                if (!contact.network_id || contact.network_id !== this.config.network_id) {
                     this.log.debug(`Ignored contact ${identity}. Invalid network ID.`);
                     return;
                 }
@@ -145,40 +144,36 @@ class Network {
         this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
-        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${this.config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
         this.node.spartacus = this.node.plugin(kadence.spartacus(
             this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
+            this.config.child_derivation_index,
             kadence.constants.HD_KEY_DERIVATION_PATH,
         ));
         this.log.info('Spartacus initialized');
 
-        if (parseInt(config.onion_enabled, 10)) {
+        if (this.config.onion_enabled) {
             this.enableOnion();
         }
 
-        if (parseInt(config.traverse_nat_enabled, 10)) {
+        if (this.config.traverse_nat_enabled) {
             this.enableNatTraversal();
         }
 
         // Use verbose logging if enabled
-        if (parseInt(config.verbose_logging, 10)) {
+        if (this.config.verbose_logging) {
             this.node.rpc.deserializer.append(new kadence.logger.IncomingMessage(this.log));
             this.node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(this.log));
         }
-        // Cast network nodes to an array
-        if (typeof config.network_bootstrap_nodes === 'string') {
-            config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
-        }
 
-        if (!utilities.isBootstrapNode()) {
+        if (!this.config.is_bootstrap_node) {
             this._registerRoutes();
         }
 
-        this.node.listen(parseInt(config.node_port, 10), async () => {
+        this.node.listen(this.config.node_port, async () => {
             this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
-            this.networkUtilities.registerControlInterface(config, this.node);
+            this.networkUtilities.registerControlInterface(this.config, this.node);
 
             const connected = false;
             const retryPeriodSeconds = 5;
@@ -204,8 +199,8 @@ class Network {
     enableNatTraversal() {
         this.log.info('Trying NAT traversal');
 
-        const remoteAddress = config.reverse_tunnel_address;
-        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+        const remoteAddress = this.config.reverse_tunnel_address;
+        const remotePort = this.config.reverse_tunnel_port;
 
         this.node.traverse = this.node.plugin(kadence.traverse([
             new kadence.traverse.ReverseTunnelStrategy({
@@ -225,8 +220,8 @@ class Network {
         this.log.info('Use Tor for an anonymous overlay');
         this.node.onion = this.node.plugin(kadence.onion({
             dataDirectory: `${__dirname}/../data/hidden_service`,
-            virtualPort: config.onion_virtual_port,
-            localMapping: `127.0.0.1:${config.node_port}`,
+            virtualPort: this.config.onion_virtual_port,
+            localMapping: `127.0.0.1:${this.config.node_port}`,
             torrcEntries: {
                 LearnCircuitBuildTimeout: 0,
                 CircuitBuildTimeout: 40,
@@ -250,7 +245,7 @@ class Network {
      * Note: this method tries to find possible bootstrap nodes from cache as well
      */
     async _joinNetwork(myContact) {
-        const bootstrapNodes = config.network_bootstrap_nodes;
+        const bootstrapNodes = this.config.network_bootstrap_nodes;
         utilities.shuffle(bootstrapNodes);
 
         const peercachePlugin = this.node.peercache;
@@ -258,7 +253,7 @@ class Network {
         let nodes = _.uniq(bootstrapNodes.concat(peers));
         nodes = nodes.slice(0, 5); // take no more than 5 peers for joining
 
-        if (utilities.isBootstrapNode()) {
+        if (this.config.is_bootstrap_node) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
         } else {
@@ -272,7 +267,7 @@ class Network {
             this.log.info('Running in seed mode (waiting for connections)');
 
             this.node.router.events.once('add', async (identity) => {
-                config.network_bootstrap_nodes = [
+                this.config.network_bootstrap_nodes = [
                     kadence.utils.getContactURL([
                         identity,
                         this.node.router.getContactByNodeId(identity),
@@ -324,7 +319,7 @@ class Network {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
             return true;
-        } else if (utilities.isBootstrapNode()) {
+        } else if (this.config.is_bootstrap_node) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
             return true;
         }

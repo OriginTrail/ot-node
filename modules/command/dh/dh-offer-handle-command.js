@@ -147,7 +147,7 @@ class DHOfferHandleCommand extends Command {
             return Command.empty();
         }
 
-        if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
+        if (!predeterminedBid && !Utilities.getImportDistance(this.config, myPrice, 1, myStake)) {
             this.logger.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
             return Command.empty();
         }

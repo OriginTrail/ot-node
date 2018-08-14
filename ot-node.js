@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const Network = require('./modules/Network');
 const NetworkUtilities = require('./modules/NetworkUtilities');
 const Utilities = require('./modules/Utilities');
@@ -11,13 +13,13 @@ const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
 const BN = require('bn.js');
 const bugsnag = require('bugsnag');
-
+const rc = require('rc');
+const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 
 const Graph = require('./modules/Graph');
@@ -30,11 +32,32 @@ const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
 
 const pjson = require('./package.json');
+const configjson = require('./config/config.json');
 
 const log = Utilities.getLogger();
 const Web3 = require('web3');
 
 global.__basedir = __dirname;
+
+const defaultConfig = configjson[
+    process.env.NODE_ENV &&
+    ['development', 'staging', 'stable', 'testnet'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'];
+
+let config;
+try {
+    // Load config.
+    config = rc('ot-node', defaultConfig);
+
+    if (!config.node_wallet || !config.node_private_key) {
+        console.error('Please provide valid wallet.');
+        process.abort();
+    }
+} catch (error) {
+    console.error(`Failed to read configuration. ${error}.`);
+    console.error(error.stack);
+    process.abort();
+}
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -54,7 +77,7 @@ process.on('unhandledRejection', (reason, p) => {
             {
                 user: {
                     id: config.node_wallet,
-                    identity: config.node_kademlia_id,
+                    identity: config.identity,
                     config: cleanConfig,
                 },
             },
@@ -80,7 +103,7 @@ process.on('uncaughtException', (err) => {
         {
             user: {
                 id: config.node_wallet,
-                identity: config.node_kademlia_id,
+                identity: config.identity,
                 config: cleanConfig,
             },
         },
@@ -131,13 +154,13 @@ function notifyBugsnag(error, subsystem) {
  * Main node object
  */
 class OTNode {
-    async getBalances(Utilities, selectedBlockchain, web3, config, initial) {
+    async getBalances(Utilities, config, web3, initial) {
         let enoughETH = false;
         let enoughtTRAC = false;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 web3,
-                selectedBlockchain.wallet_address,
+                config.node_wallet,
             );
             if (etherBalance <= 0) {
                 console.log('Please get some ETH in the node wallet fore running ot-node');
@@ -152,8 +175,8 @@ class OTNode {
 
             const atracBalance = await Utilities.getAlphaTracTokenBalance(
                 web3,
-                selectedBlockchain.wallet_address,
-                selectedBlockchain.token_contract_address,
+                config.node_wallet,
+                config.blockchain.token_contract_address,
             );
             if (atracBalance <= 0) {
                 enoughtTRAC = false;
@@ -169,7 +192,7 @@ class OTNode {
             console.log(error);
             notifyBugsnag(error);
         }
-        config.enoughFunds = enoughETH && enoughtTRAC;
+        return enoughETH && enoughtTRAC;
     }
     /**
      * OriginTrail node system bootstrap function
@@ -210,15 +233,10 @@ class OTNode {
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
-        // Loading config data
-        try {
-            await Utilities.loadConfig();
-            log.info('Loaded system config');
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
+        // Seal config in order to prevent adding properties.
+        // Allow identity to be added. Continuity.
+        config.identity = '';
+        Object.seal(config);
 
         // check for Updates
         try {
@@ -230,16 +248,16 @@ class OTNode {
             process.exit(1);
         }
 
-        if (Utilities.isBootstrapNode()) {
-            await this.startBootstrapNode();
+        if (config.is_bootstrap_node) {
+            await this.startBootstrapNode({ appState });
             this.startRPC();
             return;
         }
 
         // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
+        if (config.database.provider === 'arangodb') {
             try {
-                const responseFromArango = await Utilities.getArangoDbVersion();
+                const responseFromArango = await Utilities.getArangoDbVersion(config);
                 log.info(`Arango server version ${responseFromArango.version} is up and running`);
             } catch (err) {
                 log.error('Please make sure Arango server is up and running');
@@ -249,34 +267,10 @@ class OTNode {
             }
         }
 
-        let selectedDatabase;
-        // Loading selected graph database data
-        try {
-            selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
-            log.info('Loaded selected database data');
-            config.database = selectedDatabase;
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
         // Checking if selected graph database exists
         try {
-            await Utilities.checkDoesStorageDbExists();
+            await Utilities.checkDoesStorageDbExists(config);
             log.info('Storage database check done');
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
-        let selectedBlockchain;
-        // Loading selected blockchain network
-        try {
-            selectedBlockchain = await Utilities.loadSelectedBlockchainInfo();
-            log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
-            config.blockchain = selectedBlockchain;
         } catch (err) {
             console.log(err);
             notifyBugsnag(err);
@@ -286,14 +280,15 @@ class OTNode {
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
+        const appState = {};
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
-            await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
+            appState.enoughFunds = await this.getBalances(Utilities, config, web3, true);
             setInterval(async () => {
-                await this.getBalances(Utilities, selectedBlockchain, web3, config);
+                appState.enoughFunds = await this.getBalances(Utilities, config, web3, false);
             }, 1800000);
         } else {
-            config.enoughFunds = true;
+            appState.enoughFunds = true;
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
@@ -318,6 +313,7 @@ class OTNode {
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
             config: awilix.asValue(config),
+            appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
@@ -325,7 +321,7 @@ class OTNode {
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
@@ -353,19 +349,19 @@ class OTNode {
             process.exit(1);
         }
 
-        // Fetching Houston access password
-        models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-            log.notify('================================================================');
-            log.notify(`Houston password: ${res.value}`);
-            log.notify('================================================================');
-        });
+        // Fetch Houston access password
+        if (!config.houston_password) {
+            config.houston_password = uuidv4();
+        }
+        log.notify('================================================================');
+        log.notify(`Houston password: ${config.houston_password}`);
+        log.notify('================================================================');
 
         // Starting the kademlia
         const network = container.resolve('network');
         const blockchain = container.resolve('blockchain');
 
         await network.initialize();
-        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Initialise API
         this.startRPC(emitter);
@@ -385,7 +381,7 @@ class OTNode {
 
         await network.start();
 
-        if (parseInt(config.remote_control_enabled, 10)) {
+        if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
             await remoteControl.connect();
         }
@@ -402,7 +398,7 @@ class OTNode {
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode() {
+    async startBootstrapNode({ appState }) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
@@ -411,10 +407,12 @@ class OTNode {
             emitter: awilix.asValue({}),
             network: awilix.asClass(Network).singleton(),
             config: awilix.asValue(config),
+            appState: awilix.asValue(appState),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
 
         const network = container.resolve('network');
@@ -545,11 +543,11 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(parseInt(config.node_rpc_port, 10), config.node_rpc_ip, () => {
+        server.listen(config.node_rpc_port, config.node_rpc_ip, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
 
-        if (!Utilities.isBootstrapNode()) {
+        if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
             this.exposeAPIRoutes(server, emitter);
         }
