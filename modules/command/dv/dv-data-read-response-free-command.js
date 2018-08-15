@@ -16,6 +16,8 @@ class DVDataReadResponseFreeCommand extends Command {
         this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
+        this.importer = ctx.importer;
     }
 
     /**
