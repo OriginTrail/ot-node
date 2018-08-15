@@ -138,13 +138,15 @@ class DHDataReadRequestFreeCommand extends Command {
             await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
-            this.log.warn(errorMessage);
+            this.logger.warn(errorMessage);
             this.notifyError(e);
             await this.network.kademlia().sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
         }
+
+        return Command.empty();
     }
 
     /**

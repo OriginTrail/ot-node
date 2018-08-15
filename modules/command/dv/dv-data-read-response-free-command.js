@@ -14,6 +14,7 @@ class DVDataReadResponseFreeCommand extends Command {
         this.config = ctx.config;
         this.network = ctx.network;
         this.web3 = ctx.web3;
+        this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
     }
 
@@ -74,7 +75,7 @@ class DVDataReadResponseFreeCommand extends Command {
 
         if (!fingerprint) {
             const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${importId}`;
-            this.log.warn(errorMessage);
+            this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
@@ -86,7 +87,7 @@ class DVDataReadResponseFreeCommand extends Command {
 
         if (fingerprint !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
-            this.log.warn(errorMessage);
+            this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
@@ -100,14 +101,14 @@ class DVDataReadResponseFreeCommand extends Command {
                 wallet: dcWallet,
             }, true);
         } catch (error) {
-            this.log.warn(`Failed to import JSON. ${error}.`);
+            this.logger.warn(`Failed to import JSON. ${error}.`);
             this.notifyError(error);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
-            return;
+            return Command.empty();
         }
 
-        this.log.info(`Import ID ${importId} imported successfully.`);
+        this.logger.info(`Import ID ${importId} imported successfully.`);
         this.remoteControl.readNotification(`Import ID ${importId} imported successfully.`);
 
         const dataSize = bytes(JSON.stringify(vertices));

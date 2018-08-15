@@ -415,6 +415,7 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
 
         const network = container.resolve('network');
