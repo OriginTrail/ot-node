@@ -931,7 +931,7 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhService.handleDataReadRequest(message);
+            await dhController.handleDataReadRequestFree(message);
         });
 
         // async
@@ -951,7 +951,7 @@ class EventEmitter {
             }
 
             try {
-                await dvService.handleDataReadResponse(message);
+                await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
                 notifyError(error);
