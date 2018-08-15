@@ -39,6 +39,7 @@
 						},
 						{
 							"key": "importfile",
+							"value": "",
 							"type": "file"
 						}
 					]
@@ -59,7 +60,8 @@
 							"disabled": true
 						}
 					]
-				}
+				},
+				"description": "https://docs.origintrail.io/en/latest/introduction-to-api.html#api-import-post"
 			},
 			"response": []
 		},
@@ -89,36 +91,8 @@
 							"value": "{{vertex_type}}"
 						}
 					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/local/import",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
 				},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/local/import",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"local",
-						"import"
-					]
-				}
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-trail-get"
 			},
 			"response": []
 		},
@@ -159,176 +133,8 @@
 						"api",
 						"replication"
 					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/replication/:{replication_id}",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "import_id",
-							"value": "0xa3f2b70718bbc5f4a136fda16ef77e5af568c33e1ccfeabee979cc90d88553b1",
-							"type": "text"
-						}
-					]
 				},
-				"url": {
-					"raw": "{{baseUrl}}/api/replication/{{replication_id}}",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"replication",
-						"{{replication_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/network",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/network",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"network"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/{query_id}/responses",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/{query_id}/responses",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"{query_id}",
-						"responses"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "api/query/network/{query_param} ",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {},
-				"url": {
-					"raw": "{{baseUrl}}api/query/network/{query_param}",
-					"host": [
-						"{{baseUrl}}api"
-					],
-					"path": [
-						"query",
-						"network",
-						"{query_param}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/local",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/local",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"local"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/local/import",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/local/import",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"local",
-						"import"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/local/import:{import_id}",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/local/import/{{import_id}}",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"local",
-						"import",
-						"{{import_id}}"
-					]
-				}
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-replication-post"
 			},
 			"response": []
 		},
@@ -357,7 +163,248 @@
 							"value": "{{import_id}}"
 						}
 					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-fingerprint-get"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/replication/:{replication_id}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "import_id",
+							"value": "0xa3f2b70718bbc5f4a136fda16ef77e5af568c33e1ccfeabee979cc90d88553b1",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/replication/{{replication_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"replication",
+						"{{replication_id}}"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-replication-replication-id-get"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/network",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ff7307dc-b908-49e3-9fa9-e468c8af9344",
+						"type": "text/javascript",
+						"exec": [
+							"var data = JSON.parse(responseBody);",
+							"postman.setEnvironmentVariable(\"query_id\", data.query_id);"
+						]
+					}
 				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/network",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"network"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-network-post"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/{query_id}/responses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/{{query_id}}/responses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"{{query_id}}",
+						"responses"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-query-id-responses-get"
+			},
+			"response": []
+		},
+		{
+			"name": "api/query/network/{query_param} ",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}api/query/network/{query_param}",
+					"host": [
+						"{{baseUrl}}api"
+					],
+					"path": [
+						"query",
+						"network",
+						"{query_param}"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-network-query-param-get"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/read/network",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "query_id",
+							"value": "{{query_id}}",
+							"sessionValue": "{{query_id}}",
+							"type": "text"
+						},
+						{
+							"key": "reply_id",
+							"value": "99090be7-91f3-4a34-93e6-dbb632c0ef10",
+							"sessionValue": "99090be7-91f3-4a34-93e6-dbb632c0ef10",
+							"type": "text"
+						},
+						{
+							"key": "import_id",
+							"value": "{{import_id}}",
+							"sessionValue": "{{import_id}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/read/network",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"read",
+						"network"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-read-network-post"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-post"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local/import",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local/import",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local",
+						"import"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-import-post"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/query/local/import:{import_id}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/query/local/import/{{import_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"query",
+						"local",
+						"import",
+						"{{import_id}}"
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-import-import-id-get"
 			},
 			"response": []
 		},
