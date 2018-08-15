@@ -65,6 +65,14 @@ class DHReadDataLocationRequestCommand extends Command {
         const nodeId = this.config.identity;
         const dataPrice = 100000; // TODO add to configuration
 
+        // TODO: Temporarily allow sending raw data (free read).
+        // Merge with all imports
+        imports.forEach((importId) => {
+            if (!replicatedImportIds.includes(importId)) {
+                replicatedImportIds.push(importId);
+            }
+        });
+
         const dataInfos = await Models.data_info.findAll({
             where: {
                 import_id: {
@@ -83,7 +91,7 @@ class DHReadDataLocationRequestCommand extends Command {
         });
 
         if (importObjects.length === 0) {
-            this.logger.warn(`Zero import size for IDs ${JSON.stringify(replicatedImportIds)}.`);
+            this.logger.trace(`Didn't find imports for query ${JSON.stringify(msgQuery)}.`);
             return Command.empty();
         }
 

@@ -17,6 +17,7 @@ class DHDataReadRequestFreeCommand extends Command {
         this.config = ctx.config;
         this.web3 = ctx.web3;
         this.network = ctx.network;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -69,22 +70,31 @@ class DHDataReadRequestFreeCommand extends Command {
 
             ImportUtilities.unpackKeys(vertices, edges);
 
-            // Get replication key and then encrypt data.
-            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+            const dataInfo = await Models.data_info.findOne({
+                where: {
+                    import_id: importId,
+                },
+            });
 
-            if (!holdingDataModel) {
-                throw Error(`Didn't find import with ID. ${importId}`);
+            if (!dataInfo) {
+                throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
             ImportUtilities.deleteInternal(vertices);
-            const holdingData = holdingDataModel.get({ plain: true });
-            const dataPublicKey = holdingData.data_public_key;
-            const replicationPrivateKey = holdingData.distribution_private_key;
 
-            Graph.decryptVertices(
-                vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
-                dataPublicKey,
-            );
+            // Get replication key and then encrypt data.
+            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+
+            if (holdingDataModel) {
+                const holdingData = holdingDataModel.get({ plain: true });
+                const dataPublicKey = holdingData.data_public_key;
+                const replicationPrivateKey = holdingData.distribution_private_key;
+
+                Graph.decryptVertices(
+                    vertices.filter(vertex => vertex.vertex_type !== 'CLASS'),
+                    dataPublicKey,
+                );
+            }
 
             /*
             dataReadResponseObject = {
@@ -103,16 +113,6 @@ class DHDataReadRequestFreeCommand extends Command {
                }
             }
              */
-
-            const dataInfo = await Models.data_info.findOne({
-                where: {
-                    import_id: importId,
-                },
-            });
-
-            if (!dataInfo) {
-                throw Error(`Failed to get data info for import ID ${importId}.`);
-            }
 
             const replyMessage = {
                 id,
