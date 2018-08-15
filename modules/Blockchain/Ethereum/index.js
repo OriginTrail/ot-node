@@ -22,7 +22,7 @@ class Ethereum {
 
         this.transactions = new Transactions(
             this.web3,
-            this.config.node_wallet,
+            this.config.wallet_address,
             this.config.node_private_key,
         );
 
