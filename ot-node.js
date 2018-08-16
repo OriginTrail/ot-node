@@ -7,6 +7,7 @@ const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
 const restify = require('restify');
 const fs = require('fs');
+const path = require('path');
 const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
@@ -21,6 +22,7 @@ const bugsnag = require('bugsnag');
 const rc = require('rc');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
+const homedir = require('os').homedir();
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
@@ -47,7 +49,7 @@ const defaultConfig = configjson[
 let config;
 try {
     // Load config.
-    config = rc('ot-node', defaultConfig);
+    config = rc(pjson.name, defaultConfig);
 
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
@@ -121,6 +123,12 @@ process.on('exit', (code) => {
         log.error(`Whoops, terminating with code: ${code}`);
     } else {
         log.debug(`Normal exiting with code: ${code}`);
+    }
+
+    // Save config
+    if (homedir) {
+        const configPath = path.join(homedir, `.${pjson.name}rc`);
+        fs.writeFile(configPath, JSON.stringify(config), 'utf8');
     }
 });
 

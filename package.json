@@ -97,6 +97,7 @@
     "npm": "^6.2.0",
     "npm-cmd": "^0.2.0",
     "number-to-bn": "^1.7.0",
+    "os": "^0.1.1",
     "pem": "^1.12.3",
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
