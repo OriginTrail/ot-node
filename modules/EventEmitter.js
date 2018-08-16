@@ -345,7 +345,7 @@ class EventEmitter {
                 import_id,
                 root_hash,
                 total_documents,
-                wallet,
+                wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
             } = response;
 
@@ -355,7 +355,7 @@ class EventEmitter {
                     .create({
                         import_id,
                         root_hash,
-                        data_provider_wallet: wallet,
+                        data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
@@ -931,7 +931,7 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhService.handleDataReadRequest(message);
+            await dhController.handleDataReadRequestFree(message);
         });
 
         // async
@@ -951,7 +951,7 @@ class EventEmitter {
             }
 
             try {
-                await dvService.handleDataReadResponse(message);
+                await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
                 notifyError(error);

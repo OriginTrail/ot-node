@@ -86,6 +86,21 @@ class DHController {
             },
         });
     }
+
+    /**
+     * Sends dhDataReadRequestFreeCommand to the queue.
+     * @param message Message received from network
+     * @returns {Promise<void>}
+     */
+    async handleDataReadRequestFree(message) {
+        await this.commandExecutor.add({
+            name: 'dhDataReadRequestFreeCommand',
+            transactional: false,
+            data: {
+                message,
+            },
+        });
+    }
 }
 
 module.exports = DHController;
