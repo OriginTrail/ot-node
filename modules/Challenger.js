@@ -16,6 +16,7 @@ class Challenger {
         this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.notifyError = ctx.notifyError;
     }
 
     async startChallenging() {
@@ -63,6 +64,7 @@ class Challenger {
             await this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
         } catch (e) {
             this.log.error(`Failed to initiate litigation. ${e}`);
+            this.notifyError(e);
             return;
         }
 
@@ -73,7 +75,7 @@ class Challenger {
         this.log.debug(`Sending proof for litigation, Import ${importId}. Answer for block ${blockId} is ${block}`);
         await this.blockchain.proveLitigation(importId, dhWallet, block);
 
-        const waitForLitigationEnd = 5 * 60 * 1000;
+        const waitForLitigationEnd = 15 * 60 * 1000;
         const eventData = await this.blockchain.subscribeToEvent('LitigationCompleted', importId, waitForLitigationEnd);
         const {
             DH_wallet,
@@ -164,6 +166,7 @@ class Challenger {
                 }
             }).catch((err) => {
                 log.error(`Failed to get unanswered challenges. Error: ${err}.`);
+                this.notifyError(err);
             });
     }
 }

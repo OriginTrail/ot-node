@@ -47,7 +47,9 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
 
-    beforeEach('Setup DB', async () => {
+    beforeEach('Setup DB', async function setupDb() {
+        this.timeout(5000);
+
         systemDb = new Database();
         systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
 
@@ -88,6 +90,7 @@ describe('GS1 Importer tests', () => {
             product: awilix.asClass(Product),
             web3: awilix.asValue(web3),
             config: awilix.asValue(Utilities.loadConfig()),
+            notifyError: awilix.asFunction(() => {}),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');

@@ -27,6 +27,7 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
     }
 
     /**
@@ -165,6 +166,7 @@ class DHService {
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
+            this.notifyError(e);
             await this.network.kademlia().sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
@@ -342,7 +344,10 @@ class DHService {
         setTimeout(() => {
             this.blockchain.payOutForReading(importId, networkReplyModel.receiver_wallet)
                 .then(() => this.log.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
-                .catch(error => this.log.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`));
+                .catch((error) => {
+                    this.log.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
+                    this.notifyError(error);
+                });
         }, 5 * 60 * 1000);
     }
 
