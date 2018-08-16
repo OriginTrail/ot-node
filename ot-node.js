@@ -128,8 +128,13 @@ process.on('exit', (code) => {
     // Save config
     if (homedir) {
         const configPath = path.join(homedir, `.${pjson.name}rc`);
-        fs.writeFile(configPath, JSON.stringify(config), 'utf8');
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
     }
+});
+
+process.on('SIGINT', () => {
+    log.important('SIGINT caught. Exiting...');
+    process.exit(0);
 });
 
 function notifyBugsnag(error, subsystem) {
