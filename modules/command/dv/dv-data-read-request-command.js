@@ -38,6 +38,14 @@ class DVDataReadRequestCommand extends Command {
             }
          */
 
+        const dataInfo = await Models.data_info.findOne({
+            where: { import_id: importId },
+        });
+        if (dataInfo) {
+            this.logger.trace(`I've already stored data for import ID ${importId}. Purchase ignored.`);
+            return Command.empty();
+        }
+
         const offer = await Models.network_query_responses.findOne({
             where: {
                 query_id: queryId,

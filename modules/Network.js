@@ -25,6 +25,7 @@ class Network {
         this.log = ctx.logger;
         this.emitter = ctx.emitter;
         this.networkUtilities = ctx.networkUtilities;
+        this.notifyError = ctx.notifyError;
 
         kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
@@ -190,6 +191,7 @@ class Network {
                     }
                 } catch (e) {
                     this.log.error(`Failed to join network ${e}`);
+                    this.notifyError(e);
                 }
 
                 this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
@@ -563,6 +565,7 @@ class Network {
                     resolve(null);
                 } catch (e) {
                     // failed to refresh buckets (should not happen)
+                    this.notifyError(e);
                 }
             });
 
