@@ -66,7 +66,9 @@ class DCOfferCreateBlockchainCommand extends Command {
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'STARTED';
+        offer.message = 'Offer has been started';
         await offer.save({ fields: ['status'] });
+        await offer.save({ fields: ['message'] });
 
         const { data } = command;
         return this.continueSequence(this.pack(data), command.sequence);

@@ -44,6 +44,11 @@ class DCOfferCancelCommand extends Command {
                 { status: 'CANCELLED' },
                 { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
             );
+            // update offer.message
+            await Models.offers.update(
+                { message: 'Offer has been cancelled' },
+                { where: { import_id: importId } },
+            );
         }
         this.logger.notify(`Offer ${importId} successfully cancelled.`);
         return this.continueSequence(this.pack(command.data), command.sequence);
