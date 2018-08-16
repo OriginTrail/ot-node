@@ -30,7 +30,7 @@ class DHOfferReplicationParametersCommand extends Command {
         } = command.data;
 
         const encryptedVertices = importResult.vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
-        ImportUtilities.sort(encryptedVertices, '_dc_key');
+        ImportUtilities.sort(encryptedVertices);
         const litigationBlocks = Challenge.getBlocks(encryptedVertices, 32);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const litigationRootHash = litigationBlocksMerkleTree.getRoot();
