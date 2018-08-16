@@ -27,9 +27,8 @@ class DCOfferReadyCommand extends Command {
 
             const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
             offer.status = 'FINALIZING';
-            offer.message = 'About to finalize the offer';
-            await offer.save({ fields: ['status'], transaction });
-            await offer.save({ fields: ['message'], transaction });
+            offer.message = 'Choosing bids for offer';
+            await offer.save({ fields: ['status', 'message'], transaction });
 
             return this.continueSequence(this.pack(command.data), command.sequence);
         }

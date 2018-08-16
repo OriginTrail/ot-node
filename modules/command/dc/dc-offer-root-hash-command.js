@@ -35,9 +35,7 @@ class DCOfferRootHashCommand extends Command {
             } catch (err) {
                 offer.status = 'FAILED';
                 offer.message = 'Offer failed';
-                await offer.save({ fields: ['status'] });
-                await offer.save({ fields: ['message'] });
-
+                await offer.save({ fields: ['status', 'messages'] });
                 this.notifyError(err);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);
             }
