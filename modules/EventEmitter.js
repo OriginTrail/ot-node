@@ -135,7 +135,7 @@ class EventEmitter {
                 }
                 data.response.send(res);
             }).catch((error) => {
-                logger.error(`Failed to get trail for query ${data.query}`);
+                logger.error(`Failed to get trail for query ${JSON.stringify(data.query)}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -167,7 +167,7 @@ class EventEmitter {
         });
 
         this._on('api-get-imports', (data) => {
-            logger.info(`Get imports triggered with query ${data.query}`);
+            logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
             product.getImports(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -176,7 +176,7 @@ class EventEmitter {
                 }
                 data.response.send(res);
             }).catch((error) => {
-                logger.error(`Failed to get imports for query ${data.query}`);
+                logger.error(`Failed to get imports for query ${JSON.stringify(data.query)}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -186,7 +186,7 @@ class EventEmitter {
         });
 
         this._on('api-query', (data) => {
-            logger.info(`Get veritces triggered with query ${data.query}`);
+            logger.info(`Get veritces triggered with query ${JSON.stringify(data.query)}`);
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -195,11 +195,11 @@ class EventEmitter {
                 }
                 data.response.send(res);
             }).catch((error) => {
-                logger.error(`Failed to get vertices for query ${data.query}`);
+                logger.error(`Failed to get vertices for query ${JSON.stringify(data.query)}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: `Failed to get vertices for query ${data.query}`,
+                    message: `Failed to get vertices for query ${JSON.stringify(data.query)}`,
                 });
             });
         });
@@ -225,10 +225,10 @@ class EventEmitter {
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 data.response.send(res);
             }).catch((err) => {
-                logger.error(`Failed to get root hash for query ${data.query}`);
+                logger.error(`Failed to get root hash for query ${JSON.stringify(data.query)}`);
                 notifyError(err);
                 data.response.status(500);
-                data.response.send(`Failed to get root hash for query ${data.query}`); // TODO rethink about status codes
+                data.response.send(`Failed to get root hash for query ${JSON.stringify(data.query)}`); // TODO rethink about status codes
             });
         });
 
@@ -345,7 +345,7 @@ class EventEmitter {
                 import_id,
                 root_hash,
                 total_documents,
-                wallet,
+                wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
             } = response;
 
@@ -931,7 +931,7 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhService.handleDataReadRequest(message);
+            await dhController.handleDataReadRequestFree(message);
         });
 
         // async
@@ -951,7 +951,7 @@ class EventEmitter {
             }
 
             try {
-                await dvService.handleDataReadResponse(message);
+                await dvController.handleDataReadResponseFree(message);
             } catch (error) {
                 logger.warn(`Failed to process data read response. ${error}.`);
                 notifyError(error);
