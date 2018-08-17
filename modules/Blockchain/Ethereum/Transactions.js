@@ -24,6 +24,7 @@ class Transactions {
             try {
                 for (let i = 0; i < 3; i += 1) {
                     try {
+                        // eslint-disable-next-line no-await-in-loop
                         const result = await this._sendTransaction(transaction);
                         if (result.status === '0x0') {
                             future.reject(result);
@@ -37,6 +38,7 @@ class Transactions {
                         if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced')) {
                             throw new Error(error);
                         }
+                        // eslint-disable-next-line no-await-in-loop
                         await sleep.sleep(2000);
                     }
                 }
@@ -54,7 +56,7 @@ class Transactions {
      * @param newTransaction
      */
     async _sendTransaction(newTransaction) {
-        await this.web3.eth.getTransactionCount(this.walletAddress, 'pending').then((nonce) => {
+        await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
             newTransaction.options.nonce = nonce;
         });
 
