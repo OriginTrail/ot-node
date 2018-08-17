@@ -355,7 +355,7 @@ class EventEmitter {
                     .create({
                         import_id,
                         root_hash,
-                        data_provider_wallet: wallet,
+                        data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
