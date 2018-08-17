@@ -22,15 +22,23 @@ class Transactions {
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
             try {
-                const delta = (Date.now() - this.lastTransactionTime);
-                if (delta < 2000) {
-                    await sleep.sleep(2000);
-                }
-                const result = await this._sendTransaction(transaction);
-                if (result.status === '0x0') {
-                    future.reject(result);
-                } else {
-                    future.resolve(result);
+                for (let i = 0; i < 3; i += 1) {
+                    try {
+                        const result = await this._sendTransaction(transaction);
+                        if (result.status === '0x0') {
+                            future.reject(result);
+                            break;
+                        } else {
+                            future.resolve(result);
+                            break;
+                        }
+                    } catch (error) {
+                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
+                        if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced')) {
+                            throw new Error(error);
+                        }
+                        await sleep.sleep(2000);
+                    }
                 }
             } catch (e) {
                 future.reject(e);
@@ -46,7 +54,7 @@ class Transactions {
      * @param newTransaction
      */
     async _sendTransaction(newTransaction) {
-        await this.web3.eth.getTransactionCount(this.walletAddress).then((nonce) => {
+        await this.web3.eth.getTransactionCount(this.walletAddress, 'pending').then((nonce) => {
             newTransaction.options.nonce = nonce;
         });
 
@@ -71,6 +79,7 @@ class Transactions {
             this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
         }
 
+        this.log.trace(`Sending transaction to blockchain, nonce ${newTransaction.options.nonce}, balance is ${currentBalance.toString()}`);
         return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 
