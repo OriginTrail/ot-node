@@ -99,6 +99,42 @@ class DVController {
             transactional: false,
         });
     }
+    async handleDataReadResponseFree(message) {
+        /*
+            message: {
+                id: REPLY_ID
+                wallet: DH_WALLET,
+                nodeId: KAD_ID
+                agreementStatus: CONFIRMED/REJECTED,
+                encryptedData: { … }
+                importId: IMPORT_ID,        // Temporal. Remove it.
+            },
+         */
+
+        // Is it the chosen one?
+        const replyId = message.id;
+
+        // Find the particular reply.
+        const networkQueryResponse = await Models.network_query_responses.findOne({
+            where: { reply_id: replyId },
+        });
+
+        if (!networkQueryResponse) {
+            throw Error(`Didn't find query reply with ID ${replyId}.`);
+        }
+
+        const networkQuery = await Models.network_queries.findOne({
+            where: { id: networkQueryResponse.query_id },
+        });
+        await this.commandExecutor.add({
+            name: 'dvDataReadResponseFreeCommand',
+            delay: 0,
+            data: {
+                message,
+            },
+            transactional: false,
+        });
+    }
 }
 
 module.exports = DVController;
