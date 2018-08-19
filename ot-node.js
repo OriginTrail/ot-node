@@ -23,6 +23,7 @@ const rc = require('rc');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
+const ip = require('ip');
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
@@ -556,7 +557,13 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
 
-        server.listen(config.node_rpc_port, config.node_rpc_ip, () => {
+        // TODO: Temp solution to listen all adapters in local net.
+        let serverListenAddress = config.node_rpc_ip;
+        if (ip.isLoopback(serverListenAddress)) {
+            serverListenAddress = '0.0.0.0';
+        }
+
+        server.listen(config.node_rpc_port, serverListenAddress, () => {
             log.notify(`API exposed at  ${server.url}`);
         });
 
@@ -573,6 +580,11 @@ class OTNode {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
+
+            // TODO: Temp solution for local network. Ignore whitelist.
+            if (ip.isLoopback(config.node_rpc_ip)) {
+                return true;
+            }
 
             if (!remote_access.includes(request_ip)) {
                 res.status(403);

@@ -366,7 +366,7 @@ class Ethereum {
      * @param {number} - importId
      * @returns {Promise}
      */
-    cancelEscrow(dhWallet, importId) {
+    cancelEscrow(dhWallet, importId, dhIsSender) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -378,8 +378,9 @@ class Ethereum {
             this.escrowContractAbi,
             'cancelEscrow',
             [
-                dhWallet,
                 importId,
+                dhWallet,
+                dhIsSender,
             ],
             options,
         );
