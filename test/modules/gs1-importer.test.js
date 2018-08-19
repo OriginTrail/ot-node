@@ -6,6 +6,7 @@ const {
 const { assert, expect } = require('chai');
 const path = require('path');
 const { Database } = require('arangojs');
+const rc = require('rc');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Importer = require('../../modules/GS1Importer');
 const GS1Utilities = require('../../modules/GS1Utilities');
@@ -20,16 +21,8 @@ const Product = require('../../modules/Product');
 const Web3 = require('web3');
 const awilix = require('awilix');
 
-function buildSelectedDatabaseParam(databaseName) {
-    return {
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: databaseName,
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database_system: 'arango_db',
-    };
-}
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
@@ -50,8 +43,9 @@ describe('GS1 Importer tests', () => {
     beforeEach('Setup DB', async function setupDb() {
         this.timeout(5000);
 
+        const config = rc(pjson.name, defaultConfig);
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(config.database.username, config.database.password);
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -61,8 +55,14 @@ describe('GS1 Importer tests', () => {
 
         await systemDb.createDatabase(
             databaseName,
-            [{ username: process.env.DB_USERNAME, passwd: process.env.DB_PASSWORD, active: true }],
+            [{
+                username: config.database.username,
+                passwd: config.database.password,
+                active: true,
+            }],
         );
+
+        config.database.database = databaseName;
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
@@ -72,7 +72,7 @@ describe('GS1 Importer tests', () => {
         const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
         const logger = Utilities.getLogger();
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
+        graphStorage = new GraphStorage(config.database, logger);
         container.register({
             logger: awilix.asValue(Utilities.getLogger()),
             gs1Importer: awilix.asClass(GS1Importer),
@@ -89,7 +89,7 @@ describe('GS1 Importer tests', () => {
             emitter: awilix.asClass(EventEmitter),
             product: awilix.asClass(Product),
             web3: awilix.asValue(web3),
-            config: awilix.asValue(Utilities.loadConfig()),
+            config: awilix.asValue(config),
             notifyError: awilix.asFunction(() => {}),
         });
         await graphStorage.connect();

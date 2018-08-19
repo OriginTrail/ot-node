@@ -1,10 +1,13 @@
 require('dotenv').config();
+
 const {
     describe, beforeEach, afterEach, it,
 } = require('mocha');
 const { assert, expect } = require('chai');
 const path = require('path');
 const { Database } = require('arangojs');
+const awilix = require('awilix');
+const rc = require('rc');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const GS1Importer = require('../../modules/GS1Importer');
 const GS1Utilities = require('../../modules/GS1Utilities');
@@ -12,19 +15,9 @@ const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Product = require('../../modules/Product');
 const Utilities = require('../../modules/Utilities');
-const awilix = require('awilix');
 
-function buildSelectedDatabaseParam(databaseName) {
-    return {
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: databaseName,
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database_system: 'arango_db',
-        max_path_length: 2000,
-    };
-}
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     const databaseName = 'zk-test';
@@ -42,8 +35,9 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     ];
 
     beforeEach('Setup DB', async () => {
+        const config = rc(pjson.name, defaultConfig);
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(config.database.username, config.database.password);
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -53,8 +47,14 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
 
         await systemDb.createDatabase(
             databaseName,
-            [{ username: process.env.DB_USERNAME, passwd: process.env.DB_PASSWORD, active: true }],
+            [{
+                username: config.database.username,
+                passwd: config.database.password,
+                active: true,
+            }],
         );
+
+        config.database.database = databaseName;
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
@@ -62,7 +62,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
         });
 
         const logger = Utilities.getLogger();
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
+        graphStorage = new GraphStorage(config.database, logger);
         container.register({
             logger: awilix.asValue(Utilities.getLogger()),
             gs1Importer: awilix.asClass(GS1Importer),
@@ -71,6 +71,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             importer: awilix.asClass(Importer),
             wotImporter: awilix.asClass(WOTImporter),
             product: awilix.asClass(Product),
+            config: awilix.asValue(config),
         });
         await graphStorage.connect();
         gs1 = container.resolve('gs1Importer');
@@ -104,6 +105,8 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             }
 
             myTrail = await product.getTrailByQuery(queryObject);
+
+            assert.isAbove(Object.keys(myTrail).length, 0);
 
             Object.keys(myTrail).forEach((key, index) => {
                 if (myTrail[key].vertex_type === 'EVENT') {

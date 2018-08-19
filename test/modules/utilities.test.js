@@ -3,38 +3,34 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const fs = require('fs');
-var models = require('../../models');
-const deasync = require('deasync-promise');
 const Utilities = require('../../modules/Utilities');
-const config = require('../../modules/Config');
-const Storage = require('../../modules/Storage');
 const kadence = require('@kadenceproject/kadence');
+
 const databaseData = require('./test_data/arangodb-data.js');
 
-let myConfig;
 
 describe('Utilities module', () => {
-    before('loadConfig() should populate myConfig object', async () => {
-        Storage.models = deasync(models.sequelize.sync()).models;
-
-        myConfig = await Utilities.loadConfig();
-    });
+    const environments = ['development', 'staging', 'stable', 'production'];
+    const configJson = JSON.parse(fs.readFileSync(`${__dirname}/../../config/config.json`).toString());
 
     it('node_config should contain certain entries', () => {
-        assert.hasAllKeys(
-            myConfig, ['node_wallet', 'node_private_key', 'node_rpc_ip', 'node_port',
-                'node_kademlia_id', 'selected_graph_database', 'selected_blockchain', 'request_timeout', 'ssl_keypath',
-                'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
-                'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
-                'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                'ssl_authority_paths', 'network_bootstrap_nodes', 'solve_hashes', 'remote_access_whitelist', 'node_rpc_port',
-                'dh_min_price', 'dh_max_price', 'dh_max_stake', 'remote_control_enabled', 'remote_control_port', 'probability_threshold',
-                'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
-                'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
-                'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                'network_id'],
-            'Some config items are missing in node_config',
-        );
+        environments.forEach((environment) => {
+            const config = configJson[environment];
+            assert.hasAllKeys(
+                config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'node_ip', 'logs_level_debug',
+                    'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs', 'test_network_enabled',
+                    'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
+                    'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
+                    'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
+                    'ssl_authority_paths', 'network_bootstrap_nodes', 'remote_access_whitelist', 'node_rpc_port',
+                    'remote_control_enabled', 'probability_threshold',
+                    'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
+                    'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
+                    'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
+                    'network_id'],
+                'Some config items are missing in node_config',
+            );
+        });
     });
 
     it.skip('getNodeNetworkType()', async () => {
@@ -65,11 +61,14 @@ describe('Utilities module', () => {
     });
 
     it('loadSelectedBlockchainInfo()', async () => {
-        const myResult = await Utilities.loadSelectedBlockchainInfo();
-        assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
-            'gas_price', 'ot_contract_address', 'reading_contract_address', 'token_contract_address', 'escrow_contract_address',
-            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address']);
-        assert.equal(myResult.blockchain_title, 'Ethereum');
+        environments.forEach((environment) => {
+            const config = configJson[environment];
+            assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit',
+                'gas_price', 'ot_contract_address', 'reading_contract_address',
+                'token_contract_address', 'escrow_contract_address',
+                'rpc_node_host', 'rpc_node_port', 'bidding_contract_address']);
+            assert.equal(config.blockchain.blockchain_title, 'Ethereum');
+        });
     });
 
     it('isEmptyObject check', () => {
@@ -107,47 +106,37 @@ describe('Utilities module', () => {
     });
 
     it.skip('generateSelfSignedCertificate() should gen kademlia.key and kademlia.crt', async () => {
-        const result = await Utilities.generateSelfSignedCertificate();
-        const myKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_keypath}`, 'utf8');
-        expect(myKey).to.be.a('string');
-        assert.isTrue(/^\r?\n*-----BEGIN RSA PRIVATE KEY-----\r?\n/.test(myKey));
-        assert.isTrue(/\r?\n-----END RSA PRIVATE KEY-----\r?\n*$/.test(myKey));
-        const myCert = fs.readFileSync(`${__dirname}/../../keys/${myConfig.ssl_certificate_path}`, 'utf8');
-        expect(myCert).to.be.a('string');
-        assert.isTrue(/^\r?\n*-----BEGIN CERTIFICATE-----\r?\n/.test(myCert));
-        assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
-    });
-
-    it('saveToConfig() ', () => {
-        const newVerboseLogging = 7;
-        Utilities.saveToConfig('verbose_logging', newVerboseLogging).then(() => {
-            // reload config and check the value
-            Utilities.loadConfig().then((config) => {
-                assert(config.verbose_logging, 7);
-            }).catch((error) => {
-                console.log(error);
-            });
-        }).catch((error) => {
-            console.log(error); // TODO handle error propertly
-        });
+        await Promise.all(environments.map(async (environment) => {
+            const config = configJson[environment];
+            const result = await Utilities.generateSelfSignedCertificate(config);
+            const myKey = fs.readFileSync(`${__dirname}/../../keys/${config.ssl_keypath}`, 'utf8');
+            expect(myKey).to.be.a('string');
+            assert.isTrue(/^\r?\n*-----BEGIN RSA PRIVATE KEY-----\r?\n/.test(myKey));
+            assert.isTrue(/\r?\n-----END RSA PRIVATE KEY-----\r?\n*$/.test(myKey));
+            const myCert = fs.readFileSync(`${__dirname}/../../keys/${config.ssl_certificate_path}`, 'utf8');
+            expect(myCert).to.be.a('string');
+            assert.isTrue(/^\r?\n*-----BEGIN CERTIFICATE-----\r?\n/.test(myCert));
+            assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
+        }));
     });
 
     it.skip('createPrivateExtendedKey()', () => {
-        Utilities.createPrivateExtendedKey(kadence);
-        const myPrvKey = fs.readFileSync(`${__dirname}/../../keys/${myConfig.private_extended_key_path}`, 'utf8');
-        assert.typeOf(myPrvKey, 'string');
-        assert.isTrue(myPrvKey.length > 0);
+        environments.forEach((environment) => {
+            const config = configJson[environment];
+            Utilities.createPrivateExtendedKey(kadence, config);
+            const myPrvKey = fs.readFileSync(`${__dirname}/../../keys/${config.private_extended_key_path}`, 'utf8');
+            assert.typeOf(myPrvKey, 'string');
+            assert.isTrue(myPrvKey.length > 0);
+        });
     });
 
-    it('loadSelectedDatabaseInfo()', async () => {
-        const myResult = await Utilities.loadSelectedDatabaseInfo();
-        assert.hasAllKeys(myResult, ['id', 'database_system', 'username', 'password',
-            'host', 'port', 'max_path_length', 'database']);
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            assert.equal(myResult.database_system, 'arango_db');
-        } else if (process.env.GRAPH_DATABASE === 'neo4j') {
-            assert.equal(myResult.database_system, 'neo4j');
-        }
+    it('database settings', async () => {
+        environments.forEach((environment) => {
+            const config = configJson[environment];
+            assert.hasAllKeys(config.database, ['provider', 'username', 'password',
+                'host', 'port', 'database', 'max_path_length']);
+            assert.equal(config.database.provider, 'arangodb');
+        });
     });
 
 
