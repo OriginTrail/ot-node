@@ -81,7 +81,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     inputXmlFiles.forEach((xmlFile) => {
         let queryObject;
         let myTrail;
-        it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
+        it.skip(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
             await gs1.parseGS1(xmlFile.args[0]);
             switch (path.basename(xmlFile.args[0])) {
             case 'Transformation.xml':
