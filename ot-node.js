@@ -58,6 +58,7 @@ process.on('unhandledRejection', (reason, p) => {
                     identity: config.node_kademlia_id,
                     config: cleanConfig,
                 },
+                severity: 'error',
             },
         );
     }
@@ -84,6 +85,7 @@ process.on('uncaughtException', (err) => {
                 identity: config.node_kademlia_id,
                 config: cleanConfig,
             },
+            severity: 'error',
         },
     );
 });
@@ -125,6 +127,37 @@ function notifyBugsnag(error, subsystem) {
         }
 
         bugsnag.notify(error, options);
+    }
+}
+
+function notifyEvent(message, metadata, subsystem) {
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        const options = {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+            severity: 'info',
+        };
+
+        if (subsystem) {
+            options.subsystem = {
+                name: subsystem,
+            };
+        }
+
+        if (metadata) {
+            Object.assign(options, metadata);
+        }
+
+        bugsnag.notify(message, options);
     }
 }
 
@@ -332,6 +365,7 @@ class OTNode {
             logger: awilix.asValue(log),
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
+            notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
