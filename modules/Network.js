@@ -14,6 +14,8 @@ const PeerCache = require('./kademlia/PeerCache');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 const ip = require('ip');
 
+const { NetworkRequestIgnoredError } = require('./errors');
+
 /**
  * DHT module (Kademlia)
  */
@@ -115,20 +117,13 @@ class Network {
             storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
         });
 
+        const { validateContact } = this;
+
         // Override node's _updateContact method to filter contacts.
         this.node._updateContact = (identity, contact) => {
             try {
-                if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
-                    if (config.local_network_only && ip.isPublic(contact.hostname)) {
-                        this.log.debug(`Ignored contact ${identity} from remote address: ${contact.hostname}.`);
-                        return;
-                    } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
-                        this.log.debug(`Ignored contact ${identity} from local address: ${contact.hostname}.`);
-                        return;
-                    }
-                }
-                if (!contact.network_id || contact.network_id !== config.network_id) {
-                    this.log.debug(`Ignored contact ${identity}. Invalid network ID.`);
+                if (!validateContact(contact)) {
+                    this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
                     return;
                 }
             } catch (err) {
@@ -140,6 +135,13 @@ class Network {
             this.node.constructor.prototype.constructor.prototype
                 ._updateContact.call(this.node, identity, contact);
         };
+
+        this.node.use((request, response, next) => {
+            if (!validateContact(request.contact[1])) {
+                return next(new NetworkRequestIgnoredError('Contact not valid.', request));
+            }
+            next();
+        });
 
         this.log.info('Starting OT Node...');
         this.node.eclipse = this.node.plugin(kadence.eclipse());
@@ -627,6 +629,12 @@ class Network {
         });
         // Define a global custom error handler rule
         this.node.use((err, request, response, next) => {
+            if (err instanceof NetworkRequestIgnoredError.constructor) {
+                this.log.debug(`Network request ignored. Contact ${JSON.stringify(request.contact)}`);
+                response.send([]);
+                return;
+            }
+
             this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
             response.send({ error: err.message });
         });
@@ -634,6 +642,29 @@ class Network {
 
     kademlia() {
         return this.node;
+    }
+
+    /**
+     * Validates contact.
+     *
+     * Checks if contact is in the network by checking network ID and if contact has IP
+     * check if it's in the local or remote network based on current configuration.
+     * @param contact Contact to check
+     * @returns {boolean} true if contact is in the same network.
+     */
+    validateContact(contact) {
+        if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
+            if (config.local_network_only && ip.isPublic(contact.hostname)) {
+                return false;
+            } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
+                return false;
+            }
+        }
+        if (!contact.network_id || contact.network_id !== config.network_id) {
+            return false;
+        }
+
+        return true;
     }
 }
 
