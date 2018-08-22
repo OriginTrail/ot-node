@@ -1034,10 +1034,10 @@ class EventEmitter {
 
         // async
         this._on('kad-verify-import-request', async (request) => {
-            logger.info('Request to verify encryption key of replicated data received');
-
             const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
+
+            logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
 
             const dcNodeId = request.contact[0];
             await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
