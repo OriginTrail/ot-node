@@ -17,6 +17,7 @@ class DCOfferKeyVerificationCommand extends Command {
         this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.notifyEvent = ctx.notifyEvent;
     }
 
     /**
@@ -62,11 +63,38 @@ class DCOfferKeyVerificationCommand extends Command {
         if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
             this.logger.warn(`Distribution hash for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+
+            this.notifyEvent(
+                'Distribution hash is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
             this.logger.warn(`Litigation hash for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+            this.notifyEvent(
+                'Litigation hash is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (!escrow.checksum === epkChecksum) {
@@ -79,6 +107,19 @@ class DCOfferKeyVerificationCommand extends Command {
         if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
             this.logger.warn(`Decryption key for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+            this.notifyEvent(
+                'Decryption key is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (failed) {

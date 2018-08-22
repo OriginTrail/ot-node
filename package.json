@@ -1,6 +1,6 @@
 {
   "name": "origintrail-node",
-  "version": "1.3.8",
+  "version": "1.3.11",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -51,7 +51,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^4.1.0",
+    "@kadenceproject/kadence": "^4.1.3",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
