@@ -121,7 +121,7 @@
     "utf8-length": "latest",
     "uuid": "^3.3.2",
     "validator": "^9.4.1",
-    "web3": "1.0.0-beta.34",
+    "web3": "^1.0.0-beta.35",
     "winston": "^2.4.3",
     "winston-loggly-bulk": "^2.0.3",
     "xml2js": "^0.4.19"
