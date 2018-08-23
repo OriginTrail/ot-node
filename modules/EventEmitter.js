@@ -369,13 +369,20 @@ class EventEmitter {
                         remoteControl.importFailed(error);
                     });
 
-
                 if (data.replicate) {
                     this.emit('api-create-offer', { import_id, response: data.response });
                 } else {
+                    await dcController.writeRootHash(import_id, root_hash);
+
                     data.response.status(201);
+
+                    // TODO remove ASAP
                     data.response.send({
+                        status: 200,
+                        message: 'Import success!',
                         import_id,
+                        dc_wallet: config.node_wallet,
+                        url: `https://otscan.origintrail.io?import_id=${import_id}&dc_wallet=${config.node_wallet}`,
                     });
                     remoteControl.importSucceeded();
                 }
