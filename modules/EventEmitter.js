@@ -166,6 +166,34 @@ class EventEmitter {
             }
         });
 
+        this._on('api-imported_vertices', async (data) => {
+            const { importId } = data;
+            logger.info(`Get imported vertices triggered for import ID ${importId}`);
+            try {
+                const result = await dhService.getVerticesForImport(importId);
+
+                const dataimport =
+                    await Models.data_info.findOne({ where: { import_id: importId } });
+
+                if (result.vertices.length === 0 || dataimport == null) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+
+                    result.root_hash = dataimport.root_hash;
+                    result.transaction = dataimport.transaction_hash;
+                }
+                data.response.send(result);
+            } catch (error) {
+                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                notifyError(error);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            }
+        });
+
         this._on('api-get-imports', (data) => {
             logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
             product.getImports(data.query).then((res) => {
@@ -359,6 +387,7 @@ class EventEmitter {
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
+                        transaction_hash: null,
                     }).catch((error) => {
                         logger.error(error);
                         notifyError(error);
@@ -369,13 +398,20 @@ class EventEmitter {
                         remoteControl.importFailed(error);
                     });
 
-
                 if (data.replicate) {
                     this.emit('api-create-offer', { import_id, response: data.response });
                 } else {
+                    await dcController.writeRootHash(import_id, root_hash);
+
                     data.response.status(201);
+
+                    // TODO remove ASAP
                     data.response.send({
+                        status: 200,
+                        message: 'Import success!',
                         import_id,
+                        dc_wallet: config.node_wallet,
+                        url: `https://otscan.origintrail.io?import_id=${import_id}&dc_wallet=${config.node_wallet}`,
                     });
                     remoteControl.importSucceeded();
                 }

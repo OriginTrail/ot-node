@@ -4,6 +4,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
 const envfile = require('envfile');
 const externalip = require('externalip');
+const ip = require('ip');
 const fs = require('fs');
 
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
@@ -128,15 +129,13 @@ class RegisterNode {
             }
 
             if (process.env.INSTALLATION === 'local') {
-                env.NODE_IP = '127.0.0.1';
+                env.NODE_IP = '127.0.0.1'; // TODO remove
             } else {
-                env.NODE_IP = await this.getExternalIp();
+                env.NODE_IP = ip.address();
             }
 
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
-
-            env.TRAVERSE_NAT_ENABLED = '0';
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {

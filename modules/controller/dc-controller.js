@@ -11,6 +11,22 @@ class DCController {
 
     /**
      * Creates offer
+     * @returns {Promise<*>}
+     */
+    async writeRootHash(importId, rootHash) {
+        await this.commandExecutor.add({
+            name: 'dcOfferRootHashCommand',
+            delay: 0,
+            data: {
+                importId,
+                rootHash,
+            },
+            transactional: false,
+        });
+    }
+
+    /**
+     * Creates offer
      * @param importId  - Import ID
      * @param rootHash  - Import root hash
      * @param totalDocuments - Number of documents in import
