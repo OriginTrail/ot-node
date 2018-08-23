@@ -166,6 +166,34 @@ class EventEmitter {
             }
         });
 
+        this._on('api-imported_vertices', async (data) => {
+            const { importId } = data;
+            logger.info(`Get imported vertices triggered for import ID ${importId}`);
+            try {
+                const result = await dhService.getVerticesForImport(importId);
+
+                const dataimport =
+                    await Models.data_info.findOne({ where: { import_id: importId } });
+
+                if (result.vertices.length === 0 || dataimport == null) {
+                    data.response.status(204);
+                } else {
+                    data.response.status(200);
+
+                    result.root_hash = dataimport.root_hash;
+                    result.transaction = dataimport.transaction_hash;
+                }
+                data.response.send(result);
+            } catch (error) {
+                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                notifyError(error);
+                data.response.status(500);
+                data.response.send({
+                    message: error,
+                });
+            }
+        });
+
         this._on('api-get-imports', (data) => {
             logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
             product.getImports(data.query).then((res) => {

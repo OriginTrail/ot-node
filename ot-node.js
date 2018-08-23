@@ -934,6 +934,21 @@ class OTNode {
                 res.send({ message: 'Bad request' });
             }
         });
+
+        server.get('/api/imported_vertices', (req, res) => {
+            log.api('GET: imported_vertices.');
+            const queryObject = req.query;
+
+            if (queryObject.import_id === undefined) {
+                res.send({ status: 400, message: 'Missing parameter!', data: [] });
+                return;
+            }
+
+            emitter.emit('api-imported_vertices', {
+                importId: queryObject.import_id,
+                response: res,
+            });
+        });
     }
 }
 
