@@ -31,7 +31,7 @@ class DCOfferRootHashCommand extends Command {
             try {
                 const result = await this.blockchain.writeRootHash(importId, rootHash);
                 const dataInfo = await Models.data_info.findOne({
-                    where: { import_id: data.import_id },
+                    where: { import_id: data.importId },
                 });
                 dataInfo.transaction_hash = result.transactionHash;
                 await dataInfo.save({ fields: ['transaction_hash'] });

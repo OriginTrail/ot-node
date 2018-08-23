@@ -359,6 +359,7 @@ class EventEmitter {
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
+                        transaction_hash: null,
                     }).catch((error) => {
                         logger.error(error);
                         notifyError(error);
