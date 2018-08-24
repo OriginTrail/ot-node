@@ -89,9 +89,19 @@ class Network {
             parseInt(config.child_derivation_index, 10),
         );
 
+        const onionEnabled = parseInt(config.onion_enabled, 10);
+        const natTraversalEnabled = parseInt(config.traverse_nat_enabled, 10);
+
+        let kadServerHost = null;
+        if (config.local_network_only || natTraversalEnabled || onionEnabled) {
+            kadServerHost = '127.0.0.1';
+        } else {
+            kadServerHost = await utilities.getExternalIp();
+        }
+
         // Initialize public contact data
         const contact = {
-            hostname: config.node_rpc_ip,
+            hostname: kadServerHost,
             protocol: 'https:',
             port: parseInt(config.node_port, 10),
             xpub: parentKey.publicExtendedKey,
@@ -156,11 +166,11 @@ class Network {
         ));
         this.log.info('Spartacus initialized');
 
-        if (parseInt(config.onion_enabled, 10)) {
+        if (onionEnabled) {
             this.enableOnion();
         }
 
-        if (parseInt(config.traverse_nat_enabled, 10)) {
+        if (natTraversalEnabled) {
             this.enableNatTraversal();
         }
 

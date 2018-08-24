@@ -3,8 +3,8 @@ require('dotenv').config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
 const envfile = require('envfile');
-const externalip = require('externalip');
 const fs = require('fs');
+const Utilities = require('../modules/Utilities');
 
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
 
@@ -130,7 +130,7 @@ class RegisterNode {
             if (process.env.INSTALLATION === 'local') {
                 env.NODE_IP = '127.0.0.1';
             } else {
-                env.NODE_IP = await this.getExternalIp();
+                env.NODE_IP = await Utilities.getExternalIp();
             }
 
             env.DB_PASSWORD = 'root';
@@ -190,17 +190,6 @@ class RegisterNode {
         this.socketSend(wallet, nodeIp);
         // eslint-disable-next-line
         require('../ot-node');
-    }
-
-    getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    console.log(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 }
 // eslint-disable-next-line no-new
