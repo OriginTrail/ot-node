@@ -3,7 +3,6 @@ require('dotenv').config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
 const envfile = require('envfile');
-const externalip = require('externalip');
 const ip = require('ip');
 const fs = require('fs');
 
@@ -189,17 +188,6 @@ class RegisterNode {
         this.socketSend(wallet, nodeIp);
         // eslint-disable-next-line
         require('../ot-node');
-    }
-
-    getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    console.log(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 }
 // eslint-disable-next-line no-new
