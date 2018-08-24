@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 require('dotenv').config();
 const {
-    describe, beforeEach, afterEach, it,
+    describe, before, beforeEach, afterEach, it,
 } = require('mocha');
 const { assert, expect } = require('chai');
 const path = require('path');
@@ -17,6 +17,8 @@ const Network = require('../../modules/Network');
 const NetworkUtilities = require('../../modules/NetworkUtilities');
 const EventEmitter = require('../../modules/EventEmitter');
 const Product = require('../../modules/Product');
+const Storage = require('../../modules/Storage');
+const models = require('../../models');
 const Web3 = require('web3');
 const awilix = require('awilix');
 
@@ -46,6 +48,10 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
         { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
     ];
+
+    before('Setup models', async () => {
+        Storage.models = (await models.sequelize.sync()).models;
+    });
 
     beforeEach('Setup DB', async function setupDb() {
         this.timeout(5000);

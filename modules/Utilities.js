@@ -17,6 +17,7 @@ const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
+const externalip = require('externalip');
 
 const pjson = require('../package.json');
 
@@ -962,6 +963,21 @@ class Utilities {
             [a[i], a[j]] = [a[j], a[i]];
         }
         return a;
+    }
+
+    /**
+     * Get external IP
+     * @returns {Promise}
+     */
+    static getExternalIp() {
+        return new Promise((resolve, reject) => {
+            externalip((err, ip) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(ip);
+            });
+        });
     }
 }
 
