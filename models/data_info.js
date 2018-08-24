@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
         root_hash: DataTypes.STRING(40),
         import_timestamp: DataTypes.DATE,
         data_size: DataTypes.INTEGER,
+        transaction_hash: DataTypes.STRING(128),
     }, {
         tableName: 'data_info',
     });
