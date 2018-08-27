@@ -130,6 +130,18 @@ module.exports = {
         value: process.env.NODE_RPC_PORT ? process.env.NODE_RPC_PORT : '8900',
     },
     {
+        key: 'node_rpc_use_ssl',
+        value: process.env.NODE_RPC_USE_SSL ? process.env.NODE_RPC_USE_SSL : '0',
+    },
+    {
+        key: 'node_rpc_ssl_key_path',
+        value: process.env.NODE_RPC_SSL_KEY_PATH ? process.env.NODE_RPC_SSL_KEY_PATH : '',
+    },
+    {
+        key: 'node_rpc_ssl_cert_path',
+        value: process.env.NODE_RPC_SSL_CERT_PATH ? process.env.NODE_RPC_SSL_CERT_PATH : '',
+    },
+    {
         key: 'send_logs_to_origintrail',
         value: process.env.SEND_LOGS ? process.env.SEND_LOGS : '1',
     },
