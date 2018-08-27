@@ -20,6 +20,7 @@ const Product = require('../../modules/Product');
 const Storage = require('../../modules/Storage');
 const models = require('../../models');
 const Web3 = require('web3');
+const fs = require('fs');
 const awilix = require('awilix');
 
 function buildSelectedDatabaseParam(databaseName) {
@@ -110,7 +111,7 @@ describe('GS1 Importer tests', () => {
                 it(
                     `should correctly parse and import ${path.basename(test.args[0])} file ${i}th time`,
                     // eslint-disable-next-line no-loop-func
-                    async () => gs1.parseGS1(test.args[0]),
+                    async () => gs1.parseGS1(await Utilities.fileContents(test.args[0])),
                 );
             }
         });
@@ -122,7 +123,7 @@ describe('GS1 Importer tests', () => {
                 `should correctly pack keys for ${path.basename(test.args[0])}`,
                 // eslint-disable-next-line no-loop-func
                 async () => {
-                    const result = await gs1.parseGS1(test.args[0]);
+                    const result = await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
                     const { response } = await importer.importJSON(result, true);
 
                     const { vertices, edges } = response;
@@ -170,7 +171,7 @@ describe('GS1 Importer tests', () => {
         it('check keys immutability on GraphExample_3.xml', async () => {
             const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
-            await gs1.parseGS1(myGraphExample3);
+            await gs1.parseGS1(await Utilities.fileContents(myGraphExample3));
             const firstImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
             assert.equal(firstImportVerticesCount, 14, 'There should be 14 vertices');
 
@@ -178,7 +179,7 @@ describe('GS1 Importer tests', () => {
             assert.equal(firstImportVerticesKeys.length, firstImportVerticesCount);
 
             // re-import into same db instance
-            await gs1.parseGS1(myGraphExample3);
+            await gs1.parseGS1(await Utilities.fileContents(myGraphExample3));
             const secondImportVerticesCount = await graphStorage.getDocumentsCount('ot_vertices');
             assert.equal(secondImportVerticesCount, 14, 'There should be 14 vertices');
 
@@ -195,7 +196,7 @@ describe('GS1 Importer tests', () => {
         it('check total graph nodes count in scenario of GraphExample_3.xml', async () => {
             const myGraphExample3 = path.join(__dirname, 'test_xml/GraphExample_3.xml');
 
-            await gs1.parseGS1(myGraphExample3);
+            await gs1.parseGS1(await Utilities.fileContents(myGraphExample3));
             const verticesCount1 = await graphStorage.getDocumentsCount('ot_vertices');
             assert.isNumber(verticesCount1);
             assert.isTrue(verticesCount1 >= 0, 'we expect positive number of vertices');
@@ -203,7 +204,7 @@ describe('GS1 Importer tests', () => {
             assert.isNumber(edgesCount1);
             assert.isTrue(edgesCount1 >= 0, 'we expect positive number of edges');
 
-            await gs1.parseGS1(myGraphExample3);
+            await gs1.parseGS1(await Utilities.fileContents(myGraphExample3));
             const verticesCount2 = await graphStorage.getDocumentsCount('ot_vertices');
             assert.isTrue(verticesCount2 >= 0, 'we expect positive number of vertices');
             assert.isNumber(verticesCount2);
@@ -315,8 +316,8 @@ describe('GS1 Importer tests', () => {
             it(
                 `should generate the same graph for subsequent ${path.basename(test.args[0])} imports`,
                 async () => {
-                    const import1Result = await gs1.parseGS1(test.args[0]);
-                    const import2Result = await gs1.parseGS1(test.args[0]);
+                    const import1Result = await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
+                    const import2Result = await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
                     checkImportResults(import1Result, import2Result);
 
                     const processedResult1 = await importer.afterImport(import1Result);
@@ -337,7 +338,7 @@ describe('GS1 Importer tests', () => {
 
             for (let i = 0; i < imports.length; i += 1) {
                 // eslint-disable-next-line no-await-in-loop
-                const result = await gs1.parseGS1(imports[i].args[0]);
+                const result = await gs1.parseGS1(await Utilities.fileContents(imports[i].args[0]));
                 importResults.push(result);
             }
 
@@ -491,7 +492,7 @@ describe('GS1 Importer tests', () => {
 
         inputXmlFiles.forEach((test) => {
             it(`content/traversal check for ${path.basename(test.args[0])}`, async () => {
-                await gs1.parseGS1(test.args[0]);
+                await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
                 await checkSpecificVerticeContent(`${test.args[0]}`);
             });
         });
