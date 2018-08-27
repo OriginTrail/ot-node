@@ -627,7 +627,7 @@ class OTNode {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/api/import', (req, res) => {
+        server.post('/api/import', async (req, res) => {
             log.api('POST: Import of data request received.');
 
             if (!authorize(req, res)) {
@@ -659,33 +659,32 @@ class OTNode {
             // Check if file is provided
             if (req.files !== undefined && req.files.importfile !== undefined) {
                 const inputFile = req.files.importfile.path;
+                fs.readFile(inputFile, 'utf8', (err, content) => {
+                    if (err) {
+                        // No import data provided
+                        res.status(400);
+                        res.send({
+                            message: 'No import data provided',
+                        });
+                    } else {
+                        const queryObject = {
+                            content,
+                            contact: req.contact,
+                            replicate: req.body.replicate,
+                            response: res,
+                        };
+                        emitter.emit(`api-${importtype}-import-request`, queryObject);
+                    }
+                });
+            } else if (req.body.importfile !== undefined) {
+                // Check if import data is provided in request body
                 const queryObject = {
-                    filepath: inputFile,
+                    content: req.body.importfile,
                     contact: req.contact,
                     replicate: req.body.replicate,
                     response: res,
                 };
-
                 emitter.emit(`api-${importtype}-import-request`, queryObject);
-            } else if (req.body.importfile !== undefined) {
-                // Check if import data is provided in request body
-                const fileData = req.body.importfile;
-                fs.writeFile('tmp/import.xml', fileData, (err) => {
-                    if (err) {
-                        return console.log(err);
-                    }
-                    console.log('The file was saved!');
-
-                    const inputFile = '/tmp/import.tmp';
-                    const queryObject = {
-                        filepath: inputFile,
-                        contact: req.contact,
-                        replicate: req.body.replicate,
-                        response: res,
-                    };
-
-                    emitter.emit(`api-${importtype}-import-request`, queryObject);
-                });
             } else {
                 // No import data provided
                 res.status(400);

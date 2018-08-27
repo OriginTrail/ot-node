@@ -979,6 +979,23 @@ class Utilities {
             });
         });
     }
+
+    /**
+     * Read file contents
+     * @param file
+     * @returns {Promise}
+     */
+    static fileContents(file) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(file, 'utf8', (err, content) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(content);
+                }
+            });
+        });
+    }
 }
 
 module.exports = Utilities;
