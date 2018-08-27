@@ -34,10 +34,11 @@ class Transactions {
                             break;
                         }
                     } catch (error) {
-                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
                         if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced')) {
                             throw new Error(error);
                         }
+
+                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
                         // eslint-disable-next-line no-await-in-loop
                         await sleep.sleep(2000);
                     }
