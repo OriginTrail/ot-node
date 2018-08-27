@@ -224,6 +224,7 @@ class OTNode {
                         warn: log.warn,
                         error: log.error,
                     },
+                    logLevel: 'error',
                 },
             );
         }
