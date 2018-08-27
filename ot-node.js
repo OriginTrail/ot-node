@@ -659,23 +659,21 @@ class OTNode {
             // Check if file is provided
             if (req.files !== undefined && req.files.importfile !== undefined) {
                 const inputFile = req.files.importfile.path;
-                fs.readFile(inputFile, 'utf8', (err, content) => {
-                    if (err) {
-                        // No import data provided
-                        res.status(400);
-                        res.send({
-                            message: 'No import data provided',
-                        });
-                    } else {
-                        const queryObject = {
-                            content,
-                            contact: req.contact,
-                            replicate: req.body.replicate,
-                            response: res,
-                        };
-                        emitter.emit(`api-${importtype}-import-request`, queryObject);
-                    }
-                });
+                try {
+                    const content = await Utilities.fileContents(inputFile);
+                    const queryObject = {
+                        content,
+                        contact: req.contact,
+                        replicate: req.body.replicate,
+                        response: res,
+                    };
+                    emitter.emit(`api-${importtype}-import-request`, queryObject);
+                } catch (e) {
+                    res.status(400);
+                    res.send({
+                        message: 'No import data provided',
+                    });
+                }
             } else if (req.body.importfile !== undefined) {
                 // Check if import data is provided in request body
                 const queryObject = {

@@ -836,7 +836,7 @@ class GS1Importer {
         const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
-        const validationResult = schema.validate(contents.toString());
+        const validationResult = schema.validate(contents);
         if (validationResult !== null) {
             this.helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
         }
