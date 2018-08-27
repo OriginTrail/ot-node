@@ -531,7 +531,7 @@ class OTNode {
      * Start RPC server
      */
     startRPC(emitter) {
-        const server = restify.createServer({
+        const options = {
             name: 'RPC server',
             version: pjson.version,
             formatters: {
@@ -566,7 +566,17 @@ class OTNode {
                     return data;
                 },
             },
-        });
+        };
+
+        if (config.node_rpc_use_ssl !== '0') {
+            Object.assign(options, {
+                key: fs.readFileSync(config.node_rpc_ssl_key_path),
+                certificate: fs.readFileSync(config.node_rpc_ssl_cert_path),
+                rejectUnauthorized: true,
+            });
+        }
+
+        const server = restify.createServer(options);
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
@@ -610,7 +620,7 @@ class OTNode {
                 return true;
             }
 
-            if (!remote_access.includes(request_ip)) {
+            if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',
