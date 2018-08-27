@@ -37,6 +37,8 @@ const Web3 = require('web3');
 
 global.__basedir = __dirname;
 
+let context;
+
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
@@ -334,6 +336,8 @@ class OTNode {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
+
+        context = container.cradle;
 
         container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
             formatName: 'camelCase',
@@ -730,6 +734,23 @@ class OTNode {
                     message: 'Invalid parameters!',
                 });
             }
+        });
+
+        server.get('/api/dump/rt', (req, res) => {
+            log.api('Dumping routing table');
+            const message = {};
+            context.network.kademlia().router.forEach((value, key, map) => {
+                if (value.length > 0) {
+                    value.forEach((bValue, bKey, bMap) => {
+                        message[bKey] = bValue;
+                    });
+                }
+            });
+
+            res.status(200);
+            res.send({
+                message,
+            });
         });
 
         server.get('/api/replication/:replication_id', (req, res) => {
