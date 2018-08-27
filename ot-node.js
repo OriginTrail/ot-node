@@ -737,7 +737,7 @@ class OTNode {
         });
 
         server.get('/api/dump/rt', (req, res) => {
-            console.log('Dumping routing table');
+            log.api('Dumping routing table');
             const message = {};
             context.network.kademlia().router.forEach((value, key, map) => {
                 if (value.length > 0) {
