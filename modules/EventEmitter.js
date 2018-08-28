@@ -404,14 +404,10 @@ class EventEmitter {
                     await dcController.writeRootHash(import_id, root_hash);
 
                     data.response.status(201);
-
-                    // TODO remove ASAP
                     data.response.send({
-                        status: 200,
-                        message: 'Import success!',
+                        message: 'Import success',
                         import_id,
-                        dc_wallet: config.node_wallet,
-                        url: `https://otscan.origintrail.io?import_id=${import_id}&dc_wallet=${config.node_wallet}`,
+                        wallet: config.node_wallet,
                     });
                     remoteControl.importSucceeded();
                 }
@@ -492,8 +488,8 @@ class EventEmitter {
 
         this._on('api-gs1-import-request', async (data) => {
             try {
-                logger.info(`GS1 import with ${data.filepath} triggered.`);
-                const responseObject = await importer.importXMLgs1(data.filepath);
+                logger.debug('GS1 import triggered');
+                const responseObject = await importer.importXMLgs1(data.content);
                 const { error } = responseObject;
                 const { response } = responseObject;
 
@@ -509,8 +505,8 @@ class EventEmitter {
 
         this._on('api-wot-import-request', async (data) => {
             try {
-                logger.info(`WOT import with ${data.filepath} triggered.`);
-                const responseObject = await importer.importWOT(data.filepath);
+                logger.debug('WOT import triggered');
+                const responseObject = await importer.importWOT(data.content);
                 const { error } = responseObject;
                 const { response } = responseObject;
 
@@ -1034,10 +1030,10 @@ class EventEmitter {
 
         // async
         this._on('kad-verify-import-request', async (request) => {
-            logger.info('Request to verify encryption key of replicated data received');
-
             const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
+
+            logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
 
             const dcNodeId = request.contact[0];
             await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);

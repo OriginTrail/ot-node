@@ -37,7 +37,7 @@ class DCOfferRootHashCommand extends Command {
                 await dataInfo.save({ fields: ['transaction_hash'] });
                 this.logger.info('Fingerprint written on blockchain');
             } catch (err) {
-                await this._notify(offerId);
+                await this._notify(err, offerId);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);
             }
         } else if (blockchainRootHash !== rootHash) {

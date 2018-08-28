@@ -40,7 +40,7 @@
 							<VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
 								<attribute id="urn:ot:object:actor:name">Green</attribute>
 								<attribute id="urn:ot:object:actor:category">Company Retail</attribute>
-								<attribute id="urn:ot:object:actor:wallet">0xCcAB7BD40602B78C0649032D2532dEFa23A4C0</attribute>
+								<attribute id="urn:ot:object:actor:wallet">0x90398eF02389Ef85F262737b4B3aDB8eE588B43A</attribute>
 							</VocabularyElement>
 							<VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
 								<attribute id="urn:ot:object:actor:name">Pink</attribute>
