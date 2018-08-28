@@ -31,6 +31,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
+        transaction_hash: {
+            allowNull: true,
+            type: Sequelize.STRING,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('data_infos'),
 };

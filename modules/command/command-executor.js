@@ -19,7 +19,7 @@ const STATUS = {
  * How many commands will run in parallel
  * @type {number}
  */
-const QUEUE_PARALLELISM = 4;
+const QUEUE_PARALLELISM = 1;
 
 /**
  * Queues and processes commands
@@ -29,6 +29,7 @@ class CommandExecutor {
         this.ctx = ctx;
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
+        this.notifyError = ctx.notifyError;
 
         this.parallelism = QUEUE_PARALLELISM;
         this.queue = async.queue(async (command, callback) => {
@@ -36,6 +37,7 @@ class CommandExecutor {
                 await this._execute(command);
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
+                this.notifyError(e);
                 process.exit(-1);
             }
 
@@ -76,6 +78,7 @@ class CommandExecutor {
                 }
             } catch (e) {
                 this.logger.warn(`Failed to handle expired callback for command ${command.name} and ID ${command.id}`);
+                this.notifyError(e);
             }
             return;
         }
@@ -123,6 +126,7 @@ class CommandExecutor {
             }
         } catch (e) {
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
+            this.notifyError(e);
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
@@ -130,6 +134,7 @@ class CommandExecutor {
                 }
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
+                this.notifyError(e);
             }
         }
     }
@@ -198,6 +203,7 @@ class CommandExecutor {
                 return await handler.recover(command, err);
             } catch (e) {
                 this.logger.warn(`Failed to recover command ${command.name} and ID ${command.id}`);
+                this.notifyError(e);
             }
         }
     }

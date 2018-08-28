@@ -10,6 +10,7 @@ class Importer {
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
+        this.notifyError = ctx.notifyError;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -60,6 +61,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -142,7 +144,8 @@ class Importer {
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
-        const merkle = await ImportUtilities.merkleStructure(vertices, edges);
+        const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
+            vertex.vertex_type !== 'CLASS'), edges);
 
         this.log.info(`Import id: ${import_id}`);
         this.log.info(`Import hash: ${merkle.tree.getRoot()}`);
@@ -169,6 +172,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,
@@ -190,6 +194,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
                 response: null,

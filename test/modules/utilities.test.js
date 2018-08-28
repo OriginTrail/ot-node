@@ -32,7 +32,7 @@ describe('Utilities module', () => {
                 'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
                 'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                 'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                'network_id'],
+                'network_id', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
             'Some config items are missing in node_config',
         );
     });

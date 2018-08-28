@@ -31,7 +31,7 @@ class DHReadDataLocationRequestCommand extends Command {
 
         // Check if mine publish.
         if (msgNodeId === this.config.identity && msgWallet === this.config.node_wallet) {
-            this.log.trace('Received mine publish. Ignoring.');
+            this.logger.trace('Received mine publish. Ignoring.');
             Command.empty();
         }
 
@@ -39,7 +39,7 @@ class DHReadDataLocationRequestCommand extends Command {
         const imports = await this.graphStorage.findImportIds(msgQuery);
         if (imports.length === 0) {
             // I don't want to participate
-            this.log.trace(`No imports found for request ${msgId}`);
+            this.logger.trace(`No imports found for request ${msgId}`);
             Command.empty();
         }
 
@@ -65,6 +65,14 @@ class DHReadDataLocationRequestCommand extends Command {
         const nodeId = this.config.identity;
         const dataPrice = 100000; // TODO add to configuration
 
+        // TODO: Temporarily allow sending raw data (free read).
+        // Merge with all imports
+        imports.forEach((importId) => {
+            if (!replicatedImportIds.includes(importId)) {
+                replicatedImportIds.push(importId);
+            }
+        });
+
         const dataInfos = await Models.data_info.findAll({
             where: {
                 import_id: {
@@ -83,7 +91,7 @@ class DHReadDataLocationRequestCommand extends Command {
         });
 
         if (importObjects.length === 0) {
-            this.logger.warn(`Zero import size for IDs ${JSON.stringify(replicatedImportIds)}.`);
+            this.logger.trace(`Didn't find imports for query ${JSON.stringify(msgQuery)}.`);
             return Command.empty();
         }
 
@@ -99,7 +107,7 @@ class DHReadDataLocationRequestCommand extends Command {
         }, { transaction });
 
         if (!networkReplyModel) {
-            this.log.error('Failed to create new network reply model.');
+            this.logger.error('Failed to create new network reply model.');
             throw Error('Internal error.');
         }
 

@@ -12,7 +12,7 @@ const fs = require('fs');
 const Umzug = require('umzug');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
-const uuidv4 = require('uuid/v4');
+const bytes = require('utf8-length');
 
 const Utilities = require('../../modules/Utilities');
 const ImportUtilities = require('../../modules/ImportUtilities');
@@ -457,6 +457,7 @@ describe('Protocol tests', () => {
                 biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
                     .singleton(),
                 dcController: awilix.asClass(DCController).singleton(),
+                notifyError: awilix.asFunction(() => (error) => { throw error; }),
             });
 
             testNode.blockchain = container.resolve('blockchain');
@@ -593,6 +594,16 @@ describe('Protocol tests', () => {
             mockGraphStorage.imports[importId] = { vertices, edges };
             const merkle = await ImportUtilities.merkleStructure(vertices, edges);
             rootHash = merkle.tree.getRoot();
+
+            Models.data_info.create({
+                import_id: importId,
+                root_hash: rootHash,
+                data_provider_wallet: testNode1.wallet,
+                import_timestamp: new Date(),
+                total_documents: vertices.length,
+                data_size: bytes(JSON.stringify(vertices)),
+                transaction_hash: null,
+            });
         });
 
 
