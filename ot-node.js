@@ -545,6 +545,7 @@ class OTNode {
             version: pjson.version,
             formatters: {
                 'application/json': (req, res, body) => {
+                    res.set('content-type', 'application/json; charset=utf-8');
                     if (!body) {
                         if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                             res.setHeader('Content-Length', 0);
@@ -568,7 +569,14 @@ class OTNode {
                         body = body.toString('base64');
                     }
 
-                    const data = JSON.stringify(body, null, 2);
+                    let ident = 2;
+                    if ('prettify-json' in req.headers) {
+                        if (req.headers['prettify-json'] === 'false') {
+                            ident = 0;
+                        }
+                    }
+                    const data = Utilities.stringify(body, ident);
+
                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                         res.setHeader('Content-Length', Buffer.byteLength(data));
                     }
@@ -894,6 +902,7 @@ class OTNode {
 
             emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
+                request: req,
                 response: res,
             });
         });
