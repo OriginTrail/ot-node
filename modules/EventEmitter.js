@@ -174,10 +174,21 @@ class EventEmitter {
             }
         });
 
-        this._on('api-imported_vertices', async (data) => {
+        this._on('api-import-info', async (data) => {
             const { importId } = data;
             logger.info(`Get imported vertices triggered for import ID ${importId}`);
             try {
+                const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+
+                if (!dataInfo) {
+                    logger.info(`Import data for import ID ${importId} does not exist.`);
+                    data.response.status(404);
+                    data.response.send({
+                        message: `Import data for import ID ${importId} does not exist`,
+                    });
+                    return;
+                }
+
                 const result = await dhService.getImport(importId);
 
                 const dataimport =
@@ -185,6 +196,7 @@ class EventEmitter {
 
                 if (result.vertices.length === 0 || dataimport == null) {
                     data.response.status(204);
+                    data.response.send(result);
                 } else {
                     data.response.status(200);
 
@@ -198,8 +210,8 @@ class EventEmitter {
                     );
                     normalized.root_hash = dataimport.root_hash;
                     normalized.transaction = dataimport.transaction_hash;
+                    data.response.send(normalized);
                 }
-                data.response.send(result);
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);

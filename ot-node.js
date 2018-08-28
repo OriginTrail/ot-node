@@ -977,8 +977,8 @@ class OTNode {
             }
         });
 
-        server.get('/api/imported_vertices', (req, res) => {
-            log.api('GET: imported_vertices.');
+        server.get('/api/import_info', (req, res) => {
+            log.api('GET: import_info.');
             const queryObject = req.query;
 
             if (queryObject.import_id === undefined) {
@@ -986,7 +986,7 @@ class OTNode {
                 return;
             }
 
-            emitter.emit('api-imported_vertices', {
+            emitter.emit('api-import-info', {
                 importId: queryObject.import_id,
                 response: res,
             });

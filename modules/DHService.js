@@ -527,7 +527,7 @@ class DHService {
             return { vertices: values[0], edges: values[1] };
         }
 
-        throw Error(`Cannot find vertices for import ID ${importId}.`);
+        throw Error(`Cannot find import for import ID ${importId}.`);
     }
 
     listenToBlockchainEvents() {
