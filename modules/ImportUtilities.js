@@ -4,7 +4,7 @@ const Encryption = require('./Encryption');
 const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
-const sha3_256 = require('js-sha3').sha3_256;
+const { sha3_256 } = require('js-sha3');
 
 /**
  * Import related utilities
