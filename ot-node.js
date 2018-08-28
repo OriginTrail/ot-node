@@ -106,7 +106,7 @@ process.on('exit', (code) => {
     }
 });
 
-function notifyBugsnag(error, subsystem) {
+function notifyBugsnag(error, metadata, subsystem) {
     if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
@@ -126,6 +126,10 @@ function notifyBugsnag(error, subsystem) {
             options.subsystem = {
                 name: subsystem,
             };
+        }
+
+        if (metadata) {
+            Object.assign(options, metadata);
         }
 
         bugsnag.notify(error, options);
