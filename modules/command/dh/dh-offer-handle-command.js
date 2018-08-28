@@ -227,6 +227,33 @@ class DHOfferHandleCommand extends Command {
     }
 
     /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        this.logger.warn('Trying to recover from dhOfferHandleCommand.');
+
+        if (err.toString().includes('Transaction has been reverted by the EVM')) {
+            const {
+                importId,
+            } = command.data;
+
+            // Check if we're too late for bid.
+            const offer = await this.blockchain.getOffer(importId);
+
+            if (offer[0] !== '0x0000000000000000000000000000000000000000') {
+                if (!offer.active || offer.finalized) {
+                    this.logger.warn(`Offer for ${importId} was already finalized or not active. Failed to add bid.`);
+                    return Command.empty();
+                }
+            }
+        }
+
+        throw err;
+    }
+
+    /**
      * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
