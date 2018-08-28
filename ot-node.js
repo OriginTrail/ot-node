@@ -106,7 +106,7 @@ process.on('exit', (code) => {
     }
 });
 
-function notifyBugsnag(error, subsystem) {
+function notifyBugsnag(error, metadata, subsystem) {
     if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
@@ -126,6 +126,10 @@ function notifyBugsnag(error, subsystem) {
             options.subsystem = {
                 name: subsystem,
             };
+        }
+
+        if (metadata) {
+            Object.assign(options, metadata);
         }
 
         bugsnag.notify(error, options);
@@ -541,6 +545,7 @@ class OTNode {
             version: pjson.version,
             formatters: {
                 'application/json': (req, res, body) => {
+                    res.set('content-type', 'application/json; charset=utf-8');
                     if (!body) {
                         if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                             res.setHeader('Content-Length', 0);
@@ -564,7 +569,14 @@ class OTNode {
                         body = body.toString('base64');
                     }
 
-                    const data = JSON.stringify(body, null, 2);
+                    let ident = 2;
+                    if ('prettify-json' in req.headers) {
+                        if (req.headers['prettify-json'] === 'false') {
+                            ident = 0;
+                        }
+                    }
+                    const data = Utilities.stringify(body, ident);
+
                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                         res.setHeader('Content-Length', Buffer.byteLength(data));
                     }
@@ -890,6 +902,7 @@ class OTNode {
 
             emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
+                request: req,
                 response: res,
             });
         });
@@ -964,8 +977,8 @@ class OTNode {
             }
         });
 
-        server.get('/api/imported_vertices', (req, res) => {
-            log.api('GET: imported_vertices.');
+        server.get('/api/import_info', (req, res) => {
+            log.api('GET: import_info.');
             const queryObject = req.query;
 
             if (queryObject.import_id === undefined) {
@@ -973,7 +986,7 @@ class OTNode {
                 return;
             }
 
-            emitter.emit('api-imported_vertices', {
+            emitter.emit('api-import-info', {
                 importId: queryObject.import_id,
                 response: res,
             });

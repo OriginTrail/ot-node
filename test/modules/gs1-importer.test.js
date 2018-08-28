@@ -12,7 +12,6 @@ const GS1Utilities = require('../../modules/GS1Utilities');
 const WOTImporter = require('../../modules/WOTImporter');
 const Importer = require('../../modules/importer');
 const Utilities = require('../../modules/Utilities');
-const RemoteControl = require('../../modules/RemoteControl');
 const Network = require('../../modules/Network');
 const NetworkUtilities = require('../../modules/NetworkUtilities');
 const EventEmitter = require('../../modules/EventEmitter');
@@ -220,10 +219,6 @@ describe('GS1 Importer tests', () => {
 
     describe('Graph validation', async () => {
         function checkImportResults(import1Result, import2Result) {
-            expect(import1Result.root_hash).to.be
-                .equal(import2Result.root_hash);
-            expect(import1Result.total_documents).to.be
-                .equal(import2Result.total_documents);
             expect(import1Result.vertices.length).to.be
                 .equal(import2Result.vertices.length);
 
@@ -310,6 +305,8 @@ describe('GS1 Importer tests', () => {
 
         function checkProcessedResults(processedResult1, processedResult2) {
             expect(processedResult1.root_hash).to.be.equal(processedResult2.root_hash);
+            expect(processedResult1.import_hash).to.be.equal(processedResult2.import_hash);
+            expect(processedResult1.total_documents).to.be.equal(processedResult1.total_documents);
         }
 
         inputXmlFiles.forEach((test) => {
