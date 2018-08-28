@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
         data_provider_wallet: DataTypes.STRING(42),
         total_documents: DataTypes.INTEGER,
         root_hash: DataTypes.STRING(40),
+        import_hash: DataTypes.STRING(40),
         import_timestamp: DataTypes.DATE,
         data_size: DataTypes.INTEGER,
         transaction_hash: DataTypes.STRING(128),

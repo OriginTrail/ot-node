@@ -485,7 +485,7 @@ class DHService {
      * @param importId ID of import.
      * @returns {Promise<*>}
      */
-    async getVerticesForImport(importId) {
+    async getImport(importId) {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { id: importId } });
 

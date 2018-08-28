@@ -23,6 +23,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        import_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         import_timestamp: {
             allowNull: false,
             type: Sequelize.DATE,

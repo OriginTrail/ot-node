@@ -114,7 +114,7 @@ class Ethereum {
             to: this.otContractAddress,
         };
 
-        const importIdHash = Utilities.sha3(importId);
+        const importIdHash = Utilities.soliditySHA3(importId);
 
         this.log.notify(`Writing root hash to blockchain for import ${importId}`);
         return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
@@ -127,7 +127,7 @@ class Ethereum {
      * @return {Promise<any>}
      */
     async getRootHash(dcWallet, importId) {
-        const importIdHash = Utilities.sha3(importId.toString());
+        const importIdHash = Utilities.soliditySHA3(importId.toString());
         this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importIdHash ${importIdHash}`);
         return this.otContract.methods.getFingerprintByBatchHash(dcWallet, importIdHash).call();
     }

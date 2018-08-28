@@ -148,14 +148,22 @@ class EventEmitter {
             const { import_id: importId } = data;
             logger.info(`Get vertices trigered for import ID ${importId}`);
             try {
-                const result = await dhService.getVerticesForImport(importId);
+                const result = await dhService.getImport(importId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
                 } else {
                     data.response.status(200);
                 }
-                data.response.send(result);
+
+                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+
+                if (rawData) {
+                    data.response.send(result);
+                } else {
+                    data.response
+                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
+                }
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);
@@ -170,7 +178,7 @@ class EventEmitter {
             const { importId } = data;
             logger.info(`Get imported vertices triggered for import ID ${importId}`);
             try {
-                const result = await dhService.getVerticesForImport(importId);
+                const result = await dhService.getImport(importId);
 
                 const dataimport =
                     await Models.data_info.findOne({ where: { import_id: importId } });
@@ -180,8 +188,16 @@ class EventEmitter {
                 } else {
                     data.response.status(200);
 
-                    result.root_hash = dataimport.root_hash;
-                    result.transaction = dataimport.transaction_hash;
+                    const normalized = ImportUtilities.normalizeImport(
+                        result.vertices,
+                        result.edges,
+                    );
+                    normalized.import_hash = ImportUtilities.importHash(
+                        result.vertices,
+                        result.edges,
+                    );
+                    normalized.root_hash = dataimport.root_hash;
+                    normalized.transaction = dataimport.transaction_hash;
                 }
                 data.response.send(result);
             } catch (error) {
@@ -372,6 +388,7 @@ class EventEmitter {
             const {
                 import_id,
                 root_hash,
+                import_hash,
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
@@ -383,6 +400,7 @@ class EventEmitter {
                     .create({
                         import_id,
                         root_hash,
+                        import_hash,
                         data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
