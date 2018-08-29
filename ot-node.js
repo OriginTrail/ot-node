@@ -37,6 +37,8 @@ const Web3 = require('web3');
 
 global.__basedir = __dirname;
 
+let context;
+
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
         return;
@@ -104,7 +106,7 @@ process.on('exit', (code) => {
     }
 });
 
-function notifyBugsnag(error, subsystem) {
+function notifyBugsnag(error, metadata, subsystem) {
     if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
@@ -124,6 +126,10 @@ function notifyBugsnag(error, subsystem) {
             options.subsystem = {
                 name: subsystem,
             };
+        }
+
+        if (metadata) {
+            Object.assign(options, metadata);
         }
 
         bugsnag.notify(error, options);
@@ -222,6 +228,7 @@ class OTNode {
                         warn: log.warn,
                         error: log.error,
                     },
+                    logLevel: 'error',
                 },
             );
         }
@@ -334,6 +341,8 @@ class OTNode {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
+
+        context = container.cradle;
 
         container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
             formatName: 'camelCase',
@@ -531,11 +540,12 @@ class OTNode {
      * Start RPC server
      */
     startRPC(emitter) {
-        const server = restify.createServer({
+        const options = {
             name: 'RPC server',
             version: pjson.version,
             formatters: {
                 'application/json': (req, res, body) => {
+                    res.set('content-type', 'application/json; charset=utf-8');
                     if (!body) {
                         if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                             res.setHeader('Content-Length', 0);
@@ -559,14 +569,31 @@ class OTNode {
                         body = body.toString('base64');
                     }
 
-                    const data = JSON.stringify(body, null, 2);
+                    let ident = 2;
+                    if ('prettify-json' in req.headers) {
+                        if (req.headers['prettify-json'] === 'false') {
+                            ident = 0;
+                        }
+                    }
+                    const data = Utilities.stringify(body, ident);
+
                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                         res.setHeader('Content-Length', Buffer.byteLength(data));
                     }
                     return data;
                 },
             },
-        });
+        };
+
+        if (config.node_rpc_use_ssl !== '0') {
+            Object.assign(options, {
+                key: fs.readFileSync(config.node_rpc_ssl_key_path),
+                certificate: fs.readFileSync(config.node_rpc_ssl_cert_path),
+                rejectUnauthorized: true,
+            });
+        }
+
+        const server = restify.createServer(options);
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
@@ -610,7 +637,7 @@ class OTNode {
                 return true;
             }
 
-            if (!remote_access.includes(request_ip)) {
+            if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',
@@ -627,7 +654,7 @@ class OTNode {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/api/import', (req, res) => {
+        server.post('/api/import', async (req, res) => {
             log.api('POST: Import of data request received.');
 
             if (!authorize(req, res)) {
@@ -659,33 +686,30 @@ class OTNode {
             // Check if file is provided
             if (req.files !== undefined && req.files.importfile !== undefined) {
                 const inputFile = req.files.importfile.path;
-                const queryObject = {
-                    filepath: inputFile,
-                    contact: req.contact,
-                    replicate: req.body.replicate,
-                    response: res,
-                };
-
-                emitter.emit(`api-${importtype}-import-request`, queryObject);
-            } else if (req.body.importfile !== undefined) {
-                // Check if import data is provided in request body
-                const fileData = req.body.importfile;
-                fs.writeFile('tmp/import.xml', fileData, (err) => {
-                    if (err) {
-                        return console.log(err);
-                    }
-                    console.log('The file was saved!');
-
-                    const inputFile = '/tmp/import.tmp';
+                try {
+                    const content = await Utilities.fileContents(inputFile);
                     const queryObject = {
-                        filepath: inputFile,
+                        content,
                         contact: req.contact,
                         replicate: req.body.replicate,
                         response: res,
                     };
-
                     emitter.emit(`api-${importtype}-import-request`, queryObject);
-                });
+                } catch (e) {
+                    res.status(400);
+                    res.send({
+                        message: 'No import data provided',
+                    });
+                }
+            } else if (req.body.importfile !== undefined) {
+                // Check if import data is provided in request body
+                const queryObject = {
+                    content: req.body.importfile,
+                    contact: req.contact,
+                    replicate: req.body.replicate,
+                    response: res,
+                };
+                emitter.emit(`api-${importtype}-import-request`, queryObject);
             } else {
                 // No import data provided
                 res.status(400);
@@ -723,6 +747,23 @@ class OTNode {
                     message: 'Invalid parameters!',
                 });
             }
+        });
+
+        server.get('/api/dump/rt', (req, res) => {
+            log.api('Dumping routing table');
+            const message = {};
+            context.network.kademlia().router.forEach((value, key, map) => {
+                if (value.length > 0) {
+                    value.forEach((bValue, bKey, bMap) => {
+                        message[bKey] = bValue;
+                    });
+                }
+            });
+
+            res.status(200);
+            res.send({
+                message,
+            });
         });
 
         server.get('/api/replication/:replication_id', (req, res) => {
@@ -861,6 +902,7 @@ class OTNode {
 
             emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
+                request: req,
                 response: res,
             });
         });
@@ -935,8 +977,8 @@ class OTNode {
             }
         });
 
-        server.get('/api/imported_vertices', (req, res) => {
-            log.api('GET: imported_vertices.');
+        server.get('/api/import_info', (req, res) => {
+            log.api('GET: import_info.');
             const queryObject = req.query;
 
             if (queryObject.import_id === undefined) {
@@ -944,7 +986,7 @@ class OTNode {
                 return;
             }
 
-            emitter.emit('api-imported_vertices', {
+            emitter.emit('api-import-info', {
                 importId: queryObject.import_id,
                 response: res,
             });

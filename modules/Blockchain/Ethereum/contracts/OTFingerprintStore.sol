@@ -27,7 +27,13 @@ contract OTFingerprintStore is Ownable{
     uint256 public _version;
     /* Data Holder Fingerprint Store */ 
     // mapping(address => mapping (bytes32 => bytes32)) public DHFS; 
-    mapping(address => mapping (bytes32 => bytes32)) public DHFS; 
+    mapping(address => mapping (bytes32 => FingerprintDefinition)) public DHFS;
+
+    struct FingerprintDefinition{
+      bytes32 graph_hash;
+      bytes32 import_hash;
+    }
+
     /* Agreement store */
     struct Agreement {
         uint256 startTime;
@@ -49,18 +55,20 @@ contract OTFingerprintStore is Ownable{
     }
     /* Fingerprinting */
     /* Store a fingerpring of a graph identified by batch_id and hash of batch_id */
-    function addFingerPrint(string batch_id, bytes32 batch_id_hash, bytes32 graph_hash) public returns (bool){
+    function addFingerPrint(string batch_id, bytes32 batch_id_hash, bytes32 graph_hash, bytes32 import_hash) public returns (bool){
         require(msg.sender!=address(0));
         require(batch_id_hash!=0x0);
         require(graph_hash!=0x0);
-        require(DHFS[msg.sender][batch_id_hash] == bytes32(0));
-        DHFS[msg.sender][batch_id_hash] = graph_hash;
+        require(DHFS[msg.sender][batch_id_hash].graph_hash== bytes32(0));
+        DHFS[msg.sender][batch_id_hash].graph_hash = graph_hash;
+        DHFS[msg.sender][batch_id_hash].import_hash = import_hash;
+
         emit Fingerprint(msg.sender,batch_id,batch_id_hash,graph_hash);      
     }
-    function getFingerprintByBatchHash(address dataHolder, bytes32 batch_id_hash) public constant returns (bytes32 fingerprint){
+    function getFingerprintByBatchHash(address dataHolder, bytes32 batch_id_hash) public constant returns (bytes32 graph_hash, bytes32 import_hash){
         require(dataHolder!=address(0));
         require(batch_id_hash!=0x0);
-        return DHFS[dataHolder][batch_id_hash];
+        return (DHFS[dataHolder][batch_id_hash].graph_hash, DHFS[dataHolder][batch_id_hash].import_hash);
     }
     /* Agreements */ 
     function createAgreement(address dataHolder, uint256 startTime, uint256 endTime,bytes32 batch_id_hash, bytes32 data_hash) public returns (bool){

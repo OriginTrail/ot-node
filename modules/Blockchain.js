@@ -35,10 +35,11 @@ class Blockchain {
      * Writes data import root hash on blockchain
      * @param importId
      * @param rootHash
+     * @param importHash
      * @returns {Promise}
      */
-    writeRootHash(importId, rootHash) {
-        return this.blockchain.writeRootHash(importId, rootHash);
+    writeRootHash(importId, rootHash, importHash) {
+        return this.blockchain.writeRootHash(importId, rootHash, importHash);
     }
 
     /**

@@ -144,14 +144,18 @@ class Importer {
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
+        const importHash = ImportUtilities.importHash(vertices, edges);
+
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
 
         this.log.info(`Import id: ${import_id}`);
-        this.log.info(`Import hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Import hash: ${importHash}`);
         return {
             import_id,
             root_hash: merkle.tree.getRoot(),
+            import_hash: importHash,
             total_documents: merkle.hashPairs.length,
             vertices,
             edges,
