@@ -126,7 +126,6 @@ class CommandExecutor {
             }
         } catch (e) {
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
-            this.notifyError(e, { data: command.data });
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {
@@ -134,7 +133,7 @@ class CommandExecutor {
                 }
             } catch (e) {
                 this.logger.warn(`Failed to handle error callback for command ${command.name} and ID ${command.id}`);
-                this.notifyError(e);
+                this.notifyError(e, { data: command.data });
             }
         }
     }
