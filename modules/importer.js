@@ -150,7 +150,8 @@ class Importer {
             vertex.vertex_type !== 'CLASS'), edges);
 
         this.log.info(`Import id: ${import_id}`);
-        this.log.info(`Import hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
+        this.log.info(`Import hash: ${importHash}`);
         return {
             import_id,
             root_hash: merkle.tree.getRoot(),
