@@ -167,7 +167,7 @@ class GS1Utilities {
             privateData[key] = value;
 
             const sorted = Utilities.sortObject(value);
-            data.private[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+            data.private[key] = Utilities.soliditySHA3(JSON.stringify(`${sorted}${salt}`));
         }
         privateData._salt = salt;
     }
@@ -184,7 +184,7 @@ class GS1Utilities {
         for (const key in original) {
             const value = original[key];
             const sorted = Utilities.sortObject(value);
-            result[key] = Utilities.sha3(JSON.stringify(`${sorted}${salt}`));
+            result[key] = Utilities.soliditySHA3(JSON.stringify(`${sorted}${salt}`));
         }
         return Utilities.objectDistance(hashed, result);
     }

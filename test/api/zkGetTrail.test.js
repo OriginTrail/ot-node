@@ -81,7 +81,7 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
         let queryObject;
         let myTrail;
         it(`zero knowledge status check for EVENT in ${path.basename(xmlFile.args[0])} file`, async () => {
-            await gs1.parseGS1(xmlFile.args[0]);
+            await gs1.parseGS1(await Utilities.fileContents(xmlFile.args[0]));
             switch (path.basename(xmlFile.args[0])) {
             case 'Transformation.xml':
                 queryObject = { uid: 'CARENGINES_PROVIDER_ID:2015-03-15T00:00:00.000-04:00Z-04:00' };

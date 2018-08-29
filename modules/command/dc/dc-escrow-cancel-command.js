@@ -20,6 +20,7 @@ class DCEscrowCancelCommand extends Command {
         await this.blockchain.cancelEscrow(
             dhWallet,
             importId,
+            false,
         );
         await this.network.kademlia().sendVerifyImportResponse({
             status: 'fail',

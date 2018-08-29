@@ -485,7 +485,7 @@ class DHService {
      * @param importId ID of import.
      * @returns {Promise<*>}
      */
-    async getVerticesForImport(importId) {
+    async getImport(importId) {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { id: importId } });
 
@@ -527,7 +527,7 @@ class DHService {
             return { vertices: values[0], edges: values[1] };
         }
 
-        throw Error(`Cannot find vertices for import ID ${importId}.`);
+        throw Error(`Cannot find import for import ID ${importId}.`);
     }
 
     listenToBlockchainEvents() {

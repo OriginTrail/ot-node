@@ -22,15 +22,26 @@ class Transactions {
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
             try {
-                const delta = (Date.now() - this.lastTransactionTime);
-                if (delta < 2000) {
-                    await sleep.sleep(2000);
-                }
-                const result = await this._sendTransaction(transaction);
-                if (result.status === '0x0') {
-                    future.reject(result);
-                } else {
-                    future.resolve(result);
+                for (let i = 0; i < 3; i += 1) {
+                    try {
+                        // eslint-disable-next-line no-await-in-loop
+                        const result = await this._sendTransaction(transaction);
+                        if (result.status === '0x0') {
+                            future.reject(result);
+                            break;
+                        } else {
+                            future.resolve(result);
+                            break;
+                        }
+                    } catch (error) {
+                        if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced')) {
+                            throw new Error(error);
+                        }
+
+                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
+                        // eslint-disable-next-line no-await-in-loop
+                        await sleep.sleep(2000);
+                    }
                 }
             } catch (e) {
                 future.reject(e);
@@ -71,6 +82,7 @@ class Transactions {
             this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
         }
 
+        this.log.trace(`Sending transaction to blockchain, nonce ${newTransaction.options.nonce}, balance is ${currentBalance.toString()}`);
         return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 

@@ -4,6 +4,7 @@ const Encryption = require('./Encryption');
 const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
+const { sha3_256 } = require('js-sha3');
 
 /**
  * Import related utilities
@@ -77,6 +78,53 @@ class ImportUtilities {
     }
 
     /**
+     * Normalizes import (use just necessary data)
+     * @param vertices  Import vertices
+     * @param edges     Import edges
+     * @returns {{edges: *, vertices: *}}
+     */
+    static normalizeImport(vertices, edges) {
+        ImportUtilities.sort(edges);
+        ImportUtilities.sort(vertices);
+
+        let normEdges = null;
+        if (edges) {
+            normEdges = edges.map(e => utilities.sortObject({
+                _key: e._key,
+                identifiers: e.identifiers,
+                _from: e._from,
+                _to: e._to,
+                edge_type: e.edge_type,
+            }));
+        }
+
+        let normVertices = null;
+        if (vertices) {
+            normVertices = vertices.map(v => utilities.sortObject({
+                _key: v._key,
+                identifiers: v.identifiers,
+                data: v.data,
+            }));
+        }
+
+        return {
+            edges: normEdges,
+            vertices: normVertices,
+        };
+    }
+
+    /**
+     * Calculate import hash
+     * @param vertices  Import vertices
+     * @param edges     Import edges
+     * @returns {*}
+     */
+    static importHash(vertices, edges) {
+        const normalized = ImportUtilities.normalizeImport(vertices, edges);
+        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
+    }
+
+    /**
      * Creates Merkle tree from import data
      * @param vertices  Import vertices
      * @param edges     Import edges
@@ -91,7 +139,7 @@ class ImportUtilities {
 
         // process vertices
         for (const i in vertices) {
-            const hash = utilities.sha3(utilities.sortObject({
+            const hash = utilities.soliditySHA3(utilities.sortObject({
                 identifiers: vertices[i].identifiers,
                 data: vertices[i].data,
             }));
@@ -103,7 +151,7 @@ class ImportUtilities {
         }
 
         for (const edge of edges) {
-            const hash = utilities.sha3(utilities.sortObject({
+            const hash = utilities.soliditySHA3(utilities.sortObject({
                 identifiers: edge.identifiers,
                 _from: edge._from,
                 _to: edge._to,

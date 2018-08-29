@@ -19,7 +19,7 @@ const STATUS = {
  * How many commands will run in parallel
  * @type {number}
  */
-const QUEUE_PARALLELISM = 4;
+const QUEUE_PARALLELISM = 1;
 
 /**
  * Queues and processes commands
@@ -126,7 +126,7 @@ class CommandExecutor {
             }
         } catch (e) {
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
-            this.notifyError(e);
+            this.notifyError(e, { data: command.data });
             try {
                 const result = await this._handleError(command, handler, e);
                 if (result && result.commands) {

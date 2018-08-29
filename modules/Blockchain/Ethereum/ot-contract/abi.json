@@ -1,357 +1,373 @@
-[
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "batch_id",
-				"type": "string"
-			},
-			{
-				"name": "batch_id_hash",
-				"type": "bytes32"
-			},
-			{
-				"name": "graph_hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "addFingerPrint",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getVersion",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "party",
-				"type": "address"
-			}
-		],
-		"name": "getNumberOfAgreements",
-		"outputs": [
-			{
-				"name": "agreementCount",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "dataHolder",
-				"type": "address"
-			},
-			{
-				"name": "batch_id_hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "getFingerprintByBatchHash",
-		"outputs": [
-			{
-				"name": "fingerprint",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "_version",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "address"
-			},
-			{
-				"name": "",
-				"type": "address"
-			},
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "agreements",
-		"outputs": [
-			{
-				"name": "startTime",
-				"type": "uint256"
-			},
-			{
-				"name": "endTime",
-				"type": "uint256"
-			},
-			{
-				"name": "data_hash",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "address"
-			},
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "agreementPartiesList",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "owner",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "dataHolder",
-				"type": "address"
-			},
-			{
-				"name": "startTime",
-				"type": "uint256"
-			},
-			{
-				"name": "endTime",
-				"type": "uint256"
-			},
-			{
-				"name": "batch_id_hash",
-				"type": "bytes32"
-			},
-			{
-				"name": "data_hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "createAgreement",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "getAgreementPartiesCount",
-		"outputs": [
-			{
-				"name": "partiesCount",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "version",
-				"type": "uint256"
-			}
-		],
-		"name": "OTHashStore",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [
-			{
-				"name": "",
-				"type": "address"
-			},
-			{
-				"name": "",
-				"type": "bytes32"
-			},
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "DHFS",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "transferOwnership",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "dataHolder",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "batch_id",
-				"type": "string"
-			},
-			{
-				"indexed": true,
-				"name": "batch_id_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "graph_hash",
-				"type": "bytes32"
-			}
-		],
-		"name": "Fingerprint",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "dataCreator",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "dataHolder",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "batch_id_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "graph_hash",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "startTime",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "endTime",
-				"type": "uint256"
-			}
-		],
-		"name": "Agreed",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"name": "previousOwner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"name": "newOwner",
-				"type": "address"
-			}
-		],
-		"name": "OwnershipTransferred",
-		"type": "event"
-	}
-]
-
+ [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "DHFS",
+      "outputs": [
+        {
+          "name": "graph_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "import_hash",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "_version",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "agreements",
+      "outputs": [
+        {
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "name": "endTime",
+          "type": "uint256"
+        },
+        {
+          "name": "data_hash",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "agreementPartiesList",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "dataHolder",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "batch_id",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "name": "batch_id_hash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "graph_hash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Fingerprint",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "dataCreator",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "dataHolder",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "batch_id_hash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "graph_hash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "endTime",
+          "type": "uint256"
+        }
+      ],
+      "name": "Agreed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getVersion",
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "dataHolder",
+          "type": "address"
+        },
+        {
+          "name": "batch_id_hash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getFingerprintByBatchHash",
+      "outputs": [
+        {
+          "name": "graph_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "import_hash",
+          "type": "bytes32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "name": "party",
+          "type": "address"
+        }
+      ],
+      "name": "getNumberOfAgreements",
+      "outputs": [
+        {
+          "name": "agreementCount",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "constructor",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "version",
+          "type": "uint256"
+        }
+      ],
+      "name": "OTHashStore",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "batch_id",
+          "type": "string"
+        },
+        {
+          "name": "batch_id_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "graph_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "import_hash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "addFingerPrint",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "dataHolder",
+          "type": "address"
+        },
+        {
+          "name": "startTime",
+          "type": "uint256"
+        },
+        {
+          "name": "endTime",
+          "type": "uint256"
+        },
+        {
+          "name": "batch_id_hash",
+          "type": "bytes32"
+        },
+        {
+          "name": "data_hash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "createAgreement",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "getAgreementPartiesCount",
+      "outputs": [
+        {
+          "name": "partiesCount",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

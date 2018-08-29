@@ -36,14 +36,9 @@
                                 <attribute id="urn:ot:object:actor:wallet">0xAaBbAd7BD40602B78C0649032D2532dEFa23A4C0</attribute>
                             </VocabularyElement>
                             <VocabularyElement id="urn:ot:object:actor:id:Company_Pink">
-                                <attribute id="urn:ot:object:actor:name">Green</attribute>
+                                <attribute id="urn:ot:object:actor:name">Pink</attribute>
                                 <attribute id="urn:ot:object:actor:category">Company producer</attribute>
                                 <attribute id="urn:ot:object:actor:wallet">0xBbAaAd7BD40602B78C0649032D2532dEFa24323</attribute>
-                            </VocabularyElement>
-                            <VocabularyElement id="urn:ot:object:actor:id:Company_Orange">
-                                <attribute id="urn:ot:object:actor:name">Green</attribute>
-                                <attribute id="urn:ot:object:actor:category">Company producer</attribute>
-                                <attribute id="urn:ot:object:actor:wallet">0xCcCcAd7BD40602B78C0649032D2532dEFa212345</attribute>
                             </VocabularyElement>
                         </VocabularyElementList>
                     </Vocabulary>
@@ -58,28 +53,7 @@
                                     <id>urn:epc:id:sgln:Building_Green_V1</id>
                                     <id>urn:epc:id:sgln:Building_Green_V2</id>
                                 </children>
-                            </VocabularyElement>
-                            
-                            <VocabularyElement id="urn:epc:id:sgln:Building_Pink">
-                                <attribute id="urn:ot:object:location:category">Building</attribute>
-                                <attribute id="urn:ot:object:location:description">Distributor</attribute>
-                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Pink</attribute>
-                                <children>
-                                    <id>urn:epc:id:sgln:Building_Pink_V3</id>
-                                    <id>urn:epc:id:sgln:Building_Pink_V4</id>
-                                </children>
-                            </VocabularyElement>
-                            
-                            <VocabularyElement id="urn:epc:id:sgln:Building_Orange">
-                                <attribute id="urn:ot:object:location:category">Building</attribute>
-                                <attribute id="urn:ot:object:location:description">Retail store</attribute>
-                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Orange</attribute>
-                                <children>
-                                    <id>urn:epc:id:sgln:Building_Orange_V5</id>
-                                    <id>urn:epc:id:sgln:Building_Orange_V6</id>
-                                </children>
-                            </VocabularyElement>
-                            
+                            </VocabularyElement>                           
                         </VocabularyElementList>
                     </Vocabulary>
                     
