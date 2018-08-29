@@ -431,7 +431,7 @@ class EventEmitter {
                 if (data.replicate) {
                     this.emit('api-create-offer', { import_id, response: data.response });
                 } else {
-                    await dcController.writeRootHash(import_id, root_hash);
+                    await dcController.writeRootHash(import_id, root_hash, import_hash);
 
                     data.response.status(201);
                     data.response.send({
