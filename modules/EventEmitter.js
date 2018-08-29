@@ -280,10 +280,10 @@ class EventEmitter {
             logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
             blockchain.getRootHash(dcWallet, importId).then((res) => {
                 if (res) {
-                    if (!Utilities.isZerohash(res.graph_hash)) {
+                    if (!Utilities.isZeroHash(res.graph_hash)) {
                         data.response.status(200);
                         data.response.send({
-                            graph_hash: res.graph_hash,
+                            root_hash: res.graph_hash,
                             import_hash: res.import_hash,
                         });
                     } else {

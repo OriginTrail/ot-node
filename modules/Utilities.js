@@ -1012,7 +1012,7 @@ class Utilities {
      * Checks if hash is zero or any given hex string regardless of prefix 0x
      * @param {string} hash
      */
-    static isZerohash(hash) {
+    static isZeroHash(hash) {
         const num = new BN(this.denormalizeHex(hash));
 
         return num.eqn(0);
