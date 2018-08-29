@@ -55,6 +55,7 @@ class DHOfferHandleImportCommand extends Command {
             import_id: importResult.import_id,
             total_documents: importResult.vertices.length,
             root_hash: importResult.root_hash,
+            import_hash: importResult.import_hash,
             data_provider_wallet: importResult.wallet,
             import_timestamp: new Date(),
             data_size: dataSize,

@@ -69,7 +69,7 @@ describe('WOT Importer tests', () => {
                 it(
                     `should correctly parse and import ${path.basename(test.args[0])} file ${i}th time`,
                     // eslint-disable-next-line no-loop-func
-                    async () => wot.parse(test.args[0]),
+                    async () => wot.parse(await Utilities.fileContents(test.args[0])),
                 );
             }
         });

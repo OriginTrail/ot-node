@@ -12,7 +12,7 @@ module.exports = {
         network_id: 'rinkeby',
         gas_limit: '800000',
         gas_price: '5000000000',
-        ot_contract_address: '0x826b0e0b03f22c5e58557456bd8b8ede318c2e0a',
+        ot_contract_address: '0xc47ab060e064e9291d723e14ddf4122bc121624b',
         token_contract_address: '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882',
         escrow_contract_address: '0x6103d41059145b72f7ce5760910c017838454bca',
         bidding_contract_address: '0x4e3f704a3a8e874cf576606ed3b2a5e7bff37ad5',

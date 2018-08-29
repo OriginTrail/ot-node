@@ -22,21 +22,13 @@ class WOTImporter {
 
     /**
      * Parse WOT model
-     * @param payloadFile   WOT description
+     * @param payload   WOT contents
      * @return {Promise<void>}
      */
-    async parse(payloadFile) {
-        let payload;
-        try {
-            payload = JSON.parse(fs.readFileSync(payloadFile, 'utf8'));
-        } catch (err) {
-            const error = new Error('Invalid JSON file');
-            error.status = 400;
-            throw error;
-        }
-
+    async parse(payload) {
+        const parsed = JSON.parse(payload);
         const importId = Utilities.createImportId();
-        const { things, sender } = payload.data;
+        const { things, sender } = parsed.data;
 
         const edges = [];
         const vertices = [];

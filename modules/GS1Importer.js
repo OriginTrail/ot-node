@@ -827,19 +827,23 @@ class GS1Importer {
         };
     }
 
-    async parseGS1(gs1XmlFile) {
-        const gs1XmlFileBuffer = fs.readFileSync(gs1XmlFile);
+    /**
+     * Import GS1 contents
+     * @param contents
+     * @returns {Promise}
+     */
+    async parseGS1(contents) {
         const xsdFileBuffer = fs.readFileSync('./importers/xsd_schemas/EPCglobal-epcis-masterdata-1_2.xsd');
         const schema = xsd.parse(xsdFileBuffer.toString());
 
-        const validationResult = schema.validate(gs1XmlFileBuffer.toString());
+        const validationResult = schema.validate(contents);
         if (validationResult !== null) {
             this.helper.handleError(`Failed to validate schema. ${validationResult}`, 400);
         }
 
         return new Promise(resolve =>
             parseString(
-                gs1XmlFileBuffer,
+                contents,
                 { explicitArray: false, mergeAttrs: true },
                 /* eslint-disable consistent-return */
                 async (err, json) => {

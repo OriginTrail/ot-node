@@ -62,8 +62,26 @@ class DHOfferBidAddCommand extends Command {
      * @param command
      * @param err
      */
-    recover(command, err) {
-        this.logger.info('Bid not added, your bid was probably too late and the offer has been closed');
+    async recover(command, err) {
+        this.logger.warn('Trying to recover from dhOfferBidAddCommand.');
+
+        if (err.toString().includes('Transaction has been reverted by the EVM')) {
+            const {
+                importId,
+            } = command.data;
+
+            // Check if we're too late for bid.
+            const offer = await this.blockchain.getOffer(importId);
+
+            if (offer[0] !== '0x0000000000000000000000000000000000000000') {
+                if (!offer.active || offer.finalized) {
+                    this.logger.warn(`Offer for ${importId} was already finalized or not active. Failed to add bid.`);
+                    return;
+                }
+            }
+        }
+
+        throw err;
     }
 
     /**

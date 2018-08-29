@@ -13,13 +13,14 @@ class DCController {
      * Creates offer
      * @returns {Promise<*>}
      */
-    async writeRootHash(importId, rootHash) {
+    async writeRootHash(importId, rootHash, importHash) {
         await this.commandExecutor.add({
             name: 'dcOfferRootHashCommand',
             delay: 0,
             data: {
                 importId,
                 rootHash,
+                importHash,
             },
             transactional: false,
         });
