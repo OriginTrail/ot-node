@@ -601,7 +601,7 @@ class OTNode {
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional
             origins: ['*'],
-            allowHeaders: ['API-Token'],
+            allowHeaders: ['API-Token', 'prettify-json', 'raw-data'],
             exposeHeaders: ['API-Token-Expiry'],
         });
 
