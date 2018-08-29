@@ -279,12 +279,33 @@ class EventEmitter {
             }
             logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
             blockchain.getRootHash(dcWallet, importId).then((res) => {
+                if (res) {
+                    if (!Utilities.isZeroHash(res.graph_hash)) {
+                        data.response.status(200);
+                        data.response.send({
+                            root_hash: res.graph_hash,
+                            import_hash: res.import_hash,
+                        });
+                    } else {
+                        data.response.status(404);
+                        data.response.send({
+                            message: `Root hash not found for query ${JSON.stringify(data.query)}`,
+                        });
+                    }
+                } else {
+                    data.response.status(500);
+                    data.response.send({
+                        message: `Failed to get root hash for query ${JSON.stringify(data.query)}`,
+                    });
+                }
                 data.response.send(res);
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${JSON.stringify(data.query)}`);
                 notifyError(err);
                 data.response.status(500);
-                data.response.send(`Failed to get root hash for query ${JSON.stringify(data.query)}`); // TODO rethink about status codes
+                data.response.send({
+                    message: `Failed to get root hash for query ${JSON.stringify(data.query)}`, // TODO rethink about status codes
+                });
             });
         });
 
