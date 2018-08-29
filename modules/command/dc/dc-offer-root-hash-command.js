@@ -39,9 +39,6 @@ class DCOfferRootHashCommand extends Command {
                 await dataInfo.save({ fields: ['transaction_hash'] });
                 this.logger.info('Fingerprint written on blockchain');
             } catch (err) {
-                offer.status = 'FAILED';
-                offer.message = 'Offer failed';
-                await offer.save({ fields: ['status', 'messages'] });
                 await this._notify(err, offerId);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);
             }
@@ -64,7 +61,8 @@ class DCOfferRootHashCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId } });
             if (offer) {
                 offer.status = 'FAILED';
-                await offer.save({ fields: ['status'] });
+                offer.message = 'Offer failed';
+                await offer.save({ fields: ['status', 'messages'] });
             }
         }
         this.notifyError(err);
