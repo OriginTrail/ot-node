@@ -199,18 +199,18 @@ class EventEmitter {
                     data.response.send(result);
                 } else {
                     data.response.status(200);
-
-                    const normalized = ImportUtilities.normalizeImport(
-                        result.vertices,
-                        result.edges,
-                    );
-                    normalized.import_hash = ImportUtilities.importHash(
-                        result.vertices,
-                        result.edges,
-                    );
-                    normalized.root_hash = dataimport.root_hash;
-                    normalized.transaction = dataimport.transaction_hash;
-                    data.response.send(normalized);
+                    data.response.send({
+                        import: ImportUtilities.normalizeImport(
+                            result.vertices,
+                            result.edges,
+                        ),
+                        import_hash: ImportUtilities.importHash(
+                            result.vertices,
+                            result.edges,
+                        ),
+                        root_hash: dataimport.root_hash,
+                        transaction: dataimport.transaction_hash,
+                    });
                 }
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
