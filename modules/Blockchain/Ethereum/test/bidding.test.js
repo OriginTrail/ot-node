@@ -617,6 +617,8 @@ contract('Bidding testing', async (accounts) => {
 
     var read_token_amount = 10e10;
     var read_stake_factor = 2;
+    const reader = 1;
+    const seller = 2;
 
     // eslint-disable-next-line no-undef
     it('Should initiate reading between acc[2] and acc[1]', async () => {
@@ -624,7 +626,7 @@ contract('Bidding testing', async (accounts) => {
         const reading = await Reading.deployed();
 
         var response = await reading.purchased_data.call(import_id, accounts[chosen_bids[0]]);
-        console.log(`${JSON.stringify(response)}`);
+        console.log(`\t Purchased data of profile[${seller}]: ${JSON.stringify(response)}`);
 
         var actual_DC_wallet = response[0];
         var actual_distribution_root_hash = response[1];
@@ -642,15 +644,18 @@ contract('Bidding testing', async (accounts) => {
             'Purchased data - checksum not matching',
         );
 
-        await reading.initiatePurchase(
+        const tx = await reading.initiatePurchase(
             import_id,
-            accounts[chosen_bids[0]],
+            accounts[seller],
             read_token_amount,
             read_stake_factor,
-            { from: accounts[2] },
+            { from: accounts[reader] },
         );
 
-        response = await reading.purchase.call(accounts[chosen_bids[0]], accounts[2], import_id);
+        console.log(`\t Gas Used for initiating purchase: ${tx.receipt.gasUsed}`);
+
+
+        response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
         var actual_token_amount = response[0];
         var actual_stake_factor = response[1];
         var actual_status = response[5].toNumber();
@@ -668,7 +673,126 @@ contract('Bidding testing', async (accounts) => {
         assert.equal(
             actual_status,
             1,
-            'Read status not initiated',
+            'Read status not equal initiated',
         );
     });
+
+    // eslint-disable-next-line no-undef
+    it('Should send commitment', async () => {
+        // Get instances of contracts used in the test
+        const reading = await Reading.deployed();
+        const util = await TestingUtilities.deployed();
+
+        const commitment = await util.keccakString.call('This only a test');
+
+        const tx = await reading.sendCommitment(
+            import_id,
+            accounts[reader],
+            commitment,
+            { from: accounts[seller] },
+        );
+
+        console.log(`\t Gas Used for sending commitment: ${tx.receipt.gasUsed}`);
+
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        var actual_commitment = response[2];
+        var actual_status = response[5].toNumber();
+
+        assert.equal(
+            actual_commitment,
+            commitment,
+            'Commitment not matching',
+        );
+        assert.equal(
+            actual_status,
+            2,
+            'Read status not equal committed',
+        );
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should confirm purchase', async () => {
+        // Get instances of contracts used in the test
+        const reading = await Reading.deployed();
+
+        const tx = await reading.confirmPurchase(
+            import_id,
+            accounts[seller],
+            { from: accounts[reader] },
+        );
+
+        console.log(`\t Gas Used for confirming purchase: ${tx.receipt.gasUsed}`);
+
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        var actual_status = response[5].toNumber();
+
+        assert.equal(
+            actual_status,
+            3,
+            'Read status not equal confirmed',
+        );
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should send encrypted block', async () => {
+        // Get instances of contracts used in the test
+        const reading = await Reading.deployed();
+
+        const encryptedBlock = 1235; // This is only for testing, not a valid value
+
+        const tx = await reading.sendEncryptedBlock(
+            import_id,
+            accounts[reader],
+            encryptedBlock,
+            { from: accounts[seller] },
+        );
+
+        console.log(`\t Gas Used for sending encrypted block: ${tx.receipt.gasUsed}`);
+
+        const response = await reading.purchase.call(accounts[seller], accounts[reader], import_id);
+        var actual_encrypted_block = response[3].toNumber();
+        var actual_status = response[5].toNumber();
+        assert.equal(
+            actual_encrypted_block,
+            encryptedBlock,
+            'Encrypted block value not valid',
+        );
+        assert.equal(
+            actual_status,
+            4,
+            'Read status not equal sent',
+        );
+    });
+
+    // THIS TEST IS NOT USED
+    // BECAUSE THE TIMEOUT SET ON PAYOUT WOULD EXCEED THE MAX TIME ALLOWED FOR A TEST
+
+    // // eslint-disable-next-line no-undef
+    // it('Should payout seller for data purchase', async () => {
+    //     // Get instances of contracts used in the test
+    //     const reading = await Reading.deployed();
+
+    //     await new Promise(resolve => setTimeout(resolve, 305000));
+
+    //     let tx = await reading.payOut(
+    //         import_id,
+    //         accounts[reader],
+    //         { from: accounts[seller] },
+    //     );
+
+    //     console.log(`\t Gas Used for purchase payment: ${tx.receipt.gasUsed}`);
+
+
+    //     let response = await reading.purchase.call(
+    //             accounts[seller],
+    //             accounts[reader],
+    //             import_id,
+    //        );
+    //     var actual_status = response[5].toNumber();
+    //     assert.equal(
+    //         actual_status,
+    //         7,
+    //         'Read status not equal completed',
+    //     );
+    // });
 });
