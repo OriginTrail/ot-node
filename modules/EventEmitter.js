@@ -242,7 +242,7 @@ class EventEmitter {
         });
 
         this._on('api-imports-info', async (data) => {
-            logger.debug('Get import ids');
+            logger.debug('GET: List imports request received.');
             try {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
