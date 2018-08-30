@@ -126,7 +126,7 @@ class EventEmitter {
         });
 
         this._on('api-trail', (data) => {
-            logger.info(`Get trail triggered with query ${data.query}`);
+            logger.info(`Get trail triggered with query ${JSON.stringify(data.query)}`);
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
