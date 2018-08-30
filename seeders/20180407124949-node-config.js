@@ -154,6 +154,10 @@ module.exports = {
         value: process.env.IS_BOOTSTRAP_NODE ? process.env.IS_BOOTSTRAP_NODE : '0',
     },
     {
+        key: 'enable_auth_token',
+        value: process.env.ENABLE_AUTH_TOKEN ? process.env.ENABLE_AUTH_TOKEN : '0',
+    },
+    {
         key: 'houston_password',
         value: uuidv4(),
     },
