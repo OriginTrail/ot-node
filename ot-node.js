@@ -607,6 +607,31 @@ class OTNode {
 
         server.pre(cors.preflight);
         server.use(cors.actual);
+        server.use((request, response, next) => {
+            if (Utilities.authTokenEnabled()) {
+                const token = request.query.auth_token;
+
+                const deny = (message) => {
+                    log.trace(message);
+                    response.status(401);
+                    response.send({
+                        message,
+                    });
+                };
+
+                if (!token) {
+                    const msg = 'Failed to authorize. Auth token is missing';
+                    deny(msg);
+                    return;
+                }
+                if (token !== Utilities.getHoustonPassword()) {
+                    const msg = `Failed to authorize. Auth token ${token} is invalid`;
+                    deny(msg);
+                    return;
+                }
+            }
+            return next();
+        });
 
         // TODO: Temp solution to listen all adapters in local net.
         let serverListenAddress = config.node_rpc_ip;

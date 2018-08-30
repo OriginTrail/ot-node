@@ -955,6 +955,20 @@ class Utilities {
     }
 
     /**
+     * Enable auth token?
+     */
+    static authTokenEnabled() {
+        return parseInt(config.enable_auth_token, 10);
+    }
+
+    /**
+     * Gets Houston password (Auth token)
+     */
+    static getHoustonPassword() {
+        return config.houston_password;
+    }
+
+    /**
      * Shuffles array in place
      * @param {Array} a items An array containing the items.
      */
