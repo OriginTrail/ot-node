@@ -991,6 +991,15 @@ class OTNode {
                 response: res,
             });
         });
+
+        server.get('/api/imports_info', (req, res) => {
+            log.api('GET: import_list.');
+
+            emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
     }
 }
 

@@ -241,6 +241,28 @@ class EventEmitter {
             });
         });
 
+        this._on('api-imports-info', async (data) => {
+            logger.debug('Get import ids');
+            try {
+                const dataimports = await Models.data_info.findAll();
+                data.response.status(200);
+                data.response.send(dataimports.map(di => ({
+                    import_id: di.import_id,
+                    total_documents: di.total_documents,
+                    root_hash: di.root_hash,
+                    import_hash: di.import_hash,
+                    data_size: di.data_size,
+                    transaction_hash: di.transaction_hash,
+                })));
+            } catch (e) {
+                logger.error('Failed to get information about imports', e);
+                data.response.status(500);
+                data.response.send({
+                    message: 'Failed to get information about imports',
+                });
+            }
+        });
+
         this._on('api-query', (data) => {
             logger.info(`Get veritces triggered with query ${JSON.stringify(data.query)}`);
             product.getVertices(data.query).then((res) => {
