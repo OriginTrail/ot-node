@@ -993,7 +993,7 @@ class OTNode {
         });
 
         server.get('/api/imports_info', (req, res) => {
-            log.api('GET: import_list.');
+            log.api('GET: List imports request received.');
 
             emitter.emit('api-imports-info', {
                 response: res,
