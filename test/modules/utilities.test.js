@@ -32,7 +32,7 @@ describe('Utilities module', () => {
                 'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
                 'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                 'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                'network_id', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path'],
+                'network_id', 'node_rpc_use_ssl', 'node_rpc_ssl_key_path', 'node_rpc_ssl_cert_path', 'enable_auth_token', 'local_network_only'],
             'Some config items are missing in node_config',
         );
     });
@@ -68,7 +68,7 @@ describe('Utilities module', () => {
         const myResult = await Utilities.loadSelectedBlockchainInfo();
         assert.hasAllKeys(myResult, ['blockchain_title', 'id', 'network_id', 'gas_limit',
             'gas_price', 'ot_contract_address', 'reading_contract_address', 'token_contract_address', 'escrow_contract_address',
-            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address', 'enable_auth_token']);
+            'rpc_node_host', 'rpc_node_port', 'wallet_address', 'wallet_private_key', 'bidding_contract_address']);
         assert.equal(myResult.blockchain_title, 'Ethereum');
     });
 
