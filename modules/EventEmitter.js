@@ -407,7 +407,7 @@ class EventEmitter {
 
                     response.status(200);
                     response.send({
-                        message: `Query status ${networkQuery.status}.`,
+                        status: `${networkQuery.status}`,
                         query_id: networkQuery.id,
                         vertices,
                     });
@@ -423,7 +423,7 @@ class EventEmitter {
             } else {
                 response.status(200);
                 response.send({
-                    message: `Query status ${networkQuery.status}.`,
+                    status: `${networkQuery.status}`,
                     query_id: networkQuery.id,
                 });
             }
