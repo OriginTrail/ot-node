@@ -136,6 +136,10 @@ class RegisterNode {
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d';
 
+            if (process.env.IMPORT_WHITELIST) {
+                env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
+            }
+
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
                     process.env[prop] = env[prop];
