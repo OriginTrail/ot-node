@@ -121,6 +121,11 @@ class RegisterNode {
     setConfig() {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
+
+            for (const prop in process.env) {
+                env[prop] = process.env[prop];
+            }
+
             if (!env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
@@ -131,15 +136,6 @@ class RegisterNode {
                 env.NODE_IP = '127.0.0.1'; // TODO remove
             } else {
                 env.NODE_IP = ip.address();
-            }
-
-            env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d';
-
-            for (const prop in env) {
-                if (Object.prototype.hasOwnProperty.call(env, prop)) {
-                    process.env[prop] = env[prop];
-                }
             }
 
             const envF = envfile.stringifySync(env);
