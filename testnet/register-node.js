@@ -126,6 +126,10 @@ class RegisterNode {
                 env[prop] = process.env[prop];
             }
 
+            for (const prop in env) {
+                process.env[prop] = env[prop];
+            }
+
             if (!env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
