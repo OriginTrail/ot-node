@@ -136,7 +136,7 @@ class RegisterNode {
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d';
 
-            if (process.env.IMPORT_WHITELIST) {
+            if ('IMPORT_WHITELIST' in process.env) {
                 env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
             }
 
