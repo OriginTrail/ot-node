@@ -121,6 +121,12 @@ class RegisterNode {
     setConfig() {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
+
+            if ('NODE_WALLET' in process.env) {
+                env.NODE_WALLET = process.env.NODE_WALLET;
+                env.NODE_PRIVATE_KEY = process.env.NODE_PRIVATE_KEY;
+            }
+
             if (!env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
