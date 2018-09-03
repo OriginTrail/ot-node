@@ -3,7 +3,7 @@ require('dotenv').config();
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
 const envfile = require('envfile');
-const externalip = require('externalip');
+const ip = require('ip');
 const fs = require('fs');
 
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
@@ -107,20 +107,26 @@ class RegisterNode {
                         counter += 1;
                         console.log(`Counting ${counter}`);
                         if (counter > 20) {
-                            process.kill(3);
+                            process.exit(3);
                         }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
-            process.kill(3);
+            process.exit(3);
         });
     }
 
     setConfig() {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
+
+            if ('NODE_WALLET' in process.env) {
+                env.NODE_WALLET = process.env.NODE_WALLET;
+                env.NODE_PRIVATE_KEY = process.env.NODE_PRIVATE_KEY;
+            }
+
             if (!env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
@@ -128,13 +134,17 @@ class RegisterNode {
             }
 
             if (process.env.INSTALLATION === 'local') {
-                env.NODE_IP = '127.0.0.1';
+                env.NODE_IP = '127.0.0.1'; // TODO remove
             } else {
-                env.NODE_IP = await this.getExternalIp();
+                env.NODE_IP = ip.address();
             }
 
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56,https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e';
+
+            if ('IMPORT_WHITELIST' in process.env) {
+                env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
+            }
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
@@ -188,17 +198,6 @@ class RegisterNode {
         this.socketSend(wallet, nodeIp);
         // eslint-disable-next-line
         require('../ot-node');
-    }
-
-    getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    console.log(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 }
 // eslint-disable-next-line no-new
