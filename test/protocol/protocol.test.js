@@ -594,10 +594,19 @@ describe('Protocol tests', () => {
             mockGraphStorage.imports[importId] = { vertices, edges };
             const merkle = await ImportUtilities.merkleStructure(vertices, edges);
             rootHash = merkle.tree.getRoot();
+            const normalized = ImportUtilities.normalizeImport(
+                vertices,
+                edges,
+            );
+            const importHash = ImportUtilities.importHash(
+                normalized.vertices,
+                normalized.edges,
+            );
 
             Models.data_info.create({
                 import_id: importId,
                 root_hash: rootHash,
+                import_hash: importHash,
                 data_provider_wallet: testNode1.wallet,
                 import_timestamp: new Date(),
                 total_documents: vertices.length,

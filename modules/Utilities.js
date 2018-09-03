@@ -18,6 +18,7 @@ const BN = require('bn.js');
 const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
 const externalip = require('externalip');
+const sortedStringify = require('sorted-json-stringify');
 
 const pjson = require('../package.json');
 
@@ -381,7 +382,7 @@ class Utilities {
      * @param data
      * @returns {string}
      */
-    static sha3(data) {
+    static soliditySHA3(data) {
         return soliditySha3(data);
     }
 
@@ -826,9 +827,9 @@ class Utilities {
     static getImportDistance(price, importId, stakeAmount) {
         const wallet = new BN(config.wallet);
         const nodeId = new BN(`0x${config.node_kademlia_id}`);
-        const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
+        const hashWallerNodeId = new BN(Utilities.soliditySHA3(wallet + nodeId));
         const myBid = hashWallerNodeId.add(price);
-        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        const offer = new BN(Utilities.soliditySHA3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
     }
 
@@ -954,6 +955,20 @@ class Utilities {
     }
 
     /**
+     * Enable auth token?
+     */
+    static authTokenEnabled() {
+        return parseInt(config.enable_auth_token, 10);
+    }
+
+    /**
+     * Gets Houston password (Auth token)
+     */
+    static getHoustonPassword() {
+        return config.houston_password;
+    }
+
+    /**
      * Shuffles array in place
      * @param {Array} a items An array containing the items.
      */
@@ -995,6 +1010,26 @@ class Utilities {
                 }
             });
         });
+    }
+
+    /**
+     * Stringifies data to JSON with default parameters
+     * @param data  Data to be stringified
+     * @param ident JSON identification
+     * @returns {*}
+     */
+    static stringify(data, ident = 2) {
+        return sortedStringify(data, null, ident);
+    }
+
+    /**
+     * Checks if hash is zero or any given hex string regardless of prefix 0x
+     * @param {string} hash
+     */
+    static isZeroHash(hash) {
+        const num = new BN(this.denormalizeHex(hash));
+
+        return num.eqn(0);
     }
 }
 

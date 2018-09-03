@@ -107,14 +107,14 @@ class RegisterNode {
                         counter += 1;
                         console.log(`Counting ${counter}`);
                         if (counter > 20) {
-                            process.kill(3);
+                            process.exit(3);
                         }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
-            process.kill(3);
+            process.exit(3);
         });
     }
 
@@ -135,6 +135,10 @@ class RegisterNode {
 
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
+
+            if ('IMPORT_WHITELIST' in process.env) {
+                env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
+            }
 
             for (const prop in env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
