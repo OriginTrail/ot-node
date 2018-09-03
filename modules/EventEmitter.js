@@ -320,7 +320,6 @@ class EventEmitter {
                         message: `Failed to get root hash for query ${JSON.stringify(data.query)}`,
                     });
                 }
-                data.response.send(res);
             }).catch((err) => {
                 logger.error(`Failed to get root hash for query ${JSON.stringify(data.query)}`);
                 notifyError(err);
