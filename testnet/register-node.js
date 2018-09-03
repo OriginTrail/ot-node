@@ -140,7 +140,7 @@ class RegisterNode {
             }
 
             env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
+            env.BOOTSTRAP_NODE = 'https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56,https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e';
 
             if ('IMPORT_WHITELIST' in process.env) {
                 env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
