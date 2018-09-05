@@ -108,12 +108,12 @@ describe('Peercache basic tests', () => {
                     promises.push(peercache._setExternalPeerInfo(id, dummyContact));
                 }
 
-                Promise.all(promises);
+                await Promise.all(promises);
 
                 let size = await peercache.getSize();
                 assert.equal(size, 10, 'There should be 10 contacts in peercache');
 
-                Promise.all(ids.map(id => peercache._removeExternalPeerInfo(id)));
+                await Promise.all(ids.map(id => peercache._removeExternalPeerInfo(id)));
 
                 size = await peercache.getSize();
                 assert.equal(size, 0, 'There should be zero contacts in peercache');
