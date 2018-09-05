@@ -10,7 +10,7 @@ const utilities = require('./Utilities');
 const _ = require('lodash');
 const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
-const PeerCache = require('./kademlia/PeerCache');
+const PeerCache = require('./kademlia/peer-cache');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 const ip = require('ip');
 
@@ -509,30 +509,12 @@ class Network {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId, retry) => {
-                let contact = node.router.getContactByNodeId(contactId);
+                const contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
                     return contact;
                 }
-                contact = await this.node.peercache.getExternalPeerInfo(contactId);
-                if (contact) {
-                    const contactInfo = KadenceUtils.parseContactURL(contact);
-                    // refresh bucket
-                    if (contactInfo) {
-                        // eslint-disable-next-line
-                        contact = contactInfo[1];
-                        this.node.router.addContactByNodeId(contactId, contact);
-                    }
-                }
-                contact = this.node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    return contact;
-                }
-
+                // try to find out about the contact from peers
                 await node.refreshContact(contactId, retry);
-                contact = this.node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    return contact;
-                }
                 return this.node.router.getContactByNodeId(contactId);
             };
 
