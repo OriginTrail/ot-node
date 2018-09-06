@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions, max-len, no-console */
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
@@ -15,6 +15,8 @@ const sleep = require('sleep-async')().Promise;
 const bytes = require('utf8-length');
 
 const Utilities = require('../../modules/Utilities');
+
+const logger = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 
@@ -84,7 +86,7 @@ describe('Protocol tests', () => {
         contract,
         contractData,
         constructorArguments,
-        from,
+        deployerAddress,
     ) {
         let deploymentReceipt;
         let contractInstance;
@@ -93,9 +95,10 @@ describe('Protocol tests', () => {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
+                    logger.debug(deploymentReceipt.contractAddress); // contains the new contract address
                 })
                 .on('error', error => reject(error))
                 .then((instance) => {
@@ -338,18 +341,22 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
+        logger.debug('Deploying tokenContract');
         [tokenDeploymentReceipt, tokenInstance] = await deployContract(
             web3, tokenContract, tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
+        logger.debug('Deploying escrowContract');
         [escrowDeploymentReceipt, escrowInstance] = await deployContract(
             web3, escrowContract, escrowContractData,
             [tokenInstance._address], accounts[7],
         );
+        logger.debug('Deploying readingContract');
         [readingDeploymentReceipt, readingInstance] = await deployContract(
             web3, readingContract, readingContractData,
             [escrowInstance._address], accounts[7],
         );
+        logger.debug('Deploying biddingContract');
         [biddingDeploymentReceipt, biddingInstance] = await deployContract(
             web3, biddingContract, biddingContractData,
             [
@@ -358,6 +365,7 @@ describe('Protocol tests', () => {
                 readingInstance._address,
             ], accounts[7],
         );
+        logger.debug('Deploying otFingerprintContract');
         [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
             web3, otFingerprintContract, otFingerprintContractData,
             undefined, accounts[7],
@@ -489,6 +497,7 @@ describe('Protocol tests', () => {
     });
 
     afterEach('Unregister container', async () => {
+        logger.debug('Goodbye!');
         testNodes.forEach((testNode) => {
             if (testNode.container) {
                 testNode.container.dispose(); // Promise.
@@ -511,6 +520,10 @@ describe('Protocol tests', () => {
 
         profileInfo = await testNode1.blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.true;
+        expect(profileInfo.token_amount_per_byte_minute).to.be.equal('2');
+        expect(profileInfo.stake_amount_per_byte_minute).to.be.equal('1');
+        expect(profileInfo.read_stake_factor).to.be.equal('1');
+        expect(profileInfo.max_escrow_time_in_minutes).to.be.equal('100000');
 
         const events = await biddingInstance.getPastEvents('allEvents', {
             fromBlock: 0,
@@ -521,6 +534,7 @@ describe('Protocol tests', () => {
         expect(events[0].event).to.equal('ProfileCreated');
         expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
         expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
+        expect(events[0].address).to.be.equal(biddingInstance._address);
     });
 
     describe('DC replication', () => {
@@ -549,7 +563,6 @@ describe('Protocol tests', () => {
                 vertex_type: 'CLASS',
             },
         ];
-
         const edges = [
             {
                 _id: 'af54d5a366006fa21dcbf4df50421165',
@@ -678,7 +691,7 @@ describe('Protocol tests', () => {
 
             expect(events).to.be.an('array');
             const bidTakenEvent = events.find(event => event.event === 'BidTaken');
-            console.log(JSON.stringify(events));
+            logger.debug(JSON.stringify(events));
             expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
             expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
 
@@ -695,6 +708,43 @@ describe('Protocol tests', () => {
                 // eslint-disable-next-line no-await-in-loop
                 await sleep.sleep(500);
             }
+        });
+
+        it('rootHash for already imported data should exist on blockchain', async function () {
+            this.timeout(90000); // One minute is minimum time for a offer.
+            const { dcController, blockchain } = testNode1;
+
+            await dcController.createOffer(importId, rootHash, 1, vertices);
+            await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
+
+            // Send one bid.
+            const bidderDeposit = new BN('100000000000000000', 10)
+                .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
+            await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
+            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.addBid(importId, testNode2.identity);
+
+            await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
+            await waitForEvent(biddingInstance, 'OfferFinalized', importId, 60000);
+            await waitForEvent(biddingInstance, 'BidTaken', importId, 10000);
+
+            for (;;) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({ where: { import_id: importId } });
+
+                if (offer.status === 'FINALIZED' || offer.status === 'FAILED') {
+                    break;
+                }
+                // eslint-disable-next-line no-await-in-loop
+                await sleep.sleep(500);
+            }
+
+            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+            expect(Utilities.isHexStrict(result2)).to.be.true;
+
+            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result1).to.be.equal(result2);
         });
     });
 });
