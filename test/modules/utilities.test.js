@@ -3,6 +3,7 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const fs = require('fs');
+const net = require('net');
 var models = require('../../models');
 const deasync = require('deasync-promise');
 const Utilities = require('../../modules/Utilities');
@@ -313,6 +314,24 @@ describe('Utilities module', () => {
         assert.includeMembers(result, firstArray);
         assert.includeMembers(result, secondArray);
         assert.equal(result.length, 9);
+    });
+
+    it('check normalizeHex', () => {
+        const myNormalizedHex = Utilities.normalizeHex('123456789');
+        assert.equal(myNormalizedHex.indexOf('0x'), 0, 'myNormalizedHex doesnt start with 0x');
+        assert.equal(myNormalizedHex.length - 2, 9);
+    });
+
+    it('check getExternalIp', async () => {
+        const myResult1 = await Utilities.getExternalIp();
+        const myResult2 = await Utilities.getExternalIp();
+        assert.deepEqual(myResult1, myResult2, 'Calling getExternalIp twice should give me back identical results');
+        //  net.isIP return 0 for invalid strings, returns 4 for IP version 4 addresses,
+        //  and returns 6 for IP version 6 addresses.
+        assert.isAtLeast(net.isIP(myResult1), 3);
+        assert.isBelow(net.isIP(myResult1), 7);
+        assert.isAtLeast(net.isIP(myResult2), 3);
+        assert.isBelow(net.isIP(myResult2), 7);
     });
 
     // enable after() step after above .skip()ed tests are fixed
