@@ -710,7 +710,7 @@ describe('Protocol tests', () => {
             }
         });
 
-        it('rootHash for already imported data should exist on blockchain', async function () {
+        it.skip('rootHash for already imported data should exist on blockchain', async function () {
             this.timeout(90000); // One minute is minimum time for a offer.
             const { dcController, blockchain } = testNode1;
 
