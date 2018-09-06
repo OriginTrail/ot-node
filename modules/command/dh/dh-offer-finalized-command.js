@@ -9,7 +9,7 @@ class DHOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
     }
 
@@ -58,7 +58,7 @@ class DHOfferFinalizedCommand extends Command {
             const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
             this.remoteControl.replicationRequestSent(importId);
-            await this.network.kademlia().replicationRequest(
+            await this.transport.replicationRequest(
                 {
                     import_id: importId,
                     wallet: this.config.node_wallet,

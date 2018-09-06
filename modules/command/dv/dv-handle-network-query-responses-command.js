@@ -10,7 +10,6 @@ class DVHandleNetworkQueryResponsesCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
     }

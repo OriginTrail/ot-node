@@ -95,7 +95,16 @@ class EventEmitter {
             dcController,
             dvController,
             notifyError,
+            network,
         } = this.ctx;
+
+        this._on('api-test-send', async (data) => {
+            await network.node.payloadRequest('kurac', '15e4c00a05b106e652f7b046ffe6616bbc16870a', (err, res) => {
+                console.log(`Response ${res}, error ${err}`);
+                data.response.status(200);
+                data.response.send('ok');
+            });
+        });
 
         this._on('api-import-request', (data) => {
             importer.importXML(data.filepath, (response) => {

@@ -10,7 +10,7 @@ class DVDataReadRequestCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
     }
@@ -69,7 +69,7 @@ class DVDataReadRequestCommand extends Command {
             ),
         };
 
-        await this.network.kademlia().dataReadRequest(
+        await this.transport.dataReadRequest(
             dataReadRequestObject,
             offer.node_id,
             (err) => {

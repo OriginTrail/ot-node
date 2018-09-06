@@ -6,14 +6,12 @@ const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 
-const { Op } = Models.Sequelize;
-
 const intervalMs = 1500;
 
 class Challenger {
     constructor(ctx) {
         this.log = ctx.logger;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.notifyError = ctx.notifyError;
@@ -23,7 +21,7 @@ class Challenger {
         // TODO: temp solution to delay.
         // Should be started after replication-finished received.
         setTimeout(() => {
-            setInterval(this.intervalFunc, intervalMs, this, this.network, this.log);
+            setInterval(this.intervalFunc, intervalMs, this, this.transport, this.log);
         }, 30000);
         this.log.info(`Started challenging timer at ${intervalMs}ms.`);
     }
@@ -41,7 +39,7 @@ class Challenger {
      * @return {Promise<void>}
      */
     async initiateLitigation(challenge) {
-        const contact = await this.network.kademlia().getContact(challenge.dh_id);
+        const contact = await this.transport.getContact(challenge.dh_id);
 
         const dhId = challenge.dh_id;
         const dhWallet = contact.wallet;

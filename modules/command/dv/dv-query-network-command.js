@@ -10,7 +10,7 @@ class DVQueryNetworkCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
     }
@@ -69,7 +69,7 @@ class DVQueryNetworkCommand extends Command {
                 this.config.node_private_key,
             );
 
-        this.network.kademlia().quasar.quasarPublish(
+        this.transport.quasar.quasarPublish(
             'kad-data-location-request',
             dataLocationRequestObject,
             {},

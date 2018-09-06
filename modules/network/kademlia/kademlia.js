@@ -4,22 +4,21 @@ const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
-const config = require('./Config');
+const config = require('../../Config');
 const fs = require('fs');
-const utilities = require('./Utilities');
+const utilities = require('../../Utilities');
 const _ = require('lodash');
 const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
-const PeerCache = require('./kademlia/peer-cache');
-const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const PeerCache = require('./peer-cache');
 const ip = require('ip');
 
-const { NetworkRequestIgnoredError } = require('./errors');
+const { NetworkRequestIgnoredError } = require('../../errors/index');
 
 /**
  * DHT module (Kademlia)
  */
-class Network {
+class Kademlia {
     /**
      * Setup options and construct a node
      */
@@ -29,7 +28,7 @@ class Network {
         this.networkUtilities = ctx.networkUtilities;
         this.notifyError = ctx.notifyError;
 
-        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
+        kadence.constants.T_RESPONSETIMEOUT = 1000;
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -54,7 +53,7 @@ class Network {
         await this.networkUtilities.setSelfSignedCertificate(config);
 
         this.log.info('Getting the identity');
-        this.xprivkey = fs.readFileSync(`${__dirname}/../keys/${config.private_extended_key_path}`).toString();
+        this.xprivkey = fs.readFileSync(`${__dirname}/../../../keys/${config.private_extended_key_path}`).toString();
         this.identity = new kadence.eclipse.EclipseIdentity(
             this.xprivkey,
             this.index,
@@ -111,8 +110,8 @@ class Network {
             network_id: config.network_id,
         };
 
-        const key = fs.readFileSync(`${__dirname}/../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`);
+        const key = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_keypath}`);
+        const cert = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_certificate_path}`);
         const ca = config.ssl_authority_paths.map(fs.readFileSync);
 
         // Initialize transport adapter
@@ -124,7 +123,7 @@ class Network {
             transport,
             identity: Buffer.from(this.identity, 'hex'),
             contact,
-            storage: levelup(encoding(leveldown(`${__dirname}/../data/kadence.dht`))),
+            storage: levelup(encoding(leveldown(`${__dirname}/../../../data/kadence.dht`))),
         });
 
         const { validateContact } = this;
@@ -493,6 +492,18 @@ class Network {
             });
         });
 
+        // Define a global custom error handler rule
+        this.node.use((err, request, response, next) => {
+            if (err instanceof NetworkRequestIgnoredError.constructor) {
+                this.log.debug(`Network request ignored. Contact ${JSON.stringify(request.contact)}`);
+                response.send([]);
+                return;
+            }
+
+            this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
+            response.send({ error: err.message });
+        });
+
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             /**
@@ -563,72 +574,148 @@ class Network {
                 }
             });
 
-            node.payloadRequest = async (message, contactId, callback) => {
+            node.payloadRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-payload-request', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-payload-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.replicationRequest = async (message, contactId, callback) => {
-                // contactId = utilities.numberToHex(contactId).substring(2);
+            node.replicationRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-replication-request', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-replication-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.replicationFinished = async (message, contactId, callback) => {
+            node.replicationFinished = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-replication-finished', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-replication-finished', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.challengeRequest = async (message, contactId, callback) => {
+            node.challengeRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-challenge-request', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.sendDataLocationResponse = async (message, contactId, callback) => {
+            node.sendDataLocationResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-data-location-response', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-location-response', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.dataReadRequest = async (message, contactId, callback) => {
+            node.dataReadRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-data-read-request', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-read-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.sendDataReadResponse = async (message, contactId, callback) => {
+            node.sendDataReadResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-data-read-response', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-data-read-response', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.sendEncryptedKey = async (message, contactId, callback) => {
+            node.sendEncryptedKey = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-send-encrypted-key', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-send-encrypted-key', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.sendEncryptedKeyProcessResult = async (message, contactId, callback) => {
+            node.sendEncryptedKeyProcessResult = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.verifyImport = async (message, contactId, callback) => {
+            node.verifyImport = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-verify-import-request', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-verify-import-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
 
-            node.sendVerifyImportResponse = async (message, contactId, callback) => {
+            node.sendVerifyImportResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
-                node.send('kad-verify-import-response', { message }, [contactId, contact], callback);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-verify-import-response', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
             };
-        });
-        // Define a global custom error handler rule
-        this.node.use((err, request, response, next) => {
-            if (err instanceof NetworkRequestIgnoredError.constructor) {
-                this.log.debug(`Network request ignored. Contact ${JSON.stringify(request.contact)}`);
-                response.send([]);
-                return;
-            }
-
-            this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
-            response.send({ error: err.message });
         });
     }
 
@@ -660,4 +747,4 @@ class Network {
     }
 }
 
-module.exports = Network;
+module.exports = Kademlia;

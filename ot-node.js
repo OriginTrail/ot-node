@@ -1,5 +1,6 @@
-const Network = require('./modules/Network');
-const NetworkUtilities = require('./modules/NetworkUtilities');
+const Network = require('./modules/network/kademlia/kademlia');
+const Transport = require('./modules/network/transport');
+const NetworkUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -375,6 +376,7 @@ class OTNode {
             networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
+            transport: awilix.asValue(Transport()),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -405,10 +407,11 @@ class OTNode {
         });
 
         // Starting the kademlia
-        const network = container.resolve('network');
+        const transport = container.resolve('transport');
         const blockchain = container.resolve('blockchain');
 
-        await network.initialize();
+        await transport.init(container.cradle);
+
         models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Initialise API
@@ -426,8 +429,6 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
-
-        await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -652,7 +653,7 @@ class OTNode {
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter) {
+    exposeAPIRoutes(server, emitter, network) {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -1021,6 +1022,14 @@ class OTNode {
             log.api('GET: List imports request received.');
 
             emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        server.get('/api/send', (req, res) => {
+            log.api('Test send.');
+
+            emitter.emit('api-test-send', {
                 response: res,
             });
         });
