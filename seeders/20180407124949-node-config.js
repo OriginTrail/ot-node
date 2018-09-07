@@ -1,18 +1,25 @@
 require('dotenv').config();
 const uuidv4 = require('uuid/v4');
+const Utilities = require('../modules/Utilities');
+
+const runtimeConfig = Utilities.runtimeConfig();
+if (!runtimeConfig) {
+    Utilities.getLogger().error('Unknown environment. Please set environment.');
+    process.abort();
+}
 
 let bootstrap_nodes = [];
 if (process.env.BOOTSTRAP_NODE) {
     bootstrap_nodes = process.env.BOOTSTRAP_NODE.split(',');
 } else {
-    const error = 'Valid BOOTSTRAP_NODE list is required for a node to run. Please check your .env file.';
-    console.error(error);
-    throw Error(error);
+    bootstrap_nodes = runtimeConfig.network.bootstraps;
 }
 
 let import_whitelist = [];
 if (process.env.IMPORT_WHITELIST) {
     import_whitelist = process.env.IMPORT_WHITELIST.split(',');
+} else {
+    import_whitelist = runtimeConfig.network.remoteWhitelist;
 }
 
 if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
@@ -21,7 +28,6 @@ if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
     throw Error(error);
 }
 
-const selected_database = (process.env.GRAPH_DATABASE === 'neo4j') ? 2 : 1;
 module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.bulkInsert('node_config', [{
         key: 'node_wallet',
@@ -43,7 +49,7 @@ module.exports = {
     },
     {
         key: 'selected_graph_database',
-        value: selected_database,
+        value: '1',
     },
     {
         key: 'selected_blockchain',
@@ -228,7 +234,7 @@ module.exports = {
     },
     {
         key: 'network_id',
-        value: process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development',
+        value: process.env.NETWORK_ID ? process.env.NETWORK_ID : runtimeConfig.network.id,
     },
     ], {}),
 

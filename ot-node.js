@@ -1,3 +1,10 @@
+require('dotenv').config();
+
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'production';
+}
+
 const Network = require('./modules/Network');
 const NetworkUtilities = require('./modules/NetworkUtilities');
 const Utilities = require('./modules/Utilities');
@@ -222,7 +229,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: 'development',
+                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
@@ -246,6 +253,8 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
+
+        log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
