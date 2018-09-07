@@ -69,11 +69,7 @@ class DVQueryNetworkCommand extends Command {
                 this.config.node_private_key,
             );
 
-        await this.transport.publish(
-            'kad-data-location-request',
-            dataLocationRequestObject,
-            {},
-        );
+        await this.transport.publish('p2p-data-location-request', dataLocationRequestObject);
         this.logger.info(`Published query to the network. Query ID ${queryId}.`);
         return Command.empty();
     }

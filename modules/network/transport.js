@@ -36,6 +36,16 @@ class Transport {
     }
 
     /**
+     * Sends response
+     * @param data
+     * @param response
+     * @returns {Promise<void>}
+     */
+    async sendResponse(response, data) {
+        await this.network.sendResponse();
+    }
+
+    /**
      * Wraps function call for the underlying network layer
      *
      * @param fn            Function to be called

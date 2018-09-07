@@ -818,7 +818,7 @@ class EventEmitter {
             notifyError,
         } = this.ctx;
 
-        this._on('kad-data-location-request', async (kadMessage) => {
+        this._on('p2p-data-location-request', async (kadMessage) => {
             const { message, messageSignature } = kadMessage;
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
@@ -843,7 +843,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-payload-request', async (request) => {
+        this._on('p2p-payload-request', async (request) => {
             logger.info(`Data for replication arrived from ${request.contact[0]}`);
 
             const importId = request.params.message.payload.import_id;
@@ -861,7 +861,7 @@ class EventEmitter {
         });
 
         // sync
-        this._on('kad-replication-request', async (request) => {
+        this._on('p2p-replication-request', async (request) => {
             const { import_id, wallet } = request.params.message;
             const { wallet: kadWallet } = request.contact[1];
             const kadIdentity = request.contact[0];
@@ -957,47 +957,54 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-finished', async () => {
+        this._on('p2p-replication-finished', async () => {
             logger.notify('Replication finished, preparing to start challenges');
         });
 
         // sync
         // TODO this call should be refactored to be async
-        this._on('kad-challenge-request', (request, response) => {
+        this._on('p2p-challenge-request', (request, response) => {
             logger.info(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
             const challenge = request.params.message.payload;
 
-            this.graphStorage.findVerticesByImportId(challenge.import_id).then((vertices) => {
+            this.graphStorage.findVerticesByImportId(challenge.import_id).then(async (vertices) => {
                 ImportUtilities.unpackKeys(vertices, []);
                 ImportUtilities.sort(vertices);
                 // filter CLASS vertices
                 vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
                 const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
                 logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
-                response.send({
-                    status: 'success',
-                    answer,
-                }, (error) => {
-                    logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${error}.`);
-                });
-            }).catch((error) => {
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'success',
+                        answer,
+                    });
+                } catch (e) {
+                    // TODO handle this case
+                    logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${e}.`);
+                }
+            }).catch(async (error) => {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);
 
-                response.send({
-                    status: 'fail',
-                }, (error) => {
-                    logger.error(`Failed to send 'fail' status.v Error: ${error}.`);
-                });
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    // TODO handle this case
+                    logger.error(`Failed to send 'fail' status.v Error: ${e}.`);
+                }
             });
         });
 
-        this._on('kad-bidding-won', (message) => {
+        this._on('p2p-bidding-won', (message) => {
             logger.notify('Wow I won bidding. Let\'s get into it.');
         });
 
         // async
-        this._on('kad-data-location-response', async (request) => {
+        this._on('p2p-data-location-response', async (request) => {
             logger.info('DH confirms possesion of required data');
             try {
                 const dataLocationResponseObject = request.params.message;
@@ -1017,7 +1024,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-request', async (request) => {
+        this._on('p2p-data-read-request', async (request) => {
             logger.info('Request for data read received');
 
             const dataReadRequestObject = request.params.message;
@@ -1032,7 +1039,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-response', async (request) => {
+        this._on('p2p-data-read-response', async (request) => {
             logger.info('Encrypted data received');
 
             if (request.params.status === 'FAIL') {
@@ -1056,7 +1063,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-send-encrypted-key', async (request) => {
+        this._on('p2p-send-encrypted-key', async (request) => {
             logger.info('Initial info received to unlock data');
 
             const encryptedPaddedKeyObject = request.params.message;
@@ -1084,7 +1091,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-encrypted-key-process-result', async (request) => {
+        this._on('p2p-encrypted-key-process-result', async (request) => {
             const { status } = request.params.message;
             if (status === 'SUCCESS') {
                 logger.notify(`DV ${request.contact[0]} successfully processed the encrypted key`);
@@ -1094,7 +1101,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-verify-import-request', async (request) => {
+        this._on('p2p-verify-import-request', async (request) => {
             const { wallet: dhWallet } = request.contact[1];
             const { epk, importId, encryptionKey } = request.params.message;
 
@@ -1105,7 +1112,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-verify-import-response', async (request) => {
+        this._on('p2p-verify-import-response', async (request) => {
             const { status, import_id } = request.params.message;
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
