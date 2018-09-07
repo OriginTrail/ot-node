@@ -848,9 +848,9 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/network/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
-            if (!req.params.query_param) {
+            if (!req.params.query_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -858,7 +858,7 @@ class OTNode {
                 return;
             }
             emitter.emit('api-network-query-status', {
-                id: req.params.query_param,
+                id: req.params.query_id,
                 response: res,
             });
         });

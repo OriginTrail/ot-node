@@ -35,7 +35,7 @@ class ProfileService {
         await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
         await this.blockchain.depositToken(new BN(mATRAC));
 
-        this.logger.trace(`${amount} ATRAC deposited on you profile`);
+        this.logger.trace(`${amount} ATRAC deposited on your profile`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');

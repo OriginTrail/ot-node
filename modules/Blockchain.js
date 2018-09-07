@@ -72,10 +72,10 @@ class Blockchain {
     /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
-     * @param pricePerByteMinute Price for byte per minute
-     * @param stakePerByteMinute Stake for byte per minute
-     * @param readStakeFactor Read stake factor
-     * @param maxTimeMins   Max time in minutes
+     * @param {string} pricePerByteMinute Price for byte per minute
+     * @param {string} stakePerByteMinute Stake for byte per minute
+     * @param {string} readStakeFactor Read stake factor
+     * @param {string} maxTimeMins   Max time in minutes
      * @return {Promise<any>}
      */
     createProfile(
@@ -361,8 +361,14 @@ class Blockchain {
         return this.blockchain.withdrawToken(amount);
     }
 
-    async getRootHash(dcWallet, dataId) {
-        return this.blockchain.getRootHash(dcWallet, dataId);
+    /**
+     * Gets root hash for import
+     * @param dcWallet DC wallet
+     * @param importId   Import ID
+     * @return {Promise<any>}
+     */
+    async getRootHash(dcWallet, importId) {
+        return this.blockchain.getRootHash(dcWallet, importId);
     }
 
     async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {

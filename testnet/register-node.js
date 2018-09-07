@@ -1,4 +1,4 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
@@ -122,12 +122,7 @@ class RegisterNode {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
 
-            if ('NODE_WALLET' in process.env) {
-                env.NODE_WALLET = process.env.NODE_WALLET;
-                env.NODE_PRIVATE_KEY = process.env.NODE_PRIVATE_KEY;
-            }
-
-            if (!env.NODE_WALLET) {
+            if (!env.NODE_WALLET && !process.env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
                 env.NODE_PRIVATE_KEY = pk;
@@ -142,18 +137,15 @@ class RegisterNode {
             env.DB_PASSWORD = 'root';
             env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
 
-            if ('IMPORT_WHITELIST' in process.env) {
-                env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
-            }
-
-            for (const prop in env) {
+            for (const prop in process.env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
-                    process.env[prop] = env[prop];
+                    env[prop] = process.env[prop];
                 }
             }
 
             const envF = envfile.stringifySync(env);
             console.log(envF);
+            dotenv.config();
 
             fs.writeFile('.env', envF, (err) => {
                 if (fs.existsSync('modules/Database/system.db')) {
