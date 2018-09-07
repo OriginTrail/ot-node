@@ -61,7 +61,7 @@ class Transport {
      * @private
      */
     async _send(fn, msg, contactId, opts = DEFAULT_RETRY_CONFIG, fatalErrors = []) {
-        await retry(async (halt) => {
+        return retry(async (halt) => {
             try {
                 return await this.network.node[fn](msg, contactId);
             } catch (err) {

@@ -111,42 +111,39 @@ class Challenger {
 
             challenge.sent = true;
             await challenge.save({ fields: ['sent'] });
-            await transport.challengeRequest(
-                payload, challenge.dh_id,
-                async (error, response) => {
-                    if (error) {
-                        log.warn(`failed to get challenge answer from ${challenge.dh_id}. ${error}.`);
-                        return;
-                    }
+            try {
+                const response = await transport.challengeRequest(payload, challenge.dh_id);
 
-                    if (typeof response.status === 'undefined') {
-                        log.warn('challenge-request: Missing status');
-                        return;
-                    }
+                if (typeof response.status === 'undefined') {
+                    log.warn('challenge-request: Missing status');
+                    return;
+                }
 
-                    if (response.status !== 'success') {
-                        log.trace('challenge-request: Response not successful.');
-                    }
+                if (response.status !== 'success') {
+                    log.trace('challenge-request: Response not successful.');
+                }
 
-                    if (response.answer === challenge.answer) {
-                        log.trace('Successfully answered to challenge.');
+                if (response.answer === challenge.answer) {
+                    log.trace('Successfully answered to challenge.');
 
-                        replicatedData.status = 'ACTIVE';
-                        replicatedData.save({ fields: ['status'] });
+                    replicatedData.status = 'ACTIVE';
+                    replicatedData.save({ fields: ['status'] });
 
-                        await Challenge.completeTest(challenge.id);
-                    } else {
-                        log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                        // TODO doktor: Handle promise.
-                        await Challenge.failTest(challenge.id);
+                    await Challenge.completeTest(challenge.id);
+                } else {
+                    log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                    // TODO doktor: Handle promise.
+                    await Challenge.failTest(challenge.id);
 
-                        replicatedData.status = 'LITIGATION';
-                        await replicatedData.save({ fields: ['status'] });
+                    replicatedData.status = 'LITIGATION';
+                    await replicatedData.save({ fields: ['status'] });
 
-                        await challenger.initiateLitigation(challenge);
-                    }
-                },
-            );
+                    await challenger.initiateLitigation(challenge);
+                }
+            } catch (error) {
+                // TODO handle this case
+                log.warn(`failed to get challenge answer from ${challenge.dh_id}. ${error}.`);
+            }
         }
     }
 

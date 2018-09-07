@@ -16,7 +16,7 @@ class DVService {
      * @param ctx IoC context
      */
     constructor({
-        network, blockchain, web3, config, graphStorage, importer, logger, remoteControl,
+        blockchain, web3, config, graphStorage, importer, logger, remoteControl,
         notifyError,
     }) {
         this.blockchain = blockchain;

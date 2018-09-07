@@ -72,16 +72,19 @@ class DVDataReadRequestCommand extends Command {
         await this.transport.dataReadRequest(
             dataReadRequestObject,
             offer.node_id,
-            (err) => {
-                if (err) {
-                    this.logger.warn(`Data request failed for reply ID ${message.id}. ${err}.`);
-                } else {
-                    this.logger.info(`Data request sent for reply ID ${message.id}.`);
-                }
-            },
         );
-
+        this.logger.info(`Data request sent for reply ID ${message.id}.`);
         return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { replyId } = command.data;
+        this.logger.warn(`Data request failed for reply ID ${replyId}. ${err}.`);
     }
 
     /**

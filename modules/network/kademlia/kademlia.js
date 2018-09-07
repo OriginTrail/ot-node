@@ -718,6 +718,21 @@ class Kademlia {
                     });
                 });
             };
+
+            node.publish = async (message, topic, opts = {}) => {
+                return new Promise((resolve, reject) => {
+                    node.quasarPublish(
+                        topic, message, opts,
+                        (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        },
+                    );
+                });
+            };
         });
     }
 
