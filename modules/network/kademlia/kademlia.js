@@ -156,7 +156,7 @@ class Kademlia {
         this.node.eclipse = this.node.plugin(kadence.eclipse());
         this.node.quasar = this.node.plugin(kadence.quasar());
         this.log.info('Quasar initialised');
-        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${config.embedded_peercache_path}`));
+        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../../../data/${config.embedded_peercache_path}`));
         this.log.info('Peercache initialised');
         this.node.spartacus = this.node.plugin(kadence.spartacus(
             this.xprivkey,
@@ -235,7 +235,7 @@ class Kademlia {
     enableOnion() {
         this.log.info('Use Tor for an anonymous overlay');
         this.node.onion = this.node.plugin(kadence.onion({
-            dataDirectory: `${__dirname}/../data/hidden_service`,
+            dataDirectory: `${__dirname}/../../../data/hidden_service`,
             virtualPort: config.onion_virtual_port,
             localMapping: `127.0.0.1:${config.node_port}`,
             torrcEntries: {
