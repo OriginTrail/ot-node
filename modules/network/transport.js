@@ -74,6 +74,13 @@ class Transport {
             }
         }, opts);
     }
+
+    /**
+     * Returns basic information about the network
+     */
+    async getNetworkInfo() {
+        return this.network.getNetworkInfo();
+    }
 }
 
 module.exports = () => new Proxy(new Transport(), {
