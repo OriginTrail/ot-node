@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ccb96309-f511-4335-99ed-9d23fad79a03",
+		"_postman_id": "ed39baaa-0016-4a8f-801b-27324e9fdf44",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -45,7 +45,7 @@
 					]
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/import?",
+					"raw": "{{baseUrl}}/api/import",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -66,6 +66,31 @@
 			"response": []
 		},
 		{
+			"name": "/api/import_info?import_id={{import_id}}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "{{baseUrl}}/api/import_info?import_id={{import_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"import_info"
+					],
+					"query": [
+						{
+							"key": "import_id",
+							"value": "{{import_id}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "/api/trail",
 			"request": {
 				"method": "GET",
@@ -82,17 +107,50 @@
 					],
 					"query": [
 						{
+							"key": "vertex_type",
+							"value": "{{vertex_type}}"
+						},
+						{
 							"key": "uid",
 							"value": "{{uid}}",
 							"disabled": true
-						},
-						{
-							"key": "vertex_type",
-							"value": "{{vertex_type}}"
 						}
 					]
 				},
 				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-trail-get"
+			},
+			"response": []
+		},
+		{
+			"name": "/api/fingerprint",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/fingerprint?dc_wallet={{dc_wallet}}&import_id={{import_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"fingerprint"
+					],
+					"query": [
+						{
+							"key": "dc_wallet",
+							"value": "{{dc_wallet}}"
+						},
+						{
+							"key": "import_id",
+							"value": "{{import_id}}"
+						}
+					]
+				},
+				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-fingerprint-get"
 			},
 			"response": []
 		},
@@ -135,36 +193,6 @@
 					]
 				},
 				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-replication-post"
-			},
-			"response": []
-		},
-		{
-			"name": "/api/fingerprint",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"body": {},
-				"url": {
-					"raw": "{{baseUrl}}/api/fingerprint?dc_wallet={{dc_wallet}}&import_id={{import_id}}",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"fingerprint"
-					],
-					"query": [
-						{
-							"key": "dc_wallet",
-							"value": "{{dc_wallet}}"
-						},
-						{
-							"key": "import_id",
-							"value": "{{import_id}}"
-						}
-					]
-				},
-				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-fingerprint-get"
 			},
 			"response": []
 		},
@@ -223,7 +251,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/network",
@@ -245,7 +273,10 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/{{query_id}}/responses",
 					"host": [
@@ -263,20 +294,24 @@
 			"response": []
 		},
 		{
-			"name": "api/query/network/{query_param} ",
+			"name": "api/query/network/{{query_id}}",
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
-					"raw": "{{baseUrl}}api/query/network/{query_param}",
+					"raw": "{{baseUrl}}/api/query/network/{{query_id}}",
 					"host": [
-						"{{baseUrl}}api"
+						"{{baseUrl}}"
 					],
 					"path": [
+						"api",
 						"query",
 						"network",
-						"{query_param}"
+						"{{query_id}}"
 					]
 				},
 				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-network-query-param-get"
@@ -294,19 +329,16 @@
 						{
 							"key": "query_id",
 							"value": "{{query_id}}",
-							"sessionValue": "{{query_id}}",
 							"type": "text"
 						},
 						{
 							"key": "reply_id",
-							"value": "99090be7-91f3-4a34-93e6-dbb632c0ef10",
-							"sessionValue": "99090be7-91f3-4a34-93e6-dbb632c0ef10",
+							"value": "fef3542c-44ac-4ee0-b12f-24c2b0375dbf",
 							"type": "text"
 						},
 						{
 							"key": "import_id",
 							"value": "{{import_id}}",
-							"sessionValue": "{{import_id}}",
 							"type": "text"
 						}
 					]
@@ -338,7 +370,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/local",
@@ -390,7 +422,10 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/local/import/{{import_id}}",
 					"host": [
@@ -420,7 +455,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"atrac_amount\": 10\n}"
+					"raw": "{ \n\t\"atrac_amount\": 1\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/deposit",
@@ -447,7 +482,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"atrac_amount\": 10\n\t\n}"
+					"raw": "{ \n\t\"atrac_amount\": 15\n\t\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/withdraw",
