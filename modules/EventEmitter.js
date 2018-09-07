@@ -84,7 +84,6 @@ class EventEmitter {
     _initializeAPIEmitter() {
         const {
             dhService,
-            dvService,
             importer,
             blockchain,
             product,
@@ -807,7 +806,6 @@ class EventEmitter {
      */
     _initializeKadEmitter() {
         const {
-            dhService,
             dvService,
             logger,
             dataReplication,

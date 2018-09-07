@@ -719,9 +719,9 @@ class Kademlia {
                 });
             };
 
-            node.publish = async (message, topic, opts = {}) => {
+            node.publish = async (topic, message, opts = {}) => {
                 return new Promise((resolve, reject) => {
-                    node.quasarPublish(
+                    node.quasar.quasarPublish(
                         topic, message, opts,
                         (err, res) => {
                             if (err) {

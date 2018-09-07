@@ -1018,14 +1018,6 @@ class OTNode {
                 response: res,
             });
         });
-
-        server.get('/api/send', (req, res) => {
-            log.api('Test send.');
-
-            emitter.emit('api-test-send', {
-                response: res,
-            });
-        });
     }
 }
 
