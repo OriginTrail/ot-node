@@ -27,10 +27,10 @@ class Kademlia {
     constructor(ctx) {
         this.log = ctx.logger;
         this.emitter = ctx.emitter;
-        this.networkUtilities = ctx.networkUtilities;
+        this.kademliaUtilities = ctx.kademliaUtilities;
         this.notifyError = ctx.notifyError;
 
-        kadence.constants.T_RESPONSETIMEOUT = 1000;
+        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
         if (parseInt(config.test_network, 10)) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
             process.env.kadence_TestNetworkEnabled = config.test_network;
@@ -49,10 +49,10 @@ class Kademlia {
      */
     async initialize() {
         // Check config
-        this.networkUtilities.verifyConfiguration(config);
+        this.kademliaUtilities.verifyConfiguration(config);
 
         this.log.info('Checking SSL certificate');
-        await this.networkUtilities.setSelfSignedCertificate(config);
+        await this.kademliaUtilities.setSelfSignedCertificate(config);
 
         this.log.info('Getting the identity');
         this.xprivkey = fs.readFileSync(`${__dirname}/../../../keys/${config.private_extended_key_path}`).toString();
@@ -64,9 +64,9 @@ class Kademlia {
 
         this.log.info('Checking the identity');
         // Check if identity is valid
-        this.networkUtilities.checkIdentity(this.identity);
+        this.kademliaUtilities.checkIdentity(this.identity);
 
-        const { childKey } = this.networkUtilities.getIdentityKeys(
+        const { childKey } = this.kademliaUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
             parseInt(config.child_derivation_index, 10),
@@ -84,7 +84,7 @@ class Kademlia {
     async start() {
         this.log.info('Initializing network');
 
-        const { parentKey } = this.networkUtilities.getIdentityKeys(
+        const { parentKey } = this.kademliaUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
             parseInt(config.child_derivation_index, 10),
@@ -191,7 +191,7 @@ class Kademlia {
 
         this.node.listen(parseInt(config.node_port, 10), async () => {
             this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
-            this.networkUtilities.registerControlInterface(config, this.node);
+            this.kademliaUtilities.registerControlInterface(config, this.node);
 
             const connected = false;
             const retryPeriodSeconds = 5;

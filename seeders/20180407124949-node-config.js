@@ -51,7 +51,7 @@ module.exports = {
     },
     {
         key: 'request_timeout',
-        value: '20000',
+        value: '10000',
     },
     {
         key: 'ssl_keypath',

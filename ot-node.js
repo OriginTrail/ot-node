@@ -1,6 +1,6 @@
-const Network = require('./modules/network/kademlia/kademlia');
+const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
-const NetworkUtilities = require('./modules/network/kademlia/kademlia-utils');
+const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -355,7 +355,7 @@ class OTNode {
 
         container.register({
             emitter: awilix.asClass(EventEmitter).singleton(),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
@@ -373,7 +373,7 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
@@ -454,12 +454,12 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
 

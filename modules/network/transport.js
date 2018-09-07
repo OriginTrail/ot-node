@@ -26,7 +26,7 @@ class Transport {
         this.networkType = ctx.config.network_type ? ctx.config.network_type : DEFAULT_NETWORK_TYPE;
         switch (this.networkType) {
         case 'kademlia':
-            this.network = ctx.network;
+            this.network = ctx.kademlia;
             break;
         default:
             throw new Error(`Failed to construct network transport. Network type '${this.networkType}' is invalid.`);
