@@ -91,7 +91,7 @@ class Challenger {
         await replicatedData.save({ fields: ['status'] });
     }
 
-    async sendChallenge(challenge, challenger, network, log) {
+    async sendChallenge(challenge, challenger, transport, log) {
         if (challenge.sent) {
             return;
         }
@@ -111,7 +111,7 @@ class Challenger {
 
             challenge.sent = true;
             await challenge.save({ fields: ['sent'] });
-            await network.kademlia().challengeRequest(
+            await transport.challengeRequest(
                 payload, challenge.dh_id,
                 async (error, response) => {
                     if (error) {
@@ -150,14 +150,14 @@ class Challenger {
         }
     }
 
-    intervalFunc(challenger, network, log) {
+    intervalFunc(challenger, transport, log) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
             .then(async (challenges) => {
                 if (challenges.length > 0) {
                     for (const challenge of challenges) {
                         // eslint-disable-next-line
-                        await challenger.sendChallenge(challenge, challenger, network, log);
+                        await challenger.sendChallenge(challenge, challenger, transport, log);
                     }
                 } else {
                     //  log.trace('No challenges found.');

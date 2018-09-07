@@ -769,6 +769,21 @@ class Kademlia {
             peers,
         };
     }
+
+    /**
+     * Dumps all peers from buckets
+     */
+    dumpContacts() {
+        const message = {};
+        this.node.router.forEach((value, key, map) => {
+            if (value.length > 0) {
+                value.forEach((bValue, bKey, bMap) => {
+                    message[bKey] = bValue;
+                });
+            }
+        });
+        return message;
+    }
 }
 
 module.exports = Kademlia;

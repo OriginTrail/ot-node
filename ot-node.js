@@ -777,14 +777,7 @@ class OTNode {
 
         server.get('/api/dump/rt', (req, res) => {
             log.api('Dumping routing table');
-            const message = {};
-            context.network.kademlia().router.forEach((value, key, map) => {
-                if (value.length > 0) {
-                    value.forEach((bValue, bKey, bMap) => {
-                        message[bKey] = bValue;
-                    });
-                }
-            });
+            const message = context.transport.dumpContacts();
 
             res.status(200);
             res.send({

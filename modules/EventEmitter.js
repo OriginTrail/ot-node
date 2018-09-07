@@ -95,22 +95,7 @@ class EventEmitter {
             dcController,
             dvController,
             notifyError,
-            network,
         } = this.ctx;
-
-        this._on('api-test-send', async (data) => {
-            await network.node.payloadRequest('kurac', '15e4c00a05b106e652f7b046ffe6616bbc16870a', (err, res) => {
-                console.log(`Response ${res}, error ${err}`);
-                data.response.status(200);
-                data.response.send('ok');
-            });
-        });
-
-        this._on('api-import-request', (data) => {
-            importer.importXML(data.filepath, (response) => {
-                // emit response
-            });
-        });
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
@@ -826,7 +811,7 @@ class EventEmitter {
             dvService,
             logger,
             dataReplication,
-            network,
+            transport,
             blockchain,
             remoteControl,
             dhController,
@@ -1086,14 +1071,14 @@ class EventEmitter {
 
             try {
                 await dvService.handleEncryptedPaddedKey(message);
-                await network.kademlia().sendEncryptedKeyProcessResult({
+                await transport.sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
                 }, request.contact[0]);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
                 notifyError(error);
-                await network.kademlia().sendEncryptedKeyProcessResult({
+                await transport.sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
                 }, request.contact[0]);

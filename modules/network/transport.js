@@ -45,7 +45,7 @@ class Transport {
      * @param fatalErrors   Halt execution on fatal errors
      * @private
      */
-    _wrap(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
+    _wrapSend(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
         return async (msg, contactId, opts, fatalErrors) =>
             this._send(fn, msg, contactId, opts, fatalErrors);
     }
@@ -81,6 +81,14 @@ class Transport {
     async getNetworkInfo() {
         return this.network.getNetworkInfo();
     }
+
+    /**
+     * Dumps all peers
+     * @returns {Promise<*>}
+     */
+    dumpContacts() {
+        return this.network.dumpContacts();
+    }
 }
 
 module.exports = () => new Proxy(new Transport(), {
@@ -89,7 +97,7 @@ module.exports = () => new Proxy(new Transport(), {
         if (!property) {
             // the property is missing
             // try to pass to an underlying network layer
-            return target._wrap(propKey);
+            return target._wrapSend(propKey);
         }
         return target[propKey];
     },
