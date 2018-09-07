@@ -2,6 +2,10 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 
+ARG default_node_env=production
+ARG build_branch=master
+ENV NODE_ENV=$default_node_env
+
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
 RUN apt-get -qq update && apt-get -qq -y install wget apt-transport-https software-properties-common build-essential git nodejs sqlite unzip nano
@@ -24,9 +28,10 @@ RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/re
 
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD testnet/papertrail.yml /etc/log_files.yml
+
 #Clone the project
-RUN wget https://codeload.github.com/OriginTrail/ot-node/zip/develop
-RUN unzip develop -d . && rm develop && mv ot-node-develop ot-node
+RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/$build_branch
+RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-$build_branch ot-node
 
 RUN cp -a /tmp/node_modules /ot-node
 
@@ -36,5 +41,5 @@ RUN cp .env.example .env
 COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
-EXPOSE 5278 5279 8900 3000 4043 3010
+EXPOSE 5278 8900 3000 3010
 CMD ["sh", "/ot-node/testnet/start.sh"]
