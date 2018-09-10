@@ -322,21 +322,6 @@ describe('Utilities module', () => {
         assert.equal(myNormalizedHex.length - 2, 9);
     });
 
-    it('check getExternalIp', async () => {
-        const myResult1 = await Utilities.getExternalIp();
-        const myResult2 = await Utilities.getExternalIp();
-        // for some reason TravisCI gives me back two diferent IP addresses
-        // eslint-disable-next-line max-len
-        // assert.deepEqual(myResult1, myResult2, 'Calling getExternalIp twice should give me back identical results');
-
-        //  net.isIP return 0 for invalid strings, returns 4 for IP version 4 addresses,
-        //  and returns 6 for IP version 6 addresses.
-        assert.isAtLeast(net.isIP(myResult1), 3);
-        assert.isBelow(net.isIP(myResult1), 7);
-        assert.isAtLeast(net.isIP(myResult2), 3);
-        assert.isBelow(net.isIP(myResult2), 7);
-    });
-
     // TODO enable after() step after above .skip()ed tests are fixed
     // after('cleanup', () => {
     //     const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
