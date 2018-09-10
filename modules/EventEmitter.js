@@ -119,7 +119,7 @@ class EventEmitter {
         });
 
         this._on('api-trail', (data) => {
-            logger.info(`Get trail triggered with query ${data.query}`);
+            logger.info(`Get trail triggered with query ${JSON.stringify(data.query)}`);
             product.getTrailByQuery(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -399,7 +399,7 @@ class EventEmitter {
 
                     response.status(200);
                     response.send({
-                        message: `Query status ${networkQuery.status}.`,
+                        status: `${networkQuery.status}`,
                         query_id: networkQuery.id,
                         vertices,
                     });
@@ -415,7 +415,7 @@ class EventEmitter {
             } else {
                 response.status(200);
                 response.send({
-                    message: `Query status ${networkQuery.status}.`,
+                    status: `${networkQuery.status}`,
                     query_id: networkQuery.id,
                 });
             }

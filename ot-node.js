@@ -1,3 +1,10 @@
+require('dotenv').config();
+
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'production';
+}
+
 const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
 const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
@@ -223,7 +230,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: 'development',
+                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
@@ -247,6 +254,8 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
+
+        log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
@@ -653,7 +662,7 @@ class OTNode {
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter, network) {
+    exposeAPIRoutes(server, emitter) {
         const authorize = (req, res) => {
             const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
             const remote_access = config.remote_access_whitelist;
@@ -833,9 +842,9 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/network/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
-            if (!req.params.query_param) {
+            if (!req.params.query_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -843,7 +852,7 @@ class OTNode {
                 return;
             }
             emitter.emit('api-network-query-status', {
-                id: req.params.query_param,
+                id: req.params.query_id,
                 response: res,
             });
         });

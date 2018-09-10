@@ -2,7 +2,7 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
@@ -28,8 +28,8 @@ RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remot
 ADD testnet/papertrail.yml /etc/log_files.yml
 
 #Clone the project
-RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/master
-RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-master ot-node
+RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/development
+RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-development ot-node
 
 RUN cp -a /tmp/node_modules /ot-node
 

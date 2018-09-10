@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
@@ -20,8 +22,8 @@ const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
 
 const pjson = require('../package.json');
+const runtimeConfigJson = require('../config/runtimeConfig.json');
 
-require('dotenv').config();
 require('winston-loggly-bulk');
 
 
@@ -191,12 +193,11 @@ class Utilities {
                     }),
                 ];
 
-            const networkID = process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development';
             if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: ['development', networkID, pjson.version],
+                    tags: [process.env.NODE_ENV, this.runtimeConfig().network.id, pjson.version],
                     json: true,
                 }));
             }
@@ -1086,6 +1087,16 @@ class Utilities {
             level,
             msg,
         };
+    }
+
+    /**
+     * Returns runtime configuration based on selected environment (NODE_ENV)
+     *
+     * Currently supported environments: development, staging, stable, production.
+     * If NODE_ENV is not set, this function will return undefined.
+     */
+    static runtimeConfig() {
+        return runtimeConfigJson[process.env.NODE_ENV];
     }
 }
 

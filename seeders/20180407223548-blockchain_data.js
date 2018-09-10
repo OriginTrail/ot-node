@@ -1,9 +1,17 @@
 require('dotenv').config();
-const log = require('../modules/Utilities').getLogger();
+const Utilities = require('../modules/Utilities');
+
+const log = Utilities.getLogger();
 
 if (!(process.env.NODE_WALLET && process.env.NODE_PRIVATE_KEY)) {
     log.error('You have to set node wallet and private key in .env');
-    process.kill(0);
+    process.abort();
+}
+
+const runtimeConfig = Utilities.runtimeConfig();
+if (!runtimeConfig) {
+    log.error('Unknown environment. Please set environment.');
+    process.abort();
 }
 
 module.exports = {
@@ -12,11 +20,11 @@ module.exports = {
         network_id: 'rinkeby',
         gas_limit: '800000',
         gas_price: '5000000000',
-        ot_contract_address: '0xc47ab060e064e9291d723e14ddf4122bc121624b',
-        token_contract_address: '0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882',
-        escrow_contract_address: '0xd5b0c40a179a35bad10ad52e6ee9fbf0df86f09d',
-        bidding_contract_address: '0xd82e889ec14db740ca8898675511acc0c787359d',
-        reading_contract_address: '0xb92bfecbcdb6af8d089ff90db6e20b199fbdd04f',
+        ot_contract_address: runtimeConfig.blockchainContracts.otContractAddress,
+        token_contract_address: runtimeConfig.blockchainContracts.tokenContractAddress,
+        escrow_contract_address: runtimeConfig.blockchainContracts.escrowContractAddress,
+        bidding_contract_address: runtimeConfig.blockchainContracts.biddingContractAddress,
+        reading_contract_address: runtimeConfig.blockchainContracts.readingContractAddress,
         rpc_node_host: 'https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt',
         rpc_node_port: '',
         wallet_address: process.env.NODE_WALLET,
