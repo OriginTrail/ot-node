@@ -6,10 +6,10 @@ const DEFAULT_NETWORK_TYPE = 'kademlia';
  * Default retry strategy
  */
 const DEFAULT_RETRY_CONFIG = {
-    retries: 5,
+    retries: 3,
     factor: 1,
     minTimeout: 1000,
-    maxTimeout: 60 * 1000,
+    maxTimeout: 40 * 1000,
     randomize: true,
 };
 
@@ -83,7 +83,7 @@ class Transport {
     }
 
     /**
-     * Wraps function call for the underlying network layer
+     * Pass function call to the underlying network layer
      *
      * @param fn            Function to be called
      * @param msg           Message to be sent
@@ -92,7 +92,7 @@ class Transport {
      * @param fatalErrors   Halt execution on fatal errors
      * @private
      */
-    _wrapNative(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
+    _callNative(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
         return async (msg, contactId, opts, fatalErrors) =>
             this._send(fn, msg, contactId, opts, fatalErrors);
     }
@@ -138,14 +138,20 @@ class Transport {
     }
 }
 
-module.exports = () => new Proxy(new Transport(), {
+/**
+ * Creates simple proxy to handle missing properties (pass them beneath)
+ * @returns {Transport}
+ */
+const proxy = () => new Proxy(new Transport(), {
     get(target, propKey) {
         const property = target[propKey];
         if (!property) {
             // the property is missing
-            // try to pass to an underlying network layer
-            return target._wrapNative(propKey);
+            // try to pass to the underlying network layer
+            return target._callNative(propKey);
         }
         return target[propKey];
     },
 });
+
+module.exports = proxy;
