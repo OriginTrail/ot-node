@@ -23,6 +23,7 @@ class Transport {
      */
     async init(ctx) {
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.networkType = ctx.config.network_type ? ctx.config.network_type : DEFAULT_NETWORK_TYPE;
         switch (this.networkType) {
         case 'kademlia':
@@ -33,6 +34,7 @@ class Transport {
         }
         await this.network.initialize();
         await this.network.start();
+        this.config.networkInitialized = true;
     }
 
     /**

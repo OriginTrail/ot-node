@@ -81,136 +81,139 @@ class Kademlia {
      * Starts the node
      * @return {Promise<void>}
      */
-    async start() {
-        this.log.info('Initializing network');
+    start() {
+        return new Promise(async (resolve) => {
+            this.log.info('Initializing network');
 
-        const { parentKey } = this.kademliaUtilities.getIdentityKeys(
-            this.xprivkey,
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-            parseInt(config.child_derivation_index, 10),
-        );
+            const { parentKey } = this.kademliaUtilities.getIdentityKeys(
+                this.xprivkey,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+                parseInt(config.child_derivation_index, 10),
+            );
 
-        const onionEnabled = parseInt(config.onion_enabled, 10);
-        const natTraversalEnabled = parseInt(config.traverse_nat_enabled, 10);
+            const onionEnabled = parseInt(config.onion_enabled, 10);
+            const natTraversalEnabled = parseInt(config.traverse_nat_enabled, 10);
 
-        let kadServerHost = null;
-        if (config.local_network_only || natTraversalEnabled || onionEnabled) {
-            kadServerHost = '127.0.0.1';
-        } else {
-            kadServerHost = await utilities.getExternalIp();
-        }
+            let kadServerHost = null;
+            if (config.local_network_only || natTraversalEnabled || onionEnabled) {
+                kadServerHost = '127.0.0.1';
+            } else {
+                kadServerHost = await utilities.getExternalIp();
+            }
 
-        // Initialize public contact data
-        const contact = {
-            hostname: kadServerHost,
-            protocol: 'https:',
-            port: parseInt(config.node_port, 10),
-            xpub: parentKey.publicExtendedKey,
-            index: parseInt(config.child_derivation_index, 10),
-            agent: kadence.version.protocol,
-            wallet: config.node_wallet,
-            network_id: config.network_id,
-        };
+            // Initialize public contact data
+            const contact = {
+                hostname: kadServerHost,
+                protocol: 'https:',
+                port: parseInt(config.node_port, 10),
+                xpub: parentKey.publicExtendedKey,
+                index: parseInt(config.child_derivation_index, 10),
+                agent: kadence.version.protocol,
+                wallet: config.node_wallet,
+                network_id: config.network_id,
+            };
 
-        const key = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_keypath}`);
-        const cert = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_certificate_path}`);
-        const ca = config.ssl_authority_paths.map(fs.readFileSync);
+            const key = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_keypath}`);
+            const cert = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_certificate_path}`);
+            const ca = config.ssl_authority_paths.map(fs.readFileSync);
 
-        // Initialize transport adapter
-        const transport = new kadence.HTTPSTransport({ key, cert, ca });
+            // Initialize transport adapter
+            const transport = new kadence.HTTPSTransport({ key, cert, ca });
 
-        // Initialize protocol implementation
-        this.node = new kadence.KademliaNode({
-            logger: this.log,
-            transport,
-            identity: Buffer.from(this.identity, 'hex'),
-            contact,
-            storage: levelup(encoding(leveldown(`${__dirname}/../../../data/kadence.dht`))),
-        });
+            // Initialize protocol implementation
+            this.node = new kadence.KademliaNode({
+                logger: this.log,
+                transport,
+                identity: Buffer.from(this.identity, 'hex'),
+                contact,
+                storage: levelup(encoding(leveldown(`${__dirname}/../../../data/kadence.dht`))),
+            });
 
-        const { validateContact } = this;
+            const { validateContact } = this;
 
-        // Override node's _updateContact method to filter contacts.
-        this.node._updateContact = (identity, contact) => {
-            try {
-                if (!validateContact(contact)) {
-                    this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+            // Override node's _updateContact method to filter contacts.
+            this.node._updateContact = (identity, contact) => {
+                try {
+                    if (!validateContact(contact)) {
+                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+                        return;
+                    }
+                } catch (err) {
+                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
                     return;
                 }
-            } catch (err) {
-                this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
-                return;
-            }
 
-            // Simulate node's "super._updateContact(identity, contact)".
-            this.node.constructor.prototype.constructor.prototype
-                ._updateContact.call(this.node, identity, contact);
-        };
+                // Simulate node's "super._updateContact(identity, contact)".
+                this.node.constructor.prototype.constructor.prototype
+                    ._updateContact.call(this.node, identity, contact);
+            };
 
-        this.node.use((request, response, next) => {
-            if (!validateContact(request.contact[1])) {
-                return next(new NetworkRequestIgnoredError('Contact not valid.', request));
-            }
-            next();
-        });
-
-        this.log.info('Starting OT Node...');
-        this.node.eclipse = this.node.plugin(kadence.eclipse());
-        this.node.quasar = this.node.plugin(kadence.quasar());
-        this.log.info('Quasar initialised');
-        this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../../../data/${config.embedded_peercache_path}`));
-        this.log.info('Peercache initialised');
-        this.node.spartacus = this.node.plugin(kadence.spartacus(
-            this.xprivkey,
-            parseInt(config.child_derivation_index, 10),
-            kadence.constants.HD_KEY_DERIVATION_PATH,
-        ));
-        this.log.info('Spartacus initialized');
-
-        if (onionEnabled) {
-            this.enableOnion();
-        }
-
-        if (natTraversalEnabled) {
-            this.enableNatTraversal();
-        }
-
-        // Use verbose logging if enabled
-        if (parseInt(config.verbose_logging, 10)) {
-            this.node.rpc.deserializer.append(new kadence.logger.IncomingMessage(this.log));
-            this.node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(this.log));
-        }
-        // Cast network nodes to an array
-        if (typeof config.network_bootstrap_nodes === 'string') {
-            config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
-        }
-
-        if (!utilities.isBootstrapNode()) {
-            this._registerRoutes();
-        }
-
-        this.node.listen(parseInt(config.node_port, 10), async () => {
-            this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
-            this.kademliaUtilities.registerControlInterface(config, this.node);
-
-            const connected = false;
-            const retryPeriodSeconds = 5;
-            while (!connected) {
-                try {
-                    // eslint-disable-next-line
-                    const connected = await this._joinNetwork(contact);
-                    if (connected) {
-                        break;
-                    }
-                } catch (e) {
-                    this.log.error(`Failed to join network ${e}`);
-                    this.notifyError(e);
+            this.node.use((request, response, next) => {
+                if (!validateContact(request.contact[1])) {
+                    return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
+                next();
+            });
 
-                this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
-                // eslint-disable-next-line
-                await sleep.sleep(retryPeriodSeconds * 1000);
+            this.log.info('Starting OT Node...');
+            this.node.eclipse = this.node.plugin(kadence.eclipse());
+            this.node.quasar = this.node.plugin(kadence.quasar());
+            this.log.info('Quasar initialised');
+            this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../../../data/${config.embedded_peercache_path}`));
+            this.log.info('Peercache initialised');
+            this.node.spartacus = this.node.plugin(kadence.spartacus(
+                this.xprivkey,
+                parseInt(config.child_derivation_index, 10),
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            ));
+            this.log.info('Spartacus initialized');
+
+            if (onionEnabled) {
+                this.enableOnion();
             }
+
+            if (natTraversalEnabled) {
+                this.enableNatTraversal();
+            }
+
+            // Use verbose logging if enabled
+            if (parseInt(config.verbose_logging, 10)) {
+                this.node.rpc.deserializer.append(new kadence.logger.IncomingMessage(this.log));
+                this.node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(this.log));
+            }
+            // Cast network nodes to an array
+            if (typeof config.network_bootstrap_nodes === 'string') {
+                config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
+            }
+
+            if (!utilities.isBootstrapNode()) {
+                this._registerRoutes();
+            }
+
+            this.node.listen(parseInt(config.node_port, 10), async () => {
+                this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
+                this.kademliaUtilities.registerControlInterface(config, this.node);
+
+                const connected = false;
+                const retryPeriodSeconds = 5;
+                while (!connected) {
+                    try {
+                        // eslint-disable-next-line
+                        const connected = await this._joinNetwork(contact);
+                        if (connected) {
+                            resolve();
+                            break;
+                        }
+                    } catch (e) {
+                        this.log.error(`Failed to join network ${e}`);
+                        this.notifyError(e);
+                    }
+
+                    this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
+                    // eslint-disable-next-line
+                    await sleep.sleep(retryPeriodSeconds * 1000);
+                }
+            });
         });
     }
 
