@@ -29,9 +29,12 @@ const umzug_migrations = new Umzug({
 
 class AutoUpdate {
     static update() {
+        const runtimeConfig = Utilities.runtimeConfig();
         return new Promise(async (resolve, reject) => {
             var autoupdater = new AutoUpdater({
                 pathToJson: '',
+                repo: runtimeConfig.autoUpdater.repo,
+                branch: runtimeConfig.autoUpdater.branch,
                 autoupdate: false,
                 checkgit: true,
                 jsonhost: 'raw.githubusercontent.com',
