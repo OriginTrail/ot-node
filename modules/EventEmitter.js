@@ -28,7 +28,7 @@ class EventEmitter {
      */
     initialize() {
         this._initializeAPIEmitter();
-        this._initializeKadEmitter();
+        this._initializeP2PEmitter();
         this._initializeBlockchainEmitter();
     }
 
@@ -801,10 +801,10 @@ class EventEmitter {
     }
 
     /**
-     * Initializes Kadence related emitter
+     * Initializes P2P related emitter
      * @private
      */
-    _initializeKadEmitter() {
+    _initializeP2PEmitter() {
         const {
             dvService,
             logger,
@@ -818,8 +818,8 @@ class EventEmitter {
             notifyError,
         } = this.ctx;
 
-        this._on('p2p-data-location-request', async (kadMessage) => {
-            const { message, messageSignature } = kadMessage;
+        this._on('kad-data-location-request', async (query) => {
+            const { message, messageSignature } = query;
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
@@ -843,14 +843,15 @@ class EventEmitter {
         });
 
         // async
-        this._on('p2p-payload-request', async (request) => {
-            logger.info(`Data for replication arrived from ${request.contact[0]}`);
+        this._on('kad-payload-request', async (request) => {
+            logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
 
-            const importId = request.params.message.payload.import_id;
-            const { vertices } = request.params.message.payload;
-            const { edges } = request.params.message.payload;
-            const wallet = request.params.message.payload.dc_wallet;
-            const publicKey = request.params.message.payload.public_key;
+            const message = transport.extractMessage(request);
+            const importId = message.payload.import_id;
+            const { vertices } = message.payload;
+            const { edges } = message.payload;
+            const wallet = message.payload.dc_wallet;
+            const publicKey = message.payload.public_key;
 
             await dhController.handleReplicationImport(
                 importId, vertices,
@@ -861,20 +862,21 @@ class EventEmitter {
         });
 
         // sync
-        this._on('p2p-replication-request', async (request) => {
-            const { import_id, wallet } = request.params.message;
-            const { wallet: kadWallet } = request.contact[1];
-            const kadIdentity = request.contact[0];
+        this._on('kad-replication-request', async (request) => {
+            const message = transport.extractMessage(request);
+            const { import_id, wallet } = message;
+            const { wallet: senderWallet } = transport.extractSenderInfo(request);
+            const identity = transport.extractSenderID(request);
 
-            logger.info(`Request for replication of ${import_id} received. Sender ${kadIdentity}`);
+            logger.info(`Request for replication of ${import_id} received. Sender ${identity}`);
 
             if (!import_id || !wallet) {
                 logger.warn('Asked replication without providing import ID or wallet.');
                 return;
             }
 
-            if (kadWallet !== wallet) {
-                logger.warn(`Wallet from KADemlia differs from replication request for import ID ${import_id}.`);
+            if (senderWallet !== wallet) {
+                logger.warn(`Wallet in the message differs from replication request for import ID ${import_id}.`);
             }
 
             const offerModel = await Models.offers.findOne({
@@ -898,14 +900,14 @@ class EventEmitter {
             const offerWallets = offer.dh_wallets;
 
             // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            if (!offerDhIds.includes(kadIdentity) || !offerWallets.includes(kadWallet)) {
+            if (!offerDhIds.includes(identity) || !offerWallets.includes(senderWallet)) {
                 // Check escrow to see if it was a chosen bid. Expected status to be initiated.
                 const escrow = await blockchain.getEscrow(import_id, wallet);
 
                 if (escrow.escrow_status === 0) {
                     // const errorMessage = `Replication request
                     //  for offer you didn't apply: ${import_id}.`;
-                    logger.info(`DH ${kadIdentity} requested data without offer for import ID ${import_id}.`);
+                    logger.info(`DH ${identity} requested data without offer for import ID ${import_id}.`);
                     return;
                 }
             }
@@ -926,7 +928,7 @@ class EventEmitter {
             Graph.encryptVertices(vertices, keyPair.privateKey);
 
             const replicatedData = await Models.replicated_data.create({
-                dh_id: kadIdentity,
+                dh_id: identity,
                 import_id,
                 offer_id: offer.id,
                 data_private_key: keyPair.privateKey,
@@ -936,9 +938,9 @@ class EventEmitter {
 
             const dataInfo = Models.data_info.find({ where: { import_id } });
 
-            logger.info(`Preparing to send payload for ${import_id} to ${kadIdentity}`);
+            logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
             const data = {
-                contact: kadIdentity,
+                contact: identity,
                 vertices,
                 edges,
                 import_id,
@@ -949,23 +951,24 @@ class EventEmitter {
             };
 
             dataReplication.sendPayload(data).then(() => {
-                logger.info(`Payload for ${import_id} sent to ${kadIdentity}.`);
+                logger.info(`Payload for ${import_id} sent to ${identity}.`);
             }).catch((error) => {
-                logger.warn(`Failed to send payload to ${kadIdentity}. Replication ID ${replicatedData.id}. ${error}`);
+                logger.warn(`Failed to send payload to ${identity}. Replication ID ${replicatedData.id}. ${error}`);
                 notifyError(error);
             });
         });
 
         // async
-        this._on('p2p-replication-finished', async () => {
+        this._on('kad-replication-finished', async () => {
             logger.notify('Replication finished, preparing to start challenges');
         });
 
         // sync
         // TODO this call should be refactored to be async
-        this._on('p2p-challenge-request', (request, response) => {
-            logger.info(`Challenge arrived: Block ID ${request.params.message.payload.block_id}, Import ID ${request.params.message.payload.import_id}`);
-            const challenge = request.params.message.payload;
+        this._on('kad-challenge-request', (request, response) => {
+            const message = transport.extractMessage(request);
+            logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
+            const challenge = message.payload;
 
             this.graphStorage.findVerticesByImportId(challenge.import_id).then(async (vertices) => {
                 ImportUtilities.unpackKeys(vertices, []);
@@ -999,15 +1002,15 @@ class EventEmitter {
             });
         });
 
-        this._on('p2p-bidding-won', (message) => {
+        this._on('kad-bidding-won', (message) => {
             logger.notify('Wow I won bidding. Let\'s get into it.');
         });
 
         // async
-        this._on('p2p-data-location-response', async (request) => {
+        this._on('kad-data-location-response', async (request) => {
             logger.info('DH confirms possesion of required data');
             try {
-                const dataLocationResponseObject = request.params.message;
+                const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
@@ -1024,10 +1027,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('p2p-data-read-request', async (request) => {
+        this._on('kad-data-read-request', async (request) => {
             logger.info('Request for data read received');
 
-            const dataReadRequestObject = request.params.message;
+            const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
@@ -1039,14 +1042,16 @@ class EventEmitter {
         });
 
         // async
-        this._on('p2p-data-read-response', async (request) => {
+        this._on('kad-data-read-response', async (request) => {
             logger.info('Encrypted data received');
 
-            if (request.params.status === 'FAIL') {
-                logger.warn(`Failed to send data-read-request. ${request.params.message}`);
+            const reqStatus = transport.extractStatus(request);
+            const reqMessage = transport.extractMessage(request);
+            if (reqStatus === 'FAIL') {
+                logger.warn(`Failed to send data-read-request. ${reqMessage}`);
                 return;
             }
-            const dataReadResponseObject = request.params.message;
+            const dataReadResponseObject = reqMessage;
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
@@ -1063,10 +1068,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('p2p-send-encrypted-key', async (request) => {
+        this._on('kad-send-encrypted-key', async (request) => {
             logger.info('Initial info received to unlock data');
 
-            const encryptedPaddedKeyObject = request.params.message;
+            const encryptedPaddedKeyObject = transport.extractMessage(request);
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
@@ -1074,11 +1079,12 @@ class EventEmitter {
                 return;
             }
 
+            const senderId = transport.extractSenderID();
             try {
                 await dvService.handleEncryptedPaddedKey(message);
                 await transport.sendEncryptedKeyProcessResult({
                     status: 'SUCCESS',
-                }, request.contact[0]);
+                }, senderId);
             } catch (error) {
                 const errorMessage = `Failed to process encrypted key response. ${error}.`;
                 logger.warn(errorMessage);
@@ -1086,34 +1092,35 @@ class EventEmitter {
                 await transport.sendEncryptedKeyProcessResult({
                     status: 'FAIL',
                     message: error.message,
-                }, request.contact[0]);
+                }, senderId);
             }
         });
 
         // async
-        this._on('p2p-encrypted-key-process-result', async (request) => {
-            const { status } = request.params.message;
+        this._on('kad-encrypted-key-process-result', async (request) => {
+            const senderId = transport.extractSenderID(request);
+            const { status } = transport.extractMessage(request);
             if (status === 'SUCCESS') {
-                logger.notify(`DV ${request.contact[0]} successfully processed the encrypted key`);
+                logger.notify(`DV ${senderId} successfully processed the encrypted key`);
             } else {
-                logger.notify(`DV ${request.contact[0]} failed to process the encrypted key`);
+                logger.notify(`DV ${senderId} failed to process the encrypted key`);
             }
         });
 
         // async
-        this._on('p2p-verify-import-request', async (request) => {
-            const { wallet: dhWallet } = request.contact[1];
-            const { epk, importId, encryptionKey } = request.params.message;
+        this._on('kad-verify-import-request', async (request) => {
+            const { wallet: dhWallet } = transport.extractSenderInfo(request);
+            const { epk, importId, encryptionKey } = transport.extractMessage(request);
 
             logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
 
-            const dcNodeId = request.contact[0];
+            const dcNodeId = transport.extractSenderID(request);
             await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
         });
 
         // async
-        this._on('p2p-verify-import-response', async (request) => {
-            const { status, import_id } = request.params.message;
+        this._on('kad-verify-import-response', async (request) => {
+            const { status, import_id } = transport.extractMessage(request);
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);
                 remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);

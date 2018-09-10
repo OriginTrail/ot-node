@@ -36,6 +36,43 @@ class Transport {
     }
 
     /**
+     * Extracts message from native request
+     * @param request
+     * @returns {*}
+     */
+    extractMessage(request) {
+        return this.network.extractMessage(request);
+    }
+
+    /**
+     * Extracts sender identity from native request
+     * @param request
+     * @returns {*}
+     */
+    extractSenderID(request) {
+        return this.network.extractSenderID(request);
+    }
+
+    /**
+     * Extracts sender information from native request
+     * @param request
+     * @returns {*}
+     */
+    extractSenderInfo(request) {
+        return this.network.extractSenderInfo(request);
+    }
+
+    /**
+     * Extracts status from native request
+     * @param request
+     * @returns {*}
+     */
+    extractStatus(request) {
+        return this.network.extractStatus(request);
+    }
+
+
+    /**
      * Sends response
      * @param data
      * @param response
@@ -55,7 +92,7 @@ class Transport {
      * @param fatalErrors   Halt execution on fatal errors
      * @private
      */
-    _wrapSend(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
+    _wrapNative(fn, msg, contactId, fatalErrors = [], opts = DEFAULT_RETRY_CONFIG) {
         return async (msg, contactId, opts, fatalErrors) =>
             this._send(fn, msg, contactId, opts, fatalErrors);
     }
@@ -107,7 +144,7 @@ module.exports = () => new Proxy(new Transport(), {
         if (!property) {
             // the property is missing
             // try to pass to an underlying network layer
-            return target._wrapSend(propKey);
+            return target._wrapNative(propKey);
         }
         return target[propKey];
     },

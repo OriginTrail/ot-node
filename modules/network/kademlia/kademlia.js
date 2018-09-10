@@ -372,125 +372,125 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        this.node.quasar.quasarSubscribe('p2p-data-location-request', (message, err) => {
+        this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
-            this.emitter.emit('p2p-data-location-request', message);
+            this.emitter.emit('kad-data-location-request', message);
         });
 
         // async
-        this.node.use('p2p-payload-request', (request, response, next) => {
-            this.log.debug('p2p-payload-request received');
-            this.emitter.emit('p2p-payload-request', request, response);
+        this.node.use('kad-payload-request', (request, response, next) => {
+            this.log.debug('kad-payload-request received');
+            this.emitter.emit('kad-payload-request', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-replication-request', (request, response, next) => {
-            this.log.debug('p2p-replication-request received');
-            this.emitter.emit('p2p-replication-request', request, response);
+        this.node.use('kad-replication-request', (request, response, next) => {
+            this.log.debug('kad-replication-request received');
+            this.emitter.emit('kad-replication-request', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-replication-finished', (request, response, next) => {
-            this.log.debug('p2p-replication-finished received');
-            this.emitter.emit('p2p-replication-finished', request);
+        this.node.use('kad-replication-finished', (request, response, next) => {
+            this.log.debug('kad-replication-finished received');
+            this.emitter.emit('kad-replication-finished', request);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-data-location-response', (request, response, next) => {
-            this.log.debug('p2p-data-location-response received');
-            this.emitter.emit('p2p-data-location-response', request, response);
+        this.node.use('kad-data-location-response', (request, response, next) => {
+            this.log.debug('kad-data-location-response received');
+            this.emitter.emit('kad-data-location-response', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-data-read-request', (request, response, next) => {
-            this.log.debug('p2p-data-read-request received');
-            this.emitter.emit('p2p-data-read-request', request, response);
+        this.node.use('kad-data-read-request', (request, response, next) => {
+            this.log.debug('kad-data-read-request received');
+            this.emitter.emit('kad-data-read-request', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-data-read-response', (request, response, next) => {
-            this.log.debug('p2p-data-read-response received');
-            this.emitter.emit('p2p-data-read-response', request, response);
+        this.node.use('kad-data-read-response', (request, response, next) => {
+            this.log.debug('kad-data-read-response received');
+            this.emitter.emit('kad-data-read-response', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-send-encrypted-key', (request, response, next) => {
-            this.log.debug('p2p-send-encrypted-key received');
-            this.emitter.emit('p2p-send-encrypted-key', request, response);
+        this.node.use('kad-send-encrypted-key', (request, response, next) => {
+            this.log.debug('kad-send-encrypted-key received');
+            this.emitter.emit('kad-send-encrypted-key', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-encrypted-key-process-result', (request, response, next) => {
-            this.log.debug('p2p-encrypted-key-process-result received');
-            this.emitter.emit('p2p-encrypted-key-process-result', request, response);
+        this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
+            this.log.debug('kad-encrypted-key-process-result received');
+            this.emitter.emit('kad-encrypted-key-process-result', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-verify-import-request', (request, response, next) => {
-            this.log.debug('p2p-verify-import-request received');
-            this.emitter.emit('p2p-verify-import-request', request, response);
+        this.node.use('kad-verify-import-request', (request, response, next) => {
+            this.log.debug('kad-verify-import-request received');
+            this.emitter.emit('kad-verify-import-request', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // async
-        this.node.use('p2p-verify-import-response', (request, response, next) => {
-            this.log.debug('p2p-verify-import-response received');
-            this.emitter.emit('p2p-verify-import-response', request, response);
+        this.node.use('kad-verify-import-response', (request, response, next) => {
+            this.log.debug('kad-verify-import-response received');
+            this.emitter.emit('kad-verify-import-response', request, response);
             response.send({
                 status: 'RECEIVED',
             });
         });
 
         // sync
-        this.node.use('p2p-challenge-request', (request, response, next) => {
-            this.log.debug('p2p-challenge-request received');
-            this.emitter.emit('p2p-challenge-request', request, response);
+        this.node.use('kad-challenge-request', (request, response, next) => {
+            this.log.debug('kad-challenge-request received');
+            this.emitter.emit('kad-challenge-request', request, response);
         });
 
         // error handler
-        this.node.use('p2p-challenge-request', (err, request, response, next) => {
+        this.node.use('kad-challenge-request', (err, request, response, next) => {
             response.send({
-                error: 'p2p-challenge-request error',
+                error: 'kad-challenge-request error',
             });
         });
 
         // error handler
-        this.node.use('p2p-payload-request', (err, request, response, next) => {
+        this.node.use('kad-payload-request', (err, request, response, next) => {
             response.send({
-                error: 'p2p-payload-request error',
+                error: 'kad-payload-request error',
             });
         });
 
         // error handler
-        this.node.use('p2p-replication-finished', (err, request, response, next) => {
+        this.node.use('kad-replication-finished', (err, request, response, next) => {
             response.send({
-                error: 'p2p-replication-finished error',
+                error: 'kad-replication-finished error',
             });
         });
 
@@ -579,7 +579,7 @@ class Kademlia {
             node.payloadRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-payload-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-payload-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -592,7 +592,7 @@ class Kademlia {
             node.replicationRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-replication-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replication-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -605,7 +605,7 @@ class Kademlia {
             node.replicationFinished = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-replication-finished', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replication-finished', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -618,7 +618,7 @@ class Kademlia {
             node.challengeRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-challenge-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -631,7 +631,7 @@ class Kademlia {
             node.sendDataLocationResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-data-location-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-location-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -644,7 +644,7 @@ class Kademlia {
             node.dataReadRequest = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-data-read-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-read-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -657,7 +657,7 @@ class Kademlia {
             node.sendDataReadResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-data-read-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-data-read-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -670,7 +670,7 @@ class Kademlia {
             node.sendEncryptedKey = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-send-encrypted-key', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-send-encrypted-key', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -683,7 +683,7 @@ class Kademlia {
             node.sendEncryptedKeyProcessResult = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-encrypted-key-process-result', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-encrypted-key-process-result', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -696,7 +696,7 @@ class Kademlia {
             node.verifyImport = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-verify-import-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-verify-import-request', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -709,7 +709,7 @@ class Kademlia {
             node.sendVerifyImportResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('p2p-verify-import-response', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-verify-import-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -752,8 +752,40 @@ class Kademlia {
         });
     }
 
-    kademlia() {
-        return this.node;
+    /**
+     * Extracts message from native request
+     * @param request
+     * @returns {*}
+     */
+    extractMessage(request) {
+        return request.params.message;
+    }
+
+    /**
+     * Extracts status from native request
+     * @param request
+     * @returns {*}
+     */
+    extractStatus(request) {
+        return request.params.status;
+    }
+
+    /**
+     * Extracts sender identity from native request
+     * @param request
+     * @returns {*}
+     */
+    extractSenderID(request) {
+        return request.contact[0];
+    }
+
+    /**
+     * Extracts sender information from native request
+     * @param request
+     * @returns {*}
+     */
+    extractSenderInfo(request) {
+        return request.contact[1];
     }
 
     /**
