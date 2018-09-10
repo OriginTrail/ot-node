@@ -1,8 +1,7 @@
-/* eslint-disable no-unused-expressions */
 const {
     describe, before, after, it,
 } = require('mocha');
-const { assert, expect } = require('chai');
+const { assert } = require('chai');
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
 const models = require('../../../../models/index');
 const SystemStorage = require('../../../../modules/Database/SystemStorage');
@@ -27,7 +26,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('Checks for dc offer create database command', function () {
+describe.only('Checks DCOfferCreateDatabaseCommand', function () {
     this.timeout(5000);
     let graphStorage;
     let systemDb;
@@ -38,7 +37,7 @@ describe.only('Checks for dc offer create database command', function () {
 
     const databaseName = 'dc_offer_create_db';
 
-    before('Setup preconditions and call command execute function', async () => {
+    before('Setup preconditions and call DCOfferCreateDatabaseCommand execute function', async () => {
         try {
             await SystemStorage.connect();
         } catch (error) {
@@ -106,13 +105,12 @@ describe.only('Checks for dc offer create database command', function () {
     });
 
 
-    it('Check that offer gets created based on given parameters', async () => {
+    it('Check that new offer gets created based on the given parameters', async () => {
         // allow some time for offer to be written to system.db
         await sleep.sleep(1000);
 
         const offer =
             await models.offers.findOne({ where: { import_id: myCommand.data.importId } });
-        // console.log(offer.dataValues);
 
         assert.equal(myCommand.data.importId, offer.dataValues.import_id, 'imports do not match');
         assert.equal(myCommand.data.replicationId, offer.dataValues.external_id, 'replication ids do not match');
@@ -120,6 +118,9 @@ describe.only('Checks for dc offer create database command', function () {
         assert.equal(myCommand.data.max_token_amount, offer.dataValues.max_token_amount, 'max token amounts do not match');
         assert.equal(myCommand.data.min_stake_amount, offer.dataValues.min_stake_amount, 'min stake amounts do not match');
         assert.equal(myCommand.data.min_reputation, offer.dataValues.min_reputation, 'min reputations do not match');
+        let temp = new BN(myCommand.data.total_escrow_time);
+        temp = temp.div(new BN(60000));
+        assert.equal(offer.dataValues.total_escrow_time.toString(), temp.toString(), 'total_escrow_time do not match');
         assert.equal('PENDING', offer.dataValues.status, 'statuses do not match');
     });
 

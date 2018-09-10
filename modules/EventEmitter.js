@@ -532,6 +532,7 @@ class EventEmitter {
 
             try {
                 logger.info(`Preparing to create offer for import ${import_id}`);
+
                 const dataimport = await Models.data_info.findOne({ where: { import_id } });
                 if (dataimport == null) {
                     throw new Error('This import does not exist in the database');
