@@ -532,12 +532,10 @@ class EventEmitter {
 
             try {
                 logger.info(`Preparing to create offer for import ${import_id}`);
-                console.log(data, 'data ide');
                 const dataimport = await Models.data_info.findOne({ where: { import_id } });
                 if (dataimport == null) {
                     throw new Error('This import does not exist in the database');
                 }
-
 
                 const replicationId = await dcController.createOffer(
                     import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,

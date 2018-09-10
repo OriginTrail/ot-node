@@ -1,23 +1,20 @@
 /* eslint-disable no-unused-expressions */
+const {
+    describe, before, after, it,
+} = require('mocha');
+const { assert, expect } = require('chai');
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
 const models = require('../../../../models/index');
 const SystemStorage = require('../../../../modules/Database/SystemStorage');
-
 const BN = require('bn.js');
-const {
-    describe, before, beforeEach, after, afterEach, it,
-} = require('mocha');
-const { assert, expect } = require('chai');
 const sleep = require('sleep-async')().Promise;
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const Storage = require('../.././../../modules/Storage');
 const { Database } = require('arangojs');
-const sequelizeConfig = require('../../../../config/config.json').development;
 const CommandResolver = require('../.././../../modules/command/command-resolver');
 const CommandExecutor = require('../.././../../modules/command/command-executor');
 const awilix = require('awilix');
-// const Models = require('../../../../models');
 
 function buildSelectedDatabaseParam(databaseName) {
     return {
@@ -30,7 +27,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('Check for dc offer create database command', function () {
+describe.only('Checks for dc offer create database command', function () {
     this.timeout(5000);
     let graphStorage;
     let systemDb;
@@ -39,21 +36,18 @@ describe.only('Check for dc offer create database command', function () {
     let container;
     let myCommand;
 
-
     const databaseName = 'dc_offer_create_db';
 
-
-    before('Setup models', async () => {
+    before('Setup preconditions and call command execute function', async () => {
         try {
             await SystemStorage.connect();
         } catch (error) {
             console.log('Smth went wrong with SystemStorage.connect()');
             console.log(error);
         }
-
+        // clean offers table from system.db
         try {
             await SystemStorage.runSystemQuery('DELETE FROM offers', []);
-            console.log('offers deleted');
         } catch (error) {
             console.log('Smth went wrong with SystemStorage.runSystemQuery()');
             console.log(error);
@@ -62,7 +56,6 @@ describe.only('Check for dc offer create database command', function () {
         Storage.models = (await models.sequelize.sync()).models;
 
         systemDb = new Database();
-
         systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
 
         // Drop test database if exist.
@@ -96,36 +89,38 @@ describe.only('Check for dc offer create database command', function () {
 
         myCommand = {
             data: {
-                importId: Utilities.getRandomIntRange(0, 50),
-                replicationId: Utilities.getRandomIntRange(0, 50),
-                rootHash: Utilities.getRandomIntRange(0, 30),
-                total_escrow_time: Utilities.getRandomIntRange(2, 100),
-                max_token_amount: Utilities.getRandomIntRange(0, 100),
-                min_stake_amount: Utilities.getRandomIntRange(0, 100),
-                min_reputation: Utilities.getRandomIntRange(0, 100),
+                importId: Utilities.getRandomIntRange(1, 50),
+                replicationId: Utilities.getRandomIntRange(1, 50),
+                rootHash: '0xfe109af514aef462b86a02e032d1add2ce59a224cd095aa87716b1ad26aa08ca',
+                total_escrow_time: 9640000,
+                max_token_amount: Utilities.getRandomIntRange(5000, 10000),
+                min_stake_amount: Utilities.getRandomIntRange(1000, 2000),
+                min_reputation: Utilities.getRandomIntRange(1, 100),
             },
         };
 
         const dcOfferCreateDatabaseCommand = container.resolve('dcOfferCreateDatabaseCommand');
 
+        // call command's execute function
         models.sequelize.transaction(async t => dcOfferCreateDatabaseCommand.execute(myCommand, t));
     });
 
 
-    it('should console log', async () => {
+    it('Check that offer gets created based on given parameters', async () => {
+        // allow some time for offer to be written to system.db
         await sleep.sleep(1000);
+
         const offer =
             await models.offers.findOne({ where: { import_id: myCommand.data.importId } });
-        console.log(offer, 'ovo je offer');
+        // console.log(offer.dataValues);
 
-        assert.equal(myCommand.data.importId, offer.dataValues.import_id, 'import do not match');
-        assert.equal(myCommand.data.replicationId, offer.dataValues.external_id, 'replication id  do not match');
-        assert.equal(myCommand.data.rootHash, offer.dataValues.data_hash, 'root hash do not match');
-        // assert.equal(myCommand.data.total_escrow_time, offer.dataValues.total_escrow_time, 'total escrow time do not match');
-        assert.equal(myCommand.data.max_token_amount, offer.dataValues.max_token_amount, 'max token amount do not match');
-        assert.equal(myCommand.data.min_stake_amount, offer.dataValues.min_stake_amount, 'min stake amount do not match');
-        assert.equal(myCommand.data.min_reputation, offer.dataValues.min_reputation, 'min reputation do not match');
-        assert.equal('PENDING', offer.dataValues.status, 'status do not match');
+        assert.equal(myCommand.data.importId, offer.dataValues.import_id, 'imports do not match');
+        assert.equal(myCommand.data.replicationId, offer.dataValues.external_id, 'replication ids do not match');
+        assert.equal(myCommand.data.rootHash, offer.dataValues.data_hash, 'root hashs do not match');
+        assert.equal(myCommand.data.max_token_amount, offer.dataValues.max_token_amount, 'max token amounts do not match');
+        assert.equal(myCommand.data.min_stake_amount, offer.dataValues.min_stake_amount, 'min stake amounts do not match');
+        assert.equal(myCommand.data.min_reputation, offer.dataValues.min_reputation, 'min reputations do not match');
+        assert.equal('PENDING', offer.dataValues.status, 'statuses do not match');
     });
 
     after('Drop DB', async () => {
