@@ -14,6 +14,10 @@
     },
     "bugSnag": {
       "releaseStage": "development"
+    },
+    "autoUpdater": {
+      "repo": "OriginTrail/ot-node",
+      "branch": "develop"
     }
   },
   "staging": {
@@ -31,6 +35,10 @@
     },
     "bugSnag": {
       "releaseStage": "staging"
+    },
+    "autoUpdater": {
+      "repo": "OriginTrail/ot-node",
+      "branch": "release/staging"
     }
   },
   "stable": {
@@ -48,6 +56,10 @@
     },
     "bugSnag": {
       "releaseStage": "stable"
+    },
+    "autoUpdater": {
+      "repo": "OriginTrail/ot-node",
+      "branch": "release/stable"
     }
   },
   "production": {
@@ -68,6 +80,10 @@
     },
     "bugSnag": {
       "releaseStage": "testnet"
+    },
+    "autoUpdater": {
+      "repo": "OriginTrail/ot-node",
+      "branch": "master"
     }
   }
 }
