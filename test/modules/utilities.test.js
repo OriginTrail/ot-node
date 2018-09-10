@@ -3,7 +3,6 @@ const {
 } = require('mocha');
 const { assert, expect } = require('chai');
 const fs = require('fs');
-const net = require('net');
 var models = require('../../models');
 const deasync = require('deasync-promise');
 const Utilities = require('../../modules/Utilities');
