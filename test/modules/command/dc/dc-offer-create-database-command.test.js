@@ -1,10 +1,14 @@
 /* eslint-disable no-unused-expressions */
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
 const models = require('../../../../models/index');
+const SystemStorage = require('../../../../modules/Database/SystemStorage');
+
 const BN = require('bn.js');
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
+const { assert, expect } = require('chai');
+const sleep = require('sleep-async')().Promise;
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const Storage = require('../.././../../modules/Storage');
@@ -33,16 +37,32 @@ describe.only('Check for dc offer create database command', function () {
     let myConfig;
     let myGraphStorage;
     let container;
+    let myCommand;
 
 
     const databaseName = 'dc_offer_create_db';
 
-    before('Setup models', async () => {
-        Storage.models = (await models.sequelize.sync()).models;
-    });
 
-    before('precondition', async () => {
+    before('Setup models', async () => {
+        try {
+            await SystemStorage.connect();
+        } catch (error) {
+            console.log('Smth went wrong with SystemStorage.connect()');
+            console.log(error);
+        }
+
+        try {
+            await SystemStorage.runSystemQuery('DELETE FROM offers', []);
+            console.log('offers deleted');
+        } catch (error) {
+            console.log('Smth went wrong with SystemStorage.runSystemQuery()');
+            console.log(error);
+        }
+
+        Storage.models = (await models.sequelize.sync()).models;
+
         systemDb = new Database();
+
         systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
 
         // Drop test database if exist.
@@ -73,29 +93,39 @@ describe.only('Check for dc offer create database command', function () {
         });
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');
-    });
 
-    it('should console log', async () => {
-        const myCommand = {
+        myCommand = {
             data: {
-                importId: 100005,
-                replicationId: 2,
-                rootHash: 3,
-                total_escrow_time: 4,
-                max_token_amount: 5,
-                min_stake_amount: 6,
-                min_reputation: 7,
+                importId: Utilities.getRandomIntRange(0, 50),
+                replicationId: Utilities.getRandomIntRange(0, 50),
+                rootHash: Utilities.getRandomIntRange(0, 30),
+                total_escrow_time: Utilities.getRandomIntRange(2, 100),
+                max_token_amount: Utilities.getRandomIntRange(0, 100),
+                min_stake_amount: Utilities.getRandomIntRange(0, 100),
+                min_reputation: Utilities.getRandomIntRange(0, 100),
             },
         };
 
         const dcOfferCreateDatabaseCommand = container.resolve('dcOfferCreateDatabaseCommand');
 
         models.sequelize.transaction(async t => dcOfferCreateDatabaseCommand.execute(myCommand, t));
+    });
 
 
-        const listOfDatabases1 = await systemDb.listDatabases();
+    it('should console log', async () => {
+        await sleep.sleep(1000);
         const offer =
             await models.offers.findOne({ where: { import_id: myCommand.data.importId } });
+        console.log(offer, 'ovo je offer');
+
+        assert.equal(myCommand.data.importId, offer.dataValues.import_id, 'import do not match');
+        assert.equal(myCommand.data.replicationId, offer.dataValues.external_id, 'replication id  do not match');
+        assert.equal(myCommand.data.rootHash, offer.dataValues.data_hash, 'root hash do not match');
+        // assert.equal(myCommand.data.total_escrow_time, offer.dataValues.total_escrow_time, 'total escrow time do not match');
+        assert.equal(myCommand.data.max_token_amount, offer.dataValues.max_token_amount, 'max token amount do not match');
+        assert.equal(myCommand.data.min_stake_amount, offer.dataValues.min_stake_amount, 'min stake amount do not match');
+        assert.equal(myCommand.data.min_reputation, offer.dataValues.min_reputation, 'min reputation do not match');
+        assert.equal('PENDING', offer.dataValues.status, 'status do not match');
     });
 
     after('Drop DB', async () => {
