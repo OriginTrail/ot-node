@@ -419,12 +419,12 @@ class OTNode {
         const transport = container.resolve('transport');
         const blockchain = container.resolve('blockchain');
 
+        // Initialise API
+        this.startRPC(emitter);
+
         await transport.init(container.cradle);
 
         models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
-
-        // Initialise API
-        this.startRPC(emitter);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
