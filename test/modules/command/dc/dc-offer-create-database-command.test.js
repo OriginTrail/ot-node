@@ -42,7 +42,11 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
         Storage.db = models.sequelize;
 
         // make sure offers table is cleaned up
-        await Storage.db.query('DELETE from offers');
+
+        await models.offers.destroy({
+            where: {},
+            truncate: true,
+        });
 
         systemDb = new Database();
         systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
