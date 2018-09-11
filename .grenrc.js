@@ -3,7 +3,7 @@ module.exports = {
     "prefix": "",
     "includeMessages": "merges",
     "changelogFilename": "CHANGELOG.md",
-    "ignore-labels": "minor",
+    "ignore-labels": ["minor", "internal process"],
     "groupBy": {
         "Features": ["enhancement"],
         "Chore:": ["chore", "internal"],
