@@ -12,7 +12,6 @@ class PeerCache {
         this.db.persistence.setAutocompactionInterval(10000);
 
         this.node.router.events.on('add', async (identity) => {
-            this.node.logger.trace(`updating peer profile ${identity}`);
             const contact = this.node.router.getContactByNodeId(identity);
             if (contact != null) {
                 contact.timestamp = Date.now();
@@ -21,7 +20,6 @@ class PeerCache {
         });
 
         this.node.router.events.on('remove', async (identity) => {
-            this.node.logger.trace(`updating peer profile ${identity}`);
             await this._removeExternalPeerInfo(identity);
         });
     }
