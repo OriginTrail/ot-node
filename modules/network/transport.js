@@ -6,7 +6,7 @@ const DEFAULT_NETWORK_TYPE = 'kademlia';
  * Default retry strategy
  */
 const DEFAULT_RETRY_CONFIG = {
-    retries: 3,
+    retries: 2,
     factor: 1,
     minTimeout: 1000,
     maxTimeout: 40 * 1000,
@@ -116,6 +116,7 @@ class Transport {
             } catch (err) {
                 const isFatal = fatalErrors.filter(e => err.msg.includes(e)).length > 0;
                 if (isFatal) {
+                    this.logger.warn(`No retry policy for the error ${err}`);
                     halt(err);
                     return;
                 }
