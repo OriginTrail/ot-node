@@ -7,8 +7,8 @@
     "bugsnagkey": "64a98977c830d8c77ab28050a28ef310"
   },
   "scripts": {
-    "test": "nyc mocha --recursive test/modules/*.test.js test/protocol/*.test.js test/api/*.test.js",
-    "test:unit": "nyc mocha --recursive test/modules/*.test.js",
+    "test": "nyc mocha --recursive test/modules/*.test.js test/modules/command/dc/*.test.js test/protocol/*.test.js test/api/*.test.js",
+    "test:unit": "nyc mocha --recursive test/modules/*.test.js test/modules/command/dc/*.test.js",
     "test:api": "nyc mocha --recursive test/api/*.test.js",
     "test:protocol": "nyc mocha --recursive test/protocol/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
