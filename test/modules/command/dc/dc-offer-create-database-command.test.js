@@ -12,6 +12,7 @@ const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const { Database } = require('arangojs');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
 const awilix = require('awilix');
+
 const logger = Utilities.getLogger();
 
 function buildSelectedDatabaseParam(databaseName) {
