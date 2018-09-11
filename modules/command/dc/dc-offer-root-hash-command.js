@@ -61,7 +61,8 @@ class DCOfferRootHashCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId } });
             if (offer) {
                 offer.status = 'FAILED';
-                await offer.save({ fields: ['status'] });
+                offer.message = 'Offer failed';
+                await offer.save({ fields: ['status', 'messages'] });
             }
         }
         this.notifyError(err);
