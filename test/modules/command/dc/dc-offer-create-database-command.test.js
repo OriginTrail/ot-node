@@ -4,16 +4,15 @@ const {
 const { assert } = require('chai');
 const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
 const models = require('../../../../models/index');
-const SystemStorage = require('../../../../modules/Database/SystemStorage');
+const Storage = require('../../../../modules/Storage');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
-const Storage = require('../.././../../modules/Storage');
 const { Database } = require('arangojs');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
-const CommandExecutor = require('../.././../../modules/command/command-executor');
 const awilix = require('awilix');
+const logger = Utilities.getLogger();
 
 function buildSelectedDatabaseParam(databaseName) {
     return {
@@ -38,21 +37,11 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
     const databaseName = 'dc_offer_create_db';
 
     before('Setup preconditions and call DCOfferCreateDatabaseCommand execute function', async () => {
-        try {
-            await SystemStorage.connect();
-        } catch (error) {
-            console.log('Smth went wrong with SystemStorage.connect()');
-            console.log(error);
-        }
-        // clean offers table from system.db
-        try {
-            await SystemStorage.runSystemQuery('DELETE FROM offers', []);
-        } catch (error) {
-            console.log('Smth went wrong with SystemStorage.runSystemQuery()');
-            console.log(error);
-        }
-
         Storage.models = (await models.sequelize.sync()).models;
+        Storage.db = models.sequelize;
+
+        // make sure offers table is cleaned up
+        await Storage.db.query('DELETE from offers');
 
         systemDb = new Database();
         systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
@@ -72,11 +61,11 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
         container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
-        const logger = Utilities.getLogger();
+
         graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
 
         container.register({
-            logger: awilix.asValue(Utilities.getLogger()),
+            logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
             config: awilix.asValue(Utilities.loadConfig()),
             commandResolver: awilix.asClass(CommandResolver),
