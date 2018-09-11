@@ -26,7 +26,7 @@ function buildSelectedDatabaseParam(databaseName) {
     };
 }
 
-describe.only('Checks DCOfferCreateDatabaseCommand', function () {
+describe('Checks DCOfferCreateDatabaseCommand', function () {
     this.timeout(5000);
     let graphStorage;
     let systemDb;
