@@ -19,7 +19,7 @@ const STATUS = {
  * How many commands will run in parallel
  * @type {number}
  */
-const QUEUE_PARALLELISM = 1;
+const QUEUE_PARALLELISM = 4;
 
 /**
  * Queues and processes commands
