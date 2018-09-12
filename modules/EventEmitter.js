@@ -649,7 +649,7 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            if (!config.enoughFunds && !this.config.networkInitialized) {
+            if (!config.enoughFunds && !this.config.network_initialized) {
                 return;
             }
             const {
@@ -671,7 +671,7 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!config.enoughFunds && !this.config.networkInitialized) {
+            if (!config.enoughFunds && !this.config.network_initialized) {
                 return;
             }
             const {
