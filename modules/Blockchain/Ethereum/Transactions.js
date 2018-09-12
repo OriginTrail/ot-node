@@ -40,7 +40,7 @@ class Transactions {
                     } catch (error) {
                         if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced') &&
                             // Ganache's version of nonce error.
-                            error.name !== 'TXRejectedError' && !error.includes('the tx doesn\'t have the correct nonce.')
+                            error.name !== 'TXRejectedError' && !error.toString().includes('the tx doesn\'t have the correct nonce.')
                         ) {
                             throw new Error(error);
                         }
