@@ -72,7 +72,6 @@ class Transport {
         return this.network.extractStatus(request);
     }
 
-
     /**
      * Sends response
      * @param data
@@ -80,7 +79,7 @@ class Transport {
      * @returns {Promise<void>}
      */
     async sendResponse(response, data) {
-        await this.network.sendResponse();
+        await this.network.sendResponse(response, data);
     }
 
     /**
