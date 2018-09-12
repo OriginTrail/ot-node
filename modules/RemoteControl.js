@@ -606,7 +606,6 @@ class RemoteControl {
 
     fingerprintWritten(message, importId) {
         this.socket.emit('fingerprintWritten', { message, importId });
-        console.log(importId, 'evo je u remote');
     }
 
     initializingOffer(importId) {
