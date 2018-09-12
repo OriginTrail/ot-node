@@ -470,11 +470,11 @@ class OTNode {
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
+            transport: awilix.asValue(Transport()),
         });
 
-        const network = container.resolve('network');
-        await network.initialize();
-        await network.start();
+        const transport = container.resolve('transport');
+        await transport.init(container.cradle);
     }
 
     /**
