@@ -54,7 +54,7 @@ class DCOfferReadyCommand extends Command {
     async expired(command) {
         const { importId, offerId } = command.data;
         this.logger.notify(`Offer ${importId} not finalized. Canceling offer.`);
-
+        this.remoteControl.offerCanceled(`Offer ${importId} not finalized. Canceling offer.`, importId);
         return {
             commands: [{
                 name: 'dcOfferCancelCommand',
