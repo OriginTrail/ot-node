@@ -39,7 +39,7 @@ class SocketDecorator {
 
 class RemoteControl {
     constructor(ctx) {
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
         this.blockchain = ctx.blockchain;
         this.log = ctx.logger;
@@ -87,12 +87,11 @@ class RemoteControl {
     }
 
     async connect() {
-        this.node = this.network.kademlia();
         app.listen(config.remote_control_port);
         await remote.on('connection', (socket) => {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
-            this.getProtocolInfo().then((res) => {
+            this.transport.getNetworkInfo().then((res) => {
                 socket.emit('system', { info: res });
                 var config = {};
                 Models.node_config.findAll()
@@ -188,30 +187,6 @@ class RemoteControl {
         });
     }
 
-    /**
-     * Returns basic information about the running node
-     * @param {Control~getProtocolInfoCallback} callback
-     */
-    getProtocolInfo() {
-        return new Promise((resolve, reject) => {
-            const peers = [];
-            const dump = this.node.router.getClosestContactsToKey(
-                this.node.identity,
-                kadence.constants.K * kadence.constants.B,
-            );
-
-            for (const peer of dump) {
-                peers.push(peer);
-            }
-
-            resolve({
-                versions: pjson.version,
-                identity: this.node.identity.toString('hex'),
-                contact: this.node.contact,
-                peers,
-            });
-        });
-    }
     updateConfigRow(data) {
         return new Promise((resolve, reject) => {
             for (var key in data) {

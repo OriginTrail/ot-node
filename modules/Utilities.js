@@ -17,7 +17,6 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
 const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
@@ -230,11 +229,7 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    const transformed = KademliaUtils.transformLog(level, msg);
-                    if (!transformed) {
-                        return;
-                    }
-                    origLog.apply(logger, [transformed.level, transformed.msg]);
+                    origLog.apply(logger, [level, msg]);
                 }
             };
             return logger;
@@ -347,7 +342,6 @@ class Utilities {
     /**
      * Generate Self Signed SSL for Kademlia
      * @return {Promise<any>}
-     * @private
      */
     static generateSelfSignedCertificate() {
         return new Promise((resolve, reject) => {

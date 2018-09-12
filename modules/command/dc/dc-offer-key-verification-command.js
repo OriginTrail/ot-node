@@ -14,7 +14,6 @@ class DCOfferKeyVerificationCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.notifyEvent = ctx.notifyEvent;

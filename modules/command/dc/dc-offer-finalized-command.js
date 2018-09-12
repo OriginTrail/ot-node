@@ -9,7 +9,6 @@ class DCOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
         this.remoteControl = ctx.remoteControl;
     }
 

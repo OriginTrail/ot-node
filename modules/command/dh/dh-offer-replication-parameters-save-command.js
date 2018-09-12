@@ -8,7 +8,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
     }
 
@@ -41,7 +41,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
 
         this.logger.important('Replication finished. Send data to DC for verification.');
         this.remoteControl.dhReplicationFinished('Replication finished. Sending data to DC for verification.');
-        await this.network.kademlia().verifyImport({
+        await this.transport.verifyImport({
             epk,
             importId,
             encryptionKey: distributionPrivateKey,

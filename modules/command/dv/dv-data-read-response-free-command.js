@@ -12,7 +12,6 @@ class DVDataReadResponseFreeCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
         this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;

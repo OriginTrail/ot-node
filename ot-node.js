@@ -5,8 +5,9 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'production';
 }
 
-const Network = require('./modules/Network');
-const NetworkUtilities = require('./modules/NetworkUtilities');
+const Kademlia = require('./modules/network/kademlia/kademlia');
+const Transport = require('./modules/network/transport');
+const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -363,7 +364,7 @@ class OTNode {
 
         container.register({
             emitter: awilix.asClass(EventEmitter).singleton(),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
@@ -381,9 +382,10 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
+            transport: awilix.asValue(Transport()),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -414,14 +416,15 @@ class OTNode {
         });
 
         // Starting the kademlia
-        const network = container.resolve('network');
+        const transport = container.resolve('transport');
         const blockchain = container.resolve('blockchain');
-
-        await network.initialize();
-        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Initialise API
         this.startRPC(emitter);
+
+        await transport.init(container.cradle);
+
+        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -435,8 +438,6 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
-
-        await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -462,12 +463,12 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
         });
 
@@ -785,14 +786,7 @@ class OTNode {
 
         server.get('/api/dump/rt', (req, res) => {
             log.api('Dumping routing table');
-            const message = {};
-            context.network.kademlia().router.forEach((value, key, map) => {
-                if (value.length > 0) {
-                    value.forEach((bValue, bKey, bMap) => {
-                        message[bKey] = bValue;
-                    });
-                }
-            });
+            const message = context.transport.dumpContacts();
 
             res.status(200);
             res.send({
