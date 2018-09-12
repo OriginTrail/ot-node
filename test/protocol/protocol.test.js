@@ -19,6 +19,7 @@ const Utilities = require('../../modules/Utilities');
 const logger = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
+const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
 
 const sequelizeConfig = require('./../../config/config.json').development;
 
@@ -195,6 +196,10 @@ describe('Protocol tests', () => {
 
         get logger() {
             return this.container.resolve('logger');
+        }
+
+        get web3() {
+            return this.container.resolve('web3');
         }
     }
 
@@ -535,6 +540,61 @@ describe('Protocol tests', () => {
         expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
         expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
         expect(events[0].address).to.be.equal(biddingInstance._address);
+    });
+
+    describe('Transaction object tests', () => {
+        it('should successfully run a transaction', async () => {
+            const transactions = new Transactions(testNode1.web3, testNode1.wallet, testNode1.walletPrivateKey);
+            const options = {
+                gasLimit: web3.utils.toHex(testNode1.blockchain.config.gas_limit),
+                gasPrice: web3.utils.toHex(testNode1.blockchain.config.gas_price),
+                to: tokenInstance._address,
+            };
+            await transactions.queueTransaction(
+                tokenContractAbi,
+                'increaseApproval',
+                [biddingInstance._address, '10'],
+                options,
+            );
+            options.to = biddingInstance._address;
+
+            // console.log(await tokenInstance.methods.allowance(testNode1.wallet, escrowInstance._address).call());
+            await transactions.queueTransaction(biddingContractAbi, 'depositToken', ['1'], options);
+        });
+
+        it('should fail a transaction', async () => {
+            const nonceFakerWeb3 = new Web3(ganacheProvider);
+            const lastKnownNonce = await nonceFakerWeb3.eth.getTransactionCount(testNode1.wallet);
+            nonceFakerWeb3.eth.getTransactionCount = async () => lastKnownNonce;
+
+            const transactions = new Transactions(nonceFakerWeb3, testNode1.wallet, testNode1.walletPrivateKey);
+            const options = {
+                gasLimit: web3.utils.toHex(testNode1.blockchain.config.gas_limit),
+                gasPrice: web3.utils.toHex(testNode1.blockchain.config.gas_price),
+                to: tokenInstance._address,
+            };
+            await transactions.queueTransaction(
+                tokenContractAbi,
+                'increaseApproval',
+                [biddingInstance._address, '10'],
+                options,
+            );
+
+            // Expect nonce too low since it will be lastKnownNonce + 1 again.
+            try {
+                await transactions.queueTransaction(
+                    tokenContractAbi,
+                    'increaseApproval',
+                    [biddingInstance._address, '10'],
+                    options,
+                );
+            } catch (error) {
+                if (error.name === 'TransactionFailedError' && error.constructor.name === 'TransactionFailedError') {
+                    return;
+                }
+            }
+            throw Error('Transaction expected to fail.');
+        }).timeout(10000);
     });
 
     describe('DC replication', () => {
