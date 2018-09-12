@@ -60,6 +60,7 @@ class Transactions {
                 cb();
             } else {
                 future.reject(new TransactionFailedError('Transaction failed', transaction));
+                cb();
             }
         }), { concurrent: 1 });
     }
