@@ -39,15 +39,15 @@ class DCOfferCreateBlockchainCommand extends Command {
 
         const replicationModifier = await this.blockchain.getReplicationModifier();
 
-        const condition = maxTokenAmount
-            .mul((new BN((dhWallets.length * 2)).add(new BN(replicationModifier, 10))))
-            .mul(importSizeInBytes)
-            .mul(totalEscrowTime);
+        // const condition = maxTokenAmount
+        //     .mul((new BN((dhWallets.length * 2)).add(new BN(replicationModifier, 10))))
+        //     .mul(importSizeInBytes)
+        //     .mul(totalEscrowTime);
 
-        if (profileBalance.lt(condition)) {
-            await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
-        }
+        // if (profileBalance.lt(condition)) {
+        //     await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
+        //     await this.blockchain.depositToken(condition.sub(profileBalance));
+        // }
 
         await this.blockchain.createOffer(
             importId,
