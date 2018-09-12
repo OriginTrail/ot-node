@@ -34,7 +34,6 @@ class Transport {
         }
         await this.network.initialize();
         await this.network.start();
-        this.config.network_initialized = true;
     }
 
     /**
