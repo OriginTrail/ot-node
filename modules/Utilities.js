@@ -1028,17 +1028,6 @@ class Utilities {
     }
 
     /**
-     * Skips/Transformes Kademlia log
-     * @return {*}
-     */
-    static transformLog(level, msg) {
-        return {
-            level,
-            msg,
-        };
-    }
-
-    /**
      * Returns runtime configuration based on selected environment (NODE_ENV)
      *
      * Currently supported environments: development, staging, stable, production.
