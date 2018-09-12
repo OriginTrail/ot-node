@@ -126,6 +126,8 @@ class RegisterNode {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
                 env.NODE_PRIVATE_KEY = pk;
+                process.env.NODE_WALLET = wallet;
+                process.env.NODE_PRIVATE_KEY = pk;
             }
 
             if (process.env.INSTALLATION === 'local') {
@@ -133,9 +135,6 @@ class RegisterNode {
             } else {
                 env.NODE_IP = ip.address();
             }
-
-            env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
 
             for (const prop in process.env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
