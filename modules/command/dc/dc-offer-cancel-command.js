@@ -34,16 +34,29 @@ class DCOfferCancelCommand extends Command {
                 this.logger.warn(`Offer for ${importId} already exists. Offer is finalized therefore cannot be cancelled.`);
                 return Command.empty();
             }
+
+            const offer = await Models.offers.findOne({
+                where: {
+                    import_id: importId,
+                    status: { [Op.notIn]: ['FINALIZED', 'FINALIZING'] },
+                },
+                order: [
+                    ['id', 'DESC'],
+                ],
+            });
+            if (!offer) {
+                this.logger.warn(`Attempt to cancel offer I don't know: ${importId}.`);
+                return Command.empty();
+            }
+
             // cancel challenges for cancelled offer
             await Models.replicated_data.update(
                 { status: 'CANCELLED' },
                 { where: { import_id: importId } },
             );
-            // update offer to CANCELLED
-            await Models.offers.update(
-                { status: 'CANCELLED' },
-                { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
-            );
+            offer.status = 'CANCELLED';
+            offer.message = 'Offer has been cancelled';
+            await offer.save({ fields: ['status', 'message'] });
         }
         this.logger.notify(`Offer ${importId} successfully cancelled.`);
         return this.continueSequence(this.pack(command.data), command.sequence);
