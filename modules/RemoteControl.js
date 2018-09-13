@@ -579,6 +579,10 @@ class RemoteControl {
         this.socket.emit('writingRootHash', importId);
     }
 
+    fingerprintWritten(message, importId) {
+        this.socket.emit('fingerprintWritten', { message, importId });
+    }
+
     initializingOffer(importId) {
         this.socket.emit('initializingOffer', importId);
     }
@@ -625,6 +629,14 @@ class RemoteControl {
 
     readNotification(data) {
         this.socket.emit('readNotification', data);
+    }
+
+    offerCanceled(data, importId) {
+        this.socket.emit('offerCanceled', { data, importId });
+    }
+
+    importError(data) {
+        this.socket.emit('errorImport', data);
     }
 }
 

@@ -61,6 +61,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
@@ -176,6 +177,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
@@ -198,6 +200,7 @@ class Importer {
             };
         } catch (error) {
             this.log.error(`Import error: ${error}.`);
+            this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
             const errorObject = { message: error.toString(), status: error.status };
             return {
