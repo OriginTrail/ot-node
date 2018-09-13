@@ -15,9 +15,8 @@ class DHOfferReplicationParametersSaveCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             importId, publicKey, distributionPublicKey,
             distributionPrivateKey, epk,
@@ -33,7 +32,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
             distribution_public_key: distributionPublicKey,
             distribution_private_key: distributionPrivateKey,
             epk,
-        }, { transaction });
+        });
 
         if (!holdingData) {
             this.logger.warn('Failed to store holding data info.');
@@ -58,7 +57,7 @@ class DHOfferReplicationParametersSaveCommand extends Command {
         const command = {
             name: 'dhOfferReplicationParametersSaveCommand',
             delay: 0,
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

@@ -16,15 +16,14 @@ class DHOfferFinalizedCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const { importId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 }, transaction });
+        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 } });
         if (event) {
             event.finished = true;
-            await event.save({ fields: ['finished'], transaction });
+            await event.save({ fields: ['finished'] });
 
             const eventModelBids = await Models.events.findAll({
                 where:
@@ -94,7 +93,7 @@ class DHOfferFinalizedCommand extends Command {
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;
