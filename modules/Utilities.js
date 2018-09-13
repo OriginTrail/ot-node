@@ -229,7 +229,11 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    origLog.apply(logger, [level, msg]);
+                    const transformed = Utilities.transformLog(level, msg);
+                    if (!transformed) {
+                        return;
+                    }
+                    origLog.apply(logger, [transformed.level, transformed.msg]);
                 }
             };
             return logger;
@@ -237,6 +241,56 @@ class Utilities {
             console.error('Failed to create logger', e);
             process.exit(1);
         }
+    }
+
+    /**
+     * Skips/Transforms third-party logs
+     * @return {*}
+     */
+    static transformLog(level, msg) {
+        if (msg.startsWith('connection timed out')) {
+            return null;
+        }
+        if (msg.startsWith('negotiation error')) {
+            return null;
+        }
+        if (msg.includes('received late or invalid response')) {
+            return null;
+        }
+        if (msg.includes('error with remote connection')) {
+            return null;
+        }
+        if (msg.includes('remote connection encountered error')) {
+            return null;
+        }
+        if (msg.startsWith('updating peer profile')) {
+            return null;
+        }
+        if (msg.includes('client cannot service request at this time')) {
+            return null;
+        }
+        if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
+            return null;
+        }
+        if (msg.includes('gateway timeout')) {
+            return null;
+        }
+        if (msg.startsWith('connect econnrefused')) {
+            return null;
+        }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
+        if (msg.includes('getaddrinfo')) {
+            return null;
+        }
+        return {
+            level,
+            msg,
+        };
     }
 
     /**
