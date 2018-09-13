@@ -900,7 +900,7 @@ class OTNode {
          * @param queryObject
          */
         server.post('/api/query/local', (req, res) => {
-            log.api('GET: Local query request received.');
+            log.api('POST: Local query request received.');
 
             if (req.body == null || req.body.query == null) {
                 res.status(400);

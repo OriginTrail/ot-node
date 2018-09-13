@@ -287,6 +287,9 @@ class Utilities {
         if (msg.includes('getaddrinfo')) {
             return null;
         }
+        if (msg.includes('read econnreset')) {
+            return null;
+        }
         return {
             level,
             msg,
