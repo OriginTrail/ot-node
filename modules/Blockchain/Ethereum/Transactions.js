@@ -18,7 +18,6 @@ class Transactions {
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
-        this.lastTransactionTime = Date.now();
 
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
@@ -52,16 +51,14 @@ class Transactions {
                 }
             } catch (e) {
                 future.reject(e);
+                cb();
                 return;
             }
 
-            if (transactionHandled) {
-                this.lastTransactionTime = Date.now();
-                cb();
-            } else {
+            if (!transactionHandled) {
                 future.reject(new TransactionFailedError('Transaction failed', transaction));
-                cb();
             }
+            cb();
         }), { concurrent: 1 });
     }
 
