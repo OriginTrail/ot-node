@@ -168,6 +168,7 @@ describe('Protocol tests', () => {
         offerFinalized() {}
         dcErrorHandling() {}
         bidNotTaken() {}
+        fingerprintWritten() {}
     }
 
     class TestNode {
