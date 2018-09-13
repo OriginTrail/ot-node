@@ -15,24 +15,23 @@ class DCOfferFinalizedCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const { importId, offerId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 }, transaction });
+        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 } });
         if (event) {
             event.finished = true;
-            await event.save({ fields: ['finished'], transaction });
+            await event.save({ fields: ['finished'] });
 
-            const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
+            const offer = await Models.offers.findOne({ where: { id: offerId } });
 
             const message = `Offer for import ${offer.import_id} finalized`;
             offer.status = 'FINALIZED';
             this.remoteControl.bidChosen(importId);
             this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
             offer.message = message;
-            await offer.save({ fields: ['status', 'message'], transaction });
+            await offer.save({ fields: ['status', 'message'] });
             this.logger.info(message);
             return Command.empty();
         }
@@ -82,7 +81,7 @@ class DCOfferFinalizedCommand extends Command {
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

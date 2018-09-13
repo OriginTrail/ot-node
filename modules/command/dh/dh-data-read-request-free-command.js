@@ -22,9 +22,8 @@ class DHDataReadRequestFreeCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             message,
         } = command.data;
@@ -156,7 +155,7 @@ class DHDataReadRequestFreeCommand extends Command {
     default(map) {
         const command = {
             name: 'dhDataReadRequestFreeCommand',
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

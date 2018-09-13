@@ -13,15 +13,13 @@ class CleanerCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         await Models.commands.destroy({
             where: {
                 status: { [Models.Sequelize.Op.in]: ['COMPLETED', 'FAILED', 'EXPIRED'] },
                 started_at: { [Models.Sequelize.Op.lte]: Date.now() },
             },
-            transaction,
         });
         return Command.repeat();
     }
@@ -37,7 +35,7 @@ class CleanerCommand extends Command {
             data: {
             },
             period: 60 * 60 * 1000,
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;
