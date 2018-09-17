@@ -102,6 +102,7 @@
     "pem": "^1.12.3",
     "python-shell": "^0.5.0",
     "randomstring": "^1.1.5",
+    "request": "^2.88.0",
     "restify": "^7.2.1",
     "restify-cors-middleware": "^1.1.1",
     "rimraf": "^2.6.2",
