@@ -6,13 +6,13 @@ const assert = require('assert');
 const boscar = require('boscar');
 const hdkey = require('hdkey');
 const deasync = require('deasync-promise');
-const utilities = require('./Utilities');
+const utilities = require('../../Utilities');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
-const Control = require('./Control');
+const Control = require('../../Control');
 
-class NetworkUtilities {
+class KademliaUtils {
     constructor(ctx) {
         this.solvers = [];
         this.log = ctx.logger;
@@ -222,4 +222,4 @@ class NetworkUtilities {
     }
 }
 
-module.exports = NetworkUtilities;
+module.exports = KademliaUtils;

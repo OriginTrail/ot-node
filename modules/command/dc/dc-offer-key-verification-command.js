@@ -14,9 +14,9 @@ class DCOfferKeyVerificationCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
+        this.notifyEvent = ctx.notifyEvent;
     }
 
     /**
@@ -58,15 +58,60 @@ class DCOfferKeyVerificationCommand extends Command {
 
         const escrow = await this.blockchain.getEscrow(importId, dhWallet);
 
+        const parametersLog = {
+            distributionHash,
+            litigationRootHash,
+            escrowDistributionHash: escrow.distribution_root_hash,
+            escrowlitigationRootHash: escrow.litigation_root_hash,
+            originalVertices,
+            litigationVertices: clonedVertices,
+            distributionVertices: vertices,
+            edges,
+            distributionPrivateKey: encryptionKey,
+            dhWallet,
+            dhNodeId,
+            importId,
+            epk,
+        };
+
+        await Utilities.writeContentsToFile(`${global.__basedir}/logs/${importId}`, `${dhNodeId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
+
         let failed = false;
         if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
             this.logger.warn(`Distribution hash for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+
+            this.notifyEvent(
+                'Distribution hash is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (escrow.litigation_root_hash !== Utilities.normalizeHex(litigationRootHash)) {
             this.logger.warn(`Litigation hash for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+            this.notifyEvent(
+                'Litigation hash is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (!escrow.checksum === epkChecksum) {
@@ -79,6 +124,19 @@ class DCOfferKeyVerificationCommand extends Command {
         if (!ImportUtilities.compareDocuments(decryptedVertices, originalVertices)) {
             this.logger.warn(`Decryption key for import ${importId} and DH ${dhWallet} is incorrect`);
             failed = true;
+            this.notifyEvent(
+                'Decryption key is incorrect',
+                {
+                    dhNodeId,
+                    importId,
+                    dhWallet,
+                    encryptionKey,
+                    distributionHash,
+                    litigationRootHash,
+                    vertices,
+                    edges,
+                },
+            );
         }
 
         if (failed) {

@@ -304,7 +304,13 @@ describe('Utilities module', () => {
         assert.equal(result.length, 9);
     });
 
-    // enable after() step after above .skip()ed tests are fixed
+    it('check normalizeHex', () => {
+        const myNormalizedHex = Utilities.normalizeHex('123456789');
+        assert.equal(myNormalizedHex.indexOf('0x'), 0, 'myNormalizedHex doesnt start with 0x');
+        assert.equal(myNormalizedHex.length - 2, 9);
+    });
+
+    // TODO enable after() step after above .skip()ed tests are fixed
     // after('cleanup', () => {
     //     const keyToDelete = `${__dirname}/../../keys/${myConfig.ssl_keypath}`;
     //     const certToDelete = `${__dirname}/../../keys/${myConfig.ssl_certificate_path}`;

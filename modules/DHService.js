@@ -22,7 +22,7 @@ class DHService {
         this.config = ctx.config;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.log = ctx.logger;
@@ -158,7 +158,7 @@ class DHService {
                 ),
             };
 
-            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.transport.sendDataReadResponse(dataReadResponseObject, nodeId);
             await this.listenPurchaseInititation(
                 importId, wallet, offer, networkReplyModel,
                 holdingData, nodeId, id,
@@ -167,7 +167,7 @@ class DHService {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.log.warn(errorMessage);
             this.notifyError(e);
-            await this.network.kademlia().sendDataReadResponse({
+            await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
@@ -300,7 +300,7 @@ class DHService {
             this.config.node_private_key,
         );
 
-        await this.network.kademlia().sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
+        await this.transport.sendEncryptedKey(encryptedPaddedKeyObject, nodeId);
 
         this.listenPurchaseDispute(
             importId, wallet, m2Checksum,
@@ -485,7 +485,7 @@ class DHService {
      * @param importId ID of import.
      * @returns {Promise<*>}
      */
-    async getVerticesForImport(importId) {
+    async getImport(importId) {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { id: importId } });
 
@@ -527,7 +527,7 @@ class DHService {
             return { vertices: values[0], edges: values[1] };
         }
 
-        throw Error(`Cannot find vertices for import ID ${importId}.`);
+        throw Error(`Cannot find import for import ID ${importId}.`);
     }
 
     listenToBlockchainEvents() {

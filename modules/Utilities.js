@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
@@ -14,10 +16,14 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
+const externalip = require('externalip');
+const sortedStringify = require('sorted-json-stringify');
+const mkdirp = require('mkdirp');
+const path = require('path');
 
 const pjson = require('../package.json');
+const runtimeConfigJson = require('../config/runtimeConfig.json');
 
 require('winston-loggly-bulk');
 
@@ -143,12 +149,11 @@ class Utilities {
                     }),
                 ];
 
-            const networkID = process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development';
             if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: ['development', networkID, pjson.version],
+                    tags: [process.env.NODE_ENV, this.runtimeConfig().network.id, pjson.version],
                     json: true,
                 }));
             }
@@ -180,7 +185,7 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    const transformed = KademliaUtils.transformLog(level, msg);
+                    const transformed = Utilities.transformLog(level, msg);
                     if (!transformed) {
                         return;
                     }
@@ -192,6 +197,62 @@ class Utilities {
             console.error('Failed to create logger', e);
             process.exit(1);
         }
+    }
+
+    /**
+     * Skips/Transforms third-party logs
+     * @return {*}
+     */
+    static transformLog(level, msg) {
+        if (msg.startsWith('connection timed out')) {
+            return null;
+        }
+        if (msg.startsWith('negotiation error')) {
+            return null;
+        }
+        if (msg.includes('received late or invalid response')) {
+            return null;
+        }
+        if (msg.includes('error with remote connection')) {
+            return null;
+        }
+        if (msg.includes('remote connection encountered error')) {
+            return null;
+        }
+        if (msg.startsWith('updating peer profile')) {
+            return null;
+        }
+        if (msg.includes('client cannot service request at this time')) {
+            return null;
+        }
+        if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
+            return null;
+        }
+        if (msg.includes('gateway timeout')) {
+            return null;
+        }
+        if (msg.startsWith('connect econnrefused')) {
+            return null;
+        }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
+        if (msg.includes('getaddrinfo')) {
+            return null;
+        }
+        if (msg.includes('read econnreset')) {
+            return null;
+        }
+        if (msg.includes('connect etimedout')) {
+            return null;
+        }
+        return {
+            level,
+            msg,
+        };
     }
 
     /**
@@ -259,7 +320,6 @@ class Utilities {
     /**
      * Generate Self Signed SSL for Kademlia
      * @return {Promise<any>}
-     * @private
      */
     static generateSelfSignedCertificate(config) {
         return new Promise((resolve, reject) => {
@@ -295,7 +355,7 @@ class Utilities {
      * @param data
      * @returns {string}
      */
-    static sha3(data) {
+    static soliditySHA3(data) {
         return soliditySha3(data);
     }
 
@@ -737,7 +797,7 @@ class Utilities {
         const nodeId = new BN(`0x${config.identity}`);
         const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
         const myBid = hashWallerNodeId.add(price);
-        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        const offer = new BN(Utilities.soliditySHA3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
     }
 
@@ -864,6 +924,95 @@ class Utilities {
             [a[i], a[j]] = [a[j], a[i]];
         }
         return a;
+    }
+
+    /**
+     * Get external IP
+     * @returns {Promise}
+     */
+    static getExternalIp() {
+        return new Promise((resolve, reject) => {
+            externalip((err, ip) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(ip);
+            });
+        });
+    }
+
+    /**
+     * Read file contents
+     * @param file
+     * @returns {Promise}
+     */
+    static fileContents(file) {
+        return new Promise((resolve, reject) => {
+            fs.readFile(file, 'utf8', (err, content) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(content);
+                }
+            });
+        });
+    }
+
+    /**
+     * Write contents to file
+     * @param directory
+     * @param filename
+     * @param data
+     * @returns {Promise}
+     */
+    static writeContentsToFile(directory, filename, data) {
+        return new Promise((resolve, reject) => {
+            mkdirp(directory, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const fullpath = path.join(directory, filename);
+
+                    fs.writeFile(fullpath, data, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * Stringifies data to JSON with default parameters
+     * @param data  Data to be stringified
+     * @param ident JSON identification
+     * @returns {*}
+     */
+    static stringify(data, ident = 2) {
+        return sortedStringify(data, null, ident);
+    }
+
+    /**
+     * Checks if hash is zero or any given hex string regardless of prefix 0x
+     * @param {string} hash
+     */
+    static isZeroHash(hash) {
+        const num = new BN(this.denormalizeHex(hash));
+
+        return num.eqn(0);
+    }
+
+    /**
+     * Returns runtime configuration based on selected environment (NODE_ENV)
+     *
+     * Currently supported environments: development, staging, stable, production.
+     * If NODE_ENV is not set, this function will return undefined.
+     */
+    static runtimeConfig() {
+        return runtimeConfigJson[process.env.NODE_ENV];
     }
 }
 

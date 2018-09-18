@@ -4,6 +4,7 @@ const Queue = require('better-queue');
 const sleep = require('sleep-async')().Promise;
 const BN = require('bn.js');
 const Utilities = require('../../Utilities.js');
+const { TransactionFailedError } = require('../../errors');
 
 class Transactions {
     /**
@@ -17,10 +18,10 @@ class Transactions {
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
-        this.lastTransactionTime = Date.now();
 
         this.queue = new Queue((async (args, cb) => {
             const { transaction, future } = args;
+            let transactionHandled = false;
             try {
                 for (let i = 0; i < 3; i += 1) {
                     try {
@@ -28,24 +29,35 @@ class Transactions {
                         const result = await this._sendTransaction(transaction);
                         if (result.status === '0x0') {
                             future.reject(result);
+                            transactionHandled = true;
                             break;
                         } else {
                             future.resolve(result);
+                            transactionHandled = true;
                             break;
                         }
                     } catch (error) {
-                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
-                        if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced')) {
+                        if (!error.toString().includes('nonce too low') && !error.toString().includes('underpriced') &&
+                            // Ganache's version of nonce error.
+                            error.name !== 'TXRejectedError' && !error.toString().includes('the tx doesn\'t have the correct nonce.')
+                        ) {
                             throw new Error(error);
                         }
+
+                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
                         // eslint-disable-next-line no-await-in-loop
                         await sleep.sleep(2000);
                     }
                 }
             } catch (e) {
                 future.reject(e);
+                cb();
+                return;
             }
-            this.lastTransactionTime = Date.now();
+
+            if (!transactionHandled) {
+                future.reject(new TransactionFailedError('Transaction failed', transaction));
+            }
             cb();
         }), { concurrent: 1 });
     }

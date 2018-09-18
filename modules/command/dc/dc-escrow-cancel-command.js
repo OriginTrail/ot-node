@@ -7,7 +7,7 @@ class DCEscrowCancelCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
     }
 
@@ -22,7 +22,7 @@ class DCEscrowCancelCommand extends Command {
             importId,
             false,
         );
-        await this.network.kademlia().sendVerifyImportResponse({
+        await this.transport.sendVerifyImportResponse({
             status: 'fail',
             import_id: importId,
         }, dhNodeId);

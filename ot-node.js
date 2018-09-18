@@ -1,7 +1,14 @@
 require('dotenv').config();
 
-const Network = require('./modules/Network');
-const NetworkUtilities = require('./modules/NetworkUtilities');
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'production';
+}
+
+const HttpNetwork = require('./modules/network/http/http-network');
+const Kademlia = require('./modules/network/kademlia/kademlia');
+const Transport = require('./modules/network/transport');
+const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -42,6 +49,7 @@ const Web3 = require('web3');
 
 global.__basedir = __dirname;
 
+let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
     ['development', 'staging', 'stable', 'testnet'].indexOf(process.env.NODE_ENV) >= 0 ?
@@ -83,6 +91,7 @@ process.on('unhandledRejection', (reason, p) => {
                     identity: config.identity,
                     config: cleanConfig,
                 },
+                severity: 'error',
             },
         );
     }
@@ -109,6 +118,7 @@ process.on('uncaughtException', (err) => {
                 identity: config.identity,
                 config: cleanConfig,
             },
+            severity: 'error',
         },
     );
 });
@@ -138,7 +148,7 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-function notifyBugsnag(error, subsystem) {
+function notifyBugsnag(error, metadata, subsystem) {
     if (process.env.NODE_ENV !== 'development') {
         const cleanConfig = Object.assign({}, config);
         delete cleanConfig.node_private_key;
@@ -160,7 +170,42 @@ function notifyBugsnag(error, subsystem) {
             };
         }
 
+        if (metadata) {
+            Object.assign(options, metadata);
+        }
+
         bugsnag.notify(error, options);
+    }
+}
+
+function notifyEvent(message, metadata, subsystem) {
+    if (process.env.NODE_ENV !== 'development') {
+        const cleanConfig = Object.assign({}, config);
+        delete cleanConfig.node_private_key;
+        delete cleanConfig.houston_password;
+        delete cleanConfig.database;
+        delete cleanConfig.blockchain;
+
+        const options = {
+            user: {
+                id: config.node_wallet,
+                identity: config.node_kademlia_id,
+                config: cleanConfig,
+            },
+            severity: 'info',
+        };
+
+        if (subsystem) {
+            options.subsystem = {
+                name: subsystem,
+            };
+        }
+
+        if (metadata) {
+            Object.assign(options, metadata);
+        }
+
+        bugsnag.notify(message, options);
     }
 }
 
@@ -219,12 +264,13 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: 'development',
+                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
                         error: log.error,
                     },
+                    logLevel: 'error',
                 },
             );
         }
@@ -242,6 +288,8 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
+
+        log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
@@ -310,6 +358,8 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        context = container.cradle;
+
         container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
@@ -319,8 +369,9 @@ class OTNode {
         });
 
         container.register({
+            httpNetwork: awilix.asClass(HttpNetwork).singleton(),
             emitter: awilix.asClass(EventEmitter).singleton(),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
@@ -339,8 +390,10 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
+            notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
+            transport: awilix.asValue(Transport()),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -372,13 +425,13 @@ class OTNode {
         log.notify('================================================================');
 
         // Starting the kademlia
-        const network = container.resolve('network');
+        const transport = container.resolve('transport');
         const blockchain = container.resolve('blockchain');
-
-        await network.initialize();
 
         // Initialise API
         this.startRPC(emitter);
+
+        await transport.init(container.cradle);
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -392,8 +445,6 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
-
-        await network.start();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -419,19 +470,19 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
+            transport: awilix.asValue(Transport()),
         });
 
-        const network = container.resolve('network');
-        await network.initialize();
-        await network.start();
+        const transport = container.resolve('transport');
+        await transport.init(container.cradle);
     }
 
     /**
@@ -507,11 +558,12 @@ class OTNode {
      * Start RPC server
      */
     startRPC(emitter) {
-        const server = restify.createServer({
+        const options = {
             name: 'RPC server',
             version: pjson.version,
             formatters: {
                 'application/json': (req, res, body) => {
+                    res.set('content-type', 'application/json; charset=utf-8');
                     if (!body) {
                         if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                             res.setHeader('Content-Length', 0);
@@ -535,14 +587,31 @@ class OTNode {
                         body = body.toString('base64');
                     }
 
-                    const data = JSON.stringify(body, null, 2);
+                    let ident = 2;
+                    if ('prettify-json' in req.headers) {
+                        if (req.headers['prettify-json'] === 'false') {
+                            ident = 0;
+                        }
+                    }
+                    const data = Utilities.stringify(body, ident);
+
                     if (res.getHeader('Content-Length') === undefined && res.contentLength === undefined) {
                         res.setHeader('Content-Length', Buffer.byteLength(data));
                     }
                     return data;
                 },
             },
-        });
+        };
+
+        if (config.node_rpc_use_ssl) {
+            Object.assign(options, {
+                key: fs.readFileSync(config.node_rpc_ssl_key_path),
+                certificate: fs.readFileSync(config.node_rpc_ssl_cert_path),
+                rejectUnauthorized: true,
+            });
+        }
+
+        const server = restify.createServer(options);
 
         server.use(restify.plugins.acceptParser(server.acceptable));
         server.use(restify.plugins.queryParser());
@@ -550,12 +619,37 @@ class OTNode {
         const cors = corsMiddleware({
             preflightMaxAge: 5, // Optional
             origins: ['*'],
-            allowHeaders: ['API-Token'],
+            allowHeaders: ['API-Token', 'prettify-json', 'raw-data'],
             exposeHeaders: ['API-Token-Expiry'],
         });
 
         server.pre(cors.preflight);
         server.use(cors.actual);
+        server.use((request, response, next) => {
+            if (config.auth_token_enabled) {
+                const token = request.query.auth_token;
+
+                const deny = (message) => {
+                    log.trace(message);
+                    response.status(401);
+                    response.send({
+                        message,
+                    });
+                };
+
+                if (!token) {
+                    const msg = 'Failed to authorize. Auth token is missing';
+                    deny(msg);
+                    return;
+                }
+                if (token !== config.houston_password) {
+                    const msg = `Failed to authorize. Auth token ${token} is invalid`;
+                    deny(msg);
+                    return;
+                }
+            }
+            return next();
+        });
 
         // TODO: Temp solution to listen all adapters in local net.
         let serverListenAddress = config.node_rpc_ip;
@@ -586,7 +680,7 @@ class OTNode {
                 return true;
             }
 
-            if (!remote_access.includes(request_ip)) {
+            if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
                 res.status(403);
                 res.send({
                     message: 'Unauthorized request',
@@ -603,7 +697,7 @@ class OTNode {
          * @param importfile - file or text data
          * @param importtype - (GS1/WOT)
          */
-        server.post('/api/import', (req, res) => {
+        server.post('/api/import', async (req, res) => {
             log.api('POST: Import of data request received.');
 
             if (!authorize(req, res)) {
@@ -635,33 +729,30 @@ class OTNode {
             // Check if file is provided
             if (req.files !== undefined && req.files.importfile !== undefined) {
                 const inputFile = req.files.importfile.path;
-                const queryObject = {
-                    filepath: inputFile,
-                    contact: req.contact,
-                    replicate: req.body.replicate,
-                    response: res,
-                };
-
-                emitter.emit(`api-${importtype}-import-request`, queryObject);
-            } else if (req.body.importfile !== undefined) {
-                // Check if import data is provided in request body
-                const fileData = req.body.importfile;
-                fs.writeFile('tmp/import.xml', fileData, (err) => {
-                    if (err) {
-                        return console.log(err);
-                    }
-                    console.log('The file was saved!');
-
-                    const inputFile = '/tmp/import.tmp';
+                try {
+                    const content = await Utilities.fileContents(inputFile);
                     const queryObject = {
-                        filepath: inputFile,
+                        content,
                         contact: req.contact,
                         replicate: req.body.replicate,
                         response: res,
                     };
-
                     emitter.emit(`api-${importtype}-import-request`, queryObject);
-                });
+                } catch (e) {
+                    res.status(400);
+                    res.send({
+                        message: 'No import data provided',
+                    });
+                }
+            } else if (req.body.importfile !== undefined) {
+                // Check if import data is provided in request body
+                const queryObject = {
+                    content: req.body.importfile,
+                    contact: req.contact,
+                    replicate: req.body.replicate,
+                    response: res,
+                };
+                emitter.emit(`api-${importtype}-import-request`, queryObject);
             } else {
                 // No import data provided
                 res.status(400);
@@ -699,6 +790,16 @@ class OTNode {
                     message: 'Invalid parameters!',
                 });
             }
+        });
+
+        server.get('/api/dump/rt', (req, res) => {
+            log.api('Dumping routing table');
+            const message = context.transport.dumpContacts();
+
+            res.status(200);
+            res.send({
+                message,
+            });
         });
 
         server.get('/api/replication/:replication_id', (req, res) => {
@@ -749,9 +850,9 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/network/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
-            if (!req.params.query_param) {
+            if (!req.params.query_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -759,7 +860,7 @@ class OTNode {
                 return;
             }
             emitter.emit('api-network-query-status', {
-                id: req.params.query_param,
+                id: req.params.query_id,
                 response: res,
             });
         });
@@ -807,7 +908,7 @@ class OTNode {
          * @param queryObject
          */
         server.post('/api/query/local', (req, res) => {
-            log.api('GET: Local query request received.');
+            log.api('POST: Local query request received.');
 
             if (req.body == null || req.body.query == null) {
                 res.status(400);
@@ -837,6 +938,7 @@ class OTNode {
 
             emitter.emit('api-query-local-import', {
                 import_id: req.params.import_id,
+                request: req,
                 response: res,
             });
         });
@@ -909,6 +1011,39 @@ class OTNode {
                 res.status(400);
                 res.send({ message: 'Bad request' });
             }
+        });
+
+        server.get('/api/import_info', (req, res) => {
+            log.api('GET: import_info.');
+            const queryObject = req.query;
+
+            if (queryObject.import_id === undefined) {
+                res.send({ status: 400, message: 'Missing parameter!', data: [] });
+                return;
+            }
+
+            emitter.emit('api-import-info', {
+                importId: queryObject.import_id,
+                response: res,
+            });
+        });
+
+        server.get('/api/imports_info', (req, res) => {
+            log.api('GET: List imports request received.');
+
+            emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        /**
+         * Temporary route used for HTTP network prototype
+         */
+        server.post('/network/send', (req, res) => {
+            log.api('P2P request received');
+
+            const { type } = req.body;
+            emitter.emit(type, req, res);
         });
     }
 }

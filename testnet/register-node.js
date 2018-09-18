@@ -1,9 +1,9 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
 const envfile = require('envfile');
-const externalip = require('externalip');
+const ip = require('ip');
 const fs = require('fs');
 
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
@@ -107,45 +107,44 @@ class RegisterNode {
                         counter += 1;
                         console.log(`Counting ${counter}`);
                         if (counter > 20) {
-                            process.kill(3);
+                            process.exit(3);
                         }
                     }
                 });
             }, 20000);
         }).catch((e) => {
             console.log(e);
-            process.kill(3);
+            process.exit(3);
         });
     }
 
     setConfig() {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
-            if (!env.NODE_WALLET) {
+
+            if (!env.NODE_WALLET && !process.env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
                 env.NODE_PRIVATE_KEY = pk;
+                process.env.NODE_WALLET = wallet;
+                process.env.NODE_PRIVATE_KEY = pk;
             }
 
             if (process.env.INSTALLATION === 'local') {
-                env.NODE_IP = '127.0.0.1';
+                env.NODE_IP = '127.0.0.1'; // TODO remove
             } else {
-                env.NODE_IP = await this.getExternalIp();
+                env.NODE_IP = ip.address();
             }
 
-            env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41';
-
-            env.TRAVERSE_NAT_ENABLED = '0';
-
-            for (const prop in env) {
+            for (const prop in process.env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
-                    process.env[prop] = env[prop];
+                    env[prop] = process.env[prop];
                 }
             }
 
             const envF = envfile.stringifySync(env);
             console.log(envF);
+            dotenv.config();
 
             fs.writeFile('.env', envF, (err) => {
                 if (fs.existsSync('modules/Database/system.db')) {
@@ -190,17 +189,6 @@ class RegisterNode {
         this.socketSend(wallet, nodeIp);
         // eslint-disable-next-line
         require('../ot-node');
-    }
-
-    getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    console.log(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 }
 // eslint-disable-next-line no-new

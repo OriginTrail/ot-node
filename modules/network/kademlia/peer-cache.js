@@ -11,13 +11,16 @@ class PeerCache {
         this.db = new Datastore({ filename: peerCacheFilePath, autoload: true });
         this.db.persistence.setAutocompactionInterval(10000);
 
-        this.node.router.events.on('add', (identity) => {
-            this.node.logger.debug(`updating peer profile ${identity}`);
+        this.node.router.events.on('add', async (identity) => {
             const contact = this.node.router.getContactByNodeId(identity);
             if (contact != null) {
                 contact.timestamp = Date.now();
-                this._setExternalPeerInfo(identity, contact);
+                await this._setExternalPeerInfo(identity, contact);
             }
+        });
+
+        this.node.router.events.on('remove', async (identity) => {
+            await this._removeExternalPeerInfo(identity);
         });
     }
 
@@ -74,6 +77,32 @@ class PeerCache {
     }
 
     /**
+     * Removes contact from peer cache per identity
+     * @param identity
+     * @returns {Promise}
+     * @private
+     */
+    _removeExternalPeerInfo(identity) {
+        return new Promise((resolve, reject) => {
+            this.db.remove(
+                {
+                    _id: identity,
+                },
+                {},
+                (err, num) => {
+                    if (err) {
+                        this.node.logger.error(`Failed to remove ${identity} from peercache`);
+                        reject(err);
+                    } else {
+                        this.node.logger.debug(`Contact ${identity} removed from peercache`);
+                        resolve(num);
+                    }
+                },
+            );
+        });
+    }
+
+    /**
      * Returns a list of bootstrap nodes from local profiles
      * @returns {string[]} urls
      */
@@ -91,6 +120,29 @@ class PeerCache {
                 }
             });
         });
+    }
+
+    /**
+     * Get size of the peercache
+     * @returns {Promise}
+     */
+    getSize() {
+        return new Promise((resolve, reject) => {
+            this.db.count({}, (err, count) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(count);
+                }
+            });
+        });
+    }
+
+    /**
+     * Closes the database
+     */
+    close() {
+        this.db.persistence.stopAutocompaction();
     }
 }
 

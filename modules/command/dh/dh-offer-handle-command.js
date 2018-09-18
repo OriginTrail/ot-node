@@ -14,7 +14,7 @@ class DHOfferHandleCommand extends Command {
         this.config = ctx.config;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;
@@ -39,7 +39,7 @@ class DHOfferHandleCommand extends Command {
         } = command.data;
 
         dcNodeId = dcNodeId.substring(2, 42);
-        const dcContact = await this.network.kademlia().getContact(dcNodeId, true);
+        const dcContact = await this.transport.getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             // wait until peers are synced
             return Command.empty();

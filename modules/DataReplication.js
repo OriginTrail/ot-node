@@ -1,4 +1,3 @@
-const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
@@ -9,7 +8,7 @@ class DataReplication {
      * @param ctx  IoC container context
      */
     constructor(ctx) {
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.challenger = ctx.challenger;
         this.graphStorage = ctx.graphStorage;
         this.importer = ctx.importer;
@@ -63,9 +62,8 @@ class DataReplication {
         };
 
         // send payload to DH
-        await this.network.kademlia().payloadRequest(payload, data.contact, () => {
-            this.log.info(`Payload for import ${data.import_id} sent to ${data.contact}.`);
-        });
+        const response = await this.transport.payloadRequest(payload, data.contact);
+        this.log.info(`Payload for import ${data.import_id} sent to ${data.contact}.`);
     }
 }
 

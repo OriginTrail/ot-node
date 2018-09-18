@@ -16,15 +16,14 @@ class DHReadDataLocationRequestCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
     }
 
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             msgNodeId, msgWallet, msgQuery, msgId,
         } = command.data;
@@ -104,7 +103,7 @@ class DHReadDataLocationRequestCommand extends Command {
             },
             receiver_wallet: msgWallet,
             receiver_identity: msgNodeId,
-        }, { transaction });
+        });
 
         if (!networkReplyModel) {
             this.logger.error('Failed to create new network reply model.');
@@ -133,7 +132,7 @@ class DHReadDataLocationRequestCommand extends Command {
             messageSignature: messageResponseSignature,
         };
 
-        await this.network.kademlia().sendDataLocationResponse(
+        await this.transport.sendDataLocationResponse(
             dataLocationResponseObject,
             msgNodeId,
         );
@@ -148,7 +147,7 @@ class DHReadDataLocationRequestCommand extends Command {
     default(map) {
         const command = {
             name: 'dhReadDataLocationRequestCommand',
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

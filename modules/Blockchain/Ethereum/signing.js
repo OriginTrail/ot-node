@@ -151,7 +151,7 @@ bytes32 confirmation_hash, uint8 v, bytes32 r, bytes32 s
 
 
 
-            var hash = utilities.sha3(raw_data);
+            var hash = utilities.soliditySHA3(raw_data);
             var signature = Account.sign(hash, `0x${private_key}`);
             var vrs = Account.decodeSignature(signature);
             s = {
