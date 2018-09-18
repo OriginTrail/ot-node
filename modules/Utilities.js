@@ -292,6 +292,9 @@ class Utilities {
         if (msg.includes('read econnreset')) {
             return null;
         }
+        if (msg.includes('connect etimedout')) {
+            return null;
+        }
         return {
             level,
             msg,
