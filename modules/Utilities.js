@@ -20,6 +20,8 @@ const BN = require('bn.js');
 const numberToBN = require('number-to-bn');
 const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
+const mkdirp = require('mkdirp');
+const path = require('path');
 
 const pjson = require('../package.json');
 const runtimeConfigJson = require('../config/runtimeConfig.json');
@@ -1059,6 +1061,33 @@ class Utilities {
                     reject(err);
                 } else {
                     resolve(content);
+                }
+            });
+        });
+    }
+
+    /**
+     * Write contents to file
+     * @param directory
+     * @param filename
+     * @param data
+     * @returns {Promise}
+     */
+    static writeContentsToFile(directory, filename, data) {
+        return new Promise((resolve, reject) => {
+            mkdirp(directory, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const fullpath = path.join(directory, filename);
+
+                    fs.writeFile(fullpath, data, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
                 }
             });
         });

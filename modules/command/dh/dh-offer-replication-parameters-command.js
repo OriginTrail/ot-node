@@ -55,6 +55,23 @@ class DHOfferReplicationParametersCommand extends Command {
 
         this.logger.important('Send root hashes and checksum to blockchain.');
         this.remoteControl.sendingRootHashes('Sending import root hashes and checksum to blockchain.');
+
+        const parametersLog = {
+            distributionHash,
+            litigationRootHash,
+            litigationVertices: encryptedVertices,
+            distributionVertices: decryptedVertices,
+            edges: importResult.edges,
+            distributionPublicKey: keyPair.publicKey,
+            distributionPrivateKey: keyPair.privateKey,
+            publicKey,
+            importResult,
+            importId,
+            epk,
+        };
+
+        await Utilities.writeContentsToFile(`${__dirname}/logs`, `${importId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
+
         await this.blockchain.addRootHashAndChecksum(
             importId,
             litigationRootHash,
