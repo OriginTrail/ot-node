@@ -100,7 +100,7 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
         }
     }
 
-    beforeEach('Setup preconditions and call DCOfferCreateBlockchainCommand execute function', async () => {
+    beforeEach('Inject offer into system database', async () => {
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
@@ -170,14 +170,13 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
 
         // allow some time for offer to be written to system.db
         await sleep.sleep(1000);
-    });
 
-
-    it('profile balance less then condition', async () => {
         container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
+    });
 
+    it('profile balance less then condition', async () => {
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
@@ -210,10 +209,6 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     });
 
     it('profile balance greater then condition', async () => {
-        container = awilix.createContainer({
-            injectionMode: awilix.InjectionMode.PROXY,
-        });
-
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
@@ -246,10 +241,6 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     });
 
     it('profile balance equals the condition', async () => {
-        container = awilix.createContainer({
-            injectionMode: awilix.InjectionMode.PROXY,
-        });
-
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
