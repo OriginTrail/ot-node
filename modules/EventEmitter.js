@@ -818,6 +818,11 @@ class EventEmitter {
             notifyError,
         } = this.ctx;
 
+        // sync
+        this._on('kad-join', async (request, response) => {
+            await transport.sendResponse(response, await transport.join());
+        });
+
         this._on('kad-data-location-request', async (query) => {
             const { message, messageSignature } = query;
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
@@ -843,7 +848,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-payload-request', async (request) => {
+        this._on('kad-payload-request', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
 
             const message = transport.extractMessage(request);
@@ -861,8 +869,11 @@ class EventEmitter {
             // TODO: send fail in case of fail.
         });
 
-        // sync
-        this._on('kad-replication-request', async (request) => {
+        // async
+        this._on('kad-replication-request', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             const message = transport.extractMessage(request);
             const { import_id, wallet } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
@@ -959,7 +970,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-finished', async () => {
+        this._on('kad-replication-finished', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.notify('Replication finished, preparing to start challenges');
         });
 
@@ -1002,12 +1016,11 @@ class EventEmitter {
             });
         });
 
-        this._on('kad-bidding-won', (message) => {
-            logger.notify('Wow I won bidding. Let\'s get into it.');
-        });
-
         // async
-        this._on('kad-data-location-response', async (request) => {
+        this._on('kad-data-location-response', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.info('DH confirms possesion of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
@@ -1027,7 +1040,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-request', async (request) => {
+        this._on('kad-data-read-request', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.info('Request for data read received');
 
             const dataReadRequestObject = transport.extractMessage(request);
@@ -1042,10 +1058,13 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-response', async (request) => {
+        this._on('kad-data-read-response', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.info('Encrypted data received');
 
-            const reqStatus = transport.extractStatus(request);
+            const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);
             if (reqStatus === 'FAIL') {
                 logger.warn(`Failed to send data-read-request. ${reqMessage}`);
@@ -1068,7 +1087,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-send-encrypted-key', async (request) => {
+        this._on('kad-send-encrypted-key', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             logger.info('Initial info received to unlock data');
 
             const encryptedPaddedKeyObject = transport.extractMessage(request);
@@ -1097,7 +1119,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-encrypted-key-process-result', async (request) => {
+        this._on('kad-encrypted-key-process-result', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             const senderId = transport.extractSenderID(request);
             const { status } = transport.extractMessage(request);
             if (status === 'SUCCESS') {
@@ -1108,7 +1133,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-verify-import-request', async (request) => {
+        this._on('kad-verify-import-request', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             const { wallet: dhWallet } = transport.extractSenderInfo(request);
             const { epk, importId, encryptionKey } = transport.extractMessage(request);
 
@@ -1119,7 +1147,10 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-verify-import-response', async (request) => {
+        this._on('kad-verify-import-response', async (request, response) => {
+            await transport.sendResponse(response, {
+                status: 'OK',
+            });
             const { status, import_id } = transport.extractMessage(request);
             if (status === 'success') {
                 logger.notify(`Key verification for import ${import_id} succeeded`);

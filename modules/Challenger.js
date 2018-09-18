@@ -114,12 +114,13 @@ class Challenger {
             try {
                 const response = await transport.challengeRequest(payload, challenge.dh_id);
 
-                if (typeof response.status === 'undefined') {
+                const status = transport.extractResponseStatus(response);
+                if (typeof status === 'undefined') {
                     log.warn('challenge-request: Missing status');
                     return;
                 }
 
-                if (response.status !== 'success') {
+                if (status !== 'success') {
                     log.trace('challenge-request: Response not successful.');
                 }
 
