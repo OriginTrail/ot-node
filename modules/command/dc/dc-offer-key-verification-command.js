@@ -74,7 +74,7 @@ class DCOfferKeyVerificationCommand extends Command {
             epk,
         };
 
-        await Utilities.writeContentsToFile(`${__dirname}/logs`, `${importId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
+        await Utilities.writeContentsToFile(`${global.__basedir}/logs/${dhNodeId}`, `${importId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
 
         let failed = false;
         if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
