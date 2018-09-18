@@ -35,6 +35,8 @@ class DHOfferReplicationParametersCommand extends Command {
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const litigationRootHash = litigationBlocksMerkleTree.getRoot();
 
+        const litigationVertices = Utilities.copyObject(encryptedVertices);
+
         const keyPair = Encryption.generateKeyPair(512);
         const decryptedVertices = encryptedVertices.map((encVertex) => {
             if (encVertex.data) {
@@ -44,6 +46,7 @@ class DHOfferReplicationParametersCommand extends Command {
         });
         Graph.encryptVertices(decryptedVertices, keyPair.privateKey);
 
+        const distributionVertices = Utilities.copyObject(decryptedVertices);
         const distributionMerkle = await ImportUtilities.merkleStructure(
             decryptedVertices,
             importResult.edges,
@@ -59,9 +62,8 @@ class DHOfferReplicationParametersCommand extends Command {
         const parametersLog = {
             distributionHash,
             litigationRootHash,
-            litigationVertices: encryptedVertices,
-            distributionVertices: decryptedVertices,
-            edges: importResult.edges,
+            litigationVertices,
+            distributionVertices,
             distributionPublicKey: keyPair.publicKey,
             distributionPrivateKey: keyPair.privateKey,
             publicKey,
@@ -70,7 +72,7 @@ class DHOfferReplicationParametersCommand extends Command {
             epk,
         };
 
-        await Utilities.writeContentsToFile(`${__dirname}/logs`, `${importId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
+        await Utilities.writeContentsToFile(`${global.__basedir}/logs`, `${importId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
 
         await this.blockchain.addRootHashAndChecksum(
             importId,
