@@ -2,6 +2,9 @@ const fs = require('fs');
 const request = require('request');
 const crypto = require('crypto');
 
+/**
+ *  HTTP network transport used for testing purposes mostly
+ */
 class HttpNetwork {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -126,10 +129,11 @@ class HttpNetwork {
             this.config.identity = fs.readFileSync(`${__dirname}/../../../keys/key`).toString();
         }
 
+        const hostname = 'http://localhost:8900/network/send'; // TODO remove hardcoded value
         this.register[this.config.identity] = {
             wallet: this.config.node_wallet,
             identity: this.config.identity,
-            hostname: 'http://localhost:8900/network/send',
+            hostname,
         };
 
         // Cast network nodes to an array
@@ -146,7 +150,7 @@ class HttpNetwork {
                 message: {
                     wallet: this.config.node_wallet,
                     identity: this.config.identity,
-                    hostname: 'http://localhost:8900/network/send',
+                    hostname,
                 },
             });
             this.register = res.register;
