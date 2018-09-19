@@ -15,7 +15,7 @@ const awilix = require('awilix');
 
 const logger = Utilities.getLogger();
 
-describe('Checks DCOfferFinalizedCommand execute() logic', function () {
+describe.only('Checks DCOfferFinalizedCommand execute() logic', function () {
     this.timeout(7000);
     let systemDb;
     let container;
@@ -115,7 +115,13 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
             timestamp: Date.now(),
         };
 
-        await models.events.create(newEventsRow, {});
+        await models.events.create(newEventsRow, {})
+            .then((response) => {
+            // all good here
+            })
+            .catch((error) => {
+                console.log(error);
+            });
         await sleep.sleep(1000);
 
 
