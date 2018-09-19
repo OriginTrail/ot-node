@@ -189,7 +189,7 @@ class OTNode {
                 selectedBlockchain.wallet_address,
             );
             if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet fore running ot-node');
+                console.log('Please get some ETH in the node wallet before running ot-node');
                 enoughETH = false;
                 if (initial) {
                     process.exit(1);
@@ -206,7 +206,7 @@ class OTNode {
             );
             if (atracBalance <= 0) {
                 enoughtTRAC = false;
-                console.log('Please get some ATRAC in the node wallet fore running ot-node');
+                console.log('Please get some ATRAC in the node wallet before running ot-node');
                 if (initial) {
                     process.exit(1);
                 }

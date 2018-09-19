@@ -9,7 +9,6 @@ const Storage = require('../../../../modules/Storage');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const Utilities = require('../../../../modules/Utilities');
-const Blockchain = require('../../../../modules/Blockchain');
 const GraphStorage = require('../../../../modules/Database/GraphStorage');
 const { Database } = require('arangojs');
 const CommandResolver = require('../../../../modules/command/command-resolver');
