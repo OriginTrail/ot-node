@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 const {
-    describe, before, after, it,
+    describe, beforeEach, afterEach, it,
 } = require('mocha');
 const { assert } = require('chai');
 const DCOfferFinalizedCommand = require('../../../../modules/command/dc/dc-offer-finalized-command');
@@ -16,7 +16,7 @@ const awilix = require('awilix');
 const logger = Utilities.getLogger();
 
 describe('Checks DCOfferFinalizedCommand execute() logic', function () {
-    this.timeout(5000);
+    this.timeout(7000);
     let systemDb;
     let container;
     let dcOfferFinalizedCommand;
@@ -39,7 +39,7 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
         }
     }
 
-    before('Inject offer into system database', async () => {
+    beforeEach('Inject offer into system database', async () => {
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
@@ -48,6 +48,7 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
             where: {},
             truncate: true,
         });
+        await sleep.sleep(1000);
 
         // make sure events table is cleaned up
         await models.events.destroy({
@@ -109,8 +110,8 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
             event: 'OfferFinalized',
             data: `{"0":"0xf6d7a8ff15bd55f34f4585843d349538f82648d0df93eea5c83f34000b43b791","import_id": ${myCommand.data.importId}}`,
             block: 3014975,
-            import_id: myCommand.data.importId,
-            finished: 0,
+            import_id: myCommand.data.importId.toString(),
+            finished: false,
             timestamp: Date.now(),
         };
 
@@ -152,7 +153,7 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
         assert.isTrue((updatedOffer.message).indexOf('finalized') >= 0, 'message should include string finalized');
     });
 
-    after('Drop DB', async () => {
+    afterEach('Drop DB', async () => {
         if (systemDb) {
             const listOfDatabases = await systemDb.listDatabases();
             if (listOfDatabases.includes(databaseName)) {
