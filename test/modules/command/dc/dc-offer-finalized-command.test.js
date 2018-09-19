@@ -30,12 +30,10 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
 
     class MockRemoteControl {
         bidChosen(importId) {
-            console.log('Hi from bidChosen()');
             bidChosenCalled = true;
             return importId;
         }
         offerFinalized(message, importId) {
-            console.log('Hi from offerFinalized()');
             offerFinalizedCalled = true;
             return importId;
         }
@@ -104,7 +102,7 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
         // pass offer id to command
         myCommand.data.offerId = insertedOfferId;
         // allow some time for offer to be written to system.db
-        await sleep.sleep(500);
+        await sleep.sleep(1000);
 
         const newEventsRow = {
             contract: 'BIDDING_CONTRACT',
@@ -117,7 +115,7 @@ describe('Checks DCOfferFinalizedCommand execute() logic', function () {
         };
 
         await models.events.create(newEventsRow, {});
-        await sleep.sleep(500);
+        await sleep.sleep(1000);
 
 
         container = awilix.createContainer({
