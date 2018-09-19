@@ -15,7 +15,7 @@ const awilix = require('awilix');
 
 const logger = Utilities.getLogger();
 
-describe.only('Checks DCOfferFinalizedCommand execute() logic', function () {
+describe('Checks DCOfferFinalizedCommand execute() logic', function () {
     this.timeout(7000);
     let systemDb;
     let container;
@@ -106,6 +106,7 @@ describe.only('Checks DCOfferFinalizedCommand execute() logic', function () {
         await sleep.sleep(1000);
 
         const newEventsRow = {
+            id: '1',
             contract: 'BIDDING_CONTRACT',
             event: 'OfferFinalized',
             data: `{"0":"0xf6d7a8ff15bd55f34f4585843d349538f82648d0df93eea5c83f34000b43b791","import_id": ${myCommand.data.importId}}`,
@@ -115,13 +116,11 @@ describe.only('Checks DCOfferFinalizedCommand execute() logic', function () {
             timestamp: Date.now(),
         };
 
-        await models.events.create(newEventsRow, {})
-            .then((response) => {
-            // all good here
-            })
-            .catch((error) => {
-                console.log(error);
-            });
+        try {
+            await models.events.create(newEventsRow, {});
+        } catch (error) {
+            console.log(error);
+        }
         await sleep.sleep(1000);
 
 
