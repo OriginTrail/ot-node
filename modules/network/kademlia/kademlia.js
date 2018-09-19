@@ -260,7 +260,7 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes from cache as well
      */
     async _joinNetwork(myContact) {
-        const bootstrapNodes = this.config.network_bootstrap_nodes;
+        const bootstrapNodes = this.config.network.bootstraps;
         utilities.shuffle(bootstrapNodes);
 
         const peercachePlugin = this.node.peercache;
