@@ -106,6 +106,7 @@
     "request": "^2.88.0",
     "restify": "^7.2.1",
     "restify-cors-middleware": "^1.1.1",
+    "restify-errors": "^6.1.1",
     "rimraf": "^2.6.2",
     "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",

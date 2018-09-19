@@ -132,7 +132,7 @@ class ArangoJS {
         for (const searchRequestPart of inputQuery) {
             const { path, value, opcode } = searchRequestPart;
 
-            switch (opcode) {
+            switch (opcode.toUpperCase()) {
             case 'EQ':
                 filters.push(`v.${path} == @param${count}`);
                 break;
