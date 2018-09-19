@@ -264,7 +264,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
+                    releaseStage: config.bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
@@ -303,13 +303,14 @@ class OTNode {
         // check for Updates
         try {
             log.info('Checking for updates');
-            await Utilities.checkForUpdates();
+            await Utilities.checkForUpdates(config.autoUpdater);
         } catch (err) {
             console.log(err);
             notifyBugsnag(err);
             process.exit(1);
         }
 
+        const appState = {};
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState });
             this.startRPC();
@@ -342,7 +343,6 @@ class OTNode {
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
-        const appState = {};
         // check does node_wallet has sufficient Ether and ATRAC tokens
         if (process.env.NODE_ENV !== 'test') {
             appState.enoughFunds = await this.getBalances(Utilities, config, web3, true);

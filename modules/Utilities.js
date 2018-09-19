@@ -23,7 +23,7 @@ const mkdirp = require('mkdirp');
 const path = require('path');
 
 const pjson = require('../package.json');
-const runtimeConfigJson = require('../config/runtimeConfig.json');
+const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
 
 require('winston-loggly-bulk');
 
@@ -86,14 +86,16 @@ class Utilities {
 
     /**
      * Check if there is a new version of ot-node
+     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
+     * @param {String} [options.branch] - Github repo's branch.
      * @returns {Promise<any>}
      */
 
-    static checkForUpdates() {
+    static checkForUpdates(options) {
         return new Promise(async (resolve, reject) => {
             // eslint-disable-next-line
             const Update = require('../check-updates');
-            const res = await Update.update();
+            const res = await Update.update(options);
             if (res) {
                 resolve(res);
             }
@@ -153,7 +155,7 @@ class Utilities {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: [process.env.NODE_ENV, this.runtimeConfig().network.id, pjson.version],
+                    tags: [process.env.NODE_ENV, runtimeConfigJson.network.id, pjson.version],
                     json: true,
                 }));
             }
@@ -1003,16 +1005,6 @@ class Utilities {
         const num = new BN(this.denormalizeHex(hash));
 
         return num.eqn(0);
-    }
-
-    /**
-     * Returns runtime configuration based on selected environment (NODE_ENV)
-     *
-     * Currently supported environments: development, staging, stable, production.
-     * If NODE_ENV is not set, this function will return undefined.
-     */
-    static runtimeConfig() {
-        return runtimeConfigJson[process.env.NODE_ENV];
     }
 }
 
