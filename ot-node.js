@@ -38,7 +38,7 @@ const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
-const RestAPIValidator = require('./modules/api/rest-api-validator');
+const RestAPIValidator = require('./modules/validator/rest-api-validator');
 
 const pjson = require('./package.json');
 

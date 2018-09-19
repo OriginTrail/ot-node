@@ -132,6 +132,9 @@ class ArangoJS {
         for (const searchRequestPart of inputQuery) {
             const { path, value, opcode } = searchRequestPart;
 
+            if (opcode == null) {
+                throw new Error('OPCODE parameter is not defined');
+            }
             switch (opcode.toUpperCase()) {
             case 'EQ':
                 filters.push(`v.${path} == @param${count}`);

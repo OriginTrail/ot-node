@@ -1,6 +1,8 @@
 const Utilities = require('./Utilities');
 const ZK = require('./ZK');
 
+const ObjectValidator = require('./validator/object-validator');
+
 /**
  * Encapsulates product related operations
  */
@@ -17,6 +19,10 @@ class Product {
      */
     getVertices(queryObject) {
         return new Promise((resolve, reject) => {
+            const validationError = ObjectValidator.validateSearchQueryObject(queryObject);
+            if (validationError) {
+                reject(validationError);
+            }
             this.graphStorage.findImportIds(queryObject).then((vertices) => {
                 resolve(vertices);
             }).catch((err) => {
@@ -139,7 +145,11 @@ class Product {
         });
     }
 
-    getImports(inputQuery) {
+    async getImports(inputQuery) {
+        const validationError = ObjectValidator.validateSearchQueryObject(inputQuery);
+        if (validationError) {
+            throw validationError;
+        }
         return this.graphStorage.findImportIds(inputQuery);
     }
 }
