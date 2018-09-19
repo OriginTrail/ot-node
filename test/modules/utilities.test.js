@@ -22,13 +22,36 @@ describe('Utilities module', () => {
                     'ssl_certificate_path', 'private_extended_key_path', 'child_derivation_index', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
-                    'ssl_authority_paths', 'network_bootstrap_nodes', 'remote_access_whitelist', 'node_rpc_port',
+                    'ssl_authority_paths', 'node_rpc_port',
                     'remote_control_enabled', 'probability_threshold',
                     'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
                     'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                    'network_id'],
-                'Some config items are missing in node_config',
+                    'autoUpdater', 'bugSnag', 'network'],
+                `Some config items are missing in config for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.database, ['provider', 'username', 'password', 'database', 'port', 'host', 'max_path_length'],
+                `Some config items are missing in config.database for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.blockchain, [
+                    'blockchain_title', 'network_id', 'gas_limit', 'gas_price',
+                    'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
+                    'bidding_contract_address', 'reading_contract_address', 'rpc_node_host', 'rpc_node_port'],
+                `Some config items are missing in config.blockchain for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.network, ['id', 'bootstraps', 'remoteWhitelist'],
+                `Some config items are missing in config.network for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.bugSnag, ['releaseStage'],
+                `Some config items are missing in config.bugSnag for environment '${environment}'`,
+            );
+            assert.hasAllKeys(
+                config.autoUpdater, ['repo', 'branch'],
+                `Some config items are missing in config.autoUpdater for environment '${environment}'`,
             );
         });
     });

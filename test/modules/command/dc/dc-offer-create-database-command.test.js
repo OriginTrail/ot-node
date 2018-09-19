@@ -2,32 +2,29 @@ const {
     describe, before, after, it,
 } = require('mocha');
 const { assert } = require('chai');
-const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
-const models = require('../../../../models/index');
-const Storage = require('../../../../modules/Storage');
+
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
+const awilix = require('awilix');
+const rc = require('rc');
+const { Database } = require('arangojs');
+
+const models = require('../../../../models/index');
+const Storage = require('../../../../modules/Storage');
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
-const { Database } = require('arangojs');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
-const awilix = require('awilix');
+const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
+
+const defaultConfig = require('../../../../config/config.json').development;
+const pjson = require('../../../../package.json');
 
 const logger = Utilities.getLogger();
 
-function buildSelectedDatabaseParam(databaseName) {
-    return {
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: databaseName,
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database_system: 'arango_db',
-    };
-}
-
 describe('Checks DCOfferCreateDatabaseCommand', function () {
     this.timeout(5000);
+    let config;
+    let selectedDatabase;
     let graphStorage;
     let systemDb;
     let myConfig;
@@ -38,6 +35,10 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
     const databaseName = 'dc_offer_create_db';
 
     before('Setup preconditions and call DCOfferCreateDatabaseCommand execute function', async () => {
+        config = rc(pjson.name, defaultConfig);
+        selectedDatabase = config.database;
+        selectedDatabase.database = databaseName;
+
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
@@ -49,7 +50,7 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
         });
 
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(config.database.username, config.database.password);
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -59,7 +60,11 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
 
         await systemDb.createDatabase(
             databaseName,
-            [{ username: process.env.DB_USERNAME, passwd: process.env.DB_PASSWORD, active: true }],
+            [{
+                username: config.database.username,
+                passwd: config.database.password,
+                active: true,
+            }],
         );
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
@@ -67,12 +72,12 @@ describe('Checks DCOfferCreateDatabaseCommand', function () {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
+        graphStorage = new GraphStorage(selectedDatabase, logger);
 
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
-            config: awilix.asValue(Utilities.loadConfig()),
+            config: awilix.asValue(config),
             commandResolver: awilix.asClass(CommandResolver),
             dcOfferCreateDatabaseCommand: awilix.asClass(DCOfferCreateDatabaseCommand),
 
