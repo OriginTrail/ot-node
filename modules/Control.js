@@ -9,7 +9,7 @@ class Control extends CT {
         if (!this.config) {
             callback('Unable to read config');
         }
-        callback(null, config);
+        callback(null, this.config);
     }
 }
 

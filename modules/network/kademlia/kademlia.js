@@ -91,7 +91,9 @@ class Kademlia {
             );
 
             let kadServerHost = null;
-            if (this.config.local_network_only || this.config.traverse_nat_enabled || this.config.onion_enabled) {
+            if (this.config.local_network_only ||
+                this.config.traverse_nat_enabled ||
+                this.config.onion_enabled) {
                 kadServerHost = '127.0.0.1';
             } else {
                 kadServerHost = await utilities.getExternalIp();

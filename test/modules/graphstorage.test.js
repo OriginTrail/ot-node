@@ -115,9 +115,10 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('.addVertex() should save vertex in Document Collection', () => {
+    it('.addVertex() should save vertex in Document Collection', (done) => {
         myGraphStorage.addVertex(vertexOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
+            done();
         });
     });
 
@@ -193,7 +194,7 @@ describe('GraphStorage module', () => {
     after('drop myGraphStorage db', async () => {
         if (selectedDatabase.provider === 'arangodb') {
             systemDb = new Database();
-            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+            systemDb.useBasicAuth(selectedDatabase.username, selectedDatabase.password);
             await systemDb.dropDatabase(myDatabaseName);
         } else {
             throw Error('Not implemented database provider.');

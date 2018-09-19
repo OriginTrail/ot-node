@@ -1,13 +1,17 @@
-const Utilities = require('../../modules/Utilities');
+require('dotenv').config();
 
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
 const { assert, expect } = require('chai');
+const { Database } = require('arangojs');
+const rc = require('rc');
+
 const ArangoJs = require('../../modules/Database/Arangojs');
 const databaseData = require('./test_data/arangodb-data.js');
-// eslint-disable-next-line prefer-destructuring
-const Database = require('arangojs').Database;
+
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 const myUserName = 'otuser';
 const myPassword = 'otpass';
@@ -23,11 +27,14 @@ const oneMoreImportValue = 2520345639;
 
 let systemDb;
 let testDb;
+let config;
 
 describe('Arangojs module ', async () => {
     before('create and use testDb db', async () => {
+        config = rc(pjson.name, defaultConfig);
+
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(config.database.username, config.database.password);
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -39,7 +46,13 @@ describe('Arangojs module ', async () => {
             myDatabaseName,
             [{ username: myUserName, passwd: myPassword, active: true }],
         );
-        testDb = new ArangoJs(myUserName, myPassword, myDatabaseName, '127.0.0.1', '8529');
+        testDb = new ArangoJs(
+            myUserName,
+            myPassword,
+            myDatabaseName,
+            config.database.host,
+            config.database.port,
+        );
     });
 
     afterEach('drop ot_vertices and ot_edges collections', async () => {
@@ -639,7 +652,7 @@ describe('Arangojs module ', async () => {
 
     after('drop testDb db', async () => {
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(config.database.username, config.database.password);
         await systemDb.dropDatabase(myDatabaseName);
     });
 });

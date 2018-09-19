@@ -9,7 +9,12 @@ class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
      */
-    constructor({ config, emitter, web3, logger }) {
+    constructor({
+        config,
+        emitter,
+        web3,
+        logger,
+    }) {
         // Loading Web3
         this.emitter = emitter;
         this.web3 = web3;
@@ -710,7 +715,10 @@ class Ethereum {
      */
     subscribeToEventPermanent(event) {
         const handle = setInterval(async () => {
-            const startBlockNumber = parseInt(await Utilities.getBlockNumberFromWeb3(this.web3), 16);
+            const startBlockNumber = parseInt(
+                await Utilities.getBlockNumberFromWeb3(this.web3),
+                16,
+            );
 
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
