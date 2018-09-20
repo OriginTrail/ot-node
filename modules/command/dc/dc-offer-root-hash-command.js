@@ -63,7 +63,7 @@ class DCOfferRootHashCommand extends Command {
             if (offer) {
                 offer.status = 'FAILED';
                 offer.message = 'Offer failed';
-                await offer.save({ fields: ['status', 'messages'] });
+                await offer.save({ fields: ['status', 'message'] });
             }
         }
         this.notifyError(err);
