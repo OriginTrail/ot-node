@@ -25,6 +25,7 @@ class DCOfferReadyCommand extends Command {
             this.remoteControl.biddingComplete(importId);
 
             const offer = await Models.offers.findOne({ where: { id: offerId } });
+            offer.status = 'FINALIZING';
             offer.message = 'Choosing bids for offer';
             await offer.save({ fields: ['status', 'message'] });
             return this.continueSequence(this.pack(command.data), command.sequence);
