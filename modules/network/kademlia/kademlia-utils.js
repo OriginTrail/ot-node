@@ -25,7 +25,7 @@ class KademliaUtils {
     * @return {Promise<boolean>}
     */
     async setSelfSignedCertificate() {
-        if (!fs.existsSync(`../keys/${this.config.ssl_key_path}`)) {
+        if (!fs.existsSync(`../keys/${this.config.ssl_keypath}`)) {
             const result = await utilities.generateSelfSignedCertificate(this.config);
             if (result) {
                 this.log.info('SSL generated');

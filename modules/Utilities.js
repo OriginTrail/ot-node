@@ -334,7 +334,7 @@ class Utilities {
                 }
                 fs.writeFileSync(`${__dirname}/../keys/${config.ssl_keypath}`, keys.serviceKey);
                 fs.writeFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`, keys.certificate);
-                return resolve();
+                return resolve(true);
             });
         });
     }
