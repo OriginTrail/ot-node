@@ -121,25 +121,6 @@ describe('Peercache basic tests', () => {
         );
     });
 
-    describe('Test node event handler hooks', () => {
-        it(
-            'should correctly add a contact and remove the same one',
-            // eslint-disable-next-line no-loop-func
-            async () => {
-                const id = uuidv4();
-                nodeMock.fire('add', id);
-
-                let size = await peercache.getSize();
-                assert.equal(size, 1, 'There should be just one contact in peercache');
-
-                nodeMock.fire('remove', id);
-
-                size = await peercache.getSize();
-                assert.equal(size, 0, 'There should be zero contacts in peercache');
-            },
-        );
-    });
-
     afterEach('Drop DB', () => {
         peercache.close();
         fs.unlinkSync(peercachePath);
