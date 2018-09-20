@@ -331,7 +331,10 @@ class CommandExecutor {
                 retries: commandModel.retries,
                 sequence: commandModel.sequence,
             };
-            adds.push(this.add(command, 0, false));
+            const queued = this.queue.workersList().find(e => e.data.id === command.id);
+            if (!queued) {
+                adds.push(this.add(command, 0, false, true));
+            }
         }
         await Promise.all(adds);
     }
