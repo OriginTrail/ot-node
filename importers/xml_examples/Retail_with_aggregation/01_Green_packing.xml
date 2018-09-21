@@ -53,7 +53,7 @@
                                     <id>urn:epc:id:sgln:Building_Green_V1</id>
                                     <id>urn:epc:id:sgln:Building_Green_V2</id>
                                 </children>
-                            </VocabularyElement>
+                            </VocabularyElement>                           
                         </VocabularyElementList>
                     </Vocabulary>
                     

@@ -12,7 +12,6 @@ class DHOfferHandleImportCommand extends Command {
         this.config = ctx.config;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
-        this.network = ctx.network;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
         this.logger = ctx.logger;

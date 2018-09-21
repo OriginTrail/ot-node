@@ -10,7 +10,7 @@ class DVQueryNetworkCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
     }
@@ -69,15 +69,8 @@ class DVQueryNetworkCommand extends Command {
                 this.config.node_private_key,
             );
 
-        this.network.kademlia().quasar.quasarPublish(
-            'kad-data-location-request',
-            dataLocationRequestObject,
-            {},
-            () => {
-                this.logger.info(`Published query to the network. Query ID ${queryId}.`);
-            },
-        );
-
+        await this.transport.publish('kad-data-location-request', dataLocationRequestObject);
+        this.logger.info(`Published query to the network. Query ID ${queryId}.`);
         return Command.empty();
     }
 

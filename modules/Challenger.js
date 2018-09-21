@@ -6,14 +6,12 @@ const Challenge = require('./Challenge');
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 
-const { Op } = Models.Sequelize;
-
 const intervalMs = 1500;
 
 class Challenger {
     constructor(ctx) {
         this.log = ctx.logger;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
         this.graphStorage = ctx.graphStorage;
         this.notifyError = ctx.notifyError;
@@ -23,7 +21,7 @@ class Challenger {
         // TODO: temp solution to delay.
         // Should be started after replication-finished received.
         setTimeout(() => {
-            setInterval(this.intervalFunc, intervalMs, this, this.network, this.log);
+            setInterval(this.intervalFunc, intervalMs, this, this.transport, this.log);
         }, 30000);
         this.log.info(`Started challenging timer at ${intervalMs}ms.`);
     }
@@ -41,7 +39,7 @@ class Challenger {
      * @return {Promise<void>}
      */
     async initiateLitigation(challenge) {
-        const contact = await this.network.kademlia().getContact(challenge.dh_id);
+        const contact = await this.transport.getContact(challenge.dh_id);
 
         const dhId = challenge.dh_id;
         const dhWallet = contact.wallet;
@@ -93,7 +91,7 @@ class Challenger {
         await replicatedData.save({ fields: ['status'] });
     }
 
-    async sendChallenge(challenge, challenger, network, log) {
+    async sendChallenge(challenge, challenger, transport, log) {
         if (challenge.sent) {
             return;
         }
@@ -113,53 +111,51 @@ class Challenger {
 
             challenge.sent = true;
             await challenge.save({ fields: ['sent'] });
-            await network.kademlia().challengeRequest(
-                payload, challenge.dh_id,
-                async (error, response) => {
-                    if (error) {
-                        log.warn(`failed to get challenge answer from ${challenge.dh_id}. ${error}.`);
-                        return;
-                    }
+            try {
+                const response = await transport.challengeRequest(payload, challenge.dh_id);
 
-                    if (typeof response.status === 'undefined') {
-                        log.warn('challenge-request: Missing status');
-                        return;
-                    }
+                const status = transport.extractResponseStatus(response);
+                if (typeof status === 'undefined') {
+                    log.warn('challenge-request: Missing status');
+                    return;
+                }
 
-                    if (response.status !== 'success') {
-                        log.trace('challenge-request: Response not successful.');
-                    }
+                if (status !== 'success') {
+                    log.trace('challenge-request: Response not successful.');
+                }
 
-                    if (response.answer === challenge.answer) {
-                        log.trace('Successfully answered to challenge.');
+                if (response.answer === challenge.answer) {
+                    log.trace('Successfully answered to challenge.');
 
-                        replicatedData.status = 'ACTIVE';
-                        replicatedData.save({ fields: ['status'] });
+                    replicatedData.status = 'ACTIVE';
+                    replicatedData.save({ fields: ['status'] });
 
-                        await Challenge.completeTest(challenge.id);
-                    } else {
-                        log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-                        // TODO doktor: Handle promise.
-                        await Challenge.failTest(challenge.id);
+                    await Challenge.completeTest(challenge.id);
+                } else {
+                    log.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
+                    // TODO doktor: Handle promise.
+                    await Challenge.failTest(challenge.id);
 
-                        replicatedData.status = 'LITIGATION';
-                        await replicatedData.save({ fields: ['status'] });
+                    replicatedData.status = 'LITIGATION';
+                    await replicatedData.save({ fields: ['status'] });
 
-                        await challenger.initiateLitigation(challenge);
-                    }
-                },
-            );
+                    await challenger.initiateLitigation(challenge);
+                }
+            } catch (error) {
+                // TODO handle this case
+                log.warn(`failed to get challenge answer from ${challenge.dh_id}. ${error}.`);
+            }
         }
     }
 
-    intervalFunc(challenger, network, log) {
+    intervalFunc(challenger, transport, log) {
         const time_now = Date.now();
         Challenge.getUnansweredTest(time_now - intervalMs, time_now + intervalMs)
             .then(async (challenges) => {
                 if (challenges.length > 0) {
                     for (const challenge of challenges) {
                         // eslint-disable-next-line
-                        await challenger.sendChallenge(challenge, challenger, network, log);
+                        await challenger.sendChallenge(challenge, challenger, transport, log);
                     }
                 } else {
                     //  log.trace('No challenges found.');

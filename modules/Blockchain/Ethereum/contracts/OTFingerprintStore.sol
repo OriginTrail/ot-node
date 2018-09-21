@@ -27,7 +27,7 @@ contract OTFingerprintStore is Ownable{
     uint256 public _version;
     /* Data Holder Fingerprint Store */ 
     // mapping(address => mapping (bytes32 => bytes32)) public DHFS; 
-    mapping(address => mapping (bytes32 => FingerprintDefinition)) public DHFS;
+    mapping(address => mapping (bytes32 => FingerprintDefinition)) public DHFS; 
 
     struct FingerprintDefinition{
       bytes32 graph_hash;

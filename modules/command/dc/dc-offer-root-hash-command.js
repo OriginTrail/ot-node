@@ -38,6 +38,7 @@ class DCOfferRootHashCommand extends Command {
                 dataInfo.transaction_hash = result.transactionHash;
                 await dataInfo.save({ fields: ['transaction_hash'] });
                 this.logger.info('Fingerprint written on blockchain');
+                this.remoteControl.fingerprintWritten('Fingerprint written on blockchain', importId);
             } catch (err) {
                 await this._notify(err, offerId);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);

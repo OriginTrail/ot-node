@@ -102,7 +102,7 @@ library SafeMath {
           require(msg.sender != address(0), "Sender address cannot be 0");
           _;
      }
-
+     
      function EscrowHolder(address tokenAddress)
      public senderNotZero{
           require ( tokenAddress != address(0), "Token address cannot be 0");

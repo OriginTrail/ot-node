@@ -8,7 +8,7 @@ class DCEscrowVerifyCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
     }
 
@@ -31,7 +31,7 @@ class DCEscrowVerifyCommand extends Command {
         replicatedData.status = 'ACTIVE';
         await replicatedData.save({ fields: ['status'] });
 
-        await this.network.kademlia().sendVerifyImportResponse({
+        await this.transport.sendVerifyImportResponse({
             status: 'success',
             import_id: importId,
         }, dhNodeId);

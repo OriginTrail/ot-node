@@ -1,4 +1,4 @@
-require('dotenv').config();
+const dotenv = require('dotenv');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
@@ -122,15 +122,12 @@ class RegisterNode {
         return new Promise(async (resolve, reject) => {
             const env = envfile.parseFileSync('.env');
 
-            if ('NODE_WALLET' in process.env) {
-                env.NODE_WALLET = process.env.NODE_WALLET;
-                env.NODE_PRIVATE_KEY = process.env.NODE_PRIVATE_KEY;
-            }
-
-            if (!env.NODE_WALLET) {
+            if (!env.NODE_WALLET && !process.env.NODE_WALLET) {
                 const { wallet, pk } = await this.generateWallet();
                 env.NODE_WALLET = wallet;
                 env.NODE_PRIVATE_KEY = pk;
+                process.env.NODE_WALLET = wallet;
+                process.env.NODE_PRIVATE_KEY = pk;
             }
 
             if (process.env.INSTALLATION === 'local') {
@@ -139,21 +136,15 @@ class RegisterNode {
                 env.NODE_IP = ip.address();
             }
 
-            env.DB_PASSWORD = 'root';
-            env.BOOTSTRAP_NODE = 'https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56,https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e';
-
-            if ('IMPORT_WHITELIST' in process.env) {
-                env.IMPORT_WHITELIST = process.env.IMPORT_WHITELIST;
-            }
-
-            for (const prop in env) {
+            for (const prop in process.env) {
                 if (Object.prototype.hasOwnProperty.call(env, prop)) {
-                    process.env[prop] = env[prop];
+                    env[prop] = process.env[prop];
                 }
             }
 
             const envF = envfile.stringifySync(env);
             console.log(envF);
+            dotenv.config();
 
             fs.writeFile('.env', envF, (err) => {
                 if (fs.existsSync('modules/Database/system.db')) {

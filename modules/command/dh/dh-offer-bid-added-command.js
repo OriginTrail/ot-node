@@ -15,15 +15,14 @@ class DHOfferBidAddedCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             importId, myPrice, dcNodeId, totalEscrowTime,
             myStake, dataSizeBytes, predeterminedBid,
         } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'AddedBid', import_id: importId, finished: 0 }, transaction });
+        const event = await Models.events.findOne({ where: { event: 'AddedBid', import_id: importId, finished: 0 } });
         if (event) {
             const eventData = JSON.parse(event.data);
             this.logger.info(`Bid for ${importId} successfully added`);
@@ -39,7 +38,7 @@ class DHOfferBidAddedCommand extends Command {
                 stake: myStake.toString(),
                 data_size_bytes: dataSizeBytes.toString(),
                 pd_bid: predeterminedBid,
-            }, { transaction });
+            });
 
             return {
                 commands: [
@@ -98,7 +97,7 @@ class DHOfferBidAddedCommand extends Command {
             name: 'dhOfferBidAddedCommand',
             delay: 0,
             period: 5000,
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

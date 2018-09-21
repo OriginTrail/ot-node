@@ -1,5 +1,14 @@
-const Network = require('./modules/Network');
-const NetworkUtilities = require('./modules/NetworkUtilities');
+require('dotenv').config();
+
+if (!process.env.NODE_ENV) {
+    // Environment not set. Use the production.
+    process.env.NODE_ENV = 'production';
+}
+
+const HttpNetwork = require('./modules/network/http/http-network');
+const Kademlia = require('./modules/network/kademlia/kademlia');
+const Transport = require('./modules/network/transport');
+const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
@@ -222,7 +231,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: 'testnet',
+                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
@@ -246,6 +255,8 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
+
+        log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
         Storage.models = (await models.sequelize.sync()).models;
@@ -353,8 +364,9 @@ class OTNode {
         });
 
         container.register({
+            httpNetwork: awilix.asClass(HttpNetwork).singleton(),
             emitter: awilix.asClass(EventEmitter).singleton(),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
             dhService: awilix.asClass(DHService).singleton(),
@@ -372,9 +384,10 @@ class OTNode {
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
+            transport: awilix.asValue(Transport()),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
@@ -405,14 +418,15 @@ class OTNode {
         });
 
         // Starting the kademlia
-        const network = container.resolve('network');
+        const transport = container.resolve('transport');
         const blockchain = container.resolve('blockchain');
-
-        await network.initialize();
-        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Initialise API
         this.startRPC(emitter);
+
+        await transport.init(container.cradle);
+
+        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
@@ -426,8 +440,6 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
-
-        await network.start();
 
         if (parseInt(config.remote_control_enabled, 10)) {
             log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
@@ -453,18 +465,18 @@ class OTNode {
 
         container.register({
             emitter: awilix.asValue({}),
-            network: awilix.asClass(Network).singleton(),
+            kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
-            networkUtilities: awilix.asClass(NetworkUtilities).singleton(),
+            kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
+            transport: awilix.asValue(Transport()),
         });
 
-        const network = container.resolve('network');
-        await network.initialize();
-        await network.start();
+        const transport = container.resolve('transport');
+        await transport.init(container.cradle);
     }
 
     /**
@@ -776,14 +788,7 @@ class OTNode {
 
         server.get('/api/dump/rt', (req, res) => {
             log.api('Dumping routing table');
-            const message = {};
-            context.network.kademlia().router.forEach((value, key, map) => {
-                if (value.length > 0) {
-                    value.forEach((bValue, bKey, bMap) => {
-                        message[bKey] = bValue;
-                    });
-                }
-            });
+            const message = context.transport.dumpContacts();
 
             res.status(200);
             res.send({
@@ -839,9 +844,9 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/network/:query_param', (req, res) => {
+        server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
-            if (!req.params.query_param) {
+            if (!req.params.query_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -849,7 +854,7 @@ class OTNode {
                 return;
             }
             emitter.emit('api-network-query-status', {
-                id: req.params.query_param,
+                id: req.params.query_id,
                 response: res,
             });
         });
@@ -897,7 +902,7 @@ class OTNode {
          * @param queryObject
          */
         server.post('/api/query/local', (req, res) => {
-            log.api('GET: Local query request received.');
+            log.api('POST: Local query request received.');
 
             if (req.body == null || req.body.query == null) {
                 res.status(400);
@@ -1023,6 +1028,16 @@ class OTNode {
             emitter.emit('api-imports-info', {
                 response: res,
             });
+        });
+
+        /**
+         * Temporary route used for HTTP network prototype
+         */
+        server.post('/network/send', (req, res) => {
+            log.api('P2P request received');
+
+            const { type } = req.body;
+            emitter.emit(type, req, res);
         });
     }
 }
