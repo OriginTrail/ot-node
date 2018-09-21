@@ -127,7 +127,7 @@ class Kademlia {
                 index: this.index,
                 agent: kadence.version.protocol,
                 wallet: this.config.node_wallet,
-                network_id: this.config.network_id,
+                network_id: this.config.network.id,
             };
 
             const key = fs.readFileSync(path.join(
@@ -312,7 +312,7 @@ class Kademlia {
             this.log.info('Running in seed mode (waiting for connections)');
 
             this.node.router.events.once('add', async (identity) => {
-                this.config.network_bootstrap_nodes = [
+                this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
                         identity,
                         this.node.router.getContactByNodeId(identity),
