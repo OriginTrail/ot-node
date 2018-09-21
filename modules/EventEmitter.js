@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const ObjectValidator = require('./validator/object-validator');
 const bytes = require('utf8-length');
 
 const events = require('events');
@@ -827,6 +828,9 @@ class EventEmitter {
 
         this._on('kad-data-location-request', async (query) => {
             const { message, messageSignature } = query;
+            if (ObjectValidator.validateSearchQueryObject(message.query)) {
+                return;
+            }
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
