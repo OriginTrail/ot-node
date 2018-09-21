@@ -62,7 +62,7 @@ class KademliaUtils {
             time = Date.now() - start;
         } catch (err) {
             this.log.error(err.message.toLowerCase());
-            this.log.info(`Delete/move ${this.config.private_extended_key_path} and restart`);
+            this.log.info(`Delete/move ${this.config.identity_filepath} and restart`);
             this.notifyError(err);
             process.exit(1);
         }

@@ -19,7 +19,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'node_ip', 'logs_level_debug',
                     'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs', 'test_network_enabled',
-                    'ssl_certificate_path', 'private_extended_key_path', 'cpus', 'embedded_wallet_directory',
+                    'ssl_certificate_path', 'identity_filepath', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
                     'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
                     'ssl_authority_paths', 'node_rpc_port',
@@ -141,16 +141,6 @@ describe('Utilities module', () => {
             assert.isTrue(/^\r?\n*-----BEGIN CERTIFICATE-----\r?\n/.test(myCert));
             assert.isTrue(/\r?\n-----END CERTIFICATE-----\r?\n*$/.test(myCert));
         }));
-    });
-
-    it.skip('createPrivateExtendedKey()', () => {
-        environments.forEach((environment) => {
-            const config = configJson[environment];
-            Utilities.createPrivateExtendedKey(kadence, config);
-            const myPrvKey = fs.readFileSync(`${__dirname}/../../keys/${config.private_extended_key_path}`, 'utf8');
-            assert.typeOf(myPrvKey, 'string');
-            assert.isTrue(myPrvKey.length > 0);
-        });
     });
 
     it('database settings', async () => {

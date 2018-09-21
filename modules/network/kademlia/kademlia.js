@@ -53,7 +53,7 @@ class Kademlia {
         this.log.info('Getting the identity');
         const identityFilePath = path.join(
             this.config.appDataPath,
-            this.config.private_extended_key_path,
+            this.config.identity_filepath,
         );
         if (fs.existsSync(identityFilePath)) {
             const identityFileContent =

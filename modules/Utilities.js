@@ -346,19 +346,6 @@ class Utilities {
     }
 
     /**
-     * Generates private extended key for identity
-     * @param kadence
-     */
-    static createPrivateExtendedKey(kadence, config) {
-        if (!fs.existsSync(path.join(config.appDataPath, config.private_extended_key_path))) {
-            fs.writeFileSync(
-                path.join(config.appDataPath, config.private_extended_key_path),
-                kadence.utils.toHDKeyFromSeed().privateExtendedKey,
-            );
-        }
-    }
-
-    /**
      * Returns solidity keccak256 hash of given data
      * @param data
      * @returns {string}
