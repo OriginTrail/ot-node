@@ -88,7 +88,7 @@ class RemoteControl {
     }
 
     async connect() {
-        app.listen(this.config.remote_control_port);
+        app.listen(this.config.node_remote_control_port);
         await remote.on('connection', (socket) => {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);

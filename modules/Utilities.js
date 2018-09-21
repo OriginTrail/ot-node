@@ -1022,6 +1022,7 @@ class Utilities {
             'control_port_enabled',
             'remote_control_enabled',
             'send_logs',
+            'houston_password',
         ];
 
         const stripped = {};
