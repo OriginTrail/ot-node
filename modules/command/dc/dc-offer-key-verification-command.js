@@ -57,11 +57,11 @@ class DCOfferKeyVerificationCommand extends Command {
         const distributionHash = distributionMerkle.tree.getRoot();
         const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
-        const escrow = await retry(async (halt) => {
+        const escrow = await retry(async (halt, iteration) => {
             try {
-                const escrow = await escrowContract.methods.escrow(importId, dhWallet).call();
+                const escrow = await this.blockchain.getEscrow(importId, dhWallet);
                 if (escrow && Utilities.isZeroHash(escrow.distribution_root_hash)) {
-                    console.log(`Distribution root hash ${escrow.distribution_root_hash}, retrying ${(opts.retries - iteration) + 1} attempts left`);
+                    console.log(`Distribution root hash ${escrow.distribution_root_hash}, retrying ${iteration}. attempt`);
                     throw new Error('Distribution root hash is 0x0');
                 }
                 return escrow;
