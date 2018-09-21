@@ -17,6 +17,11 @@ const { execSync } = require('child_process');
 const argv = require('minimist')(process.argv.slice(2));
 const rc = require('rc');
 
+// Check for arguments sanity.
+if (argv.all && argv.configDir) {
+    throw Error('Cannot use --all and --configDir argument at the same time.');
+}
+
 const pjson = require('../package.json');
 const configjson = require('../config/config.json');
 
@@ -35,6 +40,7 @@ const config = rc(pjson.name, defaultConfig);
 
 if (argv.configDir) {
     configDirs.push(argv.configDir);
+    arangoDbs.push(defaultConfig.database);
 } else if (argv.all) { // All environments?
     configDirs.push(path.join(
         homedir,
@@ -135,7 +141,7 @@ async function resetArangoDb(database) {
 
 arangoDbs.forEach((database) => {
     resetArangoDb(database).catch((error) => {
-        console.error(`Failed to create '${database}'in Arango DB. ${error}.`);
+        console.error(`Failed to create '${JSON.stringify(database)}'in Arango DB. ${error}.`);
         process.abort();
     });
 });

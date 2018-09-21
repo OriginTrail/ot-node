@@ -32,6 +32,7 @@ const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
 const ip = require('ip');
+const argv = require('minimist')(process.argv.slice(2));
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
@@ -61,11 +62,16 @@ try {
     // Load config.
     config = rc(pjson.name, defaultConfig);
 
-    config.appDataPath = path.join(
-        homedir,
-        `.${pjson.name}rc`,
-        process.env.NODE_ENV,
-    );
+    if (argv.configDir) {
+        config.appDataPath = argv.configDir;
+        models.sequelize.options.storage = path.join(config.appDataPath, 'system.db');
+    } else {
+        config.appDataPath = path.join(
+            homedir,
+            `.${pjson.name}rc`,
+            process.env.NODE_ENV,
+        );
+    }
 
     if (fs.existsSync(path.join(config.appDataPath, 'config.json'))) {
         const storedConfig = JSON.parse(fs.readFileSync(path.join(config.appDataPath, 'config.json'), 'utf8'));
@@ -309,7 +315,7 @@ class OTNode {
             Storage.models = (await models.sequelize.sync()).models;
             Storage.db = models.sequelize;
         } catch (error) {
-            if (error.prototype.constructor.name === 'SequelizeConnectionError') {
+            if (error.constructor.name === 'ConnectionError') {
                 console.error('Failed to open database. Did you forget to run "npm run setup"?');
                 process.abort();
             }

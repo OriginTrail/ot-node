@@ -5,6 +5,8 @@ const axios = require('axios');
 const envfile = require('envfile');
 const ip = require('ip');
 const fs = require('fs');
+const path = require('path');
+const homedir = require('os').homedir();
 
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
 
@@ -15,6 +17,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io
 const Umzug = require('umzug');
 
 const Models = require('../models');
+
+const pjson = require('../package.json');
 
 const umzug_migrations = new Umzug({
 
@@ -147,7 +151,13 @@ class RegisterNode {
             dotenv.config();
 
             fs.writeFile('.env', envF, (err) => {
-                if (fs.existsSync('modules/Database/system.db')) {
+                const dbPath = path.join(
+                    homedir,
+                    `.${pjson.name}rc`,
+                    process.env.NODE_ENV,
+                    'system.db',
+                );
+                if (fs.existsSync(dbPath)) {
                     if (process.env.UPDATE !== undefined) {
                         umzug_seeders.down({ to: 0 }).then((migrations) => {
                             Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');

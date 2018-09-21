@@ -12,11 +12,10 @@
     "test:api": "nyc mocha --recursive test/api/*.test.js",
     "test:protocol": "nyc mocha --recursive test/protocol/*.test.js",
     "start": "node node_version_check.js && node ot-node.js",
-    "config": "sqlite3 modules/Database/system.db 'DELETE FROM node_config; DELETE FROM graph_database; DELETE FROM blockchain_data; UPDATE sqlite_sequence SET seq=0 WHERE name=\"graph_database\" OR name=\"blockchain_data\" OR name=\"node_config\"; VACUUM;' && ./node_modules/.bin/sequelize --config=./config/sequelize.json db:seed:all",
     "bootstrap": "npm run setup:hard",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js add_db_backup.js check-updates.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
-    "db_backup": " node add_db_backup.js",
+    "db_backup": "node add_db_backup.js",
     "setup": "node ./scripts/setup.js",
     "setup:hard": "node ./scripts/setup.js --hard",
     "setup:hard:all": "node ./scripts/setup.js --hard --all"
