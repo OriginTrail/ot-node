@@ -129,12 +129,14 @@ class Kademlia {
                 network_id: this.config.network_id,
             };
 
-            const key = fs.readFileSync(
-                path.join(this.config.appDataPath, this.config.ssl_keypath),
-            );
-            const cert = fs.readFileSync(
-                path.join(this.config.appDataPath, this.config.ssl_certificate_path),
-            );
+            const key = fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_keypath,
+            ));
+            const cert = fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_certificate_path,
+            ));
             const ca = this.config.ssl_authority_paths.map(fs.readFileSync);
 
             // Initialize transport adapter
@@ -179,9 +181,11 @@ class Kademlia {
             this.node.eclipse = this.node.plugin(kadence.eclipse());
             this.node.quasar = this.node.plugin(kadence.quasar());
             this.log.info('Quasar initialised');
-            this.node.peercache = this.node.plugin(
-                PeerCache(path.join(this.config.appDataPath, this.config.embedded_peercache_path)),
-            );
+            this.node.peercache =
+                this.node.plugin(PeerCache(path.join(
+                    this.config.appDataPath,
+                    this.config.embedded_peercache_path,
+                )));
             this.log.info('Peercache initialised');
             this.node.spartacus = this.node.plugin(kadence.spartacus(
                 this.xprivkey,
