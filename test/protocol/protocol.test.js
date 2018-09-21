@@ -21,7 +21,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
 
-const sequelizeConfig = require('./../../config/sequelize.json').development;
+const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 
 const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
