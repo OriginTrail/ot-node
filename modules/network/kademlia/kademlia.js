@@ -154,15 +154,16 @@ class Kademlia {
 
             const { validateContact } = this;
 
+            const that = this;
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
                 try {
-                    if (!validateContact(contact)) {
-                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+                    if (!that.validateContact(contact)) {
+                        that.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
                         return;
                     }
                 } catch (err) {
-                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                    that.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
                     return;
                 }
 
@@ -821,7 +822,7 @@ class Kademlia {
                 return false;
             }
         }
-        if (!contact.network_id || contact.network_id !== this.config.network_id) {
+        if (!contact.network_id || contact.network_id !== this.config.network.id) {
             return false;
         }
 
