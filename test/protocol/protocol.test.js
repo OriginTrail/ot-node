@@ -21,7 +21,7 @@ const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
 
-const sequelizeConfig = require('./../../config/config.json').development;
+const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 
 const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
@@ -418,11 +418,10 @@ describe('Protocol tests', () => {
         testNodes.forEach((testNode) => {
             const config = {
                 node_wallet: testNode.wallet,
+                node_private_key: testNode.walletPrivateKey,
                 identity: testNode.identity,
                 blockchain: {
                     blockchain_title: 'Ethereum',
-                    wallet_address: testNode.wallet,
-                    wallet_private_key: testNode.walletPrivateKey,
                     ot_contract_address: otFingerprintInstance._address,
                     token_contract_address: tokenInstance._address,
                     escrow_contract_address: escrowInstance._address,
@@ -662,7 +661,7 @@ describe('Protocol tests', () => {
 
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
-            importId = Utilities.createImportId();
+            importId = Utilities.createImportId(testNode1.wallet);
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
             mockGraphStorage.imports[importId] = { vertices, edges };
