@@ -77,7 +77,7 @@ class DHController {
     async handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery) {
         await this.commandExecutor.add({
             name: 'dhReadDataLocationRequestCommand',
-            transactional: true,
+            transactional: false,
             data: {
                 msgId,
                 msgNodeId,
