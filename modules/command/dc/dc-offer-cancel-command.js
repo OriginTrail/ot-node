@@ -39,7 +39,12 @@ class DCOfferCancelCommand extends Command {
                 { status: 'CANCELLED' },
                 { where: { import_id: importId } },
             );
-            // update offer to CANCELLED
+            // update offer.message
+            await Models.offers.update(
+                { message: 'Offer has been cancelled' },
+                { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },
+            );
+            // update offer.status to CANCELLED
             await Models.offers.update(
                 { status: 'CANCELLED' },
                 { where: { import_id: importId, status: { [Op.not]: 'FINALIZED' } } },

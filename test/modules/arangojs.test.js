@@ -650,6 +650,55 @@ describe('Arangojs module ', async () => {
         assert.deepEqual([1, 10, 11, 2, 3, 4, 7, 8], response);
     });
 
+    it('findDocumentWithMaxVersion() should return dummyVertex3', async () => {
+        // precondition
+        await testDb.createCollection(documentCollectionName);
+
+        const dummyVertex1 = {
+            identifiers: {
+                uid: 'dummyId1',
+            },
+            data: {
+                some_key: 'scalar',
+            },
+            imports: [1, 2, 3, 4],
+            sender_id: 'dummySenderId',
+        };
+
+        const dummyVertex2 = {
+            identifiers: {
+                uid: 'dummyId1',
+            },
+            data: {
+                some_key: 'scalar2',
+            },
+            imports: [1, 2, 3, 4],
+            sender_id: 'dummySenderId',
+        };
+
+        const dummyVertex3 = {
+            identifiers: {
+                uid: 'dummyId1',
+            },
+            data: {
+                some_key: 'scalar3',
+            },
+            imports: [1, 2, 3, 4],
+            sender_id: 'dummySenderId',
+        };
+
+
+        await testDb.addVertex(dummyVertex1);
+        await testDb.addVertex(dummyVertex2);
+        // 3rd vertex will get highest/max version
+        await testDb.addVertex(dummyVertex3);
+
+        // eslint-disable-next-line max-len
+        const response = await testDb.findVertexWithMaxVersion(dummyVertex1.sender_id, dummyVertex1.identifiers.uid);
+        assert.equal(response.data.some_key, dummyVertex3.data.some_key, 'findDocumentWithMaxVersion() should return dummyVertex3');
+        assert.equal(response.version, '3', 'version number should be 3');
+    });
+
     after('drop testDb db', async () => {
         systemDb = new Database();
         systemDb.useBasicAuth(config.database.username, config.database.password);

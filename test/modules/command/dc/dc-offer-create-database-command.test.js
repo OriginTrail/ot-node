@@ -21,7 +21,7 @@ const pjson = require('../../../../package.json');
 
 const logger = Utilities.getLogger();
 
-describe('Checks DCOfferCreateDatabaseCommand', function () {
+describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
     this.timeout(5000);
     let config;
     let selectedDatabase;
