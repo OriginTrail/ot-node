@@ -1,0 +1,183 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"name": "dcNodeId",
+				"type": "bytes32"
+			}
+		],
+		"name": "createOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"name": "holder1",
+				"type": "address"
+			},
+			{
+				"name": "holder2",
+				"type": "address"
+			},
+			{
+				"name": "holder3",
+				"type": "address"
+			}
+		],
+		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"name": "shift",
+				"type": "uint256"
+			},
+			{
+				"name": "confirmation1",
+				"type": "bytes32"
+			},
+			{
+				"name": "v1",
+				"type": "uint8"
+			},
+			{
+				"name": "r1",
+				"type": "bytes32"
+			},
+			{
+				"name": "s1",
+				"type": "bytes32"
+			},
+			{
+				"name": "confirmation2",
+				"type": "bytes32"
+			},
+			{
+				"name": "v2",
+				"type": "uint8"
+			},
+			{
+				"name": "r2",
+				"type": "bytes32"
+			},
+			{
+				"name": "s2",
+				"type": "bytes32"
+			},
+			{
+				"name": "confirmation3",
+				"type": "bytes32"
+			},
+			{
+				"name": "v3",
+				"type": "uint8"
+			},
+			{
+				"name": "r3",
+				"type": "bytes32"
+			},
+			{
+				"name": "s3",
+				"type": "bytes32"
+			}
+		],
+		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "dcProfile",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "task",
+				"type": "bytes1"
+			}
+		],
+		"name": "OfferTask",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "dcNodeId",
+				"type": "bytes32"
+			}
+		],
+		"name": "OfferCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "holder1",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "holder2",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "holder3",
+				"type": "address"
+			}
+		],
+		"name": "OfferFinalized",
+		"type": "event"
+	}
+]
