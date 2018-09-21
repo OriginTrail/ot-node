@@ -5,6 +5,7 @@ const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
 const fs = require('fs');
+const path = require('path');
 const utilities = require('../../Utilities');
 const _ = require('lodash');
 const sleep = require('sleep-async')().Promise;
@@ -36,10 +37,6 @@ class Kademlia {
             kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
             kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
         }
-        this.index = this.config.child_derivation_index;
-
-        // Initialize private extended key
-        utilities.createPrivateExtendedKey(kadence, this.config);
     }
 
     /**
@@ -54,7 +51,28 @@ class Kademlia {
         await this.kademliaUtilities.setSelfSignedCertificate();
 
         this.log.info('Getting the identity');
-        this.xprivkey = fs.readFileSync(`${__dirname}/../../../keys/${this.config.private_extended_key_path}`).toString();
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.private_extended_key_path,
+        );
+        if (fs.existsSync(identityFilePath)) {
+            const identityFileContent =
+                JSON.parse(fs.readFileSync(identityFilePath).toString());
+            this.xprivkey = identityFileContent.xprivkey;
+            this.index = identityFileContent.index;
+        } else {
+            this.log.info('Identity not provided, generating new one...');
+            this.xprivkey = kadence.utils.toHDKeyFromSeed().privateExtendedKey;
+            const [xprivkey, childIndex] = await this.kademliaUtilities.solveIdentity(
+                this.xprivkey,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            );
+            this.index = childIndex;
+            fs.writeFileSync(identityFilePath, JSON.stringify({
+                xprivkey: this.xprivkey,
+                index: this.index,
+            }));
+        }
         this.identity = new kadence.eclipse.EclipseIdentity(
             this.xprivkey,
             this.index,
@@ -68,7 +86,7 @@ class Kademlia {
         const { childKey } = this.kademliaUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
-            this.config.child_derivation_index,
+            this.index,
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
@@ -87,7 +105,7 @@ class Kademlia {
             const { parentKey } = this.kademliaUtilities.getIdentityKeys(
                 this.xprivkey,
                 kadence.constants.HD_KEY_DERIVATION_PATH,
-                this.config.child_derivation_index,
+                this.index,
             );
 
             let kadServerHost = null;
@@ -105,14 +123,18 @@ class Kademlia {
                 protocol: 'https:',
                 port: this.config.node_port,
                 xpub: parentKey.publicExtendedKey,
-                index: this.config.child_derivation_index,
+                index: this.index,
                 agent: kadence.version.protocol,
                 wallet: this.config.node_wallet,
                 network_id: this.config.network_id,
             };
 
-            const key = fs.readFileSync(`${__dirname}/../../../keys/${this.config.ssl_keypath}`);
-            const cert = fs.readFileSync(`${__dirname}/../../../keys/${this.config.ssl_certificate_path}`);
+            const key = fs.readFileSync(
+                path.join(this.config.appDataPath, this.config.ssl_keypath),
+            );
+            const cert = fs.readFileSync(
+                path.join(this.config.appDataPath, this.config.ssl_certificate_path),
+            );
             const ca = this.config.ssl_authority_paths.map(fs.readFileSync);
 
             // Initialize transport adapter
@@ -124,7 +146,7 @@ class Kademlia {
                 transport,
                 identity: Buffer.from(this.identity, 'hex'),
                 contact,
-                storage: levelup(encoding(leveldown(`${__dirname}/../../../data/kadence.dht`))),
+                storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
             const { validateContact } = this;
@@ -157,11 +179,13 @@ class Kademlia {
             this.node.eclipse = this.node.plugin(kadence.eclipse());
             this.node.quasar = this.node.plugin(kadence.quasar());
             this.log.info('Quasar initialised');
-            this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../data/${this.config.embedded_peercache_path}`));
+            this.node.peercache = this.node.plugin(
+                PeerCache(path.join(this.config.appDataPath, this.config.embedded_peercache_path)),
+            );
             this.log.info('Peercache initialised');
             this.node.spartacus = this.node.plugin(kadence.spartacus(
                 this.xprivkey,
-                this.config.child_derivation_index,
+                this.index,
                 kadence.constants.HD_KEY_DERIVATION_PATH,
             ));
             this.log.info('Spartacus initialized');
@@ -234,7 +258,7 @@ class Kademlia {
     enableOnion() {
         this.log.info('Use Tor for an anonymous overlay');
         this.node.onion = this.node.plugin(kadence.onion({
-            dataDirectory: `${__dirname}/../../../data/hidden_service`,
+            dataDirectory: path.join(this.config.appDataPath, 'hidden_service'),
             virtualPort: this.config.onion_virtual_port,
             localMapping: `127.0.0.1:${this.config.node_port}`,
             torrcEntries: {

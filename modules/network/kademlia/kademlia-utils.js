@@ -25,7 +25,7 @@ class KademliaUtils {
     * @return {Promise<boolean>}
     */
     async setSelfSignedCertificate() {
-        if (!fs.existsSync(`../keys/${this.config.ssl_keypath}`)) {
+        if (!fs.existsSync(path.join(this.config.appDataPath, this.config.ssl_keypath))) {
             const result = await utilities.generateSelfSignedCertificate(this.config);
             if (result) {
                 this.log.info('SSL generated');
@@ -71,8 +71,7 @@ class KademliaUtils {
         clearInterval(status);
 
         this.log.info(`Solved identity derivation index ${childIndex} in ${ms(time)}`);
-        // utilities.saveToConfig('child_derivation_index', childIndex);
-        this.config.child_derivation_index = childIndex;
+        return [xprivkey, childIndex];
     }
 
     /**
@@ -217,7 +216,10 @@ class KademliaUtils {
     checkIdentity(identity) {
         if (!identity.validate()) {
             this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${identity.index} is invalid`);
-            deasync(this.solveIdentity(identity.xprv, identity.path));
+            const [xprivkey, childIndex] =
+                deasync(this.solveIdentity(identity.xprv, identity.path));
+            identity.xprv = xprivkey;
+            identity.index = childIndex;
         }
     }
 }

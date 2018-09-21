@@ -27,6 +27,7 @@ const corsMiddleware = require('restify-cors-middleware');
 const BN = require('bn.js');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
+const mkdirp = require('mkdirp');
 const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
 const homedir = require('os').homedir();
@@ -59,6 +60,17 @@ let config;
 try {
     // Load config.
     config = rc(pjson.name, defaultConfig);
+
+    config.appDataPath = path.join(
+        homedir,
+        `.${pjson.name}rc`,
+        process.env.NODE_ENV,
+    );
+
+    if (fs.existsSync(path.join(config.appDataPath, 'config.json'))) {
+        const storedConfig = JSON.parse(fs.readFileSync(path.join(config.appDataPath, 'config.json'), 'utf8'));
+        Object.assign(config, storedConfig);
+    }
 
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
@@ -137,9 +149,10 @@ process.on('exit', (code) => {
     }
 
     // Save config
-    if (homedir) {
-        const configPath = path.join(homedir, `.${pjson.name}rc`);
-        fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    if (homedir && config.appDataPath) {
+        const configPath = path.join(config.appDataPath, 'config.json');
+        mkdirp.sync(config.appDataPath);
+        fs.writeFileSync(configPath, JSON.stringify(Utilities.stripAppConfig(config), null, 4));
     }
 });
 
@@ -292,8 +305,17 @@ class OTNode {
         log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
-        Storage.models = (await models.sequelize.sync()).models;
-        Storage.db = models.sequelize;
+        try {
+            Storage.models = (await models.sequelize.sync()).models;
+            Storage.db = models.sequelize;
+        } catch (error) {
+            if (error.prototype.constructor.name === 'SequelizeConnectionError') {
+                console.error('Failed to open database. Did you forget to run "npm run setup"?');
+                process.abort();
+            }
+            console.error(error);
+            process.abort();
+        }
 
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.

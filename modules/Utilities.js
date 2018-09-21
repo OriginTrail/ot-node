@@ -332,8 +332,14 @@ class Utilities {
                 if (err) {
                     return reject(err);
                 }
-                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_keypath}`, keys.serviceKey);
-                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`, keys.certificate);
+                fs.writeFileSync(
+                    path.join(config.appDataPath, config.ssl_keypath),
+                    keys.serviceKey,
+                );
+                fs.writeFileSync(
+                    path.join(config.appDataPath, config.ssl_certificate_path),
+                    keys.certificate,
+                );
                 return resolve(true);
             });
         });
@@ -344,9 +350,9 @@ class Utilities {
      * @param kadence
      */
     static createPrivateExtendedKey(kadence, config) {
-        if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
+        if (!fs.existsSync(path.join(config.appDataPath, config.private_extended_key_path))) {
             fs.writeFileSync(
-                `${__dirname}/../keys/${config.private_extended_key_path}`,
+                path.join(config.appDataPath, config.private_extended_key_path),
                 kadence.utils.toHDKeyFromSeed().privateExtendedKey,
             );
         }
@@ -513,21 +519,21 @@ class Utilities {
      */
     static checkOtNodeDirStructure() {
         const log = Utilities.getLogger();
-        try {
-            if (!fs.existsSync(`${__dirname}/../keys`)) {
-                fs.mkdirSync(`${__dirname}/../keys`);
-            }
-        } catch (error) {
-            log.warn('Failed to create folder named keys');
-        }
-
-        try {
-            if (!fs.existsSync(`${__dirname}/../data`)) {
-                fs.mkdirSync(`${__dirname}/../data`);
-            }
-        } catch (error) {
-            log.warn('Failed to create folder named data');
-        }
+        // try {
+        //     if (!fs.existsSync(`${__dirname}/../keys`)) {
+        //         fs.mkdirSync(`${__dirname}/../keys`);
+        //     }
+        // } catch (error) {
+        //     log.warn('Failed to create folder named keys');
+        // }
+        //
+        // try {
+        //     if (!fs.existsSync(`${__dirname}/../data`)) {
+        //         fs.mkdirSync(`${__dirname}/../data`);
+        //     }
+        // } catch (error) {
+        //     log.warn('Failed to create folder named data');
+        // }
     }
 
     /**
@@ -1005,6 +1011,35 @@ class Utilities {
         const num = new BN(this.denormalizeHex(hash));
 
         return num.eqn(0);
+    }
+
+    /**
+     * Strip values from config to be used for storing.
+     * @param config Application config
+     */
+    static stripAppConfig(config) {
+        const properties = [
+            'node_wallet',
+            'node_private_key',
+            'node_port',
+            'request_timeout',
+            'cpus',
+            'network',
+            'node_rpc_port',
+            'dh_price',
+            'dh_stake_factor',
+            'dh_max_time_mins',
+            'max_token_amount_per_dh',
+            'dh_min_stake_amount',
+            'read_stake_factor',
+            'control_port_enabled',
+            'remote_control_enabled',
+            'send_logs',
+        ];
+
+        const stripped = {};
+        properties.forEach(prop => stripped[prop] = config[prop]);
+        return stripped;
     }
 }
 
