@@ -6,6 +6,7 @@ const Graph = require('../../Graph');
 const Challenge = require('../../Challenge');
 const Encryption = require('../../Encryption');
 const MerkleTree = require('../../Merkle');
+const retry = require('async-retry');
 
 /**
  * Verifies DH keys created during replication
@@ -56,25 +57,24 @@ class DCOfferKeyVerificationCommand extends Command {
         const distributionHash = distributionMerkle.tree.getRoot();
         const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
-        const escrow = await this.blockchain.getEscrow(importId, dhWallet);
-
-        const parametersLog = {
-            distributionHash,
-            litigationRootHash,
-            escrowDistributionHash: escrow.distribution_root_hash,
-            escrowlitigationRootHash: escrow.litigation_root_hash,
-            originalVertices,
-            litigationVertices: clonedVertices,
-            distributionVertices: vertices,
-            edges,
-            distributionPrivateKey: encryptionKey,
-            dhWallet,
-            dhNodeId,
-            importId,
-            epk,
-        };
-
-        await Utilities.writeContentsToFile(`${global.__basedir}/logs/${importId}`, `${dhNodeId}-dh-dist-lit.log`, JSON.stringify(parametersLog));
+        const escrow = await retry(async (halt) => {
+            try {
+                const escrow = await escrowContract.methods.escrow(importId, dhWallet).call();
+                if (escrow && Utilities.isZeroHash(escrow.distribution_root_hash)) {
+                    console.log(`Distribution root hash ${escrow.distribution_root_hash}, retrying ${(opts.retries - iteration) + 1} attempts left`);
+                    throw new Error('Distribution root hash is 0x0');
+                }
+                return escrow;
+            } catch (err) {
+                if (!err.message.includes('Distribution root hash is 0x0')) {
+                    halt(err);
+                    return;
+                }
+                throw err;
+            }
+        }, {
+            retries: 3,
+        });
 
         let failed = false;
         if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {
