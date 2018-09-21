@@ -10,6 +10,8 @@ const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
 
+const ObjectValidator = require('./validator/object-validator');
+
 /**
  * DH operations (handling new offers, etc.)
  */
@@ -406,6 +408,10 @@ class DHService {
 
     async dataLocationQuery(queryId) {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
+        const validationError = ObjectValidator.validateSearchQueryObject(networkQuery);
+        if (validationError) {
+            throw validationError;
+        }
         if (networkQuery.status !== 'FINISHED') {
             throw Error('Query not finished.');
         }

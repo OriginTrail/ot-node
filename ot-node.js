@@ -38,6 +38,7 @@ const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
 const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
+const RestAPIValidator = require('./modules/validator/rest-api-validator');
 
 const pjson = require('./package.json');
 
@@ -874,45 +875,45 @@ class OTNode {
             });
         });
 
-        server.post('/api/query/network', (req, res) => {
+        server.post('/api/query/network', (req, res, next) => {
             log.api('POST: Network query request received.');
-            if (!req.body) {
-                res.status(400);
-                res.send({
-                    message: 'Body required.',
-                });
-                return;
+
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
             }
+
             const { query } = req.body;
-            if (query) {
-                emitter.emit('api-network-query', {
-                    query,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({
-                    message: 'Query required',
-                });
+            error = RestAPIValidator.validateSearchQuery(query);
+            if (error) {
+                return next(error);
             }
+
+            emitter.emit('api-network-query', {
+                query,
+                response: res,
+            });
         });
 
         /**
          * Get vertices by query
          * @param queryObject
          */
-        server.post('/api/query/local', (req, res) => {
+        server.post('/api/query/local', (req, res, next) => {
             log.api('POST: Local query request received.');
 
-            if (req.body == null || req.body.query == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
             }
 
+            const queryObject = req.body.query;
+            error = RestAPIValidator.validateSearchQuery(queryObject);
+            if (error) {
+                return next(error);
+            }
 
             // TODO: Decrypt returned vertices
-            const queryObject = req.body.query;
             emitter.emit('api-query', {
                 query: queryObject,
                 response: res,
@@ -937,22 +938,25 @@ class OTNode {
             });
         });
 
-        server.post('/api/query/local/import', (req, res) => {
+        server.post('/api/query/local/import', (req, res, next) => {
             log.api('GET: Local query import request received.');
 
-            if (req.body == null || req.body.query == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
             }
 
             const queryObject = req.body.query;
+            error = RestAPIValidator.validateSearchQuery(queryObject);
+            if (error) {
+                return next(error);
+            }
+
             emitter.emit('api-get-imports', {
                 query: queryObject,
                 response: res,
             });
         });
-
 
         server.post('/api/read/network', (req, res) => {
             log.api('POST: Network read request received.');

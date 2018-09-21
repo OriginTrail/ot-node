@@ -28,3 +28,4 @@ Envoy.blade.php
 test.*
 db_backup/*
 newrelic_agent.log
+logs/*
