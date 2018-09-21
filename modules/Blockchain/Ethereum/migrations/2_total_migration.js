@@ -239,52 +239,19 @@ module.exports = (deployer, network, accounts) => {
     case 'mock':
         DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
         DH_wallet = accounts[1]; // eslint-disable-line prefer-destructuring
-        deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
-        .then(() => giveMeTracToken())
-        .then(async (result) => {
-            token = result;
-            await deployer.deploy(MockEscrowHolder, token.address)
-        .then(() => giveMeMockEscrowHolder())
-        .then(async (result) => {
-            escrow = result;
-            await deployer.deploy(MockReading, escrow.address)
-        .then(() => giveMeMockReading())
-        .then(async (result) => {
-            reading = result;
-            await deployer.deploy(MockBidding, token.address, escrow.address, reading.address)
-        .then(() => giveMeMockBidding())
-        .then(async (result) => {
-            bidding = result;
-            await deployer.deploy(OTFingerprintStore)
-        .then(() => giveMeFingerprint())
-        .then(async (result) => {
-            fingerprint = result;
-            await escrow.transferOwnership(bidding.address)
-        .then(async () => {
-            var amounts = [];
-            var recepients = [];
-            for (var i = 0; i < 10; i += 1) {
-                amounts.push(amountToMint);
-                recepients.push(accounts[i]);
-            }
-            await token.mintMany(recepients, amounts, { from: accounts[0] })
-        .then(async () => {
-            await token.finishMinting({ from: accounts[0] })
-        .then(() => {
-            console.log('\n\n \t Contract adressess on ganache (mock versions):');
-            console.log('\t OT-fingerprint address: \t' + fingerprint.address); // eslint-disable-line
-            console.log('\t Token contract address: \t' + token.address); // eslint-disable-line
-            console.log('\t Escrow contract address: \t' + escrow.address); // eslint-disable-line
-            console.log('\t Bidding contract address: \t' + bidding.address); // eslint-disable-line
-            console.log('\t Reading contract address: \t' + reading.address); // eslint-disable-line
-        });
-        });
-        });
-        });
-        });
-        });
-        });
-        });
+        token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
+        holding = await deployer.deploy(MockHolding);
+        var amounts = [];
+        var recepients = [];
+        for (var i = 0; i < 10; i += 1) {
+            amounts.push(amountToMint);
+            recepients.push(accounts[i]);
+        }
+        await token.mintMany(recepients, amounts, { from: accounts[0] })
+
+        console.log('\n\n \t Contract adressess on ganache (mock versions):');
+        console.log(`\t Token contract address: \t + ${token.address}`);
+        console.log(`\t Escrow contract address: \t' + ${holding.address}`);
         break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');

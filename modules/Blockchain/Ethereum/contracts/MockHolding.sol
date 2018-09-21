@@ -5,7 +5,7 @@ contract Hub {
     address public holdingStorageAddress;
 }
 
-contract Holding {
+contract MockHolding {
     event OfferTask(bytes32 dataSetId, address dcProfile, bytes32 offerId, byte task);
     event OfferCreated(bytes32 offerId, bytes32 dcNodeId);
 
