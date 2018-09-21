@@ -198,17 +198,6 @@ class RemoteControl {
             resolve();
         });
     }
-    updateConfigRow(data) {
-        return new Promise((resolve, reject) => {
-            for (var key in data) {
-                const query = `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
-                Storage.db.query(query).then((res) => {
-
-                });
-            }
-            resolve();
-        });
-    }
 
     /**
      * Update imports table from data_info

@@ -881,8 +881,6 @@ class EventEmitter {
 
             logger.info(`Request for replication of ${import_id} received. Sender ${identity}`);
 
-            logger.info(`Request for replication of ${import_id} received. Sender ${kadIdentity}`);
-
             if (!import_id || !wallet) {
                 logger.warn('Asked replication without providing import ID or wallet.');
                 return;
