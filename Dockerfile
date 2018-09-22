@@ -2,7 +2,7 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 
-ENV NODE_ENV=production
+ENV NODE_ENV=staging
 
 RUN apt-get -qq update && apt-get -qq -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_9.x |  bash -
@@ -19,24 +19,16 @@ RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-COPY package.json /tmp/package.json
-RUN cd /tmp && npm install
+# Add files
+COPY . /ot-node
+RUN  echo '{ "database": { "password": "root" }}' > /ot-node/.origintrail-noderc
+RUN service arangodb3 start && cd /ot-node && npm install && npm run setup
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
-
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD testnet/papertrail.yml /etc/log_files.yml
 
-#Clone the project
-RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/master
-RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-master ot-node
-
-RUN cp -a /tmp/node_modules /ot-node
-
 WORKDIR /ot-node
-RUN mkdir keys data &> /dev/null
-RUN cp .env.example .env
-COPY testnet/start.sh /ot-node/testnet/start.sh
 RUN chmod 400 testnet/start.sh
 
 EXPOSE 5278 8900 3000 3010
