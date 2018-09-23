@@ -15,4 +15,4 @@ node.log
 modules/blockchain_interface/ethereum/build/*
 modules/Blockchain/Ethereum/build/
 hidden_service
-/modules/Database/system.db
+modules/Database/system.db
