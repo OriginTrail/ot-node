@@ -21,9 +21,9 @@ COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Add files
 COPY . /ot-node
-COPY /root/ /root
 RUN  echo '{ "database": { "password": "root" }}' > /ot-node/.origintrail-noderc
 RUN service arangodb3 start && cd /ot-node && npm install && npm run setup
+COPY /root/.origintrail-noderc /root/
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
