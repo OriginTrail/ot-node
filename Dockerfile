@@ -22,7 +22,7 @@ COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Add files
 COPY . /ot-node
 RUN  echo '{ "database": { "password": "root" }}' > /ot-node/.origintrail-noderc
-RUN service arangodb3 start && cd /ot-node && npm install && npm run setup -- --configDir=$(pwd)/generatedConfig/.origintrail-noderc
+RUN service arangodb3 start && cd /ot-node && npm install && npm run setup -- --configDir=./generatedConfig/.origintrail-noderc
 RUN ls -al generatedConfig/*
 COPY generatedConfig/.origintrail-noderc/ /root/
 
