@@ -27,7 +27,7 @@ RUN ls -al /ot-node/
 RUN find /ot-node -name system.db
 RUN find / -name system.db
 RUN ls -al /root
-COPY --from=build /root/.origintrail-noderc /root/
+COPY /root/.origintrail-noderc/ /root/
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
