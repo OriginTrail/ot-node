@@ -1,0 +1,117 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"name": "dcNodeId",
+				"type": "bytes32"
+			}
+		],
+		"name": "createOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"name": "holder1",
+				"type": "address"
+			},
+			{
+				"name": "holder2",
+				"type": "address"
+			},
+			{
+				"name": "holder3",
+				"type": "address"
+			}
+		],
+		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "dcProfile",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "task",
+				"type": "bytes1"
+			}
+		],
+		"name": "OfferTask",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "dcNodeId",
+				"type": "bytes32"
+			}
+		],
+		"name": "OfferCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "holder1",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "holder2",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "holder3",
+				"type": "address"
+			}
+		],
+		"name": "OfferFinalized",
+		"type": "event"
+	}
+]
