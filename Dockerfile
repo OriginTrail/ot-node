@@ -3,7 +3,6 @@ FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
 ARG targetEnvironment=staging
-VOLUME /ot-node /var/lib/arangodb
 
 ENV NODE_ENV=$targetEnvironment
 
@@ -34,5 +33,6 @@ ADD testnet/papertrail.yml /etc/log_files.yml
 WORKDIR /ot-node
 RUN chmod 400 testnet/start.sh
 
+VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
 CMD ["sh", "/ot-node/testnet/start.sh"]
