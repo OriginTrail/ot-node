@@ -126,7 +126,7 @@ class RegisterNode {
 
     setConfig() {
         return new Promise(async (resolve, reject) => {
-            if (!process.env.NODE_WALLET) {
+            if (!localConfiguration.node_wallet) {
                 const { wallet, pk } = await this.generateWallet();
                 localConfiguration.node_wallet = wallet;
                 localConfiguration.node_private_key = pk;
@@ -143,7 +143,7 @@ class RegisterNode {
                 localConfiguration.node_ip = ip.address();
             }
 
-            console.log(JSON.stringify(localConfiguration));
+            console.log(JSON.stringify(localConfiguration, null, 4));
 
             fs.writeFile(`.${pjson.name}rc`, JSON.stringify(localConfiguration), (err) => {
                 if (fs.existsSync(dbPath)) {
