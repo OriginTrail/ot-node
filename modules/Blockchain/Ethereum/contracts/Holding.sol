@@ -65,18 +65,18 @@ contract Holding {
     // function initiateReplacement(bytes32 offerID, bytes32[] missingData, bytes32 litigatorAnswerData);
 
     function replaceHolder(bytes32 offerId, address holderIdentity, bytes32 answerData, uint256 dataIndex, uint8 challengeV, bytes32 challengeR, bytes32 challengeS,
-    uint8 answerV, bytes32 answerR, bytes32 answerS, bytes32 correctAnswer, bytes32[] merkleHashes){
+    uint8 answerV, bytes32 answerR, bytes32 answerS, bytes32 correctAnswer, bytes32[] merkleHashes) public{
         bytes32 challenge = keccak256(abi.encodePacked(offerId, dataIndex));
         address litigatorWallet = ecrecover(challenge, challengeV, challengeR, challengeS);
-        require(ERC725(msg.sender).keyHasPurpose(keccak256(litigatorWallet), 4) || ERC725(msg.sender).keyHasPurpose(keccak256(litigatorWallet), 1));
+        require(ERC725(msg.sender).keyHasPurpose(keccak256(abi.encodePacked(litigatorWallet)), 4) || ERC725(msg.sender).keyHasPurpose(keccak256(abi.encodePacked(litigatorWallet)), 1));
     
         address holderWallet = ecrecover(keccak256(abi.encodePacked(answerData, challenge)), answerV, answerR, answerS);
-        require(ERC725(holderIdentity).keyHasPurpose(keccak256(holderWallet), 4) || ERC725(holderIdentity).keyHasPurpose(keccak256(holderWallet), 1));
+        require(ERC725(holderIdentity).keyHasPurpose(keccak256(abi.encodePacked(holderWallet)), 4) || ERC725(holderIdentity).keyHasPurpose(keccak256(abi.encodePacked(holderWallet)), 1));
         
         uint256 i = 0;
         uint256 one = 1;
-        correctAnswer = keccak256(correctAnswer, dataIndex);
-        answerData = keccak256(correctAnswer, dataIndex);
+        correctAnswer = keccak256(abi.encodePacked(correctAnswer, dataIndex));
+        answerData = keccak256(abi.encodePacked(correctAnswer, dataIndex));
         
         // ako je bit 1 on je levo
         while (i < merkleHashes.length){
@@ -124,7 +124,7 @@ contract HoldingStorage {
     mapping(bytes32 => mapping(address => Holder)) holder; // holder[offerId][address];
     
     function getHolderLitigationRootHash (bytes32 offerId, address holderIdentity)
-    public returns(bytes32) {
+    public view returns(bytes32) {
         return holder[offerId][holderIdentity].litigationRootHash;
     }
     
