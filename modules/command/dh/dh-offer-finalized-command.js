@@ -9,22 +9,21 @@ class DHOfferFinalizedCommand extends Command {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.remoteControl = ctx.remoteControl;
     }
 
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
-        const { importId, offerId, side } = command.data;
+    async execute(command) {
+        const { importId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 }, transaction });
+        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 } });
         if (event) {
             event.finished = true;
-            await event.save({ fields: ['finished'], transaction });
+            await event.save({ fields: ['finished'] });
 
             const eventModelBids = await Models.events.findAll({
                 where:
@@ -58,22 +57,29 @@ class DHOfferFinalizedCommand extends Command {
             const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
             const bid = bidModel.get({ plain: true });
             this.remoteControl.replicationRequestSent(importId);
-            await this.network.kademlia().replicationRequest(
-                {
-                    import_id: importId,
-                    wallet: this.config.node_wallet,
-                },
-                bid.dc_id, (err) => {
-                    if (err) {
-                        this.logger.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
-                        // TODO Cancel bid here.
-                        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
-                    }
-                },
-            );
+            await this.transport.replicationRequest({
+                import_id: importId,
+                wallet: this.config.node_wallet,
+            }, bid.dc_id);
             return Command.empty();
         }
         return Command.repeat();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { importId } = command.data;
+
+        const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
+        const bid = bidModel.get({ plain: true });
+
+        this.logger.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
+        // TODO Cancel bid here.
+        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
     }
 
     /**
@@ -87,7 +93,7 @@ class DHOfferFinalizedCommand extends Command {
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

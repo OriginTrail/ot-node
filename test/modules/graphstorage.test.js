@@ -1,50 +1,58 @@
+require('dotenv').config();
+
 const {
     describe, it, after, before, beforeEach,
 } = require('mocha');
 const { assert, expect } = require('chai');
-var models = require('../../models');
+const rc = require('rc');
+const models = require('../../models');
 const deasync = require('deasync-promise');
 const Utilities = require('../../modules/Utilities');
 const Storage = require('../../modules/Storage');
-// eslint-disable-next-line  prefer-destructuring
-const Database = require('arangojs').Database;
+const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const databaseData = require('./test_data/arangodb-data.js');
 
-const myUserName = 'otuser';
-const myPassword = 'otpass';
-const myDatabaseName = 'test_origintrail';
-
-const edgeCollectionName = 'ot_edges';
-const vertexOne = databaseData.vertices[0];
-const vertexTwo = databaseData.vertices[1];
-const edgeOne = databaseData.edges[0];
-const newImportValue = 2520345631;
-
-let selectedDatabase;
-let systemDb;
-let myGraphStorage;
-let myGraphStorageConnection;
-let myInvalidGraphStorage;
-let myInvalidGraphConnection;
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 describe('GraphStorage module', () => {
-    before('loadSelectedDatabaseInfo() and init myGraphStorage', async () => {
+    let selectedDatabase;
+    let systemDb;
+    let myGraphStorage;
+    let myGraphStorageConnection;
+    let myInvalidGraphStorage;
+    let myInvalidGraphConnection;
+
+    const myDatabaseName = 'test_origintrail';
+    const edgeCollectionName = 'ot_edges';
+    const vertexOne = databaseData.vertices[0];
+    const vertexTwo = databaseData.vertices[1];
+    const edgeOne = databaseData.edges[0];
+    const newImportValue = 2520345631;
+
+    before('Init myGraphStorage', async () => {
+        const config = rc(pjson.name, defaultConfig);
+        selectedDatabase = config.database;
+        selectedDatabase.database = myDatabaseName;
         Storage.models = deasync(models.sequelize.sync()).models;
-        selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
-        assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
+        assert.hasAllKeys(selectedDatabase, ['provider', 'username', 'password',
             'host', 'port', 'max_path_length', 'database']);
         selectedDatabase.database = myDatabaseName;
 
-        if (selectedDatabase.database_system === 'arango_db') {
+        if (selectedDatabase.provider === 'arangodb') {
             systemDb = new Database();
-            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+            systemDb.useBasicAuth(selectedDatabase.username, selectedDatabase.password);
             await systemDb.createDatabase(
                 myDatabaseName,
-                [{ username: myUserName, passwd: myPassword, active: true }],
+                [{
+                    username: selectedDatabase.username,
+                    passwd: selectedDatabase.password,
+                    active: true,
+                }],
             );
-        } else if (selectedDatabase.database_system === 'neo4j') {
-            // TODO Implement me
+        } else {
+            throw Error('Not implemented database provider.');
         }
 
         myGraphStorage = new GraphStorage(selectedDatabase);
@@ -55,7 +63,7 @@ describe('GraphStorage module', () => {
     });
 
     beforeEach('reset ot_vertices and ot_edges collections', async () => {
-        if (selectedDatabase.database_system === 'arango_db') {
+        if (selectedDatabase.provider === 'arangodb') {
             try {
                 await myGraphStorage.db.dropCollection('ot_vertices');
                 await myGraphStorage.db.dropCollection('ot_edges');
@@ -68,17 +76,17 @@ describe('GraphStorage module', () => {
             } catch (err) {
                 console.log('Oops, having difficulties creating collections');
             }
-        } else if (selectedDatabase.database_system === 'neo4j') {
-            // TODO Implement me
+        } else {
+            throw Error('Not implemented database provider.');
         }
     });
 
     it('identify()', async () => {
-        if (selectedDatabase.database_system === 'arango_db') {
+        if (selectedDatabase.provider === 'arangodb') {
             assert.equal(myGraphStorage.identify(), 'ArangoJS');
             assert.equal(myGraphStorage.db.identify(), 'ArangoJS');
-        } else if (selectedDatabase.database_system === 'neo4j') {
-            // TODO Implement me
+        } else {
+            throw Error('Not implemented database provider.');
         }
     });
 
@@ -107,9 +115,10 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('.addVertex() should save vertex in Document Collection', () => {
+    it('.addVertex() should save vertex in Document Collection', (done) => {
         myGraphStorage.addVertex(vertexOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
+            assert.containsAllKeys(response, ['_key']);
+            done();
         });
     });
 
@@ -122,10 +131,8 @@ describe('GraphStorage module', () => {
         }
     });
 
-    it('.addEdge() should save edge in Edge Document Collection', () => {
-        myGraphStorage.addEdge(edgeOne).then((response) => {
-            assert.containsAllKeys(response, ['_id', '_key', '_rev']);
-        });
+    it('.addEdge() should save edge in Edge Document Collection', async () => {
+        assert.containsAllKeys(await myGraphStorage.addEdge(edgeOne), ['_key']);
     });
 
     it('findVerticesByImportId() ', async () => {
@@ -185,12 +192,12 @@ describe('GraphStorage module', () => {
     });
 
     after('drop myGraphStorage db', async () => {
-        if (selectedDatabase.database_system === 'arango_db') {
+        if (selectedDatabase.provider === 'arangodb') {
             systemDb = new Database();
-            systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+            systemDb.useBasicAuth(selectedDatabase.username, selectedDatabase.password);
             await systemDb.dropDatabase(myDatabaseName);
-        } else if (selectedDatabase.database_system === 'neo4j') {
-            // TODO implement me
+        } else {
+            throw Error('Not implemented database provider.');
         }
     });
 });

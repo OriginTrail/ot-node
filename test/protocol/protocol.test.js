@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions, max-len, no-console */
 const {
     describe, before, beforeEach, after, afterEach, it,
 } = require('mocha');
@@ -15,10 +15,13 @@ const sleep = require('sleep-async')().Promise;
 const bytes = require('utf8-length');
 
 const Utilities = require('../../modules/Utilities');
+
+const logger = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
+const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
 
-const sequelizeConfig = require('./../../config/config.json').development;
+const sequelizeConfig = require('./../../config/sequelizeConfig').development;
 
 const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
@@ -84,7 +87,7 @@ describe('Protocol tests', () => {
         contract,
         contractData,
         constructorArguments,
-        from,
+        deployerAddress,
     ) {
         let deploymentReceipt;
         let contractInstance;
@@ -93,9 +96,10 @@ describe('Protocol tests', () => {
                 data: contractData,
                 arguments: constructorArguments,
             })
-                .send({ from, gas: 6000000 })
+                .send({ from: deployerAddress, gas: 6000000 })
                 .on('receipt', (receipt) => {
                     deploymentReceipt = receipt;
+                    logger.debug(deploymentReceipt.contractAddress); // contains the new contract address
                 })
                 .on('error', error => reject(error))
                 .then((instance) => {
@@ -165,6 +169,7 @@ describe('Protocol tests', () => {
         offerFinalized() {}
         dcErrorHandling() {}
         bidNotTaken() {}
+        fingerprintWritten() {}
     }
 
     class TestNode {
@@ -192,6 +197,10 @@ describe('Protocol tests', () => {
 
         get logger() {
             return this.container.resolve('logger');
+        }
+
+        get web3() {
+            return this.container.resolve('web3');
         }
     }
 
@@ -338,18 +347,22 @@ describe('Protocol tests', () => {
 
     beforeEach('Deploy new contracts', async function deploy() {
         this.timeout(15000);
+        logger.debug('Deploying tokenContract');
         [tokenDeploymentReceipt, tokenInstance] = await deployContract(
             web3, tokenContract, tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
+        logger.debug('Deploying escrowContract');
         [escrowDeploymentReceipt, escrowInstance] = await deployContract(
             web3, escrowContract, escrowContractData,
             [tokenInstance._address], accounts[7],
         );
+        logger.debug('Deploying readingContract');
         [readingDeploymentReceipt, readingInstance] = await deployContract(
             web3, readingContract, readingContractData,
             [escrowInstance._address], accounts[7],
         );
+        logger.debug('Deploying biddingContract');
         [biddingDeploymentReceipt, biddingInstance] = await deployContract(
             web3, biddingContract, biddingContractData,
             [
@@ -358,6 +371,7 @@ describe('Protocol tests', () => {
                 readingInstance._address,
             ], accounts[7],
         );
+        logger.debug('Deploying otFingerprintContract');
         [otFingerprintDeploymentReceipt, otFingerprintInstance] = await deployContract(
             web3, otFingerprintContract, otFingerprintContractData,
             undefined, accounts[7],
@@ -404,11 +418,10 @@ describe('Protocol tests', () => {
         testNodes.forEach((testNode) => {
             const config = {
                 node_wallet: testNode.wallet,
+                node_private_key: testNode.walletPrivateKey,
                 identity: testNode.identity,
                 blockchain: {
                     blockchain_title: 'Ethereum',
-                    wallet_address: testNode.wallet,
-                    wallet_private_key: testNode.walletPrivateKey,
                     ot_contract_address: otFingerprintInstance._address,
                     token_contract_address: tokenInstance._address,
                     escrow_contract_address: escrowInstance._address,
@@ -489,6 +502,7 @@ describe('Protocol tests', () => {
     });
 
     afterEach('Unregister container', async () => {
+        logger.debug('Goodbye!');
         testNodes.forEach((testNode) => {
             if (testNode.container) {
                 testNode.container.dispose(); // Promise.
@@ -511,6 +525,10 @@ describe('Protocol tests', () => {
 
         profileInfo = await testNode1.blockchain.getProfile(testNode1.wallet);
         expect(profileInfo.active).to.be.true;
+        expect(profileInfo.token_amount_per_byte_minute).to.be.equal('2');
+        expect(profileInfo.stake_amount_per_byte_minute).to.be.equal('1');
+        expect(profileInfo.read_stake_factor).to.be.equal('1');
+        expect(profileInfo.max_escrow_time_in_minutes).to.be.equal('100000');
 
         const events = await biddingInstance.getPastEvents('allEvents', {
             fromBlock: 0,
@@ -521,6 +539,62 @@ describe('Protocol tests', () => {
         expect(events[0].event).to.equal('ProfileCreated');
         expect(events[0].returnValues).to.have.property('wallet').that.deep.equals(testNode1.wallet);
         expect(events[0].returnValues).to.have.property('node_id').that.deep.equals(testNode1.getIdentityExtended());
+        expect(events[0].address).to.be.equal(biddingInstance._address);
+    });
+
+    describe('Transaction object tests', () => {
+        it('should successfully run a transaction', async () => {
+            const transactions = new Transactions(testNode1.web3, testNode1.wallet, testNode1.walletPrivateKey);
+            const options = {
+                gasLimit: web3.utils.toHex(testNode1.blockchain.config.gas_limit),
+                gasPrice: web3.utils.toHex(testNode1.blockchain.config.gas_price),
+                to: tokenInstance._address,
+            };
+            await transactions.queueTransaction(
+                tokenContractAbi,
+                'increaseApproval',
+                [biddingInstance._address, '10'],
+                options,
+            );
+            options.to = biddingInstance._address;
+
+            // console.log(await tokenInstance.methods.allowance(testNode1.wallet, escrowInstance._address).call());
+            await transactions.queueTransaction(biddingContractAbi, 'depositToken', ['1'], options);
+        });
+
+        it('should fail a transaction', async () => {
+            const nonceFakerWeb3 = new Web3(ganacheProvider);
+            const lastKnownNonce = await nonceFakerWeb3.eth.getTransactionCount(testNode1.wallet);
+            nonceFakerWeb3.eth.getTransactionCount = async () => lastKnownNonce;
+
+            const transactions = new Transactions(nonceFakerWeb3, testNode1.wallet, testNode1.walletPrivateKey);
+            const options = {
+                gasLimit: web3.utils.toHex(testNode1.blockchain.config.gas_limit),
+                gasPrice: web3.utils.toHex(testNode1.blockchain.config.gas_price),
+                to: tokenInstance._address,
+            };
+            await transactions.queueTransaction(
+                tokenContractAbi,
+                'increaseApproval',
+                [biddingInstance._address, '10'],
+                options,
+            );
+
+            // Expect nonce too low since it will be lastKnownNonce + 1 again.
+            try {
+                await transactions.queueTransaction(
+                    tokenContractAbi,
+                    'increaseApproval',
+                    [biddingInstance._address, '10'],
+                    options,
+                );
+            } catch (error) {
+                if (error.name === 'TransactionFailedError' && error.constructor.name === 'TransactionFailedError') {
+                    return;
+                }
+            }
+            throw Error('Transaction expected to fail.');
+        }).timeout(10000);
     });
 
     describe('DC replication', () => {
@@ -549,7 +623,6 @@ describe('Protocol tests', () => {
                 vertex_type: 'CLASS',
             },
         ];
-
         const edges = [
             {
                 _id: 'af54d5a366006fa21dcbf4df50421165',
@@ -588,16 +661,25 @@ describe('Protocol tests', () => {
 
         beforeEach('Create one import', async () => {
             mockGraphStorage = testNode1.graphStorage;
-            importId = Utilities.createImportId();
+            importId = Utilities.createImportId(testNode1.wallet);
             vertices.filter(vertex => vertex.vertex_type !== 'CLASS').forEach(vertex => vertex.imports.push(importId));
             edges.forEach(edge => edge.imports.push(importId));
             mockGraphStorage.imports[importId] = { vertices, edges };
             const merkle = await ImportUtilities.merkleStructure(vertices, edges);
             rootHash = merkle.tree.getRoot();
+            const normalized = ImportUtilities.normalizeImport(
+                vertices,
+                edges,
+            );
+            const importHash = ImportUtilities.importHash(
+                normalized.vertices,
+                normalized.edges,
+            );
 
             Models.data_info.create({
                 import_id: importId,
                 root_hash: rootHash,
+                import_hash: importHash,
                 data_provider_wallet: testNode1.wallet,
                 import_timestamp: new Date(),
                 total_documents: vertices.length,
@@ -669,7 +751,7 @@ describe('Protocol tests', () => {
 
             expect(events).to.be.an('array');
             const bidTakenEvent = events.find(event => event.event === 'BidTaken');
-            console.log(JSON.stringify(events));
+            logger.debug(JSON.stringify(events));
             expect(bidTakenEvent.returnValues).to.have.property('import_id').that.deep.equals(importId);
             expect(bidTakenEvent.returnValues).to.have.property('DH_wallet').that.deep.equals(testNode2.wallet);
 
@@ -686,6 +768,43 @@ describe('Protocol tests', () => {
                 // eslint-disable-next-line no-await-in-loop
                 await sleep.sleep(500);
             }
+        });
+
+        it.skip('rootHash for already imported data should exist on blockchain', async function () {
+            this.timeout(90000); // One minute is minimum time for a offer.
+            const { dcController, blockchain } = testNode1;
+
+            await dcController.createOffer(importId, rootHash, 1, vertices);
+            await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
+
+            // Send one bid.
+            const bidderDeposit = new BN('100000000000000000', 10)
+                .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
+            await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
+            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.addBid(importId, testNode2.identity);
+
+            await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
+            await waitForEvent(biddingInstance, 'OfferFinalized', importId, 60000);
+            await waitForEvent(biddingInstance, 'BidTaken', importId, 10000);
+
+            for (;;) {
+                // eslint-disable-next-line no-await-in-loop
+                const offer = await Models.offers.findOne({ where: { import_id: importId } });
+
+                if (offer.status === 'FINALIZED' || offer.status === 'FAILED') {
+                    break;
+                }
+                // eslint-disable-next-line no-await-in-loop
+                await sleep.sleep(500);
+            }
+
+            const result2 = await testNode2.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result2).to.not.equal('0x0000000000000000000000000000000000000000000000000000000000000000');
+            expect(Utilities.isHexStrict(result2)).to.be.true;
+
+            const result1 = await testNode1.blockchain.getRootHash(testNode1.wallet, importId);
+            expect(result1).to.be.equal(result2);
         });
     });
 });

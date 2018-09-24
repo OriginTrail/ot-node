@@ -55,6 +55,7 @@ class DHOfferReplicationParametersCommand extends Command {
 
         this.logger.important('Send root hashes and checksum to blockchain.');
         this.remoteControl.sendingRootHashes('Sending import root hashes and checksum to blockchain.');
+
         await this.blockchain.addRootHashAndChecksum(
             importId,
             litigationRootHash,

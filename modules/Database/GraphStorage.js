@@ -24,8 +24,8 @@ class GraphStorage {
             if (!this.selectedDatabase) {
                 reject(Error('Unable to connect to graph database'));
             } else {
-                switch (this.selectedDatabase.database_system) {
-                case 'arango_db':
+                switch (this.selectedDatabase.provider) {
+                case 'arangodb':
                     try {
                         this.db = new ArangoJS(
                             this.selectedDatabase.username,

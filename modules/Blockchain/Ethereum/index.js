@@ -8,29 +8,35 @@ const BN = require('bn.js');
 class Ethereum {
     /**
      * Initializing Ethereum blockchain connector
-     * @param blockchainConfig
-     * @param emitter
-     * @param web3
-     * @param log
      */
-    constructor(blockchainConfig, emitter, web3, log) {
+    constructor({
+        config,
+        emitter,
+        web3,
+        logger,
+    }) {
         // Loading Web3
         this.emitter = emitter;
         this.web3 = web3;
-        this.log = log;
+        this.log = logger;
+        this.config = {
+            wallet_address: config.node_wallet,
+            node_private_key: config.node_private_key,
+        };
+        Object.assign(this.config, config.blockchain);
 
         this.transactions = new Transactions(
             this.web3,
-            blockchainConfig.wallet_address,
-            blockchainConfig.wallet_private_key,
+            this.config.wallet_address,
+            this.config.node_private_key,
         );
 
         // Loading contracts
-        this.otContractAddress = blockchainConfig.ot_contract_address;
-        this.tokenContractAddress = blockchainConfig.token_contract_address;
-        this.escrowContractAddress = blockchainConfig.escrow_contract_address;
-        this.biddingContractAddress = blockchainConfig.bidding_contract_address;
-        this.readingContractAddress = blockchainConfig.reading_contract_address;
+        this.otContractAddress = this.config.ot_contract_address;
+        this.tokenContractAddress = this.config.token_contract_address;
+        this.escrowContractAddress = this.config.escrow_contract_address;
+        this.biddingContractAddress = this.config.bidding_contract_address;
+        this.readingContractAddress = this.config.reading_contract_address;
 
         // OT contract data
         const contractAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/ot-contract/abi.json');
@@ -76,14 +82,11 @@ class Ethereum {
             ESCROW_CONTRACT: this.escrowContract,
         };
 
-        // Storing config data
-        this.config = blockchainConfig;
-
         this.biddingContract.events.OfferCreated()
             .on('data', (event) => {
                 // emitter.emit('eth-offer-created', event);
             })
-            .on('error', log.warn);
+            .on('error', this.log.warn);
 
         this.biddingContract.events.OfferCanceled()
             .on('data', (event) => {
@@ -105,29 +108,30 @@ class Ethereum {
      * Writes data import root hash on Ethereum blockchain
      * @param importId
      * @param rootHash
+     * @param importHash
      * @returns {Promise}
      */
-    writeRootHash(importId, rootHash) {
+    writeRootHash(importId, rootHash, importHash) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.otContractAddress,
         };
 
-        const importIdHash = Utilities.sha3(importId);
+        const importIdHash = Utilities.soliditySHA3(importId);
 
         this.log.notify(`Writing root hash to blockchain for import ${importId}`);
-        return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash], options);
+        return this.transactions.queueTransaction(this.otContractAbi, 'addFingerPrint', [importId, importIdHash, rootHash, importHash], options);
     }
 
     /**
      * Gets root hash for import
      * @param dcWallet DC wallet
-     * @param dataId   Import ID
+     * @param importId   Import ID
      * @return {Promise<any>}
      */
     async getRootHash(dcWallet, importId) {
-        const importIdHash = Utilities.sha3(importId.toString());
+        const importIdHash = Utilities.soliditySHA3(importId.toString());
         this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importIdHash ${importIdHash}`);
         return this.otContract.methods.getFingerprintByBatchHash(dcWallet, importIdHash).call();
     }
@@ -207,10 +211,10 @@ class Ethereum {
     /**
      * Creates node profile on the Bidding contract
      * @param nodeId        Kademlia node ID
-     * @param pricePerByteMinute Price for byte per minute
-     * @param stakePerByteMinute Stake for byte per minute
-     * @param readStakeFactor Read stake factor
-     * @param maxTimeMins   Max time in minutes
+     * @param {string} pricePerByteMinute Price for byte per minute
+     * @param {string} stakePerByteMinute Stake for byte per minute
+     * @param {string} readStakeFactor Read stake factor
+     * @param {string} maxTimeMins   Max time in minutes
      * @return {Promise<any>}
      */
     createProfile(
@@ -223,7 +227,7 @@ class Ethereum {
             to: this.biddingContractAddress,
         };
 
-        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute} ${stakePerByteMinute}, ${readStakeFactor} ${maxTimeMins})`);
+        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute}, ${stakePerByteMinute}, ${readStakeFactor}, ${maxTimeMins})`);
         return this.transactions.queueTransaction(
             this.biddingContractAbi, 'createProfile',
             [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
@@ -711,7 +715,10 @@ class Ethereum {
      */
     subscribeToEventPermanent(event) {
         const handle = setInterval(async () => {
-            const startBlockNumber = parseInt(await Utilities.getBlockNumberFromWeb3(), 16);
+            const startBlockNumber = parseInt(
+                await Utilities.getBlockNumberFromWeb3(this.web3),
+                16,
+            );
 
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),

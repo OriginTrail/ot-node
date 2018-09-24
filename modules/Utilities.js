@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
@@ -5,7 +7,6 @@ const moment = require('moment');
 const ipaddr = require('ipaddr.js');
 const winston = require('winston');
 const Storage = require('./Storage');
-const config = require('./Config');
 const _ = require('lodash');
 const _u = require('underscore');
 const randomString = require('randomstring');
@@ -15,13 +16,15 @@ const { Database } = require('arangojs');
 const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
-const KademliaUtils = require('./kademlia/KademliaUtils');
 const numberToBN = require('number-to-bn');
 const externalip = require('externalip');
+const sortedStringify = require('sorted-json-stringify');
+const mkdirp = require('mkdirp');
+const path = require('path');
 
 const pjson = require('../package.json');
+const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
 
-require('dotenv').config();
 require('winston-loggly-bulk');
 
 
@@ -34,40 +37,8 @@ class Utilities {
      * Creates new hash import ID.
      * @returns {*}
      */
-    static createImportId() {
-        return soliditySha3(Date.now().toString() + config.node_wallet);
-    }
-
-    /**
-     * Get configuration parameters from SystemStorage database, table node_config
-     * @returns {Promise<void>}
-     */
-    static loadConfig() {
-        return new Promise((resolve, reject) => {
-            Storage.models.node_config.findAll({
-                attributes: ['key', 'value'],
-            }).then((cnfs) => {
-                cnfs.forEach((cnf) => {
-                    const prop = cnf.get({
-                        plain: true,
-                    }).key;
-                    if (prop === 'network_bootstrap_nodes' || prop === 'ssl_authority_paths' || prop === 'remote_access_whitelist') {
-                        config[cnf.get({
-                            plain: true,
-                        }).key] = JSON.parse(cnf.get({
-                            plain: true,
-                        }).value);
-                    } else {
-                        config[cnf.get({
-                            plain: true,
-                        }).key] = cnf.get({
-                            plain: true,
-                        }).value;
-                    }
-                });
-                resolve(config);
-            });
-        });
+    static createImportId(wallet) {
+        return soliditySha3(Date.now().toString() + wallet);
     }
 
     /**
@@ -75,21 +46,8 @@ class Utilities {
      * @param property      Property name
      * @param val           Property value
      */
-    static saveToConfig(property, val) {
-        return new Promise((resolve, reject) => {
-            Storage.models.node_config.find({
-                where: { key: property },
-            }).then((row) => {
-                row.value = val;
-                return row.save();
-            }).then(() => Utilities.loadConfig())
-                .then(() => {
-                    resolve();
-                })
-                .catch((err) => {
-                    reject(err);
-                });
-        });
+    static saveToConfig(config) {
+
     }
 
     /**
@@ -106,7 +64,8 @@ class Utilities {
                 // eslint-disable-next-line no-template-curly-in-string
                 packageDir: '${__dirname}/../',
                 install: false,
-                scopeList: ['dependencies', 'devDependencies'],
+                scopeList: process.env.NODE_ENV !== 'production' ?
+                    ['dependencies', 'devDependencies'] : ['dependencies'],
                 verbose: false,
             }).then((output) => {
                 if (!output.depsWereOk) {
@@ -128,14 +87,16 @@ class Utilities {
 
     /**
      * Check if there is a new version of ot-node
+     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
+     * @param {String} [options.branch] - Github repo's branch.
      * @returns {Promise<any>}
      */
 
-    static checkForUpdates() {
+    static checkForUpdates(options) {
         return new Promise(async (resolve, reject) => {
             // eslint-disable-next-line
             const Update = require('../check-updates');
-            const res = await Update.update();
+            const res = await Update.update(options);
             if (res) {
                 resolve(res);
             }
@@ -191,12 +152,11 @@ class Utilities {
                     }),
                 ];
 
-            const networkID = process.env.NETWORK_ID ? process.env.NETWORK_ID : 'Development';
             if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
                 transports.push(new (winston.transports.Loggly)({
                     inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
                     subdomain: 'origintrail.loggly.com',
-                    tags: ['development', networkID, pjson.version],
+                    tags: [process.env.NODE_ENV, runtimeConfigJson.network.id, pjson.version],
                     json: true,
                 }));
             }
@@ -228,7 +188,7 @@ class Utilities {
                     args[1] = msg.stack;
                     origLog.apply(logger, args);
                 } else {
-                    const transformed = KademliaUtils.transformLog(level, msg);
+                    const transformed = Utilities.transformLog(level, msg);
                     if (!transformed) {
                         return;
                     }
@@ -243,47 +203,84 @@ class Utilities {
     }
 
     /**
-     * Get information of selected graph storage database
-     * @returns {Promise<any>}
+     * Skips/Transforms third-party logs
+     * @return {*}
      */
-    static loadSelectedDatabaseInfo() {
-        return new Promise((resolve, reject) => {
-            Storage.models.node_config.findOne({
-                attributes: ['key', 'value'],
-                where: { key: 'selected_graph_database' },
-            }).then((id) => {
-                const gDBid = id.get({ plain: true });
-                Storage.models.graph_database.findById(gDBid.value)
-                    .then((gdb) => {
-                        resolve(gdb.get({ plain: true }));
-                    });
-            });
-        });
+    static transformLog(level, msg) {
+        if (msg.startsWith('connection timed out')) {
+            return null;
+        }
+        if (msg.startsWith('negotiation error')) {
+            return null;
+        }
+        if (msg.includes('received late or invalid response')) {
+            return null;
+        }
+        if (msg.includes('error with remote connection')) {
+            return null;
+        }
+        if (msg.includes('remote connection encountered error')) {
+            return null;
+        }
+        if (msg.startsWith('updating peer profile')) {
+            return null;
+        }
+        if (msg.includes('client cannot service request at this time')) {
+            return null;
+        }
+        if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
+            return null;
+        }
+        if (msg.includes('gateway timeout')) {
+            return null;
+        }
+        if (msg.startsWith('connect econnrefused')) {
+            return null;
+        }
+        if (msg.includes('unable to route to tunnel')) {
+            return null;
+        }
+        if (msg.includes('socket hang up')) {
+            return null;
+        }
+        if (msg.includes('getaddrinfo')) {
+            return null;
+        }
+        if (msg.includes('read econnreset')) {
+            return null;
+        }
+        if (msg.includes('connect etimedout')) {
+            return null;
+        }
+        return {
+            level,
+            msg,
+        };
     }
 
     /**
      * Check if origintrail database exists, in case of arangoDB create one
      * @returns {Promise<any>}
      */
-    static checkDoesStorageDbExists() {
+    static checkDoesStorageDbExists(config) {
         return new Promise((resolve, reject) => {
-            switch (config.database.database_system) {
-            case 'arango_db': {
+            switch (config.database.provider) {
+            case 'arangodb': {
                 const systemDb = new Database();
-                systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+                systemDb.useBasicAuth(config.database.username, config.database.password);
                 systemDb.listDatabases().then((result) => {
                     let databaseAlreadyExists = false;
                     for (let i = 0; i < result.length; i += 1) {
-                        if (result[i].toString() === process.env.DB_DATABASE) {
+                        if (result[i].toString() === config.database.database) {
                             databaseAlreadyExists = true;
                         }
                     }
                     if (!databaseAlreadyExists) {
                         systemDb.createDatabase(
-                            process.env.DB_DATABASE,
+                            config.database.database,
                             [{
-                                username: process.env.DB_USERNAME,
-                                passwd: process.env.DB_PASSWORD,
+                                username: config.database.username,
+                                passwd: config.database.password,
                                 active: true,
                             }],
                         ).then((result) => {
@@ -317,37 +314,17 @@ class Utilities {
                 }
                 break;
             default:
-                Utilities.getLogger.error(config.database.database_system);
+                Utilities.getLogger.error(config.database.provider);
                 reject(Error('Database doesn\'t exists'));
             }
         });
     }
 
     /**
-     * Get information of selected graph storage database
-     * @returns {Promise<any>}
-     */
-    static loadSelectedBlockchainInfo() {
-        return new Promise((resolve, reject) => {
-            Storage.models.node_config.findOne({
-                attributes: ['key', 'value'],
-                where: { key: 'selected_blockchain' },
-            }).then((id) => {
-                const BCid = id.get({ plain: true });
-                Storage.models.blockchain_data.findById(BCid.value)
-                    .then((bc) => {
-                        resolve(bc.get({ plain: true }));
-                    });
-            });
-        });
-    }
-
-    /**
      * Generate Self Signed SSL for Kademlia
      * @return {Promise<any>}
-     * @private
      */
-    static generateSelfSignedCertificate() {
+    static generateSelfSignedCertificate(config) {
         return new Promise((resolve, reject) => {
             pem.createCertificate({
                 days: 365,
@@ -356,24 +333,17 @@ class Utilities {
                 if (err) {
                     return reject(err);
                 }
-                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_keypath}`, keys.serviceKey);
-                fs.writeFileSync(`${__dirname}/../keys/${config.ssl_certificate_path}`, keys.certificate);
-                return resolve();
+                fs.writeFileSync(
+                    path.join(config.appDataPath, config.ssl_keypath),
+                    keys.serviceKey,
+                );
+                fs.writeFileSync(
+                    path.join(config.appDataPath, config.ssl_certificate_path),
+                    keys.certificate,
+                );
+                return resolve(true);
             });
         });
-    }
-
-    /**
-     * Generates private extended key for identity
-     * @param kadence
-     */
-    static createPrivateExtendedKey(kadence) {
-        if (!fs.existsSync(`${__dirname}/../keys/${config.private_extended_key_path}`)) {
-            fs.writeFileSync(
-                `${__dirname}/../keys/${config.private_extended_key_path}`,
-                kadence.utils.toHDKeyFromSeed().privateExtendedKey,
-            );
-        }
     }
 
     /**
@@ -381,7 +351,7 @@ class Utilities {
      * @param data
      * @returns {string}
      */
-    static sha3(data) {
+    static soliditySHA3(data) {
         return soliditySha3(data);
     }
 
@@ -537,21 +507,21 @@ class Utilities {
      */
     static checkOtNodeDirStructure() {
         const log = Utilities.getLogger();
-        try {
-            if (!fs.existsSync(`${__dirname}/../keys`)) {
-                fs.mkdirSync(`${__dirname}/../keys`);
-            }
-        } catch (error) {
-            log.warn('Failed to create folder named keys');
-        }
-
-        try {
-            if (!fs.existsSync(`${__dirname}/../data`)) {
-                fs.mkdirSync(`${__dirname}/../data`);
-            }
-        } catch (error) {
-            log.warn('Failed to create folder named data');
-        }
+        // try {
+        //     if (!fs.existsSync(`${__dirname}/../keys`)) {
+        //         fs.mkdirSync(`${__dirname}/../keys`);
+        //     }
+        // } catch (error) {
+        //     log.warn('Failed to create folder named keys');
+        // }
+        //
+        // try {
+        //     if (!fs.existsSync(`${__dirname}/../data`)) {
+        //         fs.mkdirSync(`${__dirname}/../data`);
+        //     }
+        // } catch (error) {
+        //     log.warn('Failed to create folder named data');
+        // }
     }
 
     /**
@@ -608,11 +578,11 @@ class Utilities {
         });
     }
 
-    static getArangoDbVersion() {
+    static getArangoDbVersion({ database }) {
         return new Promise((resolve, reject) => {
             request
-                .get(`http://${process.env.DB_HOST}:${process.env.DB_PORT}/_api/version`)
-                .auth(process.env.DB_USERNAME, process.env.DB_PASSWORD)
+                .get(`http://${database.host}:${database.port}/_api/version`)
+                .auth(database.username, database.password)
                 .then((res) => {
                     if (res.status === 200) {
                         resolve(res.body);
@@ -630,21 +600,15 @@ class Utilities {
      * Gets block number from web3
      * @returns {Promise<any>}
      */
-    static getBlockNumberFromWeb3() {
+    static getBlockNumberFromWeb3(web3) {
         return new Promise((resolve, reject) => {
-            this.loadSelectedBlockchainInfo().then((config) => {
-                const web3 = new Web3(new Web3.providers.HttpProvider(`${config.rpc_node_host}:${config.rpc_node_port}`));
-                web3.eth.getBlockNumber()
-                    .then((result) => {
-                        resolve(web3.utils.numberToHex(result));
-                    }).catch((error) => {
-                        Utilities.getLogger().error(error);
-                        reject(error);
-                    });
-            }).catch((error) => {
-                Utilities.getLogger().error(error);
-                reject(error);
-            });
+            web3.eth.getBlockNumber()
+                .then((result) => {
+                    resolve(web3.utils.numberToHex(result));
+                }).catch((error) => {
+                    Utilities.getLogger().error(error);
+                    reject(error);
+                });
         });
     }
 
@@ -818,17 +782,18 @@ class Utilities {
 
     /**
      * Calculates import distance from my node
+     * @param config Configuration
      * @param price Token amount to offer
      * @param importId ID
      * @param stakeAmount Stake amount in offer.
      * @returns {number} Distance
      */
-    static getImportDistance(price, importId, stakeAmount) {
-        const wallet = new BN(config.wallet);
-        const nodeId = new BN(`0x${config.node_kademlia_id}`);
+    static getImportDistance(config, price, importId, stakeAmount) {
+        const wallet = new BN(config.node_wallet);
+        const nodeId = new BN(`0x${config.identity}`);
         const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
         const myBid = hashWallerNodeId.add(price);
-        const offer = new BN(Utilities.sha3(importId)).add(stakeAmount);
+        const offer = new BN(Utilities.soliditySHA3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
     }
 
@@ -946,14 +911,6 @@ class Utilities {
     }
 
     /**
-     * Is bootstrap node?
-     * @return {number}
-     */
-    static isBootstrapNode() {
-        return parseInt(config.is_bootstrap_node, 10);
-    }
-
-    /**
      * Shuffles array in place
      * @param {Array} a items An array containing the items.
      */
@@ -995,6 +952,83 @@ class Utilities {
                 }
             });
         });
+    }
+
+    /**
+     * Write contents to file
+     * @param directory
+     * @param filename
+     * @param data
+     * @returns {Promise}
+     */
+    static writeContentsToFile(directory, filename, data) {
+        return new Promise((resolve, reject) => {
+            mkdirp(directory, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const fullpath = path.join(directory, filename);
+
+                    fs.writeFile(fullpath, data, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * Stringifies data to JSON with default parameters
+     * @param data  Data to be stringified
+     * @param ident JSON identification
+     * @returns {*}
+     */
+    static stringify(data, ident = 2) {
+        return sortedStringify(data, null, ident);
+    }
+
+    /**
+     * Checks if hash is zero or any given hex string regardless of prefix 0x
+     * @param {string} hash
+     */
+    static isZeroHash(hash) {
+        const num = new BN(this.denormalizeHex(hash));
+
+        return num.eqn(0);
+    }
+
+    /**
+     * Strip values from config to be used for storing.
+     * @param config Application config
+     */
+    static stripAppConfig(config) {
+        const properties = [
+            'node_wallet',
+            'node_private_key',
+            'node_port',
+            'request_timeout',
+            'cpus',
+            'network',
+            'node_rpc_port',
+            'dh_price',
+            'dh_stake_factor',
+            'dh_max_time_mins',
+            'max_token_amount_per_dh',
+            'dh_min_stake_amount',
+            'read_stake_factor',
+            'control_port_enabled',
+            'remote_control_enabled',
+            'send_logs',
+            'houston_password',
+        ];
+
+        const stripped = {};
+        properties.forEach(prop => stripped[prop] = config[prop]);
+        return stripped;
     }
 }
 
