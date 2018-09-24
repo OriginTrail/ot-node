@@ -2,23 +2,25 @@ const dotenv = require('dotenv');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const axios = require('axios');
-const envfile = require('envfile');
 const ip = require('ip');
 const fs = require('fs');
+const rc = require('rc');
 const path = require('path');
 const homedir = require('os').homedir();
-
 const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
-
 const Web3 = require('web3');
+const Umzug = require('umzug');
+const Models = require('../models');
+const pjson = require('../package.json');
+const configjson = require('../config/config.json');
 
 const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
+const defaultConfig = configjson[process.env.NODE_ENV];
+const localConfiguration = rc(pjson.name, defaultConfig);
 
-const Umzug = require('umzug');
-
-const Models = require('../models');
-
-const pjson = require('../package.json');
+// Path to system.db.
+const dbPath = '/ot-node/data/system.db';
+Models.sequelize.options.storage = dbPath;
 
 const umzug_migrations = new Umzug({
 
@@ -124,39 +126,26 @@ class RegisterNode {
 
     setConfig() {
         return new Promise(async (resolve, reject) => {
-            const env = envfile.parseFileSync('.env');
-
-            if (!env.NODE_WALLET && !process.env.NODE_WALLET) {
+            if (!localConfiguration.node_wallet) {
                 const { wallet, pk } = await this.generateWallet();
-                env.NODE_WALLET = wallet;
-                env.NODE_PRIVATE_KEY = pk;
+                localConfiguration.node_wallet = wallet;
+                localConfiguration.node_private_key = pk;
                 process.env.NODE_WALLET = wallet;
                 process.env.NODE_PRIVATE_KEY = pk;
+            } else {
+                localConfiguration.node_wallet = process.env.NODE_WALLET;
+                localConfiguration.node_private_key = process.env.NODE_PRIVATE_KEY;
             }
 
             if (process.env.INSTALLATION === 'local') {
-                env.NODE_IP = '127.0.0.1'; // TODO remove
+                localConfiguration.node_ip = '127.0.0.1'; // TODO remove
             } else {
-                env.NODE_IP = ip.address();
+                localConfiguration.node_ip = ip.address();
             }
 
-            for (const prop in process.env) {
-                if (Object.prototype.hasOwnProperty.call(env, prop)) {
-                    env[prop] = process.env[prop];
-                }
-            }
+            console.log(JSON.stringify(localConfiguration, null, 4));
 
-            const envF = envfile.stringifySync(env);
-            console.log(envF);
-            dotenv.config();
-
-            fs.writeFile('.env', envF, (err) => {
-                const dbPath = path.join(
-                    homedir,
-                    `.${pjson.name}rc`,
-                    process.env.NODE_ENV,
-                    'system.db',
-                );
+            fs.writeFile(`.${pjson.name}rc`, JSON.stringify(localConfiguration), (err) => {
                 if (fs.existsSync(dbPath)) {
                     if (process.env.UPDATE !== undefined) {
                         umzug_seeders.down({ to: 0 }).then((migrations) => {
@@ -166,16 +155,16 @@ class RegisterNode {
                             umzug_seeders.up().then((migrations) => {
                                 console.log('Configuration loaded...');
                                 resolve({
-                                    ip: env.NODE_IP,
-                                    wallet: env.NODE_WALLET,
+                                    ip: localConfiguration.node_ip,
+                                    wallet: localConfiguration.node_wallet,
                                 });
                             });
                         });
                     } else {
                         console.log('Configuration not changed...');
                         resolve({
-                            ip: env.NODE_IP,
-                            wallet: env.NODE_WALLET,
+                            ip: localConfiguration.node_ip,
+                            wallet: localConfiguration.node_wallet,
                         });
                     }
                 } else {
@@ -183,8 +172,8 @@ class RegisterNode {
                         umzug_seeders.up().then((migrations) => {
                             console.log('Configuration loaded...');
                             resolve({
-                                ip: env.NODE_IP,
-                                wallet: env.NODE_WALLET,
+                                ip: localConfiguration.node_ip,
+                                wallet: localConfiguration.node_wallet,
                             });
                         });
                     });
