@@ -4,7 +4,7 @@ require('dotenv').config();
 if (!process.env.NODE_ENV) {
     // Environment not set. Use the production.
     process.env.NODE_ENV = 'production';
-} else if (['development', 'staging', 'stable', 'testnet'].indexOf(process.env.NODE_ENV) < 0) {
+} else if (['development', 'staging', 'stable', 'production'].indexOf(process.env.NODE_ENV) < 0) {
     throw Error(`Unsupported environment '${process.env.NODE_ENV}'`);
 }
 
