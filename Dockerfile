@@ -2,7 +2,7 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
-ARG targetEnvironment=staging
+ARG targetEnvironment=production
 
 ENV NODE_ENV=$targetEnvironment
 
