@@ -507,7 +507,11 @@ class Kademlia {
                     if (contactInfo) {
                         // eslint-disable-next-line
                         contact = contactInfo[1];
-                        this.node.router.addContactByNodeId(contactId, contact);
+                        if (this.validateContact(contact)) {
+                            this.node.router.addContactByNodeId(contactId, contact);
+                        } else {
+                            contact = null; // contact is not valid
+                        }
                     }
                 }
                 if (contact && contact.hostname) {
