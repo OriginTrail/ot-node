@@ -38,7 +38,7 @@ contract Ownable {
 
 }
 
-contract ContractHub is Ownable{
+contract Hub is Ownable{
     address public tokenAddress;
     address public profileAddress;
     address public holdingAddress;
