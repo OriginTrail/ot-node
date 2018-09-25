@@ -152,8 +152,6 @@ class Kademlia {
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
-            const { validateContact } = this;
-
             const that = this;
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
@@ -173,7 +171,7 @@ class Kademlia {
             };
 
             this.node.use((request, response, next) => {
-                if (!validateContact(request.contact[1])) {
+                if (!that.validateContact(request.contact[1])) {
                     return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
                 next();
