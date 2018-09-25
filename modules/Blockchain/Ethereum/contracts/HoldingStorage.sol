@@ -20,6 +20,13 @@ contract HoldingStorage {
         _;
     }
 
+    mapping(bytes32 => bytes32) fingerprint;
+
+    function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
+    public onlyHolding {
+        fingerprint[dataSetId] = dataRootHash;
+    }
+
     struct OfferDefinition {
         address creator;
         bytes32 dataSetId;
