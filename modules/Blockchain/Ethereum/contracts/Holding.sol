@@ -52,6 +52,13 @@ contract HoldingStorage {
         _;
     }
 
+    mapping(bytes32 => bytes32) fingerprint;
+
+    function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
+    public onlyHolding {
+        fingerprint[dataSetId] = dataRootHash;
+    }
+
     struct OfferDefinition {
         address creator;
         bytes32 dataSetId;
@@ -204,10 +211,16 @@ contract Holding {
     bytes32 dataRootHash, bytes32 redLitigationHash, bytes32 greenLitigationHash, bytes32 blueLitigationHash, bytes32 dcNodeId, 
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
         // First we check that the paramaters are valid
+        require(dataRootHash != bytes32(0), "Data root hash cannot be zero");
         require(holdingTimeInMinutes > 0, "Holding time cannot be zero");
         require(dataSetSizeInBytes > 0, "Data size cannot be zero");
         require(tokenAmountPerHolder > 0, "Token amount per holder cannot be zero");
         require(litigationIntervalInMinutes > 0, "Litigation time cannot be zero");
+
+        // Writing data root hash if it wasn't previously set
+        if(holdingStorage.fingerprint(dataSetId) == bytes32(0)){
+            holdingStorage.setFingerprint(dataSetId, dataRootHash);
+        }
 
         // Now we calculate the offerId, which should be unique
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
