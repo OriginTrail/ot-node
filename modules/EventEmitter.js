@@ -203,6 +203,7 @@ class EventEmitter {
                         ),
                         root_hash: dataimport.root_hash,
                         transaction: dataimport.transaction_hash,
+                        data_provider_wallet: dataimport.data_provider_wallet,
                     });
                 }
             } catch (error) {
@@ -246,6 +247,7 @@ class EventEmitter {
                     import_hash: di.import_hash,
                     data_size: di.data_size,
                     transaction_hash: di.transaction_hash,
+                    data_provider_wallet: di.data_provider_wallet,
                 })));
             } catch (e) {
                 logger.error('Failed to get information about imports', e);
