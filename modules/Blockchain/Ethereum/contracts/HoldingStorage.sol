@@ -20,7 +20,7 @@ contract HoldingStorage {
         _;
     }
 
-    mapping(bytes32 => bytes32) fingerprint;
+    mapping(bytes32 => bytes32) public fingerprint;
 
     function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
     public onlyHolding {
@@ -40,7 +40,7 @@ contract HoldingStorage {
         bytes32 greenLitigationHash;
         bytes32 blueLitigationHash;
     }
-    mapping(bytes32 => OfferDefinition) offer; // offer[offerId];
+    mapping(bytes32 => OfferDefinition) public offer; // offer[offerId];
 
     function getOfferCreator (bytes32 offerId) 
     public view returns(address creator){
@@ -126,12 +126,11 @@ contract HoldingStorage {
 
     struct HolderDefinition {
         bool active;
-        bytes32 dataSetID; // Why?
         uint256 stakedAmount;
         bytes32 litigationRootHash;
         uint256 startTime;
     }
-    mapping(bytes32 => mapping(address => HolderDefinition)) holder; // holder[offerId][address];
+    mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
     function setHolderActive (bytes32 offerId, address identity, bool active)
     public onlyHolding {
