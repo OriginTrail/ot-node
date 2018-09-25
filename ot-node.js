@@ -5,6 +5,7 @@ if (!process.env.NODE_ENV) {
     process.env.NODE_ENV = 'production';
 }
 
+const HttpNetwork = require('./modules/network/http/http-network');
 const Kademlia = require('./modules/network/kademlia/kademlia');
 const Transport = require('./modules/network/transport');
 const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
@@ -363,6 +364,7 @@ class OTNode {
         });
 
         container.register({
+            httpNetwork: awilix.asClass(HttpNetwork).singleton(),
             emitter: awilix.asClass(EventEmitter).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
@@ -1026,6 +1028,16 @@ class OTNode {
             emitter.emit('api-imports-info', {
                 response: res,
             });
+        });
+
+        /**
+         * Temporary route used for HTTP network prototype
+         */
+        server.post('/network/send', (req, res) => {
+            log.api('P2P request received');
+
+            const { type } = req.body;
+            emitter.emit(type, req, res);
         });
     }
 }

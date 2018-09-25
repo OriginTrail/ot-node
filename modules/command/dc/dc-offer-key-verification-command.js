@@ -6,6 +6,7 @@ const Graph = require('../../Graph');
 const Challenge = require('../../Challenge');
 const Encryption = require('../../Encryption');
 const MerkleTree = require('../../Merkle');
+const retry = require('async-retry');
 
 /**
  * Verifies DH keys created during replication
@@ -56,7 +57,24 @@ class DCOfferKeyVerificationCommand extends Command {
         const distributionHash = distributionMerkle.tree.getRoot();
         const epkChecksum = Encryption.calculateDataChecksum(epk, 0, 0, 0);
 
-        const escrow = await this.blockchain.getEscrow(importId, dhWallet);
+        const escrow = await retry(async (halt, iteration) => {
+            try {
+                const escrow = await this.blockchain.getEscrow(importId, dhWallet);
+                if (escrow && Utilities.isZeroHash(escrow.distribution_root_hash)) {
+                    this.logger.warn(`Distribution root hash ${escrow.distribution_root_hash}, retrying: ${iteration} attempt`);
+                    throw new Error('Distribution root hash is 0x0');
+                }
+                return escrow;
+            } catch (err) {
+                if (!err.message.includes('Distribution root hash is 0x0')) {
+                    halt(err);
+                    return;
+                }
+                throw err;
+            }
+        }, {
+            retries: 3,
+        });
 
         let failed = false;
         if (escrow.distribution_root_hash !== Utilities.normalizeHex(distributionHash)) {

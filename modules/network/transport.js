@@ -6,7 +6,7 @@ const DEFAULT_NETWORK_TYPE = 'kademlia';
  * Default retry strategy
  */
 const DEFAULT_RETRY_CONFIG = {
-    retries: 3,
+    retries: 5,
     factor: 1,
     minTimeout: 1000,
     maxTimeout: 40 * 1000,
@@ -29,11 +29,23 @@ class Transport {
         case 'kademlia':
             this.network = ctx.kademlia;
             break;
+        case 'http':
+            this.network = ctx.httpNetwork;
+            break;
         default:
             throw new Error(`Failed to construct network transport. Network type '${this.networkType}' is invalid.`);
         }
         await this.network.initialize();
         await this.network.start();
+    }
+
+    /**
+     * Join node
+     * @param request
+     * @returns {*}
+     */
+    join(request) {
+        return this.network.join(request);
     }
 
     /**
@@ -68,8 +80,17 @@ class Transport {
      * @param request
      * @returns {*}
      */
-    extractStatus(request) {
-        return this.network.extractStatus(request);
+    extractRequestStatus(request) {
+        return this.network.extractRequestStatus(request);
+    }
+
+    /**
+     * Extracts status from native response
+     * @param request
+     * @returns {*}
+     */
+    extractResponseStatus(request) {
+        return this.network.extractResponseStatus(request);
     }
 
     /**
