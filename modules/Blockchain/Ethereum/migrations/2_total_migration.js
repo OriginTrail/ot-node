@@ -30,8 +30,9 @@ module.exports = async (deployer, network, accounts) => {
     let recepients = [];
 
     switch (network) {
+    case 'test':
+        await deployer.deploy(TestingUtilities);
     case 'ganache':
-        // hub = 
         await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] }).then((result) => hub = result);
 
         profileStorage = await deployer.deploy(ProfileStorage, hub.address, { gas: 6000000, from: accounts[0] });
@@ -61,12 +62,14 @@ module.exports = async (deployer, network, accounts) => {
         await token.mintMany(recepients, amounts, { from: accounts[0] });
         await token.finishMinting({ from: accounts[0] });
 
-        console.log('\n\n \t Contract adressess on ganache (mock versions):');
-        console.log(`\t Hub contract address: \t${hub.address}`);
-        console.log(`\t Token contract address: \t${token.address}`);
-        console.log(`\t Profile contract address: \t${profile.address}`);
-        console.log(`\t Holding contract address: \t${holding.address}`);
-        
+        console.log('\n\n \t Contract adressess on ganache:');
+        console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Token contract address: \t\t${token.address}`);
+        console.log(`\t Profile contract address: \t\t${profile.address}`);
+        console.log(`\t Holding contract address: \t\t${holding.address}`);
+
+        console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
+        console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
 
         break;
     case 'mock':
