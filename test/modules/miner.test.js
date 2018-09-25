@@ -2,9 +2,14 @@ const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
-const MinerTest = require('../../modules/Miner');
+const miner = require('../../modules/Miner');
+const Utilities = require('../../modules/Utilities');
 
-describe('PoW MinerTest ', () => {
+console.log(miner);
+
+describe('PoW MinerTest, generating random wallets and trying to find task solution.' +
+    'Solving is done by brute force attempts to generate SHA3 hash of three different wallet addresses that contains' +
+    'task substring', () => {
     function digitToHex(digit) {
         if (digit < 10) {
             return digit.toString();
@@ -15,7 +20,7 @@ describe('PoW MinerTest ', () => {
     }
 
     function randomHexDigit() {
-        return digitToHex(Math.floor(Math.random() * 100) % 16);
+        return digitToHex(Utilities.getRandomInt(16));
     }
 
     function randomWallet() {
@@ -47,7 +52,6 @@ describe('PoW MinerTest ', () => {
     }
 
     it('Should not find solution for single node wallet address', () => {
-        const miner = new MinerTest();
         const wallets = randomNWallets(1);
         const task = generateTask(1);
 
@@ -55,7 +59,6 @@ describe('PoW MinerTest ', () => {
     });
 
     it('Should not find solution for two node wallet address', () => {
-        const miner = new MinerTest();
         const wallets = randomNWallets(2);
         const task = generateTask(1);
 
@@ -63,7 +66,6 @@ describe('PoW MinerTest ', () => {
     });
 
     it('Should find solution for three node wallet address and lowest difficulty', () => {
-        const miner = new MinerTest();
         const wallets = randomNWallets(3);
         const task = generateTask(1);
 
@@ -83,8 +85,6 @@ describe('PoW MinerTest ', () => {
     });
 
     it('Should find solution on position 17 for fixed wallet addresses on lowest difficulty', () => {
-        const miner = new MinerTest();
-
         const w1 = '0000000000000000000000000000000000000000';
         const w2 = '0000000000000000000000000000000000000001';
         const w3 = '0000000000000000000000000000000000000002';
