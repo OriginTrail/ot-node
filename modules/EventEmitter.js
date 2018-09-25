@@ -979,12 +979,13 @@ class EventEmitter {
 
         // sync
         // TODO this call should be refactored to be async
-        this._on('kad-challenge-request', (request, response) => {
-            const message = transport.extractMessage(request);
-            logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
-            const challenge = message.payload;
+        this._on('kad-challenge-request', async (request, response) => {
+            try {
+                const message = transport.extractMessage(request);
+                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
+                const challenge = message.payload;
 
-            this.graphStorage.findVerticesByImportId(challenge.import_id).then(async (vertices) => {
+                let vertices = await this.graphStorage.findVerticesByImportId(challenge.import_id);
                 ImportUtilities.unpackKeys(vertices, []);
                 ImportUtilities.sort(vertices);
                 // filter CLASS vertices
@@ -999,9 +1000,9 @@ class EventEmitter {
                     });
                 } catch (e) {
                     // TODO handle this case
-                    logger.error(`Failed to send challenge answer to ${challenge.import_id}. Error: ${e}.`);
+                    logger.error(`Failed to send challenge response for import ${challenge.import_id}. Error: ${e}.`);
                 }
-            }).catch(async (error) => {
+            } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);
 
@@ -1011,9 +1012,9 @@ class EventEmitter {
                     });
                 } catch (e) {
                     // TODO handle this case
-                    logger.error(`Failed to send 'fail' status.v Error: ${e}.`);
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
                 }
-            });
+            }
         });
 
         // async

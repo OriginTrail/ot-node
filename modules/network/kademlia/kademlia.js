@@ -12,6 +12,7 @@ const sleep = require('sleep-async')().Promise;
 const leveldown = require('leveldown');
 const PeerCache = require('./peer-cache');
 const ip = require('ip');
+const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
 
 const pjson = require('../../../package.json');
 
@@ -495,7 +496,20 @@ class Kademlia {
              * @returns {{"{": Object}|Array}
              */
             node.getContact = async (contactId, retry) => {
-                const contact = node.router.getContactByNodeId(contactId);
+                let contact = node.router.getContactByNodeId(contactId);
+                if (contact && contact.hostname) {
+                    return contact;
+                }
+                contact = await this.node.peercache.getExternalPeerInfo(contactId);
+                if (contact) {
+                    const contactInfo = KadenceUtils.parseContactURL(contact);
+                    // refresh bucket
+                    if (contactInfo) {
+                        // eslint-disable-next-line
+                        contact = contactInfo[1];
+                        this.node.router.addContactByNodeId(contactId, contact);
+                    }
+                }
                 if (contact && contact.hostname) {
                     return contact;
                 }
@@ -512,7 +526,7 @@ class Kademlia {
              */
             node.refreshContact = async (contactId, retry) => new Promise(async (resolve) => {
                 const _refresh = () => new Promise((resolve, reject) => {
-                    this.node.iterativeFindNode(contactId, (err, res) => {
+                    this.node.iterativeFindNode(contactId, (err) => {
                         if (err) {
                             reject(err);
                         } else {
