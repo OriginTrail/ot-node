@@ -480,6 +480,7 @@ class Kademlia {
             response.send({ error: err.message });
         });
 
+        const { validateContact } = this;
         // creates Kadence plugin for RPC calls
         this.node.plugin((node) => {
             /**
@@ -507,7 +508,7 @@ class Kademlia {
                     if (contactInfo) {
                         // eslint-disable-next-line
                         contact = contactInfo[1];
-                        if (this.validateContact(contact)) {
+                        if (validateContact(contact)) {
                             this.node.router.addContactByNodeId(contactId, contact);
                         } else {
                             contact = null; // contact is not valid
