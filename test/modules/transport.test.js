@@ -105,7 +105,7 @@ describe('Transport basic tests', () => {
 
                 assert.isNotNull(error);
                 assert.equal(error.message, 'Nasty exception');
-                assert.equal(await transport.getCounter(), 4, 'No retries happened');
+                assert.equal(await transport.getCounter(), 6, 'No retries happened');
             },
         ).timeout(10000);
     });

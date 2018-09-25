@@ -18,10 +18,6 @@ class PeerCache {
                 await this._setExternalPeerInfo(identity, contact);
             }
         });
-
-        this.node.router.events.on('remove', async (identity) => {
-            await this._removeExternalPeerInfo(identity);
-        });
     }
 
     /**

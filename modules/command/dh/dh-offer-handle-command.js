@@ -38,16 +38,16 @@ class DHOfferHandleCommand extends Command {
             predeterminedBid,
         } = command.data;
 
+        // Check if mine offer and if so ignore it.
+        const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
+        if (offerModel) {
+            return Command.empty();
+        }
+
         dcNodeId = dcNodeId.substring(2, 42);
         const dcContact = await this.transport.getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             // wait until peers are synced
-            return Command.empty();
-        }
-
-        // Check if mine offer and if so ignore it.
-        const offerModel = await Models.offers.findOne({ where: { import_id: importId } });
-        if (offerModel) {
             return Command.empty();
         }
 

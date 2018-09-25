@@ -6,7 +6,7 @@ const DEFAULT_NETWORK_TYPE = 'kademlia';
  * Default retry strategy
  */
 const DEFAULT_RETRY_CONFIG = {
-    retries: 3,
+    retries: 5,
     factor: 1,
     minTimeout: 1000,
     maxTimeout: 40 * 1000,
