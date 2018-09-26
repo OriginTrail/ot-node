@@ -428,7 +428,12 @@ class EventEmitter {
 
         const processImport = async (response, error, data) => {
             if (response === null) {
-                data.response.status(error.status);
+                if (error.status !== 'number') {
+                    // TODO investigate why we get non numberic error.status
+                    data.response.status(500);
+                } else {
+                    data.response.status(error.status);
+                }
                 data.response.send({
                     message: error.message,
                 });
