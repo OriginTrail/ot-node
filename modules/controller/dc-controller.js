@@ -30,6 +30,7 @@ class DCController {
      * Creates offer
      * @param importId  - Import ID
      * @param rootHash  - Import root hash
+     * @param importHash - Import hash
      * @param totalDocuments - Number of documents in import
      * @param {number} [totalEscrowTime] - Total escrow time
      * @param {number} [maxTokenAmount] - DH max token amount
@@ -39,7 +40,7 @@ class DCController {
      */
     async createOffer(
         importId, rootHash, totalDocuments, totalEscrowTime,
-        maxTokenAmount, minStakeAmount, minReputation,
+        maxTokenAmount, minStakeAmount, minReputation, importHash,
     ) {
         const replicationId = uuidv4();
 
@@ -53,6 +54,7 @@ class DCController {
             delay: 0,
             data: {
                 importId,
+                importHash,
                 replicationId,
                 rootHash,
                 totalDocuments,
