@@ -184,6 +184,13 @@ class EventEmitter {
 
                 const result = await dhService.getImport(importId);
 
+                // Check if packed to fix issue with double classes.
+                const filtered = result.vertices.filter(v => v._dc_key);
+                if (filtered.length > 0) {
+                    result.vertices = filtered;
+                    ImportUtilities.unpackKeys(result.vertices, result.edges);
+                }
+
                 const dataimport =
                     await Models.data_info.findOne({ where: { import_id: importId } });
 
@@ -466,7 +473,7 @@ class EventEmitter {
                     });
 
                 if (data.replicate) {
-                    this.emit('api-create-offer', { import_id, response: data.response });
+                    this.emit('api-create-offer', { import_id, import_hash, response: data.response });
                 } else {
                     await dcController.writeRootHash(import_id, root_hash, import_hash);
 
@@ -519,6 +526,7 @@ class EventEmitter {
             }
             const {
                 import_id,
+                import_hash,
                 total_escrow_time,
                 max_token_amount,
                 min_stake_amount,
@@ -535,7 +543,7 @@ class EventEmitter {
 
                 const replicationId = await dcController.createOffer(
                     import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
-                    max_token_amount, min_stake_amount, min_reputation,
+                    max_token_amount, min_stake_amount, min_reputation, import_hash,
                 );
 
                 data.response.status(201);
