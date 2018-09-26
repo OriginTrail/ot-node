@@ -295,6 +295,9 @@ class Utilities {
         if (msg.includes('connect etimedout')) {
             return null;
         }
+        if (msg.includes('connect ehostunreach')) {
+            return null;
+        }
         return {
             level,
             msg,
