@@ -31,7 +31,7 @@ class DHReadDataLocationRequestCommand extends Command {
         // Check if mine publish.
         if (msgNodeId === this.config.identity && msgWallet === this.config.node_wallet) {
             this.logger.trace('Received mine publish. Ignoring.');
-            Command.empty();
+            return Command.empty();
         }
 
         // Handle query here.
@@ -39,7 +39,7 @@ class DHReadDataLocationRequestCommand extends Command {
         if (imports.length === 0) {
             // I don't want to participate
             this.logger.trace(`No imports found for request ${msgId}`);
-            Command.empty();
+            return Command.empty();
         }
 
         // Check if the import came from network. In more details I can only

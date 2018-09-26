@@ -48,6 +48,7 @@ class DVDataReadResponseFreeCommand extends Command {
             import_id: importId,
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
+            transaction_hash,
         } = message;
 
         // Find the particular reply.
@@ -74,7 +75,7 @@ class DVDataReadResponseFreeCommand extends Command {
 
         const fingerprint = await this.blockchain.getRootHash(dcWallet, importId);
 
-        if (!fingerprint) {
+        if (!fingerprint.graph_hash) {
             const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${importId}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
@@ -86,7 +87,7 @@ class DVDataReadResponseFreeCommand extends Command {
             vertex.vertex_type !== 'CLASS'), edges);
         const rootHash = merkle.tree.getRoot();
 
-        if (fingerprint !== rootHash) {
+        if (fingerprint.graph_hash !== rootHash) {
             const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
@@ -117,9 +118,11 @@ class DVDataReadResponseFreeCommand extends Command {
             import_id: importId,
             total_documents: vertices.length,
             root_hash: rootHash,
+            import_hash: fingerprint.import_hash,
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            transaction_hash,
         });
 
         return Command.empty();

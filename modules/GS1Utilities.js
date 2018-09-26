@@ -74,7 +74,7 @@ class GS1Utilities {
             if (inputElement.identifier) {
                 if (inputElement.id) {
                     const value = inputElement._;
-                    this.validateEan13(value);
+                    // this.validateEan13(value);
                     output[inputElement.id.replace(ignorePattern, '')] = value;
                 } else {
                     this.handleError('Failed to parse XML. ID is missing for the identifier attribute.', 400);
