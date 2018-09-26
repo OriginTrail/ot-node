@@ -132,7 +132,7 @@ class Transport {
         return retry(async (halt, iteration) => {
             try {
                 if (iteration > 1) {
-                    this.logger.warn(`Retrying previous ${fn} operation. ${(opts.retries - iteration) + 1} left.`);
+                    this.logger.warn(`Retrying previous ${fn} operation. Contact ${contactId}, ${(opts.retries - iteration) + 1} left.`);
                 }
                 return await this.network.node[fn](msg, contactId);
             } catch (err) {

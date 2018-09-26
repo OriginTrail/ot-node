@@ -123,6 +123,7 @@ class DHDataReadRequestFreeCommand extends Command {
                     edges,
                 },
                 import_id: importId, // TODO: Temporal. Remove it.
+                transaction_hash: dataInfo.transaction_hash,
             };
             const dataReadResponseObject = {
                 message: replyMessage,
