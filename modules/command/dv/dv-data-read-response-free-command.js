@@ -48,6 +48,7 @@ class DVDataReadResponseFreeCommand extends Command {
             import_id: importId,
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
+            transaction_hash,
         } = message;
 
         // Find the particular reply.
@@ -121,6 +122,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            transaction_hash,
         });
 
         return Command.empty();

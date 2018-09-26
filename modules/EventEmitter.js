@@ -184,6 +184,13 @@ class EventEmitter {
 
                 const result = await dhService.getImport(importId);
 
+                // Check if packed to fix issue with double classes.
+                const filtered = result.vertices.filter(v => v._dc_key);
+                if (filtered.length > 0) {
+                    result.vertices = filtered;
+                    ImportUtilities.unpackKeys(result.vertices, result.edges);
+                }
+
                 const dataimport =
                     await Models.data_info.findOne({ where: { import_id: importId } });
 
