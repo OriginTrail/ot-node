@@ -20,7 +20,7 @@ class Challenger {
     async startChallenging() {
         // TODO: temp solution to delay.
         // Should be started after replication-finished received.
-        setTimeout(() => {
+        setTimeout(function () {
             setInterval(this.intervalFunc, intervalMs, this, this.transport, this.log);
         }, 30000);
         this.log.info(`Started challenging timer at ${intervalMs}ms.`);
