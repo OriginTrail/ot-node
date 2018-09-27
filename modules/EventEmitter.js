@@ -956,7 +956,7 @@ class EventEmitter {
                 status: 'PENDING',
             });
 
-            const dataInfo = Models.data_info.find({ where: { import_id } });
+            const dataInfo = await Models.data_info.find({ where: { import_id } });
 
             logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
             const data = {
