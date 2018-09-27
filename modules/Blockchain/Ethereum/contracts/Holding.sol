@@ -169,6 +169,9 @@ contract Holding {
         if (sig.length != 65)
           return address(0);
 
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHash = keccak256(prefix, hash);
+  
         // The signature format is a compact form of:
         //   {bytes32 r}{bytes32 s}{uint8 v}
         // Compact means, uint8 is not padded to 32 bytes.
@@ -188,7 +191,7 @@ contract Holding {
 
         if (v != 27 && v != 28) return address(0);
 
-        return ecrecover(hash, v, r, s);
+        return ecrecover(prefixedHash, v, r, s);
     }
 
 
