@@ -114,9 +114,9 @@ function _solve(wallets, task) {
      * @param {BN[]} wallets
      * @param {BN} solution
      */
-function solve(wallets, task) {
+function solve(wallets, task, difficulty) {
     const walletsArr = wallets.map(walletBn => walletBn.toString('hex').padStart(40, '0'));
-    const taskStr = task.toString('hex');
+    const taskStr = task.toString('hex').padStart(difficulty, '0');
     return _solve(walletsArr, taskStr);
 }
 

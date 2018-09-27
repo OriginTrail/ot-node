@@ -54,22 +54,25 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
     it('Should not find solution for single node wallet address', () => {
         const wallets = randomNWallets(1);
         const task = generateTask(1);
+        const difficulty = 1;
 
-        assert.isFalse(miner.solve(wallets, task), 'Should not find solution');
+        assert.isFalse(miner.solve(wallets, task, difficulty), 'Should not find solution');
     });
 
     it('Should not find solution for two node wallet address', () => {
         const wallets = randomNWallets(2);
         const task = generateTask(1);
+        const difficulty = 1;
 
-        assert.isFalse(miner.solve(wallets, task), 'Should not find solution');
+        assert.isFalse(miner.solve(wallets, task, difficulty), 'Should not find solution');
     });
 
     it('Should find solution for three node wallet address and lowest difficulty', () => {
         const wallets = randomNWallets(3);
         const task = generateTask(1);
+        const difficulty = 1;
 
-        const res = miner.solve(wallets, task);
+        const res = miner.solve(wallets, task, difficulty);
 
         const solution = res.nodeIdentifiers.map(w => new BN(w, 16));
 
@@ -101,8 +104,9 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
         // 2ecbc4bf1ece29099c50027601e0ed56e6c4cf41991352508337fe6836bd0b19
         //                  ^
         const realHash = abi.soliditySHA3(['address', 'address', 'address'], wallets).toString('hex');
+        const difficulty = 1;
 
-        const res = miner.solve(wallets, task);
+        const res = miner.solve(wallets, task, difficulty);
 
         assert.equal(res.shift, 17, 'Shift should be 17');
         assert.equal(res.solutionHash, realHash, 'Hash should be correct');
