@@ -37,35 +37,7 @@ var DH_stake = [];
 var DH_read_factor = [];
 
 // eslint-disable-next-line no-undef
-contract('Bidding testing', async (accounts) => {
-    // // eslint-disable-next-line no-undef
-    // it('Should get Escrow contract', async () => {
-    //     await EscrowHolder.deployed().then((res) => {
-    //         console.log(`\t Escrow address: ${res.address}`);
-    //     }).catch(err => console.log(err));
-    // });
-
-    // // eslint-disable-next-line no-undef
-    // it('Should get Bidding contract', async () => {
-    //     await Bidding.deployed().then((res) => {
-    //         console.log(`\t Bidding address: ${res.address}`);
-    //     }).catch(err => console.log(err));
-    // });
-
-    // // eslint-disable-next-line no-undef
-    // it('Should get Reading contract', async () => {
-    //     await Reading.deployed().then((res) => {
-    //         console.log(`\t Reading address: ${res.address}`);
-    //     }).catch(err => console.log(err));
-    // });
-
-    // // eslint-disable-next-line no-undef
-    // it('Should get TestingUtilities contract', async () => {
-    //     await TestingUtilities.deployed().then((res) => {
-    //         console.log(`\t TestingUtilities address: ${res.address}`);
-    //     }).catch(err => console.log(err));
-    // });
-
+contract('Offer testing', async (accounts) => {
     // DC_wallet = accounts[0]; // eslint-disable-line prefer-destructuring
 
     // // eslint-disable-next-line no-undef
