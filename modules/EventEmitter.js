@@ -933,16 +933,13 @@ class EventEmitter {
                 }
             }
 
-            const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
-            const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
-            let vertices = values[0];
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
             const edges = values[1];
-            const objectClassVertices = values[2];
 
-            vertices = vertices.concat(...objectClassVertices);
             ImportUtilities.deleteInternal(vertices);
 
             const keyPair = Encryption.generateKeyPair();
