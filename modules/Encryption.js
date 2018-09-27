@@ -301,7 +301,7 @@ class Encryption {
      * Sign message arguments
      * @param dataArgs
      * @param privateKey
-     * @returns {string | Signature}
+     * @returns {Signature object}
      */
     static sign(web3, dataArgs, privateKey) {
         const types = [];
