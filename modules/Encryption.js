@@ -4,6 +4,7 @@ const BN = require('bn.js');
 const xor = require('buffer-xor');
 const abi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
+const utils = require('ethereumjs-util');
 
 class Encryption {
     /**
@@ -298,12 +299,11 @@ class Encryption {
     }
 
     /**
-     * Sign message arguments
+     * Hash multiple data
      * @param dataArgs
-     * @param privateKey
-     * @returns {Signature object}
+     * @returns {string}
      */
-    static sign(web3, dataArgs, privateKey) {
+    static generateHash(dataArgs) {
         const types = [];
         const args = [];
 
@@ -312,9 +312,40 @@ class Encryption {
             args.push(new BN(value, 16));
         }
 
-        const hash = `0x${abi.soliditySHA3(types, args).toString('hex')}`;
+        return `0x${abi.soliditySHA3(types, args).toString('hex')}`;
+    }
+
+    /**
+     * Sign message arguments
+     * @param dataArgs
+     * @param privateKey
+     * @returns {Signature object}
+     */
+    static sign(web3, dataArgs, privateKey) {
+        const hash = this.generateHash(dataArgs);
         const signature = web3.eth.accounts.sign(hash, privateKey);
         return signature;
+    }
+
+    /**
+     * Extract addres from signature for given data
+     * @param dataArgs array
+     * @param signature
+     * @returns {string}
+     */
+    static extractSignerAddress(dataArgs, signature) {
+        const r = utils.toBuffer(signature.slice(0, 66));
+        const s = utils.toBuffer(`0x${signature.slice(66, 130)}`);
+        const v = Utilities.hexToNumber(utils.toBuffer(`0x${signature.slice(130, 132)}`).toString('hex'));
+
+        const dataHash = this.generateHash(dataArgs);
+
+        const msg = abi.soliditySHA3(['bytes', 'bytes32'], [Buffer.from('\x19Ethereum Signed Message:\\n32'), new BN(dataHash, 16)]);
+
+        const m = utils.toBuffer(msg);
+        const pub = utils.ecrecover(m, v, r, s);
+        const adr = `0x${utils.pubToAddress(pub).toString('hex')}`;
+        return adr;
     }
 
     /**
@@ -352,3 +383,6 @@ class Encryption {
 }
 
 module.exports = Encryption;
+
+
+console.log(Encryption.extractSignerAddress([1, 2, 3], '0x658e9151a5f92cc761968c1600bc2950bee5638f62bb8478d66e6f0dee6f00bf09ea362cd427720b55dcfe6aa4def1a97f5b1883cb89c59072ef2959027aa09d1b'));
