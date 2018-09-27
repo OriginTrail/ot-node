@@ -298,6 +298,26 @@ class Encryption {
     }
 
     /**
+     * Sign message arguments
+     * @param dataArgs
+     * @param privateKey
+     * @returns {string | Signature}
+     */
+    static sign(web3, dataArgs, privateKey) {
+        const types = [];
+        const args = [];
+
+        for (const value of dataArgs) {
+            types.push('uint256');
+            args.push(new BN(value, 16));
+        }
+
+        const hash = `0x${abi.soliditySHA3(types, args).toString('hex')}`;
+        const signature = web3.eth.accounts.sign(hash, privateKey);
+        return signature;
+    }
+
+    /**
      * Split data and extract random block
      * @param data
      * @returns {*}
