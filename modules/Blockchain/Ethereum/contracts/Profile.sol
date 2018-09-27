@@ -127,7 +127,7 @@ contract Profile {
             emit TokenWithdrawalCancelled(identity);
         }
 
-        require(amount.add(minimalStake) >= profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity)), 
+        require(minimalStake >= profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity)).sub(amount), 
             "Profile does not have enough stake for reserving!");
 
         uint256 stakeReserved = profileStorage.getStakeReserved(identity);
