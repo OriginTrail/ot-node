@@ -4,6 +4,7 @@ import './Hub.sol';
 import {ERC725} from './ERC725.sol';
 import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
+import {Profile} from './Profile.sol';
 
 contract Holding {
 
@@ -94,6 +95,10 @@ contract Holding {
         
 
         //Secure funds from all parties
+        Profile profileContract = Profile(hub.profileAddress());
+        profileContract.reserveTokens(holderIdentity[0], holdingStorage.getOfferTokenAmountPerHolder(offerId));
+        profileContract.reserveTokens(holderIdentity[1], holdingStorage.getOfferTokenAmountPerHolder(offerId));
+        profileContract.reserveTokens(holderIdentity[2], holdingStorage.getOfferTokenAmountPerHolder(offerId));
 
 
         //Write data into storage
