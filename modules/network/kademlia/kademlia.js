@@ -162,12 +162,12 @@ class Kademlia {
             this.log.info('Quasar initialised');
             this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../../../data/${config.embedded_peercache_path}`));
             this.log.info('Peercache initialised');
-            this.node.spartacus = this.node.plugin(kadence.spartacus(
-                this.xprivkey,
-                parseInt(config.child_derivation_index, 10),
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            ));
-            this.log.info('Spartacus initialized');
+            // this.node.spartacus = this.node.plugin(kadence.spartacus(
+            //     this.xprivkey,
+            //     parseInt(config.child_derivation_index, 10),
+            //     kadence.constants.HD_KEY_DERIVATION_PATH,
+            // ));
+            // this.log.info('Spartacus initialized');
 
             if (onionEnabled) {
                 this.enableOnion();
@@ -228,7 +228,6 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
-                privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
