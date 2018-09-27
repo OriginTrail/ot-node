@@ -534,10 +534,12 @@ class ArangoJS {
     }
 
     async findVerticesByImportId(data_id) {
-        const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices FILTER v.imports != null AND POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
         const params = { importId: data_id };
-        return this.runQuery(queryString, params);
+        const vertices = await this.runQuery(queryString, params);
+        const objectClasses = await this.findObjectClassVertices();
+        return vertices.concat(objectClasses);
     }
 
     async findObjectClassVertices() {
