@@ -171,7 +171,7 @@ class DCOfferKeyVerificationCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferKeyVerificationCommand',
-            delay: 0,
+            delay: 10000,
             transactional: false,
         };
         Object.assign(command, map);
