@@ -38,10 +38,14 @@ class DVDataLocationResponseCommand extends Command {
             throw Error(`Didn't find query with ID ${queryId}.`);
         }
 
-        // Store the offer.
-        const networkQueryResponse = await Models.network_query_responses.findOrCreate({
+        // Store the offer if not stored so far.
+        // TODO: Potential race condition here.
+        let networkQueryResponse = await Models.network_query_responses.findOne({
             where: { query_id: queryId, reply_id: replyId },
-            defaults: {
+        });
+
+        if (!networkQueryResponse) {
+            networkQueryResponse = await Models.network_query_responses.create({
                 query_id: queryId,
                 wallet,
                 node_id: nodeId,
@@ -49,8 +53,8 @@ class DVDataLocationResponseCommand extends Command {
                 data_price: dataPrice,
                 stake_factor: stakeFactor,
                 reply_id: replyId,
-            },
-        });
+            });
+        }
 
         // TODO: Fire socket notification for Houston
 
