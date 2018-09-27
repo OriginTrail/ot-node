@@ -4,6 +4,7 @@ const Utilities = require('./Utilities');
 const Models = require('../models');
 const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
+const ObjectValidator = require('./validator/object-validator');
 const bytes = require('utf8-length');
 
 const events = require('events');
@@ -18,6 +19,7 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.appState = ctx.appState;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -90,6 +92,7 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
+            appState,
             profileService,
             dcController,
             dvController,
@@ -223,23 +226,25 @@ class EventEmitter {
             }
         });
 
-        this._on('api-get-imports', (data) => {
+        this._on('api-get-imports', async (data) => {
             logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
-            product.getImports(data.query).then((res) => {
+
+            try {
+                const res = await product.getImports(data.query);
                 if (res.length === 0) {
                     data.response.status(204);
                 } else {
                     data.response.status(200);
                 }
                 data.response.send(res);
-            }).catch((error) => {
+            } catch (error) {
                 logger.error(`Failed to get imports for query ${JSON.stringify(data.query)}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
                 });
-            });
+            }
         });
 
         this._on('api-imports-info', async (data) => {
@@ -334,7 +339,7 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -357,7 +362,7 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const failFunction = (error) => {
@@ -517,7 +522,7 @@ class EventEmitter {
         });
 
         this._on('api-create-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -654,12 +659,13 @@ class EventEmitter {
             dhService,
             logger,
             config,
+            appState,
             dhController,
             notifyError,
         } = this.ctx;
 
         this._on('eth-OfferCreated', async (eventData) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const {
@@ -681,7 +687,7 @@ class EventEmitter {
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const {
@@ -835,6 +841,9 @@ class EventEmitter {
 
         this._on('kad-data-location-request', async (query) => {
             const { message, messageSignature } = query;
+            if (ObjectValidator.validateSearchQueryObject(message.query)) {
+                return;
+            }
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {

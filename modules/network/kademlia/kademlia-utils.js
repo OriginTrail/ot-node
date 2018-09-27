@@ -7,7 +7,6 @@ const boscar = require('boscar');
 const hdkey = require('hdkey');
 const deasync = require('deasync-promise');
 const utilities = require('../../Utilities');
-const config = require('../../Config');
 const kadence = require('@kadenceproject/kadence');
 const { EventEmitter } = require('events');
 const { fork } = require('child_process');
@@ -18,6 +17,7 @@ class KademliaUtils {
         this.solvers = [];
         this.log = ctx.logger;
         this.notifyError = ctx.notifyError;
+        this.config = ctx.config;
     }
 
     /**
@@ -25,8 +25,8 @@ class KademliaUtils {
     * @return {Promise<boolean>}
     */
     async setSelfSignedCertificate() {
-        if (!fs.existsSync(`../keys/${config.ssl_key_path}`)) {
-            const result = await utilities.generateSelfSignedCertificate(config);
+        if (!fs.existsSync(path.join(this.config.appDataPath, this.config.ssl_keypath))) {
+            const result = await utilities.generateSelfSignedCertificate(this.config);
             if (result) {
                 this.log.info('SSL generated');
                 return true;
@@ -51,7 +51,7 @@ class KademliaUtils {
           `possible indices tested in the last ${ms(Date.now() - start)}`);
         }, 60000);
 
-        this.log.info(`Solving identity derivation index with ${config.cpus} ` +
+        this.log.info(`Solving identity derivation index with ${this.config.cpus} ` +
         'solver processes, this can take a while...');
 
         events.on('attempt', () => attempts += 1);
@@ -62,7 +62,7 @@ class KademliaUtils {
             time = Date.now() - start;
         } catch (err) {
             this.log.error(err.message.toLowerCase());
-            this.log.info(`Delete/move ${config.private_extended_key_path} and restart`);
+            this.log.info(`Delete/move ${this.config.identity_filepath} and restart`);
             this.notifyError(err);
             process.exit(1);
         }
@@ -71,8 +71,7 @@ class KademliaUtils {
         clearInterval(status);
 
         this.log.info(`Solved identity derivation index ${childIndex} in ${ms(time)}`);
-        utilities.saveToConfig('child_derivation_index', childIndex);
-        config.child_derivation_index = childIndex;
+        return [xprivkey, childIndex];
     }
 
     /**
@@ -84,7 +83,7 @@ class KademliaUtils {
     */
     async spawnIdentityDerivationProcesses(xprivkey, path, events) {
         // How many process can we run
-        const cpus = parseInt(config.cpus, 10);
+        const { cpus } = this.config;
 
         if (cpus === 0) {
             return this.log.info('There are no derivation processes running');
@@ -150,7 +149,8 @@ class KademliaUtils {
             this.log.error(`Derivation ${c} error, ${err.message}`);
         });
 
-        solver.send([xprv, index, derivationPath]);
+        const options = { test_network: this.config.test_network };
+        solver.send([xprv, index, derivationPath, options]);
 
         return solver;
     }
@@ -161,19 +161,19 @@ class KademliaUtils {
     */
     registerControlInterface(config, node) {
         assert(
-            !(parseInt(config.control_port_enabled, 10) &&
-            parseInt(config.control_sock_enabled, 10)),
+            !(config.control_port_enabled &&
+            config.control_sock_enabled),
             'ControlSock and ControlPort cannot both be enabled',
         );
 
-        const controller = new boscar.Server(new Control(node));
+        const controller = new boscar.Server(new Control(config, node));
 
-        if (parseInt(config.control_port_enabled, 10)) {
+        if (config.control_port_enabled) {
             this.log.notify(`Binding controller to port ${config.control_port}`);
-            controller.listen(parseInt(config.control_port, 10), '0.0.0.0');
+            controller.listen(config.control_port, '0.0.0.0');
         }
 
-        if (parseInt(config.control_sock_enabled, 10)) {
+        if (config.control_sock_enabled) {
             this.log.notify(`Binding controller to path ${config.control_sock}`);
             controller.listen(config.control_sock);
         }
@@ -202,7 +202,7 @@ class KademliaUtils {
     * Verifies if we are on the test network and otherconfig checks
     */
     verifyConfiguration(config) {
-        if (parseInt(config.traverse_nat_enabled, 10) && parseInt(config.onion_enabled, 10)) {
+        if (config.traverse_nat_enabled && config.onion_enabled) {
             this.log.error('Refusing to start with both TraverseNatEnabled and ' +
           'OnionEnabled - this is a privacy risk');
             process.exit(1);
@@ -216,7 +216,10 @@ class KademliaUtils {
     checkIdentity(identity) {
         if (!identity.validate()) {
             this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${identity.index} is invalid`);
-            deasync(this.solveIdentity(identity.xprv, identity.path));
+            const [xprivkey, childIndex] =
+                deasync(this.solveIdentity(identity.xprv, identity.path));
+            identity.xprv = xprivkey;
+            identity.index = childIndex;
         }
     }
 }

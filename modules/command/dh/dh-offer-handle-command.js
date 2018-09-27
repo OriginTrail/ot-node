@@ -53,6 +53,21 @@ class DHOfferHandleCommand extends Command {
 
         this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${importId}.`);
 
+        const distanceParams = await this.blockchain.getDistanceParameters(importId);
+
+        const nodeHash = distanceParams[0];
+        const dataHash = distanceParams[1];
+        const currentRanking = distanceParams[3]; // Not used at the moment
+        const k = distanceParams[4];
+        const numNodes = distanceParams[5];
+
+        if (this.amIClose(k, numNodes, dataHash, nodeHash, 10000)) {
+            this.logger.notify('Close enough to take bid');
+        } else {
+            this.logger.notify('Not close enough to take bid');
+            return Command.empty();
+        }
+
         const dataInfo = await Models.data_info.findOne({
             where: { import_id: importId },
         });
@@ -132,7 +147,7 @@ class DHOfferHandleCommand extends Command {
             return Command.empty();
         }
 
-        if (!predeterminedBid && !Utilities.getImportDistance(myPrice, 1, myStake)) {
+        if (!predeterminedBid && !Utilities.getImportDistance(this.config, myPrice, 1, myStake)) {
             this.logger.info(`Offer ${importId}, not in mine distance. Not going to participate.`);
             return Command.empty();
         }

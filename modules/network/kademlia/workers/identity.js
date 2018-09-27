@@ -2,13 +2,12 @@ const kadence = require('@kadenceproject/kadence');
 const readLine = require('readline');
 const { EventEmitter } = require('events');
 
+process.once('message', ([xprv, index, path, options]) => {
+    if (options && options.test_network) {
+        kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
+        kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
+    }
 
-if (parseInt(process.env.kadence_TestNetworkEnabled, 10)) {
-    kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-    kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-}
-
-process.once('message', ([xprv, index, path]) => {
     const identity = new kadence.eclipse.EclipseIdentity(xprv, index, path);
 
     let attempts = 0;

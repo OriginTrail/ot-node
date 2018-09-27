@@ -1,12 +1,16 @@
 require('dotenv').config();
+
 const {
     describe, beforeEach, it,
 } = require('mocha');
 const { assert } = require('chai');
 const awilix = require('awilix');
-const config = require('../../modules/Config');
+const rc = require('rc');
+
 const Transport = require('../../modules/network/transport');
 const Utilities = require('../../modules/Utilities');
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 const logger = Utilities.getLogger();
 
@@ -68,6 +72,8 @@ describe('Transport basic tests', () => {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
+
+        const config = rc(pjson.name, defaultConfig);
 
         container.register({
             config: awilix.asValue(config),

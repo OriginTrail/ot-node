@@ -1,5 +1,4 @@
 const Challenge = require('./Challenge');
-const config = require('./Config');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 
@@ -15,6 +14,7 @@ class DataReplication {
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.log = ctx.logger;
+        this.config = ctx.config;
     }
 
     /**
@@ -26,11 +26,11 @@ class DataReplication {
     async sendPayload(data) {
         const currentUnixTime = Date.now();
         const options = {
-            dh_wallet: config.dh_wallet,
+            dh_wallet: this.config.dh_wallet,
             import_id: data.import_id,
             amount: data.vertices.length + data.edges.length,
             start_time: currentUnixTime,
-            total_time: parseInt(config.total_escrow_time_in_milliseconds, 10), // TODO introduce BN
+            total_time: this.config.total_escrow_time_in_milliseconds,
         };
 
         ImportUtilities.sort(data.vertices);
@@ -45,7 +45,7 @@ class DataReplication {
         Challenge.addTests(tests).then(() => {
             this.log.trace(`Tests generated for DH ${tests[0].dhId}`);
         }, () => {
-            this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+            this.log.error(`Failed to generate challenges for ${this.config.identity}, import ID ${options.import_id}`);
         });
 
         const dataimport = await Models.data_info.findOne({ where: { import_id: data.import_id } });
@@ -53,7 +53,7 @@ class DataReplication {
             payload: {
                 edges: data.edges,
                 import_id: data.import_id,
-                dc_wallet: config.blockchain.wallet_address,
+                dc_wallet: this.config.node_wallet,
                 public_key: data.public_key,
                 vertices: data.vertices,
                 root_hash: data.root_hash,

@@ -4,8 +4,8 @@ const async = require('async');
 const levelup = require('levelup');
 const encoding = require('encoding-down');
 const kadence = require('@kadenceproject/kadence');
-const config = require('../../Config');
 const fs = require('fs');
+const path = require('path');
 const utilities = require('../../Utilities');
 const _ = require('lodash');
 const sleep = require('sleep-async')().Promise;
@@ -30,18 +30,14 @@ class Kademlia {
         this.emitter = ctx.emitter;
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.notifyError = ctx.notifyError;
+        this.config = ctx.config;
 
-        kadence.constants.T_RESPONSETIMEOUT = parseInt(config.request_timeout, 10);
-        if (parseInt(config.test_network, 10)) {
+        kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
+        if (this.config.test_network) {
             this.log.warn('Node is running in test mode, difficulties are reduced');
-            process.env.kadence_TestNetworkEnabled = config.test_network;
             kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
             kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
         }
-        this.index = parseInt(config.child_derivation_index, 10);
-
-        // Initialize private extended key
-        utilities.createPrivateExtendedKey(kadence);
     }
 
     /**
@@ -50,13 +46,34 @@ class Kademlia {
      */
     async initialize() {
         // Check config
-        this.kademliaUtilities.verifyConfiguration(config);
+        this.kademliaUtilities.verifyConfiguration(this.config);
 
         this.log.info('Checking SSL certificate');
-        await this.kademliaUtilities.setSelfSignedCertificate(config);
+        await this.kademliaUtilities.setSelfSignedCertificate();
 
         this.log.info('Getting the identity');
-        this.xprivkey = fs.readFileSync(`${__dirname}/../../../keys/${config.private_extended_key_path}`).toString();
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.identity_filepath,
+        );
+        if (fs.existsSync(identityFilePath)) {
+            const identityFileContent =
+                JSON.parse(fs.readFileSync(identityFilePath).toString());
+            this.xprivkey = identityFileContent.xprivkey;
+            this.index = identityFileContent.index;
+        } else {
+            this.log.info('Identity not provided, generating new one...');
+            this.xprivkey = kadence.utils.toHDKeyFromSeed().privateExtendedKey;
+            const [xprivkey, childIndex] = await this.kademliaUtilities.solveIdentity(
+                this.xprivkey,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            );
+            this.index = childIndex;
+            fs.writeFileSync(identityFilePath, JSON.stringify({
+                xprivkey: this.xprivkey,
+                index: this.index,
+            }));
+        }
         this.identity = new kadence.eclipse.EclipseIdentity(
             this.xprivkey,
             this.index,
@@ -70,12 +87,12 @@ class Kademlia {
         const { childKey } = this.kademliaUtilities.getIdentityKeys(
             this.xprivkey,
             kadence.constants.HD_KEY_DERIVATION_PATH,
-            parseInt(config.child_derivation_index, 10),
+            this.index,
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
         this.log.notify(`My identity: ${this.identity}`);
-        config.identity = this.identity;
+        this.config.identity = this.identity;
     }
 
     /**
@@ -89,14 +106,13 @@ class Kademlia {
             const { parentKey } = this.kademliaUtilities.getIdentityKeys(
                 this.xprivkey,
                 kadence.constants.HD_KEY_DERIVATION_PATH,
-                parseInt(config.child_derivation_index, 10),
+                this.index,
             );
 
-            const onionEnabled = parseInt(config.onion_enabled, 10);
-            const natTraversalEnabled = parseInt(config.traverse_nat_enabled, 10);
-
             let kadServerHost = null;
-            if (config.local_network_only || natTraversalEnabled || onionEnabled) {
+            if (this.config.local_network_only ||
+                this.config.traverse_nat_enabled ||
+                this.config.onion_enabled) {
                 kadServerHost = '127.0.0.1';
             } else {
                 kadServerHost = await utilities.getExternalIp();
@@ -106,17 +122,23 @@ class Kademlia {
             const contact = {
                 hostname: kadServerHost,
                 protocol: 'https:',
-                port: parseInt(config.node_port, 10),
+                port: this.config.node_port,
                 xpub: parentKey.publicExtendedKey,
-                index: parseInt(config.child_derivation_index, 10),
+                index: this.index,
                 agent: kadence.version.protocol,
-                wallet: config.node_wallet,
-                network_id: config.network_id,
+                wallet: this.config.node_wallet,
+                network_id: this.config.network.id,
             };
 
-            const key = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_keypath}`);
-            const cert = fs.readFileSync(`${__dirname}/../../../keys/${config.ssl_certificate_path}`);
-            const ca = config.ssl_authority_paths.map(fs.readFileSync);
+            const key = fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_keypath,
+            ));
+            const cert = fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_certificate_path,
+            ));
+            const ca = this.config.ssl_authority_paths.map(fs.readFileSync);
 
             // Initialize transport adapter
             const transport = new kadence.HTTPSTransport({ key, cert, ca });
@@ -127,20 +149,19 @@ class Kademlia {
                 transport,
                 identity: Buffer.from(this.identity, 'hex'),
                 contact,
-                storage: levelup(encoding(leveldown(`${__dirname}/../../../data/kadence.dht`))),
+                storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
-            const { validateContact } = this;
-
+            const that = this;
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
                 try {
-                    if (!validateContact(contact)) {
-                        this.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
+                    if (!that.validateContact(contact)) {
+                        that.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
                         return;
                     }
                 } catch (err) {
-                    this.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
+                    that.log.debug(`Failed to filter contact(${identity}, ${contact}). ${err}.`);
                     return;
                 }
 
@@ -150,7 +171,7 @@ class Kademlia {
             };
 
             this.node.use((request, response, next) => {
-                if (!validateContact(request.contact[1])) {
+                if (!that.validateContact(request.contact[1])) {
                     return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
                 next();
@@ -160,40 +181,40 @@ class Kademlia {
             this.node.eclipse = this.node.plugin(kadence.eclipse());
             this.node.quasar = this.node.plugin(kadence.quasar());
             this.log.info('Quasar initialised');
-            this.node.peercache = this.node.plugin(PeerCache(`${__dirname}/../../../data/${config.embedded_peercache_path}`));
+            this.node.peercache =
+                this.node.plugin(PeerCache(path.join(
+                    this.config.appDataPath,
+                    this.config.embedded_peercache_path,
+                )));
             this.log.info('Peercache initialised');
-            // this.node.spartacus = this.node.plugin(kadence.spartacus(
-            //     this.xprivkey,
-            //     parseInt(config.child_derivation_index, 10),
-            //     kadence.constants.HD_KEY_DERIVATION_PATH,
-            // ));
-            // this.log.info('Spartacus initialized');
+            this.node.spartacus = this.node.plugin(kadence.spartacus(
+                this.xprivkey,
+                this.index,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            ));
+            this.log.info('Spartacus initialized');
 
-            if (onionEnabled) {
+            if (this.config.onion_enabled) {
                 this.enableOnion();
             }
 
-            if (natTraversalEnabled) {
+            if (this.config.traverse_nat_enabled) {
                 this.enableNatTraversal();
             }
 
             // Use verbose logging if enabled
-            if (parseInt(config.verbose_logging, 10)) {
+            if (this.config.verbose_logging) {
                 this.node.rpc.deserializer.append(new kadence.logger.IncomingMessage(this.log));
                 this.node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(this.log));
             }
-            // Cast network nodes to an array
-            if (typeof config.network_bootstrap_nodes === 'string') {
-                config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
-            }
 
-            if (!utilities.isBootstrapNode()) {
+            if (!this.config.is_bootstrap_node) {
                 this._registerRoutes();
             }
 
-            this.node.listen(parseInt(config.node_port, 10), async () => {
+            this.node.listen(this.config.node_port, async () => {
                 this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
-                this.kademliaUtilities.registerControlInterface(config, this.node);
+                this.kademliaUtilities.registerControlInterface(this.config, this.node);
 
                 const connected = false;
                 const retryPeriodSeconds = 5;
@@ -221,13 +242,14 @@ class Kademlia {
     enableNatTraversal() {
         this.log.info('Trying NAT traversal');
 
-        const remoteAddress = config.reverse_tunnel_address;
-        const remotePort = parseInt(config.reverse_tunnel_port, 10);
+        const remoteAddress = this.config.reverse_tunnel_address;
+        const remotePort = this.config.reverse_tunnel_port;
 
         this.node.traverse = this.node.plugin(kadence.traverse([
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
+                privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
@@ -240,9 +262,9 @@ class Kademlia {
     enableOnion() {
         this.log.info('Use Tor for an anonymous overlay');
         this.node.onion = this.node.plugin(kadence.onion({
-            dataDirectory: `${__dirname}/../../../data/hidden_service`,
-            virtualPort: config.onion_virtual_port,
-            localMapping: `127.0.0.1:${config.node_port}`,
+            dataDirectory: path.join(this.config.appDataPath, 'hidden_service'),
+            virtualPort: this.config.onion_virtual_port,
+            localMapping: `127.0.0.1:${this.config.node_port}`,
             torrcEntries: {
                 LearnCircuitBuildTimeout: 0,
                 CircuitBuildTimeout: 40,
@@ -266,7 +288,7 @@ class Kademlia {
      * Note: this method tries to find possible bootstrap nodes from cache as well
      */
     async _joinNetwork(myContact) {
-        const bootstrapNodes = config.network_bootstrap_nodes;
+        const bootstrapNodes = this.config.network.bootstraps;
         utilities.shuffle(bootstrapNodes);
 
         const peercachePlugin = this.node.peercache;
@@ -274,7 +296,7 @@ class Kademlia {
         let nodes = _.uniq(bootstrapNodes.concat(peers));
         nodes = nodes.slice(0, 5); // take no more than 5 peers for joining
 
-        if (utilities.isBootstrapNode()) {
+        if (this.config.is_bootstrap_node) {
             this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             this.log.info(`Found additional ${peers.length} peers in peer cache`);
         } else {
@@ -288,7 +310,7 @@ class Kademlia {
             this.log.info('Running in seed mode (waiting for connections)');
 
             this.node.router.events.once('add', async (identity) => {
-                config.network_bootstrap_nodes = [
+                this.config.network.bootstraps = [
                     kadence.utils.getContactURL([
                         identity,
                         this.node.router.getContactByNodeId(identity),
@@ -340,7 +362,7 @@ class Kademlia {
                 this.node.refresh(this.node.router.getClosestBucket() + 1);
             }, 5000);
             return true;
-        } else if (utilities.isBootstrapNode()) {
+        } else if (this.config.is_bootstrap_node) {
             this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
             return true;
         }
@@ -792,13 +814,13 @@ class Kademlia {
      */
     validateContact(contact) {
         if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
-            if (config.local_network_only && ip.isPublic(contact.hostname)) {
+            if (this.config.local_network_only && ip.isPublic(contact.hostname)) {
                 return false;
-            } else if (!config.local_network_only && ip.isPrivate(contact.hostname)) {
+            } else if (!this.config.local_network_only && ip.isPrivate(contact.hostname)) {
                 return false;
             }
         }
-        if (!contact.network_id || contact.network_id !== config.network_id) {
+        if (!contact.network_id || contact.network_id !== this.config.network.id) {
             return false;
         }
 
