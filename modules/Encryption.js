@@ -327,7 +327,7 @@ class Encryption {
     }
 
     /**
-     * Extract addres from signature for given data
+     * Extract signer's address from signature for given data
      * @param dataArgs array
      * @param signature
      * @returns {string}
