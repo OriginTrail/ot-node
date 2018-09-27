@@ -74,9 +74,9 @@
     "blockchainContracts": {
       "otContractAddress": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
       "tokenContractAddress": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrowContractAddress": "0x34248a6e9db421a6f03757efc2a8069df9747161",
-      "biddingContractAddress": "0x20d7ca2f13c2703a594962956312ae1f56219213",
-      "readingContractAddress": "0xa244abf02eb198261215b4a9693cf2b4e96bcf13"
+      "escrowContractAddress": "0xfb2fdffbcbe785fa2531618d1bed83fcc304026c",
+      "biddingContractAddress": "0x627b7731bb76cca3ff60c201ed108a8067cf2d8c",
+      "readingContractAddress": "0x79ba6d2f303762519cca5a3a456678615fa53731"
     },
     "bugSnag": {
       "releaseStage": "testnet"
