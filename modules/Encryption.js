@@ -317,7 +317,7 @@ class Encryption {
     /**
      * Sign message arguments
      * @param dataArgs
-     * @param privateKey
+     * @param privateKey (padded with 0x)
      * @returns {Signature object}
      */
     static signMessage(web3, dataArgs, privateKey) {
