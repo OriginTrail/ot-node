@@ -311,7 +311,6 @@ class Encryption {
             types.push('uint256');
             args.push(new BN(value, 16));
         }
-
         return `0x${abi.soliditySHA3(types, args).toString('hex')}`;
     }
 
@@ -321,7 +320,7 @@ class Encryption {
      * @param privateKey
      * @returns {Signature object}
      */
-    static sign(web3, dataArgs, privateKey) {
+    static signMessage(web3, dataArgs, privateKey) {
         const hash = this.generateHash(dataArgs);
         const signature = web3.eth.accounts.sign(hash, privateKey);
         return signature;
@@ -338,9 +337,9 @@ class Encryption {
         const s = utils.toBuffer(`0x${signature.slice(66, 130)}`);
         const v = Utilities.hexToNumber(utils.toBuffer(`0x${signature.slice(130, 132)}`).toString('hex'));
 
-        const dataHash = this.generateHash(dataArgs);
+        const dataHash = this.generateHash(dataArgs).slice(2);
 
-        const msg = abi.soliditySHA3(['bytes', 'bytes32'], [Buffer.from('\x19Ethereum Signed Message:\\n32'), new BN(dataHash, 16)]);
+        const msg = `0x${abi.soliditySHA3(['bytes', 'bytes32'], [Buffer.from('\x19Ethereum Signed Message:\n32', 'utf-8'), new BN(dataHash, 16)]).toString('hex')}`;
 
         const m = utils.toBuffer(msg);
         const pub = utils.ecrecover(m, v, r, s);
@@ -383,6 +382,3 @@ class Encryption {
 }
 
 module.exports = Encryption;
-
-
-console.log(Encryption.extractSignerAddress([1, 2, 3], '0x658e9151a5f92cc761968c1600bc2950bee5638f62bb8478d66e6f0dee6f00bf09ea362cd427720b55dcfe6aa4def1a97f5b1883cb89c59072ef2959027aa09d1b'));
