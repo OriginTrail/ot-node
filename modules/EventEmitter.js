@@ -870,10 +870,12 @@ class EventEmitter {
             const { edges } = message.payload;
             const wallet = message.payload.dc_wallet;
             const publicKey = message.payload.public_key;
+            const transactionHash = message.payload.transaction_hash;
 
             await dhController.handleReplicationImport(
                 importId, vertices,
                 edges, wallet, publicKey,
+                transactionHash,
             );
 
             // TODO: send fail in case of fail.
@@ -965,6 +967,7 @@ class EventEmitter {
                 public_key: keyPair.publicKey,
                 root_hash: offer.data_hash,
                 data_provider_wallet: dataInfo.data_provider_wallet,
+                transaction_hash: dataInfo.transaction_hash,
                 total_escrow_time: offer.total_escrow_time,
             };
 
