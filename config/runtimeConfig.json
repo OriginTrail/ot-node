@@ -43,7 +43,7 @@
   },
   "stable": {
     "network": {
-      "id": "StablenetV1.0.0",
+      "id": "StablenetV1.0.1",
       "bootstraps": ["https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
