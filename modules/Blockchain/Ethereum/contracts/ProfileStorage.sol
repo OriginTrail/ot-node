@@ -6,8 +6,9 @@ import './Hub.sol';
 contract ProfileStorage {
     Hub public hub;
     
-    constructor(address hubAddress) public{
+    constructor(address hubAddress) public {
         hub = Hub(hubAddress);
+        activeNodes = 1;
     }
     
     modifier onlyProfile(){
@@ -17,6 +18,7 @@ contract ProfileStorage {
     }
 
     uint256 public activeNodes;
+
     function setActiveNodes(uint256 newActiveNodes) 
     public onlyProfile {
         activeNodes = newActiveNodes;
@@ -31,7 +33,7 @@ contract ProfileStorage {
         uint256 withdrawalAmount;
         bytes32 nodeId;
     }
-    mapping(address => ProfileDefinition) profile;
+    mapping(address => ProfileDefinition) public profile;
 
     function getStake(address identity) 
     public view returns(uint256) {
