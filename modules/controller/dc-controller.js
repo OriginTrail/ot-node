@@ -81,7 +81,7 @@ class DCController {
     async verifyKeys(importId, dhNodeId, dhWallet, epk, encryptionKey) {
         await this.commandExecutor.add({
             name: 'dcOfferKeyVerificationCommand',
-            delay: 0,
+            delay: 10000,
             data: {
                 dhNodeId,
                 dhWallet,
