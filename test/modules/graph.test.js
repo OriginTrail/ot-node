@@ -3,22 +3,22 @@ const {
 } = require('mocha');
 const { assert } = require('chai');
 const sinon = require('sinon');
+const rc = require('rc');
 const Graph = require('../../modules/Graph');
 const models = require('../../models');
 const Encryption = require('../../modules/Encryption');
 const SystemStorage = require('../../modules/Database/SystemStorage');
 const Storage = require('../../modules/Storage');
-const Utilities = require('../../modules/Utilities');
-const deasync = require('deasync-promise');
 
-let selectedDatabase;
+const defaultConfig = require('../../config/config.json').development;
+const pjson = require('../../package.json');
 
 describe('graph module ', () => {
-    before('loadSelectedDatabaseInfo() and init GraphStorage', async () => {
-        Storage.models = deasync(models.sequelize.sync()).models;
-        selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
-        assert.hasAllKeys(selectedDatabase, ['id', 'database_system', 'username', 'password',
-            'host', 'port', 'max_path_length', 'database']);
+    before('Init GraphStorage', async () => {
+        const config = rc(pjson.name, defaultConfig);
+        Storage.models = (await models.sequelize.sync()).models;
+        assert.hasAllKeys(config.database, ['provider', 'username', 'password',
+            'host', 'port', 'database', 'max_path_length']);
     });
 
     after('drop myDatabaseName db', async () => {
@@ -259,7 +259,7 @@ describe('graph module ', () => {
         ]);
     });
     // TODO
-    it.skip('Encrypt vertices, key not found test', () => {
+    it.skip('Encrypt vertices, key not found test', async () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
         const sysdb = new SystemStorageStub();
         sysdb.connect.returns(Promise.resolve());
@@ -273,7 +273,7 @@ describe('graph module ', () => {
 
         const vertexData = 1;
         const encryptedVertices =
-            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
+            await Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey);
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.calledOnce(sysdb.runSystemUpdate);
@@ -304,7 +304,7 @@ describe('graph module ', () => {
     });
 
     // TODO
-    it.skip('Encrypt vertices, key found test', () => {
+    it.skip('Encrypt vertices, key found test', async () => {
         const SystemStorageStub = sinon.spy(() => sinon.createStubInstance(SystemStorage));
         const sysdb = new SystemStorageStub();
         sysdb.connect.returns(Promise.resolve());
@@ -321,7 +321,7 @@ describe('graph module ', () => {
 
         const vertexData = 1;
         const encryptedVertices =
-            deasync(Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey));
+            await Graph.encryptVertices([{ data: vertexData }], keyPair.privateKey);
         assert.isNotNull(encryptedVertices);
 
         sinon.assert.notCalled(sysdb.runSystemUpdate);

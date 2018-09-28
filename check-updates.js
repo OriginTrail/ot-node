@@ -28,10 +28,18 @@ const umzug_migrations = new Umzug({
 });
 
 class AutoUpdate {
-    static update() {
-        return new Promise(async (resolve, reject) => {
+    /**
+     * Check for the update.
+     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
+     * @param {String} [options.branch] - Github repo's branch.
+     * @returns {Promise}
+     */
+    static update(options) {
+        return new Promise(async (resolve) => {
             var autoupdater = new AutoUpdater({
                 pathToJson: '',
+                repo: options.repo,
+                branch: options.branch,
                 autoupdate: false,
                 checkgit: true,
                 jsonhost: 'raw.githubusercontent.com',

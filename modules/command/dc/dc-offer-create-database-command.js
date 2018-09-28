@@ -14,7 +14,7 @@ class DCOfferCreateDatabaseCommand extends Command {
         this.graphStorage = ctx.graphStorage;
     }
 
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             importId,
             replicationId,
@@ -74,7 +74,7 @@ class DCOfferCreateDatabaseCommand extends Command {
             start_tender_time: Date.now(), // TODO: Problem. Actual start time is returned by SC.
             status: 'PENDING',
         };
-        newOfferRow = await Models.offers.create(newOfferRow, { transaction });
+        newOfferRow = await Models.offers.create(newOfferRow);
 
         const { data } = command;
         Object.assign(data, {
@@ -99,7 +99,7 @@ class DCOfferCreateDatabaseCommand extends Command {
         const command = {
             name: 'dcOfferCreateDatabaseCommand',
             delay: 0,
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

@@ -1,7 +1,6 @@
 const Models = require('../../../models/index');
 const Command = require('../command');
 
-const BN = require('bn.js');
 const Utilities = require('../../Utilities');
 const ImportUtilities = require('../../ImportUtilities');
 const Graph = require('../../Graph');
@@ -16,16 +15,15 @@ class DHDataReadRequestFreeCommand extends Command {
         this.graphStorage = ctx.graphStorage;
         this.config = ctx.config;
         this.web3 = ctx.web3;
-        this.network = ctx.network;
+        this.transport = ctx.transport;
         this.notifyError = ctx.notifyError;
     }
 
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const {
             message,
         } = command.data;
@@ -135,12 +133,12 @@ class DHDataReadRequestFreeCommand extends Command {
                 ),
             };
 
-            await this.network.kademlia().sendDataReadResponse(dataReadResponseObject, nodeId);
+            await this.transport.sendDataReadResponse(dataReadResponseObject, nodeId);
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
             this.logger.warn(errorMessage);
             this.notifyError(e);
-            await this.network.kademlia().sendDataReadResponse({
+            await this.transport.sendDataReadResponse({
                 status: 'FAIL',
                 message: errorMessage,
             }, nodeId);
@@ -157,7 +155,7 @@ class DHDataReadRequestFreeCommand extends Command {
     default(map) {
         const command = {
             name: 'dhDataReadRequestFreeCommand',
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

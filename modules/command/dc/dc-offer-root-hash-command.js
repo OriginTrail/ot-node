@@ -19,23 +19,26 @@ class DCOfferRootHashCommand extends Command {
             offerId,
             importId,
             rootHash,
+            importHash,
         } = command.data;
 
-        const blockchainRootHash = await this.blockchain.getRootHash(
+        const result = await this.blockchain.getRootHash(
             this.config.node_wallet,
             importId,
         );
+        const blockchainRootHash = result.graph_hash;
         const { data } = command;
         if (blockchainRootHash.toString() === '0x0000000000000000000000000000000000000000000000000000000000000000') {
             this.remoteControl.writingRootHash(importId);
             try {
-                const result = await this.blockchain.writeRootHash(importId, rootHash);
+                const result = await this.blockchain.writeRootHash(importId, rootHash, importHash);
                 const dataInfo = await Models.data_info.findOne({
                     where: { import_id: data.importId },
                 });
                 dataInfo.transaction_hash = result.transactionHash;
                 await dataInfo.save({ fields: ['transaction_hash'] });
                 this.logger.info('Fingerprint written on blockchain');
+                this.remoteControl.fingerprintWritten('Fingerprint written on blockchain', importId);
             } catch (err) {
                 await this._notify(err, offerId);
                 throw Error(`Failed to write fingerprint on blockchain. ${err}`);
@@ -59,7 +62,8 @@ class DCOfferRootHashCommand extends Command {
             const offer = await Models.offers.findOne({ where: { id: offerId } });
             if (offer) {
                 offer.status = 'FAILED';
-                await offer.save({ fields: ['status'] });
+                offer.message = 'Offer failed';
+                await offer.save({ fields: ['status', 'message'] });
             }
         }
         this.notifyError(err);

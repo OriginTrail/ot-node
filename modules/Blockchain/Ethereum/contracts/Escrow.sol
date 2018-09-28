@@ -96,16 +96,18 @@ library SafeMath {
      ERC20 public token;
      Bidding public bidding;
      Reading public reading;
+     uint256 public litigation_interval;
 
      modifier senderNotZero() {
           require(msg.sender != address(0), "Sender address cannot be 0");
           _;
      }
-
+     
      function EscrowHolder(address tokenAddress)
      public senderNotZero{
           require ( tokenAddress != address(0), "Token address cannot be 0");
           token = ERC20(tokenAddress);
+          litigation_interval = 15 * 60; // Starting interval time = 15 minutes
      }
 
      function setBidding(address biddingAddress) 
@@ -143,6 +145,8 @@ library SafeMath {
           uint256 checksum;
 
           EscrowStatus escrow_status;
+
+          uint256 litigation_interval;
      }
 
      mapping(bytes32 => mapping(address => EscrowDefinition)) public escrow;
@@ -169,6 +173,7 @@ library SafeMath {
           this_escrow.end_time = 0;
           this_escrow.total_time_in_seconds = total_time_in_minutes.mul(60);
           this_escrow.escrow_status = EscrowStatus.initiated;
+          this_escrow.litigation_interval = litigation_interval;
 
           emit EscrowInitated(import_id, DH_wallet, token_amount, stake_amount, total_time_in_minutes);
      }
@@ -348,7 +353,7 @@ library SafeMath {
 
           require(this_litigation.litigation_status == LitigationStatus.initiated, "Litigation status must be initiated");
 
-          if(block.timestamp > this_litigation.litigation_start_time + 15 minutes){
+          if(block.timestamp > this_litigation.litigation_start_time + this_escrow.litigation_interval){
                uint256 amount_to_send;
 
                uint cancelation_time = this_litigation.litigation_start_time;
@@ -394,10 +399,10 @@ library SafeMath {
      function cancelInactiveLitigation(bytes32 import_id)
      public senderNotZero{
           LitigationDefinition storage this_litigation = litigation[import_id][msg.sender];
-
+          EscrowDefinition storage this_escrow = escrow[import_id][msg.sender];
           require(this_litigation.litigation_status == LitigationStatus.answered, "Litigation status must be answered");
-          require(this_litigation.answer_timestamp + 15 minutes <= block.timestamp,
-          "Function cannot be called within 15 minutes after answering litigation");
+          require(this_litigation.answer_timestamp + this_escrow.litigation_interval <= block.timestamp,
+          "Function cannot be called within this_escrow.litigation_interval after answering litigation");
 
           this_litigation.litigation_status = LitigationStatus.completed;
           emit LitigationCompleted(import_id, msg.sender, false);
@@ -414,8 +419,8 @@ library SafeMath {
                     || this_litigation.litigation_status == LitigationStatus.answered, "Litigation status not initiated or answered");
 
           if (this_litigation.litigation_status == LitigationStatus.initiated){
-               require(this_litigation.litigation_start_time + 15 minutes <= block.timestamp,
-                    "Function cannot be called within 15 minutes after initiating litigation");
+               require(this_litigation.litigation_start_time + this_escrow.litigation_interval <= block.timestamp,
+                    "Function cannot be called within this_escrow.litigation_interval after initiating litigation");
 
                uint256 amount_to_send;
 

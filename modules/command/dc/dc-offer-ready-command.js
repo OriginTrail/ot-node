@@ -15,19 +15,19 @@ class DCOfferReadyCommand extends Command {
     /**
      * Executes command and produces one or more events
      * @param command
-     * @param transaction
      */
-    async execute(command, transaction) {
+    async execute(command) {
         const { importId, offerId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'FinalizeOfferReady', import_id: importId, finished: 0 }, transaction });
+        const event = await Models.events.findOne({ where: { event: 'FinalizeOfferReady', import_id: importId, finished: 0 } });
         if (event) {
             this.logger.trace(`Bidding completed for import ${importId}`);
             this.remoteControl.biddingComplete(importId);
 
-            const offer = await Models.offers.findOne({ where: { id: offerId }, transaction });
+            const offer = await Models.offers.findOne({ where: { id: offerId } });
             offer.status = 'FINALIZING';
-            await offer.save({ fields: ['status'], transaction });
+            offer.message = 'Choosing bids for offer';
+            await offer.save({ fields: ['status', 'message'] });
             return this.continueSequence(this.pack(command.data), command.sequence);
         }
         return Command.repeat();
@@ -54,7 +54,7 @@ class DCOfferReadyCommand extends Command {
     async expired(command) {
         const { importId, offerId } = command.data;
         this.logger.notify(`Offer ${importId} not finalized. Canceling offer.`);
-
+        this.remoteControl.offerCanceled(`Offer ${importId} not finalized. Canceling offer.`, importId);
         return {
             commands: [{
                 name: 'dcOfferCancelCommand',
@@ -94,7 +94,7 @@ class DCOfferReadyCommand extends Command {
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
-            transactional: true,
+            transactional: false,
         };
         Object.assign(command, map);
         return command;

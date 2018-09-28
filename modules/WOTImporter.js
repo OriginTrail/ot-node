@@ -12,6 +12,7 @@ class WOTImporter {
      */
     constructor(ctx) {
         this.db = ctx.graphStorage;
+        this.config = ctx.config;
     }
 
     static copyProperties(from, to) {
@@ -27,7 +28,7 @@ class WOTImporter {
      */
     async parse(payload) {
         const parsed = JSON.parse(payload);
-        const importId = Utilities.createImportId();
+        const importId = Utilities.createImportId(this.config.node_wallet);
         const { things, sender } = parsed.data;
 
         const edges = [];

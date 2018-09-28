@@ -12,11 +12,12 @@ class GS1Importer {
         this.db = ctx.graphStorage;
         this.helper = ctx.gs1Utilities;
         this.log = ctx.logger;
+        this.config = ctx.config;
     }
 
     async processXML(err, result) {
         const GLOBAL_R = 131317;
-        const importId = Utilities.createImportId();
+        const importId = Utilities.createImportId(this.config.node_wallet);
 
         const epcisDocumentElement = result['epcis:EPCISDocument'];
 
