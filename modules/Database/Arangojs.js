@@ -534,14 +534,23 @@ class ArangoJS {
     }
 
     async findVerticesByImportId(data_id) {
-        const queryString = 'FOR v IN ot_vertices FILTER POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices FILTER v.imports != null AND POSITION(v.imports, @importId, false) != false SORT v._key RETURN v';
 
         const params = { importId: data_id };
-        return this.runQuery(queryString, params);
+        const vertices = await this.runQuery(queryString, params);
+
+        // Check if packed to fix issue with double classes.
+        const filtered = vertices.filter(v => v._dc_key);
+        if (filtered.length > 0) {
+            return vertices;
+        }
+
+        const objectClasses = await this.findObjectClassVertices();
+        return vertices.concat(objectClasses);
     }
 
     async findObjectClassVertices() {
-        const queryString = 'FOR v IN ot_vertices FILTER v.data == null SORT v._key RETURN v';
+        const queryString = 'FOR v IN ot_vertices FILTER v.vertex_type == "CLASS" AND v.imports == null SORT v._key RETURN v';
         return this.runQuery(queryString, {});
     }
 
