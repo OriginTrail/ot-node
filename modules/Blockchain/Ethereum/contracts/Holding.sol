@@ -49,8 +49,6 @@ contract Holding {
         else {
             difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
         }
-            //Calculating challenge
-        bytes32 task = blockhash(block.number) & bytes32(2 ** (difficulty * 4) - 1);
         
 
         // Writing variables into storage
@@ -58,15 +56,14 @@ contract Holding {
         holdingStorage.setOfferDataSetId(offerId, dataSetId);
         holdingStorage.setOfferHoldingTimeInMinutes(offerId, holdingTimeInMinutes);
         holdingStorage.setOfferTokenAmountPerHolder(offerId, tokenAmountPerHolder);
-        holdingStorage.setOfferTask(offerId, task);
+        holdingStorage.setOfferTask(offerId, blockhash(block.number) & bytes32(2 ** (difficulty * 4) - 1));
         holdingStorage.setOfferDifficulty(offerId, difficulty);
-        holdingStorage.setOfferTimestamp(offerId, block.timestamp);
 
         holdingStorage.setOfferRedLitigationHash(offerId, redLitigationHash);
         holdingStorage.setOfferGreenLitigationHash(offerId, greenLitigationHash);
         holdingStorage.setOfferBlueLitigationHash(offerId, blueLitigationHash);
 
-        emit OfferTask(dataSetId, msg.sender, offerId, task);
+        emit OfferTask(dataSetId, msg.sender, offerId, blockhash(block.number) & bytes32(2 ** (difficulty * 4) - 1));
         emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
   
@@ -77,39 +74,28 @@ contract Holding {
         // Verify sender
         require(msg.sender == holdingStorage.getOfferCreator(offerId), "Offer can only be finalized by its creator!");
 
-        // Verify array lengths
-        require(encryptionType.length == 3, "Encryption type array length must be 3!");
-        require(holderIdentity.length == 3, "Holder identity array length must be 3!");
-
         //Check if signatures match identities
-        address[] memory wallet = new address[](3);
-        wallet[0] = ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[0])), confirmation1);
-        wallet[1] = ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[1])), confirmation2);
-        wallet[2] = ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[2])), confirmation3);
-        require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(wallet[0])), 4), "Wallet from holder 1 does not have encryption approval!");
-        require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(wallet[1])), 4), "Wallet from holder 2 does not have encryption approval!");
-        require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(wallet[2])), 4), "Wallet from holder 3 does not have encryption approval!");
+        require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[0])), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
+        require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[1])), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
+        require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[2])), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
         //Verify task answer
-        require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
-        
+        require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!")
+
 
         //Secure funds from all parties
-        Profile profileContract = Profile(hub.profileAddress());
-        profileContract.reserveTokens(holderIdentity[0], holdingStorage.getOfferTokenAmountPerHolder(offerId));
-        profileContract.reserveTokens(holderIdentity[1], holdingStorage.getOfferTokenAmountPerHolder(offerId));
-        profileContract.reserveTokens(holderIdentity[2], holdingStorage.getOfferTokenAmountPerHolder(offerId));
-
+        Profile(hub.profileAddress()).reserveTokens(
+            holderIdentity[0],
+            holderIdentity[1],
+            holderIdentity[2],
+            holdingStorage.getOfferTokenAmountPerHolder(offerId)
+        );
 
         //Write data into storage
         for(uint8 i = 0; i < 3; i += 1) {
-            holdingStorage.setHolderActive(offerId, holderIdentity[i], true);
             holdingStorage.setHolderStakedAmount(offerId, holderIdentity[i], holdingStorage.getOfferTokenAmountPerHolder(offerId));
-            if(encryptionType[i] == 0) holdingStorage.setHolderLitigationRootHash(offerId, holderIdentity[i], holdingStorage.getOfferRedLitigationHash(offerId));
-            else if(encryptionType[i] == 1) holdingStorage.setHolderLitigationRootHash(offerId, holderIdentity[i], holdingStorage.getOfferGreenLitigationHash(offerId));
-            else if(encryptionType[i] == 2) holdingStorage.setHolderLitigationRootHash(offerId, holderIdentity[i], holdingStorage.getOfferBlueLitigationHash(offerId));
-            else require(false, "Encryption type for holder must be set to 0 (red), 1 (green), or 2 (blue)!");
-            holdingStorage.setHolderStartTime(offerId, holderIdentity[0], block.timestamp);
+            holdingStorage.setHolderLitigationEncryptionType(offerId, holderIdentity[i], encryptionType[i]);
+            holdingStorage.setHolderStartTime(offerId, holderIdentity[i], block.timestamp);
         }
 
         emit OfferFinalized(offerId, holderIdentity[0], holderIdentity[1], holderIdentity[2]);

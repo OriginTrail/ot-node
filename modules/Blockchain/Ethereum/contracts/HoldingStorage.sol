@@ -128,6 +128,7 @@ contract HoldingStorage {
         bool active;
         uint256 stakedAmount;
         bytes32 litigationRootHash;
+        uint256 litigationEncryptionType;
         uint256 startTime;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
@@ -143,6 +144,10 @@ contract HoldingStorage {
     function setHolderLitigationRootHash (bytes32 offerId, address identity, bytes32 litigationRootHash)
     public onlyHolding {
         holder[offerId][identity].litigationRootHash = litigationRootHash;
+    }
+    function setHolderLitigationEncryptionType(bytes32 offerId, address identity, uint256 litigationEncryptionType)
+    public onlyHolding {
+        holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
     }
     function setHolderStartTime (bytes32 offerId, address identity, uint256 startTime)
     public onlyHolding {

@@ -55,6 +55,12 @@ contract Profile {
             profileStorage.setStake(msg.sender, initialBalance);
             profileStorage.setNodeId(msg.sender, profileNodeId);
         }
+
+        if(initialBalance > minimalStake) {
+            uint256 activeNodes = profileStorage.activeNodes();
+            activeNodes += 1;
+            profileStorage.setActiveNodes(activeNodes);
+        }
     }
 
     function depositTokens(uint256 amount) public {
@@ -121,19 +127,41 @@ contract Profile {
         emit TokensWithdrawn(msg.sender, profileStorage.getWithdrawalAmount(msg.sender), balance);
     }
     
-    function reserveTokens(address identity, uint256 amount) public onlyHolding {
-        if(profileStorage.getWithdrawalPending(identity)) {
-            profileStorage.setWithdrawalPending(identity,false);
-            emit TokenWithdrawalCancelled(identity);
+    function reserveTokens(address identity1, address identity2, address identity3, uint256 amount) public onlyHolding {
+        if(profileStorage.getWithdrawalPending(identity1)) {
+            profileStorage.setWithdrawalPending(identity1,false);
+            emit TokenWithdrawalCancelled(identity1);
+        }
+        if(profileStorage.getWithdrawalPending(identity2)) {
+            profileStorage.setWithdrawalPending(identity2,false);
+            emit TokenWithdrawalCancelled(identity2);
+        }
+        if(profileStorage.getWithdrawalPending(identity3)) {
+            profileStorage.setWithdrawalPending(identity3,false);
+            emit TokenWithdrawalCancelled(identity3);
         }
 
-        require(minimalStake >= profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity)).sub(amount), 
+        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)).sub(amount), 
+            "Profile does not have enough stake for reserving!");
+        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)).sub(amount), 
+            "Profile does not have enough stake for reserving!");
+        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)).sub(amount), 
             "Profile does not have enough stake for reserving!");
 
-        uint256 stakeReserved = profileStorage.getStakeReserved(identity);
+        uint256 stakeReserved = profileStorage.getStakeReserved(identity1);
         stakeReserved = stakeReserved.add(amount);
-        profileStorage.setStakeReserved(identity, stakeReserved);
+        profileStorage.setStakeReserved(identity1, stakeReserved);
 
-        emit TokensReserved(identity, amount);
+        stakeReserved = profileStorage.getStakeReserved(identity2);
+        stakeReserved = stakeReserved.add(amount);
+        profileStorage.setStakeReserved(identity2, stakeReserved);
+
+        stakeReserved = profileStorage.getStakeReserved(identity3);
+        stakeReserved = stakeReserved.add(amount);
+        profileStorage.setStakeReserved(identity3, stakeReserved);
+
+        emit TokensReserved(identity1, amount);
+        emit TokensReserved(identity2, amount);
+        emit TokensReserved(identity3, amount);
     }
 }
