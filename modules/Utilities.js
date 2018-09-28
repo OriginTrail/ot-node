@@ -298,6 +298,9 @@ class Utilities {
         if (msg.includes('connect ehostunreach')) {
             return null;
         }
+        if (msg.includes('ssl23_get_server_hello')) {
+            return null;
+        }
         return {
             level,
             msg,
