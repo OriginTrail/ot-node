@@ -127,7 +127,8 @@ contract Profile {
         emit TokensWithdrawn(msg.sender, profileStorage.getWithdrawalAmount(msg.sender), balance);
     }
     
-    function reserveTokens(address identity1, address identity2, address identity3, uint256 amount) public onlyHolding {
+    function reserveTokens(address identity1, address identity2, address identity3, uint256 amount) 
+    public onlyHolding {
         if(profileStorage.getWithdrawalPending(identity1)) {
             profileStorage.setWithdrawalPending(identity1,false);
             emit TokenWithdrawalCancelled(identity1);
