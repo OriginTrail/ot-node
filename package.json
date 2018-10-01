@@ -7,10 +7,13 @@
     "bugsnagkey": "64a98977c830d8c77ab28050a28ef310"
   },
   "scripts": {
-    "test": "nyc mocha --recursive test/modules/*.test.js test/modules/command/dc/*.test.js test/protocol/*.test.js test/api/*.test.js",
-    "test:unit": "nyc mocha --recursive test/modules/*.test.js test/modules/command/dc/*.test.js",
-    "test:api": "nyc mocha --recursive test/api/*.test.js",
-    "test:protocol": "nyc mocha --recursive test/protocol/*.test.js",
+    "test": "nyc mocha --exit $(find test -name '*.js')",
+    "test:unit": "nyc mocha --exit $(find test/modules -name '*.js')",
+    "test:unit:nocov": "mocha --exit $(find test/modules -name '*.js')",
+    "test:api": "nyc mocha --exit $(find test/api -name '*.js')",
+    "test:api:nocov": "mocha --exit $(find test/api -name '*.js')",
+    "test:protocol": "nyc mocha --exit $(find test/protocol -name '*.js')",
+    "test:protocol:nocov": "mocha --exit $(find test/protocol -name '*.js')",
     "start": "node node_version_check.js && node ot-node.js",
     "bootstrap": "npm run setup:hard",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js switchDatabase.js add_db_backup.js check-updates.js",
@@ -18,7 +21,10 @@
     "db_backup": "node add_db_backup.js",
     "setup": "node ./scripts/setup.js",
     "setup:hard": "node ./scripts/setup.js --hard",
-    "setup:hard:all": "node ./scripts/setup.js --hard --all"
+    "setup:hard:all": "node ./scripts/setup.js --hard --all",
+    "debug:test:unit": "mocha --inspect-brk --exit $(find test/modules -name '*.js')",
+    "debug:test:api": "mocha --inspect-brk --exit $(find test/api -name '*.js')",
+    "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
