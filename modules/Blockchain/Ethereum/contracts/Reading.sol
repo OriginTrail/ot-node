@@ -47,7 +47,7 @@ contract Ownable {
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
      * account.
      */
-    function Ownable () public {
+    constructor () public {
      	owner = msg.sender;
     }
 
@@ -114,8 +114,8 @@ contract Reading is Ownable{
 	event PurchaseDisputeCompleted(bytes32 import_id, address DH_wallet, address DV_wallet, bool proof_was_correct);
     event PurchasePayment(bytes32 import_id, address DH_wallet, address DV_wallet, uint256 amount);
 
-	function Reading(address escrow_address)
-	public senderNotZero{
+	constructor(address escrow_address)
+	public{
 		require(escrow_address != address(0));
 		escrow = escrow_address;
 	}
@@ -271,9 +271,9 @@ contract Reading is Ownable{
 	public senderNotZero{
 		PurchaseDefinition storage this_purchase = purchase[msg.sender][DV_wallet][import_id];
 
-		bool commitment_proof = this_purchase.commitment == keccak256(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index);
+		bool commitment_proof = this_purchase.commitment == keccak256(abi.encodePacked(checksum_left, checksum_right, checksum_hash, random_number_1, random_number_2, decryption_key, block_index));
 		bool checksum_hash_proof =
-			checksum_hash == keccak256(bytes32(checksum_left + uint256(keccak256(uint256(uint256(keccak256(decryption_key ^ this_purchase.encrypted_block)) - block_index - 1))) % (2**128) + random_number_1 + checksum_right - random_number_2));
+			checksum_hash == keccak256(abi.encodePacked(bytes32(checksum_left + uint256(keccak256(abi.encodePacked(uint256(uint256(keccak256(abi.encodePacked(decryption_key ^ this_purchase.encrypted_block))) - block_index - 1)))) % (2**128) + random_number_1 + checksum_right - random_number_2)));
 
 		if(commitment_proof == true && checksum_hash_proof == true) {
 			bidding.increaseBalance(msg.sender, this_purchase.token_amount.add(SafeMath.mul(this_purchase.token_amount,this_purchase.stake_factor)));
