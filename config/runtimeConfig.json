@@ -43,16 +43,16 @@
   },
   "stable": {
     "network": {
-      "id": "StablenetV1.0.0",
+      "id": "StablenetV1.0.1",
       "bootstraps": ["https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "blockchainContracts": {
       "otContractAddress": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
       "tokenContractAddress": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrowContractAddress": "0x6103d41059145b72f7ce5760910c017838454bca",
-      "biddingContractAddress": "0x4e3f704a3a8e874cf576606ed3b2a5e7bff37ad5",
-      "readingContractAddress": "0x35459b23d3eae1c82b8f349e9df4d28bc11ac5a9"
+      "escrowContractAddress": "0x68da38286d0dde6b06261655490af1074e0c5572",
+      "biddingContractAddress": "0x5ecbb18f557049133b42bfe44f892ad7d768d633",
+      "readingContractAddress": "0x930a3b8c660c4f6bdd74f9181bb82ad3a55d2f64"
     },
     "bugSnag": {
       "releaseStage": "stable"
