@@ -89,6 +89,7 @@ class Importer {
         } = json_document;
 
         this.log.trace('Import vertices and edges');
+        ImportUtilities.deleteInternal(edges);
         ImportUtilities.deleteInternal(vertices);
 
         if (packKeys) {

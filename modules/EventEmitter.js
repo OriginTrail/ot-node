@@ -947,6 +947,7 @@ class EventEmitter {
             const objectClassVertices = values[2];
 
             vertices = vertices.concat(...objectClassVertices);
+            ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
 
             const keyPair = Encryption.generateKeyPair();
