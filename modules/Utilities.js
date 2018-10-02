@@ -110,7 +110,7 @@ class Utilities {
                 // eslint-disable-next-line no-template-curly-in-string
                 packageDir: '${__dirname}/../',
                 install: false,
-                scopeList: ['dependencies', 'devDependencies'],
+                scopeList: ['dependencies'],
                 verbose: false,
             }).then((output) => {
                 if (!output.depsWereOk) {
