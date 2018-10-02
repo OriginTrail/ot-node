@@ -58,6 +58,7 @@ class DataReplication {
                 vertices: data.vertices,
                 root_hash: data.root_hash,
                 data_provider_wallet: dataimport.data_provider_wallet,
+                transaction_hash: data.transaction_hash,
             },
         };
 

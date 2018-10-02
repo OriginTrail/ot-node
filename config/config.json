@@ -67,7 +67,7 @@
     },
     "network": {
       "id": "Devnet",
-      "bootstraps": ["https://46.101.38.216:5278/#e5aa5d1e26a91d07ace18f2b25ef4d49a335c1c1"],
+      "bootstraps": ["https://46.101.38.216:5278/#fed6e96ff27ef1c288cc8b7853807ed00e85e8f7"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "bugSnag": {
