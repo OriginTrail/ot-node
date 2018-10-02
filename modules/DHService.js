@@ -82,6 +82,7 @@ class DHService {
                 throw Error(`Didn't find import with ID. ${importId}`);
             }
 
+            ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
             const holdingData = holdingDataModel.get({ plain: true });
             const dataPublicKey = holdingData.data_public_key;
