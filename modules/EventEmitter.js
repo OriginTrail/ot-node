@@ -187,6 +187,13 @@ class EventEmitter {
 
                 const result = await dhService.getImport(importId);
 
+                // Check if packed to fix issue with double classes.
+                const filtered = result.vertices.filter(v => v._dc_key);
+                if (filtered.length > 0) {
+                    result.vertices = filtered;
+                    ImportUtilities.unpackKeys(result.vertices, result.edges);
+                }
+
                 const dataimport =
                     await Models.data_info.findOne({ where: { import_id: importId } });
 
@@ -206,6 +213,7 @@ class EventEmitter {
                         ),
                         root_hash: dataimport.root_hash,
                         transaction: dataimport.transaction_hash,
+                        data_provider_wallet: dataimport.data_provider_wallet,
                     });
                 }
             } catch (error) {
@@ -251,6 +259,7 @@ class EventEmitter {
                     import_hash: di.import_hash,
                     data_size: di.data_size,
                     transaction_hash: di.transaction_hash,
+                    data_provider_wallet: di.data_provider_wallet,
                 })));
             } catch (e) {
                 logger.error('Failed to get information about imports', e);
@@ -474,7 +483,7 @@ class EventEmitter {
                     });
 
                 if (data.replicate) {
-                    this.emit('api-create-offer', { import_id, response: data.response });
+                    this.emit('api-create-offer', { import_id, import_hash, response: data.response });
                 } else {
                     await dcController.writeRootHash(import_id, root_hash, import_hash);
 
@@ -527,6 +536,7 @@ class EventEmitter {
             }
             const {
                 import_id,
+                import_hash,
                 total_escrow_time,
                 max_token_amount,
                 min_stake_amount,
@@ -543,7 +553,7 @@ class EventEmitter {
 
                 const replicationId = await dcController.createOffer(
                     import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
-                    max_token_amount, min_stake_amount, min_reputation,
+                    max_token_amount, min_stake_amount, min_reputation, import_hash,
                 );
 
                 data.response.status(201);
@@ -874,10 +884,12 @@ class EventEmitter {
             const { edges } = message.payload;
             const wallet = message.payload.dc_wallet;
             const publicKey = message.payload.public_key;
+            const transactionHash = message.payload.transaction_hash;
 
             await dhController.handleReplicationImport(
                 importId, vertices,
                 edges, wallet, publicKey,
+                transactionHash,
             );
 
             // TODO: send fail in case of fail.
@@ -937,16 +949,13 @@ class EventEmitter {
                 }
             }
 
-            const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
-            const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
-            let vertices = values[0];
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
             const edges = values[1];
-            const objectClassVertices = values[2];
 
-            vertices = vertices.concat(...objectClassVertices);
             ImportUtilities.deleteInternal(vertices);
 
             const keyPair = Encryption.generateKeyPair();
@@ -961,7 +970,7 @@ class EventEmitter {
                 status: 'PENDING',
             });
 
-            const dataInfo = Models.data_info.find({ where: { import_id } });
+            const dataInfo = await Models.data_info.find({ where: { import_id } });
 
             logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
             const data = {
@@ -972,6 +981,7 @@ class EventEmitter {
                 public_key: keyPair.publicKey,
                 root_hash: offer.data_hash,
                 data_provider_wallet: dataInfo.data_provider_wallet,
+                transaction_hash: dataInfo.transaction_hash,
                 total_escrow_time: offer.total_escrow_time,
             };
 
