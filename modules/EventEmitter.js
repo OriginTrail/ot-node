@@ -828,6 +828,7 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
+            dcController,
         } = this.ctx;
 
         // sync
@@ -892,97 +893,15 @@ class EventEmitter {
                 status: 'OK',
             });
             const message = transport.extractMessage(request);
-            const { import_id, wallet } = message;
+            const { offerId, wallet } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
             const identity = transport.extractSenderID(request);
-
-            logger.info(`Request for replication of ${import_id} received. Sender ${identity}`);
-
-            if (!import_id || !wallet) {
-                logger.warn('Asked replication without providing import ID or wallet.');
-                return;
-            }
 
             if (senderWallet !== wallet) {
                 logger.warn(`Wallet in the message differs from replication request for import ID ${import_id}.`);
             }
 
-            const offerModel = await Models.offers.findOne({
-                where: {
-                    import_id,
-                    status: { [Models.Sequelize.Op.in]: ['FINALIZING', 'FINALIZED'] },
-                },
-                order: [
-                    ['id', 'DESC'],
-                ],
-            });
-            if (!offerModel) {
-                logger.warn(`Replication request for offer I don't know: ${import_id}.`);
-                return;
-            }
-
-            const offer = offerModel.get({ plain: true });
-
-            // Check is it valid ID of replicator.
-            const offerDhIds = offer.dh_ids;
-            const offerWallets = offer.dh_wallets;
-
-            // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            if (!offerDhIds.includes(identity) || !offerWallets.includes(senderWallet)) {
-                // Check escrow to see if it was a chosen bid. Expected status to be initiated.
-                const escrow = await blockchain.getEscrow(import_id, wallet);
-
-                if (escrow.escrow_status === 0) {
-                    // const errorMessage = `Replication request
-                    //  for offer you didn't apply: ${import_id}.`;
-                    logger.info(`DH ${identity} requested data without offer for import ID ${import_id}.`);
-                    return;
-                }
-            }
-
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
-
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
-
-            const keyPair = Encryption.generateKeyPair();
-            Graph.encryptVertices(vertices, keyPair.privateKey);
-
-            const replicatedData = await Models.replicated_data.create({
-                dh_id: identity,
-                import_id,
-                offer_id: offer.id,
-                data_private_key: keyPair.privateKey,
-                data_public_key: keyPair.publicKey,
-                status: 'PENDING',
-            });
-
-            const dataInfo = await Models.data_info.find({ where: { import_id } });
-
-            logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
-            const data = {
-                contact: identity,
-                vertices,
-                edges,
-                import_id,
-                public_key: keyPair.publicKey,
-                root_hash: offer.data_hash,
-                data_provider_wallet: dataInfo.data_provider_wallet,
-                transaction_hash: dataInfo.transaction_hash,
-                total_escrow_time: offer.total_escrow_time,
-            };
-
-            dataReplication.sendPayload(data).then(() => {
-                logger.info(`Payload for ${import_id} sent to ${identity}.`);
-            }).catch((error) => {
-                logger.warn(`Failed to send payload to ${identity}. Replication ID ${replicatedData.id}. ${error}`);
-                notifyError(error);
-            });
+            await dcService.handleReplicationRequest(offerId, wallet, identity);
         });
 
         // async
@@ -990,7 +909,17 @@ class EventEmitter {
             await transport.sendResponse(response, {
                 status: 'OK',
             });
-            logger.notify('Replication finished, preparing to start challenges');
+            const dhNodeId = transport.extractSenderID(request);
+            const replicationFinishedMessage = transport.extractMessage(request);
+            const { message, messageSignature } = replicationFinishedMessage;
+
+            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                logger.warn(returnMessage);
+                return;
+            }
+            logger.notify(`Replication finished for DH node ${dhNodeId}`);
+            await dcController.addDhToOffer(dhNodeId, message.offerId);
         });
 
         // sync

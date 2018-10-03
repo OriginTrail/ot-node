@@ -11,6 +11,8 @@ class DCReplicationRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
+        this.logger = ctx.logger;
+        this.transport = ctx.transport;
     }
 
     /**
@@ -20,9 +22,9 @@ class DCReplicationRequestCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId, wallet, identity,
+            externalId, wallet, identity,
         } = command.data;
-        const offer = models.offers.findOne({ where: { external_id: offerId } });
+        const offer = await models.offers.findOne({ where: { external_id: externalId } });
         if (!offer) {
             return Command.empty();
         }
@@ -32,20 +34,22 @@ class DCReplicationRequestCommand extends Command {
 
         const colorFilePath = path.join(
             this.config.appDataPath,
-            this.config.dataSetStorage, offerId, `${color}.json`,
+            this.config.dataSetStorage, offer.id, `${color}.json`,
         );
 
         const replication = JSON.parse(await Utilities.fileContents(colorFilePath));
         await models.replicated_data.create({
             dh_id: identity,
             dh_wallet: wallet,
-            offer_id: offerId,
+            offer_id: offer.id,
             color,
         });
 
         const payload = {
             payload: {
+                offer_id: externalId,
                 edges: replication.edges,
+                data_set_id: offer.data_set_id,
                 vertices: replication.vertices,
                 public_key: replication.public_key,
                 dc_wallet: this.config.node_wallet,
@@ -54,7 +58,7 @@ class DCReplicationRequestCommand extends Command {
 
         // send payload to DH
         await this.transport.payloadRequest(payload, identity);
-        this.log.info(`Payload for offer ID ${offerId} sent to ${identity}.`);
+        this.logger.info(`Payload for offer ID ${offer.id} sent to ${identity}.`);
         return Command.empty();
     }
 

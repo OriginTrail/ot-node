@@ -1,8 +1,10 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const BN = require('bn.js');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+
+const { Op } = Models.Sequelize;
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -20,18 +22,33 @@ class DcOfferTaskCommand extends Command {
     async execute(command) {
         const { dataSetId, offerId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'OfferTask', data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')), finished: 0 } });
+        const event = await Models.events.findOne({
+            where: {
+                event: 'OfferTask',
+                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
+                finished: 0,
+            },
+        });
         if (event) {
             this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
 
-            const { task, offer_id } = JSON.parse(event.data);
-            const offer = await Models.offers.findOne({ where: { id: offerId } });
+            const { task, offerId: externalId } = JSON.parse(event.data);
+            const offer = await Models.offers.findOne({
+                where:
+                    {
+                        data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
+                        status: { [Op.in]: ['STARTED', 'PUBLISHED'] },
+                    },
+            });
+            if (!offer) {
+                throw new Error(`Offer with external ID ${offerId} doesn't exist`);
+            }
             offer.task = task;
-            offer.external_id = offer_id;
+            offer.external_id = externalId;
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'external_id', 'status', 'message'] });
-            return this.continueSequence(this.pack(command.data), command.sequence);
+            return Command.empty();
         }
         return Command.repeat();
     }

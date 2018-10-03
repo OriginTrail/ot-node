@@ -118,7 +118,7 @@ class Importer {
         return {
             vertices,
             edges,
-            dataSetId,
+            data_set_id: dataSetId,
             wallet,
         };
     }

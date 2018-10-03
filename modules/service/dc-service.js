@@ -64,34 +64,34 @@ class DCService {
 
     /**
      * Handles replication request from one DH
-     * @param offerId
+     * @param externalId
      * @param wallet
      * @param identity
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity) {
-        this.logger.info(`Request for replication of offer ID ${offerId} received. Sender ${identity}`);
+    async handleReplicationRequest(externalId, wallet, identity) {
+        this.logger.info(`Request for replication of offer external ID ${externalId} received. Sender ${identity}`);
 
-        if (!offerId || !wallet) {
+        if (!externalId || !wallet) {
             this.logger.warn('Asked replication without providing offer ID or wallet.');
             return;
         }
 
         const offerModel = await models.offers.findOne({
             where: {
-                external_id: offerId,
+                external_id: externalId,
             },
             order: [
                 ['id', 'DESC'],
             ],
         });
         if (!offerModel) {
-            this.logger.warn(`Replication request for offer ID ${offerId} that I don't know.`);
+            this.logger.warn(`Replication request for offer external ID ${externalId} that I don't know.`);
             return;
         }
         const offer = offerModel.get({ plain: true });
         if (offer.status !== 'STARTED') {
-            this.logger.warn(`Replication request for offer ${offerId} that is not in STARTED state.`);
+            this.logger.warn(`Replication request for offer external ${externalId} that is not in STARTED state.`);
             return;
         }
 
@@ -99,7 +99,7 @@ class DCService {
             name: 'dcReplicationRequestCommand',
             delay: 0,
             data: {
-                offerId,
+                externalId,
                 wallet,
                 identity,
             },

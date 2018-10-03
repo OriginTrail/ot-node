@@ -68,9 +68,10 @@ class DCOfferPrepareCommand extends Command {
                     edges,
                 )).tree.getRoot();
 
+                const objectClassVertices = await this.graphStorage.findObjectClassVertices();
                 const colorInfo = {
                     edges,
-                    vertices: encVertices,
+                    vertices: encVertices.concat(objectClassVertices),
                     privateKey: keyPair.privateKey,
                     publicKey: keyPair.publicKey,
                     litigationRootHash,

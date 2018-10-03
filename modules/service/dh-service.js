@@ -51,7 +51,7 @@ class DHService {
 
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
-            delay: 0,
+            delay: 15000,
             data: {
                 offerId,
                 dcNodeId,
@@ -62,25 +62,29 @@ class DHService {
 
     /**
      * Handle one replication payload
-     * @param importId  - Import ID
+     * @param offerId   - Offer ID
+     * @param dataSetId - Data set ID
      * @param vertices  - Encrypted import vertices
      * @param edges     - Import edges
      * @param dcWallet  - DC wallet
      * @param publicKey - Decryption key
+     * @param dcNodeId  - DC node ID
      * @param transactionHash Transaction hash of the import
      * @returns {Promise<void>}
      */
     async handleReplicationImport(
-        importId, vertices, edges, dcWallet,
-        publicKey, transactionHash,
+        offerId, dataSetId, vertices, edges, dcWallet,
+        dcNodeId, publicKey, transactionHash,
     ) {
         await this.commandExecutor.add({
             name: 'dhOfferHandleImportCommand',
             data: {
-                importId,
+                offerId,
+                dataSetId,
                 vertices,
                 edges,
                 dcWallet,
+                dcNodeId,
                 publicKey,
                 transactionHash,
             },
