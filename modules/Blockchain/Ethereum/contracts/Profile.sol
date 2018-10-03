@@ -36,6 +36,9 @@ contract Profile {
     event WithdrawalIntitiated(address profile, uint256 amount, uint256 withdrawalReadyAt);
     event TokenWithdrawalCancelled(address profile);
     event TokensWithdrawn(address profile, uint256 amounWithdrawn, uint256 newBalance);
+
+    event TokensReleased(address profile, uint256 amount);
+    event TokensTransferred(address sender, address receiver, uint256 amount);
     
     function createProfile(bytes32 profileNodeId, uint256 initialBalance, bool senderIs725) public {
         ERC20 tokenContract = ERC20(hub.tokenAddress());
@@ -164,5 +167,40 @@ contract Profile {
         emit TokensReserved(identity1, amount);
         emit TokensReserved(identity2, amount);
         emit TokensReserved(identity3, amount);
+    }
+
+    function reservePayment(address payer, uint256 amount)
+    public onlyHolding {
+        if(profileStorage.getWithdrawalPending(payer)) {
+            profileStorage.setWithdrawalPending(payer,false);
+            emit TokenWithdrawalCancelled(payer);
+        }
+
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)).sub(amount),
+            "Profile does not have enough stake for reserving!");
+
+        profileStorage.setStakeReserved(payer, profileStorage.getStakeReserved(payer).sub(amount));
+
+        emit TokensReserved(payer, amount);
+    }
+
+    function releaseTokens(address profile, uint256 amount)
+    public onlyHolding {
+        require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
+
+        profileStorage.setStakeReserved(sender, profileStorage.getStakeReserved(sender).sub(amount));
+
+        emit TokensReleased(profile, amount);
+    }
+    function transferTokens(address sender, address receiver, uint256 amount)
+    public onlyHolding {
+        require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!")
+        require(profileStorage.getStakeReserved(profile) >= amount, "Sender does not have enough tokens reserved to transfer!"");
+
+        profileStorage.setStakeReserved(sender, profileStorage.getStakeReserved(sender).sub(amount));
+        profileStorage.setStake(sender, profileStorage.getStake(sender).sub(amount));
+        profileStorage.setStake(receiver, profileStorage.getStake(receiver).add(amount));
+
+        emit TokensTransferred(sender, receiver, amount);
     }
 }

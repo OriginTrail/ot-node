@@ -88,6 +88,10 @@ contract Holding {
         require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
+        Profile(hub.profileAddress()).reservePayment(
+            msg.sender,
+            holdingStorage.getOfferTokenAmountPerHolder(offerId).mul(3)
+        );
         Profile(hub.profileAddress()).reserveTokens(
             holderIdentity[0],
             holderIdentity[1],
@@ -116,15 +120,9 @@ contract Holding {
             holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60) < block.timestamp,
             "Holding time not yet expired!");
 
-        address dataCreator = holdingStorage.getOfferCreator(offerId);
-
-        // Remove tokens reserved for payment from dataCreator
-        profileStorage.setStake(dataCreator, profileStorage.getStake(dataCreator).sub(amountToTransfer));
-        profileStorage.setStakeReserved(dataCreator, profileStorage.getStakeReserved(dataCreator).sub(amountToTransfer));
-
-        // Increase holder balance and unlock staked tokens from
-        profileStorage.setStake(msg.sender, profileStorage.getStake(msg.sender).add(amountToTransfer));
-        profileStorage.setStakeReserved(msg.sender, profileStorage.getStakeReserved(msg.sender).sub(amountToTransfer));
+        // Release tokens staked by holder and transfer tokens from data creator to holder
+        Profile(hub.profileAddress()).releaseTokens(msg.sender, amountToTransfer);
+        Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerId), msg.sender, amountToTransfer);
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
