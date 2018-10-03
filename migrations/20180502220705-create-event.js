@@ -22,8 +22,7 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-
-        import_id: {
+        data_set_id: {
             allowNull: true,
             type: Sequelize.STRING,
         },

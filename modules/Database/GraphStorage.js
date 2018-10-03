@@ -430,6 +430,25 @@ class GraphStorage {
     }
 
     /**
+     * Replaces one data set ID with another
+     * @param oldDataSet    Old data set ID
+     * @param newDataSet    New data set ID
+     * @returns {Promise<void>}
+     */
+    async replaceDataSets(oldDataSet, newDataSet) {
+        return this.db.replaceDataSets(oldDataSet, newDataSet);
+    }
+
+    /**
+     * Remove data set ID in documents from collections
+     * @param dataSetID     Data set ID
+     * @returns {Promise<void>}
+     */
+    async removeDataSetId(dataSetID) {
+        return this.db.removeDataSetId(dataSetID);
+    }
+
+    /**
      * Initializes database with predefined collections and vertices.
      * @returns {Promise<void>}
      * @private

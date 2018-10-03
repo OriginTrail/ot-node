@@ -94,7 +94,7 @@ class EventEmitter {
             config,
             appState,
             profileService,
-            dcController,
+            dcService,
             dvController,
             notifyError,
         } = this.ctx;
@@ -452,9 +452,8 @@ class EventEmitter {
             }
 
             const {
-                import_id,
+                data_set_id,
                 root_hash,
-                import_hash,
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
@@ -464,9 +463,8 @@ class EventEmitter {
                 const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
-                        import_id,
+                        data_set_id,
                         root_hash,
-                        import_hash,
                         data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
@@ -483,15 +481,17 @@ class EventEmitter {
                     });
 
                 if (data.replicate) {
-                    this.emit('api-create-offer', { import_id, import_hash, response: data.response });
+                    this.emit('api-create-offer', {
+                        dataSetId: data_set_id,
+                        dataSizeInBytes: dataSize,
+                        dataRootHash: root_hash,
+                        response: data.response,
+                    });
                 } else {
-                    await dcController.writeRootHash(import_id, root_hash, import_hash);
-
                     data.response.status(201);
                     data.response.send({
                         message: 'Import success',
-                        import_id,
-                        import_hash,
+                        data_set_id,
                         wallet: config.node_wallet,
                     });
                     remoteControl.importSucceeded();
@@ -535,30 +535,32 @@ class EventEmitter {
                 return;
             }
             const {
-                import_id,
-                import_hash,
-                total_escrow_time,
-                max_token_amount,
-                min_stake_amount,
-                min_reputation,
+                dataSetId,
+                dataRootHash,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
             } = data;
 
             try {
-                logger.info(`Preparing to create offer for import ${import_id}`);
+                logger.info(`Preparing to create offer for data set ${dataSetId}`);
 
-                const dataimport = await Models.data_info.findOne({ where: { import_id } });
-                if (dataimport == null) {
-                    throw new Error('This import does not exist in the database');
+                const dataset = await Models.data_info.findOne({
+                    where: { data_set_id: dataSetId },
+                });
+                if (dataset == null) {
+                    throw new Error('This data set does not exist in the database');
                 }
 
-                const replicationId = await dcController.createOffer(
-                    import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
-                    max_token_amount, min_stake_amount, min_reputation, import_hash,
+                const offerId = await dcService.createOffer(
+                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
+                    dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
-                    replication_id: replicationId,
+                    offer_id: offerId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
@@ -665,7 +667,6 @@ class EventEmitter {
             logger,
             config,
             appState,
-            dhController,
             notifyError,
         } = this.ctx;
 
@@ -674,21 +675,11 @@ class EventEmitter {
                 return;
             }
             const {
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                min_reputation,
-                data_hash,
-                data_size_in_bytes,
+                offerId,
+                dcNodeId,
             } = eventData;
 
-            await dhController.handleOffer(
-                import_id, DC_node_id, total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                min_reputation, data_size_in_bytes, data_hash, false,
-            );
+            await dhService.handleOffer(offerId, dcNodeId);
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
@@ -732,7 +723,7 @@ class EventEmitter {
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
                 const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
-                await dhController.handleOffer(
+                await dhService.handleOffer(
                     import_id, dcNodeId, total_escrow_time_in_minutes,
                     max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
                     createOfferEventData.min_reputation, data_size_in_bytes,
@@ -833,8 +824,8 @@ class EventEmitter {
             transport,
             blockchain,
             remoteControl,
-            dhController,
-            dcController,
+            dhService,
+            dcService,
             dvController,
             notifyError,
         } = this.ctx;
@@ -863,7 +854,7 @@ class EventEmitter {
                     wallet: msgWallet,
                     query: msgQuery,
                 } = message;
-                await dhController.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
+                await dhService.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);
@@ -886,7 +877,7 @@ class EventEmitter {
             const publicKey = message.payload.public_key;
             const transactionHash = message.payload.transaction_hash;
 
-            await dhController.handleReplicationImport(
+            await dhService.handleReplicationImport(
                 importId, vertices,
                 edges, wallet, publicKey,
                 transactionHash,
@@ -1080,7 +1071,7 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhController.handleDataReadRequestFree(message);
+            await dhService.handleDataReadRequestFree(message);
         });
 
         // async
@@ -1169,7 +1160,7 @@ class EventEmitter {
             logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
 
             const dcNodeId = transport.extractSenderID(request);
-            await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
+            await dcService.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
         });
 
         // async

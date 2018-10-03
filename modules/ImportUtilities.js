@@ -220,6 +220,33 @@ class ImportUtilities {
             delete vertex.version;
         }
     }
+
+    /**
+     * Encrypt vertices data with specified private key.
+     *
+     * All vertices that has data property will be encrypted with given private key.
+     * @param vertices Vertices to encrypt
+     * @param privateKey Encryption key
+     */
+    static immutableEncryptVertices(vertices, privateKey) {
+        const copy = utilities.copyObject(vertices);
+        for (const id in copy) {
+            const vertex = copy[id];
+            if (vertex.data) {
+                vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * Filter CLASS vertices
+     * @param vertices
+     * @returns {*}
+     */
+    static immutableFilterClassVertices(vertices) {
+        return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
+    }
 }
 
 module.exports = ImportUtilities;

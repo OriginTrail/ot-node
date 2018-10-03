@@ -84,7 +84,7 @@ class Importer {
         } = json_document;
 
         const {
-            import_id,
+            dataSetId,
             wallet,
         } = json_document;
 
@@ -110,15 +110,15 @@ class Importer {
         // TODO: Use transaction here.
         await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
             .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
-        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, import_id))
-            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
+        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
+            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
 
         this.log.info('JSON import complete');
 
         return {
             vertices,
             edges,
-            import_id,
+            dataSetId,
             wallet,
         };
     }
@@ -141,23 +141,20 @@ class Importer {
         }
 
         const {
-            import_id, wallet,
+            data_set_id, wallet,
         } = result;
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
-        const importHash = ImportUtilities.importHash(vertices, edges);
 
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
 
-        this.log.info(`Import id: ${import_id}`);
         this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
-        this.log.info(`Import hash: ${importHash}`);
+        this.log.info(`Data set ID: ${data_set_id}`);
         return {
-            import_id,
+            data_set_id,
             root_hash: merkle.tree.getRoot(),
-            import_hash: importHash,
             total_documents: merkle.hashPairs.length,
             vertices,
             edges,
