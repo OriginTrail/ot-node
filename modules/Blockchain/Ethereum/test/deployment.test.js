@@ -19,13 +19,13 @@ contract('Deployment tests', async () => {
     // eslint-disable-next-line no-undef
     it('Should get Hub contract', async () => {
         await Hub.deployed()
-        .catch((err) => {
-            assert(false, 'Hub contract is not deployed!');
-        });
+            .catch((err) => {
+                assert(false, 'Hub contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get TracToken contract', async () => {
+    it('Should get TracToken contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
         const res = await hub.tokenAddress.call();
         assert.notEqual(
@@ -34,13 +34,20 @@ contract('Deployment tests', async () => {
             'TracToken contract address in Hub is not set!',
         );
         await TracToken.deployed()
-        .catch((err) => {
-            assert(false, 'TracToken contract is not deployed!');
-        });
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'TracToken contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get Profile contract', async () => {
+    it('Should get Profile contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
         const res = await hub.profileAddress.call();
         assert.notEqual(
@@ -49,13 +56,20 @@ contract('Deployment tests', async () => {
             'Profile contract address in Hub is not set!',
         );
         await Profile.deployed()
-        .catch((err) => {
-            assert(false, 'Profile contract is not deployed!');
-        });
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'Profile contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get Holding contract', async () => {
+    it('Should get Holding contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
         const res = await hub.holdingAddress.call();
         assert.notEqual(
@@ -64,13 +78,20 @@ contract('Deployment tests', async () => {
             'Holding contract address in Hub is not set!',
         );
         await Holding.deployed()
-        .catch((err) => {
-            assert(false, 'Holding contract is not deployed!');
-        });
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'Holding contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get ProfileStorage contract', async () => {
+    it('Should get ProfileStorage contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
         const res = await hub.profileStorageAddress.call();
         assert.notEqual(
@@ -79,13 +100,20 @@ contract('Deployment tests', async () => {
             'ProfileStorage contract address in Hub is not set!',
         );
         await ProfileStorage.deployed()
-        .catch((err) => {
-            assert(false, 'ProfileStorage contract is not deployed!');
-        });
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'ProfileStorage contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get HoldingStorage contract', async () => {
+    it('Should get HoldingStorage contract and verify its value in the hub contract', async () => {
         const hub = await Hub.deployed();
         const res = await hub.holdingStorageAddress.call();
         assert.notEqual(
@@ -94,16 +122,23 @@ contract('Deployment tests', async () => {
             'HoldingStorage contract address in Hub is not set!',
         );
         await HoldingStorage.deployed()
-        .catch((err) => {
-            assert(false, 'HoldingStorage contract is not deployed!');
-        });
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'HoldingStorage contract is not deployed!');
+            });
     });
 
     // eslint-disable-next-line no-undef
     it('Should get TestingUtilities contract', async () => {
         await TestingUtilities.deployed()
-        .catch((err) => {
-            assert(false, 'TestingUtilities contract is not deployed!');
-        }) 
+            .catch((err) => {
+                assert(false, 'TestingUtilities contract is not deployed!');
+            });
     });
 });
