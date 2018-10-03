@@ -82,7 +82,7 @@ contract HoldingStorage {
         return offer[offerId].blueLitigationHash;
     }
     function getOfferStartTime (bytes32 offerId)
-    public view returns(bytes32 blueLitigationHash){
+    public view returns(uint256 startTime){
         return offer[offerId].startTime;
     }
 
