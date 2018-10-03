@@ -28,6 +28,9 @@ contract Holding {
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
         // First we check that the paramaters are valid
         require(dataRootHash != bytes32(0), "Data root hash cannot be zero");
+        require(redLitigationHash != bytes32(0), "Litigation hash cannot be zero");
+        require(greenLitigationHash != bytes32(0), "Litigation root hash cannot be zero");
+        require(blueLitigationHash != bytes32(0), "Litigation root hash cannot be zero");
         require(holdingTimeInMinutes > 0, "Holding time cannot be zero");
         require(dataSetSizeInBytes > 0, "Data size cannot be zero");
         require(tokenAmountPerHolder > 0, "Token amount per holder cannot be zero");
@@ -74,16 +77,15 @@ contract Holding {
         // Verify sender
         require(msg.sender == holdingStorage.getOfferCreator(offerId), "Offer can only be finalized by its creator!");
 
-        //Check if signatures match identities
+        // Check if signatures match identities
         require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[0])), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
         require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[1])), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[2])), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
-        //Verify task answer
-        require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!")
+        // Verify task answer
+        require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
 
-
-        //Secure funds from all parties
+        // Secure funds from all parties
         Profile(hub.profileAddress()).reserveTokens(
             holderIdentity[0],
             holderIdentity[1],
@@ -91,7 +93,7 @@ contract Holding {
             holdingStorage.getOfferTokenAmountPerHolder(offerId)
         );
 
-        //Write data into storage
+        // Write data into storage
         for(uint8 i = 0; i < 3; i += 1) {
             holdingStorage.setHolderStakedAmount(offerId, holderIdentity[i], holdingStorage.getOfferTokenAmountPerHolder(offerId));
             holdingStorage.setHolderLitigationEncryptionType(offerId, holderIdentity[i], encryptionType[i]);
@@ -101,57 +103,6 @@ contract Holding {
         emit OfferFinalized(offerId, holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
     
-    // event LitigationStarted(bytes32 offerId, address holderProfile, uint256 dataIndex, uint256 litigationTimestamp);
-    // event LitigationAnswered(bytes32 offerId, address holderProfile, uint256 dataIndex, bytes32 answerData);
-    // event LitigationCompleted(bytes32 offerId, address holderProfile, )
-    
-    // function startLitigation(bytes32 offerId, address holderProfile, uint256 dataIndex);
-    // function answerLitigation(bytes32 offerId, bytes32 answerData);
-    // function initiateReplacement(bytes32 offerId, bytes32[] missingData, bytes32 litigatorAnswerData);
-
-    function replaceHolder(bytes32 offerId, address holderIdentity, bytes32 answerData, uint256 dataIndex, 
-    bytes signedChallenge, bytes signedAnswer, 
-    bytes32 proofData, bytes32[] merkleHashes) public view {
-        bytes32 challenge = keccak256(abi.encodePacked(offerId, dataIndex));
-        address litigatorWallet = ecrecovery(challenge, signedChallenge);
-        require(ERC725(msg.sender).keyHasPurpose(keccak256(abi.encodePacked(litigatorWallet)), 4) || ERC725(msg.sender).keyHasPurpose(keccak256(abi.encodePacked(litigatorWallet)), 1));
-    
-        address holderWallet = ecrecovery(keccak256(abi.encodePacked(answerData, challenge)), signedAnswer);
-        require(ERC725(holderIdentity).keyHasPurpose(keccak256(abi.encodePacked(holderWallet)), 4) || ERC725(holderIdentity).keyHasPurpose(keccak256(abi.encodePacked(holderWallet)), 1));
-        
-        uint256 i = 0;
-        uint256 one = 1;
-        proofData = keccak256(abi.encodePacked(proofData, dataIndex));
-        answerData = keccak256(abi.encodePacked(proofData, dataIndex));
-        
-        // ako je bit 1 on je levo
-        while (i < merkleHashes.length){
-
-            if( ((one << i) & dataIndex) != 0 ){
-                proofData = keccak256(abi.encodePacked(merkleHashes[i], proofData));
-                answerData = keccak256(abi.encodePacked(merkleHashes[i], answerData));
-            }
-            else {
-                proofData = keccak256(abi.encodePacked(proofData, merkleHashes[i]));
-                answerData = keccak256(abi.encodePacked(answerData, merkleHashes[i]));
-            }
-            i++;
-        }
-
-        if(answerData == holdingStorage.getHolderLitigationRootHash(offerId, holderIdentity)){
-            
-        }
-        else {
-            if (proofData == holdingStorage.getHolderLitigationRootHash(offerId, holderIdentity)){
-                
-            }
-            else {
-                
-            }
-        }
-    }
-
-
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
         bytes32 r;
         bytes32 s;
@@ -161,7 +112,7 @@ contract Holding {
           return address(0);
 
         bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = keccak256(prefix, hash);
+        bytes32 prefixedHash = keccak256(abi.encodePacked(prefix, hash));
   
         // The signature format is a compact form of:
         //   {bytes32 r}{bytes32 s}{uint8 v}
