@@ -73,9 +73,7 @@ contract Profile {
 
         tokenContract.transferFrom(msg.sender, address(profileStorage), amount);
 
-        uint256 balance = profileStorage.getStake(msg.sender);
-        balance = balance.add(amount);
-        profileStorage.setStake(msg.sender, balance);
+        profileStorage.setStake(msg.sender, profileStorage.getStake(msg.sender).add(amount));
 
         emit TokensDeposited(msg.sender, amount, balance);
     }
@@ -121,9 +119,10 @@ contract Profile {
         // Transfer already reserved tokens to user identity
         profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(msg.sender));
         
-        uint256 balance = profileStorage.getStake(msg.sender);
-        balance = balance.sub(profileStorage.getWithdrawalAmount(msg.sender));
-        profileStorage.setStake(msg.sender, balance);
+        profileStorage.setStake(
+            msg.sender,
+            profileStorage.getStake(msg.sender).sub(profileStorage.getWithdrawalAmount(msg.sender))
+        );
 
         profileStorage.setWithdrawalPending(msg.sender, false);
         
@@ -152,17 +151,9 @@ contract Profile {
         require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)).sub(amount), 
             "Profile does not have enough stake for reserving!");
 
-        uint256 stakeReserved = profileStorage.getStakeReserved(identity1);
-        stakeReserved = stakeReserved.add(amount);
-        profileStorage.setStakeReserved(identity1, stakeReserved);
-
-        stakeReserved = profileStorage.getStakeReserved(identity2);
-        stakeReserved = stakeReserved.add(amount);
-        profileStorage.setStakeReserved(identity2, stakeReserved);
-
-        stakeReserved = profileStorage.getStakeReserved(identity3);
-        stakeReserved = stakeReserved.add(amount);
-        profileStorage.setStakeReserved(identity3, stakeReserved);
+        profileStorage.setStakeReserved(identity1, profileStorage.getStakeReserved(identity1).add(amount));
+        profileStorage.setStakeReserved(identity2, profileStorage.getStakeReserved(identity2).add(amount));
+        profileStorage.setStakeReserved(identity3, profileStorage.getStakeReserved(identity3).add(amount));
 
         emit TokensReserved(identity1, amount);
         emit TokensReserved(identity2, amount);
