@@ -5,8 +5,10 @@ import {ERC725} from './ERC725.sol';
 import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
 import {Profile} from './Profile.sol';
+import {SafeMath} from './SafeMath.sol';
 
 contract Holding {
+    using SafeMath for uint256;
 
     Hub public hub;
     HoldingStorage public holdingStorage;
@@ -101,6 +103,28 @@ contract Holding {
         }
 
         emit OfferFinalized(offerId, holderIdentity[0], holderIdentity[1], holderIdentity[2]);
+    }
+
+    function payOut(bytes32 offerId)
+    public {
+        // Verify sender
+        uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerId, msg.sender);
+        require(amountToTransfer > 0, "Sender is not holding this data set!");
+
+        // Verify that holding time expired
+        require(holdingStorage.getOfferStartTime(offerId) +
+            holdingStorage.getOfferHoldingTimeInMinutes(offerId).mul(60) < block.timestamp,
+            "Holding time not yet expired!");
+
+        address dataCreator = holdingStorage.getOfferCreator(offerId);
+
+        // Remove tokens reserved for payment from dataCreator
+        profileStorage.setStake(dataCreator, profileStorage.getStake(dataCreator).sub(amountToTransfer));
+        profileStorage.setStakeReserved(dataCreator, profileStorage.getStakeReserved(dataCreator).sub(amountToTransfer));
+
+        // Increase holder balance and unlock staked tokens from
+        profileStorage.setStake(msg.sender, profileStorage.getStake(msg.sender).add(amountToTransfer));
+        profileStorage.setStakeReserved(msg.sender, profileStorage.getStakeReserved(msg.sender).sub(amountToTransfer));
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
