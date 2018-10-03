@@ -14,7 +14,7 @@ module.exports = {
             },
         },
     },
-    
+
     networks: {
         development: {
             host: 'localhost',
@@ -44,7 +44,9 @@ module.exports = {
             port: 8545,
             provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
-            gas: 4612388, // Gas limit used for deploys
+            gas: 6000000, // Gas limit used for deploys
+            websockets: true,
+            skipDryRun: true,
         },
     },
 };
