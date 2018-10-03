@@ -30,14 +30,18 @@ contract HoldingStorage {
     struct OfferDefinition {
         address creator;
         bytes32 dataSetId;
+
         uint256 holdingTimeInMinutes;
         uint256 tokenAmountPerHolder;
+
         bytes32 task;
         uint256 difficulty;
 
         bytes32 redLitigationHash;
         bytes32 greenLitigationHash;
         bytes32 blueLitigationHash;
+
+        uint256 startTime;
     }
     mapping(bytes32 => OfferDefinition) public offer; // offer[offerId];
 
@@ -77,6 +81,10 @@ contract HoldingStorage {
     public view returns(bytes32 blueLitigationHash){
         return offer[offerId].blueLitigationHash;
     }
+    function getOfferStartTime (bytes32 offerId)
+    public view returns(bytes32 blueLitigationHash){
+        return offer[offerId].startTime;
+    }
 
     function setOfferCreator (bytes32 offerId, address creator)
     public onlyHolding {
@@ -114,11 +122,15 @@ contract HoldingStorage {
     public onlyHolding {
         offer[offerId].blueLitigationHash = blueLitigationHash;
     }
+    function setOfferStartTime (bytes32 offerId, uint256 startTime)
+    public onlyHolding {
+        offer[offerId].startTime = startTime;
+    }
+
 
     struct HolderDefinition {
         uint256 stakedAmount;
         uint256 litigationEncryptionType;
-        uint256 startTime;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
@@ -130,8 +142,13 @@ contract HoldingStorage {
     public onlyHolding {
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
     }
-    function setHolderStartTime (bytes32 offerId, address identity, uint256 startTime)
-    public onlyHolding {
-        holder[offerId][identity].startTime = startTime;
+
+    function getHolderStakedAmount (bytes32 offerId, address identity)
+    public view returns(uint256 stakedAmount) {
+        return holder[offerId][identity].stakedAmount;
+    }
+    function getHolderLitigationEncryptionType(bytes32 offerId, address identity)
+    public view returns(uint256 litigationEncryptionType) {
+        return holder[offerId][identity].litigationEncryptionType;
     }
 }

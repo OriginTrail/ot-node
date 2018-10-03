@@ -92,12 +92,12 @@ contract Holding {
             holderIdentity[2],
             holdingStorage.getOfferTokenAmountPerHolder(offerId)
         );
+        holdingStorage.setOfferStartTime(offerId, block.timestamp);
 
         // Write data into storage
         for(uint8 i = 0; i < 3; i += 1) {
             holdingStorage.setHolderStakedAmount(offerId, holderIdentity[i], holdingStorage.getOfferTokenAmountPerHolder(offerId));
             holdingStorage.setHolderLitigationEncryptionType(offerId, holderIdentity[i], encryptionType[i]);
-            holdingStorage.setHolderStartTime(offerId, holderIdentity[i], block.timestamp);
         }
 
         emit OfferFinalized(offerId, holderIdentity[0], holderIdentity[1], holderIdentity[2]);
@@ -135,7 +135,6 @@ contract Holding {
 
         return ecrecover(prefixedHash, v, r, s);
     }
-
 
     function logs2(uint x) internal pure returns (uint y){
         require(x > 0, "log(0) not allowed");

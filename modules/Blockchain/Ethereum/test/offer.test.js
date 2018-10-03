@@ -156,6 +156,7 @@ contract('Offer testing', async (accounts) => {
         assert.equal(res.redLitigationHash, redLitigationHash, 'Red litigation hash not matching!');
         assert.equal(res.greenLitigationHash, greenLitigationHash, 'Green litigation hash not matching!');
         assert.equal(res.blueLitigationHash, blueLitigationHash, 'Blue litigation hash not matching!');
+        assert.equal(res.startTime, 0, 'Start time set before it should be set!');
         assert.notEqual(res.difficulty, 0, 'Difficulty not written!');
     });
 
@@ -232,7 +233,6 @@ contract('Offer testing', async (accounts) => {
 
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
             assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
-            assert.notEqual(res.startTime, 0, 'Difficulty not written!');
         }
     });
 });
