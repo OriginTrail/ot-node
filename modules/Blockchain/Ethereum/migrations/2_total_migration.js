@@ -1,9 +1,9 @@
-var BN = require('BN.js');
+const BN = require('bn.js');
 
-var TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
-var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
-var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
-var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
+const TracToken = artifacts.require('TracToken'); // eslint-disable-line no-undef
+const Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
+const MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
+const TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
 const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(25)));
 
@@ -15,7 +15,7 @@ module.exports = async (deployer, network, accounts) => {
     case 'mock':
 
         await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2])
-        .then(result => token = result);
+            .then(result => token = result);
         holding = await deployer.deploy(MockHolding);
         var amounts = [];
         var recepients = [];
@@ -23,7 +23,7 @@ module.exports = async (deployer, network, accounts) => {
             amounts.push(amountToMint);
             recepients.push(accounts[i]);
         }
-        await token.mintMany(recepients, amounts, { from: accounts[0] })
+        await token.mintMany(recepients, amounts, { from: accounts[0] });
 
         console.log('\n\n \t Contract adressess on ganache (mock versions):');
         console.log(`\t Token contract address: \t${token.address}`);
