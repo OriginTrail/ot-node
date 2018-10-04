@@ -21,10 +21,10 @@ contract Holding {
     }
 
 
-    event OfferTask(bytes32 dataSetId, address dcNodeId, bytes32 offerId, bytes32 task);
+    event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
     event OfferCreated(bytes32 offerId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
-    
+
     function createOffer(bytes32 dataSetId, 
     bytes32 dataRootHash, bytes32 redLitigationHash, bytes32 greenLitigationHash, bytes32 blueLitigationHash, bytes32 dcNodeId, 
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
@@ -54,24 +54,23 @@ contract Holding {
         else {
             difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
         }
-        
 
         // Writing variables into storage
         holdingStorage.setOfferCreator(offerId, msg.sender);
         holdingStorage.setOfferDataSetId(offerId, dataSetId);
         holdingStorage.setOfferHoldingTimeInMinutes(offerId, holdingTimeInMinutes);
         holdingStorage.setOfferTokenAmountPerHolder(offerId, tokenAmountPerHolder);
-        holdingStorage.setOfferTask(offerId, blockhash(block.number) & bytes32(2 ** (difficulty * 4) - 1));
+        holdingStorage.setOfferTask(offerId, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
         holdingStorage.setOfferDifficulty(offerId, difficulty);
 
         holdingStorage.setOfferRedLitigationHash(offerId, redLitigationHash);
         holdingStorage.setOfferGreenLitigationHash(offerId, greenLitigationHash);
         holdingStorage.setOfferBlueLitigationHash(offerId, blueLitigationHash);
 
-        emit OfferTask(dataSetId, msg.sender, offerId, blockhash(block.number) & bytes32(2 ** (difficulty * 4) - 1));
+        emit OfferTask(dataSetId, dcNodeId, offerId, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
         emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
-  
+
     function finalizeOffer(bytes32 offerId, uint256 shift, 
         bytes confirmation1, bytes confirmation2, bytes confirmation3,
         uint8[] encryptionType, address[] holderIdentity) 
@@ -85,7 +84,8 @@ contract Holding {
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[2])), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
         // Verify task answer
-        require((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> shift & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
+
+        require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
         Profile(hub.profileAddress()).reservePayment(
