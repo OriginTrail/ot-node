@@ -45,10 +45,6 @@ class DCController {
             });
         }
     }
-
-    async addDhToOffer(dcNodeID, offerId) {
-        // TODO
-    }
 }
 
 module.exports = DCController;

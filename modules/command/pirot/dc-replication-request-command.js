@@ -22,9 +22,9 @@ class DCReplicationRequestCommand extends Command {
      */
     async execute(command) {
         const {
-            externalId, wallet, identity,
+            offerId, wallet, identity,
         } = command.data;
-        const offer = await models.offers.findOne({ where: { external_id: externalId } });
+        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (!offer) {
             return Command.empty();
         }
@@ -41,14 +41,21 @@ class DCReplicationRequestCommand extends Command {
         await models.replicated_data.create({
             dh_id: identity,
             dh_wallet: wallet,
-            offer_id: offer.id,
-            public_key: replication.publicKey,
+            offer_id: offer.offer_id,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            status: 'STARTED',
             color,
         });
 
         const payload = {
             payload: {
-                offer_id: externalId,
+                offer_id: offerId,
                 data_set_id: offer.data_set_id,
                 dc_wallet: this.config.node_wallet,
                 edges: replication.edges,

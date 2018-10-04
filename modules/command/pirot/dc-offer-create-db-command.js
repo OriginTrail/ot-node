@@ -20,7 +20,7 @@ class DCOfferCreateDbCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId,
+            internalOfferId,
             redLitigationHash,
             blueLitigationHash,
             greenLitigationHash,
@@ -29,7 +29,7 @@ class DCOfferCreateDbCommand extends Command {
             litigationIntervalInMinutes,
         } = command.data;
 
-        const offer = await models.offers.findOne({ where: { id: offerId } });
+        const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.holding_time_in_minutes = holdingTimeInMinutes.toString();
         offer.token_amount_per_holder = tokenAmountPerHolder.toString();
         offer.red_litigation_hash = redLitigationHash.toString();

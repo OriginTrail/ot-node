@@ -10,8 +10,9 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        external_id: {
+        offer_id: {
             type: Sequelize.INTEGER,
+            unique: true,
         },
         litigation_interval_in_minutes: {
             type: Sequelize.INTEGER,

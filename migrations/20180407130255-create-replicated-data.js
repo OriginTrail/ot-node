@@ -23,6 +23,34 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        litigation_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        litigation_root_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_root_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_epk: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        status: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('replicated_data'),
 };

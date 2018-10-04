@@ -929,15 +929,10 @@ class EventEmitter {
             });
             const dhNodeId = transport.extractSenderID(request);
             const replicationFinishedMessage = transport.extractMessage(request);
-            const { message, messageSignature } = replicationFinishedMessage;
+            const { wallet } = transport.extractSenderInfo(request);
+            const { offerId, messageSignature } = replicationFinishedMessage;
 
-            if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
-                logger.warn(returnMessage);
-                return;
-            }
-            logger.notify(`Replication finished for DH node ${dhNodeId}`);
-            await dcController.addDhToOffer(dhNodeId, message.offerId);
+            await dcService.verifyDHReplication(offerId, messageSignature, dhNodeId, wallet);
         });
 
         // sync

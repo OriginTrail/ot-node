@@ -20,7 +20,7 @@ class DCOfferCreateBcCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId,
+            internalOfferId,
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -44,9 +44,9 @@ class DCOfferCreateBcCommand extends Command {
             dataSizeInBytes,
             litigationIntervalInMinutes,
         );
-        this.logger.important(`Offer ${offerId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
+        this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'PUBLISHED';
         offer.message = 'Offer has been published to Blockchain';
         await offer.save({ fields: ['status', 'message'] });

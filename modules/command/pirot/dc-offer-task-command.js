@@ -4,8 +4,6 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
-const { Op } = Models.Sequelize;
-
 /**
  * Repeatable command that checks whether offer is ready or not
  */
@@ -20,7 +18,7 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { dataSetId, offerId } = command.data;
+        const { dataSetId, internalOfferId } = command.data;
 
         const event = await Models.events.findOne({
             where: {
@@ -32,22 +30,20 @@ class DcOfferTaskCommand extends Command {
         if (event) {
             this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
 
-            const { task, offerId: externalId } = JSON.parse(event.data);
-            const offer = await Models.offers.findOne({
-                where:
-                    {
-                        data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
-                        status: { [Op.in]: ['STARTED', 'PUBLISHED'] },
-                    },
-            });
+            const {
+                task: eventTask,
+                offerId: eventOfferId,
+            } = JSON.parse(event.data);
+
+            const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
             if (!offer) {
-                throw new Error(`Offer with external ID ${offerId} doesn't exist`);
+                throw new Error(`Offer with ID ${eventOfferId} cannot be found.`);
             }
-            offer.task = task;
-            offer.external_id = externalId;
+            offer.task = eventTask;
+            offer.offer_id = eventOfferId;
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
-            await offer.save({ fields: ['task', 'external_id', 'status', 'message'] });
+            await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
             return Command.empty();
         }
         return Command.repeat();

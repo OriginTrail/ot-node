@@ -1,3 +1,4 @@
+const BN = require('bn.js');
 const bytes = require('utf8-length');
 
 const Command = require('../command');
@@ -109,17 +110,13 @@ class DHOfferHandleImportCommand extends Command {
 
         this.logger.trace(`[DH] Replication finished for offer ID ${offerId}`);
 
-        const message = {
-            offerId,
-            wallet: this.config.node_wallet,
-        };
+        const toSign = [Utilities.denormalizeHex(offerId)];
+        const messageSignature = Encryption
+            .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
+
         const replicationFinishedMessage = {
-            message,
-            messageSignature: Utilities.generateRsvSignature(
-                JSON.stringify(message),
-                this.web3,
-                this.config.node_private_key,
-            ),
+            offerId,
+            messageSignature: messageSignature.signature,
         };
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);

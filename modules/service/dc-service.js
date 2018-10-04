@@ -48,7 +48,7 @@ class DCService {
             ],
             delay: 0,
             data: {
-                offerId: offer.id,
+                internalOfferId: offer.id,
                 dataSetId,
                 dataRootHash,
                 holdingTimeInMinutes,
@@ -64,34 +64,34 @@ class DCService {
 
     /**
      * Handles replication request from one DH
-     * @param externalId
+     * @param offerId
      * @param wallet
      * @param identity
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(externalId, wallet, identity) {
-        this.logger.info(`Request for replication of offer external ID ${externalId} received. Sender ${identity}`);
+    async handleReplicationRequest(offerId, wallet, identity) {
+        this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
-        if (!externalId || !wallet) {
+        if (!offerId || !wallet) {
             this.logger.warn('Asked replication without providing offer ID or wallet.');
             return;
         }
 
         const offerModel = await models.offers.findOne({
             where: {
-                external_id: externalId,
+                offer_id: offerId,
             },
             order: [
                 ['id', 'DESC'],
             ],
         });
         if (!offerModel) {
-            this.logger.warn(`Replication request for offer external ID ${externalId} that I don't know.`);
+            this.logger.warn(`Replication request for offer external ID ${offerId} that I don't know.`);
             return;
         }
         const offer = offerModel.get({ plain: true });
         if (offer.status !== 'STARTED') {
-            this.logger.warn(`Replication request for offer external ${externalId} that is not in STARTED state.`);
+            this.logger.warn(`Replication request for offer external ${offerId} that is not in STARTED state.`);
             return;
         }
 
@@ -99,9 +99,31 @@ class DCService {
             name: 'dcReplicationRequestCommand',
             delay: 0,
             data: {
-                externalId,
+                offerId,
                 wallet,
                 identity,
+            },
+            transactional: false,
+        });
+    }
+
+    /**
+     * Validates and adds DH signature
+     * @param offerId
+     * @param signature
+     * @param dhNodeId
+     * @param dhWallet
+     * @returns {Promise<void>}
+     */
+    async verifyDHReplication(offerId, signature, dhNodeId, dhWallet) {
+        await this.commandExecutor.add({
+            name: 'dcVerifyReplicationCommand',
+            delay: 0,
+            data: {
+                offerId,
+                signature,
+                dhNodeId,
+                dhWallet,
             },
             transactional: false,
         });

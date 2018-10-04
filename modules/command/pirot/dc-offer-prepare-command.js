@@ -35,7 +35,7 @@ class DCOfferPrepareCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId,
+            internalOfferId,
             dataSetId,
         } = command.data;
 
@@ -48,7 +48,7 @@ class DCOfferPrepareCommand extends Command {
             .map(async (color) => {
                 const colorDirPath = path.join(
                     this.config.appDataPath,
-                    this.config.dataSetStorage, offerId,
+                    this.config.dataSetStorage, internalOfferId,
                 );
 
                 const litigationKeyPair = Encryption.generateKeyPair(512);
