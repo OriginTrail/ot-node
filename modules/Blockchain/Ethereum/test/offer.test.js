@@ -25,6 +25,7 @@ var _ = require('lodash');
 
 // Global values
 var DC_wallet;
+var DC_identity;
 
 // Offer variables
 var import_id = 0;
@@ -38,23 +39,6 @@ const predestined_first_bid_index = 9;
 // Profile variables
 var privateKeys = [];
 var identities = [];
-
-
-function assertEvent(contract, filter) {
-    return new Promise((resolve, reject) => {
-        var event = contract[filter.event]();
-        event.watch();
-        event.get((error, logs) => {
-            var log = _.filter(logs, filter);
-            if (log) {
-                resolve(log);
-            } else {
-                throw Error(`Failed to find filtered event for  + ${filter.event}`);
-            }
-        });
-        event.stopWatching();
-    });
-}
 
 // eslint-disable-next-line no-undef
 contract('Offer testing', async (accounts) => {
@@ -110,6 +94,7 @@ contract('Offer testing', async (accounts) => {
         }
 
         DC_wallet = accounts[accounts.length - 1];
+        DC_identity = identities[identities.length - 1];
     });
 
     // eslint-disable-next-line no-undef
@@ -181,7 +166,54 @@ contract('Offer testing', async (accounts) => {
         const dataSetSizeInBytes = new BN(1024);
         const litigationIntervalInMinutes = new BN(10);
 
-        let res = await holding.createOffer(
+        const identity = await Identity.at(DC_identity);
+
+        let data = web3.eth.abi.encodeFunctionCall({
+            name: 'createOffer',
+            type: 'function',
+            inputs: [
+                {
+                    name: 'dataSetId',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'dataRootHash',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'redLitigationHash',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'greenLitigationHash',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'blueLitigationHash',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'dcNodeId',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'holdingTimeInMinutes',
+                    type: 'uint256',
+                },
+                {
+                    name: 'tokenAmountPerHolder',
+                    type: 'uint256',
+                },
+                {
+                    name: 'dataSetSizeInBytes',
+                    type: 'uint256',
+                },
+                {
+                    name: 'litigationIntervalInMinutes',
+                    type: 'uint256',
+                },
+            ],
+        }, [
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -192,17 +224,57 @@ contract('Offer testing', async (accounts) => {
             tokenAmountPerHolder,
             dataSetSizeInBytes,
             litigationIntervalInMinutes,
+        ]);
+        let res = await identity.execute(
+            holding.address,
+            new BN(0),
+            data,
             { from: DC_wallet },
-        ).catch((err) => {
-            assert(false, 'Failed to create offer!');
-        });
+        );
+
+        const offerCreatedEventData = web3.eth.abi.decodeParameters(
+            [
+                {
+                    name: 'dataSetId',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'dcNodeId',
+                    type: 'address',
+                },
+                {
+                    name: 'offerId',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'task',
+                    type: 'bytes32',
+                },
+            ],
+            res.receipt.logs[1].data,
+        );
 
         // eslint-disable-next-line prefer-destructuring
-        offerId = res.logs[0].args.offerId;
+        offerId = offerCreatedEventData.offerId;
+        // eslint-disable-next-line prefer-destructuring
+        const task = await holdingStorage.getOfferTask(offerId);
+        const solution = await util.keccakAddressAddressAddress.call(
+            identities[0],
+            identities[1],
+            identities[2],
+        );
+
+        for (var i = 65; i >= 2; i -= 1) {
+            if (task.charAt(task.length - 1) === solution.charAt(i)) break;
+        }
+        if (i === 2) {
+            assert(false, 'Could not find solution for offer challenge!');
+        }
+        const shift = 65 - i;
 
         // Getting hashes
         var hashes = [];
-        for (var i = 0; i < 3; i += 1) {
+        for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             hashes[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
         }
@@ -213,19 +285,55 @@ contract('Offer testing', async (accounts) => {
             confimations[i] = await web3.eth.accounts.sign(hashes[i], privateKeys[i]);
         }
 
-        // Finalizing offer
-        res = await holding.finalizeOffer(
+        data = web3.eth.abi.encodeFunctionCall({
+            name: 'finalizeOffer',
+            type: 'function',
+            inputs: [
+                {
+                    name: 'offerId',
+                    type: 'bytes32',
+                },
+                {
+                    name: 'shift',
+                    type: 'uint256',
+                },
+                {
+                    name: 'confirmation1',
+                    type: 'bytes',
+                },
+                {
+                    name: 'confirmation2',
+                    type: 'bytes',
+                },
+                {
+                    name: 'confirmation3',
+                    type: 'bytes',
+                },
+                {
+                    name: 'encryptionType',
+                    type: 'uint8[]',
+                },
+                {
+                    name: 'holderIdentity',
+                    type: 'address[]',
+                },
+            ],
+        }, [
             offerId,
-            new BN(0),
+            shift,
             confimations[0].signature,
             confimations[1].signature,
             confimations[2].signature,
             [new BN(0), new BN(1), new BN(2)],
             [identities[0], identities[1], identities[2]],
+        ]);
+
+        res = await identity.execute(
+            holding.address,
+            new BN(0),
+            data,
             { from: DC_wallet },
-        ).catch((err) => {
-            assert(false, 'Failed to finalize offer');
-        });
+        );
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
