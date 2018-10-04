@@ -1,8 +1,6 @@
 language: node_js
 node_js:
   - "9"
-services:
-  - neo4j
 env:
   - NODE_ENV=development
 sudo: enabled
@@ -24,17 +22,6 @@ script:
   - sleep 10
   - jobs
   - kill %1
-  # make sure previous deamon is really terminated
-  # - jobs
-  #  - kill $(lsof -t -i:8900)
-  # switches graph database in .env
-  # - node switchDatabase.js
-  # checks for neo4j based solution
-  # - npm run config > run-config.log
-  # - npm start &>neo4jdb.log &
-  # - sleep 10
-  # - jobs
-  # - kill %1
   # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
   - cd modules/Blockchain/Ethereum
@@ -46,12 +33,8 @@ script:
 after_script:
   - cat mocha-logs.log
   - rm -f mocha-logs.log
-  # - cat run-config.log
-  # - rm -f run-config.log
   - cat arangodb.log
   - rm -f arangodb.log
-  # - cat neo4jdb.log
-  # - rm -f neo4jdb.log
   - cat truffle-test.log
   - rm -f truffle-test.log
   - cat truffle-migrate.log
