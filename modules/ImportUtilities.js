@@ -240,6 +240,22 @@ class ImportUtilities {
     }
 
     /**
+     * Decrypts vertices with a public key
+     * @param vertices      Encrypted vertices
+     * @param public_key    Public key
+     * @returns {*}
+     */
+    static immutableDecryptVertices(vertices, public_key) {
+        const copy = utilities.copyObject(vertices);
+        for (const id in copy) {
+            if (copy[id].data) {
+                copy[id].data = Encryption.decryptObject(copy[id].data, public_key);
+            }
+        }
+        return copy;
+    }
+
+    /**
      * Filter CLASS vertices
      * @param vertices
      * @returns {*}
@@ -247,6 +263,8 @@ class ImportUtilities {
     static immutableFilterClassVertices(vertices) {
         return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
     }
+
+
 }
 
 module.exports = ImportUtilities;

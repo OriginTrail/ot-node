@@ -64,28 +64,52 @@ class DHService {
      * Handle one replication payload
      * @param offerId   - Offer ID
      * @param dataSetId - Data set ID
-     * @param vertices  - Encrypted import vertices
+     * @param litigationVertices  - Encrypted import vertices
      * @param edges     - Import edges
      * @param dcWallet  - DC wallet
-     * @param publicKey - Decryption key
+     * @param litigationPublicKey - Litigation decryption key
+     * @param distributionPublicKey - Distribution decryption key
+     * @param distributionPrivateKey - Distribution encryption key
+     * @param distributionEpkChecksum - Distribution decryption key checksum
      * @param dcNodeId  - DC node ID
-     * @param transactionHash Transaction hash of the import
+     * @param litigationRootHash - Litigation hash
+     * @param distributionRootHash - Distribution hash
+     * @param transactionHash - Transaction hash of the import
+     * @param distributionEpk - Distribution EPK
      * @returns {Promise<void>}
      */
     async handleReplicationImport(
-        offerId, dataSetId, vertices, edges, dcWallet,
-        dcNodeId, publicKey, transactionHash,
+        offerId,
+        dataSetId,
+        dcNodeId,
+        dcWallet,
+        edges,
+        litigationVertices,
+        litigationPublicKey,
+        distributionPublicKey,
+        distributionPrivateKey,
+        distributionEpkChecksum,
+        litigationRootHash,
+        distributionRootHash,
+        distributionEpk,
+        transactionHash,
     ) {
         await this.commandExecutor.add({
             name: 'dhOfferHandleImportCommand',
             data: {
                 offerId,
                 dataSetId,
-                vertices,
-                edges,
-                dcWallet,
                 dcNodeId,
-                publicKey,
+                dcWallet,
+                edges,
+                litigationVertices,
+                litigationPublicKey,
+                distributionPublicKey,
+                distributionPrivateKey,
+                distributionEpkChecksum,
+                litigationRootHash,
+                distributionRootHash,
+                distributionEpk,
                 transactionHash,
             },
             transactional: false,

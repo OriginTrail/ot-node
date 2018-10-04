@@ -871,19 +871,37 @@ class EventEmitter {
             logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
 
             const message = transport.extractMessage(request);
-            const importId = message.payload.import_id;
-            const { vertices } = message.payload;
+            const dcNodeId = transport.extractSenderID(request);
+            const offerId = message.payload.offer_id;
+            const dataSetId = message.payload.data_set_id;
             const { edges } = message.payload;
-            const wallet = message.payload.dc_wallet;
-            const publicKey = message.payload.public_key;
+            const litigationVertices = message.payload.litigation_vertices;
+            const dcWallet = message.payload.dc_wallet;
+            const litigationPublicKey = message.payload.litigation_public_key;
+            const distributionPublicKey = message.payload.distribution_public_key;
+            const distributionPrivateKey = message.payload.distribution_private_key;
+            const distributionEpkChecksum = message.payload.distribution_epk_checksum;
+            const litigationRootHash = message.payload.litigation_root_hash;
+            const distributionRootHash = message.payload.distribution_root_hash;
+            const distributionEpk = message.payload.distribution_epk;
             const transactionHash = message.payload.transaction_hash;
 
             await dhService.handleReplicationImport(
-                importId, vertices,
-                edges, wallet, publicKey,
+                offerId,
+                dataSetId,
+                dcNodeId,
+                dcWallet,
+                edges,
+                litigationVertices,
+                litigationPublicKey,
+                distributionPublicKey,
+                distributionPrivateKey,
+                distributionEpkChecksum,
+                litigationRootHash,
+                distributionRootHash,
+                distributionEpk,
                 transactionHash,
             );
-
             // TODO: send fail in case of fail.
         });
 
@@ -898,7 +916,7 @@ class EventEmitter {
             const identity = transport.extractSenderID(request);
 
             if (senderWallet !== wallet) {
-                logger.warn(`Wallet in the message differs from replication request for import ID ${import_id}.`);
+                logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
             await dcService.handleReplicationRequest(offerId, wallet, identity);

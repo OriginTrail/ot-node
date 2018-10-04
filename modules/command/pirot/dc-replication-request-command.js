@@ -42,20 +42,27 @@ class DCReplicationRequestCommand extends Command {
             dh_id: identity,
             dh_wallet: wallet,
             offer_id: offer.id,
+            public_key: replication.publicKey,
             color,
         });
 
         const payload = {
             payload: {
                 offer_id: externalId,
-                edges: replication.edges,
                 data_set_id: offer.data_set_id,
-                vertices: replication.vertices,
-                public_key: replication.public_key,
                 dc_wallet: this.config.node_wallet,
+                edges: replication.edges,
+                litigation_vertices: replication.litigationVertices,
+                litigation_public_key: replication.litigationPublicKey,
+                distribution_public_key: replication.distributionPublicKey,
+                distribution_private_key: replication.distributionPrivateKey,
+                distribution_epk_checksum: replication.distributionEpkChecksum,
+                litigation_root_hash: replication.litigationRootHash,
+                distribution_root_hash: replication.distributionRootHash,
+                transaction_hash: replication.transaction_hash,
+                distribution_epk: replication.distributionEpk,
             },
         };
-
         // send payload to DH
         await this.transport.payloadRequest(payload, identity);
         this.logger.info(`Payload for offer ID ${offer.id} sent to ${identity}.`);

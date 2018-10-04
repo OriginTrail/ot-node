@@ -1,8 +1,12 @@
 const bytes = require('utf8-length');
 
 const Command = require('../command');
+const MerkleTree = require('../../Merkle');
+const Encryption = require('../../Encryption');
+const Challenge = require('../../Challenge');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+const ImportUtilities = require('../../ImportUtilities');
 
 /**
  * Imports data for replication
@@ -28,16 +32,61 @@ class DHOfferHandleImportCommand extends Command {
         const {
             offerId,
             dataSetId,
-            vertices,
             edges,
+            litigationVertices,
+            litigationPublicKey,
+            distributionPublicKey,
+            distributionPrivateKey,
+            distributionEpk,
+            distributionEpkChecksum,
             dcWallet,
             dcNodeId,
-            publicKey,
+            litigationRootHash,
+            distributionRootHash,
         } = command.data;
+        const decryptedVertices =
+            await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
+        const calculatedDataSetId =
+            await ImportUtilities.importHash(decryptedVertices, edges);
+
+        if (dataSetId !== calculatedDataSetId) {
+            throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);
+        }
+
+        ImportUtilities.sort(litigationVertices);
+        const litigationBlocks = Challenge.getBlocks(litigationVertices, 32);
+        const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
+        const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
+
+        if (litigationRootHash !== calculatedLitigationRootHash) {
+            throw new Error(`Calculated litigation hash ${calculatedLitigationRootHash} differs from DC litigation hash ${litigationRootHash}`);
+        }
+
+        const distEncVertices = ImportUtilities.immutableEncryptVertices(
+            decryptedVertices,
+            distributionPrivateKey,
+        );
+        const calculatedDistributionRootHash = (await ImportUtilities.merkleStructure(
+            distEncVertices,
+            edges,
+        )).tree.getRoot();
+
+        if (distributionRootHash !== calculatedDistributionRootHash) {
+            throw new Error(`Calculated distribution hash ${calculatedLitigationRootHash} differs from DC distribution hash ${litigationRootHash}`);
+        }
+
+        const calculatedDistEpkChecksum = Encryption
+            .calculateDataChecksum(distributionEpk, 0, 0, 0);
+        if (distributionEpkChecksum !== calculatedDistEpkChecksum) {
+            throw new Error(`Calculated distribution EPK checksum ${calculatedDistEpkChecksum} differs from DC distribution EPK checksum ${distributionEpkChecksum}`);
+        }
+
+        const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
+        ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
 
         let importResult = await this.importer.importJSON({
             dataSetId,
-            vertices,
+            vertices: litigationVertices,
             edges,
             wallet: dcWallet,
         }, true);

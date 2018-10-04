@@ -44,8 +44,6 @@ class DCOfferPrepareCommand extends Command {
             this.graphStorage.findVerticesByImportId(dataSetId),
         ]);
 
-        const filteredVertices = ImportUtilities.immutableFilterClassVertices(vertices);
-
         const distLitRootHashes = (await Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
             .map(async (color) => {
                 const colorDirPath = path.join(
@@ -53,29 +51,42 @@ class DCOfferPrepareCommand extends Command {
                     this.config.dataSetStorage, offerId,
                 );
 
-                const keyPair = Encryption.generateKeyPair(512);
-                const encVertices = ImportUtilities.immutableEncryptVertices(
-                    filteredVertices,
-                    keyPair.privateKey,
+                const litigationKeyPair = Encryption.generateKeyPair(512);
+                const litEncVertices = ImportUtilities.immutableEncryptVertices(
+                    vertices,
+                    litigationKeyPair.privateKey,
                 );
 
-                const litigationBlocks = Challenge.getBlocks(encVertices, 32);
+                ImportUtilities.sort(litEncVertices);
+                const litigationBlocks = Challenge.getBlocks(litEncVertices, 32);
                 const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
-                const litigationRootHash = litigationBlocksMerkleTree.getRoot();
+                const litRootHash = litigationBlocksMerkleTree.getRoot();
 
-                const distributionRootHash = (await ImportUtilities.merkleStructure(
-                    filteredVertices,
+                const distributionKeyPair = Encryption.generateKeyPair(512);
+                const distEncVertices = ImportUtilities.immutableEncryptVertices(
+                    vertices,
+                    distributionKeyPair.privateKey,
+                );
+                const distMerkleStructure = await ImportUtilities.merkleStructure(
+                    distEncVertices,
                     edges,
-                )).tree.getRoot();
+                );
+                const distRootHash = distMerkleStructure.tree.getRoot();
 
-                const objectClassVertices = await this.graphStorage.findObjectClassVertices();
+                const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
+                const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
+
                 const colorInfo = {
                     edges,
-                    vertices: encVertices.concat(objectClassVertices),
-                    privateKey: keyPair.privateKey,
-                    publicKey: keyPair.publicKey,
-                    litigationRootHash,
-                    distributionRootHash,
+                    litigationVertices: litEncVertices,
+                    litigationPublicKey: litigationKeyPair.publicKey,
+                    litigationPrivateKey: litigationKeyPair.privateKey,
+                    distributionPublicKey: distributionKeyPair.publicKey,
+                    distributionPrivateKey: distributionKeyPair.privateKey,
+                    distributionEpkChecksum,
+                    litigationRootHash: litRootHash,
+                    distributionRootHash: distRootHash,
+                    distributionEpk: distEpk,
                 };
                 await Utilities.writeContentsToFile(
                     colorDirPath, `${color}.json`,
@@ -83,8 +94,8 @@ class DCOfferPrepareCommand extends Command {
                 );
 
                 const hashes = {};
-                hashes[`${color}LitigationHash`] = litigationRootHash;
-                hashes[`${color}DistributionHash`] = distributionRootHash;
+                hashes[`${color}LitigationHash`] = litRootHash;
+                hashes[`${color}DistributionHash`] = distRootHash;
                 return hashes;
             }))).reduce((acc, value) => Object.assign(acc, value));
 
