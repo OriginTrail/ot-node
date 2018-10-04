@@ -14,7 +14,7 @@ module.exports = {
             },
         },
     },
-    
+
     networks: {
         development: {
             host: 'localhost',
@@ -35,14 +35,6 @@ module.exports = {
             port: 7545,
             gas: 6000000,
             network_id: '5777',
-        },
-
-        mock: {
-            host: 'localhost',
-            port: 7545,
-            gas: 6000000,
-            network_id: '5777',
-            websockets: true,
         },
 
         rinkeby: {
