@@ -78,6 +78,7 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
 
             // Get replication key and then encrypt data.

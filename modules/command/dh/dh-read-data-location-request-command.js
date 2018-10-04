@@ -35,12 +35,25 @@ class DHReadDataLocationRequestCommand extends Command {
         }
 
         // Handle query here.
-        const imports = await this.graphStorage.findImportIds(msgQuery);
-        if (imports.length === 0) {
+        const graphImports = await this.graphStorage.findImportIds(msgQuery);
+        // Filter imports not stored in local DB.
+        let imports = await Models.data_info.findAll({
+            attributes: ['import_id'],
+            where: {
+                import_id: {
+                    [Op.in]: graphImports,
+                },
+            },
+        });
+
+        if (!imports || imports.length === 0) {
             // I don't want to participate
             this.logger.trace(`No imports found for request ${msgId}`);
             return Command.empty();
         }
+
+        // Convert to string array.
+        imports = imports.map(i => i.import_id);
 
         // Check if the import came from network. In more details I can only
         // distribute data gotten from someone else.

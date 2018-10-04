@@ -187,12 +187,6 @@ class Kademlia {
                     this.config.embedded_peercache_path,
                 )));
             this.log.info('Peercache initialised');
-            this.node.spartacus = this.node.plugin(kadence.spartacus(
-                this.xprivkey,
-                this.index,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            ));
-            this.log.info('Spartacus initialized');
 
             if (this.config.onion_enabled) {
                 this.enableOnion();
@@ -249,7 +243,6 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
-                privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),

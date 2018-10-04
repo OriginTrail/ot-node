@@ -437,7 +437,12 @@ class EventEmitter {
 
         const processImport = async (response, error, data) => {
             if (response === null) {
-                data.response.status(error.status);
+                if (typeof (error.status) !== 'number') {
+                    // TODO investigate why we get non numeric error.status
+                    data.response.status(500);
+                } else {
+                    data.response.status(error.status);
+                }
                 data.response.send({
                     message: error.message,
                 });
@@ -879,10 +884,12 @@ class EventEmitter {
             const { edges } = message.payload;
             const wallet = message.payload.dc_wallet;
             const publicKey = message.payload.public_key;
+            const transactionHash = message.payload.transaction_hash;
 
             await dhController.handleReplicationImport(
                 importId, vertices,
                 edges, wallet, publicKey,
+                transactionHash,
             );
 
             // TODO: send fail in case of fail.
@@ -942,16 +949,14 @@ class EventEmitter {
                 }
             }
 
-            const objectClassesPromise = this.graphStorage.findObjectClassVertices();
             const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
             const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
 
-            const values = await Promise.all([verticesPromise, edgesPromise, objectClassesPromise]);
-            let vertices = values[0];
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
             const edges = values[1];
-            const objectClassVertices = values[2];
 
-            vertices = vertices.concat(...objectClassVertices);
+            ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
 
             const keyPair = Encryption.generateKeyPair();
@@ -966,7 +971,7 @@ class EventEmitter {
                 status: 'PENDING',
             });
 
-            const dataInfo = Models.data_info.find({ where: { import_id } });
+            const dataInfo = await Models.data_info.find({ where: { import_id } });
 
             logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
             const data = {
@@ -977,6 +982,7 @@ class EventEmitter {
                 public_key: keyPair.publicKey,
                 root_hash: offer.data_hash,
                 data_provider_wallet: dataInfo.data_provider_wallet,
+                transaction_hash: dataInfo.transaction_hash,
                 total_escrow_time: offer.total_escrow_time,
             };
 

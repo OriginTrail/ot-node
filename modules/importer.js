@@ -89,6 +89,7 @@ class Importer {
         } = json_document;
 
         this.log.trace('Import vertices and edges');
+        ImportUtilities.deleteInternal(edges);
         ImportUtilities.deleteInternal(vertices);
 
         if (packKeys) {
@@ -202,7 +203,7 @@ class Importer {
             this.log.error(`Import error: ${error}.`);
             this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
-            const errorObject = { message: error.toString(), status: error.status };
+            const errorObject = { message: error.toString(), status: 400 };
             return {
                 response: null,
                 error: errorObject,
