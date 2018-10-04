@@ -40,6 +40,13 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
         { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/04_Pink_to_Orange_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/05_Pink_to_Orange_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/06_Pink_to_Red_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/07_Pink_to_Red_receipt.xml')] },
     ];
 
     before('Setup models', async () => {
@@ -482,6 +489,20 @@ describe('GS1 Importer tests', () => {
                 await checkGraphExample4XmlTraversalPath();
             } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
                 // TODO checkZKExampleXmlVerticeContent();
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/04_Pink_to_Orange_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/05_Pink_to_Orange_receipt.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/06_Pink_to_Red_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/07_Pink_to_Red_receipt.xml')) {
+                // TODO implement me
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }
