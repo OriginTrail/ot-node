@@ -75,7 +75,7 @@ contract Profile {
 
         profileStorage.setStake(msg.sender, profileStorage.getStake(msg.sender).add(amount));
 
-        emit TokensDeposited(msg.sender, amount, balance);
+        emit TokensDeposited(msg.sender, amount, profileStorage.getStake(msg.sender).add(amount));
     }
 
     function startTokenWithdrawal(uint256 amount) public {
@@ -126,7 +126,11 @@ contract Profile {
 
         profileStorage.setWithdrawalPending(msg.sender, false);
         
-        emit TokensWithdrawn(msg.sender, profileStorage.getWithdrawalAmount(msg.sender), balance);
+        emit TokensWithdrawn(
+            msg.sender,
+            profileStorage.getWithdrawalAmount(msg.sender),
+            profileStorage.getStake(msg.sender).sub(profileStorage.getWithdrawalAmount(msg.sender))
+        );
     }
     
     function reserveTokens(address identity1, address identity2, address identity3, uint256 amount) 
@@ -167,10 +171,10 @@ contract Profile {
             emit TokenWithdrawalCancelled(payer);
         }
 
-        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)).sub(amount),
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer).add(amount.mul(3))),
             "Profile does not have enough stake for reserving!");
 
-        profileStorage.setStakeReserved(payer, profileStorage.getStakeReserved(payer).sub(amount));
+        profileStorage.setStakeReserved(payer, profileStorage.getStakeReserved(payer).add(amount.mul(3)));
 
         emit TokensReserved(payer, amount);
     }
@@ -179,14 +183,14 @@ contract Profile {
     public onlyHolding {
         require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
 
-        profileStorage.setStakeReserved(sender, profileStorage.getStakeReserved(sender).sub(amount));
+        profileStorage.setStakeReserved(profile, profileStorage.getStakeReserved(profile).sub(amount));
 
         emit TokensReleased(profile, amount);
     }
     function transferTokens(address sender, address receiver, uint256 amount)
     public onlyHolding {
-        require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!")
-        require(profileStorage.getStakeReserved(profile) >= amount, "Sender does not have enough tokens reserved to transfer!"");
+        require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!");
+        require(profileStorage.getStakeReserved(sender) >= amount, "Sender does not have enough tokens reserved to transfer!");
 
         profileStorage.setStakeReserved(sender, profileStorage.getStakeReserved(sender).sub(amount));
         profileStorage.setStake(sender, profileStorage.getStake(sender).sub(amount));
