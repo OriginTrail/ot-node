@@ -162,7 +162,7 @@ class Challenger {
                 }
             }).catch((err) => {
                 log.error(`Failed to get unanswered challenges. Error: ${err}.`);
-                this.notifyError(err);
+                challenger.notifyError(err);
             });
     }
 }

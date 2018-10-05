@@ -152,8 +152,6 @@ class Kademlia {
                 storage: levelup(encoding(leveldown(path.join(this.config.appDataPath, 'kadence.dht')))),
             });
 
-            const { validateContact } = this;
-
             const that = this;
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
@@ -173,7 +171,7 @@ class Kademlia {
             };
 
             this.node.use((request, response, next) => {
-                if (!validateContact(request.contact[1])) {
+                if (!that.validateContact(request.contact[1])) {
                     return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
                 next();
@@ -189,12 +187,6 @@ class Kademlia {
                     this.config.embedded_peercache_path,
                 )));
             this.log.info('Peercache initialised');
-            this.node.spartacus = this.node.plugin(kadence.spartacus(
-                this.xprivkey,
-                this.index,
-                kadence.constants.HD_KEY_DERIVATION_PATH,
-            ));
-            this.log.info('Spartacus initialized');
 
             if (this.config.onion_enabled) {
                 this.enableOnion();
@@ -251,7 +243,6 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
-                privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
