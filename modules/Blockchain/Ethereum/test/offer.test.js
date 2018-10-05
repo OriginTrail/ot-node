@@ -183,7 +183,8 @@ contract('Offer testing', async (accounts) => {
             litigationIntervalInMinutes,
             { from: DC_wallet },
         );
-        console.log(`Gas used for creating offer: ${res.receipt.gasUsed}`);
+        const firstOfferGasUsage = res.receipt.gasUsed;
+        console.log(`Gas used for creating offer: ${firstOfferGasUsage}`);
 
         // eslint-disable-next-line prefer-destructuring
         offerId = res.logs[0].args.offerId;
@@ -228,7 +229,8 @@ contract('Offer testing', async (accounts) => {
             [identities[0], identities[1], identities[2]],
             { from: DC_wallet },
         );
-        console.log(`Gas used for finishing offer: ${res.receipt.gasUsed}`);
+        const finalizeOfferGasUsage = res.receipt.gasUsed;
+        console.log(`Gas used for finishing offer: ${finalizeOfferGasUsage}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -237,5 +239,27 @@ contract('Offer testing', async (accounts) => {
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
             assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
         }
+
+
+        // Create an additional offer
+        res = await holding.createOffer(
+            DC_identity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSetSizeInBytes,
+            litigationIntervalInMinutes,
+            { from: DC_wallet },
+        );
+        const secondOfferGasUsage = res.receipt.gasUsed;
+        console.log(`Gas used for creating a second offer: ${secondOfferGasUsage}`);
+
+        console.log(`Total gas used for creating the first offer: ${firstOfferGasUsage + finalizeOfferGasUsage}`);
+        console.log(`Total gas used for creating a second offer: ${secondOfferGasUsage + finalizeOfferGasUsage}`);
     });
 });
