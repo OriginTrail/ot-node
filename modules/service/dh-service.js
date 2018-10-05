@@ -76,6 +76,7 @@ class DHService {
      * @param distributionRootHash - Distribution hash
      * @param transactionHash - Transaction hash of the import
      * @param distributionEpk - Distribution EPK
+     * @param distributionSignature - Distribution parameters check
      * @returns {Promise<void>}
      */
     async handleReplicationImport(
@@ -92,6 +93,7 @@ class DHService {
         litigationRootHash,
         distributionRootHash,
         distributionEpk,
+        distributionSignature,
         transactionHash,
     ) {
         await this.commandExecutor.add({
@@ -110,6 +112,7 @@ class DHService {
                 litigationRootHash,
                 distributionRootHash,
                 distributionEpk,
+                distributionSignature,
                 transactionHash,
             },
             transactional: false,

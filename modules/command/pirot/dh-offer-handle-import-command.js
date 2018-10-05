@@ -44,6 +44,7 @@ class DHOfferHandleImportCommand extends Command {
             dcNodeId,
             litigationRootHash,
             distributionRootHash,
+            distributionSignature,
         } = command.data;
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
@@ -80,6 +81,15 @@ class DHOfferHandleImportCommand extends Command {
             .calculateDataChecksum(distributionEpk, 0, 0, 0);
         if (distributionEpkChecksum !== calculatedDistEpkChecksum) {
             throw new Error(`Calculated distribution EPK checksum ${calculatedDistEpkChecksum} differs from DC distribution EPK checksum ${distributionEpkChecksum}`);
+        }
+
+        const toCheck = [
+            Utilities.denormalizeHex(new BN(distributionEpkChecksum).toString('hex')),
+            Utilities.denormalizeHex(distributionRootHash),
+        ];
+        const senderAddress = Encryption.extractSignerAddress(toCheck, distributionSignature);
+        if (senderAddress.toUpperCase() !== dcWallet.toUpperCase()) {
+            throw new Error(`Failed to validate DC ${dcWallet} signature for offer ${offerId}`);
         }
 
         const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);

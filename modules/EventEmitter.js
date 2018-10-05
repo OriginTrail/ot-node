@@ -884,6 +884,7 @@ class EventEmitter {
             const litigationRootHash = message.payload.litigation_root_hash;
             const distributionRootHash = message.payload.distribution_root_hash;
             const distributionEpk = message.payload.distribution_epk;
+            const distributionSignature = message.payload.distribution_signature;
             const transactionHash = message.payload.transaction_hash;
 
             await dhService.handleReplicationImport(
@@ -900,6 +901,7 @@ class EventEmitter {
                 litigationRootHash,
                 distributionRootHash,
                 distributionEpk,
+                distributionSignature,
                 transactionHash,
             );
             // TODO: send fail in case of fail.

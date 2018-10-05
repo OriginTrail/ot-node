@@ -1,6 +1,8 @@
+const BN = require('bn.js');
 const path = require('path');
 
 const Command = require('../command');
+const Encryption = require('../../Encryption');
 const Utilities = require('../../Utilities');
 const models = require('../../../models/index');
 
@@ -10,6 +12,7 @@ const models = require('../../../models/index');
 class DCReplicationRequestCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
@@ -53,6 +56,15 @@ class DCReplicationRequestCommand extends Command {
             color,
         });
 
+        const toSign = [
+            Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
+            Utilities.denormalizeHex(replication.distributionRootHash),
+        ];
+        const distributionSignature = Encryption.signMessage(
+            this.web3, toSign,
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
         const payload = {
             payload: {
                 offer_id: offerId,
@@ -68,6 +80,8 @@ class DCReplicationRequestCommand extends Command {
                 distribution_root_hash: replication.distributionRootHash,
                 transaction_hash: replication.transaction_hash,
                 distribution_epk: replication.distributionEpk,
+                distribution_signature: distributionSignature,
+                distributionSignature,
             },
         };
         // send payload to DH
