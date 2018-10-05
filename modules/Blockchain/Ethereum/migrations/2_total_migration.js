@@ -56,7 +56,7 @@ module.exports = async (deployer, network, accounts) => {
         token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
         await hub.setTokenAddress(token.address);
 
-        profile = await deployer.deploy(Profile, hub.address, { gas: 6000000, from: accounts[0] });
+        profile = await deployer.deploy(Profile, hub.address, { gas: 9000000, from: accounts[0] });
         await hub.setProfileAddress(profile.address);
 
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
