@@ -29,6 +29,7 @@ class DHOfferHandleImportCommand extends Command {
             edges,
             dcWallet,
             publicKey,
+            transactionHash,
         } = command.data;
 
         const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
@@ -58,6 +59,7 @@ class DHOfferHandleImportCommand extends Command {
             data_provider_wallet: importResult.wallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            transaction_hash: transactionHash,
         });
 
         this.logger.trace(`[DH] Replication finished for ${importId}`);

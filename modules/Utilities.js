@@ -64,7 +64,8 @@ class Utilities {
                 // eslint-disable-next-line no-template-curly-in-string
                 packageDir: '${__dirname}/../',
                 install: false,
-                scopeList: ['dependencies', 'devDependencies'],
+                scopeList: process.env.NODE_ENV !== 'production' ?
+                    ['dependencies', 'devDependencies'] : ['dependencies'],
                 verbose: false,
             }).then((output) => {
                 if (!output.depsWereOk) {
@@ -249,6 +250,12 @@ class Utilities {
             return null;
         }
         if (msg.includes('connect etimedout')) {
+            return null;
+        }
+        if (msg.includes('connect ehostunreach')) {
+            return null;
+        }
+        if (msg.includes('ssl23_get_server_hello')) {
             return null;
         }
         return {
@@ -790,7 +797,7 @@ class Utilities {
     static getImportDistance(config, price, importId, stakeAmount) {
         const wallet = new BN(config.node_wallet);
         const nodeId = new BN(`0x${config.identity}`);
-        const hashWallerNodeId = new BN(Utilities.sha3(wallet + nodeId));
+        const hashWallerNodeId = new BN(Utilities.soliditySHA3(wallet + nodeId));
         const myBid = hashWallerNodeId.add(price);
         const offer = new BN(Utilities.soliditySHA3(importId)).add(stakeAmount);
         return Math.abs(myBid.sub(offer));
