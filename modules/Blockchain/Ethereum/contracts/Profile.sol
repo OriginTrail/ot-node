@@ -133,8 +133,12 @@ contract Profile {
         );
     }
     
-    function reserveTokens(address identity1, address identity2, address identity3, uint256 amount) 
+    function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {
+        if(profileStorage.getWithdrawalPending(payer)) {
+            profileStorage.setWithdrawalPending(payer,false);
+            emit TokenWithdrawalCancelled(payer);
+        }
         if(profileStorage.getWithdrawalPending(identity1)) {
             profileStorage.setWithdrawalPending(identity1,false);
             emit TokenWithdrawalCancelled(identity1);
@@ -147,7 +151,8 @@ contract Profile {
             profileStorage.setWithdrawalPending(identity3,false);
             emit TokenWithdrawalCancelled(identity3);
         }
-
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer).add(amount.mul(3))),
+            "Profile does not have enough stake for reserving!");
         require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)).sub(amount), 
             "Profile does not have enough stake for reserving!");
         require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)).sub(amount), 
@@ -155,10 +160,14 @@ contract Profile {
         require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)).sub(amount), 
             "Profile does not have enough stake for reserving!");
 
-        profileStorage.setStakeReserved(identity1, profileStorage.getStakeReserved(identity1).add(amount));
-        profileStorage.setStakeReserved(identity2, profileStorage.getStakeReserved(identity2).add(amount));
-        profileStorage.setStakeReserved(identity3, profileStorage.getStakeReserved(identity3).add(amount));
-
+        profileStorage.increaseStakesReserved(
+            payer,
+            identity1,
+            identity2,
+            identity3,
+            amount
+        );
+        emit TokensReserved(payer, amount);
         emit TokensReserved(identity1, amount);
         emit TokensReserved(identity2, amount);
         emit TokensReserved(identity3, amount);

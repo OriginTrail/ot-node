@@ -126,6 +126,32 @@ contract HoldingStorage {
     public onlyHolding {
         offer[offerId].startTime = startTime;
     }
+    function setOfferParameters (
+        bytes32 offerId,
+        address creator,
+        bytes32 dataSetId,
+        uint256 holdingTimeInMinutes,
+        uint256 tokenAmountPerHolder,
+        bytes32 task,
+        uint256 difficulty)
+    public onlyHolding {
+        offer[offerId].creator = creator;
+        offer[offerId].dataSetId = dataSetId;
+        offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
+        offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
+        if(offer[offerId].task != task) offer[offerId].task = task;
+        offer[offerId].difficulty = difficulty;
+    }
+    function setOfferLitigationHashes (
+        bytes32 offerId,
+        bytes32 redLitigationHash,
+        bytes32 greenLitigationHash,
+        bytes32 blueLitigationHash)
+    public onlyHolding {
+        offer[offerId].redLitigationHash = redLitigationHash;
+        offer[offerId].greenLitigationHash = greenLitigationHash;
+        offer[offerId].blueLitigationHash = blueLitigationHash;
+    }
 
 
     struct HolderDefinition {
@@ -134,6 +160,25 @@ contract HoldingStorage {
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
+    function setHolders(
+        bytes32 offerId,
+        address[] identities,
+        uint8[] litigationEncryptionTypes)
+    public onlyHolding {
+        offer[offerId].startTime = block.timestamp;
+
+        holder[offerId][identities[0]].stakedAmount = offer[offerId].tokenAmountPerHolder;
+        if(holder[offerId][identities[0]].litigationEncryptionType != litigationEncryptionTypes[0])
+            holder[offerId][identities[0]].litigationEncryptionType = litigationEncryptionTypes[0];
+
+        holder[offerId][identities[1]].stakedAmount = offer[offerId].tokenAmountPerHolder;
+        if(holder[offerId][identities[1]].litigationEncryptionType != litigationEncryptionTypes[1])
+            holder[offerId][identities[1]].litigationEncryptionType = litigationEncryptionTypes[1];
+
+        holder[offerId][identities[2]].stakedAmount = offer[offerId].tokenAmountPerHolder;
+        if(holder[offerId][identities[2]].litigationEncryptionType != litigationEncryptionTypes[2])
+            holder[offerId][identities[2]].litigationEncryptionType = litigationEncryptionTypes[2];
+    }
     function setHolderStakedAmount (bytes32 offerId, address identity, uint256 stakedAmount)
     public onlyHolding {
         holder[offerId][identity].stakedAmount = stakedAmount;
