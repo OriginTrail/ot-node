@@ -25,9 +25,12 @@ contract Holding {
     event OfferCreated(bytes32 offerId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
 
-    function createOffer(bytes32 dataSetId, 
+    function createOffer(address identity, bytes32 dataSetId,
     bytes32 dataRootHash, bytes32 redLitigationHash, bytes32 greenLitigationHash, bytes32 blueLitigationHash, bytes32 dcNodeId, 
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
+        // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+
         // First we check that the paramaters are valid
         require(dataRootHash != bytes32(0), "Data root hash cannot be zero");
         require(redLitigationHash != bytes32(0), "Litigation hash cannot be zero");
@@ -45,7 +48,7 @@ contract Holding {
 
         // Now we calculate the offerId, which should be unique
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
-        bytes32 offerId = keccak256(abi.encodePacked(dataSetId, msg.sender, blockhash(block.number)));
+        bytes32 offerId = keccak256(abi.encodePacked(dataSetId, identity, blockhash(block.number)));
 
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
@@ -56,7 +59,7 @@ contract Holding {
         }
 
         // Writing variables into storage
-        holdingStorage.setOfferCreator(offerId, msg.sender);
+        holdingStorage.setOfferCreator(offerId, identity);
         holdingStorage.setOfferDataSetId(offerId, dataSetId);
         holdingStorage.setOfferHoldingTimeInMinutes(offerId, holdingTimeInMinutes);
         holdingStorage.setOfferTokenAmountPerHolder(offerId, tokenAmountPerHolder);
@@ -71,12 +74,13 @@ contract Holding {
         emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
 
-    function finalizeOffer(bytes32 offerId, uint256 shift, 
+    function finalizeOffer(address identity, bytes32 offerId, uint256 shift,
         bytes confirmation1, bytes confirmation2, bytes confirmation3,
         uint8[] encryptionType, address[] holderIdentity) 
     public {
         // Verify sender
-        require(msg.sender == holdingStorage.getOfferCreator(offerId), "Offer can only be finalized by its creator!");
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(identity == holdingStorage.getOfferCreator(offerId), "Offer can only be finalized by its creator!");
 
         // Check if signatures match identities
         require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[0])), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
@@ -84,12 +88,11 @@ contract Holding {
         require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,holderIdentity[2])), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
         // Verify task answer
-
         require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
 
         // Secure funds from all parties
         Profile(hub.profileAddress()).reservePayment(
-            msg.sender,
+            identity,
             holdingStorage.getOfferTokenAmountPerHolder(offerId).mul(3)
         );
         Profile(hub.profileAddress()).reserveTokens(
@@ -109,10 +112,13 @@ contract Holding {
         emit OfferFinalized(offerId, holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
 
-    function payOut(bytes32 offerId)
+    function payOut(address identity, bytes32 offerId)
     public {
         // Verify sender
-        uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerId, msg.sender);
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 1) || ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+
+        // Verify holder
+        uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(offerId, identity);
         require(amountToTransfer > 0, "Sender is not holding this data set!");
 
         // Verify that holding time expired
@@ -121,8 +127,8 @@ contract Holding {
             "Holding time not yet expired!");
 
         // Release tokens staked by holder and transfer tokens from data creator to holder
-        Profile(hub.profileAddress()).releaseTokens(msg.sender, amountToTransfer);
-        Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerId), msg.sender, amountToTransfer);
+        Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
+        Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(offerId), identity, amountToTransfer);
     }
     
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {

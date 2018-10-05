@@ -115,6 +115,7 @@ contract('Offer testing', async (accounts) => {
         const litigationIntervalInMinutes = new BN(10);
 
         let res = await holding.createOffer(
+            DC_identity,
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -168,52 +169,8 @@ contract('Offer testing', async (accounts) => {
 
         const identity = await Identity.at(DC_identity);
 
-        let data = web3.eth.abi.encodeFunctionCall({
-            name: 'createOffer',
-            type: 'function',
-            inputs: [
-                {
-                    name: 'dataSetId',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'dataRootHash',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'redLitigationHash',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'greenLitigationHash',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'blueLitigationHash',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'dcNodeId',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'holdingTimeInMinutes',
-                    type: 'uint256',
-                },
-                {
-                    name: 'tokenAmountPerHolder',
-                    type: 'uint256',
-                },
-                {
-                    name: 'dataSetSizeInBytes',
-                    type: 'uint256',
-                },
-                {
-                    name: 'litigationIntervalInMinutes',
-                    type: 'uint256',
-                },
-            ],
-        }, [
+        let res = await holding.createOffer(
+            DC_identity,
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -224,40 +181,15 @@ contract('Offer testing', async (accounts) => {
             tokenAmountPerHolder,
             dataSetSizeInBytes,
             litigationIntervalInMinutes,
-        ]);
-        let res = await identity.execute(
-            holding.address,
-            new BN(0),
-            data,
             { from: DC_wallet },
         );
-
-        const offerCreatedEventData = web3.eth.abi.decodeParameters(
-            [
-                {
-                    name: 'dataSetId',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'dcNodeId',
-                    type: 'address',
-                },
-                {
-                    name: 'offerId',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'task',
-                    type: 'bytes32',
-                },
-            ],
-            res.receipt.logs[1].data,
-        );
+        console.log(`Gas used for creating offer: ${res.receipt.gasUsed}`);
 
         // eslint-disable-next-line prefer-destructuring
-        offerId = offerCreatedEventData.offerId;
+        offerId = res.logs[0].args.offerId;
+        // console.log(`offerId ${JSON.stringify(res)}`);
         // eslint-disable-next-line prefer-destructuring
-        const task = await holdingStorage.getOfferTask(offerId);
+        const task = await holdingStorage.getOfferTask.call(offerId);
         const solution = await util.keccakAddressAddressAddress.call(
             identities[0],
             identities[1],
@@ -285,40 +217,8 @@ contract('Offer testing', async (accounts) => {
             confimations[i] = await web3.eth.accounts.sign(hashes[i], privateKeys[i]);
         }
 
-        data = web3.eth.abi.encodeFunctionCall({
-            name: 'finalizeOffer',
-            type: 'function',
-            inputs: [
-                {
-                    name: 'offerId',
-                    type: 'bytes32',
-                },
-                {
-                    name: 'shift',
-                    type: 'uint256',
-                },
-                {
-                    name: 'confirmation1',
-                    type: 'bytes',
-                },
-                {
-                    name: 'confirmation2',
-                    type: 'bytes',
-                },
-                {
-                    name: 'confirmation3',
-                    type: 'bytes',
-                },
-                {
-                    name: 'encryptionType',
-                    type: 'uint8[]',
-                },
-                {
-                    name: 'holderIdentity',
-                    type: 'address[]',
-                },
-            ],
-        }, [
+        res = await holding.finalizeOffer(
+            DC_identity,
             offerId,
             shift,
             confimations[0].signature,
@@ -326,14 +226,9 @@ contract('Offer testing', async (accounts) => {
             confimations[2].signature,
             [new BN(0), new BN(1), new BN(2)],
             [identities[0], identities[1], identities[2]],
-        ]);
-
-        res = await identity.execute(
-            holding.address,
-            new BN(0),
-            data,
             { from: DC_wallet },
         );
+        console.log(`Gas used for finishing offer: ${res.receipt.gasUsed}`);
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
