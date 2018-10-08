@@ -35,8 +35,9 @@ class DCOfferChooseCommand extends Command {
             },
         });
 
+        // TODO remove this! testing purposes only
         // if (replications.length < 3) {
-        //     throw new Error();
+        //     throw new Error('Failed to choose holders. Not enough DHs submitted.');
         // }
 
         // const wallets = replications.map(r => r.dh_wallet);
@@ -45,12 +46,36 @@ class DCOfferChooseCommand extends Command {
         const w3 = '0000000000000000000000000000000000000002';
 
         const wallets = [w1, w2, w3];
-        this.minerService.sendToMiner(
+        await this.minerService.sendToMiner(
             offer.task,
             wallets.concat(wallets).concat(wallets),
             offer.offer_id,
         );
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dcOfferMiningStatusCommand',
+                    delay: 0,
+                    period: 5000,
+                    data: {
+                        offerId: offer.offer_id,
+                    },
+                },
+            ],
+        };
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { offerId } = command.data;
+        const offer = await models.offers.findOne({ where: { id: offerId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
+        await offer.save({ fields: ['status', 'message'] });
     }
 
     /**

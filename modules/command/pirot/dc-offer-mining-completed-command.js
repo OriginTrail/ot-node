@@ -1,6 +1,9 @@
 const Command = require('../command');
 const models = require('../../../models/index');
 
+/**
+ * Handles miner results
+ */
 class DcOfferMiningCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
@@ -23,9 +26,9 @@ class DcOfferMiningCompletedCommand extends Command {
 
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (success) {
-            this.logger.important(`Offer with ID ${offerId} has a solution.`);
+            this.logger.important(`Miner found a solution of offer ${offerId}.`);
 
-            offer.status = 'COMPLETED';
+            offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
             return {

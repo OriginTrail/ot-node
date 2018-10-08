@@ -52,7 +52,7 @@ class DcOfferFinalizedCommand extends Command {
         this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
-        offer.status = 'ABORTED';
+        offer.status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
         return Command.empty();

@@ -1135,7 +1135,7 @@ class EventEmitter {
             if (err) {
                 await dcService.miningFailed(data.offerId);
             } else {
-                await dcService.miningSucceed(data.offerId, data.result);
+                await dcService.miningSucceed(data);
             }
         });
     }

@@ -1,4 +1,7 @@
 const { fork } = require('child_process');
+const Models = require('../../models/index');
+
+const DEFAULT_DIFFICULTY = 1;
 
 class MinerService {
     constructor(ctx) {
@@ -13,13 +16,13 @@ class MinerService {
      * @param wallets
      * @param offerId
      */
-    sendToMiner(task, wallets, offerId) {
+    async sendToMiner(task, wallets, offerId) {
         try {
             const forked = fork('modules/worker/miner-worker.js');
             forked.send({
                 offerId,
                 wallets,
-                difficulty: 1, // TODO take from configuration
+                difficulty: DEFAULT_DIFFICULTY, // TODO take from configuration
                 task,
                 type: 'TASK',
             });
@@ -31,6 +34,12 @@ class MinerService {
                 } else {
                     this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
                 }
+            });
+            await Models.miner_records.create({
+                offer_id: offerId,
+                difficulty: DEFAULT_DIFFICULTY,
+                task,
+                status: 'STARTED',
             });
         } catch (e) {
             this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ID ${offerId}`);

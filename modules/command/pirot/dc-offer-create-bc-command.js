@@ -56,6 +56,19 @@ class DCOfferCreateBcCommand extends Command {
     }
 
     /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { offerId } = command.data;
+        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
+        await offer.save({ fields: ['status', 'message'] });
+    }
+
+    /**
      * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}

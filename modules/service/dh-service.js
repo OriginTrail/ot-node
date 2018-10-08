@@ -41,13 +41,14 @@ class DHService {
             return; // wait until peers are synced
         }
 
-        const dataInfo = await models.data_info.findOne({
-            where: { data_set_id: dataSetId },
-        });
-        if (dataInfo) {
-            this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
-            return;
-        }
+        // TODO enable this check after SC event update
+        // const dataInfo = await models.data_info.findOne({
+        //     where: { data_set_id: dataSetId },
+        // });
+        // if (dataInfo) {
+        //     this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
+        //     return;
+        // }
 
         const bid = await models.bids.findOne({
             where: { offer_id: offerId },
@@ -113,7 +114,7 @@ class DHService {
         }
 
         await this.commandExecutor.add({
-            name: 'dhOfferHandleImportCommand',
+            name: 'dhReplicationImportCommand',
             data: {
                 offerId,
                 dataSetId,

@@ -64,38 +64,42 @@ class DCService {
 
     /**
      * Completes offer and writes solution to the blockchain
-     * @param offerId
-     * @param solution
+     * @param data - Miner result
      * @returns {Promise<void>}
      */
-    async miningSucceed(offerId, solution) {
-        await this.commandExecutor.add({
-            name: 'dcOfferMiningCompletedCommand',
-            delay: 0,
-            solution,
-            data: {
-                offerId,
-                solution,
-                success: true,
-            },
-            transactional: false,
+    async miningSucceed(data) {
+        const { offerId } = data;
+        const mined = await models.miner_records.findOne({
+            offer_id: offerId,
+        });
+        if (!mined) {
+            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
+        }
+        mined.status = 'COMPLETED';
+        mined.message = data.message;
+        mined.result = data.result;
+        await mined.save({
+            fields: ['message', 'status', 'result'],
         });
     }
 
     /**
      * Fails offer
-     * @param offerId
+     * @param result - Miner result
      * @returns {Promise<void>}
      */
-    async miningFailed(offerId) {
-        await this.commandExecutor.add({
-            name: 'dcOfferMiningCompletedCommand',
-            delay: 0,
-            data: {
-                offerId,
-                success: false,
-            },
-            transactional: false,
+    async miningFailed(result) {
+        const { offerId } = result;
+        const mined = await models.miner_records.findOne({
+            offer_id: offerId,
+        });
+        if (!mined) {
+            throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
+        }
+        mined.status = 'FAILED';
+        mined.message = result.message;
+        await mined.save({
+            fields: ['message', 'status'],
         });
     }
 

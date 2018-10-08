@@ -8,7 +8,7 @@ module.exports = {
         },
         offer_id: {
             allowNull: false,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
         dc_node_id: {
             allowNull: false,
