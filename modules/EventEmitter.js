@@ -820,7 +820,6 @@ class EventEmitter {
         const {
             dvService,
             logger,
-            dataReplication,
             transport,
             blockchain,
             remoteControl,
