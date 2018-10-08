@@ -1,14 +1,15 @@
 /* eslint-disable prefer-arrow-callback */
 
-// TODO: Handle different environments.
-process.env.NODE_ENV = 'development';
-
 const {
     And, But, Given, Then, When,
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
+const fs = require('fs');
+const path = require('path');
+const sortedStringify = require('sorted-json-stringify');
+const { sha3_256 } = require('js-sha3');
 
 const OtNode = require('./lib/otnode');
 const LocalBlockchain = require('./lib/local-blockchain');
@@ -19,15 +20,6 @@ const bootstrapIdentity = {
         index: 0,
     },
 };
-
-Given(/^the blockchain is set up$/, { timeout: 60000 }, function (done) {
-    expect(this.state.localBlockchain, 'localBlockchain shouldn\'t be defined').to.be.equal(null);
-
-    this.state.localBlockchain = new LocalBlockchain({ logger: this.logger });
-    this.state.localBlockchain.initialize().then(() => {
-        done();
-    }).catch(error => done(error));
-});
 
 Given(/^(\d+) bootstrap is running$/, { timeout: 60000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
@@ -152,3 +144,74 @@ Then(/^all nodes should be aware of each other$/, function (done) {
 
     Promise.all(promises).then(() => done());
 });
+
+Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV]+)$/, function (nodeIndex, nodeType) {
+    expect(nodeType, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(nodeIndex, 'No started nodes').to.be.lessThan(this.state.nodes.length);
+
+    this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
+    this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex];
+});
+
+Given(/^I import "([^"]*)"$/, function (xmlFilepath) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    return new Promise((accept, reject) => {
+        request.post({
+            headers: { 'Content-Type': 'application/json' },
+            url: `${dc.state.node_rpc_url}/api/import`,
+            json: true,
+            formData: {
+                importfile: fs.createReadStream(path.join(__dirname, '../../../', xmlFilepath)),
+                importtype: 'GS1',
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            expect(body).to.have.keys(['import_hash', 'import_id', 'message', 'wallet']);
+
+            this.state.lastImport = body;
+            accept();
+        });
+    });
+});
+
+Then(/^the last import's hash should be the same as one manually calculated$/, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    return new Promise((accept, reject) => {
+        request(
+            `${dc.state.node_rpc_url}/api/import_info?import_id=${this.state.lastImport.import_id}`,
+            { json: true },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                expect(body).to.have.keys([
+                    'import_hash', 'root_hash', 'import', 'transaction',
+                    // 'transaction', 'data_provider_wallet',
+                ]);
+                expect(body.import).to.have.keys(['vertices', 'edges']);
+                expect(body.import_hash).to.be.equal(this.state.lastImport.import_hash);
+                const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
+                expect(calculatedImportHash).to.be.equal(this.state.lastImport.import_hash);
+                accept();
+            },
+        );
+    });
+});
+

@@ -8,5 +8,10 @@ Feature: Test basic network features
     And I start the nodes
     Then all nodes should be aware of each other
 
-  Scenario: Nesto drugo
-    Given I wait for 1 second
+  Scenario: Test replication DC -> DH
+    Given the replication factor is 5
+    And I setup 5 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And I import "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml"
+    Then the last import's hash should be the same as one manually calculated

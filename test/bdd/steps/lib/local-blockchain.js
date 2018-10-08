@@ -41,6 +41,7 @@ class LocalBlockchain {
                 { secretKey: `0x${accountPrivateKeys[9]}`, balance: Web3.utils.toWei('100', 'ether') },
             ],
         });
+        this.initialized = false;
     }
 
     async initialize() {
@@ -162,6 +163,8 @@ class LocalBlockchain {
         await this.tokenInstance.methods.finishMinting()
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
+
+        this.initialized = true;
     }
 
     async deployContract(
@@ -211,6 +214,10 @@ class LocalBlockchain {
 
     get readingContractAddress() {
         return this.readingInstance._address;
+    }
+
+    get isInitialized() {
+        return this.initialized;
     }
 
     static wallets() {

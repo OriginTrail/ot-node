@@ -1,7 +1,9 @@
 /* eslint-disable prefer-arrow-callback */
 
-// TODO: Handle different environments.
-process.env.NODE_ENV = 'development';
+if (process.env.NODE_ENV !== 'development') {
+    console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
+    process.abort();
+}
 
 const {
     Before, BeforeAll, After, AfterAll,
@@ -41,8 +43,8 @@ After(function (testCase, done) {
                     }
                 });
             }));
-    this.state.nodes.forEach(node => node.stop());
-    this.state.bootstraps.forEach(node => node.stop());
+    this.state.nodes.forEach(node => (node.isRunning && node.stop()));
+    this.state.bootstraps.forEach(node => (node.isRunning && node.stop()));
     if (this.state.localBlockchain && this.state.localBlockchain.server) {
         this.state.localBlockchain.server.close();
     }
