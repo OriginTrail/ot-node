@@ -49,6 +49,14 @@ class DHService {
             return;
         }
 
+        const bid = await models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (bid) {
+            this.logger.trace(`I've already added bid for offer ${offerId}. Ignoring.`);
+            return;
+        }
+
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
             delay: 15000,
@@ -96,6 +104,14 @@ class DHService {
         distributionSignature,
         transactionHash,
     ) {
+        const bid = await models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (!bid) {
+            this.logger.trace(`Request for replication import came for unknown offer ${offerId}. Ignoring.`);
+            return;
+        }
+
         await this.commandExecutor.add({
             name: 'dhOfferHandleImportCommand',
             data: {

@@ -10,10 +10,6 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        dc_wallet: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
         dc_node_id: {
             allowNull: false,
             type: Sequelize.STRING,

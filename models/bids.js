@@ -8,7 +8,6 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
         },
         offer_id: DataTypes.STRING,
-        dc_wallet: DataTypes.STRING,
         dc_node_id: DataTypes.STRING,
     }, {});
     bids.associate = (models) => {

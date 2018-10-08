@@ -676,9 +676,10 @@ class EventEmitter {
             const {
                 offerId,
                 dcNodeId,
+                dataSetId,
             } = eventData;
 
-            await dhService.handleOffer(offerId, dcNodeId);
+            await dhService.handleOffer(offerId, dcNodeId, dataSetId);
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
