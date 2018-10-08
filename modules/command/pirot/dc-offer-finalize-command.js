@@ -1,5 +1,4 @@
 const Command = require('../command');
-const Models = require('../../../models/index');
 
 /**
  * Finalizes offer on blockchain

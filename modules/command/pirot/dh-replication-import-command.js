@@ -12,7 +12,7 @@ const ImportUtilities = require('../../ImportUtilities');
 /**
  * Imports data for replication
  */
-class DHOfferHandleImportCommand extends Command {
+class DhReplicationImportCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -135,13 +135,13 @@ class DHOfferHandleImportCommand extends Command {
     }
 
     /**
-     * Builds default AddCommand
+     * Builds default
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'dhOfferHandleImportCommand',
+            name: 'dhReplicationImportCommand',
             delay: 0,
             transactional: false,
         };
@@ -150,4 +150,4 @@ class DHOfferHandleImportCommand extends Command {
     }
 }
 
-module.exports = DHOfferHandleImportCommand;
+module.exports = DhReplicationImportCommand;

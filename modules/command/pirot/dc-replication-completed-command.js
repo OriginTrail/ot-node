@@ -1,5 +1,3 @@
-const path = require('path');
-
 const Command = require('../command');
 const utilities = require('../../Utilities');
 const encryption = require('../../Encryption');
@@ -8,7 +6,7 @@ const models = require('../../../models/index');
 /**
  * Handles replication request
  */
-class DcReplicationValidationCommand extends Command {
+class DcReplicationCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -55,7 +53,7 @@ class DcReplicationValidationCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcReplicationValidationCommand',
+            name: 'dcReplicationCompletedCommand',
             delay: 0,
             transactional: false,
         };
@@ -64,4 +62,4 @@ class DcReplicationValidationCommand extends Command {
     }
 }
 
-module.exports = DcReplicationValidationCommand;
+module.exports = DcReplicationCompletedCommand;

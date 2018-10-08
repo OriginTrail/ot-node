@@ -70,7 +70,7 @@ class DCService {
      */
     async miningSucceed(offerId, solution) {
         await this.commandExecutor.add({
-            name: 'dcMiningCompletedCommand',
+            name: 'dcOfferMiningCompletedCommand',
             delay: 0,
             solution,
             data: {
@@ -154,7 +154,7 @@ class DCService {
      */
     async verifyDHReplication(offerId, signature, dhNodeId, dhWallet) {
         await this.commandExecutor.add({
-            name: 'dcVerifyReplicationCommand',
+            name: 'dcReplicationCompletedCommand',
             delay: 0,
             data: {
                 offerId,
