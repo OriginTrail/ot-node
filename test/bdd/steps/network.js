@@ -126,10 +126,7 @@ Then(/^all nodes should be aware of each other$/, function (done) {
 
     const promises = [];
     this.state.nodes.forEach((node) => {
-        console.log(node.state);
-
         promises.push(new Promise((accept, reject) => {
-            console.log(`${node.state.node_rpc_url}/api/dump/rt`);
             request(`${node.state.node_rpc_url}/api/dump/rt`, { json: true }, (err, res, body) => {
                 if (err) {
                     reject(err);
