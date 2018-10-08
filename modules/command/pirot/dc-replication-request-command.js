@@ -80,7 +80,7 @@ class DCReplicationRequestCommand extends Command {
                 distribution_root_hash: replication.distributionRootHash,
                 transaction_hash: replication.transaction_hash,
                 distribution_epk: replication.distributionEpk,
-                distribution_signature: distributionSignature,
+                distribution_signature: distributionSignature.signature,
                 distributionSignature,
             },
         };

@@ -28,16 +28,22 @@ class DCMiningCompletedCommand extends Command {
             offer.status = 'COMPLETED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
-            return Command.empty();
+            return {
+                commands: [
+                    {
+                        name: 'dcOfferFinalizeCommand',
+                        data: { offerId, wallets: solution.nodeIdentifiers },
+                    },
+                ],
+            };
         }
+        // TODO found no solution, handle this case properly
         this.logger.warn(`Offer with ID ${offerId} has no solution.`);
 
         offer.status = 'Failed';
         offer.message = 'Failed to find solution for DHs provided';
         await offer.save({ fields: ['status', 'message'] });
-        // TODO handle this case
-
-        return this.continueSequence(this.pack(command.data), command.sequence);
+        return Command.empty();
     }
 
     /**
