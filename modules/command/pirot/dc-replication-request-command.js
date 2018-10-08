@@ -84,9 +84,9 @@ class DCReplicationRequestCommand extends Command {
                 distributionSignature,
             },
         };
-        // send payload to DH
-        await this.transport.payloadRequest(payload, identity);
-        this.logger.info(`Payload for offer ID ${offer.id} sent to ${identity}.`);
+        // send replication to DH
+        await this.transport.replicationResponse(payload, identity);
+        this.logger.info(`Replication for offer ID ${offer.id} sent to ${identity}.`);
         return Command.empty();
     }
 

@@ -8,7 +8,7 @@ const models = require('../../../models/index');
 /**
  * Handles replication request
  */
-class DCVerifyReplicationCommand extends Command {
+class DcReplicationValidationCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -49,13 +49,13 @@ class DCVerifyReplicationCommand extends Command {
     }
 
     /**
-     * Builds default dcReplicationRequestCommand
+     * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
     default(map) {
         const command = {
-            name: 'dcVerifyReplicationCommand',
+            name: 'dcReplicationValidationCommand',
             delay: 0,
             transactional: false,
         };
@@ -64,4 +64,4 @@ class DCVerifyReplicationCommand extends Command {
     }
 }
 
-module.exports = DCVerifyReplicationCommand;
+module.exports = DcReplicationValidationCommand;

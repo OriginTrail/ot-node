@@ -15,9 +15,9 @@ class HttpNetwork {
         this.logger.trace('Network initialized');
         this.node = {};
         this.register = {};
-        this.node.payloadRequest = async (message, contactId) => {
+        this.node.replicationResponse = async (message, contactId) => {
             const data = {
-                type: 'kad-payload-request',
+                type: 'kad-replication-response',
                 message,
             };
             const contact = await this.node.getContact(contactId);

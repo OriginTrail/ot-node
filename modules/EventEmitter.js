@@ -863,7 +863,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-payload-request', async (request, response) => {
+        this._on('kad-replication-response', async (request, response) => {
             await transport.sendResponse(response, {
                 status: 'OK',
             });

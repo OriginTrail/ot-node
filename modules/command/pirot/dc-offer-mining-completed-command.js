@@ -1,7 +1,7 @@
 const Command = require('../command');
 const models = require('../../../models/index');
 
-class DCMiningCompletedCommand extends Command {
+class DcOfferMiningCompletedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -53,7 +53,7 @@ class DCMiningCompletedCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcMiningCompletedCommand',
+            name: 'dcOfferMiningCompletedCommand',
             delay: 0,
             transactional: false,
         };
@@ -62,4 +62,4 @@ class DCMiningCompletedCommand extends Command {
     }
 }
 
-module.exports = DCMiningCompletedCommand;
+module.exports = DcOfferMiningCompletedCommand;

@@ -19,7 +19,7 @@ const COLOR = {
 };
 
 /**
- * Prepare offer parameters (litigation hashes, etc.)
+ * Prepare offer parameters (litigation/distribution hashes, etc.)
  */
 class DCOfferPrepareCommand extends Command {
     constructor(ctx) {

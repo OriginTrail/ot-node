@@ -40,7 +40,6 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ProfileService = require('./modules/ProfileService');
-const DataReplication = require('./modules/DataReplication');
 const ImportController = require('./modules/controller/import-controller');
 const RestAPIValidator = require('./modules/validator/rest-api-validator');
 const APIUtilities = require('./modules/utility/api-utilities');
@@ -411,7 +410,6 @@ class OTNode {
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),

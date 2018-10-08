@@ -89,7 +89,7 @@ class DCService {
      */
     async miningFailed(offerId) {
         await this.commandExecutor.add({
-            name: 'dcMiningCompletedCommand',
+            name: 'dcOfferMiningCompletedCommand',
             delay: 0,
             data: {
                 offerId,
