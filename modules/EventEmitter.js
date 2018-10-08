@@ -1,8 +1,6 @@
-const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const Models = require('../models');
-const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
 const bytes = require('utf8-length');
@@ -32,6 +30,7 @@ class EventEmitter {
         this._initializeAPIEmitter();
         this._initializeP2PEmitter();
         this._initializeBlockchainEmitter();
+        this._initializeInternalEmitter();
     }
 
     /**
@@ -1119,6 +1118,24 @@ class EventEmitter {
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
                 remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
+            }
+        });
+    }
+
+    /**
+     * Initializes internal emitter
+     * @private
+     */
+    _initializeInternalEmitter() {
+        const {
+            dcService,
+        } = this.ctx;
+
+        this._on('int-miner-solution', async (err, data) => {
+            if (err) {
+                await dcService.miningFailed(data.offerId);
+            } else {
+                await dcService.miningSucceed(data.offerId, data.result);
             }
         });
     }

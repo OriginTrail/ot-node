@@ -44,7 +44,7 @@ class DCService {
         await this.commandExecutor.add({
             name: 'dcOfferPrepareCommand',
             sequence: [
-                'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand',
+                'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
             ],
             delay: 0,
             data: {
@@ -60,6 +60,43 @@ class DCService {
         });
 
         return offer.id;
+    }
+
+    /**
+     * Completes offer and writes solution to the blockchain
+     * @param offerId
+     * @param solution
+     * @returns {Promise<void>}
+     */
+    async miningSucceed(offerId, solution) {
+        await this.commandExecutor.add({
+            name: 'dcMiningCompletedCommand',
+            delay: 0,
+            solution,
+            data: {
+                offerId,
+                solution,
+                success: true,
+            },
+            transactional: false,
+        });
+    }
+
+    /**
+     * Fails offer
+     * @param offerId
+     * @returns {Promise<void>}
+     */
+    async miningFailed(offerId) {
+        await this.commandExecutor.add({
+            name: 'dcMiningCompletedCommand',
+            delay: 0,
+            data: {
+                offerId,
+                success: false,
+            },
+            transactional: false,
+        });
     }
 
     /**

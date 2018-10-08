@@ -30,7 +30,7 @@ const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bid
 const DepositTokenCommand = require('../../modules/command/common/deposit-token-command');
 
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
-const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command');
+const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command2');
 const DCOfferCreateBlockchainCommand = require('../../modules/command/dc/dc-offer-create-blockchain-command');
 const DCOfferCreateDBCommand = require('../../modules/command/dc/dc-offer-create-database-command');
 const DCOfferReadyCommand = require('../../modules/command/dc/dc-offer-ready-command');

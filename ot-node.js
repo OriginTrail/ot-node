@@ -38,6 +38,7 @@ const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
+const MinerService = require('./modules/service/miner-service');
 const ProfileService = require('./modules/ProfileService');
 const DataReplication = require('./modules/DataReplication');
 const ImportController = require('./modules/controller/import-controller');
@@ -424,6 +425,7 @@ class OTNode {
             transport: awilix.asValue(Transport()),
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             importController: awilix.asClass(ImportController).singleton(),
+            minerService: awilix.asClass(MinerService).singleton(),
         });
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');

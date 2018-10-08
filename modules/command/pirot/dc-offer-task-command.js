@@ -44,7 +44,7 @@ class DcOfferTaskCommand extends Command {
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
-            return Command.empty();
+            return this.continueSequence(this.pack(command.data), command.sequence);
         }
         return Command.repeat();
     }
