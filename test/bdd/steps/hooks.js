@@ -59,3 +59,7 @@ After(function (testCase, done) {
 AfterAll(() => {
 });
 
+process.on('unhandledRejection', (reason, p) => {
+    console.log(`Unhandled Rejection:\n${reason.stack}`);
+    process.abort();
+});

@@ -7,6 +7,7 @@ const EventEmitter = require('events');
 const deepExtend = require('deep-extend');
 const tmpdir = require('os').tmpdir();
 const uuidv4 = require('uuid/v4');
+const stripAnsi = require('strip-ansi');
 
 const defaultConfiguration = require('../../../../config/config.json').development;
 
@@ -74,10 +75,29 @@ class OtNode extends EventEmitter {
     _processOutput(data) {
         this.logStream.write(data);
 
+        data = stripAnsi(data.toString());
+        data = data.replace(/[^\x20-\x7E]+/g, '');
+
         if (data.toString().includes('OT Node started')) {
-            this.state.initialized = true;
             this.logger.log(`Node ${this.id} initialized.`);
+            this.state.initialized = true;
             this.emit('initialized');
+        } else if (data.toString().includes('My identity: ')) {
+            // Expected something like:
+            // 'My identity: f299588d23ebbdc2da51ad423e03d66721ac0e18'
+            const expression = /\b[0-9A-F]{40}\b/gi;
+            [this.state.identity] = data.toString().match(expression);
+            // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
+        } else if (data.toString().includes('API exposed at')) {
+            // Expected something like:
+            // API exposed at  http://0.0.0.0:8920
+            // TODO: Poor man's parsing. Use regular expressions.
+            this.state.node_rpc_url = data.toString().substr(data.toString().search('API exposed at  ') + 'API exposed at  '.length, data.toString().length - 1);
+        } else if (data.toString().includes('OT Node listening at ')) {
+            // Expected something like:
+            // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
+            // TODO: Poor man's parsing. Use regular expressions.
+            this.state.node_url = data.toString().substr(data.toString().search('OT Node listening at ') + 'OT Node listening at '.length, data.toString().length - 1);
         }
     }
 

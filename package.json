@@ -128,6 +128,7 @@
     "sorted-json-stringify": "^0.1.1",
     "sqldown": "^2.1.0",
     "sqlite3": "^4.0.2",
+    "strip-ansi": "^5.0.0",
     "superagent": "^3.8.3",
     "truffle-hdwallet-provider": "0.0.5",
     "umzug": "^2.1.0",

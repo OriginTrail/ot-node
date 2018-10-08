@@ -8,6 +8,7 @@ const {
 } = require('cucumber');
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
+const request = require('request');
 
 const OtNode = require('./lib/otnode');
 const LocalBlockchain = require('./lib/local-blockchain');
@@ -119,6 +120,38 @@ Given(/^I start the nodes$/, { timeout: 60000 }, function (done) {
     Promise.all(nodesStarts).then(() => done());
 });
 
-Then(/^everything should be without the errors$/, (done) => {
-    done();
+Then(/^all nodes should be aware of each other$/, function (done) {
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const promises = [];
+    this.state.nodes.forEach((node) => {
+        console.log(node.state);
+
+        promises.push(new Promise((accept, reject) => {
+            console.log(`${node.state.node_rpc_url}/api/dump/rt`);
+            request(`${node.state.node_rpc_url}/api/dump/rt`, { json: true }, (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                this.state.nodes.forEach((testNode) => {
+                    if (testNode.state.identity !== node.state.identity) {
+                        expect(body.message).to.have.property(testNode.state.identity);
+                    }
+                });
+
+                this.state.bootstraps.forEach((bootstrap) => {
+                    if (bootstrap.state.identity !== node.state.identity) {
+                        expect(body.message).to.have.property(bootstrap.state.identity);
+                    }
+                });
+
+                accept();
+            });
+        }));
+    });
+
+    Promise.all(promises).then(() => done());
 });
