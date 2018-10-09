@@ -39,7 +39,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
-const ProfileService = require('./modules/ProfileService');
+const ProfileService = require('./modules/service/profile-service');
 const ImportController = require('./modules/controller/import-controller');
 const RestAPIValidator = require('./modules/validator/rest-api-validator');
 const APIUtilities = require('./modules/utility/api-utilities');
@@ -330,6 +330,7 @@ class OTNode {
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.
         config.identity = '';
+        config.erc725Identity = '';
         Object.seal(config);
 
         // check for Updates
@@ -434,6 +435,7 @@ class OTNode {
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+        const profileService = container.resolve('profileService');
 
         emitter.initialize();
 
@@ -473,7 +475,7 @@ class OTNode {
         dhService.listenToBlockchainEvents();
 
         try {
-            await this.createProfile(blockchain);
+            await profileService.initProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
@@ -533,17 +535,11 @@ class OTNode {
             if (!working && Date.now() > deadline) {
                 working = true;
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
         }, 5000);
-    }
-
-    /**
-     * Creates profile on the contract
-     */
-    async createProfile(blockchain) {
-        // TODO implement createProfile
     }
 
     /**

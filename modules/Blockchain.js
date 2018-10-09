@@ -79,21 +79,21 @@ class Blockchain {
 
     /**
      * Creates node profile on the Bidding contract
-     * @param nodeId        Kademlia node ID
-     * @param {string} pricePerByteMinute Price for byte per minute
-     * @param {string} stakePerByteMinute Stake for byte per minute
-     * @param {string} readStakeFactor Read stake factor
-     * @param {string} maxTimeMins   Max time in minutes
+     * @param profileNodeId - Network node ID
+     * @param initialBalance - Initial profile balance
+     * @param isSender725 - Is sender ERC 725?
      * @return {Promise<any>}
      */
-    createProfile(
-        nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins,
-    ) {
-        return this.blockchain.createProfile(
-            nodeId, pricePerByteMinute, stakePerByteMinute,
-            readStakeFactor, maxTimeMins,
-        );
+    createProfile(profileNodeId, initialBalance, isSender725) {
+        return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
+    }
+
+    /**
+     * Gets minimum stake for creating a profile
+     * @returns {Promise<*>}
+     */
+    async getProfileMinimumStake() {
+        return this.blockchain.getProfileMinimumStake();
     }
 
     /**

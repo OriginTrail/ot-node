@@ -71,8 +71,18 @@ class Ethereum {
             this.readingContractAddress,
         );
 
+        // Profile contract data
+        const profileAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile.json');
+        this.profileContractAddress = await this._getProfileContractAddress();
+        this.profileContractAbi = JSON.parse(profileAbiFile);
+        this.profileContract = new this.web3.eth.Contract(
+            this.profileContractAbi,
+            this.profileContractAddress,
+        );
+
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
+            PROFILE_CONTRACT: this.profileContract,
         };
     }
 
@@ -108,6 +118,18 @@ class Ethereum {
     async _getReadingContractAddress() {
         this.log.trace('Asking Hub for Holding contract address...');
         return this.hubContract.methods.readingAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Profile contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getProfileContractAddress() {
+        this.log.trace('Asking Hub for Profile contract address...');
+        return this.hubContract.methods.profileAddress().call({
             from: this.config.wallet_address,
         });
     }
@@ -201,33 +223,27 @@ class Ethereum {
 
     /**
      * Creates node profile on the Bidding contract
-     * @param nodeId        Kademlia node ID
-     * @param {string} pricePerByteMinute Price for byte per minute
-     * @param {string} stakePerByteMinute Stake for byte per minute
-     * @param {string} readStakeFactor Read stake factor
-     * @param {string} maxTimeMins   Max time in minutes
+     * @param profileNodeId - Network node ID
+     * @param initialBalance - Initial profile balance
+     * @param isSender725 - Is sender ERC 725?
      * @return {Promise<any>}
      */
-    createProfile(
-        nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins,
-    ) {
+    createProfile(profileNodeId, initialBalance, isSender725) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
+            to: this.profileContractAddress,
         };
 
-        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute}, ${stakePerByteMinute}, ${readStakeFactor}, ${maxTimeMins})`);
+        this.log.trace(`CreateProfile(${profileNodeId}, ${initialBalance}, ${isSender725})`);
         return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'createProfile',
-            [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
-                readStakeFactor, maxTimeMins], options,
+            this.profileContractAbi, 'createProfile',
+            [Utilities.normalizeHex(profileNodeId), initialBalance, isSender725], options,
         );
     }
 
     /**
-     * Increase token approval for escrow contract on Ethereum blockchain
+     * Increase token approval for profile
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
@@ -237,8 +253,8 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        this.log.notify('Increasing approval for escrow');
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
+        this.log.notify('Increasing token approval for profile contract');
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.profileContractAddress, tokenAmountIncrease], options);
     }
 
     /**
@@ -480,112 +496,6 @@ class Ethereum {
             this.biddingContractAbi, 'cancelOffer',
             [importId], options,
         );
-    }
-
-    async getStakedAmount(importId) {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalStake = new BN(0);
-        const initiated = {};
-        for (const event of events) {
-            const { import_id } = event.returnValues;
-            if (event.event === 'EscrowInitated'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
-            }
-            if (event.event === 'EscrowVerified'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.add(initiated[import_id]);
-            }
-            if (event.event === 'EscrowCompleted'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.sub(initiated[import_id]);
-            }
-        }
-        return totalStake.toString();
-    }
-
-    async getHoldingIncome(importId) {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'Payment'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
-    }
-
-    async getPurchaseIncome(importId, dvWallet) {
-        const events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'PurchasePayment'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DV_wallet === dvWallet
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
-    }
-
-    async getTotalStakedAmount() {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalStake = new BN(0);
-        const initiated = {};
-        for (const event of events) {
-            const { import_id } = event.returnValues;
-            if (event.event === 'EscrowInitated' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
-            }
-            if (event.event === 'EscrowVerified' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.add(initiated[import_id]);
-            }
-            if (event.event === 'EscrowCompleted' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.sub(initiated[import_id]);
-            }
-        }
-        return totalStake.toString();
-    }
-
-    async getTotalIncome() {
-        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'Payment' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        for (const event of events) {
-            if (event.event === 'PurchasePayment' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
     }
 
     /**
@@ -1097,6 +1007,16 @@ class Ethereum {
     async getReplicationModifier() {
         this.log.trace('get replication modifier from blockchain');
         return this.biddingContract.methods.replication_modifier().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get Profile minimum stake
+     */
+    async getProfileMinimumStake() {
+        this.log.trace('get replication modifier from blockchain');
+        return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
     }

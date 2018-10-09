@@ -1,5 +1,8 @@
-const Utilities = require('./Utilities');
-const BN = require('bn.js');
+const fs = require('fs');
+const path = require('path');
+
+const Utilities = require('../Utilities');
+const BN = require('../../node_modules/bn.js/lib/bn');
 
 class ProfileService {
     /**
@@ -12,6 +15,67 @@ class ProfileService {
         this.remoteControl = ctx.remoteControl;
         this.config = ctx.config;
         this.logger = ctx.logger;
+    }
+
+    /**
+     * Initializes profile on the contract
+     * Note: creates profile if there is none
+     */
+    async initProfile() {
+        this._loadIdentity();
+
+        if (this.config.erc725Identity) {
+            this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
+            return;
+        }
+
+        const profileMinStake = await this.blockchain.getProfileMinimumStake();
+        this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
+
+        await this.blockchain.increaseApproval(new BN(profileMinStake, 10));
+        await this.blockchain.createProfile(
+            this.config.identity,
+            new BN(profileMinStake, 10), false,
+        );
+        const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => eventData.profile.includes(this.config.node_wallet));
+        if (event) {
+            this._saveIdentity(event.newIdentity);
+            this.logger.notify(`Profile created for node ${this.config.identity}`);
+            return;
+        }
+        throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
+    }
+
+    /**
+     * Load ERC725 identity from file
+     * @private
+     */
+    _loadIdentity() {
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.erc725_identity_filepath,
+        );
+        if (fs.existsSync(identityFilePath)) {
+            const content = JSON.parse(fs.readFileSync(identityFilePath).toString());
+            this.config.erc725Identity = content.identity;
+        }
+    }
+
+    /**
+     * Save ERC725 identity to file
+     * @param identity - ERC725 identity
+     * @private
+     */
+    _saveIdentity(identity) {
+        this.config.erc725Identity = identity;
+
+        const identityFilePath = path.join(
+            this.config.appDataPath,
+            this.config.erc725_identity_filepath,
+        );
+        fs.writeFileSync(identityFilePath, JSON.stringify({
+            identity,
+        }));
     }
 
     /**
