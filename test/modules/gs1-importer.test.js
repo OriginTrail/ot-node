@@ -4,8 +4,9 @@ const {
     describe, before, beforeEach, afterEach, it,
 } = require('mocha');
 const chai = require('chai');
-// const chaiAsPromised = require("chai-as-promised");
-// chai.use(chaiAsPromised);
+const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
 const { assert, expect } = chai;
 const path = require('path');
 const { Database } = require('arangojs');
@@ -29,7 +30,7 @@ const awilix = require('awilix');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
-describe.only('GS1 Importer tests', () => {
+describe('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let graphStorage;
     let systemDb;
@@ -519,37 +520,23 @@ describe.only('GS1 Importer tests', () => {
         });
     });
 
-    describe.only('Incomplete xmls should fail to import', () => {
+    describe('Incomplete xmls should fail to import', () => {
         const xmlWithoutQuantityList = path.join(__dirname, 'test_xml/withoutQuantityList.xml');
         const xmlWithoutBizStep = path.join(__dirname, 'test_xml/withoutBizStep.xml');
         const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
+        const xmlWithoutSenderContactinfo = path.join(__dirname, 'test_xml/withoutSenderContactInfo.xml');
 
 
-        it('and throw an error about missing quantityElement', async () => {
-            try {
-                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList));
-            } catch (error) {
-                assert.equal(error.message, 'Cannot read property \'quantityElement\' of undefined');
-            }
-        });
+        it('and throw an error about missing quantityElement', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.rejectedWith(TypeError, "Cannot read property 'quantityElement' of undefined"));
 
-        it('and throw an error related to missing bizStep', async () => {
-            try {
-                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep));
-            } catch (error) {
-                assert.equal(error.message, 'Cannot read property \'replace\' of undefined');
-            }
-        });
+        it('and throw an error related to missing bizStep', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
 
         it('and throw an error related to missing CreationDateAndTime', async () => {
-            try {
-                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutCreationDateAndTime));
-            } catch (error) {
-                assert.isTrue(error.message.indexOf('Failed to validate schema') >= 0, 'Failed to validate schema sentance should be part of error message');
-                assert.isTrue(error.message.indexOf('Missing child element(s).') >= 0, 'Missing child element should be part of error message');
-                assert.isTrue(error.message.indexOf('CreationDateAndTime') >= 0, 'CreationDateAndTime should be part of error message');
-            }
+            const rejectionMessage = 'Failed to validate schema. Error: Element \'{http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}DocumentIdentification\': Missing child element(s). Expected is one of ( {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}MultipleType, {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}CreationDateAndTime ).\n';
+            return expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutCreationDateAndTime))).to.be.rejectedWith(Error, rejectionMessage);
         });
+
+        it('and throw an error releted to missing SenderContactInformation', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutSenderContactinfo))).to.be.rejectedWith(Error, "Cannot read property 'EmailAddress' of undefined"));
     });
 
     afterEach('Drop DB', async () => {
