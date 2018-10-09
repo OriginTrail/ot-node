@@ -18,11 +18,10 @@ const accountPrivateKeys = [
     '03c5646544ea8e47174ac98e3b97338c486860897e31333318ee62d19e5ea118',
 ];
 
-const wallets = accountPrivateKeys.map(
-    privateKey => ({
-        address: `0x${EthWallet.fromPrivateKey(Buffer.from(privateKey, 'hex')).getAddress().toString('hex')}`,
-        privateKey,
-    }));
+const wallets = accountPrivateKeys.map(privateKey => ({
+    address: `0x${EthWallet.fromPrivateKey(Buffer.from(privateKey, 'hex')).getAddress().toString('hex')}`,
+    privateKey,
+}));
 
 class LocalBlockchain {
     constructor(options = {}) {
@@ -52,9 +51,8 @@ class LocalBlockchain {
                     return;
                 }
                 this.logger.info('Blockchain is up at http://localhost:7547/');
-                this.web3 = new Web3(
-                    new Web3.providers.HttpProvider('http://localhost:7545'), // TODO: Use from server.
-                );
+                // TODO: Use url from server.
+                this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
                 this.compileContracts();
                 await this.deployContracts();
                 accept();
@@ -63,16 +61,11 @@ class LocalBlockchain {
     }
 
     compileContracts() {
-        const tokenSource = fs.readFileSync(
-            path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/TracToken.sol'), 'utf8');
-        const escrowSource = fs.readFileSync(
-            path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Escrow.sol'), 'utf8');
-        const readingSource = fs.readFileSync(
-            path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Reading.sol'), 'utf8');
-        const biddingSource = fs.readFileSync(
-            path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Bidding.sol'), 'utf8');
-        const otFingerprintSource = fs.readFileSync(
-            path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol'), 'utf8');
+        const tokenSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/TracToken.sol'), 'utf8');
+        const escrowSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Escrow.sol'), 'utf8');
+        const readingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Reading.sol'), 'utf8');
+        const biddingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Bidding.sol'), 'utf8');
+        const otFingerprintSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol'), 'utf8');
 
         let compileResult = solc.compile({ sources: { 'TracToken.sol': tokenSource } }, 1);
         this.tokenContractData = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
@@ -127,7 +120,10 @@ class LocalBlockchain {
             ], accounts[7],
         );
         this.logger.debug('Deploying otFingerprintContract');
-        [this.otFingerprintDeploymentReceipt, this.otFingerprintInstance] = await this.deployContract(
+        [
+            this.otFingerprintDeploymentReceipt,
+            this.otFingerprintInstance,
+        ] = await this.deployContract(
             this.web3, this.otFingerprintContract, this.otFingerprintContractData,
             undefined, accounts[7],
         );
