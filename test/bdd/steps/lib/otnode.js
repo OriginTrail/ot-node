@@ -8,6 +8,7 @@ const deepExtend = require('deep-extend');
 const tmpdir = require('os').tmpdir();
 const uuidv4 = require('uuid/v4');
 const stripAnsi = require('strip-ansi');
+const lineReader = require('readline');
 
 const defaultConfiguration = require('../../../../config/config.json').development;
 
@@ -55,15 +56,27 @@ class OtNode extends EventEmitter {
 
     start() {
         assert(!this.process);
+        assert(this.initialized);
         this.logger.log(`Starting node ${this.id}.`);
         // Starting node should be done with following code:
         // this.process = spawn('npm', ['start', '--', `--configDir=${this.options.configDir}`]);
         // The problem is with it spawns two child process thus creating the problem when
         // sending the SIGINT in order to close it.
-        this.process = spawn('node', ['ot-node.js', `--configDir=${this.options.configDir}`], { cwd: '../../' });
-        this.process.stdout.on('data', data => this._processOutput(data));
-        this.process.stderr.on('data', data => this._processOutput(data));
+        this.process = spawn(
+            'node',
+            ['ot-node.js', `--configDir=${this.options.configDir}`],
+            { cwd: path.join(__dirname, '../../../../') },
+        );
         this.process.on('close', code => this._processExited(code));
+
+        this.lineReaderStdOut = lineReader.createInterface({
+            input: this.process.stdout,
+        });
+        this.lineReaderStdOut.on('line', data => this._processOutput(data));
+        this.lineReaderStdErr = lineReader.createInterface({
+            input: this.process.stderr,
+        });
+        this.lineReaderStdErr.on('line', data => this._processOutput(data));
     }
 
     stop() {
@@ -74,6 +87,7 @@ class OtNode extends EventEmitter {
 
     _processOutput(data) {
         this.logStream.write(data);
+
         let line = stripAnsi(data.toString());
         line = line.replace(/[^\x20-\x7E]+/g, '');
 

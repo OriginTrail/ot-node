@@ -14,6 +14,7 @@
     "test:api:nocov": "mocha --exit $(find test/api -name '*.js')",
     "test:protocol": "nyc mocha --exit $(find test/protocol -name '*.js')",
     "test:protocol:nocov": "mocha --exit $(find test/protocol -name '*.js')",
+    "test:bdd": "cucumber-js test/bdd/ -r test/bdd/steps/",
     "start": "node node_version_check.js && node ot-node.js",
     "bootstrap": "npm run setup:hard",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js add_db_backup.js check-updates.js",

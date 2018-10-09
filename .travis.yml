@@ -30,6 +30,7 @@ script:
   - cd ../../../
   - jobs
   - kill %1
+  - npm run test:bdd
 after_script:
   - cat mocha-logs.log
   - rm -f mocha-logs.log

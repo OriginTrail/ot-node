@@ -201,14 +201,25 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
                     return;
                 }
 
-                expect(body).to.have.keys([
-                    'import_hash', 'root_hash', 'import', 'transaction',
-                    // 'transaction', 'data_provider_wallet',
-                ]);
-                expect(body.import).to.have.keys(['vertices', 'edges']);
-                expect(body.import_hash).to.be.equal(this.state.lastImport.import_hash);
+                // TODO: Avoid asserting in promise. Manually check.
+                // expect(body).to.have.keys([
+                //     'import_hash', 'root_hash', 'import',
+                //     'transaction', 'data_provider_wallet',
+                // ]);
+                if (!body.import || !body.import.vertices || !body.import.vertices) {
+                    reject(Error('Response should contain import: { vertices: ..., edges: ... }'));
+                    return;
+                }
+
+                if (body.import_hash !== this.state.lastImport.import_hash) {
+                    reject(Error(`Import hash differs: ${body.import_hash} !== ${this.state.lastImport.import_hash}.`));
+                    return;
+                }
                 const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
-                expect(calculatedImportHash).to.be.equal(this.state.lastImport.import_hash);
+                if (calculatedImportHash !== this.state.lastImport.import_hash) {
+                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.import_hash}.`));
+                    return;
+                }
                 accept();
             },
         );
