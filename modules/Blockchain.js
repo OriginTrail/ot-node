@@ -21,6 +21,14 @@ class Blockchain {
     }
 
     /**
+     * Initialize Blockchain provider
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        await this.blockchain.initialize();
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @param wallet DH wallet

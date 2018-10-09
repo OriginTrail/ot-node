@@ -32,18 +32,30 @@ class Ethereum {
         );
 
         // Loading contracts
-        this.holdingContractAddress = this.config.holding_contract_address;
-        this.tokenContractAddress = this.config.token_contract_address;
-        this.readingContractAddress = this.config.reading_contract_address;
+        this.hubContractAddress = this.config.hub_contract_address;
 
+        const hubAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/hub.json');
+        this.hubContractAbi = JSON.parse(hubAbiFile);
+        this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
+
+        this.log.info('Selected blockchain: Ethereum');
+    }
+
+    /**
+     * Initializes Blockchain provider (get contract addresses, etc.)
+     * @returns {Promise<void>}
+     */
+    async initialize() {
         // Holding contract data
         const holdingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
+        this.holdingContractAddress = await this._getHoldingContractAddress();
         this.holdingContractAbi = JSON.parse(holdingAbiFile);
         this.holdingContract = new this.web3.eth
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
 
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/token.json');
+        this.tokenContractAddress = await this._getTokenContractAddress();
         this.tokenContractAbi = JSON.parse(tokenAbiFile);
         this.tokenContract = new this.web3.eth.Contract(
             this.tokenContractAbi,
@@ -52,6 +64,7 @@ class Ethereum {
 
         // Reading contract data
         const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/reading.json');
+        this.readingContractAddress = await this._getReadingContractAddress();
         this.readingContractAbi = JSON.parse(readingAbiFile);
         this.readingContract = new this.web3.eth.Contract(
             this.readingContractAbi,
@@ -61,8 +74,42 @@ class Ethereum {
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
         };
+    }
 
-        this.log.info('Selected blockchain: Ethereum');
+    /**
+     * Gets Holding contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getHoldingContractAddress() {
+        this.log.trace('Asking Hub for Holding contract address...');
+        return this.hubContract.methods.holdingAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Token contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getTokenContractAddress() {
+        this.log.trace('Asking Hub for Token contract address...');
+        return this.hubContract.methods.tokenAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Reading contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getReadingContractAddress() {
+        this.log.trace('Asking Hub for Holding contract address...');
+        return this.hubContract.methods.readingAddress().call({
+            from: this.config.wallet_address,
+        });
     }
 
     /**

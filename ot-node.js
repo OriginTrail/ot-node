@@ -233,9 +233,10 @@ function notifyEvent(message, metadata, subsystem) {
  * Main node object
  */
 class OTNode {
+    // TODO move this to Blockchain layer
     async getBalances(Utilities, config, web3, initial) {
         let enoughETH = false;
-        let enoughtTRAC = false;
+        // let enoughtTRAC = false;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 web3,
@@ -252,26 +253,28 @@ class OTNode {
                 log.info(`Balance of ETH: ${etherBalance}`);
             }
 
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                web3,
-                config.node_wallet,
-                config.blockchain.token_contract_address,
-            );
-            if (atracBalance <= 0) {
-                enoughtTRAC = false;
-                console.log('Please get some ATRAC in the node wallet fore running ot-node');
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughtTRAC = true;
-                log.info(`Balance of ATRAC: ${atracBalance}`);
-            }
+            // TODO wait for contract address initialization
+            // const atracBalance = await Utilities.getAlphaTracTokenBalance(
+            //     web3,
+            //     config.node_wallet,
+            //     config.blockchain.token_contract_address,
+            // );
+            // if (atracBalance <= 0) {
+            //     enoughtTRAC = false;
+            //     console.log('Please get some ATRAC in the node wallet fore running ot-node');
+            //     if (initial) {
+            //         process.exit(1);
+            //     }
+            // } else {
+            //     enoughtTRAC = true;
+            //     log.info(`Balance of ATRAC: ${atracBalance}`);
+            // }
         } catch (error) {
             console.log(error);
             notifyBugsnag(error);
         }
-        return enoughETH && enoughtTRAC;
+        // return enoughETH && enoughtTRAC;
+        return enoughETH;
     }
     /**
      * OriginTrail node system bootstrap function
@@ -425,6 +428,9 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
@@ -456,7 +462,6 @@ class OTNode {
 
         // Starting the kademlia
         const transport = container.resolve('transport');
-        const blockchain = container.resolve('blockchain');
 
         // Initialise API
         this.startRPC(emitter);
@@ -503,7 +508,6 @@ class OTNode {
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
