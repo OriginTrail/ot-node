@@ -1,96 +1,49 @@
-const uuidv4 = require('uuid/v4');
+const utilities = require('../Utilities');
 
 /**
- * Encapsulates DC related methods
+ * DC related API controller
  */
 class DCController {
     constructor(ctx) {
         this.logger = ctx.logger;
-        this.commandExecutor = ctx.commandExecutor;
+        this.emitter = ctx.emitter;
+        this.apiUtilities = ctx.apiUtilities;
     }
 
     /**
-     * Creates offer
-     * @returns {Promise<*>}
+     * Validate create offer request and import
+     *
+     * @param req   HTTP request
+     * @param res   HTTP response
      */
-    async writeRootHash(importId, rootHash, importHash) {
-        await this.commandExecutor.add({
-            name: 'dcOfferRootHashCommand',
-            delay: 0,
-            data: {
-                importId,
-                rootHash,
-                importHash,
-            },
-            transactional: false,
-        });
-    }
+    async createOffer(req, res) {
+        this.logger.api('POST: Replication of imported data request received.');
 
-    /**
-     * Creates offer
-     * @param importId  - Import ID
-     * @param rootHash  - Import root hash
-     * @param importHash - Import hash
-     * @param totalDocuments - Number of documents in import
-     * @param {number} [totalEscrowTime] - Total escrow time
-     * @param {number} [maxTokenAmount] - DH max token amount
-     * @param {number} [minStakeAmount] - DH min stake amount
-     * @param {number} [minReputation] - DH min reputation
-     * @returns {Promise<*>}
-     */
-    async createOffer(
-        importId, rootHash, totalDocuments, totalEscrowTime,
-        maxTokenAmount, minStakeAmount, minReputation, importHash,
-    ) {
-        const replicationId = uuidv4();
+        if (!this.apiUtilities.authorize(req, res)) {
+            return;
+        }
 
-        await this.commandExecutor.add({
-            name: 'dcOfferCancelCommand',
-            sequence: [
-                'dcOfferRootHashCommand', 'dcOfferCreateDatabaseCommand',
-                'dcOfferCreateBlockchainCommand', 'dcOfferReadyCommand',
-                'dcOfferChooseCommand', 'dcOfferFinalizedCommand',
-            ],
-            delay: 0,
-            data: {
-                importId,
-                importHash,
-                replicationId,
-                rootHash,
-                totalDocuments,
-                totalEscrowTime,
-                maxTokenAmount,
-                minStakeAmount,
-                minReputation,
-            },
-            transactional: false,
-        });
-
-        return replicationId;
-    }
-
-    /**
-     * Verify DH keys generated on replication
-     * @param importId  - Import ID
-     * @param dhNodeId  - DH node ID
-     * @param dhWallet  - DH wallet
-     * @param epk       - EPK parameter
-     * @param encryptionKey - Encryption key
-     * @returns {Promise<void>}
-     */
-    async verifyKeys(importId, dhNodeId, dhWallet, epk, encryptionKey) {
-        await this.commandExecutor.add({
-            name: 'dcOfferKeyVerificationCommand',
-            delay: 10000,
-            data: {
-                dhNodeId,
-                dhWallet,
-                epk,
-                importId,
-                encryptionKey,
-            },
-            transactional: false,
-        });
+        if (req.body !== undefined && req.body.import_id !== undefined && typeof req.body.import_id === 'string' &&
+            utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
+            utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
+            utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
+            utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
+            const queryObject = {
+                import_id: req.body.import_id,
+                total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
+                max_token_amount: req.body.max_token_amount_per_dh,
+                min_stake_amount: req.body.dh_min_stake_amount,
+                min_reputation: req.body.dh_min_reputation,
+                response: res,
+            };
+            this.emitter.emit('api-create-offer', queryObject);
+        } else {
+            this.logger.error('Invalid request');
+            res.status(400);
+            res.send({
+                message: 'Invalid parameters!',
+            });
+        }
     }
 }
 

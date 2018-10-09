@@ -112,7 +112,8 @@ function _solve(wallets, task) {
 /**
      * Solve PoW task
      * @param {BN[]} wallets
-     * @param {BN} solution
+     * @param {BN} task
+     * @param difficulty
      */
 function solve(wallets, task, difficulty) {
     const walletsArr = wallets.map(walletBn => walletBn.toString('hex').padStart(40, '0'));
@@ -121,12 +122,5 @@ function solve(wallets, task, difficulty) {
 }
 
 module.exports = {
-    solve: (wallets, task) => solve(wallets, task),
+    solve: (wallets, task, difficulty) => solve(wallets, task, difficulty),
 };
-
-process.once('message', ({ wallets, task }) => {
-    const res = solve(wallets, task);
-    process.send({ result: res });
-});
-
-process.once('SIGTERM', () => process.exit(0));

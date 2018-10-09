@@ -4,7 +4,7 @@ const Command = require('../command');
 /**
  * Chooses bids for particular offer
  */
-class DCOfferChooseCommand extends Command {
+class DcOfferChooseCommand2 extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -54,7 +54,7 @@ class DCOfferChooseCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferChooseCommand',
+            name: 'dcOfferChooseCommand2',
             delay: 30000,
             transactional: false,
         };
@@ -63,4 +63,4 @@ class DCOfferChooseCommand extends Command {
     }
 }
 
-module.exports = DCOfferChooseCommand;
+module.exports = DcOfferChooseCommand2;

@@ -1,17 +1,21 @@
 const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
-    const bids = sequelize.define('bids', {
+    const miner = sequelize.define('miner_records', {
         id: {
             type: DataTypes.STRING,
             defaultValue: () => uuidv4(),
             primaryKey: true,
         },
         offer_id: DataTypes.STRING,
-        dc_node_id: DataTypes.STRING,
+        difficulty: DataTypes.INTEGER,
+        task: DataTypes.STRING,
+        result: DataTypes.JSON,
+        status: DataTypes.STRING,
+        message: DataTypes.STRING,
     }, {});
-    bids.associate = (models) => {
+    miner.associate = (models) => {
         // associations can be defined here
     };
-    return bids;
+    return miner;
 };

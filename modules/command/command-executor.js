@@ -102,6 +102,8 @@ class CommandExecutor {
                     await CommandExecutor._update(command, {
                         status: STATUS.repeating,
                     }, transaction);
+
+                    command.data = handler.pack(command.data);
                     await this.add(command, command.period, false);
                     return Command.repeat();
                 }

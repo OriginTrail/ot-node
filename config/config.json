@@ -76,7 +76,8 @@
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
       "branch": "develop"
-    }
+    },
+    "dataSetStorage": "data_set_storage"
   },
   "staging": {
     "identity": null,
@@ -155,7 +156,8 @@
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
       "branch": "release/staging"
-    }
+    },
+    "dataSetStorage": "data_set_storage"
   },
   "stable": {
     "identity": null,
@@ -234,7 +236,8 @@
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
       "branch": "release/stable"
-    }
+    },
+    "dataSetStorage": "data_set_storage"
   },
   "production": {
     "identity": null,
@@ -316,6 +319,7 @@
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
       "branch": "master"
-    }
+    },
+    "dataSetStorage": "data_set_storage"
   }
 }

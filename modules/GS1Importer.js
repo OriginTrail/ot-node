@@ -2,6 +2,8 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
+const models = require('../models');
+const ImportUtilities = require('./ImportUtilities');
 
 class GS1Importer {
     /**
@@ -17,6 +19,7 @@ class GS1Importer {
 
     async processXML(err, result) {
         const GLOBAL_R = 131317;
+        let dataSetId;
         const importId = Utilities.createImportId(this.config.node_wallet);
 
         const epcisDocumentElement = result['epcis:EPCISDocument'];
@@ -799,23 +802,42 @@ class GS1Importer {
             await Promise.all(updates);
             await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
             await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+
+            let edgesPerImport = await this.db.findEdgesByImportId(importId);
+            edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+            edgesPerImport = edgesPerImport.map((edge) => {
+                delete edge.private;
+                return edge;
+            });
+
+            let verticesPerImport = await this.db.findVerticesByImportId(importId);
+            verticesPerImport = verticesPerImport.map((vertex) => {
+                delete vertex.private;
+                return vertex;
+            });
+
+            dataSetId = ImportUtilities.importHash(verticesPerImport, edgesPerImport);
+            const dataInfo = await models.data_info.find({ where: { data_set_id: dataSetId } });
+            if (dataInfo) {
+                throw new Error(`Data set ${dataSetId} has already been imported`);
+            }
+            await this.db.replaceDataSets(importId, dataSetId);
         } catch (e) {
             this.log.warn(`Failed to import data. ${e}`);
             await this.db.rollback(); // delete elements in transaction
+            await this.db.removeDataSetId(importId);
             throw e;
         }
         await this.db.commit();
 
-        // console.log('Done parsing and importing.');
-
-        let edgesPerImport = await this.db.findEdgesByImportId(importId);
+        let edgesPerImport = await this.db.findEdgesByImportId(dataSetId);
         edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
         edgesPerImport = edgesPerImport.map((edge) => {
             delete edge.private;
             return edge;
         });
 
-        let verticesPerImport = await this.db.findVerticesByImportId(importId);
+        let verticesPerImport = await this.db.findVerticesByImportId(dataSetId);
         verticesPerImport = verticesPerImport.map((vertex) => {
             delete vertex.private;
             return vertex;
@@ -823,7 +845,7 @@ class GS1Importer {
         return {
             vertices: verticesPerImport,
             edges: edgesPerImport,
-            import_id: importId,
+            data_set_id: dataSetId,
             wallet: senderWallet,
         };
     }
