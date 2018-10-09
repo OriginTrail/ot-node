@@ -182,6 +182,7 @@ class Blockchain {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
+        blockchainIdentity,
         dataSetId,
         dataRootHash,
         redLitigationHash,
@@ -194,6 +195,7 @@ class Blockchain {
         litigationIntervalInMinutes,
     ) {
         return this.blockchain.createOffer(
+            blockchainIdentity,
             dataSetId,
             dataRootHash,
             redLitigationHash,

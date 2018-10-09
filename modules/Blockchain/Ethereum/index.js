@@ -19,9 +19,12 @@ class Ethereum {
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
+
+        this.globalConfig = config;
         this.config = {
             wallet_address: config.node_wallet,
             node_private_key: config.node_private_key,
+            erc725Identity: config.erc725Identity,
         };
         Object.assign(this.config, config.blockchain);
 
@@ -421,6 +424,7 @@ class Ethereum {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
+        blockchainIdentity,
         dataSetId,
         dataRootHash,
         redLitigationHash,
@@ -437,12 +441,21 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.holdingContractAddress,
         };
-        this.log.trace(`createOffer (${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
+        this.log.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'createOffer',
             [
+                blockchainIdentity,
                 dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
                 dcNodeId,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
             ],
             options,
         );

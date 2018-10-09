@@ -30,15 +30,15 @@ class DCService {
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.holding_time_in_minutes, 16);
+            holdingTimeInMinutes = new BN(1, 10); // TODO take from config
         }
 
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = new BN(this.config.token_amount_per_holder, 16);
+            tokenAmountPerHolder = new BN(1, 10); // TODO take from config
         }
 
         if (!litigationIntervalInMinutes) {
-            litigationIntervalInMinutes = new BN(this.config.litigation_interval_in_minutes, 16);
+            litigationIntervalInMinutes = new BN(1, 10); // TODO take from config
         }
 
         await this.commandExecutor.add({
