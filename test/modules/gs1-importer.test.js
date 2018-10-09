@@ -3,7 +3,10 @@ require('dotenv').config();
 const {
     describe, before, beforeEach, afterEach, it,
 } = require('mocha');
-const { assert, expect } = require('chai');
+const chai = require('chai');
+// const chaiAsPromised = require("chai-as-promised");
+// chai.use(chaiAsPromised);
+const { assert, expect } = chai;
 const path = require('path');
 const { Database } = require('arangojs');
 const rc = require('rc');
@@ -26,7 +29,7 @@ const awilix = require('awilix');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
-describe('GS1 Importer tests', () => {
+describe.only('GS1 Importer tests', () => {
     const databaseName = 'gs1-test';
     let graphStorage;
     let systemDb;
@@ -513,6 +516,39 @@ describe('GS1 Importer tests', () => {
                 await gs1.parseGS1(await Utilities.fileContents(test.args[0]));
                 await checkSpecificVerticeContent(`${test.args[0]}`);
             });
+        });
+    });
+
+    describe.only('Incomplete xmls should fail to import', () => {
+        const xmlWithoutQuantityList = path.join(__dirname, 'test_xml/withoutQuantityList.xml');
+        const xmlWithoutBizStep = path.join(__dirname, 'test_xml/withoutBizStep.xml');
+        const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
+
+
+        it('and throw an error about missing quantityElement', async () => {
+            try {
+                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList));
+            } catch (error) {
+                assert.equal(error.message, 'Cannot read property \'quantityElement\' of undefined');
+            }
+        });
+
+        it('and throw an error related to missing bizStep', async () => {
+            try {
+                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep));
+            } catch (error) {
+                assert.equal(error.message, 'Cannot read property \'replace\' of undefined');
+            }
+        });
+
+        it('and throw an error related to missing CreationDateAndTime', async () => {
+            try {
+                await gs1.parseGS1(await Utilities.fileContents(xmlWithoutCreationDateAndTime));
+            } catch (error) {
+                assert.isTrue(error.message.indexOf('Failed to validate schema') >= 0, 'Failed to validate schema sentance should be part of error message');
+                assert.isTrue(error.message.indexOf('Missing child element(s).') >= 0, 'Missing child element should be part of error message');
+                assert.isTrue(error.message.indexOf('CreationDateAndTime') >= 0, 'CreationDateAndTime should be part of error message');
+            }
         });
     });
 
