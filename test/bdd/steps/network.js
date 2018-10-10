@@ -21,7 +21,7 @@ const bootstrapIdentity = {
     },
 };
 
-Given(/^(\d+) bootstrap is running$/, { timeout: 60000 }, function (nodeCount, done) {
+Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
 

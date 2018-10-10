@@ -17,31 +17,31 @@ before_script:
 script:
   - npm run lint
   # checks for arangodb based solution
-  - npm test 2> mocha-logs.log
-  - npm start &>arangodb.log &
-  - sleep 10
-  - jobs
-  - kill %1
+  # - npm test 2> mocha-logs.log
+  # - npm start &>arangodb.log &
+  # - sleep 10
+  # - jobs
+  # - kill %1
   # compile and check Smart Contracts
-  - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
-  - cd modules/Blockchain/Ethereum
-  - truffle test --network test > ../../../truffle-test.log
-  - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log
-  - cd ../../../
-  - jobs
-  - kill %1
+  # - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
+  # - cd modules/Blockchain/Ethereum
+  # - truffle test --network test > ../../../truffle-test.log
+  # - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log
+  # - cd ../../../
+  # - jobs
+  # - kill %1
   # TODO to be changed to "$TRAVIS_EVENT_TYPE" == "pull_request" later
   - 'if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then npm run test:bdd; fi'
 after_script:
-  - cat mocha-logs.log
-  - rm -f mocha-logs.log
-  - cat arangodb.log
-  - rm -f arangodb.log
-  - cat truffle-test.log
-  - rm -f truffle-test.log
-  - cat truffle-migrate.log
-  - rm -f truffle-migrate.log
+  # - cat mocha-logs.log
+  # - rm -f mocha-logs.log
+  # - cat arangodb.log
+  # - rm -f arangodb.log
+  # - cat truffle-test.log
+  # - rm -f truffle-test.log
+  # - cat truffle-migrate.log
+  # - rm -f truffle-migrate.log
   # enable line bellow in case you are interested in reading ganache-cli logs
   # - cat ganache.log
-  - rm -f ganache.log
+  # - rm -f ganache.log
   - kill -9 $(pgrep arangod)
