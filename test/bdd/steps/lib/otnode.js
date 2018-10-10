@@ -45,7 +45,8 @@ class OtNode extends EventEmitter {
         }
 
         this.state = {};
-        this.state.initialized = false;
+        this.state.addedBids = [];
+        this.state.notTakenBids = [];
 
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
@@ -111,6 +112,13 @@ class OtNode extends EventEmitter {
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
             // TODO: Poor man's parsing. Use regular expressions.
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
+        } else if (line.match(/Bid for .+ successfully added/gi)) {
+            this.state.addedBids.push(line.match(/\b0x[0-9A-F]{64}\b/gi)[0]);
+        } else if (line.match(/Bid not taken for offer .+\./gi)) {
+            this.state.notTakenBids.push(line.match(/\b0x[0-9A-F]{64}\b/gi)[0]);
+        } else if (line.match(/Offer for import .+ finalized/gi)) {
+            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
+            this.emit('offer-finalized', importId);
         }
     }
 
