@@ -1,4 +1,5 @@
 /* eslint-disable prefer-arrow-callback */
+require('dotenv').config();
 
 if (process.env.NODE_ENV !== 'development') {
     console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
