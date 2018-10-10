@@ -68,6 +68,8 @@ class OtNode extends EventEmitter {
             { cwd: path.join(__dirname, '../../../../') },
         );
         this.process.on('close', code => this._processExited(code));
+        this.process.stdout.on('data', data => this.logStream.write(data));
+        this.process.stderr.on('data', data => this.logStream.write(data));
 
         this.lineReaderStdOut = lineReader.createInterface({
             input: this.process.stdout,
@@ -86,8 +88,6 @@ class OtNode extends EventEmitter {
     }
 
     _processOutput(data) {
-        this.logStream.write(data);
-
         let line = stripAnsi(data.toString());
         line = line.replace(/[^\x20-\x7E]+/g, '');
 

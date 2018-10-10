@@ -226,3 +226,41 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
     });
 });
 
+Given(/^I initiate the replication$/, function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+    return new Promise((accept, reject) => {
+        request.post({
+            headers: { 'Content-Type': 'application/json' },
+            url: `${dc.state.node_rpc_url}/api/replication`,
+            body: {
+                import_id: this.state.lastImport.import_id,
+            },
+            json: true,
+        }, (err, res, body) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            if (!body.replication_id) {
+                reject(Error('Failed to replicate.'));
+                return;
+            }
+
+            this.state.lastReplication = body;
+            accept();
+        });
+    });
+});
+
+Given(/^I wait for replication to finish$/, { timeout: 600000 }, function () {
+    return new Promise((accept) => {
+        setTimeout(accept, 60000 * 2);
+    });
+});
+
