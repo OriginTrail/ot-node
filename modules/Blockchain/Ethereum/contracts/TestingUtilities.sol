@@ -39,7 +39,7 @@ contract TestingUtilities{
 
 	function keccakBytesAddress(bytes32 a, address b)
 	public pure returns (bytes32) {
-		return keccak256(abi.encodePacked(a,b));
+		return keccak256(abi.encodePacked(uint256(a),uint256(b)));
 	}
 
 	function keccakAddressAddressAddress(address a, address b, address c)
