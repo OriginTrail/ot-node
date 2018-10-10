@@ -1,4 +1,12 @@
+const BN = require('bn.js');
+
 const Command = require('../command');
+const Utilities = require('../../Utilities');
+
+const Models = require('../../../models/index');
+
+const { Op } = Models.Sequelize;
+
 
 /**
  * Finalizes offer on blockchain
@@ -19,14 +27,35 @@ class DCOfferFinalizeCommand extends Command {
     async execute(command) {
         const {
             offerId,
-            wallets,
+            solution,
         } = command.data;
 
+        const wallets = solution.nodeIdentifiers.map(ni => Utilities.normalizeHex(ni));
+        const replications = await Models.replicated_data.findAll({
+            where: {
+                offer_id: offerId,
+                dh_wallet: { [Op.in]: wallets },
+            },
+        });
+
+        const colors = [];
+        const identities = [];
+        const confirmations = [];
+        for (const replication of replications) {
+            colors.push(this.castColor(replication.color));
+            confirmations.push(replication.confirmation);
+            identities.push(replication.dh_identity);
+        }
+
         await this.blockchain.finalizeOffer(
+            Utilities.normalizeHex(this.config.erc725Identity),
             offerId,
-            wallets[0],
-            wallets[1],
-            wallets[2],
+            new BN(solution.shift, 10),
+            confirmations[0],
+            confirmations[1],
+            confirmations[2],
+            colors,
+            identities,
         );
         return {
             commands: [
@@ -36,6 +65,23 @@ class DCOfferFinalizeCommand extends Command {
                 },
             ],
         };
+    }
+
+    /**
+     * Casts color to number (needed for Blockchain)
+     * @param color
+     */
+    castColor(color) {
+        switch (color.toLowerCase()) {
+        case 'red':
+            return new BN(0, 10);
+        case 'green':
+            return new BN(1, 10);
+        case 'blue':
+            return new BN(2, 10);
+        default:
+            throw new Error(`Failed to cast color ${color}`);
+        }
     }
 
     /**

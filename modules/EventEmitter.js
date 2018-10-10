@@ -674,12 +674,19 @@ class EventEmitter {
                 return;
             }
             const {
-                offerId,
+                dataSetSizeInBytes,
                 dcNodeId,
-                dataSetId,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                offerId,
+                tokenAmountPerHolder,
             } = eventData;
 
-            await dhService.handleOffer(offerId, dcNodeId, dataSetId);
+            await dhService.handleOffer(
+                offerId, dcNodeId,
+                dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+            );
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
@@ -912,7 +919,7 @@ class EventEmitter {
                 status: 'OK',
             });
             const message = transport.extractMessage(request);
-            const { offerId, wallet } = message;
+            const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
             const identity = transport.extractSenderID(request);
 
@@ -920,7 +927,7 @@ class EventEmitter {
                 logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            await dcService.handleReplicationRequest(offerId, wallet, identity);
+            await dcService.handleReplicationRequest(offerId, wallet, identity, dhIdentity);
         });
 
         // async
@@ -931,9 +938,11 @@ class EventEmitter {
             const dhNodeId = transport.extractSenderID(request);
             const replicationFinishedMessage = transport.extractMessage(request);
             const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature } = replicationFinishedMessage;
-
-            await dcService.verifyDHReplication(offerId, messageSignature, dhNodeId, wallet);
+            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+            await dcService.verifyDHReplication(
+                offerId, messageSignature,
+                dhNodeId, dhIdentity, wallet,
+            );
         });
 
         // sync

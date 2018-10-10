@@ -34,6 +34,7 @@ class DHOfferHandleCommand extends Command {
         await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
+            dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
         this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
         return Command.empty();

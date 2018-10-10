@@ -463,31 +463,36 @@ class Ethereum {
 
     /**
      * Finalizes offer on Blockchain
-     * @param offerId   - Offer ID
-     * @param holder1   - Holder address
-     * @param holder2   - Holder address
-     * @param holder3   - Holder address
      * @returns {Promise<any>}
      */
     finalizeOffer(
+        blockchainIdentity,
         offerId,
-        holder1,
-        holder2,
-        holder3,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.holdingContractAddress,
         };
-        this.log.trace(`finalizeOffer (${offerId}, ${holder1}, ${holder2}, ${holder3})`);
+
+        this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'finalizeOffer',
             [
+                blockchainIdentity,
                 offerId,
-                holder1,
-                holder2,
-                holder3,
+                shift,
+                confirmation1,
+                confirmation2,
+                confirmation3,
+                encryptionType,
+                holders,
             ],
             options,
         );

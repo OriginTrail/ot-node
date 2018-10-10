@@ -70,7 +70,7 @@ class DCService {
     async miningSucceed(data) {
         const { offerId } = data;
         const mined = await models.miner_records.findOne({
-            offer_id: offerId,
+            where: { offer_id: offerId },
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -91,7 +91,7 @@ class DCService {
     async miningFailed(result) {
         const { offerId } = result;
         const mined = await models.miner_records.findOne({
-            offer_id: offerId,
+            where: { offer_id: offerId },
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -108,9 +108,10 @@ class DCService {
      * @param offerId
      * @param wallet
      * @param identity
+     * @param dhIdentity
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity) {
+    async handleReplicationRequest(offerId, wallet, identity, dhIdentity) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
@@ -143,6 +144,7 @@ class DCService {
                 offerId,
                 wallet,
                 identity,
+                dhIdentity,
             },
             transactional: false,
         });
@@ -154,9 +156,10 @@ class DCService {
      * @param signature
      * @param dhNodeId
      * @param dhWallet
+     * @param dhIdentity
      * @returns {Promise<void>}
      */
-    async verifyDHReplication(offerId, signature, dhNodeId, dhWallet) {
+    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet) {
         await this.commandExecutor.add({
             name: 'dcReplicationCompletedCommand',
             delay: 0,
@@ -165,6 +168,7 @@ class DCService {
                 signature,
                 dhNodeId,
                 dhWallet,
+                dhIdentity,
             },
             transactional: false,
         });

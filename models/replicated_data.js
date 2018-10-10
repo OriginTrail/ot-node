@@ -3,6 +3,7 @@ module.exports = (sequelize, DataTypes) => {
     const replicated_data = sequelize.define('replicated_data', {
         dh_id: DataTypes.STRING,
         dh_wallet: DataTypes.STRING,
+        dh_identity: DataTypes.STRING,
         offer_id: DataTypes.STRING,
         color: DataTypes.STRING,
         litigation_public_key: DataTypes.STRING,
@@ -11,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         litigation_root_hash: DataTypes.STRING,
         distribution_root_hash: DataTypes.STRING,
         distribution_epk: DataTypes.STRING,
+        confirmation: DataTypes.STRING,
         status: DataTypes.STRING,
     }, {});
     replicated_data.associate = (models) => {

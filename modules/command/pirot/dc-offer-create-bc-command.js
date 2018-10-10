@@ -59,46 +59,6 @@ class DCOfferCreateBcCommand extends Command {
     }
 
     /**
-     * Pack data for DB
-     * @param data
-     */
-    pack(data) {
-        Object.assign(data, {
-            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex')),
-            dataRootHash: Utilities.normalizeHex(data.dataRootHash.toString('hex')),
-            redLitigationHash: Utilities.normalizeHex(data.redLitigationHash.toString('hex')),
-            greenLitigationHash: Utilities.normalizeHex(data.greenLitigationHash.toString('hex')),
-            blueLitigationHash: Utilities.normalizeHex(data.blueLitigationHash.toString('hex')),
-            holdingTimeInMinutes: data.holdingTimeInMinutes.toString(),
-            tokenAmountPerHolder: data.tokenAmountPerHolder.toString(),
-            dataSizeInBytes: data.dataSizeInBytes.toString(),
-            litigationIntervalInMinutes: data.litigationIntervalInMinutes.toString(),
-        });
-        return data;
-    }
-
-    /**
-     * Unpack data from database
-     * @param data
-     * @returns {Promise<*>}
-     */
-    unpack(data) {
-        const parsed = data;
-        Object.assign(parsed, {
-            dataSetId: new BN(Utilities.denormalizeHex(data.dataSetId), 16),
-            dataRootHash: new BN(Utilities.denormalizeHex(data.dataRootHash), 16),
-            redLitigationHash: new BN(Utilities.denormalizeHex(data.redLitigationHash), 16),
-            greenLitigationHash: new BN(Utilities.denormalizeHex(data.greenLitigationHash), 16),
-            blueLitigationHash: new BN(Utilities.denormalizeHex(data.blueLitigationHash), 16),
-            holdingTimeInMinutes: new BN(data.holdingTimeInMinutes, 10),
-            tokenAmountPerHolder: new BN(data.tokenAmountPerHolder, 10),
-            dataSizeInBytes: new BN(data.dataSizeInBytes, 10),
-            litigationIntervalInMinutes: new BN(data.litigationIntervalInMinutes, 10),
-        });
-        return parsed;
-    }
-
-    /**
      * Recover system from failure
      * @param command
      * @param err

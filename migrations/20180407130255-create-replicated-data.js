@@ -11,6 +11,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        dh_identity: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         offer_id: {
             allowNull: false,
             type: Sequelize.STRING,
@@ -45,6 +49,9 @@ module.exports = {
         },
         distribution_epk: {
             allowNull: false,
+            type: Sequelize.STRING,
+        },
+        confirmation: {
             type: Sequelize.STRING,
         },
         status: {

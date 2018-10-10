@@ -31,7 +31,11 @@ class DHService {
      * Handle one offer
      * @returns {Promise<void>}
      */
-    async handleOffer(offerId, dcNodeId, dataSetId) {
+    async handleOffer(
+        offerId, dcNodeId,
+        dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+        tokenAmountPerHolder,
+    ) {
         if (dcNodeId.startsWith(Utilities.normalizeHex(this.config.identity))) {
             return; // the offer is mine
         }

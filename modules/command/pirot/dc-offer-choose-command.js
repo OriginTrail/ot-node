@@ -1,5 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
+const Utilities = require('../../Utilities');
 
 /**
  * Creates offer on blockchain
@@ -35,20 +36,14 @@ class DCOfferChooseCommand extends Command {
             },
         });
 
-        // TODO remove this! testing purposes only
-        // if (replications.length < 3) {
-        //     throw new Error('Failed to choose holders. Not enough DHs submitted.');
-        // }
+        if (replications.length < 3) {
+            throw new Error('Failed to choose holders. Not enough DHs submitted.');
+        }
 
-        // const wallets = replications.map(r => r.dh_wallet);
-        const w1 = '0000000000000000000000000000000000000000';
-        const w2 = '0000000000000000000000000000000000000001';
-        const w3 = '0000000000000000000000000000000000000002';
-
-        const wallets = [w1, w2, w3];
+        const wallets = replications.map(r => Utilities.denormalizeHex(r.dh_wallet));
         await this.minerService.sendToMiner(
             offer.task,
-            wallets.concat(wallets).concat(wallets),
+            wallets,
             offer.offer_id,
         );
         return {
@@ -86,7 +81,7 @@ class DCOfferChooseCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferChooseCommand',
-            delay: 20000,
+            delay: 30000,
             transactional: false,
         };
         Object.assign(command, map);
