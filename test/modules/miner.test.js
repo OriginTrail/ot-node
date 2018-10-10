@@ -2,7 +2,7 @@ const { describe, before, it } = require('mocha');
 const { assert, expect } = require('chai');
 const BN = require('bn.js');
 const abi = require('ethereumjs-abi');
-const miner = require('../../modules/Miner');
+const miner = require('../../modules/miner');
 const Utilities = require('../../modules/Utilities');
 
 console.log(miner);

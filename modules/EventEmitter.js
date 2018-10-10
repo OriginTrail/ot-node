@@ -1,8 +1,6 @@
-const Graph = require('./Graph');
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
 const Models = require('../models');
-const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
 const bytes = require('utf8-length');
@@ -32,6 +30,7 @@ class EventEmitter {
         this._initializeAPIEmitter();
         this._initializeP2PEmitter();
         this._initializeBlockchainEmitter();
+        this._initializeInternalEmitter();
     }
 
     /**
@@ -94,7 +93,7 @@ class EventEmitter {
             config,
             appState,
             profileService,
-            dcController,
+            dcService,
             dvController,
             notifyError,
         } = this.ctx;
@@ -452,9 +451,8 @@ class EventEmitter {
             }
 
             const {
-                import_id,
+                data_set_id,
                 root_hash,
-                import_hash,
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
@@ -464,9 +462,8 @@ class EventEmitter {
                 const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
-                        import_id,
+                        data_set_id,
                         root_hash,
-                        import_hash,
                         data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
@@ -483,15 +480,17 @@ class EventEmitter {
                     });
 
                 if (data.replicate) {
-                    this.emit('api-create-offer', { import_id, import_hash, response: data.response });
+                    this.emit('api-create-offer', {
+                        dataSetId: data_set_id,
+                        dataSizeInBytes: dataSize,
+                        dataRootHash: root_hash,
+                        response: data.response,
+                    });
                 } else {
-                    await dcController.writeRootHash(import_id, root_hash, import_hash);
-
                     data.response.status(201);
                     data.response.send({
                         message: 'Import success',
-                        import_id,
-                        import_hash,
+                        data_set_id,
                         wallet: config.node_wallet,
                     });
                     remoteControl.importSucceeded();
@@ -535,30 +534,32 @@ class EventEmitter {
                 return;
             }
             const {
-                import_id,
-                import_hash,
-                total_escrow_time,
-                max_token_amount,
-                min_stake_amount,
-                min_reputation,
+                dataSetId,
+                dataRootHash,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
             } = data;
 
             try {
-                logger.info(`Preparing to create offer for import ${import_id}`);
+                logger.info(`Preparing to create offer for data set ${dataSetId}`);
 
-                const dataimport = await Models.data_info.findOne({ where: { import_id } });
-                if (dataimport == null) {
-                    throw new Error('This import does not exist in the database');
+                const dataset = await Models.data_info.findOne({
+                    where: { data_set_id: dataSetId },
+                });
+                if (dataset == null) {
+                    throw new Error('This data set does not exist in the database');
                 }
 
-                const replicationId = await dcController.createOffer(
-                    import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
-                    max_token_amount, min_stake_amount, min_reputation, import_hash,
+                const offerId = await dcService.createOffer(
+                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
+                    dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
-                    replication_id: replicationId,
+                    offer_id: offerId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
@@ -665,7 +666,6 @@ class EventEmitter {
             logger,
             config,
             appState,
-            dhController,
             notifyError,
         } = this.ctx;
 
@@ -674,21 +674,12 @@ class EventEmitter {
                 return;
             }
             const {
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                min_reputation,
-                data_hash,
-                data_size_in_bytes,
+                offerId,
+                dcNodeId,
+                dataSetId,
             } = eventData;
 
-            await dhController.handleOffer(
-                import_id, DC_node_id, total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                min_reputation, data_size_in_bytes, data_hash, false,
-            );
+            await dhService.handleOffer(offerId, dcNodeId, dataSetId);
         });
 
         this._on('eth-AddedPredeterminedBid', async (eventData) => {
@@ -732,7 +723,7 @@ class EventEmitter {
                 const createOfferEventData = JSON.parse(createOfferEvent.data);
 
                 const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
-                await dhController.handleOffer(
+                await dhService.handleOffer(
                     import_id, dcNodeId, total_escrow_time_in_minutes,
                     max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
                     createOfferEventData.min_reputation, data_size_in_bytes,
@@ -829,14 +820,14 @@ class EventEmitter {
         const {
             dvService,
             logger,
-            dataReplication,
             transport,
             blockchain,
             remoteControl,
-            dhController,
-            dcController,
+            dhService,
+            dcService,
             dvController,
             notifyError,
+            dcController,
         } = this.ctx;
 
         // sync
@@ -863,7 +854,7 @@ class EventEmitter {
                     wallet: msgWallet,
                     query: msgQuery,
                 } = message;
-                await dhController.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
+                await dhService.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);
@@ -872,26 +863,46 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-payload-request', async (request, response) => {
+        this._on('kad-replication-response', async (request, response) => {
             await transport.sendResponse(response, {
                 status: 'OK',
             });
             logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
 
             const message = transport.extractMessage(request);
-            const importId = message.payload.import_id;
-            const { vertices } = message.payload;
+            const dcNodeId = transport.extractSenderID(request);
+            const offerId = message.payload.offer_id;
+            const dataSetId = message.payload.data_set_id;
             const { edges } = message.payload;
-            const wallet = message.payload.dc_wallet;
-            const publicKey = message.payload.public_key;
+            const litigationVertices = message.payload.litigation_vertices;
+            const dcWallet = message.payload.dc_wallet;
+            const litigationPublicKey = message.payload.litigation_public_key;
+            const distributionPublicKey = message.payload.distribution_public_key;
+            const distributionPrivateKey = message.payload.distribution_private_key;
+            const distributionEpkChecksum = message.payload.distribution_epk_checksum;
+            const litigationRootHash = message.payload.litigation_root_hash;
+            const distributionRootHash = message.payload.distribution_root_hash;
+            const distributionEpk = message.payload.distribution_epk;
+            const distributionSignature = message.payload.distribution_signature;
             const transactionHash = message.payload.transaction_hash;
 
-            await dhController.handleReplicationImport(
-                importId, vertices,
-                edges, wallet, publicKey,
+            await dhService.handleReplicationImport(
+                offerId,
+                dataSetId,
+                dcNodeId,
+                dcWallet,
+                edges,
+                litigationVertices,
+                litigationPublicKey,
+                distributionPublicKey,
+                distributionPrivateKey,
+                distributionEpkChecksum,
+                litigationRootHash,
+                distributionRootHash,
+                distributionEpk,
+                distributionSignature,
                 transactionHash,
             );
-
             // TODO: send fail in case of fail.
         });
 
@@ -901,97 +912,15 @@ class EventEmitter {
                 status: 'OK',
             });
             const message = transport.extractMessage(request);
-            const { import_id, wallet } = message;
+            const { offerId, wallet } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
             const identity = transport.extractSenderID(request);
 
-            logger.info(`Request for replication of ${import_id} received. Sender ${identity}`);
-
-            if (!import_id || !wallet) {
-                logger.warn('Asked replication without providing import ID or wallet.');
-                return;
-            }
-
             if (senderWallet !== wallet) {
-                logger.warn(`Wallet in the message differs from replication request for import ID ${import_id}.`);
+                logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            const offerModel = await Models.offers.findOne({
-                where: {
-                    import_id,
-                    status: { [Models.Sequelize.Op.in]: ['FINALIZING', 'FINALIZED'] },
-                },
-                order: [
-                    ['id', 'DESC'],
-                ],
-            });
-            if (!offerModel) {
-                logger.warn(`Replication request for offer I don't know: ${import_id}.`);
-                return;
-            }
-
-            const offer = offerModel.get({ plain: true });
-
-            // Check is it valid ID of replicator.
-            const offerDhIds = offer.dh_ids;
-            const offerWallets = offer.dh_wallets;
-
-            // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            if (!offerDhIds.includes(identity) || !offerWallets.includes(senderWallet)) {
-                // Check escrow to see if it was a chosen bid. Expected status to be initiated.
-                const escrow = await blockchain.getEscrow(import_id, wallet);
-
-                if (escrow.escrow_status === 0) {
-                    // const errorMessage = `Replication request
-                    //  for offer you didn't apply: ${import_id}.`;
-                    logger.info(`DH ${identity} requested data without offer for import ID ${import_id}.`);
-                    return;
-                }
-            }
-
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
-
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
-
-            const keyPair = Encryption.generateKeyPair();
-            Graph.encryptVertices(vertices, keyPair.privateKey);
-
-            const replicatedData = await Models.replicated_data.create({
-                dh_id: identity,
-                import_id,
-                offer_id: offer.id,
-                data_private_key: keyPair.privateKey,
-                data_public_key: keyPair.publicKey,
-                status: 'PENDING',
-            });
-
-            const dataInfo = await Models.data_info.find({ where: { import_id } });
-
-            logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
-            const data = {
-                contact: identity,
-                vertices,
-                edges,
-                import_id,
-                public_key: keyPair.publicKey,
-                root_hash: offer.data_hash,
-                data_provider_wallet: dataInfo.data_provider_wallet,
-                transaction_hash: dataInfo.transaction_hash,
-                total_escrow_time: offer.total_escrow_time,
-            };
-
-            dataReplication.sendPayload(data).then(() => {
-                logger.info(`Payload for ${import_id} sent to ${identity}.`);
-            }).catch((error) => {
-                logger.warn(`Failed to send payload to ${identity}. Replication ID ${replicatedData.id}. ${error}`);
-                notifyError(error);
-            });
+            await dcService.handleReplicationRequest(offerId, wallet, identity);
         });
 
         // async
@@ -999,7 +928,12 @@ class EventEmitter {
             await transport.sendResponse(response, {
                 status: 'OK',
             });
-            logger.notify('Replication finished, preparing to start challenges');
+            const dhNodeId = transport.extractSenderID(request);
+            const replicationFinishedMessage = transport.extractMessage(request);
+            const { wallet } = transport.extractSenderInfo(request);
+            const { offerId, messageSignature } = replicationFinishedMessage;
+
+            await dcService.verifyDHReplication(offerId, messageSignature, dhNodeId, wallet);
         });
 
         // sync
@@ -1080,7 +1014,7 @@ class EventEmitter {
                 logger.warn(returnMessage);
                 return;
             }
-            await dhController.handleDataReadRequestFree(message);
+            await dhService.handleDataReadRequestFree(message);
         });
 
         // async
@@ -1169,7 +1103,7 @@ class EventEmitter {
             logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
 
             const dcNodeId = transport.extractSenderID(request);
-            await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
+            await dcService.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
         });
 
         // async
@@ -1184,6 +1118,24 @@ class EventEmitter {
             } else {
                 logger.notify(`Key verification for import ${import_id} failed`);
                 remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
+            }
+        });
+    }
+
+    /**
+     * Initializes internal emitter
+     * @private
+     */
+    _initializeInternalEmitter() {
+        const {
+            dcService,
+        } = this.ctx;
+
+        this._on('int-miner-solution', async (err, data) => {
+            if (err) {
+                await dcService.miningFailed(data.offerId);
+            } else {
+                await dcService.miningSucceed(data);
             }
         });
     }

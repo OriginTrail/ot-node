@@ -246,7 +246,6 @@ class Encryption {
         }
 
         checksum = checksum.add(new BN(r2));
-
         return checksum.toString('hex');
     }
 
@@ -322,8 +321,7 @@ class Encryption {
      */
     static signMessage(web3, dataArgs, privateKey) {
         const hash = this.generateHash(dataArgs);
-        const signature = web3.eth.accounts.sign(hash, privateKey);
-        return signature;
+        return web3.eth.accounts.sign(hash, privateKey);
     }
 
     /**
@@ -343,8 +341,7 @@ class Encryption {
 
         const m = utils.toBuffer(msg);
         const pub = utils.ecrecover(m, v, r, s);
-        const adr = `0x${utils.pubToAddress(pub).toString('hex')}`;
-        return adr;
+        return `0x${utils.pubToAddress(pub).toString('hex')}`;
     }
 
     /**

@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
         contract: DataTypes.STRING,
         event: DataTypes.STRING,
         data: DataTypes.TEXT,
-        import_id: DataTypes.STRING,
+        data_set_id: DataTypes.STRING,
         block: DataTypes.INTEGER,
         finished: DataTypes.BOOLEAN,
         timestamp: DataTypes.INTEGER,

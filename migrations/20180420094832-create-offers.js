@@ -3,49 +3,37 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('offers', {
         id: {
             allowNull: false,
-            autoIncrement: true,
             primaryKey: true,
+            type: Sequelize.STRING,
+        },
+        data_set_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        offer_id: {
+            type: Sequelize.INTEGER,
+            unique: true,
+        },
+        litigation_interval_in_minutes: {
             type: Sequelize.INTEGER,
         },
-        import_id: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
-        total_escrow_time: {
+        holding_time_in_minutes: {
             type: Sequelize.INTEGER,
-            allowNull: false,
         },
-        max_token_amount: {
+        token_amount_per_holder: {
             type: Sequelize.STRING,
-            allowNull: false,
         },
-        min_stake_amount: {
+        red_litigation_hash: {
             type: Sequelize.STRING,
-            allowNull: false,
         },
-        min_reputation: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-        },
-        data_hash: {
+        blue_litigation_hash: {
             type: Sequelize.STRING,
-            allowNull: false,
         },
-        data_size_bytes: {
+        green_litigation_hash: {
             type: Sequelize.STRING,
-            allowNull: false,
         },
-        dh_wallets: {
-            type: Sequelize.JSON,
-            allowNull: false,
-        },
-        dh_ids: {
-            type: Sequelize.JSON,
-            allowNull: false,
-        },
-        start_tender_time: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
+        task: {
+            type: Sequelize.STRING,
         },
         status: {
             type: Sequelize.STRING,
@@ -55,10 +43,6 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
         },
-        external_id: {
-            type: Sequelize.STRING,
-            allowNull: false,
-        },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('offers'),
+    down: queryInterface => queryInterface.dropTable('offers'),
 };

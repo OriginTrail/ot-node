@@ -254,6 +254,70 @@ class ArangoJS {
     }
 
     /**
+     * Removes hanging data set ID
+     * @param dataSetID
+     * @returns {Promise<any>}
+     */
+    async removeDataSetId(dataSetID) {
+        const queryString = 'LET documents = (' +
+            '    FOR d IN __COLLECTION__' +
+            '    FILTER' +
+            '        d.imports != null' +
+            '        AND' +
+            '        POSITION(d.imports, @dataSetID, false) != false' +
+            '    SORT d._key RETURN d' +
+            ')' +
+            'RETURN COUNT(\n' +
+            '    FOR d IN documents\n' +
+            '        LET pos = POSITION(d.imports, @dataSetID, true)\n' +
+            '        LET dataSets = REMOVE_NTH(d.imports, pos)\n' +
+            '        UPDATE { _key: d._key, imports: dataSets } IN __COLLECTION__\n' +
+            '        RETURN 1)';
+
+        const edgesQuery = queryString.replace(/__COLLECTION__/g, 'ot_edges');
+        const verticesQuery = queryString.replace(/__COLLECTION__/g, 'ot_vertices');
+        const params = {
+            dataSetID,
+        };
+        let count = await this.runQuery(edgesQuery, params);
+        count += await this.runQuery(verticesQuery, params);
+        return count;
+    }
+
+    /**
+     * Replaces one data set ID with another
+     * @param oldDataSet    Old data set ID
+     * @param newDataSet    New data set ID
+     * @returns {Promise<any>}
+     */
+    async replaceDataSets(oldDataSet, newDataSet) {
+        const queryString = 'LET documents = (' +
+            '    FOR d IN __COLLECTION__' +
+            '    FILTER' +
+            '        d.imports != null' +
+            '        AND' +
+            '        POSITION(d.imports, @oldDataSet, false) != false' +
+            '    SORT d._key RETURN d' +
+            ')' +
+            '    RETURN COUNT(' +
+            '       FOR d IN documents' +
+            '           LET pos = POSITION(d.imports, @oldDataSet, true)' +
+            '           LET dataSets = pos == -1? d.imports : APPEND(PUSH(SLICE(d.imports, 0, pos), @newDataSet), SLICE(d.imports, pos+1))' +
+            '           UPDATE { _key: d._key, imports: dataSets } IN __COLLECTION__' +
+            '       RETURN 1)';
+
+        const edgesQuery = queryString.replace(/__COLLECTION__/g, 'ot_edges');
+        const verticesQuery = queryString.replace(/__COLLECTION__/g, 'ot_vertices');
+        const params = {
+            oldDataSet,
+            newDataSet,
+        };
+        let count = await this.runQuery(edgesQuery, params);
+        count += await this.runQuery(verticesQuery, params);
+        return count;
+    }
+
+    /**
      * Updates document imports by ID
      * @param collectionName
      * @param senderId

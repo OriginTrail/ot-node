@@ -30,7 +30,7 @@ const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bid
 const DepositTokenCommand = require('../../modules/command/common/deposit-token-command');
 
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
-const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command');
+const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command2');
 const DCOfferCreateBlockchainCommand = require('../../modules/command/dc/dc-offer-create-blockchain-command');
 const DCOfferCreateDBCommand = require('../../modules/command/dc/dc-offer-create-database-command');
 const DCOfferReadyCommand = require('../../modules/command/dc/dc-offer-ready-command');
@@ -40,7 +40,7 @@ const DCEscrowVerifyCommand = require('../../modules/command/dc/dc-escrow-verify
 const DCEscrowCancelCommand = require('../../modules/command/dc/dc-escrow-cancel-command');
 const DCOfferFinalizedCommand = require('../../modules/command/dc/dc-offer-finalized-command');
 
-const DCController = require('../../modules/controller/dc-controller');
+const DCService = require('../../modules/service/dc-service');
 
 // Thanks solc. At least this works!
 // This removes solc's overzealous uncaughtException event handler.
@@ -469,13 +469,13 @@ describe('Protocol tests', () => {
                     .singleton(),
                 biddingApprovalIncreaseCommand: awilix.asClass(BiddingApprovalIncreaseCommand)
                     .singleton(),
-                dcController: awilix.asClass(DCController).singleton(),
+                dcService: awilix.asClass(DCService).singleton(),
                 notifyError: awilix.asFunction(() => (error) => { throw error; }),
             });
 
             testNode.blockchain = container.resolve('blockchain');
             testNode.commandExecutor = container.resolve('commandExecutor');
-            testNode.dcController = container.resolve('dcController');
+            testNode.dcService = container.resolve('dcService');
             testNode.container = container;
         });
 
@@ -691,9 +691,9 @@ describe('Protocol tests', () => {
 
         it('should initiate replication for happy path and without predetermined bidders', async function replication1() {
             this.timeout(90000); // One minute is minimum time for a offer.
-            const { dcController, blockchain } = testNode1;
+            const { dcService, blockchain } = testNode1;
 
-            const replicationId = await dcController.createOffer(importId, rootHash, 1);
+            const replicationId = await dcService.createOffer(importId, rootHash, 1);
 
             const event = await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
             expect(event).to.exist;
@@ -772,9 +772,9 @@ describe('Protocol tests', () => {
 
         it.skip('rootHash for already imported data should exist on blockchain', async function () {
             this.timeout(90000); // One minute is minimum time for a offer.
-            const { dcController, blockchain } = testNode1;
+            const { dcService, blockchain } = testNode1;
 
-            await dcController.createOffer(importId, rootHash, 1, vertices);
+            await dcService.createOffer(importId, rootHash, 1, vertices);
             await waitForEvent(biddingInstance, 'OfferCreated', importId, 60000);
 
             // Send one bid.

@@ -396,9 +396,9 @@ class Kademlia {
         });
 
         // async
-        this.node.use('kad-payload-request', (request, response, next) => {
-            this.log.debug('kad-payload-request received');
-            this.emitter.emit('kad-payload-request', request, response);
+        this.node.use('kad-replication-response', (request, response, next) => {
+            this.log.debug('kad-replication-response received');
+            this.emitter.emit('kad-replication-response', request, response);
         });
 
         // async
@@ -469,9 +469,9 @@ class Kademlia {
         });
 
         // error handler
-        this.node.use('kad-payload-request', (err, request, response, next) => {
+        this.node.use('kad-replication-response', (err, request, response, next) => {
             response.send({
-                error: 'kad-payload-request error',
+                error: 'kad-replication-response error',
             });
         });
 
@@ -577,10 +577,10 @@ class Kademlia {
                 }
             });
 
-            node.payloadRequest = async (message, contactId) => {
+            node.replicationResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-payload-request', { message }, [contactId, contact], (err, res) => {
+                    node.send('kad-replication-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {

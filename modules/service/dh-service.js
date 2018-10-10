@@ -1,35 +1,175 @@
 const BN = require('bn.js');
-
-const Utilities = require('./Utilities');
-const Models = require('../models');
-const Op = require('sequelize/lib/operators');
-const Encryption = require('./Encryption');
-const Challenge = require('./Challenge');
-const Graph = require('./Graph');
-const ImportUtilities = require('./ImportUtilities');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
+const Op = require('sequelize/lib/operators');
 
-const ObjectValidator = require('./validator/object-validator');
+const Models = require('../../models');
+const Utilities = require('../Utilities');
+const models = require('../../models/index');
 
-/**
- * DH operations (handling new offers, etc.)
- */
+const Graph = require('../Graph');
+const Challenge = require('../Challenge');
+const Encryption = require('../Encryption');
+const ImportUtilities = require('../ImportUtilities');
+const ObjectValidator = require('../validator/object-validator');
+
 class DHService {
-    /**
-     * Default constructor
-     * @param ctx IoC context
-     */
     constructor(ctx) {
+        this.logger = ctx.logger;
         this.config = ctx.config;
+        this.commandExecutor = ctx.commandExecutor;
         this.importer = ctx.importer;
         this.blockchain = ctx.blockchain;
         this.transport = ctx.transport;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
-        this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+    }
+
+    /**
+     * Handle one offer
+     * @returns {Promise<void>}
+     */
+    async handleOffer(offerId, dcNodeId, dataSetId) {
+        if (dcNodeId.startsWith(Utilities.normalizeHex(this.config.identity))) {
+            return; // the offer is mine
+        }
+        dcNodeId = dcNodeId.substring(2, 42);
+        const dcContact = await this.transport.getContact(dcNodeId, true);
+        if (dcContact == null || dcContact.hostname == null) {
+            return; // wait until peers are synced
+        }
+
+        // TODO enable this check after SC event update
+        // const dataInfo = await models.data_info.findOne({
+        //     where: { data_set_id: dataSetId },
+        // });
+        // if (dataInfo) {
+        //     this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
+        //     return;
+        // }
+
+        const bid = await models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (bid) {
+            this.logger.trace(`I've already added bid for offer ${offerId}. Ignoring.`);
+            return;
+        }
+
+        await this.commandExecutor.add({
+            name: 'dhOfferHandleCommand',
+            delay: 15000,
+            data: {
+                offerId,
+                dcNodeId,
+            },
+            transactional: false,
+        });
+    }
+
+    /**
+     * Handle one replication payload
+     * @param offerId   - Offer ID
+     * @param dataSetId - Data set ID
+     * @param litigationVertices  - Encrypted import vertices
+     * @param edges     - Import edges
+     * @param dcWallet  - DC wallet
+     * @param litigationPublicKey - Litigation decryption key
+     * @param distributionPublicKey - Distribution decryption key
+     * @param distributionPrivateKey - Distribution encryption key
+     * @param distributionEpkChecksum - Distribution decryption key checksum
+     * @param dcNodeId  - DC node ID
+     * @param litigationRootHash - Litigation hash
+     * @param distributionRootHash - Distribution hash
+     * @param transactionHash - Transaction hash of the import
+     * @param distributionEpk - Distribution EPK
+     * @param distributionSignature - Distribution parameters check
+     * @returns {Promise<void>}
+     */
+    async handleReplicationImport(
+        offerId,
+        dataSetId,
+        dcNodeId,
+        dcWallet,
+        edges,
+        litigationVertices,
+        litigationPublicKey,
+        distributionPublicKey,
+        distributionPrivateKey,
+        distributionEpkChecksum,
+        litigationRootHash,
+        distributionRootHash,
+        distributionEpk,
+        distributionSignature,
+        transactionHash,
+    ) {
+        const bid = await models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (!bid) {
+            this.logger.trace(`Request for replication import came for unknown offer ${offerId}. Ignoring.`);
+            return;
+        }
+
+        await this.commandExecutor.add({
+            name: 'dhReplicationImportCommand',
+            data: {
+                offerId,
+                dataSetId,
+                dcNodeId,
+                dcWallet,
+                edges,
+                litigationVertices,
+                litigationPublicKey,
+                distributionPublicKey,
+                distributionPrivateKey,
+                distributionEpkChecksum,
+                litigationRootHash,
+                distributionRootHash,
+                distributionEpk,
+                distributionSignature,
+                transactionHash,
+            },
+            transactional: false,
+        });
+    }
+
+    /**
+     * Handle one read request (checks whether node satisfies query)
+     * @param msgId       - Message ID
+     * @param msgNodeId   - Message node ID
+     * @param msgWallet   - Message wallet
+     * @param msgQuery    - Message query
+     * @returns {Promise<void>}
+     */
+    async handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery) {
+        await this.commandExecutor.add({
+            name: 'dhReadDataLocationRequestCommand',
+            transactional: false,
+            data: {
+                msgId,
+                msgNodeId,
+                msgWallet,
+                msgQuery,
+            },
+        });
+    }
+
+    /**
+     * Sends dhDataReadRequestFreeCommand to the queue.
+     * @param message Message received from network
+     * @returns {Promise<void>}
+     */
+    async handleDataReadRequestFree(message) {
+        await this.commandExecutor.add({
+            name: 'dhDataReadRequestFreeCommand',
+            transactional: false,
+            data: {
+                message,
+            },
+        });
     }
 
     /**
@@ -168,7 +308,7 @@ class DHService {
             );
         } catch (e) {
             const errorMessage = `Failed to process data read request. ${e}.`;
-            this.log.warn(errorMessage);
+            this.logger.warn(errorMessage);
             this.notifyError(e);
             await this.transport.sendDataReadResponse({
                 status: 'FAIL',
@@ -197,7 +337,7 @@ class DHService {
 
         if (!purchase) {
             const errorMessage = `Failed to get purchase for: DH ${this.config.node_wallet}, DV ${networkReplyModel.receiver_wallet} and import ID ${importId}.`;
-            this.log.error(errorMessage);
+            this.logger.error(errorMessage);
             throw errorMessage;
         }
 
@@ -209,11 +349,11 @@ class DHService {
 
         if (!purchaseTokenAmount.eq(myPrice) || !purchaseStakeFactor.eq(myStakeFactor)) {
             const errorMessage = `Whoa, we didn't agree on this. Purchase price and stake factor: ${purchaseTokenAmount} and ${purchaseStakeFactor}, my price and stake factor: ${myPrice} and ${myStakeFactor}.`;
-            this.log.error(errorMessage);
+            this.logger.error(errorMessage);
             throw errorMessage;
         }
 
-        this.log.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
+        this.logger.info(`Purchase for import ${importId} seems just fine. Sending comm to contract.`);
 
         // bool commitment_proof = this_purchase.commitment ==
         // keccak256(checksum_left, checksum_right, checksum_hash,
@@ -221,7 +361,7 @@ class DHService {
 
         // Fetch epk from db.
         if (!holdingData) {
-            this.log.error(`Cannot find holding data info for import ID ${importId}`);
+            this.logger.error(`Cannot find holding data info for import ID ${importId}`);
             throw Error('Internal error');
         }
         const { epk } = holdingData;
@@ -309,12 +449,12 @@ class DHService {
             importId, wallet, m2Checksum,
             epkChecksumHash, selectedBlockNumber,
             m1Checksum, r1, r2, e,
-        ).then(() => this.log.info('Purchase dispute completed'));
+        ).then(() => this.logger.info('Purchase dispute completed'));
 
         this.listenPurchaseConfirmation(
             importId, wallet, networkReplyModel,
             selectedBlock, eHex,
-        ).then(() => this.log.important('Purchase confirmation completed'));
+        ).then(() => this.logger.important('Purchase confirmation completed'));
     }
 
     /**
@@ -325,13 +465,13 @@ class DHService {
         const eventData = await this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
         if (!eventData) {
             // Everything is ok.
-            this.log.warn(`Purchase not confirmed for ${importId}.`);
+            this.logger.warn(`Purchase not confirmed for ${importId}.`);
             await this.blockchain.cancelPurchase(importId, wallet, true);
-            this.log.important(`Purchase for import ${importId} canceled.`);
+            this.logger.important(`Purchase for import ${importId} canceled.`);
             return;
         }
 
-        this.log.important(`[DH] Purchase confirmed for import ID ${importId}`);
+        this.logger.important(`[DH] Purchase confirmed for import ID ${importId}`);
         await this.blockchain.sendEncryptedBlock(
             importId,
             networkReplyModel.receiver_wallet,
@@ -340,15 +480,15 @@ class DHService {
                 Utilities.denormalizeHex(eHex),
             )),
         );
-        this.log.notify(`[DH] Encrypted block sent for import ID ${importId}`);
+        this.logger.notify(`[DH] Encrypted block sent for import ID ${importId}`);
         this.blockchain.subscribeToEvent('PurchaseConfirmed', importId, 10 * 60 * 1000);
 
         // Call payOut() after 5 minutes. Requirement from contract.
         setTimeout(() => {
             this.blockchain.payOutForReading(importId, networkReplyModel.receiver_wallet)
-                .then(() => this.log.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
+                .then(() => this.logger.info(`[DH] Payout finished for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}.`))
                 .catch((error) => {
-                    this.log.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
+                    this.logger.info(`[DH] Payout failed for import ID ${importId} and DV ${networkReplyModel.receiver_wallet}. ${error}.`);
                     this.notifyError(error);
                 });
         }, 5 * 60 * 1000);
@@ -365,7 +505,7 @@ class DHService {
         let eventData = await this.blockchain.subscribeToEvent('PurchaseDisputed', importId, 10 * 60 * 1000);
         if (!eventData) {
             // Everything is ok.
-            this.log.info(`No litigation process initiated for purchase for ${importId}.`);
+            this.logger.info(`No litigation process initiated for purchase for ${importId}.`);
             return;
         }
 
@@ -378,9 +518,9 @@ class DHService {
         // emit PurchaseDisputeCompleted(import_id, msg.sender, DV_wallet, false);
         eventData = this.blockchain.subscribeToEvent('PurchaseDisputeCompleted', importId, 10 * 60 * 1000);
         if (eventData.proof_was_correct) {
-            this.log.info(`Litigation process for purchase ${importId} was fortunate for me.`);
+            this.logger.info(`Litigation process for purchase ${importId} was fortunate for me.`);
         } else {
-            this.log.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
+            this.logger.info(`Litigation process for purchase ${importId} was unfortunate for me.`);
         }
     }
 
@@ -395,7 +535,7 @@ class DHService {
         if (dhWallet !== this.config.node_wallet) {
             return;
         }
-        this.log.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
+        this.logger.debug(`Litigation initiated for import ${importId} and block ${blockId}`);
 
         let vertices = await this.graphStorage.findVerticesByImportId(importId);
         ImportUtilities.sort(vertices, '_dc_key');
@@ -403,7 +543,7 @@ class DHService {
         vertices = vertices.filter(vertex => vertex.vertex_type !== 'CLASS'); // Dump class objects.
         const answer = Challenge.answerTestQuestion(blockId, vertices, 32);
 
-        this.log.debug(`Answer litigation for import ${importId}. Answer for block ${blockId} is ${answer}`);
+        this.logger.debug(`Answer litigation for import ${importId}. Answer for block ${blockId} is ${answer}`);
         await this.blockchain.answerLitigation(importId, answer);
     }
 

@@ -8,7 +8,7 @@ const d3 = require('d3-format');
 /**
  * Handles new offer from the DH side
  */
-class DHOfferHandleCommand extends Command {
+class DhOfferHandleCommandOld extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -227,4 +227,4 @@ class DHOfferHandleCommand extends Command {
     }
 }
 
-module.exports = DHOfferHandleCommand;
+module.exports = DhOfferHandleCommandOld;

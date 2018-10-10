@@ -171,40 +171,44 @@ class Blockchain {
 
     /**
      * Creates offer for the data storing on the Ethereum blockchain.
-     * @param importId Import ID of the offer.
-     * @param nodeId KADemlia node ID of offer creator
-     * @param totalEscrowTime Total time of the escrow in milliseconds
-     * @param maxTokenAmount Maximum price per DH
-     * @param MinStakeAmount Minimum stake in tokens
-     * @param minReputation Minimum required reputation
-     * @param dataHash Hash of the data put to the offer
-     * @param dataSize Size of the data for storing in bytes
-     * @param predeterminedDhWallets Array of predetermined DH wallets to be used in offer
-     * @param predeterminedDhNodeIds Array of predetermined node IDs to be used in offer
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
-        importId, nodeId,
-        totalEscrowTime,
-        maxTokenAmount,
-        MinStakeAmount,
-        minReputation,
-        dataHash,
-        dataSize,
-        predeterminedDhWallets,
-        predeterminedDhNodeIds,
+        dataSetId,
+        dataRootHash,
+        redLitigationHash,
+        greenLitigationHash,
+        blueLitigationHash,
+        dcNodeId,
+        holdingTimeInMinutes,
+        tokenAmountPerHolder,
+        dataSizeInBytes,
+        litigationIntervalInMinutes,
     ) {
         return this.blockchain.createOffer(
-            importId, nodeId,
-            totalEscrowTime,
-            maxTokenAmount,
-            MinStakeAmount,
-            minReputation,
-            dataHash,
-            dataSize,
-            predeterminedDhWallets,
-            predeterminedDhNodeIds,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSizeInBytes,
+            litigationIntervalInMinutes,
         );
+    }
+
+    /**
+     * Finalizes offer on Blockchain
+     * @param offerId   - Offer ID
+     * @param holder1   - Holder address
+     * @param holder2   - Holder address
+     * @param holder3   - Holder address
+     * @returns {Promise<any>}
+     */
+    finalizeOffer(offerId, holder1, holder2, holder3) {
+        return this.blockchain.finalizeOffer(offerId, holder1, holder2, holder3);
     }
 
     /**
