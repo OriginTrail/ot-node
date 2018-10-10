@@ -7,7 +7,7 @@
     "bugsnagkey": "64a98977c830d8c77ab28050a28ef310"
   },
   "scripts": {
-    "test": "nyc mocha --exit $(find test -name '*.js')",
+    "test": "nyc mocha --exit $(find test -name '*.js' ! -path 'test/bdd/*')",
     "test:unit": "nyc mocha --exit $(find test/modules -name '*.js')",
     "test:unit:nocov": "mocha --exit $(find test/modules -name '*.js')",
     "test:api": "nyc mocha --exit $(find test/api -name '*.js')",
