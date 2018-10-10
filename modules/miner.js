@@ -55,6 +55,8 @@ function _generateHash(permutation) {
  */
 function _solutionIndex(permutation, task) {
     const hex = _generateHash(permutation);
+    console.log(task);
+    console.log(hex);
     return hex.indexOf(task);
 }
 
@@ -80,7 +82,7 @@ function _findSolution(wallets, candidate, i, k, task) {
                 const hash = _generateHash(permutation);
 
                 return {
-                    nodeIdentifiers: permutation, solutionHash: hash, shift: res, task,
+                    nodeIdentifiers: permutation, solutionHash: hash, shift: 64 - res - task.length, task,
                 };
             }
         }

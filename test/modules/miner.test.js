@@ -108,7 +108,7 @@ describe('PoW MinerTest, generating random wallets and trying to find task solut
 
         const res = miner.solve(wallets, task, difficulty);
 
-        assert.equal(res.shift, 17, 'Shift should be 17');
+        assert.equal(res.shift, 44, 'Shift should be 44');
         assert.equal(res.solutionHash, realHash, 'Hash should be correct');
         assert.equal(res.nodeIdentifiers.length, 3, 'Solution should contain three addresses');
         assert.equal(res.nodeIdentifiers[0], w1, 'First solution hash should be correct');
