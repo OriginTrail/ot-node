@@ -30,7 +30,8 @@ script:
   - cd ../../../
   - jobs
   - kill %1
-  - npm run test:bdd
+  # TODO to be changed to "$TRAVIS_EVENT_TYPE" == "pull_request" later
+  - 'if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then npm run test:bdd; fi'
 after_script:
   - cat mocha-logs.log
   - rm -f mocha-logs.log
