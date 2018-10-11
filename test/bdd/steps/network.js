@@ -1,4 +1,4 @@
-/* eslint-disable prefer-arrow-callback */
+/* eslint-disable prefer-arrow-callback, max-len */
 
 const {
     And, But, Given, Then, When,
@@ -255,6 +255,7 @@ Given(/^I initiate the replication$/, function () {
             }
 
             this.state.lastReplication = body;
+            console.log(body);
             accept();
         });
     });
@@ -333,3 +334,18 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
+Given(/^I remember last import's fingerprint value$/, async function () {
+    this.logger.log(this.state.lastImport);
+    this.logger.log('_________');
+    // this.state.lastImport.import_hash
+    // this.state.lastImport.import_id
+    // this.state.lastImport.wallet
+    const { dc } = this.state;
+
+    console.log(dc.state);
+
+    const lastImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, dc.state.dcWallet, this.state.lastImport.import_id);
+    // this.state.lastImportsFingerprint = lastImportFingerprint;
+    // this.logger.log(lastImportFingerprint);
+    // this.logger.log("_________");
+});

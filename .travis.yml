@@ -16,7 +16,7 @@ before_script:
   - npm install -g truffle &> /dev/null
 script:
   - npm run lint
-  - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd; fi'
+  - 'if [ "$TRAVIS_EVENT_TYPE" == "push" ]; then npm run test:bdd; fi'
   # checks for arangodb based solution
   - npm test 2> mocha-logs.log
   - npm start &>arangodb.log &

@@ -18,3 +18,13 @@ Feature: Test basic network features
     Given I initiate the replication
     And I wait for replications to finish
     Then the last import should be the same on all nodes that replicated data
+
+  @experiment
+  Scenario: Check that second import does not mess up first import hash value
+    Given I setup 2 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And I import "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml"
+    Given I initiate the replication
+    And I wait for replications to finish
+    And I remember last import's fingerprint value
