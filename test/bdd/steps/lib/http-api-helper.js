@@ -43,16 +43,13 @@ async function apiImportInfo(nodeRpcUrl, importId) {
 async function apiFingerprint(nodeRpcUrl, dcWallet, importId) {
     return new Promise((accept, reject) => {
         request(
-            `${nodeRpcUrl}/api/fingerprint?dc_wallet=${dcWallet}}&import_id=${importId}`,
+            `${nodeRpcUrl}/api/fingerprint?dc_wallet=${dcWallet}&import_id=${importId}`,
             { json: true },
             (err, res, body) => {
                 if (err) {
                     reject(err);
                     return;
                 }
-                console.log('apiFingerprint: ');
-                console.log(body);
-                console.log('_________');
 
                 accept(body);
             },
@@ -60,5 +57,7 @@ async function apiFingerprint(nodeRpcUrl, dcWallet, importId) {
     });
 }
 
-exports.apiImportInfo = apiImportInfo;
-exports.apiFingerprint = apiFingerprint;
+module.exports = {
+    apiImportInfo,
+    apiFingerprint,
+};

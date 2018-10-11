@@ -3,7 +3,7 @@
 const {
     And, But, Given, Then, When,
 } = require('cucumber');
-const { expect } = require('chai');
+const { expect, assert } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
 const fs = require('fs');
@@ -13,8 +13,9 @@ const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
+const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
-const httpApiHelper = require('./lib/http-api-helper');
+const { apiImportInfo, apiFingerprint } = require('./lib/http-api-helper');
 
 const bootstrapIdentity = {
     ba9f7526f803490e631859c75d56e5ab25a47a33: {
@@ -255,7 +256,6 @@ Given(/^I initiate the replication$/, function () {
             }
 
             this.state.lastReplication = body;
-            console.log(body);
             accept();
         });
     });
@@ -303,7 +303,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.import_id);
+        await apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.import_id);
 
     const promises = [];
     dc.state.holdingData.forEach((holdingData) => {
@@ -320,7 +320,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
         promises.push(new Promise(async (accept, reject) => {
             const dhImportInfo =
-                await httpApiHelper.apiImportInfo(node.state.node_rpc_url, importId);
+                await apiImportInfo(node.state.node_rpc_url, importId);
             // TODO: fix different root hashes error.
             dhImportInfo.root_hash = dcImportInfo.root_hash;
             if (deepEqual(dcImportInfo, dhImportInfo)) {
@@ -334,18 +334,36 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
-Given(/^I remember last import's fingerprint value$/, async function () {
-    this.logger.log(this.state.lastImport);
-    this.logger.log('_________');
-    // this.state.lastImport.import_hash
-    // this.state.lastImport.import_id
-    // this.state.lastImport.wallet
+Given(/^I remember previous import's fingerprint value and details$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    assert.isTrue(this.state.nodesWalletAddress !== 'null');
+
     const { dc } = this.state;
 
-    console.log(dc.state);
+    const myFingerprint = await apiFingerprint(dc.state.node_rpc_url, dc.state.nodesWalletAddress, this.state.lastImport.import_id);
+    expect(myFingerprint).to.have.keys(['import_hash', 'root_hash']);
+    assert.isFalse(Utilities.isZeroHash(myFingerprint.import_hash));
+    assert.isFalse(Utilities.isZeroHash(myFingerprint.root_hash));
 
-    const lastImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, dc.state.dcWallet, this.state.lastImport.import_id);
-    // this.state.lastImportsFingerprint = lastImportFingerprint;
-    // this.logger.log(lastImportFingerprint);
-    // this.logger.log("_________");
+    // TODO need better namings
+    this.state.lastMinusOneImportFingerprint = myFingerprint;
+    this.state.lastMinusOneImport = this.state.lastImport;
+});
+
+Then(/^checking again first import hash should point to remembered value$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    assert.isTrue(this.state.nodesWalletAddress !== 'null');
+
+    const { dc } = this.state;
+
+    const firstImportFingerprint = await apiFingerprint(dc.state.node_rpc_url, dc.state.nodesWalletAddress, this.state.lastMinusOneImport.import_id);
+    expect(firstImportFingerprint).to.have.keys(['import_hash', 'root_hash']);
+    assert.isFalse(Utilities.isZeroHash(firstImportFingerprint.import_hash));
+    assert.isFalse(Utilities.isZeroHash(firstImportFingerprint.root_hash));
+
+    expect(firstImportFingerprint.import_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.import_hash);
+    expect(firstImportFingerprint.root_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
+    assert.isTrue(deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint));
 });

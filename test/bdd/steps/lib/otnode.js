@@ -58,8 +58,8 @@ class OtNode extends EventEmitter {
         this.state.holdingData = [];
         // Verified escrows for own imports. List of import IDs.
         this.state.escrowsVerified = [];
-        // maybe dc wallet
-        this.state.dcWallet = null;
+        // grab node's wallet address
+        this.state.nodesWalletAddress = null;
 
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
@@ -142,7 +142,7 @@ class OtNode extends EventEmitter {
             this.state.holdingData.push({ importId, dhWallet });
             this.emit('holding-data', { importId, dhWallet });
         } else if (line.includes('Get profile by wallet ')) {
-            this.state.dcWallet = line.substr(line.search('Get profile by wallet ') + 'Get profile by wallet '.length, line.length - 1);
+            this.state.nodesWalletAddress = line.substr(line.search('Get profile by wallet ') + 'Get profile by wallet '.length, line.length - 1);
         }
     }
 
