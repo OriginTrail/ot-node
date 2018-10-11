@@ -1,5 +1,23 @@
 [
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			}
+		],
+		"name": "payOut",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "hub",
@@ -11,8 +29,49 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function",
-		"signature": "0x365a86fc"
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"name": "shift",
+				"type": "uint256"
+			},
+			{
+				"name": "confirmation1",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation2",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation3",
+				"type": "bytes"
+			},
+			{
+				"name": "encryptionType",
+				"type": "uint8[]"
+			},
+			{
+				"name": "holderIdentity",
+				"type": "address[]"
+			}
+		],
+		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"constant": true,
@@ -26,8 +85,7 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function",
-		"signature": "0xab60636c"
+		"type": "function"
 	},
 	{
 		"constant": true,
@@ -41,8 +99,7 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function",
-		"signature": "0xf42cb038"
+		"type": "function"
 	},
 	{
 		"constant": true,
@@ -56,116 +113,10 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function",
-		"signature": "0xf58ec57e"
+		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"name": "hubAddress",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "constructor",
-		"signature": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "dataSetId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "dcNodeId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "offerId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "task",
-				"type": "bytes32"
-			}
-		],
-		"name": "OfferTask",
-		"type": "event",
-		"signature": "0xc02335f4c444cce217a60853f6fd34ba3e698ba52c208883d975253732055495"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "offerId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "dcNodeId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "holdingTimeInMinutes",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "dataSetSizeInBytes",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "tokenAmountPerHolder",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"name": "litigationIntervalInMinutes",
-				"type": "uint256"
-			}
-		],
-		"name": "OfferCreated",
-		"type": "event",
-		"signature": "0xbda35549192d127491cdc034ca5de38e1af72f19c984cc9f74b5fe23a6dc08a8"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "offerId",
-				"type": "bytes32"
-			},
-			{
-				"indexed": false,
-				"name": "holder1",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "holder2",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"name": "holder3",
-				"type": "address"
-			}
-		],
-		"name": "OfferFinalized",
-		"type": "event",
-		"signature": "0xeac1e15fac392f7eb69fb5accdf5e9892330f41cd8fa89933c2d2c8c68e4d4a7"
-	},
-	{
+		"constant": false,
 		"inputs": [
 			{
 				"name": "identity",
@@ -213,73 +164,123 @@
 			}
 		],
 		"name": "createOffer",
-		"type": "function",
-		"signature": "0xfa2c6b12",
-		"constant": false,
 		"outputs": [],
 		"payable": false,
-		"stateMutability": "nonpayable"
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"inputs": [
 			{
-				"name": "identity",
+				"name": "hubAddress",
 				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "dataSetId",
+				"type": "bytes32"
 			},
 			{
+				"indexed": false,
+				"name": "dcNodeId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
 				"name": "offerId",
 				"type": "bytes32"
 			},
 			{
-				"name": "shift",
+				"indexed": false,
+				"name": "task",
+				"type": "bytes32"
+			}
+		],
+		"name": "OfferTask",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "dcNodeId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "holdingTimeInMinutes",
 				"type": "uint256"
 			},
 			{
-				"name": "confirmation1",
-				"type": "bytes"
+				"indexed": false,
+				"name": "dataSetSizeInBytes",
+				"type": "uint256"
 			},
 			{
-				"name": "confirmation2",
-				"type": "bytes"
+				"indexed": false,
+				"name": "tokenAmountPerHolder",
+				"type": "uint256"
 			},
 			{
-				"name": "confirmation3",
-				"type": "bytes"
-			},
-			{
-				"name": "encryptionType",
-				"type": "uint8[]"
-			},
-			{
-				"name": "holderIdentity",
-				"type": "address[]"
+				"indexed": false,
+				"name": "litigationIntervalInMinutes",
+				"type": "uint256"
 			}
 		],
-		"name": "finalizeOffer",
-		"type": "function",
-		"signature": "0x9d364233",
-		"constant": false,
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable"
+		"name": "OfferCreated",
+		"type": "event"
 	},
 	{
+		"anonymous": false,
 		"inputs": [
 			{
-				"name": "identity",
+				"indexed": false,
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "holder1",
 				"type": "address"
 			},
 			{
-				"name": "offerId",
-				"type": "bytes32"
+				"indexed": false,
+				"name": "holder2",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"name": "holder3",
+				"type": "address"
 			}
 		],
-		"name": "payOut",
-		"type": "function",
-		"signature": "0x006a12d0",
-		"constant": false,
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable"
+		"name": "OfferFinalized",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "adr",
+				"type": "address"
+			}
+		],
+		"name": "Address",
+		"type": "event"
 	}
 ]
