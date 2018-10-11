@@ -83,6 +83,24 @@ class Ethereum {
             this.profileContractAddress,
         );
 
+        // Profile storage contract data
+        const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
+        this.profileStorageContractAddress = await this._getProfileStorageContractAddress();
+        this.profileStorageContractAbi = JSON.parse(profileStorageAbiFile);
+        this.profileStorageContract = new this.web3.eth.Contract(
+            this.profileStorageContractAbi,
+            this.profileStorageContractAddress,
+        );
+
+        // Holding storage contract data
+        const holdingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
+        this.holdingStorageContractAddress = await this._getHoldingStorageContractAddress();
+        this.holdingStorageContractAbi = JSON.parse(holdingStorageAbiFile);
+        this.holdingStorageContract = new this.web3.eth.Contract(
+            this.holdingStorageContractAbi,
+            this.holdingStorageContractAddress,
+        );
+
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
             PROFILE_CONTRACT: this.profileContract,
@@ -133,6 +151,42 @@ class Ethereum {
     async _getProfileContractAddress() {
         this.log.trace('Asking Hub for Profile contract address...');
         return this.hubContract.methods.profileAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Profile storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getProfileStorageContractAddress() {
+        this.log.trace('Asking Hub for ProfileStorage contract address...');
+        return this.hubContract.methods.profileStorageAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Holding storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getHoldingStorageContractAddress() {
+        this.log.trace('Asking Hub for HoldingStorage contract address...');
+        return this.hubContract.methods.holdingStorageAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Reading storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getReadingStorageContractAddress() {
+        this.log.trace('Asking Hub for ReadingStorage contract address...');
+        return this.hubContract.methods.readingStorageAddress().call({
             from: this.config.wallet_address,
         });
     }
@@ -1035,6 +1089,17 @@ class Ethereum {
     async getProfileMinimumStake() {
         this.log.trace('get replication modifier from blockchain');
         return this.profileContract.methods.minimalStake().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets profile by wallet
+     * @param identity
+     */
+    async getProfile(identity) {
+        this.log.trace(`Get profile by identity ${identity}`);
+        return this.profileStorageContract.methods.profile(identity).call({
             from: this.config.wallet_address,
         });
     }

@@ -52,10 +52,10 @@ class Blockchain {
 
     /**
      * Gets profile by wallet
-     * @param wallet
+     * @param identity
      */
-    getProfile(wallet) {
-        return this.blockchain.getProfile(wallet);
+    getProfile(identity) {
+        return this.blockchain.getProfile(identity);
     }
 
     /**

@@ -24,7 +24,13 @@ class ProfileService {
     async initProfile() {
         this._loadIdentity();
 
+        let identityExists = false;
         if (this.config.erc725Identity) {
+            identityExists = true;
+            this.logger.notify(`Identity has already been created for node ${this.config.identity}`);
+        }
+
+        if (identityExists && await this._isProfileCreated()) {
             this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
             return;
         }
@@ -35,15 +41,28 @@ class ProfileService {
         await this.blockchain.increaseApproval(new BN(profileMinStake, 10));
         await this.blockchain.createProfile(
             this.config.identity,
-            new BN(profileMinStake, 10), false,
+            new BN(profileMinStake, 10), identityExists,
         );
-        const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => eventData.profile.includes(this.config.node_wallet));
-        if (event) {
-            this._saveIdentity(event.newIdentity);
-            this.logger.notify(`Profile created for node ${this.config.identity}`);
-            return;
+        if (!identityExists) {
+            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => eventData.profile.includes(this.config.node_wallet));
+            if (event) {
+                this._saveIdentity(event.newIdentity);
+                this.logger.notify(`Identity created for node ${this.config.identity}`);
+                return;
+            }
         }
+        this.logger.notify(`Profile created for node ${this.config.identity}`);
         throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
+    }
+
+    /**
+     * Is profile created
+     * @returns {Promise<boolean>}
+     * @private
+     */
+    async _isProfileCreated() {
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        return !new BN(profile.stake, 10).eq(new BN(0, 10));
     }
 
     /**
