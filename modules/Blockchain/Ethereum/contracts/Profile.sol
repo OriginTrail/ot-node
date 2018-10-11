@@ -153,13 +153,23 @@ contract Profile {
         }
 
         require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
+            "Profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)),
+            "Profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)),
+            "Profile does not have enough stake to take new jobs!");
+        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)),
+            "Profile does not have enough stake to take new jobs!");
+        
+        require(profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)) >= amount.mul(3), 
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)), 
+        require(profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)) >= amount, 
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)), 
+        require(profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)) >= amount, 
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)), 
+        require(profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)) >= amount, 
             "Profile does not have enough stake for reserving!");
+
 
         profileStorage.increaseStakesReserved(
             payer,
