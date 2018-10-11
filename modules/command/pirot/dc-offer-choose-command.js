@@ -40,10 +40,10 @@ class DCOfferChooseCommand extends Command {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
-        const wallets = replications.map(r => Utilities.denormalizeHex(r.dh_wallet));
+        const identities = replications.map(r => Utilities.denormalizeHex(r.dh_identity));
         await this.minerService.sendToMiner(
             offer.task,
-            wallets,
+            identities,
             offer.offer_id,
         );
         return {

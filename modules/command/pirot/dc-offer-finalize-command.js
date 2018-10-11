@@ -30,21 +30,23 @@ class DCOfferFinalizeCommand extends Command {
             solution,
         } = command.data;
 
-        const wallets = solution.nodeIdentifiers.map(ni => Utilities.normalizeHex(ni));
+        const nodeIdentifiers = solution.nodeIdentifiers.map(ni =>
+            Utilities.normalizeHex(ni).toLowerCase());
         const replications = await Models.replicated_data.findAll({
             where: {
                 offer_id: offerId,
-                dh_wallet: { [Op.in]: wallets },
+                dh_identity: { [Op.in]: nodeIdentifiers },
             },
         });
 
         const colors = [];
-        const identities = [];
         const confirmations = [];
-        for (const replication of replications) {
+        for (const identity of nodeIdentifiers) {
+            const replication = replications.find((r) => {
+                return identity.includes(r.dh_identity);
+            });
             colors.push(this.castColor(replication.color));
             confirmations.push(replication.confirmation);
-            identities.push(replication.dh_identity);
         }
 
         await this.blockchain.finalizeOffer(
@@ -55,7 +57,7 @@ class DCOfferFinalizeCommand extends Command {
             confirmations[1],
             confirmations[2],
             colors,
-            identities,
+            nodeIdentifiers,
         );
         return {
             commands: [

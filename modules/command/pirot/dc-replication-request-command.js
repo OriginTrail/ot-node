@@ -44,7 +44,7 @@ class DCReplicationRequestCommand extends Command {
         await models.replicated_data.create({
             dh_id: identity,
             dh_wallet: wallet.toLowerCase(),
-            dh_identity: dhIdentity,
+            dh_identity: dhIdentity.toLowerCase(),
             offer_id: offer.offer_id,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
