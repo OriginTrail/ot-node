@@ -151,13 +151,14 @@ contract Profile {
             profileStorage.setWithdrawalPending(identity3,false);
             emit TokenWithdrawalCancelled(identity3);
         }
-        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer).add(amount.mul(3))),
+
+        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer)),
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)).sub(amount), 
+        require(minimalStake <= profileStorage.getStake(identity1).sub(profileStorage.getStakeReserved(identity1)), 
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)).sub(amount), 
+        require(minimalStake <= profileStorage.getStake(identity2).sub(profileStorage.getStakeReserved(identity2)), 
             "Profile does not have enough stake for reserving!");
-        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)).sub(amount), 
+        require(minimalStake <= profileStorage.getStake(identity3).sub(profileStorage.getStakeReserved(identity3)), 
             "Profile does not have enough stake for reserving!");
 
         profileStorage.increaseStakesReserved(
