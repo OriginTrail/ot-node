@@ -296,8 +296,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     // Assumed it hasn't been changed in between.
     const currentModifier =
-        await this.state.localBlockchain.biddingInstance.methods.
-            replication_modifier().call();
+        await this.state.localBlockchain.biddingInstance.methods
+            .replication_modifier().call();
     expect(currentModifier).to.be.equal(dc.state.holdingData.length.toString());
 
     // Get original import info.
@@ -325,7 +325,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
             if (deepEqual(dcImportInfo, dhImportInfo)) {
                 accept();
             } else {
-                reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`))
+                reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`));
             }
         }));
     });
