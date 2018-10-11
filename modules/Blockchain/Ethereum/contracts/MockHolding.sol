@@ -1,10 +1,5 @@
 pragma solidity ^0.4.24;
 
-contract Hub {
-    address public holdingAddress;
-    address public holdingStorageAddress;
-}
-
 contract MockHolding {
     event OfferTask(bytes32 dataSetId, address dcProfile, bytes32 offerId, byte task);
     event OfferCreated(bytes32 offerId, bytes32 dcNodeId);
