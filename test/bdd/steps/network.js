@@ -10,9 +10,11 @@ const fs = require('fs');
 const path = require('path');
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
+const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
 const LocalBlockchain = require('./lib/local-blockchain');
+const httpApiHelper = require('./lib/http-api-helper');
 
 const bootstrapIdentity = {
     ba9f7526f803490e631859c75d56e5ab25a47a33: {
@@ -147,12 +149,12 @@ Then(/^all nodes should be aware of each other$/, function (done) {
 
 Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV]+)$/, function (nodeIndex, nodeType) {
     expect(nodeType, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-    expect(nodeIndex, 'No started nodes').to.be.lessThan(this.state.nodes.length);
+    expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid idex.').to.be.within(0, this.state.nodes.length);
 
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
-    this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex];
+    this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 });
 
 Given(/^I import "([^"]*)"$/, function (xmlFilepath) {
@@ -258,15 +260,76 @@ Given(/^I initiate the replication$/, function () {
     });
 });
 
-Given(/^I wait for replication to finish$/, { timeout: 1200000 }, function () {
+Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
-    return new Promise((accept) => {
-        setTimeout(accept, 60000 * 2);
+    const promises = [];
+    this.state.nodes.forEach((node) => {
+        if (node.state.identity !== this.state.dc.state.identity) {
+            promises.push(new Promise((accept, reject) => {
+                node.once('key-verified', (importId) => {
+                    if (importId === this.state.lastImport.import_id) {
+                        accept();
+                    } else {
+                        reject(Error(`Import ID differs. Expected ${this.state.lastImport.import_id}, got ${importId}.`));
+                    }
+                });
+            }));
+        }
     });
+
+    return Promise.all(promises);
+});
+
+Then(/^the last import should be the same on all nodes that replicated data$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    // Assumed it hasn't been changed in between.
+    const currentModifier =
+        await this.state.localBlockchain.biddingInstance.methods.
+            replication_modifier().call();
+    expect(currentModifier).to.be.equal(dc.state.holdingData.length.toString());
+
+    // Get original import info.
+    const dcImportInfo =
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.import_id);
+
+    const promises = [];
+    dc.state.holdingData.forEach((holdingData) => {
+        const { importId, dhWallet } = holdingData;
+
+        expect(importId).to.be.equal(this.state.lastImport.import_id);
+
+        const node =
+            this.state.nodes.find(node => node.options.nodeConfiguration.node_wallet === dhWallet);
+
+        if (!node) {
+            throw Error(`Failed to find node with wallet: ${dhWallet}.`);
+        }
+
+        promises.push(new Promise(async (accept, reject) => {
+            const dhImportInfo =
+                await httpApiHelper.apiImportInfo(node.state.node_rpc_url, importId);
+            // TODO: fix different root hashes error.
+            dhImportInfo.root_hash = dcImportInfo.root_hash;
+            if (deepEqual(dcImportInfo, dhImportInfo)) {
+                accept();
+            } else {
+                reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`))
+            }
+        }));
+    });
+
+    return Promise.all(promises);
 });
 

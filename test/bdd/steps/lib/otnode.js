@@ -12,6 +12,11 @@ const lineReader = require('readline');
 
 const defaultConfiguration = require('../../../../config/config.json').development;
 
+/**
+ * OtNode represent small wrapper over a running OT Node.
+ *
+ * One instance of OtNode class handles one running node.
+ */
 class OtNode extends EventEmitter {
     constructor({ logger, nodeConfiguration }) {
         super();
@@ -45,8 +50,14 @@ class OtNode extends EventEmitter {
         }
 
         this.state = {};
-        this.state.addedBids = [];
+        this.state.addedBids = []; // List of import IDs.
         this.state.notTakenBids = [];
+        // Valid replications (DH side). List of import IDs.
+        this.state.replications = [];
+        // Valid replications (DC side). List of objects { importId, dhWallet }.
+        this.state.holdingData = [];
+        // Verified escrows for own imports. List of import IDs.
+        this.state.escrowsVerified = [];
 
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
@@ -119,6 +130,15 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Offer for import .+ finalized/gi)) {
             const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
             this.emit('offer-finalized', importId);
+        } else if (line.match(/Key verification for import .+ succeeded/gi)) {
+            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
+            this.state.replications.push(importId);
+            this.emit('key-verified', importId);
+        } else if (line.match(/Holding data for offer .+ and contact .+ successfully verified. Challenges taking place\.\.\./gi)) {
+            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
+            const dhWallet = line.match(/\b0x[0-9A-F]{40}\b/gi)[0];
+            this.state.holdingData.push({ importId, dhWallet });
+            this.emit('holding-data', { importId, dhWallet });
         }
     }
 

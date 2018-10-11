@@ -22,15 +22,20 @@ Given(/^the replication factor is (\d+)$/, async function (replicationFactor) {
         'localBlockchain not initialized',
     ).to.be.equal(true);
 
-    const currentModifier =
+    let currentModifier =
         await this.state.localBlockchain.biddingInstance.methods.replication_modifier().call();
 
-    if (currentModifier !== replicationFactor) {
+    if (currentModifier !== replicationFactor.toString()) {
         this.logger.log(`Changing replication modifier to ${replicationFactor}.`);
-        await this.state.localBlockchain.biddingInstance.methods.replication_modifier().send({
-            // TODO: Add access to original wallet.
-            from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
-            gas: 3000000,
-        }).on('error', (error) => { throw error; });
+        await this.state.localBlockchain.biddingInstance.methods
+            .setReplicationModifier(replicationFactor).send({
+                // TODO: Add access to original wallet.
+                from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
+                gas: 3000000,
+            }).on('error', (error) => { throw error; });
+
+        currentModifier =
+            await this.state.localBlockchain.biddingInstance.methods.replication_modifier().call();
+        expect(currentModifier).to.be.equal(replicationFactor.toString());
     }
 });

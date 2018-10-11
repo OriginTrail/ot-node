@@ -23,6 +23,29 @@ const wallets = accountPrivateKeys.map(privateKey => ({
     privateKey,
 }));
 
+/**
+ * LocalBlockchain represent small wrapper around the Ganache.
+ *
+ * LocalBlockchain uses the Ganache-core to run in-memory blockchain simulator. It uses
+ * predefined accounts that can be fetch by calling LocalBlockchain.wallets(). Account with
+ * index 7 is used for deploying contracts.
+ *
+ * Basic usage:
+ * LocalBlockchain.wallets()[9].address
+ * LocalBlockchain.wallets()[9].privateKey,
+ *
+ * const localBlockchain = new LocalBlockchain({ logger: this.logger });
+ * await localBlockchain.initialize(); // Init the server.
+ * // That will compile and deploy contracts. Later can be called
+ * // deployContracts() to re-deploy fresh contracts.
+ *
+ * // After usage:
+ *     if (localBlockchain.server) {
+ *         this.state.localBlockchain.server.close();
+ *     }
+ *
+ * @param {String} [options.logger] - Logger instance with debug, trace, info and error methods.
+ */
 class LocalBlockchain {
     constructor(options = {}) {
         this.logger = options.logger || console;
