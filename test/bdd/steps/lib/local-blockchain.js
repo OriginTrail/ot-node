@@ -73,7 +73,7 @@ class LocalBlockchain {
                     reject(err);
                     return;
                 }
-                this.logger.info('Blockchain is up at http://localhost:7547/');
+                this.logger.info('Blockchain is up at http://localhost:7545/');
                 // TODO: Use url from server.
                 this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
                 this.compileContracts();
