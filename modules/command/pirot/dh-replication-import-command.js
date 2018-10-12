@@ -134,7 +134,16 @@ class DhReplicationImportCommand extends Command {
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);
         this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dhOfferFinalizedCommand',
+                    data: {
+                        offerId,
+                    },
+                },
+            ],
+        };
     }
 
     /**

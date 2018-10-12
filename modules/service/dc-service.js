@@ -33,7 +33,7 @@ class DCService {
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes., 10);
+            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes, 10);
         }
 
         if (!tokenAmountPerHolder) {

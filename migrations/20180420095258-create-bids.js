@@ -26,6 +26,9 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        chosen: {
+            type: Sequelize.BOOLEAN,
+        },
     }),
     down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),
 };

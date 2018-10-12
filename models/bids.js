@@ -12,6 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         data_size_in_bytes: DataTypes.STRING,
         litigation_interval_in_minutes: DataTypes.INTEGER,
         token_amount: DataTypes.STRING,
+        chosen: DataTypes.BOOLEAN,
     }, {});
     bids.associate = (models) => {
         // associations can be defined here
