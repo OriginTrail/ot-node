@@ -381,7 +381,7 @@ class Blockchain {
      * @returns {Promise<any>}
      */
     async depositTokens(blockchainIdentity, amount) {
-        return this.blockchain.depositTokens(amount);
+        return this.blockchain.depositTokens(blockchainIdentity, amount);
     }
 
     /**

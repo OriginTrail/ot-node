@@ -10,6 +10,7 @@ class DepositTokensCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.blockchain = ctx.blockchain;
     }
 
