@@ -147,7 +147,7 @@ contract('Offer testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get offerId from an offer', async () => {
+    it('Should test creating and finalizing offer', async () => {
         // Get instances of contracts used in the test
         const holding = await Holding.deployed();
         const util = await TestingUtilities.deployed();

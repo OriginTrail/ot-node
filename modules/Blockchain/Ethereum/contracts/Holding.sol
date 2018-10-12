@@ -82,8 +82,6 @@ contract Holding {
         emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
 
-    event Address(address adr);
-
     function finalizeOffer(address identity, bytes32 offerId, uint256 shift,
         bytes confirmation1, bytes confirmation2, bytes confirmation3,
         uint8[] encryptionType, address[] holderIdentity) 
@@ -93,17 +91,9 @@ contract Holding {
         require(identity == holdingStorage.getOfferCreator(offerId), "Offer can only be finalized by its creator!");
 
         // Check if signatures match identities
-        address wallet = ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[0]))), confirmation1);
-        // require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(wallet)),4));
-        emit Address(wallet);
-        
-        wallet = ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[1]))), confirmation2);
-        // require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(wallet)),4));
-        emit Address(wallet);
-
-        wallet = ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[2]))), confirmation3);
-        // require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(wallet)),4));
-        emit Address(wallet);
+        require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[0]))), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
+        require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
+        require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(uint256(offerId),uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
 
         // Verify task answer
         require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(offerId))) - 1)) == holdingStorage.getOfferTask(offerId), "Submitted identities do not answer the task correctly!");
