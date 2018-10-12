@@ -69,7 +69,7 @@ class DCService {
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
                 sequence: [
-                    'depositTokensCommand', 'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
+                    'depositTokensCommand', 'dcOfferPrepareCommand', 'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
                 ],
                 delay: 0,
                 data: {
@@ -103,9 +103,6 @@ class DCService {
                 transactional: false,
             });
         }
-
-
-
         return offer.id;
     }
 
