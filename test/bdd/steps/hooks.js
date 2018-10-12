@@ -10,16 +10,12 @@ const {
     Before, BeforeAll, After, AfterAll,
 } = require('cucumber');
 
-// TODO: After-all.
-// Delete all Arango dbs.
-// Drop all data to artifacts.
-
 BeforeAll(() => {
 });
 
 Before(function (testCase, done) {
     this.logger = console;
-    this.logger.log('Starting: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    this.logger.log('Starting scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
 
     // Initialize variables
     this.state = {};
@@ -30,7 +26,13 @@ Before(function (testCase, done) {
 });
 
 After(function (testCase, done) {
-    this.logger.log('Done: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    this.logger.log('Completed scenario: ', testCase.pickle.name, `${testCase.sourceLocation.uri}:${testCase.sourceLocation.line}`);
+    this.logger.log('with status: ', testCase.result.status, ' and duration: ', testCase.result.duration, ' miliseconds.');
+
+    if (testCase.result.status === 'failed') {
+        this.logger.log('Oops, exception occured:');
+        this.logger.log(testCase.result.exception);
+    }
 
     // Clean.
     const nodesWaits =
@@ -60,6 +62,9 @@ After(function (testCase, done) {
 });
 
 AfterAll(() => {
+    // TODO: After-all.
+    // Delete all Arango dbs.
+    // Drop all data to artifacts.
 });
 
 process.on('unhandledRejection', (reason, p) => {
