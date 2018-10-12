@@ -11,8 +11,26 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x07f19651"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getWithdrawalPending",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -26,8 +44,206 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x365a86fc"
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newActiveNodes",
+        "type": "uint256"
+      }
+    ],
+    "name": "setActiveNodes",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "stakeReserved",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStakeReserved",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getWithdrawalAmount",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getStakeReserved",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "withdrawalTimestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "setWithdrawalTimestamp",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getStake",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "nodeId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setNodeId",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "withdrawalAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setWithdrawalAmount",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getWithdrawalTimestamp",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "withdrawalPending",
+        "type": "bool"
+      }
+    ],
+    "name": "setWithdrawalPending",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getReputation",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -70,308 +286,7 @@
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x9dd9d0fd"
-  },
-  {
-    "inputs": [
-      {
-        "name": "hubAddress",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor",
-    "signature": "constructor"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "newActiveNodes",
-        "type": "uint256"
-      }
-    ],
-    "name": "setActiveNodes",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x48fd564b"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getStake",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x7a766460"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getStakeReserved",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x5ffe0282"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getReputation",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x9c89a0e2"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getWithdrawalPending",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x2ba97595"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getWithdrawalTimestamp",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x9344ea6e"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getWithdrawalAmount",
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x56582bf9"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getNodeId",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0xb56e4129"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "stake",
-        "type": "uint256"
-      }
-    ],
-    "name": "setStake",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xbd3cd525"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "stakeReserved",
-        "type": "uint256"
-      }
-    ],
-    "name": "setStakeReserved",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x50c3ff57"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "reputation",
-        "type": "uint256"
-      }
-    ],
-    "name": "setReputation",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xb120c16a"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "withdrawalPending",
-        "type": "bool"
-      }
-    ],
-    "name": "setWithdrawalPending",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x9385067f"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "withdrawalTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "setWithdrawalTimestamp",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x67b6d271"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "withdrawalAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "setWithdrawalAmount",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x82aa2928"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "nodeId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setNodeId",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x7fdc3676"
+    "type": "function"
   },
   {
     "constant": false,
@@ -401,14 +316,68 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xa6748ef5"
+    "type": "function"
   },
   {
     "constant": false,
     "inputs": [
       {
         "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "reputation",
+        "type": "uint256"
+      }
+    ],
+    "name": "setReputation",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getNodeId",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "stake",
+        "type": "uint256"
+      }
+    ],
+    "name": "setStake",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "wallet",
         "type": "address"
       },
       {
@@ -420,7 +389,17 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xbec3fa17"
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "hubAddress",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   }
 ]

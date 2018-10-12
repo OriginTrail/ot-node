@@ -270,17 +270,5 @@
 		],
 		"name": "OfferFinalized",
 		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"name": "adr",
-				"type": "address"
-			}
-		],
-		"name": "Address",
-		"type": "event"
 	}
 ]
