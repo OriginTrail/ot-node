@@ -117,29 +117,29 @@ contract Profile {
         }
     }
 
-    // function withdrawTokens(address identity) public {
-    //     // Verify sender
-    //     require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+    function withdrawTokens(address identity) public {
+        // Verify sender
+        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
-    //     // require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
-    //     // require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
+        require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
+        require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
 
-    //     // Transfer already reserved tokens to user identity
-    //     profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
+        // Transfer already reserved tokens to user identity
+        profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
         
-    //     profileStorage.setStake(
-    //         identity,
-    //         profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
-    //     );
+        profileStorage.setStake(
+            identity,
+            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
+        );
 
-    //     profileStorage.setWithdrawalPending(identity, false);
+        profileStorage.setWithdrawalPending(identity, false);
         
-    //     emit TokensWithdrawn(
-    //         identity,
-    //         profileStorage.getWithdrawalAmount(identity),
-    //         profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
-    //     );
-    // }
+        emit TokensWithdrawn(
+            identity,
+            profileStorage.getWithdrawalAmount(identity),
+            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
+        );
+    }
     
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {
