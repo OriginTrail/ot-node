@@ -30,6 +30,13 @@ module.exports = {
             network_id: '5777',
         },
 
+        update: {
+          host: 'localhost',
+            port: 7545,
+            gas: 6000000,
+            network_id: '5777',
+        },
+      
         test: {
             host: 'localhost',
             port: 7545,
