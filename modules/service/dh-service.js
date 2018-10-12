@@ -62,12 +62,44 @@ class DHService {
             return;
         }
 
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+
+        const offerStake = new BN(tokenAmountPerHolder, 10);
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+        }
+
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
+            if (remainder.lt(stakeRemainder)) {
+                remainder = stakeRemainder;
+            }
+        }
+
+        if (!remainder) {
+            // deposit tokens
+            await this.commandExecutor.add({
+                name: 'deposit-tokens-command',
+                data: {
+                    amount: remainder.toString(),
+                },
+            });
+        }
         await this.commandExecutor.add({
             name: 'dhOfferHandleCommand',
             delay: 15000,
             data: {
                 offerId,
                 dcNodeId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
             },
             transactional: false,
         });
@@ -253,7 +285,7 @@ class DHService {
 
             if (profileBalance.lt(condition)) {
                 await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-                await this.blockchain.depositToken(condition.sub(profileBalance));
+                await this.blockchain.depositTokens(condition.sub(profileBalance));
             }
 
             /*

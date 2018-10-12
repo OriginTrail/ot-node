@@ -304,7 +304,7 @@ class Ethereum {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseApproval(tokenAmountIncrease) {
+    increaseProfileApproval(tokenAmountIncrease) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -312,6 +312,21 @@ class Ethereum {
         };
         this.log.notify('Increasing token approval for profile contract');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.profileContractAddress, tokenAmountIncrease], options);
+    }
+
+    /**
+     * Increase token approval for holding
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseHoldingApproval(tokenAmountIncrease) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.tokenContractAddress,
+        };
+        this.log.notify('Increasing token approval for profile contract');
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.holdingContractAddress, tokenAmountIncrease], options);
     }
 
     /**
@@ -887,7 +902,7 @@ class Ethereum {
      * @param {number} - amount
      * @returns {Promise<any>}
      */
-    async depositToken(amount) {
+    async depositTokens(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -896,7 +911,7 @@ class Ethereum {
 
         this.log.trace(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'depositToken',
+            this.profileContractAbi, 'depositTokens',
             [amount], options,
         );
     }

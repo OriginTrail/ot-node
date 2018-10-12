@@ -2,6 +2,8 @@ const BN = require('bn.js');
 
 const models = require('../../models');
 
+const DEFAILT_NUMBER_OF_HOLDERS = 3;
+
 class DCService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -39,6 +41,36 @@ class DCService {
 
         if (!litigationIntervalInMinutes) {
             litigationIntervalInMinutes = new BN(1, 10); // TODO take from config
+        }
+
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+
+        const offerStake = new BN(tokenAmountPerHolder, 10)
+            .mul(new BN(DEFAILT_NUMBER_OF_HOLDERS, 10));
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+        }
+
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
+            if (remainder.lt(stakeRemainder)) {
+                remainder = stakeRemainder;
+            }
+        }
+
+        if (!remainder) {
+            // deposit tokens
+            await this.commandExecutor.add({
+                name: 'deposit-tokens-command',
+                data: {
+                    amount: remainder.toString(),
+                },
+            });
         }
 
         await this.commandExecutor.add({

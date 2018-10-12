@@ -102,7 +102,16 @@ class Blockchain {
      * @returns {Promise}
      */
     increaseApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseApproval(tokenAmountIncrease);
+        return this.blockchain.increaseProfileApproval(tokenAmountIncrease);
+    }
+
+    /**
+     * Increase token approval for escrow contract
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseHoldingApproval(tokenAmountIncrease) {
+        return this.blockchain.increaseHoldingApproval(tokenAmountIncrease);
     }
 
     /**
@@ -370,8 +379,8 @@ class Blockchain {
      * @param amount
      * @returns {Promise<any>}
      */
-    async depositToken(amount) {
-        return this.blockchain.depositToken(amount);
+    async depositTokens(amount) {
+        return this.blockchain.depositTokens(amount);
     }
 
     /**

@@ -38,7 +38,7 @@ class ProfileService {
         const profileMinStake = await this.blockchain.getProfileMinimumStake();
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
-        await this.blockchain.increaseApproval(new BN(profileMinStake, 10));
+        await this.blockchain.increaseProfileApproval(new BN(profileMinStake, 10));
         await this.blockchain.createProfile(
             this.config.identity,
             new BN(profileMinStake, 10), identityExists,
@@ -116,7 +116,7 @@ class ProfileService {
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
         await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
-        await this.blockchain.depositToken(new BN(mATRAC));
+        await this.blockchain.depositTokens(new BN(mATRAC));
 
         this.logger.trace(`${amount} ATRAC deposited on your profile`);
 

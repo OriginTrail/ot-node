@@ -27,7 +27,7 @@ const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bidding-approval-increase-command');
-const DepositTokenCommand = require('../../modules/command/common/deposit-token-command');
+const DepositTokenCommand = require('../../modules/command/pirot/deposit-tokens-command');
 
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command2');
@@ -718,7 +718,7 @@ describe('Protocol tests', () => {
             const bidderDeposit = new BN('100000000000000000', 10)
                 .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
             await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
-            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.depositTokens(bidderDeposit);
             await testNode2.blockchain.addBid(importId, testNode2.identity);
 
             await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
@@ -781,7 +781,7 @@ describe('Protocol tests', () => {
             const bidderDeposit = new BN('100000000000000000', 10)
                 .mul(new BN(ImportUtilities.calculateEncryptedImportSize(vertices)));
             await testNode2.blockchain.increaseBiddingApproval(bidderDeposit);
-            await testNode2.blockchain.depositToken(bidderDeposit);
+            await testNode2.blockchain.depositTokens(bidderDeposit);
             await testNode2.blockchain.addBid(importId, testNode2.identity);
 
             await waitForEvent(biddingInstance, 'FinalizeOfferReady', importId, 5000);
