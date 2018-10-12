@@ -38,7 +38,6 @@ class DCOfferPrepareCommand extends Command {
             const hashes = {};
             hashes[`${cInfo.color}LitigationHash`] = cInfo.litigationRootHash;
             hashes[`${cInfo.color}DistributionHash`] = cInfo.distributionRootHash;
-            console.log(cInfo.color);
             return hashes;
         }))).reduce((acc, value) => Object.assign(acc, value));
 

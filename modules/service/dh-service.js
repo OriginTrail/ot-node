@@ -82,27 +82,36 @@ class DHService {
         }
 
         if (remainder) {
-            // deposit tokens
             await this.commandExecutor.add({
-                name: 'depositTokensCommand',
+                name: 'profileApprovalIncreaseCommand',
+                sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
+                delay: 15000,
                 data: {
                     amount: remainder.toString(),
+                    offerId,
+                    dcNodeId,
+                    dataSetSizeInBytes,
+                    holdingTimeInMinutes,
+                    litigationIntervalInMinutes,
+                    tokenAmountPerHolder,
                 },
+                transactional: false,
+            });
+        } else {
+            await this.commandExecutor.add({
+                name: 'dhOfferHandleCommand',
+                delay: 15000,
+                data: {
+                    offerId,
+                    dcNodeId,
+                    dataSetSizeInBytes,
+                    holdingTimeInMinutes,
+                    litigationIntervalInMinutes,
+                    tokenAmountPerHolder,
+                },
+                transactional: false,
             });
         }
-        await this.commandExecutor.add({
-            name: 'dhOfferHandleCommand',
-            delay: 15000,
-            data: {
-                offerId,
-                dcNodeId,
-                dataSetSizeInBytes,
-                holdingTimeInMinutes,
-                litigationIntervalInMinutes,
-                tokenAmountPerHolder,
-            },
-            transactional: false,
-        });
     }
 
     /**

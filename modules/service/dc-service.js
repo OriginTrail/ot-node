@@ -67,30 +67,44 @@ class DCService {
         if (remainder) {
             // deposit tokens
             await this.commandExecutor.add({
-                name: 'depositTokensCommand',
+                name: 'profileApprovalIncreaseCommand',
+                sequence: [
+                    'depositTokensCommand', 'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
+                ],
+                delay: 0,
                 data: {
                     amount: remainder.toString(),
+                    internalOfferId: offer.id,
+                    dataSetId,
+                    dataRootHash,
+                    holdingTimeInMinutes,
+                    tokenAmountPerHolder,
+                    dataSizeInBytes,
+                    litigationIntervalInMinutes,
                 },
+                transactional: false,
+            });
+        } else {
+            await this.commandExecutor.add({
+                name: 'dcOfferPrepareCommand',
+                sequence: [
+                    'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
+                ],
+                delay: 0,
+                data: {
+                    internalOfferId: offer.id,
+                    dataSetId,
+                    dataRootHash,
+                    holdingTimeInMinutes,
+                    tokenAmountPerHolder,
+                    dataSizeInBytes,
+                    litigationIntervalInMinutes,
+                },
+                transactional: false,
             });
         }
 
-        await this.commandExecutor.add({
-            name: 'dcOfferPrepareCommand',
-            sequence: [
-                'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
-            ],
-            delay: 0,
-            data: {
-                internalOfferId: offer.id,
-                dataSetId,
-                dataRootHash,
-                holdingTimeInMinutes,
-                tokenAmountPerHolder,
-                dataSizeInBytes,
-                litigationIntervalInMinutes,
-            },
-            transactional: false,
-        });
+
 
         return offer.id;
     }
