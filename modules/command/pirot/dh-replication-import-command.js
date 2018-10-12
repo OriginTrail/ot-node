@@ -120,12 +120,15 @@ class DhReplicationImportCommand extends Command {
 
         this.logger.trace(`[DH] Replication finished for offer ID ${offerId}`);
 
-        const toSign = [Utilities.denormalizeHex(offerId)];
+        const toSign = [
+            Utilities.denormalizeHex(offerId),
+            Utilities.denormalizeHex(this.config.erc725Identity)];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         const replicationFinishedMessage = {
             offerId,
+            dhIdentity: this.config.erc725Identity,
             messageSignature: messageSignature.signature,
         };
 

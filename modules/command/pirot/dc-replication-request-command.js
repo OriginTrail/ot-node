@@ -25,7 +25,7 @@ class DCReplicationRequestCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId, wallet, identity,
+            offerId, wallet, identity, dhIdentity,
         } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (!offer) {
@@ -43,7 +43,8 @@ class DCReplicationRequestCommand extends Command {
         const replication = JSON.parse(await Utilities.fileContents(colorFilePath));
         await models.replicated_data.create({
             dh_id: identity,
-            dh_wallet: wallet,
+            dh_wallet: wallet.toLowerCase(),
+            dh_identity: dhIdentity.toLowerCase(),
             offer_id: offer.offer_id,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,

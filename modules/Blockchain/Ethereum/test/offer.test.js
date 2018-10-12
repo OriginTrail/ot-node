@@ -71,7 +71,7 @@ contract('Offer testing', async (accounts) => {
         // Increase approval for depositing tokens
         var promises = [];
         for (var i = 0; i < accounts.length; i += 1) {
-            promises[i] = trac.increaseApproval(
+            promises[i] = trac.increaseProfileApproval(
                 profile.address,
                 (new BN(5)).mul(new BN(10).pow(new BN(20))),
                 { from: accounts[i] },
@@ -147,7 +147,7 @@ contract('Offer testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get offerId from an offer', async () => {
+    it('Should test creating and finalizing offer', async () => {
         // Get instances of contracts used in the test
         const holding = await Holding.deployed();
         const util = await TestingUtilities.deployed();

@@ -46,7 +46,7 @@ class DCOfferCreateBlockchainCommand extends Command {
 
         if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
+            await this.blockchain.depositTokens(condition.sub(profileBalance));
         }
 
         await this.blockchain.createOffer(

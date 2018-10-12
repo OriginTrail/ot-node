@@ -2,6 +2,8 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const Utilities = require('../../Utilities');
 
+const BN = require('bn.js');
+
 /**
  * Creates offer on blockchain
  */
@@ -33,6 +35,7 @@ class DCOfferCreateBcCommand extends Command {
         } = command.data;
 
         await this.blockchain.createOffer(
+            Utilities.normalizeHex(this.config.erc725Identity),
             dataSetId,
             dataRootHash,
             redLitigationHash,

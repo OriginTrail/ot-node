@@ -35,7 +35,7 @@ class DcOfferMiningCompletedCommand extends Command {
                 commands: [
                     {
                         name: 'dcOfferFinalizeCommand',
-                        data: { offerId, wallets: solution.nodeIdentifiers },
+                        data: { offerId, solution },
                     },
                 ],
             };

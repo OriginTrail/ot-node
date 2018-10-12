@@ -2,6 +2,8 @@ const BN = require('bn.js');
 
 const models = require('../../models');
 
+const DEFAILT_NUMBER_OF_HOLDERS = 3;
+
 class DCService {
     constructor(ctx) {
         this.logger = ctx.logger;
@@ -30,15 +32,45 @@ class DCService {
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(this.config.holding_time_in_minutes, 16);
+            holdingTimeInMinutes = new BN(1, 10); // TODO take from config
         }
 
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = new BN(this.config.token_amount_per_holder, 16);
+            tokenAmountPerHolder = new BN(1, 10); // TODO take from config
         }
 
         if (!litigationIntervalInMinutes) {
-            litigationIntervalInMinutes = new BN(this.config.litigation_interval_in_minutes, 16);
+            litigationIntervalInMinutes = new BN(1, 10); // TODO take from config
+        }
+
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+
+        const offerStake = new BN(tokenAmountPerHolder, 10)
+            .mul(new BN(DEFAILT_NUMBER_OF_HOLDERS, 10));
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+        }
+
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
+            if (remainder.lt(stakeRemainder)) {
+                remainder = stakeRemainder;
+            }
+        }
+
+        if (!remainder) {
+            // deposit tokens
+            await this.commandExecutor.add({
+                name: 'deposit-tokens-command',
+                data: {
+                    amount: remainder.toString(),
+                },
+            });
         }
 
         await this.commandExecutor.add({
@@ -70,7 +102,7 @@ class DCService {
     async miningSucceed(data) {
         const { offerId } = data;
         const mined = await models.miner_records.findOne({
-            offer_id: offerId,
+            where: { offer_id: offerId },
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -91,7 +123,7 @@ class DCService {
     async miningFailed(result) {
         const { offerId } = result;
         const mined = await models.miner_records.findOne({
-            offer_id: offerId,
+            where: { offer_id: offerId },
         });
         if (!mined) {
             throw new Error(`Failed to find offer ${offerId}. Something fatal has occurred!`);
@@ -108,9 +140,10 @@ class DCService {
      * @param offerId
      * @param wallet
      * @param identity
+     * @param dhIdentity
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity) {
+    async handleReplicationRequest(offerId, wallet, identity, dhIdentity) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
@@ -143,6 +176,7 @@ class DCService {
                 offerId,
                 wallet,
                 identity,
+                dhIdentity,
             },
             transactional: false,
         });
@@ -154,9 +188,10 @@ class DCService {
      * @param signature
      * @param dhNodeId
      * @param dhWallet
+     * @param dhIdentity
      * @returns {Promise<void>}
      */
-    async verifyDHReplication(offerId, signature, dhNodeId, dhWallet) {
+    async verifyDHReplication(offerId, signature, dhNodeId, dhIdentity, dhWallet) {
         await this.commandExecutor.add({
             name: 'dcReplicationCompletedCommand',
             delay: 0,
@@ -165,6 +200,7 @@ class DCService {
                 signature,
                 dhNodeId,
                 dhWallet,
+                dhIdentity,
             },
             transactional: false,
         });

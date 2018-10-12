@@ -3,12 +3,164 @@
 		"constant": false,
 		"inputs": [
 			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			}
+		],
+		"name": "payOut",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "hub",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "offerId",
+				"type": "bytes32"
+			},
+			{
+				"name": "shift",
+				"type": "uint256"
+			},
+			{
+				"name": "confirmation1",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation2",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation3",
+				"type": "bytes"
+			},
+			{
+				"name": "encryptionType",
+				"type": "uint8[]"
+			},
+			{
+				"name": "holderIdentity",
+				"type": "address[]"
+			}
+		],
+		"name": "finalizeOffer",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "profile",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "profileStorage",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "holdingStorage",
+		"outputs": [
+			{
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
 				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"name": "dataRootHash",
+				"type": "bytes32"
+			},
+			{
+				"name": "redLitigationHash",
+				"type": "bytes32"
+			},
+			{
+				"name": "greenLitigationHash",
+				"type": "bytes32"
+			},
+			{
+				"name": "blueLitigationHash",
 				"type": "bytes32"
 			},
 			{
 				"name": "dcNodeId",
 				"type": "bytes32"
+			},
+			{
+				"name": "holdingTimeInMinutes",
+				"type": "uint256"
+			},
+			{
+				"name": "tokenAmountPerHolder",
+				"type": "uint256"
+			},
+			{
+				"name": "dataSetSizeInBytes",
+				"type": "uint256"
+			},
+			{
+				"name": "litigationIntervalInMinutes",
+				"type": "uint256"
 			}
 		],
 		"name": "createOffer",
@@ -18,30 +170,15 @@
 		"type": "function"
 	},
 	{
-		"constant": false,
 		"inputs": [
 			{
-				"name": "offerId",
-				"type": "bytes32"
-			},
-			{
-				"name": "holder1",
-				"type": "address"
-			},
-			{
-				"name": "holder2",
-				"type": "address"
-			},
-			{
-				"name": "holder3",
+				"name": "hubAddress",
 				"type": "address"
 			}
 		],
-		"name": "finalizeOffer",
-		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
-		"type": "function"
+		"type": "constructor"
 	},
 	{
 		"anonymous": false,
@@ -53,8 +190,8 @@
 			},
 			{
 				"indexed": false,
-				"name": "dcProfile",
-				"type": "address"
+				"name": "dcNodeId",
+				"type": "bytes32"
 			},
 			{
 				"indexed": false,
@@ -64,7 +201,7 @@
 			{
 				"indexed": false,
 				"name": "task",
-				"type": "bytes1"
+				"type": "bytes32"
 			}
 		],
 		"name": "OfferTask",
@@ -82,6 +219,26 @@
 				"indexed": false,
 				"name": "dcNodeId",
 				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"name": "holdingTimeInMinutes",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "dataSetSizeInBytes",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "tokenAmountPerHolder",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"name": "litigationIntervalInMinutes",
+				"type": "uint256"
 			}
 		],
 		"name": "OfferCreated",
@@ -112,6 +269,18 @@
 			}
 		],
 		"name": "OfferFinalized",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "adr",
+				"type": "address"
+			}
+		],
+		"name": "Address",
 		"type": "event"
 	}
 ]

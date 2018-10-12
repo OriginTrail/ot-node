@@ -19,9 +19,12 @@ class Ethereum {
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
+
+        this.globalConfig = config;
         this.config = {
             wallet_address: config.node_wallet,
             node_private_key: config.node_private_key,
+            erc725Identity: config.erc725Identity,
         };
         Object.assign(this.config, config.blockchain);
 
@@ -32,18 +35,30 @@ class Ethereum {
         );
 
         // Loading contracts
-        this.holdingContractAddress = this.config.holding_contract_address;
-        this.tokenContractAddress = this.config.token_contract_address;
-        this.readingContractAddress = this.config.reading_contract_address;
+        this.hubContractAddress = this.config.hub_contract_address;
 
+        const hubAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/hub.json');
+        this.hubContractAbi = JSON.parse(hubAbiFile);
+        this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
+
+        this.log.info('Selected blockchain: Ethereum');
+    }
+
+    /**
+     * Initializes Blockchain provider (get contract addresses, etc.)
+     * @returns {Promise<void>}
+     */
+    async initialize() {
         // Holding contract data
         const holdingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
+        this.holdingContractAddress = await this._getHoldingContractAddress();
         this.holdingContractAbi = JSON.parse(holdingAbiFile);
         this.holdingContract = new this.web3.eth
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
 
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/token.json');
+        this.tokenContractAddress = await this._getTokenContractAddress();
         this.tokenContractAbi = JSON.parse(tokenAbiFile);
         this.tokenContract = new this.web3.eth.Contract(
             this.tokenContractAbi,
@@ -52,17 +67,128 @@ class Ethereum {
 
         // Reading contract data
         const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/reading.json');
+        this.readingContractAddress = await this._getReadingContractAddress();
         this.readingContractAbi = JSON.parse(readingAbiFile);
         this.readingContract = new this.web3.eth.Contract(
             this.readingContractAbi,
             this.readingContractAddress,
         );
 
+        // Profile contract data
+        const profileAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile.json');
+        this.profileContractAddress = await this._getProfileContractAddress();
+        this.profileContractAbi = JSON.parse(profileAbiFile);
+        this.profileContract = new this.web3.eth.Contract(
+            this.profileContractAbi,
+            this.profileContractAddress,
+        );
+
+        // Profile storage contract data
+        const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
+        this.profileStorageContractAddress = await this._getProfileStorageContractAddress();
+        this.profileStorageContractAbi = JSON.parse(profileStorageAbiFile);
+        this.profileStorageContract = new this.web3.eth.Contract(
+            this.profileStorageContractAbi,
+            this.profileStorageContractAddress,
+        );
+
+        // Holding storage contract data
+        const holdingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
+        this.holdingStorageContractAddress = await this._getHoldingStorageContractAddress();
+        this.holdingStorageContractAbi = JSON.parse(holdingStorageAbiFile);
+        this.holdingStorageContract = new this.web3.eth.Contract(
+            this.holdingStorageContractAbi,
+            this.holdingStorageContractAddress,
+        );
+
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
+            PROFILE_CONTRACT: this.profileContract,
         };
+    }
 
-        this.log.info('Selected blockchain: Ethereum');
+    /**
+     * Gets Holding contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getHoldingContractAddress() {
+        this.log.trace('Asking Hub for Holding contract address...');
+        return this.hubContract.methods.holdingAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Token contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getTokenContractAddress() {
+        this.log.trace('Asking Hub for Token contract address...');
+        return this.hubContract.methods.tokenAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Reading contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getReadingContractAddress() {
+        this.log.trace('Asking Hub for Holding contract address...');
+        return this.hubContract.methods.readingAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Profile contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getProfileContractAddress() {
+        this.log.trace('Asking Hub for Profile contract address...');
+        return this.hubContract.methods.profileAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Profile storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getProfileStorageContractAddress() {
+        this.log.trace('Asking Hub for ProfileStorage contract address...');
+        return this.hubContract.methods.profileStorageAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Holding storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getHoldingStorageContractAddress() {
+        this.log.trace('Asking Hub for HoldingStorage contract address...');
+        return this.hubContract.methods.holdingStorageAddress().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets Reading storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getReadingStorageContractAddress() {
+        this.log.trace('Asking Hub for ReadingStorage contract address...');
+        return this.hubContract.methods.readingStorageAddress().call({
+            from: this.config.wallet_address,
+        });
     }
 
     /**
@@ -154,44 +280,53 @@ class Ethereum {
 
     /**
      * Creates node profile on the Bidding contract
-     * @param nodeId        Kademlia node ID
-     * @param {string} pricePerByteMinute Price for byte per minute
-     * @param {string} stakePerByteMinute Stake for byte per minute
-     * @param {string} readStakeFactor Read stake factor
-     * @param {string} maxTimeMins   Max time in minutes
+     * @param profileNodeId - Network node ID
+     * @param initialBalance - Initial profile balance
+     * @param isSender725 - Is sender ERC 725?
      * @return {Promise<any>}
      */
-    createProfile(
-        nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins,
-    ) {
+    createProfile(profileNodeId, initialBalance, isSender725) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
+            to: this.profileContractAddress,
         };
 
-        this.log.trace(`CreateProfile(${nodeId}, ${pricePerByteMinute}, ${stakePerByteMinute}, ${readStakeFactor}, ${maxTimeMins})`);
+        this.log.trace(`CreateProfile(${profileNodeId}, ${initialBalance}, ${isSender725})`);
         return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'createProfile',
-            [Utilities.normalizeHex(nodeId), pricePerByteMinute, stakePerByteMinute,
-                readStakeFactor, maxTimeMins], options,
+            this.profileContractAbi, 'createProfile',
+            [Utilities.normalizeHex(profileNodeId), initialBalance, isSender725], options,
         );
     }
 
     /**
-     * Increase token approval for escrow contract on Ethereum blockchain
+     * Increase token approval for profile
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseApproval(tokenAmountIncrease) {
+    increaseProfileApproval(tokenAmountIncrease) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.tokenContractAddress,
         };
-        this.log.notify('Increasing approval for escrow');
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.escrowContractAddress, tokenAmountIncrease], options);
+        this.log.notify('Increasing token approval for profile contract');
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.profileContractAddress, tokenAmountIncrease], options);
+    }
+
+    /**
+     * Increase token approval for holding
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseHoldingApproval(tokenAmountIncrease) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.tokenContractAddress,
+        };
+        this.log.notify('Increasing token approval for profile contract');
+        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.holdingContractAddress, tokenAmountIncrease], options);
     }
 
     /**
@@ -358,6 +493,7 @@ class Ethereum {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
+        blockchainIdentity,
         dataSetId,
         dataRootHash,
         redLitigationHash,
@@ -374,12 +510,21 @@ class Ethereum {
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.holdingContractAddress,
         };
-        this.log.trace(`createOffer (${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
+        this.log.trace(`createOffer (${blockchainIdentity}, ${dataSetId}, ${dataRootHash}, ${redLitigationHash}, ${greenLitigationHash}, ${blueLitigationHash}, ${dcNodeId}, ${holdingTimeInMinutes}, ${tokenAmountPerHolder}, ${dataSizeInBytes}, ${litigationIntervalInMinutes})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'createOffer',
             [
+                blockchainIdentity,
                 dataSetId,
+                dataRootHash,
+                redLitigationHash,
+                greenLitigationHash,
+                blueLitigationHash,
                 dcNodeId,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                dataSizeInBytes,
+                litigationIntervalInMinutes,
             ],
             options,
         );
@@ -387,31 +532,36 @@ class Ethereum {
 
     /**
      * Finalizes offer on Blockchain
-     * @param offerId   - Offer ID
-     * @param holder1   - Holder address
-     * @param holder2   - Holder address
-     * @param holder3   - Holder address
      * @returns {Promise<any>}
      */
     finalizeOffer(
+        blockchainIdentity,
         offerId,
-        holder1,
-        holder2,
-        holder3,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
     ) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.holdingContractAddress,
         };
-        this.log.trace(`finalizeOffer (${offerId}, ${holder1}, ${holder2}, ${holder3})`);
+
+        this.log.trace(`finalizeOffer (${blockchainIdentity}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders})`);
         return this.transactions.queueTransaction(
             this.holdingContractAbi, 'finalizeOffer',
             [
+                blockchainIdentity,
                 offerId,
-                holder1,
-                holder2,
-                holder3,
+                shift,
+                confirmation1,
+                confirmation2,
+                confirmation3,
+                encryptionType,
+                holders,
             ],
             options,
         );
@@ -433,112 +583,6 @@ class Ethereum {
             this.biddingContractAbi, 'cancelOffer',
             [importId], options,
         );
-    }
-
-    async getStakedAmount(importId) {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalStake = new BN(0);
-        const initiated = {};
-        for (const event of events) {
-            const { import_id } = event.returnValues;
-            if (event.event === 'EscrowInitated'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
-            }
-            if (event.event === 'EscrowVerified'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.add(initiated[import_id]);
-            }
-            if (event.event === 'EscrowCompleted'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.sub(initiated[import_id]);
-            }
-        }
-        return totalStake.toString();
-    }
-
-    async getHoldingIncome(importId) {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'Payment'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
-    }
-
-    async getPurchaseIncome(importId, dvWallet) {
-        const events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'PurchasePayment'
-                && event.returnValues.import_id === importId
-                && event.returnValues.DV_wallet === dvWallet
-                && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
-    }
-
-    async getTotalStakedAmount() {
-        const events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalStake = new BN(0);
-        const initiated = {};
-        for (const event of events) {
-            const { import_id } = event.returnValues;
-            if (event.event === 'EscrowInitated' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                initiated[import_id] = new BN(event.returnValues.stake_amount, 10);
-            }
-            if (event.event === 'EscrowVerified' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.add(initiated[import_id]);
-            }
-            if (event.event === 'EscrowCompleted' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalStake = totalStake.sub(initiated[import_id]);
-            }
-        }
-        return totalStake.toString();
-    }
-
-    async getTotalIncome() {
-        let events = await this.contractsByName.ESCROW_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        let totalAmount = new BN(0);
-        for (const event of events) {
-            if (event.event === 'Payment' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        events = await this.contractsByName.READING_CONTRACT.getPastEvents('allEvents', {
-            fromBlock: 0,
-            toBlock: 'latest',
-        });
-        for (const event of events) {
-            if (event.event === 'PurchasePayment' && event.returnValues.DH_wallet === this.config.wallet_address) {
-                totalAmount = totalAmount.add(new BN(event.returnValues.amount));
-            }
-        }
-        return totalAmount.toString();
     }
 
     /**
@@ -858,7 +902,7 @@ class Ethereum {
      * @param {number} - amount
      * @returns {Promise<any>}
      */
-    async depositToken(amount) {
+    async depositTokens(amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
@@ -867,7 +911,7 @@ class Ethereum {
 
         this.log.trace(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
-            this.biddingContractAbi, 'depositToken',
+            this.profileContractAbi, 'depositTokens',
             [amount], options,
         );
     }
@@ -1050,6 +1094,27 @@ class Ethereum {
     async getReplicationModifier() {
         this.log.trace('get replication modifier from blockchain');
         return this.biddingContract.methods.replication_modifier().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get Profile minimum stake
+     */
+    async getProfileMinimumStake() {
+        this.log.trace('get replication modifier from blockchain');
+        return this.profileContract.methods.minimalStake().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Gets profile by wallet
+     * @param identity
+     */
+    async getProfile(identity) {
+        this.log.trace(`Get profile by identity ${identity}`);
+        return this.profileStorageContract.methods.profile(identity).call({
             from: this.config.wallet_address,
         });
     }

@@ -21,6 +21,14 @@ class Blockchain {
     }
 
     /**
+     * Initialize Blockchain provider
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        await this.blockchain.initialize();
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @param wallet DH wallet
@@ -44,10 +52,10 @@ class Blockchain {
 
     /**
      * Gets profile by wallet
-     * @param wallet
+     * @param identity
      */
-    getProfile(wallet) {
-        return this.blockchain.getProfile(wallet);
+    getProfile(identity) {
+        return this.blockchain.getProfile(identity);
     }
 
     /**
@@ -71,21 +79,21 @@ class Blockchain {
 
     /**
      * Creates node profile on the Bidding contract
-     * @param nodeId        Kademlia node ID
-     * @param {string} pricePerByteMinute Price for byte per minute
-     * @param {string} stakePerByteMinute Stake for byte per minute
-     * @param {string} readStakeFactor Read stake factor
-     * @param {string} maxTimeMins   Max time in minutes
+     * @param profileNodeId - Network node ID
+     * @param initialBalance - Initial profile balance
+     * @param isSender725 - Is sender ERC 725?
      * @return {Promise<any>}
      */
-    createProfile(
-        nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins,
-    ) {
-        return this.blockchain.createProfile(
-            nodeId, pricePerByteMinute, stakePerByteMinute,
-            readStakeFactor, maxTimeMins,
-        );
+    createProfile(profileNodeId, initialBalance, isSender725) {
+        return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
+    }
+
+    /**
+     * Gets minimum stake for creating a profile
+     * @returns {Promise<*>}
+     */
+    async getProfileMinimumStake() {
+        return this.blockchain.getProfileMinimumStake();
     }
 
     /**
@@ -94,7 +102,16 @@ class Blockchain {
      * @returns {Promise}
      */
     increaseApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseApproval(tokenAmountIncrease);
+        return this.blockchain.increaseProfileApproval(tokenAmountIncrease);
+    }
+
+    /**
+     * Increase token approval for escrow contract
+     * @param {number} tokenAmountIncrease
+     * @returns {Promise}
+     */
+    increaseHoldingApproval(tokenAmountIncrease) {
+        return this.blockchain.increaseHoldingApproval(tokenAmountIncrease);
     }
 
     /**
@@ -174,6 +191,7 @@ class Blockchain {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
+        blockchainIdentity,
         dataSetId,
         dataRootHash,
         redLitigationHash,
@@ -186,6 +204,7 @@ class Blockchain {
         litigationIntervalInMinutes,
     ) {
         return this.blockchain.createOffer(
+            blockchainIdentity,
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -201,14 +220,22 @@ class Blockchain {
 
     /**
      * Finalizes offer on Blockchain
-     * @param offerId   - Offer ID
-     * @param holder1   - Holder address
-     * @param holder2   - Holder address
-     * @param holder3   - Holder address
      * @returns {Promise<any>}
      */
-    finalizeOffer(offerId, holder1, holder2, holder3) {
-        return this.blockchain.finalizeOffer(offerId, holder1, holder2, holder3);
+    finalizeOffer(
+        blockchainIdentity,
+        offerId,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
+    ) {
+        return this.blockchain.finalizeOffer(
+            blockchainIdentity, offerId, shift, confirmation1,
+            confirmation2, confirmation3, encryptionType, holders,
+        );
     }
 
     /**
@@ -352,8 +379,8 @@ class Blockchain {
      * @param amount
      * @returns {Promise<any>}
      */
-    async depositToken(amount) {
-        return this.blockchain.depositToken(amount);
+    async depositTokens(amount) {
+        return this.blockchain.depositTokens(amount);
     }
 
     /**

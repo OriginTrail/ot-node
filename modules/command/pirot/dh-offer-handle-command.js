@@ -1,3 +1,5 @@
+const BN = require('bn.js');
+
 const Command = require('../command');
 const Models = require('../../../models/index');
 
@@ -10,6 +12,7 @@ class DHOfferHandleCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -20,11 +23,18 @@ class DHOfferHandleCommand extends Command {
         const {
             offerId,
             dcNodeId,
+            dataSetSizeInBytes,
+            holdingTimeInMinutes,
+            litigationIntervalInMinutes,
+            tokenAmountPerHolder,
         } = command.data;
 
         this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${offerId}.`);
 
         // TODO check for parameters
+
+
+
 
         await Models.bids.create({
             offer_id: offerId,
@@ -34,6 +44,7 @@ class DHOfferHandleCommand extends Command {
         await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
+            dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
         this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
         return Command.empty();
