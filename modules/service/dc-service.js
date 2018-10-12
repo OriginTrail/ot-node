@@ -8,6 +8,7 @@ class DCService {
     constructor(ctx) {
         this.logger = ctx.logger;
         this.config = ctx.config;
+        this.blockchain = ctx.blockchain;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -58,15 +59,15 @@ class DCService {
         const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
         if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
             const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
-            if (remainder.lt(stakeRemainder)) {
+            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
                 remainder = stakeRemainder;
             }
         }
 
-        if (!remainder) {
+        if (remainder) {
             // deposit tokens
             await this.commandExecutor.add({
-                name: 'deposit-tokens-command',
+                name: 'depositTokensCommand',
                 data: {
                     amount: remainder.toString(),
                 },

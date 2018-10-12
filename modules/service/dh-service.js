@@ -76,15 +76,15 @@ class DHService {
         const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
         if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
             const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
-            if (remainder.lt(stakeRemainder)) {
+            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
                 remainder = stakeRemainder;
             }
         }
 
-        if (!remainder) {
+        if (remainder) {
             // deposit tokens
             await this.commandExecutor.add({
-                name: 'deposit-tokens-command',
+                name: 'depositTokensCommand',
                 data: {
                     amount: remainder.toString(),
                 },
@@ -713,7 +713,7 @@ class DHService {
         throw Error(`Cannot find import for import ID ${importId}.`);
     }
 
-    listenToBlockchainEvents() {
+    async listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent([
             'AddedPredeterminedBid',
             'OfferCreated',

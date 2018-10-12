@@ -101,7 +101,7 @@ class Blockchain {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseApproval(tokenAmountIncrease) {
+    increaseProfileApproval(tokenAmountIncrease) {
         return this.blockchain.increaseProfileApproval(tokenAmountIncrease);
     }
 
@@ -267,7 +267,7 @@ class Blockchain {
      * @param event Event to listen to
      * @returns {number | Object} Event handle
      */
-    subscribeToEventPermanent(event) {
+    async subscribeToEventPermanent(event) {
         return this.blockchain.subscribeToEventPermanent(event);
     }
 
@@ -376,10 +376,11 @@ class Blockchain {
 
     /**
      * Deposits tokens to the profile
+     * @param blockchainIdentity
      * @param amount
      * @returns {Promise<any>}
      */
-    async depositTokens(amount) {
+    async depositTokens(blockchainIdentity, amount) {
         return this.blockchain.depositTokens(amount);
     }
 

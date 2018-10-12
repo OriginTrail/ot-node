@@ -716,13 +716,12 @@ class Ethereum {
      * @param event Event to listen to
      * @returns {number | Object} Event handle
      */
-    subscribeToEventPermanent(event) {
+    async subscribeToEventPermanent(event) {
+        const startBlockNumber = parseInt(
+            await Utilities.getBlockNumberFromWeb3(this.web3),
+            16,
+        );
         const handle = setInterval(async () => {
-            const startBlockNumber = parseInt(
-                await Utilities.getBlockNumberFromWeb3(this.web3),
-                16,
-            );
-
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
                 block: { [Op.gte]: startBlockNumber },
@@ -899,20 +898,21 @@ class Ethereum {
 
     /**
      * Deposit tokens to profile
-     * @param {number} - amount
+     * @param blockchainIdentity
+     * @param amount
      * @returns {Promise<any>}
      */
-    async depositTokens(amount) {
+    async depositTokens(blockchainIdentity, amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.biddingContractAddress,
+            to: this.profileContractAddress,
         };
 
         this.log.trace(`Calling - depositToken(${amount.toString()})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'depositTokens',
-            [amount], options,
+            [blockchainIdentity, amount], options,
         );
     }
 

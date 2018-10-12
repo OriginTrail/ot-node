@@ -1,5 +1,7 @@
+const BN = require('bn.js');
+
 const Command = require('../command');
-const BN = require('../../../node_modules/bn.js/lib/bn');
+const Utilities = require('../../Utilities');
 
 /**
  * Deposits tokens on blockchain
@@ -17,7 +19,8 @@ class DepositTokensCommand extends Command {
      */
     async execute(command) {
         const { amount } = command.data;
-        await this.blockchain.depositTokens(amount);
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this.blockchain.depositTokens(blockchainIdentity, amount);
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
