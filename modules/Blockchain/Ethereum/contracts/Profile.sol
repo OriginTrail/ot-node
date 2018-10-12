@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import {SafeMath} from './SafeMath.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
 import {Hub} from './Hub.sol';
-import {ERC725, Identity} from './Identity.sol';
+import {Identity} from './Identity.sol';
 import {ERC20} from './TracToken.sol';
 
 contract Profile {
@@ -68,7 +68,7 @@ contract Profile {
 
     function depositTokens(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
@@ -83,7 +83,7 @@ contract Profile {
 
     function startTokenWithdrawal(address identity, uint256 amount) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         if(profileStorage.getWithdrawalPending(identity)){
             if(block.timestamp < profileStorage.getWithdrawalTimestamp(identity)){
@@ -103,7 +103,6 @@ contract Profile {
 
         uint256 availableBalance = profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity));
 
-        
         profileStorage.setWithdrawalPending(identity, true);
         profileStorage.setWithdrawalTimestamp(identity, block.timestamp + withdrawalTime);
         if(availableBalance >= amount) {
@@ -118,29 +117,29 @@ contract Profile {
         }
     }
 
-    function withdrawTokens(address identity) public {
-        // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+    // function withdrawTokens(address identity) public {
+    //     // Verify sender
+    //     require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
-        require(profileStorage.getWithdrawalPending(identity), "Cannot withdraw tokens before starting token withdrawal!");
-        require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
+    //     // require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
+    //     // require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
 
-        // Transfer already reserved tokens to user identity
-        profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
+    //     // Transfer already reserved tokens to user identity
+    //     profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
         
-        profileStorage.setStake(
-            identity,
-            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
-        );
+    //     profileStorage.setStake(
+    //         identity,
+    //         profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
+    //     );
 
-        profileStorage.setWithdrawalPending(identity, false);
+    //     profileStorage.setWithdrawalPending(identity, false);
         
-        emit TokensWithdrawn(
-            identity,
-            profileStorage.getWithdrawalAmount(identity),
-            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
-        );
-    }
+    //     emit TokensWithdrawn(
+    //         identity,
+    //         profileStorage.getWithdrawalAmount(identity),
+    //         profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
+    //     );
+    // }
     
     function reserveTokens(address payer, address identity1, address identity2, address identity3, uint256 amount)
     public onlyHolding {

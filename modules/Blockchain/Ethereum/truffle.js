@@ -9,7 +9,7 @@ module.exports = {
             settings: {
                 optimizer: {
                     enabled: true,
-                    runs: 200000,
+                    runs: 20,
                 },
             },
         },
@@ -31,12 +31,12 @@ module.exports = {
         },
 
         update: {
-          host: 'localhost',
+            host: 'localhost',
             port: 7545,
             gas: 6000000,
             network_id: '5777',
         },
-      
+
         test: {
             host: 'localhost',
             port: 7545,
