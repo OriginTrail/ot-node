@@ -50,7 +50,7 @@ contract Holding {
 
         // Now we calculate the offerId, which should be unique
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
-        bytes32 offerId = keccak256(abi.encodePacked(dataSetId, identity, blockhash(block.number)));
+        bytes32 offerId = keccak256(abi.encodePacked(dataSetId, identity, blockhash(block.number - 1)));
 
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
