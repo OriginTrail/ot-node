@@ -9,6 +9,9 @@ module.exports = (sequelize, DataTypes) => {
         },
         offer_id: DataTypes.STRING,
         dc_node_id: DataTypes.STRING,
+        data_size_in_bytes: DataTypes.STRING,
+        litigation_interval_in_minutes: DataTypes.INTEGER,
+        token_amount: DataTypes.STRING,
     }, {});
     bids.associate = (models) => {
         // associations can be defined here

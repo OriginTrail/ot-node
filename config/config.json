@@ -78,7 +78,13 @@
       "repo": "OriginTrail/ot-node",
       "branch": "develop"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1
   },
   "staging": {
     "identity": null,
@@ -159,7 +165,13 @@
       "repo": "OriginTrail/ot-node",
       "branch": "release/staging"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1
   },
   "stable": {
     "identity": null,
@@ -240,7 +252,13 @@
       "repo": "OriginTrail/ot-node",
       "branch": "release/stable"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1
   },
   "production": {
     "identity": null,
@@ -324,6 +342,12 @@
       "repo": "OriginTrail/ot-node",
       "branch": "master"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1
   }
 }

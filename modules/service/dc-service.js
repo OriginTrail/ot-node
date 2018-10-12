@@ -33,15 +33,15 @@ class DCService {
         });
 
         if (!holdingTimeInMinutes) {
-            holdingTimeInMinutes = new BN(1, 10); // TODO take from config
+            holdingTimeInMinutes = new BN(this.config.dc_holding_time_in_minutes., 10);
         }
 
         if (!tokenAmountPerHolder) {
-            tokenAmountPerHolder = new BN(1, 10); // TODO take from config
+            tokenAmountPerHolder = new BN(this.config.dc_token_amount_per_holder, 10);
         }
 
         if (!litigationIntervalInMinutes) {
-            litigationIntervalInMinutes = new BN(1, 10); // TODO take from config
+            litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
