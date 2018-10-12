@@ -35,7 +35,7 @@ contract Profile {
     
     event WithdrawalIntitiated(address profile, uint256 amount, uint256 withdrawalReadyAt);
     event TokenWithdrawalCancelled(address profile);
-    event TokensWithdrawn(address profile, uint256 amounWithdrawn, uint256 newBalance);
+    event TokensWithdrawn(address profile, uint256 amountWithdrawn, uint256 newBalance);
 
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
@@ -66,70 +66,79 @@ contract Profile {
         }
     }
 
-    function depositTokens(uint256 amount) public {
+    function depositTokens(address identity, uint256 amount) public {
+        // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
         require(tokenContract.balanceOf(msg.sender) >= amount, "Sender balance must be equal to or higher than chosen amount!");
 
         tokenContract.transferFrom(msg.sender, address(profileStorage), amount);
 
-        profileStorage.setStake(msg.sender, profileStorage.getStake(msg.sender).add(amount));
+        profileStorage.setStake(identity, profileStorage.getStake(identity).add(amount));
 
-        emit TokensDeposited(msg.sender, amount, profileStorage.getStake(msg.sender).add(amount));
+        emit TokensDeposited(identity, amount, profileStorage.getStake(identity).add(amount));
     }
 
-    function startTokenWithdrawal(uint256 amount) public {
-        if(profileStorage.getWithdrawalPending(msg.sender)){
-            if(block.timestamp < profileStorage.getWithdrawalTimestamp(msg.sender)){
+    function startTokenWithdrawal(address identity, uint256 amount) public {
+        // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+
+        if(profileStorage.getWithdrawalPending(identity)){
+            if(block.timestamp < profileStorage.getWithdrawalTimestamp(identity)){
                 // Transfer already reserved tokens to user identity
-                profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(msg.sender));
+                profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
                 
-                uint256 balance = profileStorage.getStake(msg.sender);
-                balance = balance.sub(profileStorage.getWithdrawalAmount(msg.sender));
-                profileStorage.setStake(msg.sender, balance);
+                uint256 balance = profileStorage.getStake(identity);
+                balance = balance.sub(profileStorage.getWithdrawalAmount(identity));
+                profileStorage.setStake(identity, balance);
                 
-                emit TokensWithdrawn(msg.sender, profileStorage.getWithdrawalAmount(msg.sender), balance);
+                emit TokensWithdrawn(identity, profileStorage.getWithdrawalAmount(identity), balance);
             }
             else {
                 require(false, "Withrdrawal process already pending!");
             }
         }
 
-        uint256 availableBalance = profileStorage.getStake(msg.sender).sub(profileStorage.getStakeReserved(msg.sender));
+        uint256 availableBalance = profileStorage.getStake(identity).sub(profileStorage.getStakeReserved(identity));
 
         
-        profileStorage.setWithdrawalPending(msg.sender, true);
-        profileStorage.setWithdrawalTimestamp(msg.sender, block.timestamp + withdrawalTime);
+        profileStorage.setWithdrawalPending(identity, true);
+        profileStorage.setWithdrawalTimestamp(identity, block.timestamp + withdrawalTime);
         if(availableBalance >= amount) {
             // Reserve chosen token amount
-            profileStorage.setWithdrawalAmount(msg.sender, amount);
-            emit WithdrawalIntitiated(msg.sender, amount, block.timestamp + withdrawalTime);
+            profileStorage.setWithdrawalAmount(identity, amount);
+            emit WithdrawalIntitiated(identity, amount, block.timestamp + withdrawalTime);
         }
         else {
             // Reserve only the available balance
-            profileStorage.setWithdrawalAmount(msg.sender, availableBalance);
-            emit WithdrawalIntitiated(msg.sender, availableBalance, block.timestamp + withdrawalTime);
+            profileStorage.setWithdrawalAmount(identity, availableBalance);
+            emit WithdrawalIntitiated(identity, availableBalance, block.timestamp + withdrawalTime);
         }
     }
 
-    function withdrawTokens() public {
-        require(profileStorage.getWithdrawalPending(msg.sender), "Cannot withdraw tokens before starting token withdrawal!");
-        require(block.timestamp < profileStorage.getWithdrawalTimestamp(msg.sender), "Cannot withdraw tokens before withdrawal timestamp!");
+    function withdrawTokens(address identity) public {
+        // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+
+        require(profileStorage.getWithdrawalPending(identity), "Cannot withdraw tokens before starting token withdrawal!");
+        require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
 
         // Transfer already reserved tokens to user identity
-        profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(msg.sender));
+        profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
         
         profileStorage.setStake(
-            msg.sender,
-            profileStorage.getStake(msg.sender).sub(profileStorage.getWithdrawalAmount(msg.sender))
+            identity,
+            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
         );
 
-        profileStorage.setWithdrawalPending(msg.sender, false);
+        profileStorage.setWithdrawalPending(identity, false);
         
         emit TokensWithdrawn(
-            msg.sender,
-            profileStorage.getWithdrawalAmount(msg.sender),
-            profileStorage.getStake(msg.sender).sub(profileStorage.getWithdrawalAmount(msg.sender))
+            identity,
+            profileStorage.getWithdrawalAmount(identity),
+            profileStorage.getStake(identity).sub(profileStorage.getWithdrawalAmount(identity))
         );
     }
     
@@ -167,7 +176,7 @@ contract Profile {
             identity3,
             amount
         );
-        emit TokensReserved(payer, amount);
+        emit TokensReserved(payer, amount.mul(3));
         emit TokensReserved(identity1, amount);
         emit TokensReserved(identity2, amount);
         emit TokensReserved(identity3, amount);
