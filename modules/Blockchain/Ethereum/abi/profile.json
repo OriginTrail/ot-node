@@ -331,11 +331,11 @@
       },
       {
         "indexed": false,
-        "name": "withdrawalReadyAt",
+        "name": "withdrawalDelayInSeconds",
         "type": "uint256"
       }
     ],
-    "name": "WithdrawalIntitiated",
+    "name": "WithdrawalInitiated",
     "type": "event"
   },
   {
