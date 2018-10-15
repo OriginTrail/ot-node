@@ -22,7 +22,6 @@
 				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
 				<sbdh:InstanceIdentifier>100001</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
 				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-				<sbdh:CreationDateAndTime>2018-01-01T00:31:52Z</sbdh:CreationDateAndTime>
 			</sbdh:DocumentIdentification>
 			<sbdh:BusinessScope>
 				<sbdh:Scope>
