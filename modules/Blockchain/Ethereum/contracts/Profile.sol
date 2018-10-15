@@ -83,7 +83,7 @@ contract Profile {
 
     function startTokenWithdrawal(address identity, uint256 amount) public {
         // Verify sender
-        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         if(profileStorage.getWithdrawalPending(identity)){
             if(block.timestamp < profileStorage.getWithdrawalTimestamp(identity)){
