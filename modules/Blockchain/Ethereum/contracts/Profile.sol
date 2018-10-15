@@ -33,7 +33,7 @@ contract Profile {
     event TokensDeposited(address profile, uint256 amountDeposited, uint256 newBalance);
     event TokensReserved(address profile, uint256 amountReserved);
     
-    event WithdrawalIntitiated(address profile, uint256 amount, uint256 withdrawalReadyAt);
+    event WithdrawalInitiated(address profile, uint256 amount, uint256 withdrawalDelayInSeconds);
     event TokenWithdrawalCancelled(address profile);
     event TokensWithdrawn(address profile, uint256 amountWithdrawn, uint256 newBalance);
 
@@ -108,12 +108,12 @@ contract Profile {
         if(availableBalance >= amount) {
             // Reserve chosen token amount
             profileStorage.setWithdrawalAmount(identity, amount);
-            emit WithdrawalIntitiated(identity, amount, block.timestamp + withdrawalTime);
+            emit WithdrawalInitiated(identity, amount, withdrawalTime);
         }
         else {
             // Reserve only the available balance
             profileStorage.setWithdrawalAmount(identity, availableBalance);
-            emit WithdrawalIntitiated(identity, availableBalance, block.timestamp + withdrawalTime);
+            emit WithdrawalInitiated(identity, availableBalance, withdrawalTime);
         }
     }
 
