@@ -3,7 +3,7 @@ pragma solidity ^0.4.23;
 import {SafeMath} from './SafeMath.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
 import {Hub} from './Hub.sol';
-import {Identity} from './Identity.sol';
+import {Identity, ERC725} from './Identity.sol';
 import {ERC20} from './TracToken.sol';
 
 contract Profile {
@@ -68,7 +68,7 @@ contract Profile {
 
     function depositTokens(address identity, uint256 amount) public {
         // Verify sender
-        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= amount, "Sender allowance must be equal to or higher than chosen amount");
@@ -119,7 +119,7 @@ contract Profile {
 
     function withdrawTokens(address identity) public {
         // Verify sender
-        require(Identity(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
         require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
