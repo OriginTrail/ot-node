@@ -122,7 +122,7 @@ contract Profile {
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
 
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
-        require(block.timestamp < profileStorage.getWithdrawalTimestamp(identity), "Cannot withdraw tokens before withdrawal timestamp!");
+        require(profileStorage.getWithdrawalTimestamp(identity) < block.timestamp, "Cannot withdraw tokens before withdrawal timestamp!");
 
         // Transfer already reserved tokens to user identity
         profileStorage.transferTokens(msg.sender, profileStorage.getWithdrawalAmount(identity));
