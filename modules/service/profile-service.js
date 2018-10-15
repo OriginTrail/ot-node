@@ -1,8 +1,8 @@
 const fs = require('fs');
+const BN = require('bn.js');
 const path = require('path');
 
 const Utilities = require('../Utilities');
-const BN = require('../../node_modules/bn.js/lib/bn');
 
 class ProfileService {
     /**
@@ -10,11 +10,12 @@ class ProfileService {
      * @param ctx
      */
     constructor(ctx) {
+        this.logger = ctx.logger;
+        this.config = ctx.config;
         this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
         this.remoteControl = ctx.remoteControl;
-        this.config = ctx.config;
-        this.logger = ctx.logger;
+        this.commandExecutor = ctx.commandExecutor;
     }
 
     /**
@@ -98,6 +99,23 @@ class ProfileService {
     }
 
     /**
+     * Initiates payout opertaion
+     * @param offerId
+     * @return {Promise<void>}
+     */
+    async payOut(offerId) {
+        await this.commandExecutor.add({
+            name: 'payOutCommand',
+            delay: 0,
+            transactional: false,
+            data: {
+                offerId,
+            },
+        });
+        this.logger.notify(`Pay-out for offer ${offerId} initiated.`);
+    }
+
+    /**
      * Deposit token to profile
      * @param amount
      * @returns {Promise<void>}
@@ -126,27 +144,19 @@ class ProfileService {
     }
 
     /**
-     * Withdraw tokens from profile to wallet
+     * Withdraw tokens from profile to identity
      * @param amount
-     * @returns {Promise<void>}
+     * @return {Promise<void>}
      */
-    async withdrawToken(amount) {
-        const profileBalance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-
-        if (amount > parseFloat(profileBalanceInATRAC)) {
-            throw new Error(`Profile balance: ${profileBalanceInATRAC} ATRAC`);
-        }
-
+    async withdrawTokens(amount) {
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-
-        await this.blockchain.withdrawToken(new BN(mATRAC));
-
-        this.logger.trace(`${amount} ATRAC withdrawn to your wallet`);
-
-        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Profile balance: ${balanceInATRAC} ATRAC`);
+        await this.commandExecutor.add({
+            name: 'tokenWithdrawalStartCommand',
+            data: {
+                amount: mATRAC,
+            },
+        });
+        this.logger.info(`Token withdrawal started for amount ${amount}.`);
     }
 }
 

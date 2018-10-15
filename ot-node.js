@@ -254,7 +254,7 @@ class OTNode {
                 log.info(`Balance of ETH: ${etherBalance}`);
             }
 
-            // TODO wait for contract address initialization
+            // TODO enable this check with Blockchain agnosticism in mind
             // const atracBalance = await Utilities.getAlphaTracTokenBalance(
             //     web3,
             //     config.node_wallet,

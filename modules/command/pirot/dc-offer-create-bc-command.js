@@ -2,8 +2,6 @@ const Command = require('../command');
 const Models = require('../../../models/index');
 const Utilities = require('../../Utilities');
 
-const BN = require('bn.js');
-
 /**
  * Creates offer on blockchain
  */

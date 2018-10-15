@@ -637,13 +637,15 @@ class EventEmitter {
             try {
                 logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
 
-                await profileService.withdrawToken(atrac_amount);
+                await profileService.withdrawTokens(atrac_amount);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                    message: `Withdraw operation started for amount ${atrac_amount}.`,
                 });
-                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
+                // TODO notify Houston
+                // remoteControl.tokensWithdrawSucceeded
+                // (`Successfully withdrawn ${atrac_amount} ATRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 notifyError(error);

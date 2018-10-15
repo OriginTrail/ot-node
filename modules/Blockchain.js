@@ -106,15 +106,6 @@ class Blockchain {
     }
 
     /**
-     * Increase token approval for escrow contract
-     * @param {number} tokenAmountIncrease
-     * @returns {Promise}
-     */
-    increaseHoldingApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseHoldingApproval(tokenAmountIncrease);
-    }
-
-    /**
      * Increase token approval for bidding contract
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
@@ -177,13 +168,13 @@ class Blockchain {
     }
 
     /**
-     * Pay out tokens from escrow
-     * @param {string} - dcWallet
-     * @param {number} - importId
+     * Pay out tokens
+     * @param blockchainIdentity
+     * @param offerId
      * @returns {Promise}
      */
-    payOut(dcWallet, importId) {
-        return this.blockchain.payOut(dcWallet, importId);
+    payOut(blockchainIdentity, offerId) {
+        return this.blockchain.payOut(blockchainIdentity, offerId);
     }
 
     /**
@@ -472,6 +463,25 @@ class Blockchain {
      */
     async getReplicationModifier() {
         return this.blockchain.getReplicationModifier();
+    }
+
+    /**
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @param amount
+     * @return {Promise<any>}
+     */
+    async startTokenWithdrawal(blockchainIdentity, amount) {
+        return this.blockchain.startTokenWithdrawal(blockchainIdentity, amount);
+    }
+
+    /**
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @return {Promise<any>}
+     */
+    async withdrawTokens(blockchainIdentity) {
+        return this.blockchain.withdrawTokens(blockchainIdentity);
     }
 }
 

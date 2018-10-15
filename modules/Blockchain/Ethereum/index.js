@@ -231,7 +231,7 @@ class Ethereum {
     getProfileBalance(wallet) {
         return new Promise((resolve, reject) => {
             this.log.trace(`Getting profile balance by wallet ${wallet}`);
-            this.biddingContract.methods.getBalance(wallet).call()
+            this.tokenContract.methods.balanceOf(wallet).call()
                 .then((res) => {
                     resolve(res);
                 }).catch((e) => {
@@ -315,18 +315,34 @@ class Ethereum {
     }
 
     /**
-     * Increase token approval for holding
-     * @param {number} tokenAmountIncrease
-     * @returns {Promise}
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @param amount
+     * @return {Promise<any>}
      */
-    increaseHoldingApproval(tokenAmountIncrease) {
+    startTokenWithdrawal(blockchainIdentity, amount) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.tokenContractAddress,
+            to: this.profileContractAddress,
         };
-        this.log.notify('Increasing token approval for profile contract');
-        return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.holdingContractAddress, tokenAmountIncrease], options);
+        this.log.trace(`startTokenWithdrawal(blockchainIdentity=${blockchainIdentity}, amount=${amount}`);
+        return this.transactions.queueTransaction(this.profileContractAbi, 'startTokenWithdrawal', [blockchainIdentity, amount], options);
+    }
+
+    /**
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @return {Promise<any>}
+     */
+    withdrawTokens(blockchainIdentity) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.profileContractAddress,
+        };
+        this.log.trace(`withdrawTokens(blockchainIdentity=${blockchainIdentity}`);
+        return this.transactions.queueTransaction(this.profileContractAbi, 'withdrawTokens', [blockchainIdentity], options);
     }
 
     /**
@@ -472,20 +488,19 @@ class Ethereum {
     }
 
     /**
-     * Pay out tokens from escrow on Ethereum blockchain
-     * @param {string} - dcWallet
-     * @param {number} - importId
+     * Pay out tokens
+     * @param blockchainIdentity
+     * @param offerId
      * @returns {Promise}
      */
-    payOut(importId) {
+    payOut(blockchainIdentity, offerId) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.holdingContractAddress,
         };
-
-        this.log.notify('Initiating escrow - payOut');
-        return this.transactions.queueTransaction(this.escrowContractAbi, 'payOut', [importId], options);
+        this.log.trace(`payOut(blockchainIdentity=${blockchainIdentity}, offerId=${offerId}`);
+        return this.transactions.queueTransaction(this.holdingContractAbi, 'payOut', [blockchainIdentity, offerId], options);
     }
 
     /**
