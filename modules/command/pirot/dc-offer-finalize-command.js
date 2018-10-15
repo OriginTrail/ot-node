@@ -63,6 +63,7 @@ class DCOfferFinalizeCommand extends Command {
             commands: [
                 {
                     name: 'dcOfferFinalizedCommand',
+                    period: 5000,
                     data: { offerId },
                 },
             ],

@@ -8,6 +8,7 @@ class DhOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.config = ctx.config;
     }
 
     /**
@@ -24,13 +25,16 @@ class DhOfferFinalizedCommand extends Command {
             },
         });
         if (events) {
-            const event = events.filter((e) => {
+            const event = events.find((e) => {
                 const {
                     offerId: eventOfferId,
                 } = JSON.parse(e.data);
                 return offerId === eventOfferId;
             });
             if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
                 this.logger.important(`Offer ${offerId} finalized`);
 
                 const {
@@ -41,7 +45,7 @@ class DhOfferFinalizedCommand extends Command {
 
                 const holders = [holder1, holder2, holder3].map(h => h.toLowerCase());
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-                if (holders.includes(this.config.identity.toLowerCase())) {
+                if (holders.includes(this.config.erc725Identity.toLowerCase())) {
                     bid.chosen = true;
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
                 } else {

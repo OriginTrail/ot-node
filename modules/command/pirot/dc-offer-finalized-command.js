@@ -25,13 +25,16 @@ class DcOfferFinalizedCommand extends Command {
             },
         });
         if (events) {
-            const event = events.filter((e) => {
+            const event = events.find((e) => {
                 const {
                     offerId: eventOfferId,
                 } = JSON.parse(e.data);
                 return offerId === eventOfferId;
             });
             if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
                 this.logger.important(`Offer ${offerId} finalized`);
 
                 const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
