@@ -26,14 +26,8 @@ class DCOfferPrepareCommand extends Command {
 
         const colorsInfo = await this.replicationService.createReplications(internalOfferId);
         const distLitRootHashes = (await Promise.all(colorsInfo.map(async (cInfo) => {
-            const cDirPath = path.join(
-                this.config.appDataPath,
-                this.config.dataSetStorage, internalOfferId,
-            );
-            await Utilities.writeContentsToFile(
-                cDirPath, `${cInfo.color}.json`,
-                JSON.stringify(cInfo, null, 2),
-            );
+            const offerDirPath = this.replicationService.getOfferDirPath(internalOfferId);
+            await Utilities.writeContentsToFile(offerDirPath, `${cInfo.color}.json`, JSON.stringify(cInfo, null, 2));
 
             const hashes = {};
             hashes[`${cInfo.color}LitigationHash`] = cInfo.litigationRootHash;

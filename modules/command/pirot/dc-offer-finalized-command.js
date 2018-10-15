@@ -8,6 +8,7 @@ class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -37,6 +38,8 @@ class DcOfferFinalizedCommand extends Command {
                 offer.status = 'FINALIZED';
                 offer.message = 'Offer has been finalized';
                 await offer.save({ fields: ['status', 'message'] });
+
+                await this.replicationService.deleteOfferDir(offer.id);
                 return Command.empty();
             }
         }
@@ -55,6 +58,8 @@ class DcOfferFinalizedCommand extends Command {
         offer.status = 'FAILED';
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
         return Command.empty();
     }
 

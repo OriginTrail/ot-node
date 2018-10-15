@@ -11,6 +11,7 @@ class DcOfferMiningCompletedCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -43,9 +44,11 @@ class DcOfferMiningCompletedCommand extends Command {
         // TODO found no solution, handle this case properly
         this.logger.warn(`Offer with ID ${offerId} has no solution.`);
 
-        offer.status = 'Failed';
+        offer.status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
         return Command.empty();
     }
 

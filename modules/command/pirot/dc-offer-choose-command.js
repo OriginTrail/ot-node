@@ -13,6 +13,7 @@ class DCOfferChooseCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.minerService = ctx.minerService;
         this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -66,11 +67,14 @@ class DCOfferChooseCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId } = command.data;
-        const offer = await models.offers.findOne({ where: { id: offerId } });
+        const { internalOfferId } = command.data;
+        const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
+        return Command.empty();
     }
 
     /**

@@ -11,6 +11,7 @@ class DcOfferTaskCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -58,9 +59,11 @@ class DcOfferTaskCommand extends Command {
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
-        offer.status = 'ABORTED';
+        offer.status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
         return Command.empty();
     }
 

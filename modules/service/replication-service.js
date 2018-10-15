@@ -1,9 +1,11 @@
+const path = require('path');
+
 const Encryption = require('../Encryption');
 const ImportUtilities = require('../ImportUtilities');
 const MerkleTree = require('../Merkle');
 const Challenge = require('../Challenge');
-
 const Models = require('../../models/index');
+const Utilities = require('../Utilities');
 
 /**
  * Supported versions of the same data set
@@ -79,6 +81,29 @@ class ReplicationService {
                     distributionEpk: distEpk,
                 };
             }));
+    }
+
+    /**
+     * Delete offer directory
+     * @param internalOfferId
+     * @return {Promise<void>}
+     */
+    async deleteOfferDir(internalOfferId) {
+        this.logger.info(`Deleting replications directory for offer with internal ID ${internalOfferId}`);
+        const offerDirPath = this.getOfferDirPath(internalOfferId);
+        await Utilities.deleteDirectory(offerDirPath);
+    }
+
+    /**
+     * Gets offer directory
+     * @param internalOfferId
+     * @returns {string}
+     */
+    getOfferDirPath(internalOfferId) {
+        return path.join(
+            this.config.appDataPath,
+            this.config.dataSetStorage, internalOfferId,
+        );
     }
 }
 

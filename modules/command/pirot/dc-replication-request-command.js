@@ -16,6 +16,7 @@ class DCReplicationRequestCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -35,10 +36,8 @@ class DCReplicationRequestCommand extends Command {
         const colors = ['red', 'green', 'blue'];
         const color = colors[Utilities.getRandomInt(2)];
 
-        const colorFilePath = path.join(
-            this.config.appDataPath,
-            this.config.dataSetStorage, offer.id, `${color}.json`,
-        );
+        const offerDirPath = this.replicationService.getOfferDirPath(offer.id);
+        const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         const replication = JSON.parse(await Utilities.fileContents(colorFilePath));
         await models.replicated_data.create({
