@@ -120,11 +120,11 @@ contract('Dev testing', async (accounts) => {
         console.log(dummy);
         console.log(`${await util.getSolution.call(w1, w2, w3, shift)}`);
 
-        for (var i = 65; i >= 2; i -= 1) {
+        for (i = 65; i >= 2; i -= 1) {
             if (task === solution.charAt(i)) break;
         }
         console.log(`${shift = 65 - i}`);
-        console.log('0x' + 'f1d5bfca3f7616ad02abcd10c993b0dae890e09a628ec188205a36b278725e62');
+        console.log('0xf1d5bfca3f7616ad02abcd10c993b0dae890e09a628ec188205a36b278725e62');
     });
 
     // eslint-disable-next-line no-undef
