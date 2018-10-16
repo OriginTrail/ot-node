@@ -173,11 +173,9 @@ class GS1Importer {
 
             locationVertices.push({
                 _key: locationKey,
-                [importId]: {
-                    identifiers,
-                    data,
-                    private: privateData,
-                },
+                identifiers,
+                data,
+                private: privateData,
                 vertex_type: 'LOCATION',
             });
 
@@ -238,11 +236,9 @@ class GS1Importer {
 
             actorsVertices.push({
                 _key: this.helper.createKey('actor', senderId, actor.id),
-                [importId]: {
-                    identifiers,
-                    data,
-                    private: privateData,
-                },
+                identifiers,
+                data,
+                private: privateData,
                 vertex_type: 'ACTOR',
             });
         }
@@ -274,11 +270,9 @@ class GS1Importer {
 
             productVertices.push({
                 _key: this.helper.createKey('product', senderId, product.id),
-                [importId]: {
-                    data,
-                    identifiers,
-                    private: privateData,
-                },
+                data,
+                identifiers,
+                private: privateData,
                 vertex_type: 'PRODUCT',
             });
         }
@@ -287,7 +281,7 @@ class GS1Importer {
             // eslint-disable-next-line prefer-destructuring
             const productId = batch.attributes.productId;
 
-            const { identifiers } = batch;
+            const { identifiers, randomness } = batch;
             Object.assign(identifiers, {
                 id: batch.id,
                 uid: batch.id,
@@ -310,12 +304,11 @@ class GS1Importer {
             const key = this.helper.createKey('batch', senderId, batch.id);
             batchesVertices.push({
                 _key: key,
-                [importId]: {
-                    identifiers,
-                    data,
-                    private: privateData,
-                },
+                identifiers,
+                data,
+                private: privateData,
                 vertex_type: 'BATCH',
+                randomness,
             });
         }
 
@@ -530,7 +523,6 @@ class GS1Importer {
                             uid: `event_batch_${eventId}_${batchId}`,
                         },
                     });
-                    currentBatchesToRemove.push(batchId);
                 }
             }
 
@@ -671,31 +663,29 @@ class GS1Importer {
                 }));
                 // eslint-disable-next-line
                 currentEventVertices.map(vertice => updates.push(this.db.updateVertexImportsByUID(senderId, vertice.identifiers.uid, importId)));
-                batchesToExclude.push(...currentBatchesToRemove);
             }
         }
 
-        for (const batchId of batchesToExclude) {
-            for (const index in batchesVertices) {
-                const batch = batchesVertices[index];
-                if (batch.identifiers.uid === batchId) {
-                    batchesVertices.splice(index, 1);
-                    updates.push(updates.push(this.db.updateVertexImportsByUID(
-                        senderId,
-                        batch.identifiers.uid, importId,
-                    )));
+        // for (const batchId of batchesToExclude) {
+        //     for (const index in batchesVertices) {
+        //         const batch = batchesVertices[index];
+        //         if (batch.identifiers.uid === batchId) {
+        //             batchesVertices.splice(index, 1);
+        //             updates.push(updates.push(this.db.updateVertexImportsByUID(
+        //                 senderId,
+        //                 batch.identifiers.uid, importId,
+        //             )));
+        //
+        //             const edgeId = `batch_product_${batch.identifiers.id}_${batch.data.parent_id}`;
+        //             updates.push(updates.push(this.db.updateEdgeImportsByUID(
+        //                 senderId,
+        //                 edgeId, importId,
+        //             )));
+        //         }
+        //     }
+        // }
 
-                    const edgeId = `batch_product_${batch.identifiers.id}_${batch.data.parent_id}`;
-                    updates.push(updates.push(this.db.updateEdgeImportsByUID(
-                        senderId,
-                        edgeId, importId,
-                    )));
-                }
-            }
-        }
-
-        for (const batchVertex of batchesVertices) {
-            const batch = batchVertex[importId];
+        for (const batch of batchesVertices) {
             const productId = batch.data.parent_id;
 
             batchEdges.push({
@@ -964,10 +954,25 @@ class GS1Importer {
         for (const element of vocabularyElementElements) {
             const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:batch:');
 
+            let randomness = this.helper.zk.generateR();
+
+            const batchVertex = this.db.findVertices({
+                query: [{
+                    id: element.id,
+                }],
+            });
+
+            if (batchVertex) {
+                // eslint-disable-next-line
+                randomness = batchVertex[0].randomness;
+            }
+
+
             const batch = {
                 type: 'batch',
                 id: element.id,
                 identifiers,
+                randomness,
                 attributes: this.helper.parseAttributes(element.attribute, 'urn:ot:object:product:batch:'),
                 extension: element.extension,
             };

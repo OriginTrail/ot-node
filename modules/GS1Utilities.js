@@ -11,6 +11,7 @@ class GS1Utilities {
     constructor(ctx) {
         this.db = ctx.graphStorage;
         this.ctx = ctx;
+        this.zk = new ZK(ctx);
     }
 
     /**
@@ -359,7 +360,7 @@ class GS1Utilities {
                 }
             }
         }
-        const zk = new ZK(this.ctx);
+        const { zk } = this;
         const quantities = zk.P(eventId, inputQuantities, outputQuantities);
         for (const quantity of quantities.inputs.concat(quantities.outputs)) {
             if (quantity.added) {
