@@ -14,7 +14,6 @@ class ProfileService {
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
         this.web3 = ctx.web3;
-        this.remoteControl = ctx.remoteControl;
         this.commandExecutor = ctx.commandExecutor;
     }
 
@@ -40,9 +39,12 @@ class ProfileService {
         this.logger.info(`Minimum stake for profile registration is ${profileMinStake}`);
 
         await this.blockchain.increaseProfileApproval(new BN(profileMinStake, 10));
+
+        // set empty identity if there is none
+        const identity = this.config.erc725Identity ? this.config.erc725Identity : new BN(0, 16);
         await this.blockchain.createProfile(
             this.config.identity,
-            new BN(profileMinStake, 10), identityExists,
+            new BN(profileMinStake, 10), identityExists, identity,
         );
         if (!identityExists) {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => eventData.profile.includes(this.config.node_wallet));

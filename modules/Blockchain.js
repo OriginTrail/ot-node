@@ -82,9 +82,10 @@ class Blockchain {
      * @param profileNodeId - Network node ID
      * @param initialBalance - Initial profile balance
      * @param isSender725 - Is sender ERC 725?
+     * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(profileNodeId, initialBalance, isSender725) {
+    createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
         return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
     }
 

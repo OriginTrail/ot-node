@@ -283,19 +283,22 @@ class Ethereum {
      * @param profileNodeId - Network node ID
      * @param initialBalance - Initial profile balance
      * @param isSender725 - Is sender ERC 725?
+     * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(profileNodeId, initialBalance, isSender725) {
+    createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
             to: this.profileContractAddress,
         };
-
         this.log.trace(`CreateProfile(${profileNodeId}, ${initialBalance}, ${isSender725})`);
         return this.transactions.queueTransaction(
             this.profileContractAbi, 'createProfile',
-            [Utilities.normalizeHex(profileNodeId), initialBalance, isSender725], options,
+            [
+                Utilities.normalizeHex(profileNodeId),
+                initialBalance, isSender725, blockchainIdentity,
+            ], options,
         );
     }
 
