@@ -200,7 +200,7 @@ class Importer {
                 error: null,
             };
         } catch (error) {
-            this.log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.\n${error.stack}`);
             this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
             const errorObject = { message: error.toString(), status: 400 };

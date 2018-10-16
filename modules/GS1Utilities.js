@@ -193,14 +193,15 @@ class GS1Utilities {
      * Helper function for finding batch either in memory or in db
      * @param senderId
      * @param batchVertices
+     * @param importId
      * @param uid
      * @return {Promise<void>}
      * @private
      */
-    async _findBatch(senderId, batchVertices, uid) {
+    async _findBatch(senderId, batchVertices, importId, uid) {
         // check in memory
         for (const batchVertex of batchVertices) {
-            if (batchVertex.identifiers.uid === uid) {
+            if (batchVertex[importId].identifiers.uid === uid) {
                 return batchVertex;
             }
         }
@@ -214,15 +215,12 @@ class GS1Utilities {
      * @param event
      * @param eventId
      * @param categories
-     * @param importId
      * @param globalR
      * @param batchVertices
+     * @param importId
      * @return {Promise<void>}
      */
-    async zeroKnowledge(
-        senderId, event, eventId, categories,
-        importId, globalR, batchVertices,
-    ) {
+    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices, importId) {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
@@ -250,8 +248,8 @@ class GS1Utilities {
 
                 for (const outputQ of outputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, outputQ.object);
-                    if (vertex && vertex.data.quantities) {
+                    const vertex = await this._findBatch(senderId, batchVertices, importId, outputQ.object);
+                    if (vertex && vertex[importId] && vertex[importId].data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
                             object: outputQ.object,
@@ -286,7 +284,7 @@ class GS1Utilities {
 
                 for (const inputQ of inputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, inputQ.object);
+                    const vertex = await this._findBatch(senderId, batchVertices, importId, inputQ.object);
                     if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         outputQuantities.push({
@@ -315,7 +313,7 @@ class GS1Utilities {
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, inputQuantity.object);
+                    const vertex = await this._findBatch(senderId, batchVertices, importId, inputQuantity.object);
                     if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
@@ -342,7 +340,7 @@ class GS1Utilities {
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, outputQuantity.object);
+                    const vertex = await this._findBatch(senderId, batchVertices, importId, outputQuantity.object);
                     if (vertex && vertex.data.quantities) {
                         const quantities = vertex.data.quantities.private;
                         const quantity = {
@@ -362,12 +360,13 @@ class GS1Utilities {
             }
         }
         const zk = new ZK(this.ctx);
-        const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
+        const quantities = zk.P(eventId, inputQuantities, outputQuantities);
         for (const quantity of quantities.inputs.concat(quantities.outputs)) {
             if (quantity.added) {
                 delete quantity.added;
                 let batchFound = false;
-                for (const batch of batchVertices) {
+                for (const batchVertex of batchVertices) {
+                    const batch = batchVertex[importId];
                     if (batch.identifiers.uid === quantity.object) {
                         batchFound = true;
                         batch.data.quantities = quantity;

@@ -129,7 +129,7 @@ class GS1Importer {
 
             if (location.attributes.actorId) {
                 if (!locationKey) {
-                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                    locationKey = this.helper.createKey('business_location', senderId, location.id);
                 }
                 location.participant_id = location.attributes.actorId;
                 locationEdges.push({
@@ -148,7 +148,7 @@ class GS1Importer {
                     await this.helper.handlePrivate(senderId, location.id, location.extension.private, data, privateData);
                 }
                 if (!locationKey) {
-                    locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                    locationKey = this.helper.createKey('business_location', senderId, location.id);
                 }
                 const attrs = this.helper.parseAttributes(this.helper.arrayze(location.extension.attribute), 'urn:ot:object:location:');
                 for (const attr of this.helper.arrayze(attrs)) {
@@ -168,14 +168,16 @@ class GS1Importer {
                 }
             }
             if (!locationKey) {
-                locationKey = this.helper.createKey('business_location', senderId, identifiers, data);
+                locationKey = this.helper.createKey('business_location', senderId, location.id);
             }
 
             locationVertices.push({
                 _key: locationKey,
-                identifiers,
-                data,
-                private: privateData,
+                [importId]: {
+                    identifiers,
+                    data,
+                    private: privateData,
+                },
                 vertex_type: 'LOCATION',
             });
 
@@ -235,17 +237,18 @@ class GS1Importer {
             }
 
             actorsVertices.push({
-                _key: this.helper.createKey('actor', senderId, identifiers, data),
-                _id: actor.id,
-                identifiers,
-                data,
-                private: privateData,
+                _key: this.helper.createKey('actor', senderId, actor.id),
+                [importId]: {
+                    identifiers,
+                    data,
+                    private: privateData,
+                },
                 vertex_type: 'ACTOR',
             });
         }
 
         if (senderWallet == null) {
-            throw new Error('It is required for sender to have a valid wallet!');
+            throw new Error('It is required for a sender to have a valid wallet!');
         }
 
         for (const product of products) {
@@ -270,11 +273,12 @@ class GS1Importer {
             }
 
             productVertices.push({
-                _key: this.helper.createKey('product', senderId, identifiers, data),
-                _id: product.id,
-                data,
-                identifiers,
-                private: privateData,
+                _key: this.helper.createKey('product', senderId, product.id),
+                [importId]: {
+                    data,
+                    identifiers,
+                    private: privateData,
+                },
                 vertex_type: 'PRODUCT',
             });
         }
@@ -303,12 +307,14 @@ class GS1Importer {
                 }
             }
 
-            const key = this.helper.createKey('batch', senderId, identifiers, data);
+            const key = this.helper.createKey('batch', senderId, batch.id);
             batchesVertices.push({
                 _key: key,
-                identifiers,
-                data,
-                private: privateData,
+                [importId]: {
+                    identifiers,
+                    data,
+                    private: privateData,
+                },
                 vertex_type: 'BATCH',
             });
         }
@@ -331,8 +337,9 @@ class GS1Importer {
             const eventCategories = this.helper.arrayze(eventClass).map(obj => this.helper.ignorePattern(obj, 'urn:ot:event:'));
 
             // eslint-disable-next-line
-            await this.helper.zeroKnowledge(senderId, event, eventId, eventCategories,
-                importId, GLOBAL_R, batchesVertices,
+            await this.helper.zeroKnowledge(
+                senderId, event, eventId, eventCategories,
+                GLOBAL_R, batchesVertices, importId,
             );
 
             const identifiers = {
@@ -687,7 +694,8 @@ class GS1Importer {
             }
         }
 
-        for (const batch of batchesVertices) {
+        for (const batchVertex of batchesVertices) {
+            const batch = batchVertex[importId];
             const productId = batch.data.parent_id;
 
             batchEdges.push({
@@ -758,7 +766,7 @@ class GS1Importer {
             });
             await Promise.all(allVertices.map(vertex => this.db.addVertex(vertex)));
 
-            const allEdges = locationEdges
+            let allEdges = locationEdges
                 .concat(eventEdges)
                 .concat(batchEdges)
                 .concat(classObjectEdges)
@@ -766,6 +774,8 @@ class GS1Importer {
                     edge.sender_id = senderId;
                     return edge;
                 });
+
+            allEdges = [];
 
             for (const edge of allEdges) {
                 const to = edge._to;

@@ -1,6 +1,6 @@
 const { Database } = require('arangojs');
-const Utilities = require('./../Utilities');
 const request = require('superagent');
+const Utilities = require('../Utilities');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -392,30 +392,12 @@ class ArangoJS {
         if (document._key) {
             const response = await this.findDocuments(collectionName, { _key: document._key });
             if (response.length > 0) {
-                if (response[0]._key === document._key);
-                return response[0];
+                const existing = ArangoJS._normalize(response[0]);
+                Object.assign(existing, document);
+                return this.updateDocument(collectionName, existing);
             }
         }
-        if (document.sender_id && document.identifiers && document.identifiers.uid) {
-            const maxVersionDoc =
-                await this.findDocumentWithMaxVersion(
-                    collectionName,
-                    document.sender_id,
-                    document.identifiers.uid,
-                );
-
-            if (maxVersionDoc) {
-                document.version = maxVersionDoc.version + 1;
-                const response = await collection.save(document);
-                return ArangoJS._normalize(response);
-            }
-
-            document.version = 1;
-            const response = await collection.save(document);
-            return ArangoJS._normalize(response);
-        }
-        const response = await collection.save(document);
-        return ArangoJS._normalize(response);
+        return ArangoJS._normalize(await collection.save(document));
     }
 
     /**

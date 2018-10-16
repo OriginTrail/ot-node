@@ -14,13 +14,16 @@ class ZK {
         this.redSquare = BN.red(this.nSquare);
         this.g = this.n.add(this.one).toRed(this.redSquare);
 
-        this.log = ctx.logger;
+        this.log = ctx.logger || console;
     }
 
     encrypt(m, r) {
         return (this.g).redPow(m).redMul(r.redPow(this.n));
     }
 
+    generateR() {
+        return new BN(this.generatePrime()).mod(this.n);
+    }
     generatePrime() {
         let isPrime;
         let pr;
@@ -39,10 +42,10 @@ class ZK {
         return pr;
     }
 
-    P(importId, eventId, inputQuantities, outputQuantities) {
-        const e = new BN(sha3(importId, eventId).substring(0, 10), 16);
+    P(eventId, inputQuantities, outputQuantities) {
+        const e = new BN(sha3(eventId).substring(0, 10), 16);
 
-        let r = new BN(this.generatePrime()).mod(this.n);
+        let r = this.generateR();
 
         const a = this.encrypt(this.zero, r.toRed(this.redSquare));
 
@@ -150,7 +153,6 @@ class ZK {
             e: e.toString('hex'),
             a: a.toString('hex'),
             zp: zp.toString('hex'),
-            importId,
         };
 
         // return res;
