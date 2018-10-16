@@ -68,9 +68,18 @@ class DHService {
 
         const offerStake = new BN(tokenAmountPerHolder, 10);
 
+        const pendingBids = await Models.bids.findAll({ where: { status: 'PENDING' } });
+        const pendingSum = pendingBids
+            .map(pb => pb.token_amount)
+            .reduce((acc, amount) => acc.add(new BN(amount, 10)), new BN(0, 10));
+
         let remainder = null;
-        if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
-            remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+        if (profileStake
+            .sub(profileStakeReserved)
+            .sub(pendingSum || new BN(0, 10)).lt(offerStake)) {
+            remainder = offerStake
+                .sub(profileStake.sub(profileStakeReserved))
+                .sub(pendingSum || new BN(0, 10));
         }
 
         const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);

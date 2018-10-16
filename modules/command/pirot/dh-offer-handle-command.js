@@ -64,6 +64,7 @@ class DHOfferHandleCommand extends Command {
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
             token_amount: tokenAmountPerHolder,
+            status: 'PENDING',
         });
 
         this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);

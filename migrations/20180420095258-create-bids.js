@@ -26,9 +26,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        chosen: {
-            type: Sequelize.BOOLEAN,
+        status: {
+            allowNull: false,
+            type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),
+    down: (queryInterface) => queryInterface.dropTable('bids'),
 };

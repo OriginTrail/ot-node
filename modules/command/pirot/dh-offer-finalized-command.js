@@ -46,13 +46,13 @@ class DhOfferFinalizedCommand extends Command {
                 const holders = [holder1, holder2, holder3].map(h => h.toLowerCase());
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
                 if (holders.includes(this.config.erc725Identity.toLowerCase())) {
-                    bid.chosen = true;
+                    bid.status = 'CHOSEN';
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
                 } else {
-                    bid.chosen = false;
+                    bid.status = 'NOT_CHOSEN';
                     this.logger.important(`I haven't been chosen for offer ${offerId}.`);
                 }
-                await bid.save({ fields: ['chosen'] });
+                await bid.save({ fields: ['status'] });
                 return Command.empty();
             }
         }
@@ -68,8 +68,8 @@ class DhOfferFinalizedCommand extends Command {
 
         this.logger.important(`I haven't been chosen for offer ${offerId}. Offer has not been finalized.`);
         const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-        bid.chosen = false;
-        await bid.save({ fields: ['chosen'] });
+        bid.status = 'NOT_CHOSEN';
+        await bid.save({ fields: ['status'] });
         return Command.empty();
     }
 
