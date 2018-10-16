@@ -1,3 +1,4 @@
+const BN = require('bn.js');
 const Command = require('../command');
 const models = require('../../../models/index');
 
@@ -29,6 +30,27 @@ class DcOfferMiningCompletedCommand extends Command {
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (success) {
             this.logger.important(`Miner found a solution of offer ${offerId}.`);
+
+            const excludedDHs = await this.dcService.checkDhFunds(
+                solution.nodeIdentifiers,
+                offer.token_amount_per_holder,
+            );
+            if (excludedDHs.length > 0) {
+                // send back to miner
+                this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offerId}. Sending back to miner...`);
+                const { data } = command;
+                Object.assign(data, {
+                    excludedDHs,
+                    internalOfferId: offer.id,
+                });
+                return {
+                    commands: [{
+                        name: 'dcOfferChooseCommand',
+                        data,
+                        transactional: false,
+                    }],
+                };
+            }
 
             offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';

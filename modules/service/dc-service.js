@@ -80,6 +80,39 @@ class DCService {
     }
 
     /**
+     * Check for funds
+     * @param identities
+     * @param tokenAmountPerHolder
+     * @return {Promise<*>}
+     */
+    async checkDhFunds(identities, tokenAmountPerHolder) {
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+        const excluded = await Promise.all(identities.map(async (identity) => {
+            const profile = await this.blockchain.getProfile(identity);
+            const profileStake = new BN(profile.stake, 10);
+            const profileStakeReserved = new BN(profile.stakeReserved, 10);
+
+            let remainder = null;
+            const offerStake = new BN(tokenAmountPerHolder, 10);
+            if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
+                remainder = offerStake.sub(profileStake.sub(profileStakeReserved));
+            }
+
+            if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
+                const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
+                if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
+                    remainder = stakeRemainder;
+                }
+            }
+            if (remainder) {
+                return identity;
+            }
+            return null;
+        }));
+        return excluded.filter(e => e != null);
+    }
+
+    /**
      * Creates commands needed for token deposit if there is a need for that
      * @param tokenAmountPerHolder
      * @param commandData

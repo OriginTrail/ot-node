@@ -23,6 +23,7 @@ class DCOfferChooseCommand extends Command {
     async execute(command) {
         const {
             internalOfferId,
+            excludedDHs,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -37,11 +38,18 @@ class DCOfferChooseCommand extends Command {
             },
         });
 
-        if (replications.length < 3) {
+        let identities = replications
+            .map(r => Utilities.denormalizeHex(r.dh_identity).toLowerCase());
+        if (excludedDHs) {
+            const normalizedExcludedDHs = excludedDHs
+                .map(excludedDH => Utilities.denormalizeHex(excludedDH).toLowerCase());
+            identities = identities.filter(identity => !normalizedExcludedDHs.includes(identity));
+        }
+        if (identities.length < 3) {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
-        const identities = replications.map(r => Utilities.denormalizeHex(r.dh_identity));
+
         await this.minerService.sendToMiner(
             offer.task,
             identities,
@@ -85,7 +93,7 @@ class DCOfferChooseCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferChooseCommand',
-            delay: 30000,
+            delay: 2 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
