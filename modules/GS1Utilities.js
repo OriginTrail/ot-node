@@ -227,6 +227,12 @@ class GS1Utilities {
         const { extension } = event;
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
+            const batchVerticesMap = {};
+
+            for (const batch of batchVertices) {
+                batchVerticesMap[batch.identifiers.uid] = batch;
+            }
+
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
@@ -244,27 +250,17 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            r: batchVerticesMap[elem.epcClass].randomness,
                         }));
                 }
 
                 for (const outputQ of outputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, importId, outputQ.object);
-                    if (vertex && vertex[importId] && vertex[importId].data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                        });
-                    }
+                    inputQuantities.push({
+                        added: true,
+                        object: outputQ.object,
+                        quantity: parseInt(outputQ.quantity, 10),
+                        r: batchVerticesMap[outputQ.object].randomness,
+                    });
                 }
             } else {
                 // receiving output
@@ -280,26 +276,18 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            r: batchVerticesMap[elem.epcClass].randomness,
                         }));
                 }
 
                 for (const inputQ of inputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, importId, inputQ.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        outputQuantities.push({
-                            object: inputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        });
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: inputQ.object,
-                            quantity: parseInt(inputQ.quantity, 10),
-                        });
-                    }
+                    outputQuantities.push({
+                        added: true,
+                        object: inputQ.object,
+                        quantity: parseInt(inputQ.quantity, 10),
+                        r: batchVerticesMap[inputQ.object].randomness,
+                    });
                 }
             }
         } else {
@@ -310,26 +298,16 @@ class GS1Utilities {
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
+                        r: batchVertices[elem.epcClass].randomness,
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, importId, inputQuantity.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: inputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: inputQuantity.object,
-                            quantity: parseInt(inputQuantity.quantity, 10),
-                        });
-                    }
+                    inputQuantities.push({
+                        added: true,
+                        object: inputQuantity.object,
+                        quantity: parseInt(inputQuantity.quantity, 10),
+                        r: batchVertices[inputQuantity.object].randomness,
+                    });
                 }
             }
             if (outputQuantityList) {
@@ -337,26 +315,17 @@ class GS1Utilities {
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
+                        r: batchVertices[elem.epcClass].randomness,
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
                     const vertex = await this._findBatch(senderId, batchVertices, importId, outputQuantity.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        outputQuantities.push(quantity);
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQuantity.object,
-                            quantity: parseInt(outputQuantity.quantity, 10),
-                        });
-                    }
+                    outputQuantities.push({
+                        added: true,
+                        object: outputQuantity.object,
+                        quantity: parseInt(outputQuantity.quantity, 10),
+                        r: batchVertices[outputQuantity.object].randomness,
+                    });
                 }
             }
         }
@@ -370,7 +339,8 @@ class GS1Utilities {
                     const batch = batchVertex[importId];
                     if (batch.identifiers.uid === quantity.object) {
                         batchFound = true;
-                        batch.data.quantities = quantity;
+                        batch.data[eventId] = {}
+                        batch.data[eventId].quantities = quantity;
                         batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
                         break;
                     }
