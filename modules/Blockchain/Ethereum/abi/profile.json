@@ -47,8 +47,12 @@
         "type": "uint256"
       },
       {
-        "name": "senderIs725",
+        "name": "senderHas725",
         "type": "bool"
+      },
+      {
+        "name": "identity",
+        "type": "address"
       }
     ],
     "name": "createProfile",

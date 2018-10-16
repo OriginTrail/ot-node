@@ -40,14 +40,14 @@ contract Profile {
     event TokensReleased(address profile, uint256 amount);
     event TokensTransferred(address sender, address receiver, uint256 amount);
     
-    function createProfile(bytes32 profileNodeId, uint256 initialBalance, bool senderIs725) public {
+    function createProfile(bytes32 profileNodeId, uint256 initialBalance, bool senderHas725, address identity) public {
         ERC20 tokenContract = ERC20(hub.tokenAddress());
         require(tokenContract.allowance(msg.sender, this) >= initialBalance, "Sender allowance must be equal to or higher than initial balance");
         require(tokenContract.balanceOf(msg.sender) >= initialBalance, "Sender balance must be equal to or higher than initial balance!");
 
         tokenContract.transferFrom(msg.sender, address(profileStorage), initialBalance);
 
-        if(!senderIs725) {
+        if(!senderHas725) {
             Identity newIdentity = new Identity(msg.sender);
             emit IdentityCreated(msg.sender, address(newIdentity));
 
@@ -55,8 +55,11 @@ contract Profile {
             profileStorage.setNodeId(address(newIdentity), profileNodeId);
         }
         else {
-            profileStorage.setStake(msg.sender, initialBalance);
-            profileStorage.setNodeId(msg.sender, profileNodeId);
+            // Verify sender
+            require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+            
+            profileStorage.setStake(identity, initialBalance);
+            profileStorage.setNodeId(identity, profileNodeId);
         }
 
         if(initialBalance > minimalStake) {

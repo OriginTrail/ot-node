@@ -88,6 +88,7 @@ contract('Offer testing', async (accounts) => {
                 '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde',
                 (new BN(5)).mul(new BN(10).pow(new BN(20))),
                 false,
+                '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
                 { from: accounts[i] },
             );
             identities[i] = res.logs[0].args.newIdentity;
