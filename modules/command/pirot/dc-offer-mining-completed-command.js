@@ -9,6 +9,7 @@ class DcOfferMiningCompletedCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.dcService = ctx.dcService;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
         this.replicationService = ctx.replicationService;
@@ -32,11 +33,24 @@ class DcOfferMiningCompletedCommand extends Command {
             offer.status = 'MINED';
             offer.message = 'Found a solution for DHs provided';
             await offer.save({ fields: ['status', 'message'] });
+
+            const commandData = { offerId, solution };
+            const commandSequence = ['dcOfferFinalizeCommand'];
+            const depositCommand = await this.dcService.chainDepositCommandIfNeeded(
+                offer.token_amount_per_holder,
+                commandData,
+                commandSequence,
+            );
+            if (depositCommand) {
+                return {
+                    commands: [depositCommand],
+                };
+            }
             return {
                 commands: [
                     {
-                        name: 'dcOfferFinalizeCommand',
-                        data: { offerId, solution },
+                        name: commandSequence[0],
+                        data: commandData,
                     },
                 ],
             };

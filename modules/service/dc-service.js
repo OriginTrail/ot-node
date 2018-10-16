@@ -44,6 +44,49 @@ class DCService {
             litigationIntervalInMinutes = new BN(this.config.dc_litigation_interval_in_minutes, 10);
         }
 
+        const commandData = {
+            internalOfferId: offer.id,
+            dataSetId,
+            dataRootHash,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSizeInBytes,
+            litigationIntervalInMinutes,
+        };
+        const commandSequence = [
+            'dcOfferPrepareCommand',
+            'dcOfferCreateDbCommand',
+            'dcOfferCreateBcCommand',
+            'dcOfferTaskCommand',
+            'dcOfferChooseCommand'];
+        const depositCommand = await this.chainDepositCommandIfNeeded(
+            tokenAmountPerHolder,
+            commandData,
+            commandSequence,
+        );
+
+        if (depositCommand) {
+            await this.commandExecutor.add(depositCommand);
+        } else {
+            await this.commandExecutor.add({
+                name: commandSequence[0],
+                sequence: commandSequence.slice(1),
+                delay: 0,
+                data: commandData,
+                transactional: false,
+            });
+        }
+        return offer.id;
+    }
+
+    /**
+     * Creates commands needed for token deposit if there is a need for that
+     * @param tokenAmountPerHolder
+     * @param commandData
+     * @param commandSequence
+     * @return {Promise<*>}
+     */
+    async chainDepositCommandIfNeeded(tokenAmountPerHolder, commandData, commandSequence) {
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
         const profileStake = new BN(profile.stake, 10);
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
@@ -64,46 +107,25 @@ class DCService {
             }
         }
 
+        let depositCommand = null;
         if (remainder) {
             // deposit tokens
-            await this.commandExecutor.add({
+            depositCommand = {
                 name: 'profileApprovalIncreaseCommand',
                 sequence: [
-                    'depositTokensCommand', 'dcOfferPrepareCommand', 'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
+                    'depositTokensCommand',
                 ],
                 delay: 0,
                 data: {
                     amount: remainder.toString(),
-                    internalOfferId: offer.id,
-                    dataSetId,
-                    dataRootHash,
-                    holdingTimeInMinutes,
-                    tokenAmountPerHolder,
-                    dataSizeInBytes,
-                    litigationIntervalInMinutes,
                 },
                 transactional: false,
-            });
-        } else {
-            await this.commandExecutor.add({
-                name: 'dcOfferPrepareCommand',
-                sequence: [
-                    'dcOfferCreateDbCommand', 'dcOfferCreateBcCommand', 'dcOfferTaskCommand', 'dcOfferChooseCommand',
-                ],
-                delay: 0,
-                data: {
-                    internalOfferId: offer.id,
-                    dataSetId,
-                    dataRootHash,
-                    holdingTimeInMinutes,
-                    tokenAmountPerHolder,
-                    dataSizeInBytes,
-                    litigationIntervalInMinutes,
-                },
-                transactional: false,
-            });
+            };
+
+            Object.assign(depositCommand.data, commandData);
+            depositCommand.sequence = depositCommand.sequence.concat(commandSequence);
         }
-        return offer.id;
+        return depositCommand;
     }
 
     /**
