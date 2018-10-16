@@ -142,7 +142,9 @@ class OtNode extends EventEmitter {
             this.state.holdingData.push({ importId, dhWallet });
             this.emit('holding-data', { importId, dhWallet });
         } else if (line.includes('Get profile by wallet ')) {
-            this.state.nodesWalletAddress = line.substr(line.search('Get profile by wallet ') + 'Get profile by wallet '.length, line.length - 1);
+            // note that node's wallet can also be access via nodeConfiguration directly
+            const wallet = line.match(/\b0x[0-9A-F]{40}\b/gi)[0];
+            this.state.nodesWalletAddress = wallet;
         }
     }
 
