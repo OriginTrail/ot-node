@@ -1,4 +1,6 @@
 const BN = require('bn.js');
+const d3 = require('d3-format');
+const Queue = require('better-queue');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
 const Op = require('sequelize/lib/operators');
@@ -25,13 +27,60 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+
+        const that = this;
+        this.queue = new Queue((async (args, cb) => {
+            const {
+                offerId,
+                dcNodeId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+                future,
+            } = args;
+            try {
+                await that._handleOffer(
+                    offerId,
+                    dcNodeId,
+                    dataSetSizeInBytes,
+                    holdingTimeInMinutes,
+                    litigationIntervalInMinutes,
+                    tokenAmountPerHolder,
+                );
+                future.resolve();
+            } catch (e) {
+                future.reject(e);
+            }
+            cb();
+        }), { concurrent: 1 });
+    }
+
+    handleOffer(
+        offerId, dcNodeId,
+        dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+        tokenAmountPerHolder,
+    ) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({
+                offerId,
+                dcNodeId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+                future: {
+                    resolve, reject,
+                },
+            });
+        });
     }
 
     /**
      * Handle one offer
      * @returns {Promise<void>}
      */
-    async handleOffer(
+    async _handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder,
@@ -54,7 +103,7 @@ class DHService {
         //     return;
         // }
 
-        const bid = await models.bids.findOne({
+        let bid = await models.bids.findOne({
             where: { offer_id: offerId },
         });
         if (bid) {
@@ -62,35 +111,53 @@ class DHService {
             return;
         }
 
-        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
-        const profileStake = new BN(profile.stake, 10);
-        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+        this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${offerId}.`);
 
-        const offerStake = new BN(tokenAmountPerHolder, 10);
+        const format = d3.formatPrefix(',.6~s', 1e6);
+        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
+        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
 
-        const pendingBids = await Models.bids.findAll({ where: { status: 'PENDING' } });
-        const pendingSum = pendingBids
-            .map(pb => pb.token_amount)
-            .reduce((acc, amount) => acc.add(new BN(amount, 10)), new BN(0, 10));
+        const formatMaxPrice = format(tokenAmountPerHolder);
+        const formatMyPrice = format(this.config.dh_min_token_price);
 
-        let remainder = null;
-        if (profileStake
-            .sub(profileStakeReserved)
-            .sub(pendingSum || new BN(0, 10)).lt(offerStake)) {
-            remainder = offerStake
-                .sub(profileStake.sub(profileStakeReserved))
-                .sub(pendingSum || new BN(0, 10));
+        if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
+            this.logger.info(`Offer ${offerId} too cheap for me.`);
+            this.logger.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
+            this.logger.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
+            return;
         }
 
-        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
-        if (profileStake.sub(profileStakeReserved).lt(profileMinStake)) {
-            const stakeRemainder = profileMinStake.sub(profileStake.sub(profileStakeReserved));
-            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
-                remainder = stakeRemainder;
-            }
+        if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
+            this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
+            return;
         }
 
+        if (dhMinLitigationIntervalInMinutes.gt(new BN(litigationIntervalInMinutes, 10))) {
+            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
+            return;
+        }
+
+        bid = await Models.bids.create({
+            offer_id: offerId,
+            dc_node_id: dcNodeId,
+            data_size_in_bytes: dataSetSizeInBytes,
+            litigation_interval_in_minutes: litigationIntervalInMinutes,
+            token_amount: tokenAmountPerHolder,
+            deposited: false,
+            status: 'PENDING',
+        });
+
+        const remainder = await this._calculatePessimisticMinimumDeposit(
+            bid.id,
+            tokenAmountPerHolder,
+        );
         if (remainder) {
+            bid.deposit = remainder.toString();
+            await bid.save({ fields: ['deposit'] });
+
+            this.logger.warn(`Not enough tokens for offer ${offerId}. OT-node will automatically deposit enough tokens.`);
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
                 sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
@@ -121,6 +188,61 @@ class DHService {
                 transactional: false,
             });
         }
+    }
+
+    /**
+     * Calculates possible minimum amount to deposit (pessimistically)
+     * @param bidId
+     * @param tokenAmountPerHolder
+     * @return {Promise<*>}
+     * @private
+     */
+    async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder) {
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+
+        const offerStake = new BN(tokenAmountPerHolder, 10);
+
+        const bids = await Models.bids.findAll({
+            where: {
+                id: {
+                    [Op.ne]: bidId,
+                },
+                status: {
+                    [Op.in]: ['PENDING', 'SENT'],
+                },
+                deposit: {
+                    [Op.ne]: null,
+                },
+            },
+        });
+
+        const currentDeposits = bids
+            .map(pb => new BN(pb.deposit, 10))
+            .reduce((acc, amount) => acc.add(amount), new BN(0, 10));
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).sub(currentDeposits).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved).sub(currentDeposits));
+        }
+
+        if (profileStake
+            .sub(profileStakeReserved)
+            .sub(offerStake)
+            .sub(currentDeposits)
+            .lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake
+                .sub(profileStake
+                    .sub(profileStakeReserved)
+                    .sub(offerStake)
+                    .sub(currentDeposits));
+            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
+                remainder = stakeRemainder;
+            }
+        }
+        return remainder;
     }
 
     /**

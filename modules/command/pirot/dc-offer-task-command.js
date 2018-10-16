@@ -55,10 +55,10 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { dataSetId, offerId } = command.data;
+        const { dataSetId, internalOfferId } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message'] });
