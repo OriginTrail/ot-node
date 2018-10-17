@@ -273,6 +273,11 @@
 			},
 			{
 				"indexed": false,
+				"name": "dataSetId",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
 				"name": "dcNodeId",
 				"type": "bytes32"
 			},

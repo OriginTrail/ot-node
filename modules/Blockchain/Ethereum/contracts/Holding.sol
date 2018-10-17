@@ -27,7 +27,7 @@ contract Holding is Ownable {
 
 
     event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
-    event OfferCreated(bytes32 offerId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
+    event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
 
     function createOffer(address identity, bytes32 dataSetId,
@@ -86,7 +86,7 @@ contract Holding is Ownable {
         );
 
         emit OfferTask(dataSetId, dcNodeId, offerId, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
-        emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
+        emit OfferCreated(offerId, dataSetId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
 
     function finalizeOffer(address identity, bytes32 offerId, uint256 shift,
