@@ -3,69 +3,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "identity",
+        "name": "newTokenAddress",
         "type": "address"
-      },
-      {
-        "name": "offerId",
-        "type": "uint256"
       }
     ],
-    "name": "payOut",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "dataSetId",
-        "type": "uint256"
-      },
-      {
-        "name": "dataRootHash",
-        "type": "uint256"
-      },
-      {
-        "name": "redLitigationHash",
-        "type": "uint256"
-      },
-      {
-        "name": "greenLitigationHash",
-        "type": "uint256"
-      },
-      {
-        "name": "blueLitigationHash",
-        "type": "uint256"
-      },
-      {
-        "name": "dcNodeId",
-        "type": "uint256"
-      },
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      },
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      },
-      {
-        "name": "dataSetSizeInBytes",
-        "type": "uint256"
-      },
-      {
-        "name": "litigationIntervalInMinutes",
-        "type": "uint256"
-      }
-    ],
-    "name": "createOffer",
+    "name": "setTokenAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -74,7 +16,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "hub",
+    "name": "readingStorageAddress",
     "outputs": [
       {
         "name": "",
@@ -89,11 +31,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "new_difficulty",
-        "type": "uint256"
+        "name": "newReadingAddress",
+        "type": "address"
       }
     ],
-    "name": "setDifficulty",
+    "name": "setReadingAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -102,11 +44,67 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "difficultyOverride",
+    "name": "readingAddress",
     "outputs": [
       {
         "name": "",
-        "type": "uint256"
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newReadingStorageAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setReadingStorageAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newProfileAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setProfileAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newHoldingStorageAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setHoldingStorageAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "profileAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -131,39 +129,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "identity",
+        "name": "newpPofileStorageAddress",
         "type": "address"
-      },
-      {
-        "name": "offerId",
-        "type": "uint256"
-      },
-      {
-        "name": "shift",
-        "type": "uint256"
-      },
-      {
-        "name": "confirmation1",
-        "type": "bytes"
-      },
-      {
-        "name": "confirmation2",
-        "type": "bytes"
-      },
-      {
-        "name": "confirmation3",
-        "type": "bytes"
-      },
-      {
-        "name": "encryptionType",
-        "type": "uint8[]"
-      },
-      {
-        "name": "holderIdentity",
-        "type": "address[]"
       }
     ],
-    "name": "finalizeOffer",
+    "name": "setProfileStorageAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -172,7 +142,49 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "profile",
+    "name": "tokenAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "holdingStorageAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "holdingAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "profileStorageAddress",
     "outputs": [
       {
         "name": "",
@@ -198,138 +210,23 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "profileStorage",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "holdingStorage",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
+    "constant": false,
     "inputs": [
       {
-        "name": "hubAddress",
+        "name": "newHoldingAddress",
         "type": "address"
       }
     ],
+    "name": "setHoldingAddress",
+    "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "constructor"
+    "type": "function"
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "dcNodeId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "task",
-        "type": "bytes32"
-      }
-    ],
-    "name": "OfferTask",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "dcNodeId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "dataSetSizeInBytes",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "name": "litigationIntervalInMinutes",
-        "type": "uint256"
-      }
-    ],
-    "name": "OfferCreated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "holder1",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "holder2",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "name": "holder3",
-        "type": "address"
-      }
-    ],
-    "name": "OfferFinalized",
+    "inputs": [],
+    "name": "ContractsChanged",
     "type": "event"
   },
   {

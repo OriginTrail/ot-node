@@ -8,10 +8,64 @@
 			},
 			{
 				"name": "offerId",
-				"type": "bytes32"
+				"type": "uint256"
 			}
 		],
 		"name": "payOut",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "dataSetId",
+				"type": "uint256"
+			},
+			{
+				"name": "dataRootHash",
+				"type": "uint256"
+			},
+			{
+				"name": "redLitigationHash",
+				"type": "uint256"
+			},
+			{
+				"name": "greenLitigationHash",
+				"type": "uint256"
+			},
+			{
+				"name": "blueLitigationHash",
+				"type": "uint256"
+			},
+			{
+				"name": "dcNodeId",
+				"type": "uint256"
+			},
+			{
+				"name": "holdingTimeInMinutes",
+				"type": "uint256"
+			},
+			{
+				"name": "tokenAmountPerHolder",
+				"type": "uint256"
+			},
+			{
+				"name": "dataSetSizeInBytes",
+				"type": "uint256"
+			},
+			{
+				"name": "litigationIntervalInMinutes",
+				"type": "uint256"
+			}
+		],
+		"name": "createOffer",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -82,7 +136,7 @@
 			},
 			{
 				"name": "offerId",
-				"type": "bytes32"
+				"type": "uint256"
 			},
 			{
 				"name": "shift",
@@ -169,60 +223,6 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "identity",
-				"type": "address"
-			},
-			{
-				"name": "dataSetId",
-				"type": "bytes32"
-			},
-			{
-				"name": "dataRootHash",
-				"type": "bytes32"
-			},
-			{
-				"name": "redLitigationHash",
-				"type": "bytes32"
-			},
-			{
-				"name": "greenLitigationHash",
-				"type": "bytes32"
-			},
-			{
-				"name": "blueLitigationHash",
-				"type": "bytes32"
-			},
-			{
-				"name": "dcNodeId",
-				"type": "bytes32"
-			},
-			{
-				"name": "holdingTimeInMinutes",
-				"type": "uint256"
-			},
-			{
-				"name": "tokenAmountPerHolder",
-				"type": "uint256"
-			},
-			{
-				"name": "dataSetSizeInBytes",
-				"type": "uint256"
-			},
-			{
-				"name": "litigationIntervalInMinutes",
-				"type": "uint256"
-			}
-		],
-		"name": "createOffer",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
