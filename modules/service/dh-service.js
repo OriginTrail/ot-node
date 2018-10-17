@@ -87,10 +87,10 @@ class DHService {
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder, dataSetId,
     ) {
-        if (dcNodeId.startsWith(Utilities.normalizeHex(this.config.identity))) {
+        dcNodeId = dcNodeId.substring(26);
+        if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
-        dcNodeId = dcNodeId.substring(2, 42);
         const dcContact = await this.transport.getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             return; // wait until peers are synced
