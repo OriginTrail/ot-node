@@ -34,6 +34,9 @@ class DcOfferTaskCommand extends Command {
         if (event) {
             this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
 
+            event.finished = true;
+            await event.save({ fields: ['finished'] });
+
             const {
                 task: eventTask,
                 offerId: eventOfferId,
