@@ -40,41 +40,11 @@ class Blockchain {
     }
 
     /**
-     * Writes data import root hash on blockchain
-     * @param importId
-     * @param rootHash
-     * @param importHash
-     * @returns {Promise}
-     */
-    writeRootHash(importId, rootHash, importHash) {
-        return this.blockchain.writeRootHash(importId, rootHash, importHash);
-    }
-
-    /**
      * Gets profile by wallet
      * @param identity
      */
     getProfile(identity) {
         return this.blockchain.getProfile(identity);
-    }
-
-    /**
-     * Get offer by importId
-     * @param importId
-     * @returns {Promise}
-     */
-    getOffer(importId) {
-        return this.blockchain.getOffer(importId);
-    }
-
-    /**
-     * Gets the index of the node's bid in the array of one offer
-     * @param importId Offer import id
-     * @param dhNodeId KADemplia ID of the DH node that wants to get index
-     * @returns {Promisse<any>} integer index in the array
-     */
-    getBidIndex(importId, nodeId) {
-        return this.blockchain.getBidIndex(importId, nodeId);
     }
 
     /**
@@ -116,16 +86,6 @@ class Blockchain {
     }
 
     /**
-     * Verify escrow contract
-     * @param importId
-     * @param dhWallet
-     * @returns {Promise}
-     */
-    verifyEscrow(importId, dhWallet) {
-        return this.blockchain.verifyEscrow(importId, dhWallet);
-    }
-
-    /**
      * DC initiates litigation on DH wrong challenge answer
      * @param importId
      * @param dhWallet
@@ -156,16 +116,6 @@ class Blockchain {
      */
     proveLitigation(importId, dhWallet, proofData) {
         return this.blockchain.proveLitigation(importId, dhWallet, proofData);
-    }
-
-    /**
-     * Cancel data holding escrow process
-     * @param {string} - dhWallet
-     * @param {number} - importId
-     * @returns {Promise}
-     */
-    cancelEscrow(dhWallet, importId, dhIsSender) {
-        return this.blockchain.cancelEscrow(dhWallet, importId, dhIsSender);
     }
 
     /**
@@ -228,14 +178,6 @@ class Blockchain {
             blockchainIdentity, offerId, shift, confirmation1,
             confirmation2, confirmation3, encryptionType, holders,
         );
-    }
-
-    /**
-     * Cancel offer for data storing on Ethereum blockchain.
-     * @param importId Data if of the offer.
-     */
-    cancelOffer(importId) {
-        return this.blockchain.cancelOffer(importId);
     }
 
     /**
@@ -303,58 +245,12 @@ class Blockchain {
     }
 
     /**
-     * Activates predetermined bid to the offer on Ethereum blockchain
-     * @param importId Import ID
-     * @param dhNodeId KADemlia ID of the DH node that wants to activate bid
-     * @param bidIndex index of the bid
-     * @returns {Promise<any>} Index of the bid.
-     */
-    activatePredeterminedBid(importId, dhNodeId, bidIndex) {
-        return this.blockchain.activatePredeterminedBid(importId, dhNodeId, bidIndex);
-    }
-
-    /**
-     * Cancel the bid on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param importId ID of the data of the bid
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    cancelBid(dcWallet, importId, bidIndex) {
-        return this.blockchain.cancelBid(dcWallet, importId, bidIndex);
-    }
-
-    /**
-     * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param importId Import ID
-     * @returns {Promise<any>} Array of bid indices of chosen ones.
-     */
-    chooseBids(importId) {
-        return this.blockchain.chooseBids(importId);
-    }
-
-    /**
-     *
-     * @param dcWallet
-     * @param importId
-     * @param bidIndex
-     * @returns {Promise<any>}
-     */
-    getBid(dcWallet, importId, bidIndex) {
-        return this.blockchain.getBid(dcWallet, importId, bidIndex);
-    }
-
-    /**
     * Gets status of the offer
     * @param importId
     * @return {Promise<any>}
     */
     getOfferStatus(importId) {
         return this.blockchain.getOfferStatus(importId);
-    }
-
-    getDcWalletFromOffer(importId) {
-        return this.blockchain.getDcWalletFromOffer(importId);
     }
 
     /**
@@ -377,15 +273,6 @@ class Blockchain {
     }
 
     /**
-     * Withdraws tokens from profile to wallet
-     * @param amount
-     * @returns {Promise<any>}
-     */
-    async withdrawToken(amount) {
-        return this.blockchain.withdrawToken(amount);
-    }
-
-    /**
      * Gets root hash for import
      * @param dcWallet DC wallet
      * @param importId   Import ID
@@ -393,15 +280,6 @@ class Blockchain {
      */
     async getRootHash(dcWallet, importId) {
         return this.blockchain.getRootHash(dcWallet, importId);
-    }
-
-    async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
-        return this.blockchain.addRootHashAndChecksum(
-            importId,
-            litigationHash,
-            distributionHash,
-            checksum,
-        );
     }
 
     async getEscrow(importId, dhWallet) {
@@ -457,13 +335,6 @@ class Blockchain {
      */
     async payOutForReading(importId, dvWallet) {
         return this.blockchain.payOutForReading(importId, dvWallet);
-    }
-
-    /**
-     * Get replication modifier
-     */
-    async getReplicationModifier() {
-        return this.blockchain.getReplicationModifier();
     }
 
     /**
