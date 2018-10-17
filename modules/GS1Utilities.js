@@ -194,15 +194,14 @@ class GS1Utilities {
      * Helper function for finding batch either in memory or in db
      * @param senderId
      * @param batchVertices
-     * @param importId
      * @param uid
      * @return {Promise<void>}
      * @private
      */
-    async _findBatch(senderId, batchVertices, importId, uid) {
+    async _findBatch(senderId, batchVertices, uid) {
         // check in memory
         for (const batchVertex of batchVertices) {
-            if (batchVertex[importId].identifiers.uid === uid) {
+            if (batchVertex.identifiers.uid === uid) {
                 return batchVertex;
             }
         }
@@ -218,10 +217,9 @@ class GS1Utilities {
      * @param categories
      * @param globalR
      * @param batchVertices
-     * @param importId
      * @return {Promise<void>}
      */
-    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices, importId) {
+    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices) {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
@@ -236,6 +234,7 @@ class GS1Utilities {
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
+            console.log(quantityList);
             if (bizStep === 'shipping') {
                 // sending input
                 if (categories.includes('Ownership')) {
@@ -260,7 +259,7 @@ class GS1Utilities {
                     inputQuantities.push({
                         object: outputQ.object,
                         quantity: parseInt(outputQ.quantity, 10),
-                        unit: outputQ.uom,
+                        unit: outputQ.unit,
                         r: batchVerticesMap[outputQ.object].randomness,
                     });
                 }
@@ -271,6 +270,7 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
                             r: globalR,
                         }));
                 } else {
@@ -288,7 +288,7 @@ class GS1Utilities {
                     outputQuantities.push({
                         object: inputQ.object,
                         quantity: parseInt(inputQ.quantity, 10),
-                        unit: inputQ.uom,
+                        unit: inputQ.unit,
                         r: batchVerticesMap[inputQ.object].randomness,
                     });
                 }
@@ -309,7 +309,7 @@ class GS1Utilities {
                     inputQuantities.push({
                         object: inputQuantity.object,
                         quantity: parseInt(inputQuantity.quantity, 10),
-                        unit: inputQuantity.uom,
+                        unit: inputQuantity.unit,
                         r: batchVertices[inputQuantity.object].randomness,
                     });
                 }
@@ -327,7 +327,7 @@ class GS1Utilities {
                     outputQuantities.push({
                         object: outputQuantity.object,
                         quantity: parseInt(outputQuantity.quantity, 10),
-                        unit: outputQuantity.uom,
+                        unit: outputQuantity.unit,
                         r: batchVertices[outputQuantity.object].randomness,
                     });
                 }
@@ -336,9 +336,10 @@ class GS1Utilities {
         const { zk } = this;
         const zkResponse = zk.P(eventId, inputQuantities, outputQuantities);
         for (const batchVertex of batchVertices) {
-            const batch = batchVertex[importId];
-            batch.data.quantities = {};
-            batch.data.quantities[eventId] = zkResponse[batch.identifiers.uid];
+            if (batchVertex.data.quantities == null) {
+                batchVertex.data.quantities = {};
+            }
+            batchVertex.data.quantities[eventId] = zkResponse.batches[batchVertex.identifiers.uid];
         }
 
         event.quantities = zkResponse.quantities;

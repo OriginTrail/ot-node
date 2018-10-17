@@ -2,6 +2,7 @@ const { parseString } = require('xml2js');
 const fs = require('fs');
 const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
+const { denormalizeGraph } = require('./Database/graph-converter')
 
 class GS1Importer {
     /**
@@ -72,7 +73,7 @@ class GS1Importer {
                 break;
             case 'urn:ot:object:batch':
                 batches = batches
-                    .concat(this._parseBatches(vocabularyElement.VocabularyElementList));
+                    .concat(await this._parseBatches(vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:location':
                 locations = locations
@@ -332,7 +333,7 @@ class GS1Importer {
             // eslint-disable-next-line
             await this.helper.zeroKnowledge(
                 senderId, event, eventId, eventCategories,
-                GLOBAL_R, batchesVertices, importId,
+                GLOBAL_R, batchesVertices,
             );
 
             const identifiers = {
@@ -754,7 +755,9 @@ class GS1Importer {
                 v.inTransaction = true;
                 return v;
             });
-            await Promise.all(allVertices.map(vertex => this.db.addVertex(vertex)));
+
+            const { vertices: denormalizedVertices } = denormalizeGraph(importId, allVertices, []);
+            await Promise.all(denormalizedVertices.map(vertex => this.db.addVertex(vertex)));
 
             let allEdges = locationEdges
                 .concat(eventEdges)
@@ -797,8 +800,8 @@ class GS1Importer {
 
             // updates
             await Promise.all(updates);
-            await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
-            await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+            // await Promise.all(allVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
+            // await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
         } catch (e) {
             this.log.warn(`Failed to import data. ${e}`);
             await this.db.rollback(); // delete elements in transaction
@@ -944,7 +947,7 @@ class GS1Importer {
         return products;
     }
 
-    _parseBatches(vocabularyElementList) {
+    async _parseBatches(vocabularyElementList) {
         const batches = [];
 
         // May be an array in VocabularyElement.
@@ -956,13 +959,13 @@ class GS1Importer {
 
             let randomness = this.helper.zk.generateR();
 
-            const batchVertex = this.db.findVertices({
+            const batchVertex = await this.db.findVertices({
                 query: [{
                     id: element.id,
                 }],
             });
 
-            if (batchVertex) {
+            if (batchVertex && batchVertex.length > 0) {
                 // eslint-disable-next-line
                 randomness = batchVertex[0].randomness;
             }

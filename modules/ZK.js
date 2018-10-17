@@ -57,23 +57,27 @@ class ZK {
                 batches[input.object] = {};
             }
 
-            batches[input.object][unit] = this.encrypt(new BN(input.quantity), new BN(input.r));
+            batches[input.object][unit] = this.encrypt(new BN(input.quantity),
+                new BN(input.r).mod(this.n).toRed(this.redSquare));
         }
 
         for (const output of outputQuantities) {
             const { unit } = output;
-            if (all_units[output] == null) {
-                all_units[output] = true;
+            if (all_units[unit] == null) {
+                all_units[unit] = true;
             }
 
             if (batches[output.object] == null) {
                 batches[output.object] = {};
             }
 
-            batches[output.object][unit] = this.encrypt(new BN(output.quantity), new BN(output.r));
+            batches[output.object][unit] = this.encrypt(new BN(output.quantity),
+                new BN(output.r).mod(this.n).toRed(this.redSquare));
         }
 
-        for (const unit of all_units) {
+        console.log(JSON.stringify(all_units));
+
+        for (const unit in all_units) {
             response[unit] = this._P(eventId, inputQuantities, outputQuantities, unit);
         }
 
@@ -156,14 +160,12 @@ class ZK {
                     public: {
                         enc: encryptedOutput.toString('hex'),
                         // encNeg: '0x' + encryptedNegOutput.toString('hex'),
-                        unit,
                     },
                     private: {
                         object: outputQuantities[i].object,
                         r: randomness.toString(),
                         // rp : negRandomness,
                         quantity: rawQuantity,
-                        unit,
                     },
                 });
             }
