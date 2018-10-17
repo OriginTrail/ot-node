@@ -1110,7 +1110,7 @@ class Ethereum {
      * Get replication modifier
      */
     async getReplicationModifier() {
-        this.log.trace('get replication modifier from blockchain');
+        this.log.trace('Get replication modifier from blockchain');
         return this.biddingContract.methods.replication_modifier().call({
             from: this.config.wallet_address,
         });
@@ -1120,19 +1120,29 @@ class Ethereum {
      * Get Profile minimum stake
      */
     async getProfileMinimumStake() {
-        this.log.trace('get replication modifier from blockchain');
+        this.log.trace('Get replication modifier from blockchain');
         return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
     }
 
     /**
-     * Gets profile by wallet
+     * Get profile by wallet
      * @param identity
      */
     async getProfile(identity) {
         this.log.trace(`Get profile by identity ${identity}`);
         return this.profileStorageContract.methods.profile(identity).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get difficulty for the particular offer
+     */
+    async getOfferDifficulty(offerId) {
+        this.log.trace(`getOfferDifficulty(offer=${offerId})`);
+        return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
     }

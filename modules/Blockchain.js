@@ -484,6 +484,13 @@ class Blockchain {
     async withdrawTokens(blockchainIdentity) {
         return this.blockchain.withdrawTokens(blockchainIdentity);
     }
+
+    /**
+     * Get difficulty for the particular offer
+     */
+    async getOfferDifficulty(offerId) {
+        return this.blockchain.getOfferDifficulty(offerId);
+    }
 }
 
 module.exports = Blockchain;
