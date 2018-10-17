@@ -194,15 +194,14 @@ class GS1Utilities {
      * Helper function for finding batch either in memory or in db
      * @param senderId
      * @param batchVertices
-     * @param importId
      * @param uid
      * @return {Promise<void>}
      * @private
      */
-    async _findBatch(senderId, batchVertices, importId, uid) {
+    async _findBatch(senderId, batchVertices, uid) {
         // check in memory
         for (const batchVertex of batchVertices) {
-            if (batchVertex[importId].identifiers.uid === uid) {
+            if (batchVertex.identifiers.uid === uid) {
                 return batchVertex;
             }
         }
@@ -218,10 +217,9 @@ class GS1Utilities {
      * @param categories
      * @param globalR
      * @param batchVertices
-     * @param importId
      * @return {Promise<void>}
      */
-    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices, importId) {
+    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices) {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
@@ -319,7 +317,7 @@ class GS1Utilities {
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, importId, outputQuantity.object);
+                    const vertex = await this._findBatch(senderId, batchVertices, outputQuantity.object);
                     outputQuantities.push({
                         added: true,
                         object: outputQuantity.object,
@@ -335,8 +333,7 @@ class GS1Utilities {
             if (quantity.added) {
                 delete quantity.added;
                 let batchFound = false;
-                for (const batchVertex of batchVertices) {
-                    const batch = batchVertex[importId];
+                for (const batch of batchVertices) {
                     if (batch.identifiers.uid === quantity.object) {
                         batchFound = true;
                         batch.data[eventId] = {}
