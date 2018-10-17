@@ -27,7 +27,7 @@ const CommandResolver = require('../../modules/command/command-resolver');
 const CommandExecutor = require('../../modules/command/command-executor');
 
 const BiddingApprovalIncreaseCommand = require('../../modules/command/common/bidding-approval-increase-command');
-const DepositTokenCommand = require('../../modules/command/pirot/deposit-tokens-command');
+const DepositTokenCommand = require('../../modules/command/common/deposit-tokens-command');
 
 const DCOfferCancelCommand = require('../../modules/command/dc/dc-offer-cancel-command');
 const DCOfferChooseCommand = require('../../modules/command/dc/dc-offer-choose-command2');
