@@ -7,7 +7,6 @@ const Op = require('sequelize/lib/operators');
 
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-const models = require('../../models/index');
 
 const Graph = require('../Graph');
 const Challenge = require('../Challenge');
@@ -37,6 +36,7 @@ class DHService {
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
+                dataSetId,
                 future,
             } = args;
             try {
@@ -47,6 +47,7 @@ class DHService {
                     holdingTimeInMinutes,
                     litigationIntervalInMinutes,
                     tokenAmountPerHolder,
+                    dataSetId,
                 );
                 future.resolve();
             } catch (e) {
@@ -59,7 +60,7 @@ class DHService {
     handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-        tokenAmountPerHolder,
+        tokenAmountPerHolder, dataSetId,
     ) {
         return new Promise((resolve, reject) => {
             this.queue.push({
@@ -69,6 +70,7 @@ class DHService {
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
                 tokenAmountPerHolder,
+                dataSetId,
                 future: {
                     resolve, reject,
                 },
@@ -83,7 +85,7 @@ class DHService {
     async _handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-        tokenAmountPerHolder,
+        tokenAmountPerHolder, dataSetId,
     ) {
         if (dcNodeId.startsWith(Utilities.normalizeHex(this.config.identity))) {
             return; // the offer is mine
@@ -94,16 +96,16 @@ class DHService {
             return; // wait until peers are synced
         }
 
-        // TODO enable this check after SC event update
-        // const dataInfo = await models.data_info.findOne({
-        //     where: { data_set_id: dataSetId },
-        // });
-        // if (dataInfo) {
-        //     this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
-        //     return;
-        // }
+        // use LIKE because of some SC related issues
+        const dataInfo = await Models.data_info.findOne({
+            where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%`} },
+        });
+        if (dataInfo) {
+            this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
+            return;
+        }
 
-        let bid = await models.bids.findOne({
+        let bid = await Models.bids.findOne({
             where: { offer_id: offerId },
         });
         if (bid) {
@@ -153,38 +155,37 @@ class DHService {
             bid.id,
             tokenAmountPerHolder,
         );
+
+        const data = {
+            offerId,
+            dcNodeId,
+            dataSetSizeInBytes,
+            holdingTimeInMinutes,
+            litigationIntervalInMinutes,
+            tokenAmountPerHolder,
+        };
+
         if (remainder) {
             bid.deposit = remainder.toString();
             await bid.save({ fields: ['deposit'] });
 
             this.logger.warn(`Not enough tokens for offer ${offerId}. OT-node will automatically deposit enough tokens.`);
+
+            Object.assign(data, {
+                amount: remainder.toString(),
+            });
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
                 sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
                 delay: 15000,
-                data: {
-                    amount: remainder.toString(),
-                    offerId,
-                    dcNodeId,
-                    dataSetSizeInBytes,
-                    holdingTimeInMinutes,
-                    litigationIntervalInMinutes,
-                    tokenAmountPerHolder,
-                },
+                data,
                 transactional: false,
             });
         } else {
             await this.commandExecutor.add({
                 name: 'dhOfferHandleCommand',
                 delay: 15000,
-                data: {
-                    offerId,
-                    dcNodeId,
-                    dataSetSizeInBytes,
-                    holdingTimeInMinutes,
-                    litigationIntervalInMinutes,
-                    tokenAmountPerHolder,
-                },
+                data,
                 transactional: false,
             });
         }
@@ -281,7 +282,7 @@ class DHService {
         distributionSignature,
         transactionHash,
     ) {
-        const bid = await models.bids.findOne({
+        const bid = await Models.bids.findOne({
             where: { offer_id: offerId },
         });
         if (!bid) {

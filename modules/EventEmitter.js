@@ -682,12 +682,13 @@ class EventEmitter {
                 litigationIntervalInMinutes,
                 offerId,
                 tokenAmountPerHolder,
+                dataSetId,
             } = eventData;
 
             await dhService.handleOffer(
                 offerId, dcNodeId,
                 dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-                tokenAmountPerHolder,
+                tokenAmountPerHolder, dataSetId,
             );
         });
 
