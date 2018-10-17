@@ -3,7 +3,11 @@ require('dotenv').config();
 const {
     describe, before, beforeEach, afterEach, it,
 } = require('mocha');
-const { assert, expect } = require('chai');
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+
+chai.use(chaiAsPromised);
+const { assert, expect } = chai;
 const path = require('path');
 const { Database } = require('arangojs');
 const rc = require('rc');
@@ -40,6 +44,13 @@ describe('GS1 Importer tests', () => {
         { args: [path.join(__dirname, 'test_xml/GraphExample_3.xml')] },
         { args: [path.join(__dirname, 'test_xml/GraphExample_4.xml')] },
         { args: [path.join(__dirname, 'test_xml/ZKExample.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/04_Pink_to_Orange_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/05_Pink_to_Orange_receipt.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/06_Pink_to_Red_shipment.xml')] },
+        { args: [path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/07_Pink_to_Red_receipt.xml')] },
     ];
 
     before('Setup models', async () => {
@@ -482,6 +493,20 @@ describe('GS1 Importer tests', () => {
                 await checkGraphExample4XmlTraversalPath();
             } else if (xml === path.join(__dirname, 'test_xml/ZKExample.xml')) {
                 // TODO checkZKExampleXmlVerticeContent();
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/01_Green_to_pink_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/02_Green_to_Pink_receipt.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/03_Pink_ZKN_Transform.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/04_Pink_to_Orange_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/05_Pink_to_Orange_receipt.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/06_Pink_to_Red_shipment.xml')) {
+                // TODO implement me
+            } else if (xml === path.join(__dirname, '../../importers/xml_examples/Retail_with_Zk/07_Pink_to_Red_receipt.xml')) {
+                // TODO implement me
             } else {
                 throw Error(`Not Implemented for ${xml}.`);
             }
@@ -493,6 +518,25 @@ describe('GS1 Importer tests', () => {
                 await checkSpecificVerticeContent(`${test.args[0]}`);
             });
         });
+    });
+
+    describe('Incomplete xmls should fail to import', () => {
+        const xmlWithoutQuantityList = path.join(__dirname, 'test_xml/withoutQuantityList.xml');
+        const xmlWithoutBizStep = path.join(__dirname, 'test_xml/withoutBizStep.xml');
+        const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
+        const xmlWithoutSenderContactinfo = path.join(__dirname, 'test_xml/withoutSenderContactInfo.xml');
+
+
+        it('and throw an error about missing quantityElement', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.rejectedWith(TypeError, "Cannot read property 'quantityElement' of undefined"));
+
+        it('and throw an error related to missing bizStep', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
+
+        it('and throw an error related to missing CreationDateAndTime', async () => {
+            const rejectionMessage = 'Failed to validate schema. Error: Element \'{http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}DocumentIdentification\': Missing child element(s). Expected is one of ( {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}MultipleType, {http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader}CreationDateAndTime ).\n';
+            return expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutCreationDateAndTime))).to.be.rejectedWith(Error, rejectionMessage);
+        });
+
+        it('and throw an error releted to missing SenderContactInformation', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutSenderContactinfo))).to.be.rejectedWith(Error, "Cannot read property 'EmailAddress' of undefined"));
     });
 
     afterEach('Drop DB', async () => {

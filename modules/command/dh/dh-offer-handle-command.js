@@ -1,5 +1,5 @@
 const Command = require('../command');
-const Models = require('../../../models');
+const Models = require('../../../models/index');
 
 /**
  * Handles new offer from the DH side

@@ -49,7 +49,6 @@ class DCOfferChooseCommand extends Command {
             throw new Error('Failed to choose holders. Not enough DHs submitted.');
         }
 
-
         await this.minerService.sendToMiner(
             offer.task,
             identities,

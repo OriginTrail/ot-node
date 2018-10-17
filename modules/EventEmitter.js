@@ -535,11 +535,14 @@ class EventEmitter {
             }
             const {
                 dataSetId,
-                dataRootHash,
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
-                dataSizeInBytes,
                 litigationIntervalInMinutes,
+            } = data;
+
+            let {
+                dataRootHash,
+                dataSizeInBytes,
             } = data;
 
             try {
@@ -550,6 +553,14 @@ class EventEmitter {
                 });
                 if (dataset == null) {
                     throw new Error('This data set does not exist in the database');
+                }
+
+                if (dataSizeInBytes == null) {
+                    dataSizeInBytes = dataset.data_size;
+                }
+
+                if (dataRootHash == null) {
+                    dataRootHash = dataset.root_hash;
                 }
 
                 const offerId = await dcService.createOffer(
@@ -682,12 +693,13 @@ class EventEmitter {
                 litigationIntervalInMinutes,
                 offerId,
                 tokenAmountPerHolder,
+                dataSetId,
             } = eventData;
 
             await dhService.handleOffer(
                 offerId, dcNodeId,
                 dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-                tokenAmountPerHolder,
+                tokenAmountPerHolder, dataSetId,
             );
         });
 

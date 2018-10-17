@@ -1,4 +1,4 @@
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 const bytes = require('utf8-length');
 
 const Command = require('../command');

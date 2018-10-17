@@ -1,5 +1,5 @@
 const Command = require('../command');
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 /**
  * Increases approval for Profile contract on blockchain

@@ -26,6 +26,9 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        deposit: {
+            type: Sequelize.STRING,
+        },
         status: {
             allowNull: false,
             type: Sequelize.STRING,

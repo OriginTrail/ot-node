@@ -1,8 +1,10 @@
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+
+const { Op } = Models.Sequelize;
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -24,12 +26,16 @@ class DcOfferTaskCommand extends Command {
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
+                // use LIKE because of some SC related issues
+                data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%`},
                 finished: 0,
             },
         });
         if (event) {
             this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
+
+            event.finished = true;
+            await event.save({ fields: ['finished'] });
 
             const {
                 task: eventTask,

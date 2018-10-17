@@ -609,7 +609,7 @@ class Ethereum {
      */
     async getAllPastEvents(contractName) {
         try {
-            const currentBlock = Utilities.hexToNumber(await this.web3.eth.getBlockNumber());
+            const currentBlock = await this.web3.eth.getBlockNumber();
 
             let fromBlock = 0;
 
@@ -636,6 +636,9 @@ class Ethereum {
             for (let i = 0; i < events.length; i += 1) {
                 const event = events[i];
                 const timestamp = Date.now();
+                if (event.returnValues.DH_wallet) {
+                    event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
+                }
                 /* eslint-disable-next-line */
                 await Models.events.create({
                     id: event.id,
@@ -735,10 +738,8 @@ class Ethereum {
      * @returns {number | Object} Event handle
      */
     async subscribeToEventPermanent(event) {
-        const startBlockNumber = parseInt(
-            await Utilities.getBlockNumberFromWeb3(this.web3),
-            16,
-        );
+        const startBlockNumber = await this.web3.eth.getBlockNumber();
+
         const handle = setInterval(async () => {
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
@@ -1110,7 +1111,7 @@ class Ethereum {
      * Get replication modifier
      */
     async getReplicationModifier() {
-        this.log.trace('get replication modifier from blockchain');
+        this.log.trace('Get replication modifier from blockchain');
         return this.biddingContract.methods.replication_modifier().call({
             from: this.config.wallet_address,
         });
@@ -1120,19 +1121,29 @@ class Ethereum {
      * Get Profile minimum stake
      */
     async getProfileMinimumStake() {
-        this.log.trace('get replication modifier from blockchain');
+        this.log.trace('Get replication modifier from blockchain');
         return this.profileContract.methods.minimalStake().call({
             from: this.config.wallet_address,
         });
     }
 
     /**
-     * Gets profile by wallet
+     * Get profile by wallet
      * @param identity
      */
     async getProfile(identity) {
         this.log.trace(`Get profile by identity ${identity}`);
         return this.profileStorageContract.methods.profile(identity).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get difficulty for the particular offer
+     */
+    async getOfferDifficulty(offerId) {
+        this.log.trace(`getOfferDifficulty(offer=${offerId})`);
+        return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
     }

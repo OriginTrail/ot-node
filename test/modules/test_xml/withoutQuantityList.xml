@@ -114,13 +114,6 @@
 					<id>urn:epc:id:sgln:Building_Green</id>
 				</bizLocation>
 				<extension>
-					<quantityList>
-						<quantityElement>
-							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
-							<quantity>10</quantity>
-							<uom>KG</uom>
-						</quantityElement>
-					</quantityList>
 					<extension>
 						<documentId>1</documentId>
 						<OTEventClass>urn:ot:event:Transport</OTEventClass>
