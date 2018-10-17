@@ -303,6 +303,7 @@ contract('Profile contract testing', async (accounts) => {
                 tokensToDeposit,
                 { from: accounts[i] },
             );
+            // console.log(JSON.stringify(res));
             // eslint-disable-next-line no-await-in-loop
             timestamps[i] = await util.getBlockTimestamp.call();
         }
@@ -315,8 +316,12 @@ contract('Profile contract testing', async (accounts) => {
                 `Stake deposited not matching for account ${i}!`,
             );
             assert(
-                timestamps[i].add(new BN(300)).eq(res.withdrawalTimestamp),
+                timestamps[i].add(new BN(300)).gte(res.withdrawalTimestamp),
                 `Withdrawal timestamp incorrect for account ${i}!`,
+            );
+            assert(
+                !(new BN(0)).eq(res.withdrawalTimestamp),
+                `Withdrawal timestamp not set for account ${i}!`,
             );
             assert(
                 tokensToDeposit.eq(res.withdrawalAmount),
@@ -330,13 +335,11 @@ contract('Profile contract testing', async (accounts) => {
         }
 
         errored = false;
-
-        // Wait half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 150000));
     });
 
     // eslint-disable-next-line no-undef
-    it('Should complete token withdrawal process', async () => {
+    it('Should complete token withdrawal process', async function test() {
+        this.timeout(330000);
         // Get contracts used in hook
         const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
@@ -345,7 +348,7 @@ contract('Profile contract testing', async (accounts) => {
 
         if (errored) assert(false, 'No use of running a test after previous test failed');
         // Wait other half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 150000));
+        await new Promise(resolve => setTimeout(resolve, 300000));
 
         var initialBalances = [];
         for (var i = 0; i < accounts.length; i += 1) {
