@@ -547,7 +547,7 @@ class Ethereum {
      */
     async getAllPastEvents(contractName) {
         try {
-            const currentBlock = Utilities.hexToNumber(await this.web3.eth.getBlockNumber());
+            const currentBlock = await this.web3.eth.getBlockNumber();
 
             let fromBlock = 0;
 
@@ -574,6 +574,9 @@ class Ethereum {
             for (let i = 0; i < events.length; i += 1) {
                 const event = events[i];
                 const timestamp = Date.now();
+                if (event.returnValues.DH_wallet) {
+                    event.returnValues.DH_wallet = event.returnValues.DH_wallet.toLowerCase();
+                }
                 /* eslint-disable-next-line */
                 await Models.events.create({
                     id: event.id,
@@ -672,13 +675,10 @@ class Ethereum {
      * @param event Event to listen to
      * @returns {number | Object} Event handle
      */
-    subscribeToEventPermanent(event) {
-        const handle = setInterval(async () => {
-            const startBlockNumber = parseInt(
-                await Utilities.getBlockNumberFromWeb3(this.web3),
-                16,
-            );
+    async subscribeToEventPermanent(event) {
+        const startBlockNumber = await this.web3.eth.getBlockNumber();
 
+        const handle = setInterval(async () => {
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
                 block: { [Op.gte]: startBlockNumber },

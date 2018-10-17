@@ -5,10 +5,6 @@
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
 			<sbdh:Sender>
 				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Creator PROVIDER_ID-->
-				<sbdh:ContactInformation>
-					<sbdh:Contact>Abraham Smith</sbdh:Contact>
-					<sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>
-				</sbdh:ContactInformation>
 			</sbdh:Sender>
 			<sbdh:Receiver>
 				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>
@@ -105,7 +101,7 @@
 					<epc>urn:epc:id:sgtin:Batch_1</epc>
 				</epcList>
 				<action>OBSERVE</action>
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+                <bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
 				<disposition>urn:epcglobal:cbv:disp:active</disposition>
 				<readPoint>
 					<id>urn:epc:id:sgln:Building_Green_V2</id>
