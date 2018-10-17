@@ -4,29 +4,29 @@
 	<EPCISHeader>
 		<sbdh:StandardBusinessDocumentHeader>
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
-			<sbdh:Sender><!-- Mandatory -->
+			<sbdh:Sender>
 				<!--  <sbdh:Identifier Authority="EAN.UCC">2203148000007</sbdh:Identifier> -->
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
-				<sbdh:ContactInformation> <!-- Mandatory-->
-					<sbdh:Contact>Mary Smith</sbdh:Contact> <!-- Mandatory -->
-					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>	<!-- Optional -->				
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1</sbdh:Identifier> <!-- Creator PROVIDER_ID-->
+				<sbdh:ContactInformation>
+					<sbdh:Contact>Mary Smith</sbdh:Contact>
+					<sbdh:EmailAddress>Mary_Smith@carengines.com</sbdh:EmailAddress>
 				</sbdh:ContactInformation>
 			</sbdh:Sender>
-			<sbdh:Receiver> <!-- Mandatory -->
-				<sbdh:Identifier Authority="OriginTrail">RECEIVER_ID</sbdh:Identifier>  <!-- Mandatory-->
-				<sbdh:ContactInformation> <!-- Mandatory-->
-					<sbdh:Contact>John Doe</sbdh:Contact> <!-- Mandatory -->
-					<sbdh:EmailAddress>John_Doe@airtransport.com</sbdh:EmailAddress> <!-- Optional -->
+			<sbdh:Receiver>
+				<sbdh:Identifier Authority="OriginTrail">RECEIVER_ID</sbdh:Identifier>
+				<sbdh:ContactInformation>
+					<sbdh:Contact>John Doe</sbdh:Contact>
+					<sbdh:EmailAddress>John_Doe@airtransport.com</sbdh:EmailAddress>
 				</sbdh:ContactInformation>
 			</sbdh:Receiver>
-			<sbdh:DocumentIdentification> <!-- Mandatory-->
+			<sbdh:DocumentIdentification>
 				<sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
 				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
 				<sbdh:InstanceIdentifier>100003</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
 				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-				<sbdh:CreationDateAndTime>2003-07-09T00:31:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+				<sbdh:CreationDateAndTime>2003-07-09T00:31:52Z</sbdh:CreationDateAndTime>
 			</sbdh:DocumentIdentification>
-			<sbdh:BusinessScope> <!-- Optional -->
+			<sbdh:BusinessScope>
 				<sbdh:Scope>
 					<sbdh:Type>BusinessProcess</sbdh:Type>
 					<sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
@@ -130,22 +130,22 @@
 		<EventList>	
 			<ObjectEvent>
 				<!-- Transport -->
-				<eventTime>2015-04-17T00:00:00.000-04:00</eventTime> <!-- Mandatory-->
-				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+				<eventTime>2015-04-17T00:00:00.000-04:00</eventTime>
+				<eventTimeZoneOffset>-04:00</eventTimeZoneOffset>
 				<epcList>
 					<epc>urn:epc:id:sgtin:Batch_1</epc>
 				</epcList>
-				<action>OBSERVE</action> <!-- Mandatory-->
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep> <!-- Optional -->
-				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
-				<readPoint> <!-- Optional -->
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:active</disposition>
+				<readPoint>
 					<id>urn:epc:id:sgln:Building_1</id>
 				</readPoint>
-				<bizLocation> <!-- Optional -->
+				<bizLocation>
 					<id>urn:epc:id:sgln:Building_1</id>
 				</bizLocation>
 				<extension>
-					<quantityList> <!-- Optional -->
+					<quantityList>
 						<quantityElement>			 
 							<epcClass>urn:epc:id:sgtin:Batch_1</epcClass>
 							<quantity>3</quantity>

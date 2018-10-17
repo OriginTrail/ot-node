@@ -611,7 +611,7 @@ class Utilities {
         return new Promise((resolve, reject) => {
             web3.eth.getBlockNumber()
                 .then((result) => {
-                    resolve(web3.utils.numberToHex(result));
+                    resolve(web3.utils.hexToNumber(result));
                 }).catch((error) => {
                     Utilities.getLogger().error(error);
                     reject(error);

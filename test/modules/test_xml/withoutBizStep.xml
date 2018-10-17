@@ -105,7 +105,6 @@
 					<epc>urn:epc:id:sgtin:Batch_1</epc>
 				</epcList>
 				<action>OBSERVE</action>
-				<bizStep>urn:epcglobal:cbv:bizstep:shipping</bizStep>
 				<disposition>urn:epcglobal:cbv:disp:active</disposition>
 				<readPoint>
 					<id>urn:epc:id:sgln:Building_Green_V2</id>
