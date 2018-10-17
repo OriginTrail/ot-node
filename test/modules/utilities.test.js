@@ -4,10 +4,8 @@ const {
 const { assert, expect } = require('chai');
 const fs = require('fs');
 const Utilities = require('../../modules/Utilities');
-const kadence = require('@kadenceproject/kadence');
 
 const databaseData = require('./test_data/arangodb-data.js');
-
 
 describe('Utilities module', () => {
     const environments = ['development', 'staging', 'stable', 'production'];
@@ -27,7 +25,8 @@ describe('Utilities module', () => {
                     'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
                     'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                    'autoUpdater', 'bugSnag', 'network'],
+                    'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_litigation_interval_in_minutes',
+                    'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price', 'erc725_identity_filepath'],
                 `Some config items are missing in config for environment '${environment}'`,
             );
             assert.hasAllKeys(
