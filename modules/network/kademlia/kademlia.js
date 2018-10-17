@@ -694,32 +694,6 @@ class Kademlia {
                 });
             };
 
-            node.verifyImport = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-verify-import-request', { message }, [contactId, contact], (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
-            node.sendVerifyImportResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-verify-import-response', { message }, [contactId, contact], (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
-                });
-            };
-
             node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
                 node.quasar.quasarPublish(
                     topic, message, opts,

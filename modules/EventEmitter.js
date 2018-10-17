@@ -703,72 +703,6 @@ class EventEmitter {
             );
         });
 
-        this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
-            const {
-                import_id,
-                DH_wallet,
-                DH_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                data_size_in_bytes,
-            } = eventData;
-
-            if (DH_wallet !== config.node_wallet
-                || config.identity !== DH_node_id.substring(2, 42)) {
-                // Offer not for me.
-                return;
-            }
-
-            logger.info(`Added as predetermined for import ${import_id}`);
-
-            // TODO: This is a hack. DH doesn't know with whom to sign the offer.
-            // Try to dig it from events.
-            const createOfferEventEventModel = await Models.events.findOne({
-                where: {
-                    event: 'OfferCreated',
-                    import_id,
-                },
-            });
-
-            if (!createOfferEventEventModel) {
-                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
-                return;
-            }
-
-            try {
-                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
-                const createOfferEventData = JSON.parse(createOfferEvent.data);
-
-                const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
-                await dhService.handleOffer(
-                    import_id, dcNodeId, total_escrow_time_in_minutes,
-                    max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                    createOfferEventData.min_reputation, data_size_in_bytes,
-                    createOfferEventData.data_hash, true,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
-            }
-        });
-
-        this._on('eth-offer-canceled', (event) => {
-            logger.info(`Ongoing offer ${event.import_id} canceled`);
-        });
-
-        this._on('eth-bid-taken', (event) => {
-            if (event.DH_wallet !== config.node_wallet) {
-                logger.notify(`Bid not accepted for offer ${event.import_id}`);
-                // Offer not for me.
-                return;
-            }
-            logger.notify(`Bid accepted for offer ${event.import_id}`);
-        });
-
         this._on('eth-LitigationInitiated', async (eventData) => {
             const {
                 import_id,
@@ -800,37 +734,6 @@ class EventEmitter {
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
-
-        this._on('eth-EscrowVerified', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // Event is for me.
-                logger.trace(`Escrow for import ${import_id} verified`);
-                try {
-                    // TODO: Possible race condition if another bid for same import came meanwhile.
-                    const bid = await Models.bids.findOne({
-                        where: {
-                            import_id,
-                        },
-                        order: [
-                            ['id', 'DESC'],
-                        ],
-                    });
-
-                    if (!bid) {
-                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
-                        return;
-                    }
-                } catch (error) {
-                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
-                    notifyError(error);
-                }
-            }
-        });
     }
 
     /**
@@ -842,13 +745,10 @@ class EventEmitter {
             dvService,
             logger,
             transport,
-            blockchain,
-            remoteControl,
             dhService,
             dcService,
             dvController,
             notifyError,
-            dcController,
         } = this.ctx;
 
         // sync
@@ -1112,35 +1012,6 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} successfully processed the encrypted key`);
             } else {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
-            }
-        });
-
-        // async
-        this._on('kad-verify-import-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { wallet: dhWallet } = transport.extractSenderInfo(request);
-            const { epk, importId, encryptionKey } = transport.extractMessage(request);
-
-            logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
-
-            const dcNodeId = transport.extractSenderID(request);
-            await dcService.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
-        });
-
-        // async
-        this._on('kad-verify-import-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { status, import_id } = transport.extractMessage(request);
-            if (status === 'success') {
-                logger.notify(`Key verification for import ${import_id} succeeded`);
-                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
-            } else {
-                logger.notify(`Key verification for import ${import_id} failed`);
-                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
             }
         });
     }
