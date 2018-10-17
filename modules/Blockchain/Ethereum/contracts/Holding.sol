@@ -7,24 +7,27 @@ import {ProfileStorage} from './ProfileStorage.sol';
 import {Profile} from './Profile.sol';
 import {SafeMath} from './SafeMath.sol';
 
-contract Holding {
+contract Holding is Ownable {
     using SafeMath for uint256;
 
     Hub public hub;
     HoldingStorage public holdingStorage;
     ProfileStorage public profileStorage;
     Profile public profile;
+
+    uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
         hub = Hub(hubAddress);
         holdingStorage = HoldingStorage(hub.holdingStorageAddress());
         profileStorage = ProfileStorage(hub.profileStorageAddress());
         profile = Profile(hub.profileAddress());
+        difficultyOverride = 0;
     }
 
 
     event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
-    event OfferCreated(bytes32 offerId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
+    event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
     event OfferFinalized(bytes32 offerId, address holder1, address holder2, address holder3);
 
     function createOffer(address identity, bytes32 dataSetId,
@@ -52,14 +55,18 @@ contract Holding {
         // We consider a pair of dataSet and identity unique within one block, hence the formula for offerId
         bytes32 offerId = keccak256(abi.encodePacked(dataSetId, identity, blockhash(block.number - 1)));
 
+
         //We calculate the task for the data creator to solve
             //Calculating task difficulty
         uint256 difficulty;
-        if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
+        if(difficultyOverride != 0) difficulty = difficultyOverride;
         else {
-            difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
+            if(logs2(profileStorage.activeNodes()) <= 4) difficulty = 1;
+            else {
+                difficulty = 4 + (((logs2(profileStorage.activeNodes()) - 4) * 10000) / 13219);
+            }
         }
-
+        
         // Writing variables into storage
         holdingStorage.setOfferParameters(
             offerId,
@@ -79,7 +86,7 @@ contract Holding {
         );
 
         emit OfferTask(dataSetId, dcNodeId, offerId, blockhash(block.number - 1) & bytes32(2 ** (difficulty * 4) - 1));
-        emit OfferCreated(offerId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
+        emit OfferCreated(offerId, dataSetId, dcNodeId, holdingTimeInMinutes, dataSetSizeInBytes, tokenAmountPerHolder, litigationIntervalInMinutes);
     }
 
     function finalizeOffer(address identity, bytes32 offerId, uint256 shift,
@@ -195,6 +202,11 @@ contract Holding {
             y := div(mload(add(m,sub(255,a))), shift)
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
+    }
+
+    function setDifficulty(uint256 new_difficulty) 
+    public onlyOwner{
+        difficultyOverride = new_difficulty;
     }
 }
 

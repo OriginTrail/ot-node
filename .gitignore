@@ -14,7 +14,7 @@ node.log
 keys
 data
 modules/blockchain_interface/ethereum/build/*
-/modules/blockchain_interface/ethereum/test/development.test.js
+modules/Blockchain/Ethereum/test/development.test.js
 modules/Blockchain/Ethereum/build/
 hidden_service
 !*.gitkeep
