@@ -13,7 +13,7 @@ before_script:
   - cp .origintrail-noderc.travis .origintrail-noderc
   - npm run bootstrap
   - npm install -g ganache-cli@6.1.5 &> /dev/null
-  - npm install -g truffle &> /dev/null
+  - npm install -g truffle@beta &> /dev/null
 script:
   - npm run lint
   - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd; fi'
