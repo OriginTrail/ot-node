@@ -148,20 +148,19 @@ class GS1Utilities {
         return eventId;
     }
 
+    generateSalt() {
+        return crypto.randomBytes(16).toString('base64');
+    }
+
     /**
      * Handle private data
      * @private
      */
-    async handlePrivate(senderId, uid, _private, data, privateData) {
+    async handlePrivate(senderId, uid, _private, data, privateData, salt) {
         data.private = {};
 
-        const existingVertex = await this.db.findVertexWithMaxVersion(senderId, uid);
-        let salt = null;
-        if (existingVertex && existingVertex.private) {
-            salt = existingVertex.private._salt;
-        }
         if (salt == null) {
-            salt = crypto.randomBytes(16).toString('base64');
+            salt = this.generateSalt();
         }
         for (const key in _private) {
             const value = _private[key];
@@ -170,7 +169,6 @@ class GS1Utilities {
             const sorted = Utilities.sortObject(value);
             data.private[key] = Utilities.soliditySHA3(JSON.stringify(`${sorted}${salt}`));
         }
-        privateData._salt = salt;
     }
 
     /**

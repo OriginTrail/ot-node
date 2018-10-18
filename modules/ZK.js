@@ -57,8 +57,10 @@ class ZK {
                 batches[input.object] = {};
             }
 
-            batches[input.object][unit] = this.encrypt(new BN(input.quantity),
-                new BN(input.r).mod(this.n).toRed(this.redSquare));
+            batches[input.object][unit] = this.encrypt(
+                new BN(input.quantity),
+                new BN(input.r).mod(this.n).toRed(this.redSquare),
+            );
         }
 
         for (const output of outputQuantities) {
@@ -71,8 +73,10 @@ class ZK {
                 batches[output.object] = {};
             }
 
-            batches[output.object][unit] = this.encrypt(new BN(output.quantity),
-                new BN(output.r).mod(this.n).toRed(this.redSquare));
+            batches[output.object][unit] = this.encrypt(
+                new BN(output.quantity),
+                new BN(output.r).mod(this.n).toRed(this.redSquare),
+            );
         }
 
         console.log(JSON.stringify(all_units));
@@ -87,9 +91,8 @@ class ZK {
     _P(eventId, inputQuantities, outputQuantities, unit) {
         const e = new BN(sha3(eventId).substring(0, 10), 16);
 
-        let r = this.generateR();
-
-        const a = this.encrypt(this.zero, r.toRed(this.redSquare));
+        //let r = this.generateR();
+        let rand = '';
 
         const inputs = [];
         const outputs = [];
@@ -111,6 +114,8 @@ class ZK {
                     randomness = new BN(this.generatePrime()).mod(this.n).toRed(this.redSquare);
                 }
 
+                rand = inputQuantities[i].r;
+
                 const encryptedInput = this.encrypt(quantity, randomness);
                 // let encryptedNegInput = this.encrypt(this.n.sub(quantity), negRandomness);
 
@@ -127,7 +132,7 @@ class ZK {
                     },
                     private: {
                         object: inputQuantities[i].object,
-                        r: randomness.toString(),
+                        r: randomness.toString('hex'),
                         quantity: rawQuantity,
                     },
                 });
@@ -146,6 +151,8 @@ class ZK {
                     randomness = new BN(this.generatePrime()).mod(this.n).toRed(this.redSquare);
                 }
 
+                rand = outputQuantities[i].r;
+
                 const encryptedOutput = this.encrypt(quantity, randomness);
                 const encryptedNegOutput = encryptedOutput.redInvm();
 
@@ -163,7 +170,7 @@ class ZK {
                     },
                     private: {
                         object: outputQuantities[i].object,
-                        r: randomness.toString(),
+                        r: randomness.toString('hex'),
                         // rp : negRandomness,
                         quantity: rawQuantity,
                     },
@@ -172,8 +179,10 @@ class ZK {
         }
 
 
-        r = r.toRed(this.redSquare);
+        //r = r.toRed(this.redSquare);
+        const r = new BN(rand).toRed(this.redSquare);
         const zp = r.redMul(R.redPow(e));
+        const a = this.encrypt(this.zero, r);
 
         const res = this.V(e, a, Z, zp);
         /*
@@ -197,9 +206,11 @@ class ZK {
 
         // return res;
         if (res) {
+            console.log('ZK proof successfully created and validated for event: ', eventId);
             this.log.debug('ZK proof successfully created and validated for event: ', eventId);
         } else {
             this.log.debug('ZK proof failed for event: ', eventId);
+            console.log('ZK proof failed for event: ', eventId);
         }
         return zkObject;
     }

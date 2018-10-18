@@ -42,32 +42,89 @@ class ArangoJS {
      * @returns {Promise<any>}
      */
     async findVertices(queryObject) {
-        let queryString = 'FOR v IN ot_vertices ';
+        let queryString = '';
+        console.log(queryObject);
         const params = {};
+        const { query } = queryObject[0];
         if (Utilities.isEmptyObject(queryObject) === false) {
-            queryString += 'FILTER ';
-
             let count = 1;
-            const filters = [];
-            for (const key in queryObject) {
-                if (key.match(/^[\w\d]+$/g) !== null) {
-                    let searchKey;
-                    if (key !== 'vertex_type' && key !== '_key') {
-                        searchKey = `identifiers.${key}`;
+            for (const key in query) {
+                if (key.match(/^[.\w\d]+$/g) !== null) {
+                    if (key === 'uid') {
+                        queryString += `
+                        LET v_res${count} = (
+                        FOR v${count} IN ot_vertices
+                            FILTER v${count}.uid == "@param${count}"
+                            RETURN {"imports": v${count}.imports, "objects": [v${count}]}
+                        )`;
                     } else {
-                        searchKey = key;
+                        queryString += `
+                            LET v_res${count} = (
+                                FOR v${count} IN ot_vertices
+                                    LET objects = (
+                                                    FOR w${count}, e IN 1..1
+                                                    OUTBOUND v${count}._id GRAPH "origintrail_graph"
+                                                    FILTER e.edge_type == "IDENTIFIES"
+                                                            AND LENGTH(INTERSECTION(e.imports, v${count}.imports)) > 0
+                                                    RETURN w${count}
+                                                )
+                                    FILTER v${count}.vertex_type == "IDENTIFIER"
+                                            AND v${count}.id_type == "${key}"
+                                            AND v${count}.id_value == "@param${count}"
+                                    RETURN {"imports": v${count}.imports, "objects": objects}
+                                )
+                        `;
                     }
                     const param = `param${count}`;
-                    filters.push(`v.${searchKey} == @param${count}`);
 
                     count += 1;
-                    params[param] = queryObject[key];
+                    params[param] = query[key];
                 }
             }
-            queryString += filters.join(' AND ');
+
+            for (let i = 1; i <= count; i += 1) {
+                queryString += `
+                    FILTER LENGTH(v_res${i}) > 0
+                    `;
+            }
+
+            queryString += 'AND LENGTH(INTERSECTION(v_res1[0].imports';
+
+
+            for (let i = 1; i <= count; i += 1) {
+                queryString += `
+                   , v_res${i}[0].imports`;
+            }
+
+            queryString += ')) > 0 RETURN {imports: INTERSECTION(v_res1[0].imports';
+
+            for (let i = 1; i <= count; i += 1) {
+                queryString += `
+                   , v_res${i}[0].imports`;
+            }
+
+            queryString += '), "objects": INTERSECTION(v_res1[0].objects';
+
+            for (let i = 1; i <= count; i += 1) {
+                queryString += `
+                   , v_res${i}[0].objects`;
+            }
+
+            queryString += '), ';
+
+            const results = [];
+
+            for (let i = 1; i <= count; i += 1) {
+                results.push(`"v${i}": v_res${i}[0].objects`);
+            }
+
+            queryString += results.join(',');
+            queryString += '}';
+
+            console.log(queryString);
+
+            return this.runQuery(queryString, params);
         }
-        queryString += ' RETURN v';
-        return this.runQuery(queryString, params);
     }
 
     /**
@@ -110,13 +167,7 @@ class ArangoJS {
      */
     async findImportIds(inputQuery) {
         const results = await this.dataLocationQuery(inputQuery);
-        const imports = results.reduce((prevVal, elem) => {
-            for (const importId of elem.imports) {
-                prevVal.add(importId);
-            }
-            return prevVal;
-        }, new Set([]));
-        return [...imports].sort();
+        return results[0];
     }
 
     /**
@@ -125,30 +176,69 @@ class ArangoJS {
      */
     async dataLocationQuery(inputQuery) {
         const params = {};
-        const filters = [];
 
         let count = 1;
-        let queryString = 'FOR v IN ot_vertices FILTER ';
+        let queryString = '';
         for (const searchRequestPart of inputQuery) {
             const { path, value, opcode } = searchRequestPart;
 
             if (opcode == null) {
                 throw new Error('OPCODE parameter is not defined');
             }
-            switch (opcode.toUpperCase()) {
-            case 'EQ':
-                filters.push(`v.${path} == @param${count}`);
-                break;
-            case 'IN':
-                filters.push(`POSITION(v.${path}, @param${count}) == true`);
-                break;
-            default:
-                throw new Error(`OPCODE ${opcode} is not defined`);
+
+            if (path.indexOf('identifiers.') === 0) {
+                const id_type = path.replace('identifiers.', '');
+                const id_value = value;
+                let filter = `LET v_res${count} = (
+                                                FOR v${count} IN ot_vertices
+                                            LET objects = (
+                                                FOR w${count}, e IN 1..1
+                                            OUTBOUND v${count}._id GRAPH "origintrail_graph"
+                                            FILTER e.edge_type == "IDENTIFIES"
+                                            AND LENGTH(INTERSECTION(e.imports, v${count}.imports)) > 0
+                                            RETURN w${count})
+                                 `;
+
+                switch (opcode) {
+                case 'EQ':
+                    filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
+                                         AND v${count}.id_type == "${id_type}"
+                                         AND v${count}.id_value == "${id_value}"
+                                         `;
+                    break;
+                case 'IN':
+                    filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
+                                         AND v${count}.id_type == "${id_type}"
+                                         AND "${id_value}" IN v${count}.id_value
+                                         `;
+                    break;
+                default:
+                    throw new Error(`OPCODE ${opcode} is not defined`);
+                }
+
+                filter += `RETURN {"imports": v${count}.imports, "objects": objects})
+                    `;
+
+                queryString += filter;
             }
-            params[`param${count}`] = value;
             count += 1;
         }
-        queryString += `${filters.join(' AND ')} RETURN v`;
+
+        for (let i = 1; i < count; i += 1) {
+            queryString += `
+                    FILTER LENGTH(v_res${i}) > 0
+                    `;
+        }
+
+
+        queryString += ' RETURN INTERSECTION(v_res1[0].imports';
+
+        for (let i = 1; i < count; i += 1) {
+            queryString += `, v_res${i}[0].imports`;
+        }
+
+        queryString += ')';
+
         return this.runQuery(queryString, params);
     }
 
@@ -329,10 +419,10 @@ class ArangoJS {
      */
     async findDocumentWithMaxVersion(collection, senderId, uid) {
         const queryString = `FOR v IN  ${collection} ` +
-            'FILTER v.identifiers.uid == @uid AND v.sender_id == @senderId ' +
-            'SORT v.version DESC ' +
+            'FILTER v.uid == @uid AND v.sender_id == @senderId ' +
             'LIMIT 1 ' +
             'RETURN v';
+
         const params = {
             uid,
             senderId,
@@ -524,6 +614,25 @@ class ArangoJS {
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
+        for (const i in vertices) {
+            if (vertices[i][data_id]) {
+                delete vertices[i][data_id].privateData;
+                vertices[i] = {
+                    _dc_key: vertices[i]._dc_key,
+                    _key: vertices[i]._key,
+                    data: vertices[i][data_id].data,
+                    vertex_type: vertices[i].vertex_type,
+                    uid: vertices[i].uid,
+                };
+
+                for (const key in vertices[i]) {
+                    if (vertices[i][key] == null) {
+                        delete vertices[i][key];
+                    }
+                }
+            }
+        }
+
         // Check if packed to fix issue with double classes.
         const filtered = vertices.filter(v => v._dc_key);
         if (filtered.length > 0) {
@@ -531,6 +640,7 @@ class ArangoJS {
         }
 
         const objectClasses = await this.findObjectClassVertices();
+
         return vertices.concat(objectClasses);
     }
 
