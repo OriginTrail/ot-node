@@ -687,11 +687,15 @@ class EventEmitter {
                 dataSetId,
             } = eventData;
 
-            await dhService.handleOffer(
-                offerId, dcNodeId,
-                dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
-                tokenAmountPerHolder, dataSetId,
-            );
+            try {
+                await dhService.handleOffer(
+                    offerId, dcNodeId,
+                    dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+                    tokenAmountPerHolder, dataSetId,
+                );
+            } catch (e) {
+                logger.warn(e.message);
+            }
         });
 
         this._on('eth-LitigationInitiated', async (eventData) => {

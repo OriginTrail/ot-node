@@ -168,14 +168,13 @@ class DHService {
         if (remainder) {
             if (!this.config.deposit_on_demand) {
                 const message = 'Not enough tokens. Deposit on demand feature is disabled. Please, enable it in your configuration.';
-                this.logger.warn(message);
                 throw new Error(message);
             }
 
             bid.deposit = remainder.toString();
             await bid.save({ fields: ['deposit'] });
 
-            this.logger.warn(`Not enough tokens for offer ${offerId}. OT-node will automatically deposit enough tokens.`);
+            this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
 
             Object.assign(data, {
                 amount: remainder.toString(),
