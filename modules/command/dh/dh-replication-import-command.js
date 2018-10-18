@@ -118,7 +118,7 @@ class DhReplicationImportCommand extends Command {
             data_size: dataSize,
         });
 
-        this.logger.trace(`[DH] Replication finished for offer ID ${offerId}`);
+        this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
         const toSign = [
             Utilities.denormalizeHex(offerId),

@@ -96,12 +96,14 @@ class DHService {
             return; // wait until peers are synced
         }
 
+        this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
+
         // use LIKE because of some SC related issues
         const dataInfo = await Models.data_info.findOne({
             where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` } },
         });
         if (dataInfo) {
-            this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
+            this.logger.info(`I've already stored data for data set ${dataSetId}. Ignoring.`);
             return;
         }
 
@@ -109,11 +111,9 @@ class DHService {
             where: { offer_id: offerId },
         });
         if (bid) {
-            this.logger.trace(`I've already added bid for offer ${offerId}. Ignoring.`);
+            this.logger.info(`I've already added bid for offer ${offerId}. Ignoring.`);
             return;
         }
-
-        this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${offerId}.`);
 
         const format = d3.formatPrefix(',.6~s', 1e6);
         const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
