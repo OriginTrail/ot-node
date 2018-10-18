@@ -274,12 +274,11 @@ class Blockchain {
 
     /**
      * Gets root hash for import
-     * @param dcWallet DC wallet
-     * @param importId   Import ID
+     * @param dataSetId Data set ID
      * @return {Promise<any>}
      */
-    async getRootHash(dcWallet, importId) {
-        return this.blockchain.getRootHash(dcWallet, importId);
+    async getRootHash(dataSetId) {
+        return this.blockchain.getRootHash(dataSetId);
     }
 
     async getEscrow(importId, dhWallet) {

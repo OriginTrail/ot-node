@@ -289,30 +289,21 @@ class EventEmitter {
         });
 
         this._on('api-get_root_hash', (data) => {
-            const dcWallet = data.query.dc_wallet;
-            if (dcWallet == null) {
+            const dataSetId = data.query.data_set_id;
+            if (dataSetId == null) {
                 data.response.status(400);
                 data.response.send({
-                    message: 'dc_wallet parameter query is missing',
+                    message: 'data_set_id parameter query is missing',
                 });
                 return;
             }
-            const importId = data.query.import_id;
-            if (importId == null) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'import_id parameter query is missing',
-                });
-                return;
-            }
-            logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
-            blockchain.getRootHash(dcWallet, importId).then((res) => {
-                if (res) {
-                    if (!Utilities.isZeroHash(res.graph_hash)) {
+            logger.info(`Get root hash triggered with data set ${dataSetId}`);
+            blockchain.getRootHash(dataSetId).then((dataRootHash) => {
+                if (dataRootHash) {
+                    if (!Utilities.isZeroHash(dataRootHash)) {
                         data.response.status(200);
                         data.response.send({
-                            root_hash: res.graph_hash,
-                            import_hash: res.import_hash,
+                            root_hash: dataRootHash,
                         });
                     } else {
                         data.response.status(404);

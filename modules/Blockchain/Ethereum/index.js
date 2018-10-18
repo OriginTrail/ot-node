@@ -179,14 +179,12 @@ class Ethereum {
 
     /**
      * Gets root hash for import
-     * @param dcWallet DC wallet
-     * @param importId   Import ID
+     * @param dataSetId Data set ID
      * @return {Promise<any>}
      */
-    async getRootHash(dcWallet, importId) {
-        const importIdHash = Utilities.soliditySHA3(importId.toString());
-        this.log.trace(`Fetching root hash for dcWallet ${dcWallet} and importIdHash ${importIdHash}`);
-        return this.otContract.methods.getFingerprintByBatchHash(dcWallet, importIdHash).call();
+    async getRootHash(dataSetId) {
+        this.log.trace(`Fetching root hash for data set ${dataSetId}`);
+        return this.holdingStorageContract.methods.fingerprint(dataSetId).call();
     }
 
     /**
