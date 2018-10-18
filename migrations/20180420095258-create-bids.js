@@ -34,5 +34,5 @@ module.exports = {
             type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface) => queryInterface.dropTable('bids'),
+    down: queryInterface => queryInterface.dropTable('bids'),
 };

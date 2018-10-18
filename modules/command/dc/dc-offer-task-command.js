@@ -27,7 +27,7 @@ class DcOfferTaskCommand extends Command {
             where: {
                 event: 'OfferTask',
                 // use LIKE because of some SC related issues
-                data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%`},
+                data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` },
                 finished: 0,
             },
         });

@@ -98,7 +98,7 @@ class DHService {
 
         // use LIKE because of some SC related issues
         const dataInfo = await Models.data_info.findOne({
-            where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%`} },
+            where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` } },
         });
         if (dataInfo) {
             this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);

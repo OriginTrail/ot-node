@@ -33,7 +33,7 @@ class TokenWithdrawalStartCommand extends Command {
                     name: 'tokenWithdrawalWaitStartedCommand',
                     period: 5000,
                     data: command.data,
-                }
+                },
             ],
         };
     }

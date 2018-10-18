@@ -28,7 +28,6 @@ class DCController {
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&
             utilities.validateNumberParameter(req.body.litigation_interval_in_minutes)) {
-
             const dataset = await Models.data_info.findOne({
                 where: { data_set_id: req.body.data_set_id },
             });

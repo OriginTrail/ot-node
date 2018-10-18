@@ -262,30 +262,40 @@ describe.skip('Protocol tests', () => {
     let tokenContract;
     let tokenInstance;
     let tokenDeploymentReceipt;
+    const tokenSource = null;
+    // TODO fix
     // const tokenSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/TracToken.sol', 'utf8');
     let escrowContractData;
     let escrowContractAbi;
     let escrowContract;
     let escrowInstance;
     let escrowDeploymentReceipt;
+    const escrowSource = null;
+    // TODO fix
     // const escrowSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/Escrow.sol', 'utf8');
     let readingContractData;
     let readingContractAbi;
     let readingContract;
     let readingInstance;
     let readingDeploymentReceipt;
+    const readingSource = null;
+    // TODO fix
     // const readingSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/Reading.sol', 'utf8');
     let biddingContractData;
     let biddingContractAbi;
     let biddingContract;
     let biddingInstance;
     let biddingDeploymentReceipt;
+    const biddingSource = null;
+    // TODO fix
     // const biddingSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/Bidding.sol', 'utf8');
     let otFingerprintContractData;
     let otFingerprintContractAbi;
     let otFingerprintContract;
     let otFingerprintInstance;
     let otFingerprintDeploymentReceipt;
+    const otFingerprintSource = null;
+    // TODO fix
     // const otFingerprintSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol', 'utf8');
 
     const log = Utilities.getLogger();
