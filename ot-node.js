@@ -495,6 +495,7 @@ class OTNode {
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
+        await commandExecutor.start();
     }
 
     /**
