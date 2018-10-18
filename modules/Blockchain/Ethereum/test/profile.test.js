@@ -289,6 +289,171 @@ contract('Profile contract testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
+    it('Should reserve tokens', async () => {
+        // Get contracts used in hook
+        const hub = await Hub.deployed();
+        const holding = await Holding.deployed();
+        const profile = await Profile.deployed();
+        const profileStorage = await ProfileStorage.deployed();
+
+        var initialStakes = [];
+        for (var i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var initialStakesReserved = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        await hub.setHoldingAddress(accounts[0]);
+
+        const amountToReserve = new BN(100);
+        await profile.reserveTokens(
+            identities[0],
+            identities[1],
+            identities[2],
+            identities[3],
+            amountToReserve,
+        );
+
+        var newStakes = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var newStakesReserved = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        assert(initialStakes[0].eq(newStakes[0]), 'Stake changed for DC');
+        assert(
+            initialStakesReserved[0].add(amountToReserve.mul(new BN(3))).eq(newStakesReserved[0]),
+            'Wrong amount of tokens reserved for DC',
+        );
+        for (i = 1; i < 4; i += 1) {
+            assert(initialStakes[i].eq(newStakes[i]), `Stake changed for account ${i}!`);
+            assert(
+                initialStakesReserved[i].add(amountToReserve).eq(newStakesReserved[i]),
+                `Wrong amount of tokens reserved for account ${i}!`,
+            );
+        }
+
+        await hub.setHoldingAddress(holding.address);
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should release tokens', async () => {
+        // Get contracts used in hook
+        const hub = await Hub.deployed();
+        const holding = await Holding.deployed();
+        const profile = await Profile.deployed();
+        const profileStorage = await ProfileStorage.deployed();
+
+        var initialStakes = [];
+        for (var i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var initialStakesReserved = [];
+        for (i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        await hub.setHoldingAddress(accounts[0]);
+
+        const amountToRelease = new BN(100);
+        for (i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await profile.releaseTokens(identities[i], amountToRelease);
+        }
+
+        var newStakes = [];
+        for (i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var newStakesReserved = [];
+        for (i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        for (i = 1; i < 4; i += 1) {
+            assert(initialStakes[i].eq(newStakes[i]), `Stake changed for account ${i}!`);
+            assert(
+                initialStakesReserved[i].sub(amountToRelease).eq(newStakesReserved[i]),
+                `Wrong amount of tokens reserved for account ${i}!`,
+            );
+        }
+
+        await hub.setHoldingAddress(holding.address);
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should transfer tokens in profile contract', async () => {
+        // Get contracts used in hook
+        const hub = await Hub.deployed();
+        const holding = await Holding.deployed();
+        const profile = await Profile.deployed();
+        const profileStorage = await ProfileStorage.deployed();
+
+        var initialStakes = [];
+        for (var i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var initialStakesReserved = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        await hub.setHoldingAddress(accounts[0]);
+
+        const amountToTransfer = new BN(100);
+
+        // Execute tested function
+        for (i = 1; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await profile.transferTokens(identities[0], identities[i], amountToTransfer);
+        }
+
+        var newStakes = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakes[i] = await profileStorage.getStake.call(identities[i]);
+        }
+        var newStakesReserved = [];
+        for (i = 0; i < 4; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            newStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
+        }
+
+        assert(
+            initialStakes[0].sub(amountToTransfer.mul(new BN(3))).eq(newStakes[0]),
+            'Wrong amount of stake for DC!',
+        );
+        assert(
+            initialStakesReserved[0].sub(amountToTransfer.mul(new BN(3))).eq(newStakesReserved[0]),
+            'Wrong amount of tokens reserved for DC!',
+        );
+        for (i = 1; i < 4; i += 1) {
+            assert(initialStakes[i].add(amountToTransfer).eq(newStakes[i]), `Wrong amount of stake for account ${i}!`);
+            assert(
+                initialStakesReserved[i].eq(newStakesReserved[i]),
+                `Amount of tokens reserved for account ${i} has changed!`,
+            );
+        }
+
+        await hub.setHoldingAddress(holding.address);
+    });
+
+    // eslint-disable-next-line no-undef
     it('Should start token withdrawal process', async () => {
         // Get contracts used in hook
         const profile = await Profile.deployed();
