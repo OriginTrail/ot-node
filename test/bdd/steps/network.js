@@ -6,8 +6,6 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
-const fs = require('fs');
-const path = require('path');
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
@@ -158,33 +156,20 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV]+)$/, function (nodeIndex, 
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 });
 
-Given(/^I import "([^"]*)"$/, function (xmlFilepath) {
+Given(/^I import "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
+    expect(importType, 'importType can only be GS1 or WOT.').to.satisfy(val => (val === 'GS1' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    return new Promise((accept, reject) => {
-        request.post({
-            headers: { 'Content-Type': 'application/json' },
-            url: `${dc.state.node_rpc_url}/api/import`,
-            json: true,
-            formData: {
-                importfile: fs.createReadStream(path.join(__dirname, '../../../', xmlFilepath)),
-                importtype: 'GS1',
-            },
-        }, (error, response, body) => {
-            if (error) {
-                reject(error);
-                return;
-            }
+    const host = dc.state.node_rpc_url;
 
-            expect(body).to.have.keys(['import_hash', 'import_id', 'message', 'wallet']);
 
-            this.state.lastImport = body;
-            accept();
-        });
-    });
+    const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
+
+    expect(importResponse).to.have.keys(['import_hash', 'import_id', 'message', 'wallet']);
+    this.state.lastImport = importResponse;
 });
 
 Then(/^the last import's hash should be the same as one manually calculated$/, function () {
@@ -366,4 +351,81 @@ Then(/^checking again first import hash should point to remembered value$/, asyn
     expect(firstImportFingerprint.import_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.import_hash);
     expect(firstImportFingerprint.root_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
     expect(deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint), 'import and root has in both scenario should be indentical').to.be.equal(true);
+});
+
+Given(/^I call api-query-local with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const response = await httpApiHelper.apiQueryLocal(host, jsonQuery);
+    this.state.apiQueryLocalResponse = response;
+});
+
+Given(/^I call api-query-local-import with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const response = await httpApiHelper.apiQueryLocalImport(host, jsonQuery);
+    this.state.apiQueryLocalImportResponse = response;
+});
+
+Given(/^I call api-query-local-import-importId endpoint for last import$/, async function () {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const lastImportId = this.state.lastImport.import_id;
+
+    const response = await httpApiHelper.apiQueryLocalImportByImportId(host, lastImportId);
+    this.state.apiQueryLocalImportByImportIdResponse = response;
+});
+
+Then(/^api-query-local response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
+
+    // TODO agree on moderate expected response structure with A.V.
+    // console.log(this.state.apiQueryLocalResponse);
+    // console.log("_______________________________");
+});
+
+Then(/^api-query-local-import response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
+
+    // TODO agree on moderate expected response structure with A.V.
+    // console.log(this.state.apiQueryLocalImportResponse);
+    // console.log("_______________________________");
+});
+
+Then(/^api-query-local-import-importId response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalImportByImportIdResponse, 'apiQueryLocalImportByImportId should have given some result').to.be.equal(true);
+
+    // TODO agree on moderate expected response structure with A.V.
+    // console.log(this.state.apiQueryLocalImportByImportIdResponse);
+    // console.log("_______________________________");
+
+    expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
 });

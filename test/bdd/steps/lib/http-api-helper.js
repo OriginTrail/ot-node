@@ -1,4 +1,6 @@
 const request = require('request');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * @typedef {Object} ImportInfo
@@ -57,7 +59,124 @@ async function apiFingerprint(nodeRpcUrl, dcWallet, importId) {
     });
 }
 
+/**
+ * Fetch /api/import
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} importFilePath
+ * @param {string} importType
+ * @return {Promise.<Import>}
+ */
+async function apiImport(nodeRpcUrl, importFilePath, importType) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/import`,
+            json: true,
+            formData: {
+                importfile: fs.createReadStream(path.join(__dirname, '../../../../', importFilePath)),
+                importtype: `${importType}`,
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
+ * Fetch /api/query/local response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise}
+ */
+async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/query/local`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch /api/query/local/import/{{import_id}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} importId ID.
+ * @return {Promise}
+ */
+async function apiQueryLocalImportByImportId(nodeRpcUrl, importId) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/query/local/import/${importId}`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch /api/query/local/import response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise}
+ */
+async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/query/local/import`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+
 module.exports = {
+    apiImport,
     apiImportInfo,
     apiFingerprint,
+    apiQueryLocal,
+    apiQueryLocalImport,
+    apiQueryLocalImportByImportId,
 };
