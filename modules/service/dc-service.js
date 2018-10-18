@@ -142,6 +142,12 @@ class DCService {
 
         let depositCommand = null;
         if (remainder) {
+            if (!this.config.deposit_on_demand) {
+                const message = 'Not enough tokens. Deposit on demand feature is disabled. Please, enable it in your configuration.';
+                this.logger.warn(message);
+                throw new Error(message);
+            }
+
             // deposit tokens
             depositCommand = {
                 name: 'profileApprovalIncreaseCommand',

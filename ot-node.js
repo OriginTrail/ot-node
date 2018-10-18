@@ -466,10 +466,6 @@ class OTNode {
 
         // Starting the kademlia
         const transport = container.resolve('transport');
-
-        // Initialise API
-        this.startRPC(emitter);
-
         await transport.init(container.cradle);
 
         // Starting event listener on Blockchain
@@ -484,6 +480,9 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
+
+        // Initialise API
+        this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -547,7 +546,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC(emitter) {
+    startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,
