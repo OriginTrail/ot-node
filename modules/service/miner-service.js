@@ -48,6 +48,8 @@ class MinerService {
                 task,
                 status: 'STARTED',
             });
+
+            this.logger.important(`Miner started for offer ${offerId}.`);
         } catch (e) {
             this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ID ${offerId}`);
         }
