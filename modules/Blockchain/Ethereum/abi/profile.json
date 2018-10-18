@@ -3,24 +3,6 @@
     "constant": false,
     "inputs": [
       {
-        "name": "payer",
-        "type": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "reservePayment",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
         "name": "identity",
         "type": "address"
       },

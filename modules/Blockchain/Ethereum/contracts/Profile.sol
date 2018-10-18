@@ -195,21 +195,6 @@ contract Profile {
         emit TokensReserved(identity3, amount);
     }
 
-    function reservePayment(address payer, uint256 amount)
-    public onlyHolding {
-        if(profileStorage.getWithdrawalPending(payer)) {
-            profileStorage.setWithdrawalPending(payer,false);
-            emit TokenWithdrawalCancelled(payer);
-        }
-
-        require(minimalStake <= profileStorage.getStake(payer).sub(profileStorage.getStakeReserved(payer).add(amount.mul(3))),
-            "Profile does not have enough stake for reserving!");
-
-        profileStorage.setStakeReserved(payer, profileStorage.getStakeReserved(payer).add(amount.mul(3)));
-
-        emit TokensReserved(payer, amount);
-    }
-
     function releaseTokens(address profile, uint256 amount)
     public onlyHolding {
         require(profileStorage.getStakeReserved(profile) >= amount, "Cannot release more tokens than there are reserved");
@@ -218,6 +203,7 @@ contract Profile {
 
         emit TokensReleased(profile, amount);
     }
+    
     function transferTokens(address sender, address receiver, uint256 amount)
     public onlyHolding {
         require(profileStorage.getStake(sender) >= amount, "Sender does not have enough tokens to transfer!");
