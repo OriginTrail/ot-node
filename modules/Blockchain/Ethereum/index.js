@@ -871,36 +871,27 @@ class Ethereum {
      * @returns {Promise<boolean>}
      */
     async getBalances() {
-        this.log.trace();
-        let enoughETH = false;
-        // let enoughTRAC = false;
+        this.log.trace('Checking ballances');
+        let enoughETH = true;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 this.web3,
                 this.config.wallet_address,
             );
-            if (etherBalance > 0) {
-                this.log.info(`Balance of ETH: ${etherBalance}`);
-                enoughETH = true;
-            } else {
-                this.log.warn('Please get some ETH in the node wallet for running ot-node');
+            this.log.info(`Balance of ETH: ${etherBalance}`);
+            if (etherBalance <= 0) {
+                enoughETH = false;
             }
 
-            // const atracBalance = await Utilities.getAlphaTracTokenBalance(
-            //     this.web3,
-            //     this.config.wallet_address,
-            //     this.tokenContractAddress,
-            // );
-            // if (atracBalance <= 0) {
-            //     this.log.info('Please get some ATRAC in the node wallet fore running ot-node');
-            // } else {
-            //     enoughTRAC = true;
-            //     this.log.info(`Balance of ATRAC: ${atracBalance}`);
-            // }
+            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                this.web3,
+                this.config.wallet_address,
+                this.tokenContractAddress,
+            );
+            this.log.info(`Balance of ATRAC: ${atracBalance}`);
         } catch (error) {
             throw new Error(error);
         }
-        // return enoughETH && enoughTRAC;
         return enoughETH;
     }
 }
