@@ -13,18 +13,8 @@ var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
 
-var Identity = artifacts.require('Identity'); // eslint-disable-line no-undef
-
-var Web3 = require('web3');
-
-var web3;
-var Ganache = require('ganache-core');
-
 // Helper variables
-var errored = true;
-var DC_identity;
 var DC_wallet;
-var amountToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(20)));
 const emptyHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
 const emptyAddress = '0x0000000000000000000000000000000000000000';
 
@@ -44,31 +34,22 @@ const tokenAmountPerHolder = new BN(1200);
 const dataSetSizeInBytes = new BN(1024);
 const litigationIntervalInMinutes = new BN(10);
 
-var trac;
+// Contracts used in test
 var hub;
-var profile;
 var holding;
 var holdingStorage;
-var util;
 
 // Profile variables
 var identities = [];
 
 // eslint-disable-next-line no-undef
-contract('Offer testing', async (accounts) => {
+contract('Holding storage testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     before(async () => {
         // Get contracts used in hook
-        trac = await TracToken.deployed();
         hub = await Hub.deployed();
-        profile = await Profile.deployed();
         holding = await Holding.deployed();
         holdingStorage = await HoldingStorage.deployed();
-        util = await TestingUtilities.deployed();
-
-        // Generate web3 and set provider
-        web3 = new Web3('HTTP://127.0.0.1:7545');
-        web3.setProvider(Ganache.provider());
 
         // Set accounts[0] as holding contract so it can execute functions
         await hub.setHoldingAddress(accounts[0]);
@@ -78,10 +59,6 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     after(async () => {
-        // Get contracts used in hook
-        const hub = await Hub.deployed();
-        const holding = await Holding.deployed();
-
         // Revert Holding contract address in hub contract
         await hub.setHoldingAddress(holding.address);
     });
