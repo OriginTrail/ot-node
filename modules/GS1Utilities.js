@@ -11,6 +11,7 @@ class GS1Utilities {
     constructor(ctx) {
         this.db = ctx.graphStorage;
         this.ctx = ctx;
+        this.zk = new ZK(ctx);
     }
 
     /**
@@ -147,20 +148,19 @@ class GS1Utilities {
         return eventId;
     }
 
+    generateSalt() {
+        return crypto.randomBytes(16).toString('base64');
+    }
+
     /**
      * Handle private data
      * @private
      */
-    async handlePrivate(senderId, uid, _private, data, privateData) {
+    async handlePrivate(senderId, uid, _private, data, privateData, salt) {
         data.private = {};
 
-        const existingVertex = await this.db.findVertexWithMaxVersion(senderId, uid);
-        let salt = null;
-        if (existingVertex && existingVertex.private) {
-            salt = existingVertex.private._salt;
-        }
         if (salt == null) {
-            salt = crypto.randomBytes(16).toString('base64');
+            salt = this.generateSalt();
         }
         for (const key in _private) {
             const value = _private[key];
@@ -169,7 +169,6 @@ class GS1Utilities {
             const sorted = Utilities.sortObject(value);
             data.private[key] = Utilities.soliditySHA3(JSON.stringify(`${sorted}${salt}`));
         }
-        privateData._salt = salt;
     }
 
     /**
@@ -214,23 +213,26 @@ class GS1Utilities {
      * @param event
      * @param eventId
      * @param categories
-     * @param importId
      * @param globalR
      * @param batchVertices
      * @return {Promise<void>}
      */
-    async zeroKnowledge(
-        senderId, event, eventId, categories,
-        importId, globalR, batchVertices,
-    ) {
+    async zeroKnowledge(senderId, event, eventId, categories, globalR, batchVertices) {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
+            const batchVerticesMap = {};
+
+            for (const batch of batchVertices) {
+                batchVerticesMap[batch.identifiers.uid] = batch;
+            }
+
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
+            console.log(quantityList);
             if (bizStep === 'shipping') {
                 // sending input
                 if (categories.includes('Ownership')) {
@@ -238,6 +240,7 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
                             r: globalR,
                         }));
                 } else {
@@ -245,27 +248,18 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
+                            r: batchVerticesMap[elem.epcClass].randomness,
                         }));
                 }
 
                 for (const outputQ of outputQuantities) {
-                    // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, outputQ.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: outputQ.object,
-                            quantity: parseInt(outputQ.quantity, 10),
-                        });
-                    }
+                    inputQuantities.push({
+                        object: outputQ.object,
+                        quantity: parseInt(outputQ.quantity, 10),
+                        unit: outputQ.unit,
+                        r: batchVerticesMap[outputQ.object].randomness,
+                    });
                 }
             } else {
                 // receiving output
@@ -274,6 +268,7 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
                             r: globalR,
                         }));
                 } else {
@@ -281,26 +276,19 @@ class GS1Utilities {
                         .map(elem => ({
                             object: elem.epcClass,
                             quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
+                            r: batchVerticesMap[elem.epcClass].randomness,
                         }));
                 }
 
                 for (const inputQ of inputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, inputQ.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        outputQuantities.push({
-                            object: inputQ.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        });
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: inputQ.object,
-                            quantity: parseInt(inputQ.quantity, 10),
-                        });
-                    }
+                    outputQuantities.push({
+                        object: inputQ.object,
+                        quantity: parseInt(inputQ.quantity, 10),
+                        unit: inputQ.unit,
+                        r: batchVerticesMap[inputQ.object].randomness,
+                    });
                 }
             }
         } else {
@@ -311,26 +299,17 @@ class GS1Utilities {
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
+                        unit: elem.uom,
+                        r: batchVertices[elem.epcClass].randomness,
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, inputQuantity.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: inputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        inputQuantities.push(quantity);
-                    } else {
-                        inputQuantities.push({
-                            added: true,
-                            object: inputQuantity.object,
-                            quantity: parseInt(inputQuantity.quantity, 10),
-                        });
-                    }
+                    inputQuantities.push({
+                        object: inputQuantity.object,
+                        quantity: parseInt(inputQuantity.quantity, 10),
+                        unit: inputQuantity.unit,
+                        r: batchVertices[inputQuantity.object].randomness,
+                    });
                 }
             }
             if (outputQuantityList) {
@@ -338,49 +317,30 @@ class GS1Utilities {
                     .map(elem => ({
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
-                        r: globalR,
+                        unit: elem.uom,
+                        r: batchVertices[elem.epcClass].randomness,
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    const vertex = await this._findBatch(senderId, batchVertices, outputQuantity.object);
-                    if (vertex && vertex.data.quantities) {
-                        const quantities = vertex.data.quantities.private;
-                        const quantity = {
-                            object: outputQuantity.object,
-                            quantity: parseInt(quantities.quantity, 10),
-                            r: quantities.r,
-                        };
-                        outputQuantities.push(quantity);
-                    } else {
-                        outputQuantities.push({
-                            added: true,
-                            object: outputQuantity.object,
-                            quantity: parseInt(outputQuantity.quantity, 10),
-                        });
-                    }
+                    outputQuantities.push({
+                        object: outputQuantity.object,
+                        quantity: parseInt(outputQuantity.quantity, 10),
+                        unit: outputQuantity.unit,
+                        r: batchVertices[outputQuantity.object].randomness,
+                    });
                 }
             }
         }
-        const zk = new ZK(this.ctx);
-        const quantities = zk.P(importId, eventId, inputQuantities, outputQuantities);
-        for (const quantity of quantities.inputs.concat(quantities.outputs)) {
-            if (quantity.added) {
-                delete quantity.added;
-                let batchFound = false;
-                for (const batch of batchVertices) {
-                    if (batch.identifiers.uid === quantity.object) {
-                        batchFound = true;
-                        batch.data.quantities = quantity;
-                        batch._key = md5(`batch_${senderId}_${JSON.stringify(batch.identifiers)}_${JSON.stringify(batch.data)}`);
-                        break;
-                    }
-                }
-                if (!batchFound) {
-                    this.handleError(`Invalid import! Batch ${quantity.object} not found.`, 400);
-                }
+        const { zk } = this;
+        const zkResponse = zk.P(eventId, inputQuantities, outputQuantities);
+        for (const batchVertex of batchVertices) {
+            if (batchVertex.data.quantities == null) {
+                batchVertex.data.quantities = {};
             }
+            batchVertex.data.quantities[eventId] = zkResponse.batches[batchVertex.identifiers.uid];
         }
-        event.quantities = quantities;
+
+        event.quantities = zkResponse.quantities;
     }
 }
 

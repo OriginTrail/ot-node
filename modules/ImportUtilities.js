@@ -91,7 +91,6 @@ class ImportUtilities {
         if (edges) {
             normEdges = edges.map(e => utilities.sortObject({
                 _key: e._key,
-                identifiers: e.identifiers,
                 _from: e._from,
                 _to: e._to,
                 edge_type: e.edge_type,
@@ -102,10 +101,13 @@ class ImportUtilities {
         if (vertices) {
             normVertices = vertices.map(v => utilities.sortObject({
                 _key: v._key,
-                identifiers: v.identifiers,
                 data: v.data,
+                uid: v.uid,
+                vertex_type: v.vertex_type,
             }));
         }
+
+        console.log(normEdges);
 
         return {
             edges: normEdges,
@@ -215,7 +217,7 @@ class ImportUtilities {
      */
     static deleteInternal(vertices) {
         for (const vertex of vertices) {
-            delete vertex.imports;
+            delete vertex.datasets;
             delete vertex.private;
             delete vertex.version;
         }

@@ -151,17 +151,14 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+                const normalizedImport = ImportUtilities.normalizeImport(
+                    result.vertices, result.edges);
 
-                if (rawData) {
-                    data.response.send(result);
-                } else {
-                    data.response
-                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
-                }
+                data.response.send(normalizedImport);
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);
+                console.log(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
