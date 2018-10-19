@@ -52,6 +52,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         confirmation: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
         status: {
