@@ -89,7 +89,7 @@ class ZK {
     _P(eventId, inputQuantities, outputQuantities, unit) {
         const e = new BN(sha3(eventId).substring(0, 10), 16);
 
-        //let r = this.generateR();
+        // let r = this.generateR();
         let rand = '';
 
         const inputs = [];

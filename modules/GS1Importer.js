@@ -70,19 +70,27 @@ class GS1Importer {
             switch (vocabularyElement.type) {
             case 'urn:ot:object:actor':
                 actors = actors
-                    .concat(await this._parseActors(senderId, vocabularyElement.VocabularyElementList));
+                // eslint-disable-next-line
+                    .concat(await this._parseActors(
+                        senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:product':
                 products = products
-                    .concat(await this._parseProducts(senderId, vocabularyElement.VocabularyElementList));
+                // eslint-disable-next-line
+                    .concat(await this._parseProducts(
+                        senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:batch':
                 batches = batches
-                    .concat(await this._parseBatches(senderId, vocabularyElement.VocabularyElementList));
+                // eslint-disable-next-line
+                    .concat(await this._parseBatches(
+                        senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:location':
                 locations = locations
-                    .concat(await this._parseLocations(senderId, vocabularyElement.VocabularyElementList));
+                // eslint-disable-next-line
+                    .concat(await this._parseLocations(
+                        senderId, vocabularyElement.VocabularyElementList));
                 break;
             default:
                 this.helper.handleError(`Unimplemented or unknown type: ${vocabularyElement.type}.`, 400);
@@ -363,7 +371,6 @@ class GS1Importer {
             if (extension.extension) {
                 if (extension.extension.private) {
                     // eslint-disable-next-line
-
                     const eventVertex = await this.db.findVertexWithMaxVersion(senderId, eventId);
 
                     if (eventVertex && eventVertex.private_salt) {
@@ -594,48 +601,9 @@ class GS1Importer {
                     currentBatchesToRemove.push(batchId);
                 }
             }
-
-            // let add = false;
-            // // eslint-disable-next-line
-            // const existingEventVertex = await this.db.findVertexWithMaxVersion(senderId, eventId, eventKey);
-            // if (existingEventVertex) {
-            //     const { data } = eventVertex;
-            //     const existingData = existingEventVertex.data;
-            //
-            //     let matchPrivate = 100;
-            //     if (existingEventVertex.data.private) {
-            //         matchPrivate = this._eventPrivateDistance(eventVertex, existingEventVertex);
-            //     }
-            //
-            //     const matchVertex = Utilities.objectDistance(data, existingData, ['quantities', 'private']);
-            //     if (matchPrivate !== 100 || matchVertex !== 100) {
-            //         add = true;
-            //     }
-            // } else {
-            //     add = true;
-            // }
             eventEdges.push(...currentEventEdges);
             eventVertices.push(...currentEventVertices);
         }
-
-        // for (const batchId of batchesToExclude) {
-        //     for (const index in batchesVertices) {
-        //         const batch = batchesVertices[index];
-        //         if (batch.identifiers.uid === batchId) {
-        //             batchesVertices.splice(index, 1);
-        //             updates.push(updates.push(this.db.updateVertexImportsByUID(
-        //                 senderId,
-        //                 batch.identifiers.uid, importId,
-        //             )));
-        //
-        //             const edgeId = `batch_product_${batch.identifiers.id}_${batch.data.parent_id}`;
-        //             updates.push(updates.push(this.db.updateEdgeImportsByUID(
-        //                 senderId,
-        //                 edgeId, importId,
-        //             )));
-        //         }
-        //     }
-        // }
 
         for (const batch of batchesVertices) {
             const productId = batch.data.parent_id;
@@ -902,6 +870,7 @@ class GS1Importer {
             const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:location:');
             const childLocations = this.helper.arrayze(element.children ? element.children.id : []);
 
+            // eslint-disable-next-line
             const locationVertex = await this.db.findVertexWithMaxVersion(senderId, element.id);
 
             let salt = this.helper.generateSalt();
@@ -936,6 +905,7 @@ class GS1Importer {
         for (const element of vocabularyElementElements) {
             const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:actor:');
 
+            // eslint-disable-next-line
             const actorVertex = await this.db.findVertexWithMaxVersion(senderId, element.id);
 
             let salt = this.helper.generateSalt();
@@ -969,6 +939,7 @@ class GS1Importer {
         for (const element of vocabularyElementElements) {
             const identifiers = this.helper.parseIdentifiers(element.attribute, 'urn:ot:object:product:');
 
+            // eslint-disable-next-line
             const productVertex = await this.db.findVertexWithMaxVersion(senderId, element.id);
 
             let salt = this.helper.generateSalt();
@@ -1003,6 +974,7 @@ class GS1Importer {
 
             let randomness = this.helper.zk.generateR().toString('hex');
 
+            // eslint-disable-next-line
             const batchVertex = await this.db.findVertexWithMaxVersion(senderId, element.id);
 
             let salt = this.helper.generateSalt();

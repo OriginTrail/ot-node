@@ -151,8 +151,8 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const normalizedImport = ImportUtilities.normalizeImport(
-                    result.vertices, result.edges);
+                const normalizedImport = ImportUtilities
+                    .normalizeImport(result.vertices, result.edges);
 
                 data.response.send(normalizedImport);
             } catch (error) {
