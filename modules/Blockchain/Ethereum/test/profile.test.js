@@ -24,7 +24,8 @@ var Ganache = require('ganache-core');
 var _ = require('lodash');
 
 // Global values
-const tokensToDeposit = (new BN(10)).pow(new BN(20));
+const amountToDeposit = (new BN(10)).pow(new BN(20));
+const amountToWithdraw = (new BN(100));
 const nodeId = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
 
 // Profile variables
@@ -65,7 +66,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = trac.increaseApproval(
                 profile.address,
-                tokensToDeposit,
+                amountToDeposit,
                 { from: accounts[i] },
             );
         }
@@ -75,7 +76,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = profile.createProfile(
                 nodeId,
-                tokensToDeposit,
+                amountToDeposit,
                 true,
                 identities[i].address,
                 { from: accounts[i] },
@@ -89,7 +90,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             newBalances[i] = await trac.balanceOf.call(accounts[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(tokensToDeposit)),
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
                 `Account balance for account ${i} does not match!`,
             );
         }
@@ -98,7 +99,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i].address);
             assert(
-                tokensToDeposit.eq(res.stake),
+                amountToDeposit.eq(res.stake),
                 `Stake deposited not matching for account ${i}!`,
             );
             assert.equal(
@@ -146,7 +147,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = trac.increaseApproval(
                 profile.address,
-                tokensToDeposit,
+                amountToDeposit,
                 { from: accounts[i] },
             );
         }
@@ -156,7 +157,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.createProfile(
                 nodeId,
-                tokensToDeposit,
+                amountToDeposit,
                 false,
                 '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
                 { from: accounts[i] },
@@ -170,7 +171,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             newBalances[i] = await trac.balanceOf.call(accounts[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(tokensToDeposit)),
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
                 `Account balance for account ${i} does not match!`,
             );
         }
@@ -179,7 +180,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
             assert(
-                tokensToDeposit.eq(res.stake),
+                amountToDeposit.eq(res.stake),
                 `Stake deposited not matching for account ${i}!`,
             );
             assert.equal(
@@ -227,7 +228,7 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             promises[i] = trac.increaseApproval(
                 profile.address,
-                tokensToDeposit,
+                amountToDeposit,
                 { from: accounts[i] },
             );
         }
@@ -237,7 +238,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.depositTokens(
                 identities[i],
-                tokensToDeposit,
+                amountToDeposit,
                 { from: accounts[i] },
             );
         }
@@ -248,7 +249,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             newBalances[i] = await trac.balanceOf.call(accounts[i]);
             assert(
-                newBalances[i].eq(initialBalances[i].sub(tokensToDeposit)),
+                newBalances[i].eq(initialBalances[i].sub(amountToDeposit)),
                 `Account balance for account ${i} does not match!`,
             );
         }
@@ -257,7 +258,7 @@ contract('Profile contract testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
             assert(
-                tokensToDeposit.mul(new BN(2)).eq(res.stake),
+                amountToDeposit.mul(new BN(2)).eq(res.stake),
                 `Stake deposited not matching for account ${i}!`,
             );
             assert.equal(
@@ -402,19 +403,18 @@ contract('Profile contract testing', async (accounts) => {
         const profile = await Profile.deployed();
         const profileStorage = await ProfileStorage.deployed();
 
+
+        // Get initial balances
         var initialStakes = [];
+        var initialStakesReserved = [];
         for (var i = 0; i < 4; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             initialStakes[i] = await profileStorage.getStake.call(identities[i]);
-        }
-        var initialStakesReserved = [];
-        for (i = 0; i < 4; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             initialStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
         }
 
         await hub.setHoldingAddress(accounts[0]);
-
         const amountToTransfer = new BN(100);
 
         // Execute tested function
@@ -424,12 +424,10 @@ contract('Profile contract testing', async (accounts) => {
         }
 
         var newStakes = [];
+        var newStakesReserved = [];
         for (i = 0; i < 4; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             newStakes[i] = await profileStorage.getStake.call(identities[i]);
-        }
-        var newStakesReserved = [];
-        for (i = 0; i < 4; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             newStakesReserved[i] = await profileStorage.getStakeReserved.call(identities[i]);
         }
@@ -460,12 +458,23 @@ contract('Profile contract testing', async (accounts) => {
         const profileStorage = await ProfileStorage.deployed();
         const util = await TestingUtilities.deployed();
 
-        var timestamps = [];
+        // Get initial balances
+        var initialStakes = [];
+        var initialStakesReserved = [];
         for (var i = 0; i < accounts.length; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            const res = await profileStorage.profile.call(identities[i]);
+            initialStakes[i] = res.stake;
+            initialStakesReserved[i] = res.stakeReserved;
+        }
+
+        var timestamps = [];
+        // Call tested function
+        for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profile.startTokenWithdrawal(
                 identities[i],
-                tokensToDeposit,
+                amountToWithdraw,
                 { from: accounts[i] },
             );
             // console.log(JSON.stringify(res));
@@ -473,12 +482,17 @@ contract('Profile contract testing', async (accounts) => {
             timestamps[i] = await util.getBlockTimestamp.call();
         }
 
+        // Get new balances
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
             assert(
-                tokensToDeposit.mul(new BN(2)).eq(res.stake),
-                `Stake deposited not matching for account ${i}!`,
+                initialStakes[i].eq(res.stake),
+                `Stake not matching for account ${i}, expected ${initialStakes[i].toString()}, got ${res.stake.toString()}!`,
+            );
+            assert(
+                initialStakesReserved[i].eq(res.stakeReserved),
+                `Stake not matching for account ${i}, expected ${initialStakesReserved[i].toString()}, got ${res.stakeReserved.toString()}!`,
             );
             assert(
                 timestamps[i].add(new BN(300)).gte(res.withdrawalTimestamp),
@@ -489,7 +503,7 @@ contract('Profile contract testing', async (accounts) => {
                 `Withdrawal timestamp not set for account ${i}!`,
             );
             assert(
-                tokensToDeposit.eq(res.withdrawalAmount),
+                amountToWithdraw.eq(res.withdrawalAmount),
                 `Withdrawal amount not set for account ${i}!`,
             );
             assert.equal(
@@ -513,20 +527,25 @@ contract('Profile contract testing', async (accounts) => {
 
         if (errored) assert(false, 'No use of running a test after previous test failed');
         // Wait other half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 300000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
+        // Get initial balances
         var initialBalances = [];
+        var initialStakes = [];
+        var initialStakesReserved = [];
         for (var i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             initialBalances[i] = await trac.balanceOf.call(accounts[i]);
+            // eslint-disable-next-line no-await-in-loop
+            const res = await profileStorage.profile.call(identities[i]);
+            initialStakes[i] = res.stake;
+            initialStakesReserved[i] = res.stakeReserved;
         }
 
+        // Call tested function
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            const res = await profile.withdrawTokens(
-                identities[i],
-                { from: accounts[i] },
-            );
+            await profile.withdrawTokens(identities[i], { from: accounts[i] });
         }
 
         // Get new balances
@@ -534,20 +553,19 @@ contract('Profile contract testing', async (accounts) => {
         for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             newBalances[i] = await trac.balanceOf.call(accounts[i]);
-            assert(
-                newBalances[i].eq(initialBalances[i].add(tokensToDeposit)),
-                `Account balance for account ${i} does not match!`,
-            );
-        }
-
-        for (i = 0; i < accounts.length; i += 1) {
             // eslint-disable-next-line no-await-in-loop
             const res = await profileStorage.profile.call(identities[i]);
-            // eslint-disable-next-line no-await-in-loop
-            const timestamp = await util.getBlockTimestamp.call();
             assert(
-                tokensToDeposit.eq(res.stake),
-                `Stake deposited not matching for account ${i}!`,
+                newBalances[i].eq(initialBalances[i].add(amountToWithdraw)),
+                `Account balance for account ${i} does not match!`,
+            );
+            assert(
+                initialStakes[i].sub(amountToWithdraw).eq(res.stake),
+                `Stake not matching for account ${i}, expected ${initialStakes[i].sub(amountToWithdraw).toString()}, got ${res.stake.toString()}!`,
+            );
+            assert(
+                initialStakesReserved[i].eq(res.stakeReserved),
+                `Stake not matching for account ${i}, expected ${initialStakesReserved[i].toString()}, got ${res.stakeReserved.toString()}!`,
             );
             assert.equal(
                 res.withdrawalPending,

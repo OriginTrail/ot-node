@@ -122,7 +122,7 @@ contract Profile {
 
     function withdrawTokens(address identity) public {
         // Verify sender
-        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2),  "Sender does not have action permission for identity!");
 
         require(profileStorage.getWithdrawalPending(identity) == true, "Cannot withdraw tokens before starting token withdrawal!");
         require(profileStorage.getWithdrawalTimestamp(identity) < block.timestamp, "Cannot withdraw tokens before withdrawal timestamp!");
