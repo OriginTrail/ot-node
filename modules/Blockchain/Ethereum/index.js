@@ -865,6 +865,47 @@ class Ethereum {
             from: this.config.wallet_address,
         });
     }
+
+    /**
+     * @param Utilities
+     * @param config
+     * @param web3
+     * @param initial
+     * @returns {Promise<boolean>}
+     */
+    async getBalances() {
+        this.log.trace();
+        let enoughETH = false;
+        // let enoughTRAC = false;
+        try {
+            const etherBalance = await Utilities.getBalanceInEthers(
+                this.web3,
+                this.config.wallet_address,
+            );
+            if (etherBalance > 0) {
+                this.log.info(`Balance of ETH: ${etherBalance}`);
+                enoughETH = true;
+            } else {
+                this.log.warn('Please get some ETH in the node wallet for running ot-node');
+            }
+
+            // const atracBalance = await Utilities.getAlphaTracTokenBalance(
+            //     this.web3,
+            //     this.config.wallet_address,
+            //     this.tokenContractAddress,
+            // );
+            // if (atracBalance <= 0) {
+            //     this.log.info('Please get some ATRAC in the node wallet fore running ot-node');
+            // } else {
+            //     enoughTRAC = true;
+            //     this.log.info(`Balance of ATRAC: ${atracBalance}`);
+            // }
+        } catch (error) {
+            throw new Error(error);
+        }
+        // return enoughETH && enoughTRAC;
+        return enoughETH;
+    }
 }
 
 module.exports = Ethereum;
