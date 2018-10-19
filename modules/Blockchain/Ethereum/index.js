@@ -867,10 +867,7 @@ class Ethereum {
     }
 
     /**
-     * @param Utilities
-     * @param config
-     * @param web3
-     * @param initial
+     * Check balances
      * @returns {Promise<boolean>}
      */
     async getBalances() {
