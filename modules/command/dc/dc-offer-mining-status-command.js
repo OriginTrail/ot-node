@@ -1,8 +1,6 @@
 const Command = require('../command');
 const Models = require('../../../models/index');
 
-const { Op } = Models.Sequelize;
-
 /**
  * Repeatable command that checks whether offer is ready or not
  */
@@ -10,6 +8,7 @@ class DcOfferMiningStatusCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -69,9 +68,11 @@ class DcOfferMiningStatusCommand extends Command {
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
         const offer = await Models.offers.findOne({ where: { id: offerId } });
-        offer.status = 'ABORTED';
+        offer.status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
         return Command.empty();
     }
 

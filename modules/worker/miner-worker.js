@@ -35,7 +35,7 @@ process.once('message', (msg) => {
             success: true,
             type,
         }));
-        process.exit(1);
+        process.exit(0);
     } catch (e) {
         process.send(JSON.stringify({
             offerId: msg.offerId,

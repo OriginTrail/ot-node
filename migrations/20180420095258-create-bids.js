@@ -14,6 +14,26 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        data_size_in_bytes: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        litigation_interval_in_minutes: {
+            allowNull: false,
+            type: Sequelize.INTEGER,
+        },
+        token_amount: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        deposit: {
+            allowNull: true,
+            type: Sequelize.STRING,
+        },
+        status: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),
+    down: queryInterface => queryInterface.dropTable('bids'),
 };

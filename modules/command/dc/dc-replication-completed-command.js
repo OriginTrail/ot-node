@@ -21,10 +21,12 @@ class DcReplicationCompletedCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId, dhNodeId, dhWallet, signature,
+            offerId, dhNodeId, dhWallet, dhIdentity, signature,
         } = command.data;
 
-        const toValidate = [utilities.denormalizeHex(offerId)];
+        const toValidate = [
+            utilities.denormalizeHex(offerId),
+            utilities.denormalizeHex(dhIdentity)];
         const address = encryption.extractSignerAddress(toValidate, signature);
 
         if (address.toUpperCase() !== dhWallet.toUpperCase()) {
@@ -40,8 +42,9 @@ class DcReplicationCompletedCommand extends Command {
         if (!replicatedData) {
             throw new Error(`Failed to find replication for DH node ${dhNodeId}`);
         }
+        replicatedData.confirmation = signature;
         replicatedData.status = 'VERIFIED';
-        await replicatedData.save({ fields: ['status'] });
+        await replicatedData.save({ fields: ['status', 'confirmation'] });
         this.logger.notify(`Replication finished for DH node ${dhNodeId}`);
         return Command.empty();
     }

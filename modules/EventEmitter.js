@@ -286,30 +286,21 @@ class EventEmitter {
         });
 
         this._on('api-get_root_hash', (data) => {
-            const dcWallet = data.query.dc_wallet;
-            if (dcWallet == null) {
+            const dataSetId = data.query.data_set_id;
+            if (dataSetId == null) {
                 data.response.status(400);
                 data.response.send({
-                    message: 'dc_wallet parameter query is missing',
+                    message: 'data_set_id parameter query is missing',
                 });
                 return;
             }
-            const importId = data.query.import_id;
-            if (importId == null) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'import_id parameter query is missing',
-                });
-                return;
-            }
-            logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
-            blockchain.getRootHash(dcWallet, importId).then((res) => {
-                if (res) {
-                    if (!Utilities.isZeroHash(res.graph_hash)) {
+            logger.info(`Get root hash triggered with data set ${dataSetId}`);
+            blockchain.getRootHash(dataSetId).then((dataRootHash) => {
+                if (dataRootHash) {
+                    if (!Utilities.isZeroHash(dataRootHash)) {
                         data.response.status(200);
                         data.response.send({
-                            root_hash: res.graph_hash,
-                            import_hash: res.import_hash,
+                            root_hash: dataRootHash,
                         });
                     } else {
                         data.response.status(404);
@@ -532,11 +523,14 @@ class EventEmitter {
             }
             const {
                 dataSetId,
-                dataRootHash,
                 holdingTimeInMinutes,
                 tokenAmountPerHolder,
-                dataSizeInBytes,
                 litigationIntervalInMinutes,
+            } = data;
+
+            let {
+                dataRootHash,
+                dataSizeInBytes,
             } = data;
 
             try {
@@ -547,6 +541,14 @@ class EventEmitter {
                 });
                 if (dataset == null) {
                     throw new Error('This data set does not exist in the database');
+                }
+
+                if (dataSizeInBytes == null) {
+                    dataSizeInBytes = dataset.data_size;
+                }
+
+                if (dataRootHash == null) {
+                    dataRootHash = dataset.root_hash;
                 }
 
                 const offerId = await dcService.createOffer(
@@ -610,7 +612,7 @@ class EventEmitter {
             try {
                 logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
 
-                await profileService.depositToken(atrac_amount);
+                await profileService.depositTokens(atrac_amount);
                 remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
 
                 data.response.status(200);
@@ -634,13 +636,15 @@ class EventEmitter {
             try {
                 logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
 
-                await profileService.withdrawToken(atrac_amount);
+                await profileService.withdrawTokens(atrac_amount);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                    message: `Withdraw operation started for amount ${atrac_amount}.`,
                 });
-                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
+                // TODO notify Houston
+                // remoteControl.tokensWithdrawSucceeded
+                // (`Successfully withdrawn ${atrac_amount} ATRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 notifyError(error);
@@ -671,78 +675,24 @@ class EventEmitter {
                 return;
             }
             const {
-                offerId,
+                dataSetSizeInBytes,
                 dcNodeId,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                offerId,
+                tokenAmountPerHolder,
                 dataSetId,
             } = eventData;
 
-            await dhService.handleOffer(offerId, dcNodeId, dataSetId);
-        });
-
-        this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!appState.enoughFunds) {
-                return;
-            }
-            const {
-                import_id,
-                DH_wallet,
-                DH_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                data_size_in_bytes,
-            } = eventData;
-
-            if (DH_wallet !== config.node_wallet
-                || config.identity !== DH_node_id.substring(2, 42)) {
-                // Offer not for me.
-                return;
-            }
-
-            logger.info(`Added as predetermined for import ${import_id}`);
-
-            // TODO: This is a hack. DH doesn't know with whom to sign the offer.
-            // Try to dig it from events.
-            const createOfferEventEventModel = await Models.events.findOne({
-                where: {
-                    event: 'OfferCreated',
-                    import_id,
-                },
-            });
-
-            if (!createOfferEventEventModel) {
-                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
-                return;
-            }
-
             try {
-                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
-                const createOfferEventData = JSON.parse(createOfferEvent.data);
-
-                const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
                 await dhService.handleOffer(
-                    import_id, dcNodeId, total_escrow_time_in_minutes,
-                    max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                    createOfferEventData.min_reputation, data_size_in_bytes,
-                    createOfferEventData.data_hash, true,
+                    offerId, dcNodeId,
+                    dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+                    tokenAmountPerHolder, dataSetId,
                 );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
+            } catch (e) {
+                logger.warn(e.message);
             }
-        });
-
-        this._on('eth-offer-canceled', (event) => {
-            logger.info(`Ongoing offer ${event.import_id} canceled`);
-        });
-
-        this._on('eth-bid-taken', (event) => {
-            if (event.DH_wallet !== config.node_wallet) {
-                logger.notify(`Bid not accepted for offer ${event.import_id}`);
-                // Offer not for me.
-                return;
-            }
-            logger.notify(`Bid accepted for offer ${event.import_id}`);
         });
 
         this._on('eth-LitigationInitiated', async (eventData) => {
@@ -776,37 +726,6 @@ class EventEmitter {
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
-
-        this._on('eth-EscrowVerified', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // Event is for me.
-                logger.trace(`Escrow for import ${import_id} verified`);
-                try {
-                    // TODO: Possible race condition if another bid for same import came meanwhile.
-                    const bid = await Models.bids.findOne({
-                        where: {
-                            import_id,
-                        },
-                        order: [
-                            ['id', 'DESC'],
-                        ],
-                    });
-
-                    if (!bid) {
-                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
-                        return;
-                    }
-                } catch (error) {
-                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
-                    notifyError(error);
-                }
-            }
-        });
     }
 
     /**
@@ -818,13 +737,10 @@ class EventEmitter {
             dvService,
             logger,
             transport,
-            blockchain,
-            remoteControl,
             dhService,
             dcService,
             dvController,
             notifyError,
-            dcController,
         } = this.ctx;
 
         // sync
@@ -909,7 +825,7 @@ class EventEmitter {
                 status: 'OK',
             });
             const message = transport.extractMessage(request);
-            const { offerId, wallet } = message;
+            const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
             const identity = transport.extractSenderID(request);
 
@@ -917,7 +833,7 @@ class EventEmitter {
                 logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            await dcService.handleReplicationRequest(offerId, wallet, identity);
+            await dcService.handleReplicationRequest(offerId, wallet, identity, dhIdentity);
         });
 
         // async
@@ -928,9 +844,11 @@ class EventEmitter {
             const dhNodeId = transport.extractSenderID(request);
             const replicationFinishedMessage = transport.extractMessage(request);
             const { wallet } = transport.extractSenderInfo(request);
-            const { offerId, messageSignature } = replicationFinishedMessage;
-
-            await dcService.verifyDHReplication(offerId, messageSignature, dhNodeId, wallet);
+            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+            await dcService.verifyDHReplication(
+                offerId, messageSignature,
+                dhNodeId, dhIdentity, wallet,
+            );
         });
 
         // sync
@@ -1086,35 +1004,6 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} successfully processed the encrypted key`);
             } else {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
-            }
-        });
-
-        // async
-        this._on('kad-verify-import-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { wallet: dhWallet } = transport.extractSenderInfo(request);
-            const { epk, importId, encryptionKey } = transport.extractMessage(request);
-
-            logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
-
-            const dcNodeId = transport.extractSenderID(request);
-            await dcService.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
-        });
-
-        // async
-        this._on('kad-verify-import-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { status, import_id } = transport.extractMessage(request);
-            if (status === 'success') {
-                logger.notify(`Key verification for import ${import_id} succeeded`);
-                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
-            } else {
-                logger.notify(`Key verification for import ${import_id} failed`);
-                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
             }
         });
     }

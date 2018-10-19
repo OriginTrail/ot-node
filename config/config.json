@@ -18,6 +18,7 @@
     "ssl_keypath": "kademlia.key",
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
+    "erc725_identity_filepath": "erc725_identity.json",
     "cpus": 1,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
@@ -77,7 +78,14 @@
       "repo": "OriginTrail/ot-node",
       "branch": "develop"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1,
+    "deposit_on_demand": true
   },
   "staging": {
     "identity": null,
@@ -98,6 +106,7 @@
     "ssl_keypath": "kademlia.key",
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
+    "erc725_identity_filepath": "erc725_identity.json",
     "cpus": 1,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
@@ -157,7 +166,14 @@
       "repo": "OriginTrail/ot-node",
       "branch": "release/staging"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1,
+    "deposit_on_demand": true
   },
   "stable": {
     "identity": null,
@@ -178,6 +194,7 @@
     "ssl_keypath": "kademlia.key",
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
+    "erc725_identity_filepath": "erc725_identity.json",
     "cpus": 1,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
@@ -237,7 +254,14 @@
       "repo": "OriginTrail/ot-node",
       "branch": "release/stable"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1,
+    "deposit_on_demand": true
   },
   "production": {
     "identity": null,
@@ -258,6 +282,7 @@
     "ssl_keypath": "kademlia.key",
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
+    "erc725_identity_filepath": "erc725_identity.json",
     "cpus": 1,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
@@ -320,6 +345,13 @@
       "repo": "OriginTrail/ot-node",
       "branch": "master"
     },
-    "dataSetStorage": "data_set_storage"
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 60,
+    "dc_token_amount_per_holder": 1,
+    "dc_litigation_interval_in_minutes": 10,
+    "dh_max_holding_time_in_minutes": 100,
+    "dh_min_token_price": 1,
+    "dh_min_litigation_interval_in_minutes": 1,
+    "deposit_on_demand": true
   }
 }

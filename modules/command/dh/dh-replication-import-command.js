@@ -1,4 +1,4 @@
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 const bytes = require('utf8-length');
 
 const Command = require('../command');
@@ -118,20 +118,33 @@ class DhReplicationImportCommand extends Command {
             data_size: dataSize,
         });
 
-        this.logger.trace(`[DH] Replication finished for offer ID ${offerId}`);
+        this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
-        const toSign = [Utilities.denormalizeHex(offerId)];
+        const toSign = [
+            Utilities.denormalizeHex(offerId),
+            Utilities.denormalizeHex(this.config.erc725Identity)];
         const messageSignature = Encryption
             .signMessage(this.web3, toSign, Utilities.normalizeHex(this.config.node_private_key));
 
         const replicationFinishedMessage = {
             offerId,
+            dhIdentity: this.config.erc725Identity,
             messageSignature: messageSignature.signature,
         };
 
         await this.transport.replicationFinished(replicationFinishedMessage, dcNodeId);
         this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dhOfferFinalizedCommand',
+                    period: 5000,
+                    data: {
+                        offerId,
+                    },
+                },
+            ],
+        };
     }
 
     /**

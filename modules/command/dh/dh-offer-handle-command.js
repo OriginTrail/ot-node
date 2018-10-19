@@ -10,6 +10,7 @@ class DHOfferHandleCommand extends Command {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.transport = ctx.transport;
+        this.blockchain = ctx.blockchain;
     }
 
     /**
@@ -22,20 +23,20 @@ class DHOfferHandleCommand extends Command {
             dcNodeId,
         } = command.data;
 
-        this.logger.info(`New offer has been created by ${dcNodeId}. Offer ID ${offerId}.`);
-
-        // TODO check for parameters
-
-        await Models.bids.create({
-            offer_id: offerId,
-            dc_node_id: dcNodeId,
-        });
-
+        this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
         await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
+            dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
-        this.logger.info(`Replication request for ${offerId} sent to ${dcNodeId}`);
+
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        bid.status = 'SENT';
+        await bid.save({ fields: ['status'] });
+
+        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}`);
         return Command.empty();
     }
 

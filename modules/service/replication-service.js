@@ -1,12 +1,11 @@
 const path = require('path');
 
-const MerkleTree = require('../../Merkle');
-const Utilities = require('../../Utilities');
-const Challenge = require('../../Challenge');
-const Encryption = require('../../Encryption');
-const ImportUtilities = require('../../ImportUtilities');
-
-const Command = require('../command');
+const Encryption = require('../Encryption');
+const ImportUtilities = require('../ImportUtilities');
+const MerkleTree = require('../Merkle');
+const Challenge = require('../Challenge');
+const Models = require('../../models/index');
+const Utilities = require('../Utilities');
 
 /**
  * Supported versions of the same data set
@@ -18,39 +17,31 @@ const COLOR = {
     GREEN: 'green',
 };
 
-/**
- * Prepare offer parameters (litigation/distribution hashes, etc.)
- */
-class DCOfferPrepareCommand extends Command {
+class ReplicationService {
     constructor(ctx) {
-        super(ctx);
+        this.logger = ctx.logger;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
     }
 
     /**
-     * Creates an offer in the database
-     * @param command
-     * @returns {Promise<{commands}>}
+     * Creates replications for one Offer
+     * @param internalOfferId   - Internal Offer ID
+     * @returns {Promise<void>}
      */
-    async execute(command) {
-        const {
-            internalOfferId,
-            dataSetId,
-        } = command.data;
+    async createReplications(internalOfferId) {
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
+        if (!offer) {
+            throw new Error(`Failed to find offer with internal ID ${internalOfferId}`);
+        }
 
         const [edges, vertices] = await Promise.all([
-            this.graphStorage.findEdgesByImportId(dataSetId),
-            this.graphStorage.findVerticesByImportId(dataSetId),
+            this.graphStorage.findEdgesByImportId(offer.data_set_id),
+            this.graphStorage.findVerticesByImportId(offer.data_set_id),
         ]);
 
-        const distLitRootHashes = (await Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
+        return Promise.all([COLOR.RED, COLOR.BLUE, COLOR.GREEN]
             .map(async (color) => {
-                const colorDirPath = path.join(
-                    this.config.appDataPath,
-                    this.config.dataSetStorage, internalOfferId,
-                );
-
                 const litigationKeyPair = Encryption.generateKeyPair(512);
                 const litEncVertices = ImportUtilities.immutableEncryptVertices(
                     vertices,
@@ -76,7 +67,8 @@ class DCOfferPrepareCommand extends Command {
                 const distEpk = Encryption.packEPK(distributionKeyPair.publicKey);
                 const distributionEpkChecksum = Encryption.calculateDataChecksum(distEpk, 0, 0, 0);
 
-                const colorInfo = {
+                return {
+                    color,
                     edges,
                     litigationVertices: litEncVertices,
                     litigationPublicKey: litigationKeyPair.publicKey,
@@ -88,36 +80,31 @@ class DCOfferPrepareCommand extends Command {
                     distributionRootHash: distRootHash,
                     distributionEpk: distEpk,
                 };
-                await Utilities.writeContentsToFile(
-                    colorDirPath, `${color}.json`,
-                    JSON.stringify(colorInfo, null, 2),
-                );
-
-                const hashes = {};
-                hashes[`${color}LitigationHash`] = litRootHash;
-                hashes[`${color}DistributionHash`] = distRootHash;
-                return hashes;
-            }))).reduce((acc, value) => Object.assign(acc, value));
-
-        const { data } = command;
-        Object.assign(data, distLitRootHashes);
-        return this.continueSequence(data, command.sequence);
+            }));
     }
 
     /**
-     * Builds default dcOfferPrepareCommand
-     * @param map
-     * @returns {{add, data: *, delay: *, deadline: *}}
+     * Delete offer directory
+     * @param internalOfferId
+     * @return {Promise<void>}
      */
-    default(map) {
-        const command = {
-            name: 'dcOfferPrepareCommand',
-            delay: 0,
-            transactional: false,
-        };
-        Object.assign(command, map);
-        return command;
+    async deleteOfferDir(internalOfferId) {
+        this.logger.info(`Deleting replications directory for offer with internal ID ${internalOfferId}`);
+        const offerDirPath = this.getOfferDirPath(internalOfferId);
+        await Utilities.deleteDirectory(offerDirPath);
+    }
+
+    /**
+     * Gets offer directory
+     * @param internalOfferId
+     * @returns {string}
+     */
+    getOfferDirPath(internalOfferId) {
+        return path.join(
+            this.config.appDataPath,
+            this.config.dataSetStorage, internalOfferId,
+        );
     }
 }
 
-module.exports = DCOfferPrepareCommand;
+module.exports = ReplicationService;

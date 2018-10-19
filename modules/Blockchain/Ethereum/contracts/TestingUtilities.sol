@@ -37,14 +37,25 @@ contract TestingUtilities{
         return ecrecover(prefixedHash, v, r, s);
 	}
 
+	function getSolution(address holderIdentity0, address holderIdentity1, address holderIdentity2, uint256 shift)
+	public pure returns (bytes32) {
+		return ( (keccakAddressAddressAddress(holderIdentity0, holderIdentity1, holderIdentity2) >> (shift * 4)) & bytes32( 2 ** (4 * 1) - 1));
+	}
+
+
 	function keccakBytesAddress(bytes32 a, address b)
 	public pure returns (bytes32) {
-		return keccak256(abi.encodePacked(a,b));
+		return keccak256(abi.encodePacked(uint256(a),uint256(b)));
 	}
 
 	function keccakAddressAddressAddress(address a, address b, address c)
 	public pure returns (bytes32) {
 		return keccak256(abi.encodePacked(a,b,c));
+	}
+
+	function keccakAddress(address a)
+	public pure returns (bytes32) {
+		return keccak256(abi.encodePacked(a));
 	}
 
 	function keccak2hashes(bytes32 a, bytes32 b)

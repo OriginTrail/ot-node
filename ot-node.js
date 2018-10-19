@@ -39,7 +39,8 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
-const ProfileService = require('./modules/ProfileService');
+const ProfileService = require('./modules/service/profile-service');
+const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
 const RestAPIValidator = require('./modules/validator/rest-api-validator');
 const APIUtilities = require('./modules/utility/api-utilities');
@@ -233,9 +234,10 @@ function notifyEvent(message, metadata, subsystem) {
  * Main node object
  */
 class OTNode {
+    // TODO move this to Blockchain layer
     async getBalances(Utilities, config, web3, initial) {
         let enoughETH = false;
-        let enoughtTRAC = false;
+        // let enoughtTRAC = false;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 web3,
@@ -252,26 +254,28 @@ class OTNode {
                 log.info(`Balance of ETH: ${etherBalance}`);
             }
 
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                web3,
-                config.node_wallet,
-                config.blockchain.token_contract_address,
-            );
-            if (atracBalance <= 0) {
-                enoughtTRAC = false;
-                console.log('Please get some ATRAC in the node wallet fore running ot-node');
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughtTRAC = true;
-                log.info(`Balance of ATRAC: ${atracBalance}`);
-            }
+            // TODO enable this check with Blockchain agnosticism in mind
+            // const atracBalance = await Utilities.getAlphaTracTokenBalance(
+            //     web3,
+            //     config.node_wallet,
+            //     config.blockchain.token_contract_address,
+            // );
+            // if (atracBalance <= 0) {
+            //     enoughtTRAC = false;
+            //     console.log('Please get some ATRAC in the node wallet fore running ot-node');
+            //     if (initial) {
+            //         process.exit(1);
+            //     }
+            // } else {
+            //     enoughtTRAC = true;
+            //     log.info(`Balance of ATRAC: ${atracBalance}`);
+            // }
         } catch (error) {
             console.log(error);
             notifyBugsnag(error);
         }
-        return enoughETH && enoughtTRAC;
+        // return enoughETH && enoughtTRAC;
+        return enoughETH;
     }
     /**
      * OriginTrail node system bootstrap function
@@ -327,6 +331,7 @@ class OTNode {
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.
         config.identity = '';
+        config.erc725Identity = '';
         Object.seal(config);
 
         // check for Updates
@@ -424,10 +429,15 @@ class OTNode {
             apiUtilities: awilix.asClass(APIUtilities).singleton(),
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
+            replicationService: awilix.asClass(ReplicationService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+        const profileService = container.resolve('profileService');
 
         emitter.initialize();
 
@@ -456,11 +466,6 @@ class OTNode {
 
         // Starting the kademlia
         const transport = container.resolve('transport');
-        const blockchain = container.resolve('blockchain');
-
-        // Initialise API
-        this.startRPC(emitter);
-
         await transport.init(container.cradle);
 
         // Starting event listener on Blockchain
@@ -468,13 +473,16 @@ class OTNode {
         dhService.listenToBlockchainEvents();
 
         try {
-            await this.createProfile(blockchain);
+            await profileService.initProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
             notifyBugsnag(e);
             process.exit(1);
         }
+
+        // Initialise API
+        this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -487,6 +495,7 @@ class OTNode {
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
+        await commandExecutor.start();
     }
 
     /**
@@ -503,7 +512,6 @@ class OTNode {
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
@@ -529,6 +537,7 @@ class OTNode {
             if (!working && Date.now() > deadline) {
                 working = true;
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -536,16 +545,9 @@ class OTNode {
     }
 
     /**
-     * Creates profile on the contract
-     */
-    async createProfile(blockchain) {
-        // TODO implement createProfile
-    }
-
-    /**
      * Start RPC server
      */
-    startRPC(emitter) {
+    startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,

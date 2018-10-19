@@ -1,15 +1,14 @@
-const Models = require('../../../models/index');
 const Command = require('../command');
+const Models = require('../../../models/index');
 
 /**
- * Checks whether offer is finalized from the DC side
+ * Repeatable command that checks whether offer is ready or not
  */
-class DCOfferFinalizedCommand extends Command {
+class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
-        this.config = ctx.config;
-        this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -17,43 +16,37 @@ class DCOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { importId, offerId } = command.data;
-
-        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 } });
-        if (event) {
-            event.finished = true;
-            await event.save({ fields: ['finished'] });
-
-            const offer = await Models.offers.findOne({ where: { id: offerId } });
-
-            const message = `Offer for import ${offer.import_id} finalized`;
-            offer.status = 'FINALIZED';
-            this.remoteControl.bidChosen(importId);
-            this.remoteControl.offerFinalized(`Offer for import ${offer.import_id} finalized`, importId);
-            offer.message = message;
-            await offer.save({ fields: ['status', 'message'] });
-            this.logger.info(message);
-            return Command.empty();
-        }
-        return Command.repeat();
-    }
-
-    /**
-     * Recover system from failure
-     * @param command
-     * @param err
-     */
-    async recover(command, err) {
         const { offerId } = command.data;
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
-        const message = `Failed to get offer for import ${offer.import_id}). ${err}.`;
-        offer.status = 'FAILED';
-        offer.message = message;
-        await offer.save({ fields: ['status', 'message'] });
-        this.logger.error(message);
-        this.remoteControl.dcErrorHandling(message);
-        return Command.empty();
+        const events = await Models.events.findAll({
+            where: {
+                event: 'OfferFinalized',
+                finished: 0,
+            },
+        });
+        if (events) {
+            const event = events.find((e) => {
+                const {
+                    offerId: eventOfferId,
+                } = JSON.parse(e.data);
+                return offerId === eventOfferId;
+            });
+            if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
+
+                this.logger.important(`Offer ${offerId} finalized`);
+
+                const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+                offer.status = 'FINALIZED';
+                offer.message = 'Offer has been finalized';
+                await offer.save({ fields: ['status', 'message'] });
+
+                await this.replicationService.deleteOfferDir(offer.id);
+                return Command.empty();
+            }
+        }
+        return Command.repeat();
     }
 
     /**
@@ -62,16 +55,19 @@ class DCOfferFinalizedCommand extends Command {
      */
     async expired(command) {
         const { offerId } = command.data;
+        this.logger.notify(`Offer ${offerId} has not been finalized.`);
 
-        this.logger.warn('OfferFinalized command expired.');
         const offer = await Models.offers.findOne({ where: { id: offerId } });
         offer.status = 'FAILED';
-        offer.message = 'OfferFinalized command expired.';
+        offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
+        return Command.empty();
     }
 
     /**
-     * Builds default FinalizeOfferReadyCommand
+     * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
@@ -88,4 +84,4 @@ class DCOfferFinalizedCommand extends Command {
     }
 }
 
-module.exports = DCOfferFinalizedCommand;
+module.exports = DcOfferFinalizedCommand;

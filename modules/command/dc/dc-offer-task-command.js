@@ -1,8 +1,10 @@
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
+
+const { Op } = Models.Sequelize;
 
 /**
  * Repeatable command that checks whether offer is ready or not
@@ -11,6 +13,7 @@ class DcOfferTaskCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -23,12 +26,16 @@ class DcOfferTaskCommand extends Command {
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
+                // use LIKE because of some SC related issues
+                data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` },
                 finished: 0,
             },
         });
         if (event) {
             this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
+
+            event.finished = true;
+            await event.save({ fields: ['finished'] });
 
             const {
                 task: eventTask,
@@ -54,13 +61,15 @@ class DcOfferTaskCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { dataSetId, offerId } = command.data;
+        const { dataSetId, internalOfferId } = command.data;
         this.logger.notify(`Offer for data set ${dataSetId} has not been started.`);
 
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
-        offer.status = 'ABORTED';
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
+        offer.status = 'FAILED';
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
         return Command.empty();
     }
 

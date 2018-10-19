@@ -1,10 +1,12 @@
+const BN = require('../../../node_modules/bn.js/lib/bn');
+
 const Command = require('../command');
 const Models = require('../../../models/index');
 
 /**
  * Repeatable command that checks whether offer is ready or not
  */
-class DhOfferFinalizedCommand extends Command {
+class TokenWithdrawalWaitStartedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -16,44 +18,52 @@ class DhOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { offerId } = command.data;
+        const {
+            amount,
+        } = command.data;
 
         const events = await Models.events.findAll({
             where: {
-                event: 'OfferFinalized',
+                event: 'WithdrawalInitiated',
                 finished: 0,
             },
         });
         if (events) {
             const event = events.find((e) => {
                 const {
-                    offerId: eventOfferId,
+                    profile: eventProfile,
                 } = JSON.parse(e.data);
-                return offerId === eventOfferId;
+                return eventProfile.toLowerCase()
+                    .includes(this.config.erc725Identity.toLowerCase());
             });
             if (event) {
                 event.finished = true;
                 await event.save({ fields: ['finished'] });
 
-                this.logger.important(`Offer ${offerId} finalized`);
-
                 const {
-                    holder1,
-                    holder2,
-                    holder3,
+                    amount: eAmount,
+                    withdrawalDelayInSeconds: eWithdrawalDelayInSeconds,
                 } = JSON.parse(event.data);
+                this.logger.important(`Token withdrawal for amount ${amount} initiated.`);
 
-                const holders = [holder1, holder2, holder3].map(h => h.toLowerCase());
-                const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-                if (holders.includes(this.config.erc725Identity.toLowerCase())) {
-                    bid.status = 'CHOSEN';
-                    this.logger.important(`I've been chosen for offer ${offerId}.`);
-                } else {
-                    bid.status = 'NOT_CHOSEN';
-                    this.logger.important(`I haven't been chosen for offer ${offerId}.`);
+                const amountBN = new BN(amount, 10);
+                const eAmountBN = new BN(eAmount, 10);
+                if (!amountBN.eq(eAmountBN)) {
+                    this.logger.warn(`Not enough tokens for withdrawal [${amount}]. All the tokens will be withdrawn [${eAmount}]`);
                 }
-                await bid.save({ fields: ['status'] });
-                return Command.empty();
+                const { data } = command;
+                Object.assign(data, {
+                    amount: eAmount,
+                });
+                return {
+                    commands: [
+                        {
+                            name: 'tokenWithdrawalCommand',
+                            delay: eWithdrawalDelayInSeconds * 1000,
+                            data,
+                        },
+                    ],
+                };
             }
         }
         return Command.repeat();
@@ -64,12 +74,7 @@ class DhOfferFinalizedCommand extends Command {
      * @param command
      */
     async expired(command) {
-        const { offerId } = command.data;
-
-        this.logger.important(`I haven't been chosen for offer ${offerId}. Offer has not been finalized.`);
-        const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-        bid.status = 'NOT_CHOSEN';
-        await bid.save({ fields: ['status'] });
+        // TODO implement
         return Command.empty();
     }
 
@@ -80,7 +85,7 @@ class DhOfferFinalizedCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dhOfferFinalizedCommand',
+            name: 'tokenWithdrawalWaitStartedCommand',
             delay: 0,
             period: 5000,
             deadline_at: Date.now() + (5 * 60 * 1000),
@@ -91,4 +96,4 @@ class DhOfferFinalizedCommand extends Command {
     }
 }
 
-module.exports = DhOfferFinalizedCommand;
+module.exports = TokenWithdrawalWaitStartedCommand;
