@@ -1,11 +1,6 @@
 pragma solidity ^0.4.24;
 
-contract Hub {
-    address public profileAddress;
-    address public profileStorageAddres;
-    address public holdingAddress;
-    address public holdingStorageAddress;
-}
+import './Hub.sol';
 
 contract HoldingStorage {
     Hub public hub;

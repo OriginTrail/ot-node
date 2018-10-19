@@ -1,11 +1,12 @@
 const BN = require('bn.js');
+const d3 = require('d3-format');
+const Queue = require('better-queue');
 const ethAbi = require('ethereumjs-abi');
 const crypto = require('crypto');
 const Op = require('sequelize/lib/operators');
 
 const Models = require('../../models');
 const Utilities = require('../Utilities');
-const models = require('../../models/index');
 
 const Graph = require('../Graph');
 const Challenge = require('../Challenge');
@@ -25,48 +26,229 @@ class DHService {
         this.graphStorage = ctx.graphStorage;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+
+        const that = this;
+        this.queue = new Queue((async (args, cb) => {
+            const {
+                offerId,
+                dcNodeId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+                dataSetId,
+                future,
+            } = args;
+            try {
+                await that._handleOffer(
+                    offerId,
+                    dcNodeId,
+                    dataSetSizeInBytes,
+                    holdingTimeInMinutes,
+                    litigationIntervalInMinutes,
+                    tokenAmountPerHolder,
+                    dataSetId,
+                );
+                future.resolve();
+            } catch (e) {
+                future.reject(e);
+            }
+            cb();
+        }), { concurrent: 1 });
+    }
+
+    handleOffer(
+        offerId, dcNodeId,
+        dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+        tokenAmountPerHolder, dataSetId,
+    ) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({
+                offerId,
+                dcNodeId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+                dataSetId,
+                future: {
+                    resolve, reject,
+                },
+            });
+        });
     }
 
     /**
      * Handle one offer
      * @returns {Promise<void>}
      */
-    async handleOffer(offerId, dcNodeId, dataSetId) {
-        if (dcNodeId.startsWith(Utilities.normalizeHex(this.config.identity))) {
+    async _handleOffer(
+        offerId, dcNodeId,
+        dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+        tokenAmountPerHolder, dataSetId,
+    ) {
+        dcNodeId = dcNodeId.substring(26);
+        if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
-        dcNodeId = dcNodeId.substring(2, 42);
         const dcContact = await this.transport.getContact(dcNodeId, true);
         if (dcContact == null || dcContact.hostname == null) {
             return; // wait until peers are synced
         }
 
-        // TODO enable this check after SC event update
-        // const dataInfo = await models.data_info.findOne({
-        //     where: { data_set_id: dataSetId },
-        // });
-        // if (dataInfo) {
-        //     this.logger.trace(`I've already stored data for data set ${dataSetId}. Ignoring.`);
-        //     return;
-        // }
+        this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
-        const bid = await models.bids.findOne({
-            where: { offer_id: offerId },
+        // use LIKE because of some SC related issues
+        const dataInfo = await Models.data_info.findOne({
+            where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` } },
         });
-        if (bid) {
-            this.logger.trace(`I've already added bid for offer ${offerId}. Ignoring.`);
+        if (dataInfo) {
+            this.logger.info(`I've already stored data for data set ${dataSetId}. Ignoring.`);
             return;
         }
 
-        await this.commandExecutor.add({
-            name: 'dhOfferHandleCommand',
-            delay: 15000,
-            data: {
-                offerId,
-                dcNodeId,
-            },
-            transactional: false,
+        let bid = await Models.bids.findOne({
+            where: { offer_id: offerId },
         });
+        if (bid) {
+            this.logger.info(`I've already added bid for offer ${offerId}. Ignoring.`);
+            return;
+        }
+
+        const format = d3.formatPrefix(',.6~s', 1e6);
+        const dhMinTokenPrice = new BN(this.config.dh_min_token_price, 10);
+        const dhMaxHoldingTimeInMinutes = new BN(this.config.dh_max_holding_time_in_minutes, 10);
+        const dhMinLitigationIntervalInMinutes =
+            new BN(this.config.dh_min_litigation_interval_in_minutes, 10);
+
+        const formatMaxPrice = format(tokenAmountPerHolder);
+        const formatMyPrice = format(this.config.dh_min_token_price);
+
+        if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
+            this.logger.info(`Offer ${offerId} too cheap for me.`);
+            this.logger.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
+            this.logger.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
+            return;
+        }
+
+        if (dhMaxHoldingTimeInMinutes.lt(new BN(holdingTimeInMinutes, 10))) {
+            this.logger.info(`Holding time for the offer ${offerId} is greater than my holding time defined.`);
+            return;
+        }
+
+        if (dhMinLitigationIntervalInMinutes.gt(new BN(litigationIntervalInMinutes, 10))) {
+            this.logger.info(`Litigation interval for the offer ${offerId} is lesser than the one defined in the config.`);
+            return;
+        }
+
+        bid = await Models.bids.create({
+            offer_id: offerId,
+            dc_node_id: dcNodeId,
+            data_size_in_bytes: dataSetSizeInBytes,
+            litigation_interval_in_minutes: litigationIntervalInMinutes,
+            token_amount: tokenAmountPerHolder,
+            deposited: false,
+            status: 'PENDING',
+        });
+
+        const remainder = await this._calculatePessimisticMinimumDeposit(
+            bid.id,
+            tokenAmountPerHolder,
+        );
+
+        const data = {
+            offerId,
+            dcNodeId,
+            dataSetSizeInBytes,
+            holdingTimeInMinutes,
+            litigationIntervalInMinutes,
+            tokenAmountPerHolder,
+        };
+
+        if (remainder) {
+            if (!this.config.deposit_on_demand) {
+                const message = 'Not enough tokens. Deposit on demand feature is disabled. Please, enable it in your configuration.';
+                throw new Error(message);
+            }
+
+            bid.deposit = remainder.toString();
+            await bid.save({ fields: ['deposit'] });
+
+            this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
+
+            Object.assign(data, {
+                amount: remainder.toString(),
+            });
+            await this.commandExecutor.add({
+                name: 'profileApprovalIncreaseCommand',
+                sequence: ['depositTokensCommand', 'dhOfferHandleCommand'],
+                delay: 15000,
+                data,
+                transactional: false,
+            });
+        } else {
+            await this.commandExecutor.add({
+                name: 'dhOfferHandleCommand',
+                delay: 15000,
+                data,
+                transactional: false,
+            });
+        }
+    }
+
+    /**
+     * Calculates possible minimum amount to deposit (pessimistically)
+     * @param bidId
+     * @param tokenAmountPerHolder
+     * @return {Promise<*>}
+     * @private
+     */
+    async _calculatePessimisticMinimumDeposit(bidId, tokenAmountPerHolder) {
+        const profile = await this.blockchain.getProfile(this.config.erc725Identity);
+        const profileStake = new BN(profile.stake, 10);
+        const profileStakeReserved = new BN(profile.stakeReserved, 10);
+        const profileMinStake = new BN(await this.blockchain.getProfileMinimumStake(), 10);
+
+        const offerStake = new BN(tokenAmountPerHolder, 10);
+
+        const bids = await Models.bids.findAll({
+            where: {
+                id: {
+                    [Op.ne]: bidId,
+                },
+                status: {
+                    [Op.in]: ['PENDING', 'SENT'],
+                },
+                deposit: {
+                    [Op.ne]: null,
+                },
+            },
+        });
+
+        const currentDeposits = bids
+            .map(pb => new BN(pb.deposit, 10))
+            .reduce((acc, amount) => acc.add(amount), new BN(0, 10));
+
+        let remainder = null;
+        if (profileStake.sub(profileStakeReserved).sub(currentDeposits).lt(offerStake)) {
+            remainder = offerStake.sub(profileStake.sub(profileStakeReserved).sub(currentDeposits));
+        }
+
+        if (profileStake
+            .sub(profileStakeReserved)
+            .sub(offerStake)
+            .sub(currentDeposits)
+            .lt(profileMinStake)) {
+            const stakeRemainder = profileMinStake
+                .sub(profileStake
+                    .sub(profileStakeReserved)
+                    .sub(offerStake)
+                    .sub(currentDeposits));
+            if (!remainder || (remainder && remainder.lt(stakeRemainder))) {
+                remainder = stakeRemainder;
+            }
+        }
+        return remainder;
     }
 
     /**
@@ -105,7 +287,7 @@ class DHService {
         distributionSignature,
         transactionHash,
     ) {
-        const bid = await models.bids.findOne({
+        const bid = await Models.bids.findOne({
             where: { offer_id: offerId },
         });
         if (!bid) {
@@ -249,7 +431,7 @@ class DHService {
 
             if (profileBalance.lt(condition)) {
                 await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-                await this.blockchain.depositToken(condition.sub(profileBalance));
+                await this.blockchain.depositTokens(condition.sub(profileBalance));
             }
 
             /*
@@ -677,7 +859,7 @@ class DHService {
         throw Error(`Cannot find import for import ID ${importId}.`);
     }
 
-    listenToBlockchainEvents() {
+    async listenToBlockchainEvents() {
         this.blockchain.subscribeToEventPermanent([
             'AddedPredeterminedBid',
             'OfferCreated',

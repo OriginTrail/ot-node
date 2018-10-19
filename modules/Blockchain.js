@@ -21,6 +21,14 @@ class Blockchain {
     }
 
     /**
+     * Initialize Blockchain provider
+     * @returns {Promise<void>}
+     */
+    async initialize() {
+        await this.blockchain.initialize();
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @param wallet DH wallet
@@ -32,60 +40,31 @@ class Blockchain {
     }
 
     /**
-     * Writes data import root hash on blockchain
-     * @param importId
-     * @param rootHash
-     * @param importHash
-     * @returns {Promise}
-     */
-    writeRootHash(importId, rootHash, importHash) {
-        return this.blockchain.writeRootHash(importId, rootHash, importHash);
-    }
-
-    /**
      * Gets profile by wallet
-     * @param wallet
+     * @param identity
      */
-    getProfile(wallet) {
-        return this.blockchain.getProfile(wallet);
-    }
-
-    /**
-     * Get offer by importId
-     * @param importId
-     * @returns {Promise}
-     */
-    getOffer(importId) {
-        return this.blockchain.getOffer(importId);
-    }
-
-    /**
-     * Gets the index of the node's bid in the array of one offer
-     * @param importId Offer import id
-     * @param dhNodeId KADemplia ID of the DH node that wants to get index
-     * @returns {Promisse<any>} integer index in the array
-     */
-    getBidIndex(importId, nodeId) {
-        return this.blockchain.getBidIndex(importId, nodeId);
+    getProfile(identity) {
+        return this.blockchain.getProfile(identity);
     }
 
     /**
      * Creates node profile on the Bidding contract
-     * @param nodeId        Kademlia node ID
-     * @param {string} pricePerByteMinute Price for byte per minute
-     * @param {string} stakePerByteMinute Stake for byte per minute
-     * @param {string} readStakeFactor Read stake factor
-     * @param {string} maxTimeMins   Max time in minutes
+     * @param profileNodeId - Network node ID
+     * @param initialBalance - Initial profile balance
+     * @param isSender725 - Is sender ERC 725?
+     * @param blockchainIdentity - ERC 725 identity (empty if there is none)
      * @return {Promise<any>}
      */
-    createProfile(
-        nodeId, pricePerByteMinute, stakePerByteMinute,
-        readStakeFactor, maxTimeMins,
-    ) {
-        return this.blockchain.createProfile(
-            nodeId, pricePerByteMinute, stakePerByteMinute,
-            readStakeFactor, maxTimeMins,
-        );
+    createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
+        return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
+    }
+
+    /**
+     * Gets minimum stake for creating a profile
+     * @returns {Promise<*>}
+     */
+    async getProfileMinimumStake() {
+        return this.blockchain.getProfileMinimumStake();
     }
 
     /**
@@ -93,8 +72,8 @@ class Blockchain {
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
      */
-    increaseApproval(tokenAmountIncrease) {
-        return this.blockchain.increaseApproval(tokenAmountIncrease);
+    increaseProfileApproval(tokenAmountIncrease) {
+        return this.blockchain.increaseProfileApproval(tokenAmountIncrease);
     }
 
     /**
@@ -104,16 +83,6 @@ class Blockchain {
      */
     increaseBiddingApproval(tokenAmountIncrease) {
         return this.blockchain.increaseBiddingApproval(tokenAmountIncrease);
-    }
-
-    /**
-     * Verify escrow contract
-     * @param importId
-     * @param dhWallet
-     * @returns {Promise}
-     */
-    verifyEscrow(importId, dhWallet) {
-        return this.blockchain.verifyEscrow(importId, dhWallet);
     }
 
     /**
@@ -150,23 +119,13 @@ class Blockchain {
     }
 
     /**
-     * Cancel data holding escrow process
-     * @param {string} - dhWallet
-     * @param {number} - importId
+     * Pay out tokens
+     * @param blockchainIdentity
+     * @param offerId
      * @returns {Promise}
      */
-    cancelEscrow(dhWallet, importId, dhIsSender) {
-        return this.blockchain.cancelEscrow(dhWallet, importId, dhIsSender);
-    }
-
-    /**
-     * Pay out tokens from escrow
-     * @param {string} - dcWallet
-     * @param {number} - importId
-     * @returns {Promise}
-     */
-    payOut(dcWallet, importId) {
-        return this.blockchain.payOut(dcWallet, importId);
+    payOut(blockchainIdentity, offerId) {
+        return this.blockchain.payOut(blockchainIdentity, offerId);
     }
 
     /**
@@ -174,6 +133,7 @@ class Blockchain {
      * @returns {Promise<any>} Return choose start-time.
      */
     createOffer(
+        blockchainIdentity,
         dataSetId,
         dataRootHash,
         redLitigationHash,
@@ -186,6 +146,7 @@ class Blockchain {
         litigationIntervalInMinutes,
     ) {
         return this.blockchain.createOffer(
+            blockchainIdentity,
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -201,22 +162,22 @@ class Blockchain {
 
     /**
      * Finalizes offer on Blockchain
-     * @param offerId   - Offer ID
-     * @param holder1   - Holder address
-     * @param holder2   - Holder address
-     * @param holder3   - Holder address
      * @returns {Promise<any>}
      */
-    finalizeOffer(offerId, holder1, holder2, holder3) {
-        return this.blockchain.finalizeOffer(offerId, holder1, holder2, holder3);
-    }
-
-    /**
-     * Cancel offer for data storing on Ethereum blockchain.
-     * @param importId Data if of the offer.
-     */
-    cancelOffer(importId) {
-        return this.blockchain.cancelOffer(importId);
+    finalizeOffer(
+        blockchainIdentity,
+        offerId,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
+    ) {
+        return this.blockchain.finalizeOffer(
+            blockchainIdentity, offerId, shift, confirmation1,
+            confirmation2, confirmation3, encryptionType, holders,
+        );
     }
 
     /**
@@ -240,7 +201,7 @@ class Blockchain {
      * @param event Event to listen to
      * @returns {number | Object} Event handle
      */
-    subscribeToEventPermanent(event) {
+    async subscribeToEventPermanent(event) {
         return this.blockchain.subscribeToEventPermanent(event);
     }
 
@@ -284,58 +245,12 @@ class Blockchain {
     }
 
     /**
-     * Activates predetermined bid to the offer on Ethereum blockchain
-     * @param importId Import ID
-     * @param dhNodeId KADemlia ID of the DH node that wants to activate bid
-     * @param bidIndex index of the bid
-     * @returns {Promise<any>} Index of the bid.
-     */
-    activatePredeterminedBid(importId, dhNodeId, bidIndex) {
-        return this.blockchain.activatePredeterminedBid(importId, dhNodeId, bidIndex);
-    }
-
-    /**
-     * Cancel the bid on Ethereum blockchain
-     * @param dcWallet Wallet of the bidder
-     * @param importId ID of the data of the bid
-     * @param bidIndex Index of the bid
-     * @returns {Promise<any>}
-     */
-    cancelBid(dcWallet, importId, bidIndex) {
-        return this.blockchain.cancelBid(dcWallet, importId, bidIndex);
-    }
-
-    /**
-     * Starts choosing bids from contract escrow on Ethereum blockchain
-     * @param importId Import ID
-     * @returns {Promise<any>} Array of bid indices of chosen ones.
-     */
-    chooseBids(importId) {
-        return this.blockchain.chooseBids(importId);
-    }
-
-    /**
-     *
-     * @param dcWallet
-     * @param importId
-     * @param bidIndex
-     * @returns {Promise<any>}
-     */
-    getBid(dcWallet, importId, bidIndex) {
-        return this.blockchain.getBid(dcWallet, importId, bidIndex);
-    }
-
-    /**
     * Gets status of the offer
     * @param importId
     * @return {Promise<any>}
     */
     getOfferStatus(importId) {
         return this.blockchain.getOfferStatus(importId);
-    }
-
-    getDcWalletFromOffer(importId) {
-        return this.blockchain.getDcWalletFromOffer(importId);
     }
 
     /**
@@ -349,39 +264,21 @@ class Blockchain {
 
     /**
      * Deposits tokens to the profile
+     * @param blockchainIdentity
      * @param amount
      * @returns {Promise<any>}
      */
-    async depositToken(amount) {
-        return this.blockchain.depositToken(amount);
-    }
-
-    /**
-     * Withdraws tokens from profile to wallet
-     * @param amount
-     * @returns {Promise<any>}
-     */
-    async withdrawToken(amount) {
-        return this.blockchain.withdrawToken(amount);
+    async depositTokens(blockchainIdentity, amount) {
+        return this.blockchain.depositTokens(blockchainIdentity, amount);
     }
 
     /**
      * Gets root hash for import
-     * @param dcWallet DC wallet
-     * @param importId   Import ID
+     * @param dataSetId Data set ID
      * @return {Promise<any>}
      */
-    async getRootHash(dcWallet, importId) {
-        return this.blockchain.getRootHash(dcWallet, importId);
-    }
-
-    async addRootHashAndChecksum(importId, litigationHash, distributionHash, checksum) {
-        return this.blockchain.addRootHashAndChecksum(
-            importId,
-            litigationHash,
-            distributionHash,
-            checksum,
-        );
+    async getRootHash(dataSetId) {
+        return this.blockchain.getRootHash(dataSetId);
     }
 
     async getEscrow(importId, dhWallet) {
@@ -440,10 +337,29 @@ class Blockchain {
     }
 
     /**
-     * Get replication modifier
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @param amount
+     * @return {Promise<any>}
      */
-    async getReplicationModifier() {
-        return this.blockchain.getReplicationModifier();
+    async startTokenWithdrawal(blockchainIdentity, amount) {
+        return this.blockchain.startTokenWithdrawal(blockchainIdentity, amount);
+    }
+
+    /**
+     * Start token withdrawal operation
+     * @param blockchainIdentity
+     * @return {Promise<any>}
+     */
+    async withdrawTokens(blockchainIdentity) {
+        return this.blockchain.withdrawTokens(blockchainIdentity);
+    }
+
+    /**
+     * Get difficulty for the particular offer
+     */
+    async getOfferDifficulty(offerId) {
+        return this.blockchain.getOfferDifficulty(offerId);
     }
 }
 

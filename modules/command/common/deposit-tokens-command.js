@@ -1,13 +1,16 @@
+const BN = require('../../../node_modules/bn.js/lib/bn');
+
 const Command = require('../command');
-const BN = require('bn.js');
+const Utilities = require('../../Utilities');
 
 /**
- * Increases approval for Bidding contract on blockchain
+ * Deposits tokens on blockchain
  */
-class BiddingApprovalIncreaseCommand extends Command {
+class DepositTokensCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.config = ctx.config;
         this.blockchain = ctx.blockchain;
     }
 
@@ -16,8 +19,11 @@ class BiddingApprovalIncreaseCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { myStake, profileBalance } = command.data;
-        await this.blockchain.increaseBiddingApproval(myStake.sub(profileBalance));
+        const { amount } = command.data;
+        this.logger.notify(`Deposit amount [${amount}]...`);
+
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this.blockchain.depositTokens(blockchainIdentity, amount);
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
@@ -27,9 +33,7 @@ class BiddingApprovalIncreaseCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            myStake: data.myStake.toString(),
-            myPrice: data.myPrice.toString(),
-            profileBalance: data.profileBalance.toString(),
+            amount: data.amount.toString(),
         });
         return data;
     }
@@ -42,9 +46,7 @@ class BiddingApprovalIncreaseCommand extends Command {
     unpack(data) {
         const parsed = data;
         Object.assign(parsed, {
-            myStake: new BN(data.myStake, 10),
-            myPrice: new BN(data.myPrice, 10),
-            profileBalance: new BN(data.profileBalance, 10),
+            amount: new BN(data.amount, 10),
         });
         return parsed;
     }
@@ -56,7 +58,7 @@ class BiddingApprovalIncreaseCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'biddingApprovalIncreaseCommand',
+            name: 'depositTokensCommand',
             delay: 0,
             transactional: false,
         };
@@ -65,4 +67,4 @@ class BiddingApprovalIncreaseCommand extends Command {
     }
 }
 
-module.exports = BiddingApprovalIncreaseCommand;
+module.exports = DepositTokensCommand;

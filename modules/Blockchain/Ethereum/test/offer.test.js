@@ -23,18 +23,24 @@ var Ganache = require('ganache-core');
 
 var _ = require('lodash');
 
-// Global values
-var DC_wallet;
+// Helper variables
+var errored = true;
 var DC_identity;
+var DC_wallet;
+var offerId;
+var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(20)));
 
 // Offer variables
-var import_id = 0;
-const data_size = 1;
-const total_escrow_time = 1;
-const max_token_amount = 1000e18;
-const min_stake_amount = 10e12;
-const min_reputation = 0;
-const predestined_first_bid_index = 9;
+const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const dataRootHash = '0x1cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const redLitigationHash = '0x2cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const greenLitigationHash = '0x3cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const blueLitigationHash = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const dcNodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const holdingTimeInMinutes = new BN(1);
+const tokenAmountPerHolder = new BN(1200);
+const dataSetSizeInBytes = new BN(1024);
+const litigationIntervalInMinutes = new BN(10);
 
 // Profile variables
 var privateKeys = [];
@@ -86,8 +92,9 @@ contract('Offer testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             res = await profile.createProfile(
                 '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde',
-                (new BN(5)).mul(new BN(10).pow(new BN(20))),
+                tokensToDeposit,
                 false,
+                '0x7e9f99b7971cb3de779690a82fec5e2ceec74dd0',
                 { from: accounts[i] },
             );
             identities[i] = res.logs[0].args.newIdentity;
@@ -102,17 +109,6 @@ contract('Offer testing', async (accounts) => {
         // Get instances of contracts used in the test
         const holding = await Holding.deployed();
         const holdingStorage = await HoldingStorage.deployed();
-
-        const dataSetId = '0x0cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const dataRootHash = '0x1cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const redLitigationHash = '0x2cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const greenLitigationHash = '0x3cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const blueLitigationHash = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const dcNodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const holdingTimeInMinutes = new BN(60);
-        const tokenAmountPerHolder = new BN(1200);
-        const dataSetSizeInBytes = new BN(1024);
-        const litigationIntervalInMinutes = new BN(10);
 
         let res = await holding.createOffer(
             DC_identity,
@@ -147,27 +143,12 @@ contract('Offer testing', async (accounts) => {
     });
 
     // eslint-disable-next-line no-undef
-    it('Should get offerId from an offer', async () => {
+    it('Should test finalizing offer', async () => {
         // Get instances of contracts used in the test
         const holding = await Holding.deployed();
         const util = await TestingUtilities.deployed();
         const holdingStorage = await HoldingStorage.deployed();
-
-
-        let offerId = 'nista';
-
-        const dataSetId = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const dataRootHash = '0x1cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const redLitigationHash = '0x2cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const greenLitigationHash = '0x3cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const blueLitigationHash = '0x4cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const dcNodeId = '0x5cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
-        const holdingTimeInMinutes = new BN(60);
-        const tokenAmountPerHolder = new BN(1200);
-        const dataSetSizeInBytes = new BN(1024);
-        const litigationIntervalInMinutes = new BN(10);
-
-        const identity = await Identity.at(DC_identity);
+        const profileStorage = await ProfileStorage.deployed();
 
         let res = await holding.createOffer(
             DC_identity,
@@ -188,8 +169,7 @@ contract('Offer testing', async (accounts) => {
 
         // eslint-disable-next-line prefer-destructuring
         offerId = res.logs[0].args.offerId;
-        // console.log(`offerId ${JSON.stringify(res)}`);
-        // eslint-disable-next-line prefer-destructuring
+
         const task = await holdingStorage.getOfferTask.call(offerId);
         const solution = await util.keccakAddressAddressAddress.call(
             identities[0],
@@ -211,6 +191,7 @@ contract('Offer testing', async (accounts) => {
             // eslint-disable-next-line no-await-in-loop
             hashes[i] = await util.keccakBytesAddress.call(offerId, identities[i]);
         }
+
         // Getting confirmations
         var confimations = [];
         for (i = 0; i < 3; i += 1) {
@@ -234,12 +215,27 @@ contract('Offer testing', async (accounts) => {
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
+            res = await profileStorage.profile.call(identities[i]);
+            assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for account ${i}!`);
+        }
+        res = await profileStorage.profile.call(DC_identity);
+        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC!');
+
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
             res = await holdingStorage.holder.call(offerId, identities[i]);
 
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
             assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
         }
 
+        for (i = 0; i < confimations.length; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            res = await profileStorage.getStakeReserved.call(identities[i]);
+            assert(tokenAmountPerHolder.eq(res), 'Tokens reserved not matching');
+        }
+        res = await profileStorage.getStakeReserved.call(DC_identity);
+        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res), 'Tokens reserved for DC not matching');
 
         // Create an additional offer
         res = await holding.createOffer(
@@ -261,5 +257,45 @@ contract('Offer testing', async (accounts) => {
 
         console.log(`Total gas used for creating the first offer: ${firstOfferGasUsage + finalizeOfferGasUsage}`);
         console.log(`Total gas used for creating a second offer: ${secondOfferGasUsage + finalizeOfferGasUsage}`);
+
+        errored = false;
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should test token transfers for holding', async () => {
+        // Get instances of contracts used in the test
+        const holding = await Holding.deployed();
+        const util = await TestingUtilities.deployed();
+        const holdingStorage = await HoldingStorage.deployed();
+        const profileStorage = await ProfileStorage.deployed();
+
+        // wait for holding job to expire
+        if (errored) assert(false, 'Test cannot run without previous test succeeding');
+        await new Promise(resolve => setTimeout(resolve, 65000));
+
+        var initialStake = [];
+        for (var i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            var res = await profileStorage.profile.call(identities[i]);
+            initialStake[i] = res.stake;
+        }
+        res = await profileStorage.profile.call(DC_identity);
+        const initialStakeDC = res.stake;
+
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await holding.payOut(identities[i], offerId, { from: accounts[i] });
+        }
+
+
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            res = await profileStorage.profile.call(identities[i]);
+            assert(initialStake[i].add(tokenAmountPerHolder).eq(res.stake), `Stake amount incorrect for account ${i}`);
+            assert((new BN(0)).eq(res.stakeReserved), `Stake amout incorrect for account ${i}`);
+        }
+        res = await profileStorage.profile.call(DC_identity);
+        assert(initialStakeDC.sub(tokenAmountPerHolder.mul(new BN(3))).eq(res.stake), 'Stake amount incorrect for DC');
+        assert((new BN(0)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC');
     });
 });

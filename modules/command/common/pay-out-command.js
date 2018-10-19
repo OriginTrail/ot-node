@@ -1,14 +1,16 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 
 /**
- * Cancels Escrow on blockchain
+ * Starts token withdrawal operation
  */
-class DCEscrowCancelCommand extends Command {
+class PayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.logger = ctx.logger;
-        this.transport = ctx.transport;
         this.blockchain = ctx.blockchain;
+        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -16,17 +18,12 @@ class DCEscrowCancelCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { importId, dhWallet, dhNodeId } = command.data;
-        await this.blockchain.cancelEscrow(
-            dhWallet,
-            importId,
-            false,
-        );
-        await this.transport.sendVerifyImportResponse({
-            status: 'fail',
-            import_id: importId,
-        }, dhNodeId);
-        return this.continueSequence(this.pack(command.data), command.sequence);
+        const {
+            offerId,
+        } = command.data;
+
+        await this.blockchain.payOut(Utilities.normalizeHex(this.config.erc725Identity), offerId);
+        return Command.empty();
     }
 
     /**
@@ -36,7 +33,7 @@ class DCEscrowCancelCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcEscrowCancelCommand',
+            name: 'payOutCommand',
             delay: 0,
             transactional: false,
         };
@@ -45,4 +42,4 @@ class DCEscrowCancelCommand extends Command {
     }
 }
 
-module.exports = DCEscrowCancelCommand;
+module.exports = PayOutCommand;

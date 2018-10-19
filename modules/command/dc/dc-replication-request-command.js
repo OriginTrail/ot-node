@@ -1,4 +1,4 @@
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 const path = require('path');
 
 const Command = require('../command');
@@ -16,6 +16,7 @@ class DCReplicationRequestCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -25,7 +26,7 @@ class DCReplicationRequestCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId, wallet, identity,
+            offerId, wallet, identity, dhIdentity,
         } = command.data;
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         if (!offer) {
@@ -35,15 +36,14 @@ class DCReplicationRequestCommand extends Command {
         const colors = ['red', 'green', 'blue'];
         const color = colors[Utilities.getRandomInt(2)];
 
-        const colorFilePath = path.join(
-            this.config.appDataPath,
-            this.config.dataSetStorage, offer.id, `${color}.json`,
-        );
+        const offerDirPath = this.replicationService.getOfferDirPath(offer.id);
+        const colorFilePath = path.join(offerDirPath, `${color}.json`);
 
         const replication = JSON.parse(await Utilities.fileContents(colorFilePath));
         await models.replicated_data.create({
             dh_id: identity,
-            dh_wallet: wallet,
+            dh_wallet: wallet.toLowerCase(),
+            dh_identity: dhIdentity.toLowerCase(),
             offer_id: offer.offer_id,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,

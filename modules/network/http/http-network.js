@@ -98,24 +98,6 @@ class HttpNetwork {
             return HttpNetwork.send(contact.hostname, data, this.config.identity);
         };
 
-        this.node.verifyImport = async (message, contactId) => {
-            const data = {
-                type: 'kad-verify-import-request',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            return HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
-
-        this.node.sendVerifyImportResponse = async (message, contactId) => {
-            const data = {
-                type: 'kad-verify-import-response',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            return HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
-
         this.node.publish = async (topic, message, opts = {}) => new Promise((resolve, reject) => {
             // TODO
         });

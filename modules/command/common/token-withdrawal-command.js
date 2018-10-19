@@ -1,9 +1,10 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 
 /**
- * Finalizes offer on blockchain
+ * Starts token withdrawal operation
  */
-class DCOfferFinalizeCommand extends Command {
+class TokenWithdrawalCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -18,24 +19,11 @@ class DCOfferFinalizeCommand extends Command {
      */
     async execute(command) {
         const {
-            offerId,
-            wallets,
+            amount,
         } = command.data;
-
-        await this.blockchain.finalizeOffer(
-            offerId,
-            wallets[0],
-            wallets[1],
-            wallets[2],
-        );
-        return {
-            commands: [
-                {
-                    name: 'dcOfferFinalizedCommand',
-                    data: { offerId },
-                },
-            ],
-        };
+        await this.blockchain.withdrawTokens(Utilities.normalizeHex(this.config.erc725Identity));
+        this.logger.important(`Token withdrawal for amount ${amount} completed.`);
+        return Command.empty();
     }
 
     /**
@@ -45,7 +33,7 @@ class DCOfferFinalizeCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcOfferFinalizeCommand',
+            name: 'tokenWithdrawalCommand',
             delay: 0,
             transactional: false,
         };
@@ -54,4 +42,4 @@ class DCOfferFinalizeCommand extends Command {
     }
 }
 
-module.exports = DCOfferFinalizeCommand;
+module.exports = TokenWithdrawalCommand;

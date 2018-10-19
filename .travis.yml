@@ -13,7 +13,7 @@ before_script:
   - cp .origintrail-noderc.travis .origintrail-noderc
   - npm run bootstrap
   - npm install -g ganache-cli@6.1.5 &> /dev/null
-  - npm install -g truffle &> /dev/null
+  - npm install -g truffle@beta &> /dev/null
 script:
   - npm run lint
   - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd; fi'
@@ -24,7 +24,7 @@ script:
   - jobs
   - kill %1
   # compile and check Smart Contracts
-  - ganache-cli -i 5777 -p 7545 -l 10000000 &>ganache.log &
+  - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &>ganache.log &
   - cd modules/Blockchain/Ethereum
   - truffle test --network test > ../../../truffle-test.log
   - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log

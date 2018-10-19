@@ -1,10 +1,10 @@
 const Command = require('../command');
-const BN = require('bn.js');
+const BN = require('../../../node_modules/bn.js/lib/bn');
 
 /**
- * Deposits tokens on blockchain
+ * Increases approval for Profile contract on blockchain
  */
-class DepositTokenCommand extends Command {
+class ProfileApprovalIncreaseCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
@@ -16,8 +16,10 @@ class DepositTokenCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { myStake, profileBalance } = command.data;
-        await this.blockchain.depositToken(myStake.sub(profileBalance));
+        const { amount } = command.data;
+        this.logger.notify(`Giving approval to profile contract for amount [${amount}].`);
+
+        await this.blockchain.increaseProfileApproval(amount);
         return this.continueSequence(this.pack(command.data), command.sequence);
     }
 
@@ -27,9 +29,7 @@ class DepositTokenCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            myStake: data.myStake.toString(),
-            myPrice: data.myPrice.toString(),
-            profileBalance: data.profileBalance.toString(),
+            amount: data.amount.toString(),
         });
         return data;
     }
@@ -42,9 +42,7 @@ class DepositTokenCommand extends Command {
     unpack(data) {
         const parsed = data;
         Object.assign(parsed, {
-            myStake: new BN(data.myStake, 10),
-            myPrice: new BN(data.myPrice, 10),
-            profileBalance: new BN(data.profileBalance, 10),
+            amount: new BN(data.amount, 10),
         });
         return parsed;
     }
@@ -56,7 +54,7 @@ class DepositTokenCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'depositTokenCommand',
+            name: 'profileApprovalIncreaseCommand',
             delay: 0,
             transactional: false,
         };
@@ -65,4 +63,4 @@ class DepositTokenCommand extends Command {
     }
 }
 
-module.exports = DepositTokenCommand;
+module.exports = ProfileApprovalIncreaseCommand;

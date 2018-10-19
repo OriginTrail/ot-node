@@ -21,6 +21,7 @@ const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
+const rimraf = require('rimraf');
 
 const pjson = require('../package.json');
 const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
@@ -983,6 +984,19 @@ class Utilities {
                         }
                     });
                 }
+            });
+        });
+    }
+
+    /**
+     * Deletes directory recursively
+     * @param directoryPath
+     * @return {Promise}
+     */
+    static deleteDirectory(directoryPath) {
+        return new Promise((resolve) => {
+            rimraf(directoryPath, () => {
+                resolve();
             });
         });
     }

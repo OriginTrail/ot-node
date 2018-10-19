@@ -1,4 +1,5 @@
 const utilities = require('../Utilities');
+const Models = require('../../models');
 
 /**
  * DC related API controller
@@ -23,17 +24,22 @@ class DCController {
             return;
         }
 
-        if (req.body !== undefined && req.body.import_id !== undefined && typeof req.body.import_id === 'string' &&
-            utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
-            utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
-            utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-            utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
+        if (req.body !== undefined && req.body.data_set_id !== undefined && typeof req.body.data_set_id === 'string' &&
+            utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
+            utilities.validateStringParameter(req.body.token_amount_per_holder) &&
+            utilities.validateNumberParameter(req.body.litigation_interval_in_minutes)) {
+            const dataset = await Models.data_info.findOne({
+                where: { data_set_id: req.body.data_set_id },
+            });
+            if (dataset == null) {
+                throw new Error('This data set does not exist in the database');
+            }
+
             const queryObject = {
-                import_id: req.body.import_id,
-                total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
-                max_token_amount: req.body.max_token_amount_per_dh,
-                min_stake_amount: req.body.dh_min_stake_amount,
-                min_reputation: req.body.dh_min_reputation,
+                dataSetId: req.body.data_set_id,
+                holdingTimeInMinutes: req.body.holding_time_in_minutes,
+                tokenAmountPerHolder: req.body.token_amount_per_holder,
+                litigationIntervalInMinutes: req.body.litigation_interval_in_minutes,
                 response: res,
             };
             this.emitter.emit('api-create-offer', queryObject);

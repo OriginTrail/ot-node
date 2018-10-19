@@ -263,8 +263,6 @@ class ImportUtilities {
     static immutableFilterClassVertices(vertices) {
         return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
     }
-
-
 }
 
 module.exports = ImportUtilities;

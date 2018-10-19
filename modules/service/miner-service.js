@@ -8,6 +8,8 @@ class MinerService {
         this.logger = ctx.logger;
         this.dcService = ctx.dcService;
         this.emitter = ctx.emitter;
+        this.blockchain = ctx.blockchain;
+        this.forks = {};
     }
 
     /**
@@ -18,7 +20,11 @@ class MinerService {
      */
     async sendToMiner(task, wallets, offerId) {
         try {
+            const difficulty = await this.blockchain.getOfferDifficulty(offerId);
+
             const forked = fork('modules/worker/miner-worker.js');
+            this.forks[offerId] = forked;
+
             forked.send({
                 offerId,
                 wallets,
@@ -35,12 +41,15 @@ class MinerService {
                     this.emitter.emit('int-miner-solution', new Error(`Cannot find a solution for offer ${offerId}`), null);
                 }
             });
+
             await Models.miner_records.create({
                 offer_id: offerId,
-                difficulty: DEFAULT_DIFFICULTY,
+                difficulty,
                 task,
                 status: 'STARTED',
             });
+
+            this.logger.important(`Miner started for offer ${offerId}.`);
         } catch (e) {
             this.logger.error(`Failed to find solution for ${wallets.length} wallets and task ${task}. Offer ID ${offerId}`);
         }

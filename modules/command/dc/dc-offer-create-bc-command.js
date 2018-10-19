@@ -12,6 +12,7 @@ class DCOfferCreateBcCommand extends Command {
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -33,6 +34,7 @@ class DCOfferCreateBcCommand extends Command {
         } = command.data;
 
         await this.blockchain.createOffer(
+            Utilities.normalizeHex(this.config.erc725Identity),
             dataSetId,
             dataRootHash,
             redLitigationHash,
@@ -66,6 +68,9 @@ class DCOfferCreateBcCommand extends Command {
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
+        return Command.empty();
     }
 
     /**

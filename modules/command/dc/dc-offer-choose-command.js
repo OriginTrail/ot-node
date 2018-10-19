@@ -1,5 +1,6 @@
 const Command = require('../command');
 const models = require('../../../models/index');
+const Utilities = require('../../Utilities');
 
 /**
  * Creates offer on blockchain
@@ -12,6 +13,7 @@ class DCOfferChooseCommand extends Command {
         this.blockchain = ctx.blockchain;
         this.minerService = ctx.minerService;
         this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -21,6 +23,7 @@ class DCOfferChooseCommand extends Command {
     async execute(command) {
         const {
             internalOfferId,
+            excludedDHs,
         } = command.data;
 
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
@@ -35,20 +38,23 @@ class DCOfferChooseCommand extends Command {
             },
         });
 
-        // TODO remove this! testing purposes only
-        // if (replications.length < 3) {
-        //     throw new Error('Failed to choose holders. Not enough DHs submitted.');
-        // }
+        const verifiedReplications = replications.map(r => r.status === 'VERIFIED');
+        this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
 
-        // const wallets = replications.map(r => r.dh_wallet);
-        const w1 = '0000000000000000000000000000000000000000';
-        const w2 = '0000000000000000000000000000000000000001';
-        const w3 = '0000000000000000000000000000000000000002';
+        let identities = replications
+            .map(r => Utilities.denormalizeHex(r.dh_identity).toLowerCase());
+        if (excludedDHs) {
+            const normalizedExcludedDHs = excludedDHs
+                .map(excludedDH => Utilities.denormalizeHex(excludedDH).toLowerCase());
+            identities = identities.filter(identity => !normalizedExcludedDHs.includes(identity));
+        }
+        if (identities.length < 3) {
+            throw new Error('Failed to choose holders. Not enough DHs submitted.');
+        }
 
-        const wallets = [w1, w2, w3];
         await this.minerService.sendToMiner(
             offer.task,
-            wallets.concat(wallets).concat(wallets),
+            identities,
             offer.offer_id,
         );
         return {
@@ -71,11 +77,14 @@ class DCOfferChooseCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId } = command.data;
-        const offer = await models.offers.findOne({ where: { id: offerId } });
+        const { internalOfferId } = command.data;
+        const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.deleteOfferDir(offer.id);
+        return Command.empty();
     }
 
     /**
@@ -86,7 +95,7 @@ class DCOfferChooseCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferChooseCommand',
-            delay: 20000,
+            delay: 2 * 60 * 1000,
             transactional: false,
         };
         Object.assign(command, map);
