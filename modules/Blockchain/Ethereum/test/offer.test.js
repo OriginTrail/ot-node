@@ -298,4 +298,52 @@ contract('Offer testing', async (accounts) => {
         assert(initialStakeDC.sub(tokenAmountPerHolder.mul(new BN(3))).eq(res.stake), 'Stake amount incorrect for DC');
         assert((new BN(0)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC');
     });
+
+    // eslint-disable-next-line no-undef
+    it('Should test difficulty override', async () => {
+        // Get instances of contracts used in the test
+        const holding = await Holding.deployed();
+        const holdingStorage = await HoldingStorage.deployed();
+
+
+        let res = await holding.difficultyOverride.call();
+        assert(
+            res.isZero(),
+            `Initial difficulty ovverride incorrect, got ${res.toString()} instead of 0!`,
+        );
+
+        const difficultyToSet = new BN(100);
+        // Execute tested function
+        await holding.setDifficulty(difficultyToSet, { from: accounts[0] });
+
+        res = await holding.difficultyOverride.call();
+        assert(
+            difficultyToSet.eq(res),
+            `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
+        );
+
+        // Create offer to check difficulty to be written
+        res = await holding.createOffer(
+            DC_identity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSetSizeInBytes,
+            litigationIntervalInMinutes,
+            { from: DC_wallet },
+        );
+        // eslint-disable-next-line prefer-destructuring
+        offerId = res.logs[0].args.offerId;
+        res = await holdingStorage.offer.call(offerId);
+
+        assert(
+            difficultyToSet.eq(res.difficulty),
+            `Written difficulty ovverride incorrect, got ${res.difficulty.toString()} instead of ${difficultyToSet.toString()}!`,
+        );
+    });
 });
