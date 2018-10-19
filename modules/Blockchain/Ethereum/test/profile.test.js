@@ -527,7 +527,7 @@ contract('Profile contract testing', async (accounts) => {
 
         if (errored) assert(false, 'No use of running a test after previous test failed');
         // Wait other half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 300000));
 
         // Get initial balances
         var initialBalances = [];
