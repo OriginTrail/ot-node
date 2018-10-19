@@ -33,6 +33,8 @@ const holdingTimeInMinutes = new BN(1);
 const tokenAmountPerHolder = new BN(1200);
 const dataSetSizeInBytes = new BN(1024);
 const litigationIntervalInMinutes = new BN(10);
+const fingerprint = '0x8cad6896887d99d70db8ce035d331ba2ade1a5e1161f38ff7fda76cf7c308cde';
+const litigationEncryptionTypes = [new BN(1), new BN(2), new BN(3)];
 
 // Contracts used in test
 var hub;
@@ -287,5 +289,151 @@ contract('Holding storage testing', async (accounts) => {
         assert.equal(finalOffer.greenLitigationHash, emptyHash, 'Final greenLitigationHash in Holding storage must be 0!');
         assert.equal(finalOffer.blueLitigationHash, emptyHash, 'Final blueLitigationHash in Holding storage must be 0!');
         assert(finalOffer.startTime.isZero(), 'Final start time in Holding storage must be 0!');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should set and get fingerprint', async () => {
+        const initialFingerpint =
+            await holdingStorage.fingerprint.call(offerId);
+
+        assert.equal(initialFingerpint, emptyHash, 'Initial fingerprint in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setFingerprint(offerId, fingerprint);
+
+        const newFingerprint =
+            await holdingStorage.fingerprint.call(offerId);
+
+        assert.equal(newFingerprint, fingerprint, 'Incorrect fingerprint written in Holding storage!');
+
+        // Revert to previous status
+        await holdingStorage.setFingerprint(offerId, emptyHash);
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should set and get holder staked amount', async () => {
+        const initialStakedAmount =
+            await holdingStorage.getHolderStakedAmount.call(offerId, accounts[0]);
+
+        assert(initialStakedAmount.isZero(), 'Initial staked amount in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setHolderStakedAmount(
+            offerId,
+            accounts[0],
+            tokenAmountPerHolder,
+        );
+
+        const newStakedAmount =
+            await holdingStorage.getHolderStakedAmount.call(offerId, accounts[0]);
+
+        assert(
+            newStakedAmount.eq(tokenAmountPerHolder),
+            `Incorrect staked amount written in Holding storage, got ${newStakedAmount} instead of ${tokenAmountPerHolder}!`,
+        );
+
+        // Revert to previous status
+        await holdingStorage.setHolderStakedAmount(
+            offerId,
+            accounts[0],
+            initialStakedAmount,
+        );
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should set and get holder litigation encryption type', async () => {
+        const initialEncryptionType =
+            await holdingStorage.getHolderLitigationEncryptionType.call(offerId, accounts[0]);
+
+        assert(initialEncryptionType.isZero(), 'Initial litigation encryption type in Holding storage must be 0!');
+
+        // Execute tested function
+        await holdingStorage.setHolderLitigationEncryptionType(
+            offerId,
+            accounts[0],
+            litigationEncryptionTypes[0],
+        );
+
+        const newEncryptionType =
+            await holdingStorage.getHolderLitigationEncryptionType.call(offerId, accounts[0]);
+
+        assert(
+            newEncryptionType.eq(litigationEncryptionTypes[0]),
+            `Incorrect litigation encryption type written in Holding storage, got ${newEncryptionType} instead of ${litigationEncryptionTypes[0]}!`,
+        );
+
+        // Revert to previous status
+        await holdingStorage.setHolderLitigationEncryptionType(
+            offerId,
+            accounts[0],
+            initialEncryptionType,
+        );
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should set and get holders using multiple setter function', async () => {
+        var initialStakedAmounts = [];
+        for (var i = 0; i < 3; i += 1) {
+            initialStakedAmounts[i] =
+                // eslint-disable-next-line no-await-in-loop
+                await holdingStorage.getHolderStakedAmount(offerId, accounts[i]);
+            assert(initialStakedAmounts[i].isZero(), `Initial staked amount for account ${i} not 0!`);
+        }
+        var initialEncryptionTypes = [];
+        for (i = 0; i < 3; i += 1) {
+            initialEncryptionTypes[i] =
+                // eslint-disable-next-line no-await-in-loop
+                await holdingStorage.getHolderLitigationEncryptionType(offerId, accounts[i]);
+            assert(initialEncryptionTypes[i].isZero(), `Initial encryption type for account ${i} not 0!`);
+        }
+
+        await holdingStorage.setOfferTokenAmountPerHolder(offerId, tokenAmountPerHolder);
+
+        // Execute tested function
+        await holdingStorage.setHolders(
+            offerId,
+            [accounts[0], accounts[1], accounts[2]],
+            litigationEncryptionTypes,
+        );
+
+        var newStakedAmounts = [];
+        for (i = 0; i < 3; i += 1) {
+            newStakedAmounts[i] =
+                // eslint-disable-next-line no-await-in-loop
+                await holdingStorage.getHolderStakedAmount(offerId, accounts[i]);
+            assert(
+                newStakedAmounts[i].eq(initialStakedAmounts[i].add(tokenAmountPerHolder)),
+                `Staked amount for holder ${i} incorrectly written un Holding storage!
+                    Got ${newStakedAmounts[i]}, but expected ${initialStakedAmounts[i].add(tokenAmountPerHolder)}! `,
+            );
+        }
+        var newEncryptionTypes = [];
+        for (i = 0; i < 3; i += 1) {
+            newEncryptionTypes[i] =
+                // eslint-disable-next-line no-await-in-loop
+                await holdingStorage.getHolderLitigationEncryptionType(offerId, accounts[i]);
+            assert(
+                newEncryptionTypes[i].eq(litigationEncryptionTypes[i]),
+                `Encryption type for account ${i} incorrectly written un Holding storage!
+                    Got ${newEncryptionTypes[i]}, but expected ${litigationEncryptionTypes[i]}!`,
+            );
+        }
+
+        // Revert to previous status
+        await holdingStorage.setOfferTokenAmountPerHolder(offerId, new BN(0));
+        for (i = 0; i < 3; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await holdingStorage.setHolderLitigationEncryptionType(
+                offerId,
+                accounts[i],
+                initialEncryptionTypes[i],
+            );
+            // eslint-disable-next-line no-await-in-loop
+            await holdingStorage.setHolderStakedAmount(
+                offerId,
+                accounts[i],
+                initialStakedAmounts[i],
+            );
+        }
     });
 });
