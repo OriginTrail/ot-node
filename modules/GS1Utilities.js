@@ -232,7 +232,6 @@ class GS1Utilities {
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
-            console.log(quantityList);
             if (bizStep === 'shipping') {
                 // sending input
                 if (categories.includes('Ownership')) {

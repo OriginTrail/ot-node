@@ -43,7 +43,6 @@ class ArangoJS {
      */
     async findVertices(queryObject) {
         let queryString = '';
-        console.log(queryObject);
         const params = {};
         const { query } = queryObject[0];
         if (Utilities.isEmptyObject(queryObject) === false) {
@@ -120,8 +119,6 @@ class ArangoJS {
 
             queryString += results.join(',');
             queryString += '}';
-
-            console.log(queryString);
 
             return this.runQuery(queryString, params);
         }

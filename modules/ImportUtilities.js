@@ -107,8 +107,6 @@ class ImportUtilities {
             }));
         }
 
-        console.log(normEdges);
-
         return {
             edges: normEdges,
             vertices: normVertices,

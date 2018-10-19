@@ -79,8 +79,6 @@ class ZK {
             );
         }
 
-        console.log(JSON.stringify(all_units));
-
         for (const unit in all_units) {
             response[unit] = this._P(eventId, inputQuantities, outputQuantities, unit);
         }
@@ -179,7 +177,7 @@ class ZK {
         }
 
 
-        //r = r.toRed(this.redSquare);
+        // r = r.toRed(this.redSquare);
         const r = new BN(rand).toRed(this.redSquare);
         const zp = r.redMul(R.redPow(e));
         const a = this.encrypt(this.zero, r);
@@ -206,11 +204,9 @@ class ZK {
 
         // return res;
         if (res) {
-            console.log('ZK proof successfully created and validated for event: ', eventId);
             this.log.debug('ZK proof successfully created and validated for event: ', eventId);
         } else {
             this.log.debug('ZK proof failed for event: ', eventId);
-            console.log('ZK proof failed for event: ', eventId);
         }
         return zkObject;
     }
