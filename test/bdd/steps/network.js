@@ -14,6 +14,7 @@ const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
+const ImportUtilities = require('../../../modules/ImportUtilities');
 
 const bootstrapIdentity = {
     ba9f7526f803490e631859c75d56e5ab25a47a33: {
@@ -407,25 +408,22 @@ Given(/^I call api-query-local-import-importId endpoint for last import$/, async
 Then(/^api-query-local response should have certain structure$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
-    // TODO agree on moderate expected response structure with A.V.
-    // console.log(this.state.apiQueryLocalResponse);
-    // console.log("_______________________________");
+    expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
+    expect(this.state.apiQueryLocalResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
 });
 
 Then(/^api-query-local-import response should have certain structure$/, function () {
     expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
 
-    // TODO agree on moderate expected response structure with A.V.
-    // console.log(this.state.apiQueryLocalImportResponse);
-    // console.log("_______________________________");
+    expect(this.state.apiQueryLocalImportResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
+    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
 });
 
 Then(/^api-query-local-import-importId response should have certain structure$/, function () {
     expect(!!this.state.apiQueryLocalImportByImportIdResponse, 'apiQueryLocalImportByImportId should have given some result').to.be.equal(true);
 
-    // TODO agree on moderate expected response structure with A.V.
-    // console.log(this.state.apiQueryLocalImportByImportIdResponse);
-    // console.log("_______________________________");
-
     expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
+    // check that lastImport.import_hash and sha256 calculated hash are matching
+    const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
+    expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
