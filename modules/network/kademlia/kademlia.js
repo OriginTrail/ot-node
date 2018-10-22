@@ -331,10 +331,10 @@ class Kademlia {
         });
 
         // async
-        this.node.use('kad-find-contact', async (request, response, next) => {
+        this.node.use('kad-find-contact', (request, response, next) => {
             this.log.debug('kad-find-contact received');
 
-            // try {
+            try {
                 const contactId = request.params.message.contact;
 
                 let contact = this.node.router.getContactByNodeId(contactId);
@@ -342,20 +342,20 @@ class Kademlia {
                     response.send({ contact });
                     return;
                 }
-                const peerContact = await this.node.peercache.getExternalPeerInfo(contactId);
-                if (peerContact) {
-                    contact = KadenceUtils.parseContactURL(peerContact);
 
-                    if (contact.length === 2 && contact[1].hostname) {
-                        response.send({ contact: contact[1] });
-                        return;
+                this.node.peercache.getExternalPeerInfo(contactId).then((peerContact) => {
+                    if (peerContact) {
+                        contact = KadenceUtils.parseContactURL(peerContact);
+
+                        if (contact.length === 2 && contact[1].hostname) {
+                            response.send({ contact: contact[1] });
+                            return;
+                        }
                     }
-                }
-
-            //     response.send([]);
-            // } catch (error) {
-            //     response.error(error);
-            // }
+                }).catch(error => response.error(error));
+            } catch (error) {
+                response.error(error);
+            }
         });
 
         // async
@@ -430,6 +430,12 @@ class Kademlia {
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
+        });
+
+        // error handler
+        this.node.use('kad-find-contact', (err, request, response, next) => {
+            this.log.warn(`kad-find-contact error received. ${err}`);
+            response.error(err);
         });
 
         // error handler
