@@ -35,18 +35,19 @@ class DataReplication {
 
         ImportUtilities.sort(data.vertices);
 
-        // TODO: Move test generation outside sendPayload(.
-        const tests = Challenge.generateTests(
-            data.contact, options.import_id.toString(), 20,
-            options.start_time, options.start_time + options.total_time,
-            32, data.vertices,
-        );
-
-        Challenge.addTests(tests).then(() => {
-            this.log.trace(`Tests generated for DH ${tests[0].dhId}`);
-        }, () => {
-            this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
-        });
+        // TODO [network-fix]: Enable tests
+        // // TODO: Move test generation outside sendPayload(.
+        // const tests = Challenge.generateTests(
+        //     data.contact, options.import_id.toString(), 20,
+        //     options.start_time, options.start_time + options.total_time,
+        //     32, data.vertices,
+        // );
+        //
+        // Challenge.addTests(tests).then(() => {
+        //     this.log.trace(`Tests generated for DH ${tests[0].dhId}`);
+        // }, () => {
+        //     this.log.error(`Failed to generate challenges for ${config.identity}, import ID ${options.import_id}`);
+        // });
 
         const dataimport = await Models.data_info.findOne({ where: { import_id: data.import_id } });
         const payload = {

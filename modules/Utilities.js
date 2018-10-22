@@ -152,7 +152,7 @@ class Utilities {
      */
     static getLogger() {
         let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
 
