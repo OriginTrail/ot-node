@@ -202,9 +202,7 @@ class Kademlia {
                 config.network_bootstrap_nodes = config.network_bootstrap_nodes.trim().split();
             }
 
-            if (!utilities.isBootstrapNode()) {
-                this._registerRoutes();
-            }
+            this._registerRoutes();
 
             this.node.listen(parseInt(config.node_port, 10), async () => {
                 this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
@@ -325,37 +323,46 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
+        if (utilities.isBootstrapNode()) {
+            // async
+            this.node.use('kad-find-contact', (request, response, next) => {
+                this.log.debug('kad-find-contact received');
+
+                try {
+                    const contactId = request.params.message.contact;
+
+                    let contact = this.node.router.getContactByNodeId(contactId);
+                    if (contact && contact.hostname) {
+                        response.send({ contact });
+                        return;
+                    }
+
+                    this.node.peercache.getExternalPeerInfo(contactId).then((peerContact) => {
+                        if (peerContact) {
+                            contact = KadenceUtils.parseContactURL(peerContact);
+
+                            if (contact.length === 2 && contact[1].hostname) {
+                                response.send({ contact: contact[1] });
+                            }
+                        }
+                    }).catch(error => response.error(error));
+                } catch (error) {
+                    response.error(error);
+                }
+            });
+
+            // error handler
+            this.node.use('kad-find-contact', (err, request, response, next) => {
+                this.log.warn(`kad-find-contact error received. ${err}`);
+                response.error(err);
+            });
+
+            return;
+        }
+
         this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
-        });
-
-        // async
-        this.node.use('kad-find-contact', (request, response, next) => {
-            this.log.debug('kad-find-contact received');
-
-            try {
-                const contactId = request.params.message.contact;
-
-                let contact = this.node.router.getContactByNodeId(contactId);
-                if (contact && contact.hostname) {
-                    response.send({ contact });
-                    return;
-                }
-
-                this.node.peercache.getExternalPeerInfo(contactId).then((peerContact) => {
-                    if (peerContact) {
-                        contact = KadenceUtils.parseContactURL(peerContact);
-
-                        if (contact.length === 2 && contact[1].hostname) {
-                            response.send({ contact: contact[1] });
-                            return;
-                        }
-                    }
-                }).catch(error => response.error(error));
-            } catch (error) {
-                response.error(error);
-            }
         });
 
         // async
@@ -430,12 +437,6 @@ class Kademlia {
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
-        });
-
-        // error handler
-        this.node.use('kad-find-contact', (err, request, response, next) => {
-            this.log.warn(`kad-find-contact error received. ${err}`);
-            response.error(err);
         });
 
         // error handler
