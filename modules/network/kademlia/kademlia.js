@@ -55,9 +55,8 @@ class Kademlia {
             // eslint-disable-next-line no-await-in-loop
             const response = await this.node.findContact(contactId, bootstrapContact[0]);
 
-            if (response) {
-                console.log('GOT FUCKIN ANSWER', JSON.stringify(response));
-                return;
+            if (response && response.contact) {
+                return response.contact;
             }
         }
 
@@ -344,6 +343,8 @@ class Kademlia {
                             if (contact.length === 2 && contact[1].hostname) {
                                 response.send({ contact: contact[1] });
                             }
+                        } else {
+                            response.send([]);
                         }
                     }).catch(error => response.error(error));
                 } catch (error) {
