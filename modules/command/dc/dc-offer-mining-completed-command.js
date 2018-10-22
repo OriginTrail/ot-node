@@ -84,7 +84,7 @@ class DcOfferMiningCompletedCommand extends Command {
         offer.message = 'Failed to find solution for DHs provided';
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.deleteOfferDir(offer.id);
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

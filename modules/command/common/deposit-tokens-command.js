@@ -20,7 +20,7 @@ class DepositTokensCommand extends Command {
      */
     async execute(command) {
         const { amount } = command.data;
-        this.logger.notify(`Deposit amount [${amount}]...`);
+        this.logger.notify(`Deposit amount: ${amount}.`);
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this.blockchain.depositTokens(blockchainIdentity, amount);
