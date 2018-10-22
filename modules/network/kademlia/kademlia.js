@@ -334,8 +334,8 @@ class Kademlia {
         this.node.use('kad-find-contact', async (request, response, next) => {
             this.log.debug('kad-find-contact received');
 
-            try {
-                const contactId = request.params.message;
+            // try {
+                const contactId = request.params.message.contact;
 
                 let contact = this.node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
@@ -352,10 +352,10 @@ class Kademlia {
                     }
                 }
 
-                response.send([]);
-            } catch (error) {
-                response.error(error);
-            }
+            //     response.send([]);
+            // } catch (error) {
+            //     response.error(error);
+            // }
         });
 
         // async
@@ -576,13 +576,20 @@ class Kademlia {
             node.findContact = async (contactToFind, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
-                    node.send('kad-find-contact', { contact: contactToFind }, [contactId, contact], (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
-                        }
-                    });
+                    node.send(
+                        'kad-find-contact',
+                        {
+                            message: { contact: contactToFind },
+                        },
+                        [contactId, contact],
+                        (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        },
+                    );
                 });
             };
 
