@@ -6,15 +6,13 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
-const sortedStringify = require('sorted-json-stringify');
-const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
-const ImportUtilities = require('../../../modules/ImportUtilities');
+const utilities = require('./lib/utilities');
 
 const bootstrapIdentity = {
     ba9f7526f803490e631859c75d56e5ab25a47a33: {
@@ -204,7 +202,7 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
                     reject(Error(`Import hash differs: ${body.import_hash} !== ${this.state.lastImport.import_hash}.`));
                     return;
                 }
-                const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
+                const calculatedImportHash = utilities.calculateImportHash(body.import);
                 if (calculatedImportHash !== this.state.lastImport.import_hash) {
                     reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.import_hash}.`));
                     return;
@@ -424,6 +422,6 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
 
     expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
     // check that lastImport.import_hash and sha256 calculated hash are matching
-    const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
+    const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByImportIdResponse);
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
