@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
 /**
@@ -29,7 +30,7 @@ class DcOfferFinalizedCommand extends Command {
                 const {
                     offerId: eventOfferId,
                 } = JSON.parse(e.data);
-                return offerId === eventOfferId;
+                return Utilities.compareHexStrings(offerId, eventOfferId);
             });
             if (event) {
                 event.finished = true;

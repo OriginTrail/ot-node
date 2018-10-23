@@ -4,8 +4,6 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
-const { Op } = Models.Sequelize;
-
 /**
  * Repeatable command that checks whether offer is ready or not
  */
@@ -26,8 +24,7 @@ class DcOfferTaskCommand extends Command {
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                // use LIKE because of some SC related issues
-                data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` },
+                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
                 finished: 0,
             },
         });
@@ -37,10 +34,15 @@ class DcOfferTaskCommand extends Command {
             event.finished = true;
             await event.save({ fields: ['finished'] });
 
+            const data = JSON.parse(event.data);
             const {
                 task: eventTask,
+            } = data;
+
+            let {
                 offerId: eventOfferId,
-            } = JSON.parse(event.data);
+            } = data;
+            eventOfferId = Utilities.normalizeHex(eventOfferId);
 
             const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
             if (!offer) {

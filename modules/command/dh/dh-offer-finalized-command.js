@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
 /**
@@ -43,9 +44,10 @@ class DhOfferFinalizedCommand extends Command {
                     holder3,
                 } = JSON.parse(event.data);
 
-                const holders = [holder1, holder2, holder3].map(h => h.toLowerCase());
+                const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-                if (holders.includes(this.config.erc725Identity.toLowerCase())) {
+
+                if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
                     bid.status = 'CHOSEN';
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
                 } else {
@@ -82,8 +84,8 @@ class DhOfferFinalizedCommand extends Command {
         const command = {
             name: 'dhOfferFinalizedCommand',
             delay: 0,
-            period: 5000,
-            deadline_at: Date.now() + (5 * 60 * 1000),
+            period: 10 * 1000,
+            deadline_at: Date.now() + (10 * 60 * 1000),
             transactional: false,
         };
         Object.assign(command, map);

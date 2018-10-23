@@ -504,7 +504,7 @@ class Ethereum {
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),
-                    data_set_id: event.returnValues.dataSetId,
+                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
                     block: event.blockNumber,
                     timestamp,
                     finished: 0,
@@ -864,6 +864,40 @@ class Ethereum {
         return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Check balances
+     * @returns {Promise<boolean>}
+     */
+    async getBalances() {
+        this.log.trace('Checking ballances');
+        let enoughETH = true;
+        let enoughATRAC = true;
+        try {
+            const etherBalance = await Utilities.getBalanceInEthers(
+                this.web3,
+                this.config.wallet_address,
+            );
+            this.log.info(`Balance of ETH: ${etherBalance}`);
+            if (etherBalance <= 0) {
+                enoughETH = false;
+            }
+
+            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                this.web3,
+                this.config.wallet_address,
+                this.tokenContractAddress,
+            );
+            this.log.info(`Balance of ATRAC: ${atracBalance}`);
+            if (enoughATRAC <= 0) {
+                enoughATRAC = false;
+            }
+
+        } catch (error) {
+            throw new Error(error);
+        }
+        return enoughETH && enoughATRAC;
     }
 }
 
