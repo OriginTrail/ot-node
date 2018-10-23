@@ -831,6 +831,9 @@ class Utilities {
      * @returns {string} Normalized hex number
      */
     static normalizeHex(number) {
+        if (number == null) {
+            return null;
+        }
         number = number.toLowerCase();
         const denormalized = number.startsWith('0x') ? number.substring(2) : number;
         return `0x${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
@@ -842,6 +845,9 @@ class Utilities {
      * @returns {string} Normalized hex number
      */
     static denormalizeHex(number) {
+        if (number == null) {
+            return null;
+        }
         number = number.toLowerCase();
         const denormalized = number.startsWith('0x') ? number.substring(2) : number;
         return `${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
