@@ -873,6 +873,7 @@ class Ethereum {
     async getBalances() {
         this.log.trace('Checking ballances');
         let enoughETH = true;
+        let enoughATRAC = true;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 this.web3,
@@ -889,10 +890,14 @@ class Ethereum {
                 this.tokenContractAddress,
             );
             this.log.info(`Balance of ATRAC: ${atracBalance}`);
+            if (enoughATRAC <= 0) {
+                enoughATRAC = false;
+            }
+
         } catch (error) {
             throw new Error(error);
         }
-        return enoughETH;
+        return enoughETH && enoughATRAC;
     }
 }
 
