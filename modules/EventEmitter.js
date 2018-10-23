@@ -677,14 +677,21 @@ class EventEmitter {
             if (!appState.enoughFunds) {
                 return;
             }
+            let {
+                dcNodeId,
+                offerId,
+                dataSetId,
+            } = eventData;
+
+            offerId = Utilities.normalizeHex(offerId);
+            dcNodeId = Utilities.denormalizeHex(dcNodeId);
+            dataSetId = Utilities.normalizeHex(dataSetId);
+
             const {
                 dataSetSizeInBytes,
-                dcNodeId,
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
-                offerId,
                 tokenAmountPerHolder,
-                dataSetId,
             } = eventData;
 
             try {

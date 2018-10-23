@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
 /**
@@ -45,7 +46,9 @@ class DhOfferFinalizedCommand extends Command {
 
                 const holders = [holder1, holder2, holder3].map(h => h.toLowerCase());
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
-                if (holders.includes(this.config.erc725Identity.toLowerCase())) {
+
+                const denormalized = Utilities.denormalizeHex(this.config.erc725Identity);
+                if (holders.includes(denormalized)) {
                     bid.status = 'CHOSEN';
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
                 } else {
