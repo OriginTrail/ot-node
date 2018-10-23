@@ -75,13 +75,14 @@ AfterAll(async function () {
 
     const listOfDatabases = await systemDb.listDatabases();
 
+    const that = this;
     listOfDatabases.forEach(async function (databaseItem) {
         if (databaseItem !== '_system' && databaseItem !== 'origintrail' && databaseItem !== 'origintrail-develop' && databaseItem !== 'origintrail-staging' && databaseItem !== 'origintrail-stable') {
             try {
                 await systemDb.dropDatabase(databaseItem);
             } catch (error) {
-                this.logger.log(`Oops, failed to delete database: ${databaseItem}`);
-                this.logger.log(error);
+                that.logger.log(`Oops, failed to delete database: ${databaseItem}`);
+                that.logger.log(error);
             }
         }
     });
