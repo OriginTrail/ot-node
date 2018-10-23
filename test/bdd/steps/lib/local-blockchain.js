@@ -107,7 +107,6 @@ class LocalBlockchain {
 
 
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
-        console.log(Object.keys(compileResult));
         this.hubContractData = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
         this.hubContractAbi = JSON.parse(compileResult.contracts['Hub.sol:Hub'].interface);
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi);
@@ -117,33 +116,27 @@ class LocalBlockchain {
                 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
             },
         }, 1);
-        console.log(Object.keys(compileResult.contracts));
-        // console.log(compileResult.errors);
+
         this.profileStorageContractData = `0x${compileResult.contracts['ProfileStorage.sol:ProfileStorage'].bytecode}`;
         this.profileStorageContractAbi = JSON.parse(compileResult.contracts['ProfileStorage.sol:ProfileStorage'].interface);
         this.profileStorageContract = new this.web3.eth.Contract(this.profileStorageContractAbi);
 
-        // compileResult = solc.compile({ sources: { 'HoldingStorage.sol': holdingStorageSource } }, 1);
         this.holdingStorageContractData = `0x${compileResult.contracts['HoldingStorage.sol:HoldingStorage'].bytecode}`;
         this.holdingStorageContractAbi = JSON.parse(compileResult.contracts['HoldingStorage.sol:HoldingStorage'].interface);
         this.holdingStorageContract = new this.web3.eth.Contract(this.holdingStorageContractAbi);
 
-        // compileResult = solc.compile({ sources: { 'TracToken.sol': tokenSource } }, 1);
         this.tokenContractData = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
         this.tokenContractAbi = JSON.parse(compileResult.contracts['TracToken.sol:TracToken'].interface);
         this.tokenContract = new this.web3.eth.Contract(this.tokenContractAbi);
 
-        // compileResult = solc.compile({ sources: { 'Reading.sol': readingSource } }, 1);
         this.readingContractData = `0x${compileResult.contracts['Reading.sol:Reading'].bytecode}`;
         this.readingContractAbi = JSON.parse(compileResult.contracts['Reading.sol:Reading'].interface);
         this.readingContract = new this.web3.eth.Contract(this.readingContractAbi);
 
-        // compileResult = solc.compile({ sources: { 'Profile.sol': profileSource } }, 1);
         this.profileContractData = `0x${compileResult.contracts['Profile.sol:Profile'].bytecode}`;
         this.profileContractAbi = JSON.parse(compileResult.contracts['Profile.sol:Profile'].interface);
         this.profileContract = new this.web3.eth.Contract(this.profileContractAbi);
 
-        // compileResult = solc.compile({ sources: { 'Holding.sol': holdingSource } }, 1);
         this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
         this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
         this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);

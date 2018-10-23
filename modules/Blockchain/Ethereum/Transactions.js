@@ -41,7 +41,6 @@ class Transactions {
                             // Ganache's version of nonce error.
                             error.name !== 'TXRejectedError' && !error.toString().includes('the tx doesn\'t have the correct nonce.')
                         ) {
-                            console.log(error.stack);
                             throw new Error(error);
                         }
 
