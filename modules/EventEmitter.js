@@ -158,7 +158,6 @@ class EventEmitter {
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);
-                console.log(error);
                 data.response.status(500);
                 data.response.send({
                     message: error,
@@ -205,6 +204,7 @@ class EventEmitter {
                             result.edges,
                         ),
                         import_hash: ImportUtilities.importHash(
+                            importId,
                             result.vertices,
                             result.edges,
                         ),

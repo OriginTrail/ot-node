@@ -123,7 +123,6 @@ class ImportUtilities {
      */
     static importHash(dataSetId, vertices, edges) {
         const normalized = ImportUtilities.normalizeImport(dataSetId, vertices, edges);
-        console.log(utilities.stringify(normalized, 0));
         return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
     }
 
