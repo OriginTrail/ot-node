@@ -24,7 +24,7 @@ class DcOfferTaskCommand extends Command {
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: dataSetId,
+                data_set_id: dataSetId.toString('hex'),
                 finished: 0,
             },
         });
