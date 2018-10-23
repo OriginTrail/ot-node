@@ -1,9 +1,11 @@
+/* eslint-disable max-len */
 const Ganache = require('ganache-core');
 const Web3 = require('web3');
 const solc = require('solc');
 const fs = require('fs');
 const path = require('path');
 const EthWallet = require('ethereumjs-wallet');
+const assert = require('assert');
 
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
@@ -78,92 +80,139 @@ class LocalBlockchain {
                 this.web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
                 this.compileContracts();
                 await this.deployContracts();
+                assert(this.hubContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.profileStorageContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.holdingStorageContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.tokenContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.profileContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.holdingContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.readingContractAddress !== '0x0000000000000000000000000000000000000000');
                 accept();
             });
         });
     }
 
     compileContracts() {
+        const hubSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Hub.sol'), 'utf8');
+        const profileStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ProfileStorage.sol'), 'utf8');
+        const holdingStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/HoldingStorage.sol'), 'utf8');
         const tokenSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/TracToken.sol'), 'utf8');
-        const escrowSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Escrow.sol'), 'utf8');
+        const profileSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Profile.sol'), 'utf8');
+        const holdingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Holding.sol'), 'utf8');
         const readingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Reading.sol'), 'utf8');
-        const biddingSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Bidding.sol'), 'utf8');
-        const otFingerprintSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol'), 'utf8');
+        const eRC725Source = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ERC725.sol'), 'utf8');
+        const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
+        const identitySource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Identity.sol'), 'utf8');
+        const byteArrSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ByteArr.sol'), 'utf8');
 
-        let compileResult = solc.compile({ sources: { 'TracToken.sol': tokenSource } }, 1);
+
+        let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
+        console.log(Object.keys(compileResult));
+        this.hubContractData = `0x${compileResult.contracts['Hub.sol:Hub'].bytecode}`;
+        this.hubContractAbi = JSON.parse(compileResult.contracts['Hub.sol:Hub'].interface);
+        this.hubContract = new this.web3.eth.Contract(this.hubContractAbi);
+
+        compileResult = solc.compile({
+            sources: {
+                'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
+            },
+        }, 1);
+        console.log(Object.keys(compileResult.contracts));
+        // console.log(compileResult.errors);
+        this.profileStorageContractData = `0x${compileResult.contracts['ProfileStorage.sol:ProfileStorage'].bytecode}`;
+        this.profileStorageContractAbi = JSON.parse(compileResult.contracts['ProfileStorage.sol:ProfileStorage'].interface);
+        this.profileStorageContract = new this.web3.eth.Contract(this.profileStorageContractAbi);
+
+        // compileResult = solc.compile({ sources: { 'HoldingStorage.sol': holdingStorageSource } }, 1);
+        this.holdingStorageContractData = `0x${compileResult.contracts['HoldingStorage.sol:HoldingStorage'].bytecode}`;
+        this.holdingStorageContractAbi = JSON.parse(compileResult.contracts['HoldingStorage.sol:HoldingStorage'].interface);
+        this.holdingStorageContract = new this.web3.eth.Contract(this.holdingStorageContractAbi);
+
+        // compileResult = solc.compile({ sources: { 'TracToken.sol': tokenSource } }, 1);
         this.tokenContractData = `0x${compileResult.contracts['TracToken.sol:TracToken'].bytecode}`;
         this.tokenContractAbi = JSON.parse(compileResult.contracts['TracToken.sol:TracToken'].interface);
         this.tokenContract = new this.web3.eth.Contract(this.tokenContractAbi);
 
-        compileResult = solc.compile({ sources: { 'Escrow.sol': escrowSource } }, 1);
-        this.escrowContractData = `0x${compileResult.contracts['Escrow.sol:EscrowHolder'].bytecode}`;
-        this.escrowContractAbi = JSON.parse(compileResult.contracts['Escrow.sol:EscrowHolder'].interface);
-        this.escrowContract = new this.web3.eth.Contract(this.escrowContractAbi);
-
-        compileResult = solc.compile({ sources: { 'Reading.sol': readingSource } }, 1);
+        // compileResult = solc.compile({ sources: { 'Reading.sol': readingSource } }, 1);
         this.readingContractData = `0x${compileResult.contracts['Reading.sol:Reading'].bytecode}`;
         this.readingContractAbi = JSON.parse(compileResult.contracts['Reading.sol:Reading'].interface);
         this.readingContract = new this.web3.eth.Contract(this.readingContractAbi);
 
-        compileResult = solc.compile({ sources: { 'Bidding.sol': biddingSource } }, 1);
-        this.biddingContractData = `0x${compileResult.contracts['Bidding.sol:Bidding'].bytecode}`;
-        this.biddingContractAbi = JSON.parse(compileResult.contracts['Bidding.sol:Bidding'].interface);
-        this.biddingContract = new this.web3.eth.Contract(this.biddingContractAbi);
+        // compileResult = solc.compile({ sources: { 'Profile.sol': profileSource } }, 1);
+        this.profileContractData = `0x${compileResult.contracts['Profile.sol:Profile'].bytecode}`;
+        this.profileContractAbi = JSON.parse(compileResult.contracts['Profile.sol:Profile'].interface);
+        this.profileContract = new this.web3.eth.Contract(this.profileContractAbi);
 
-        compileResult = solc.compile({ sources: { 'OTFingerprintStore.sol': otFingerprintSource } }, 1);
-        this.otFingerprintContractData = `0x${compileResult.contracts['OTFingerprintStore.sol:OTFingerprintStore'].bytecode}`;
-        this.otFingerprintContractAbi = JSON.parse(compileResult.contracts['OTFingerprintStore.sol:OTFingerprintStore'].interface);
-        this.otFingerprintContract = new this.web3.eth.Contract(this.otFingerprintContractAbi);
+        // compileResult = solc.compile({ sources: { 'Holding.sol': holdingSource } }, 1);
+        this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
+        this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
+        this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);
     }
 
     async deployContracts() {
         const accounts = await this.web3.eth.getAccounts();
-        this.logger.debug('Deploying tokenContract');
+        this.logger.log('Deploying hubContract');
+        [this.hubDeploymentReceipt, this.hubInstance] = await this.deployContract(
+            this.web3, this.hubContract, this.hubContractData,
+            [], accounts[7],
+        );
+        this.logger.log('Deploying profileStorageContract');
+        [this.profileStorageDeploymentReceipt, this.profileStorageInstance] = await this.deployContract(
+            this.web3, this.profileStorageContract, this.profileStorageContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setProfileStorageAddress(this.profileStorageInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying holdingStorageContract');
+        [this.holdingStorageDeploymentReceipt, this.holdingStorageInstance] = await this.deployContract(
+            this.web3, this.holdingStorageContract, this.holdingStorageContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setHoldingStorageAddress(this.holdingStorageInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying tokenContract');
         [this.tokenDeploymentReceipt, this.tokenInstance] = await this.deployContract(
             this.web3, this.tokenContract, this.tokenContractData,
             [accounts[7], accounts[8], accounts[9]], accounts[7],
         );
-        this.logger.debug('Deploying escrowContract');
-        [this.escrowDeploymentReceipt, this.escrowInstance] = await this.deployContract(
-            this.web3, this.escrowContract, this.escrowContractData,
-            [this.tokenInstance._address], accounts[7],
-        );
-        this.logger.debug('Deploying readingContract');
-        [this.readingDeploymentReceipt, this.readingInstance] = await this.deployContract(
-            this.web3, this.readingContract, this.readingContractData,
-            [this.escrowInstance._address], accounts[7],
-        );
-        this.logger.debug('Deploying biddingContract');
-        [this.biddingDeploymentReceipt, this.biddingInstance] = await this.deployContract(
-            this.web3, this.biddingContract, this.biddingContractData,
-            [
-                this.tokenInstance._address,
-                this.escrowInstance._address,
-                this.readingInstance._address,
-            ], accounts[7],
-        );
-        this.logger.debug('Deploying otFingerprintContract');
-        [
-            this.otFingerprintDeploymentReceipt,
-            this.otFingerprintInstance,
-        ] = await this.deployContract(
-            this.web3, this.otFingerprintContract, this.otFingerprintContractData,
-            undefined, accounts[7],
+
+        await this.hubInstance.methods.setTokenAddress(this.tokenInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
+        this.logger.log('Deploying profileContract');
+        [this.profileDeploymentReceipt, this.profileInstance] = await this.deployContract(
+            this.web3, this.profileContract, this.profileContractData,
+            [this.hubInstance._address], accounts[7],
         );
 
-        await this.escrowInstance.methods.setBidding(this.biddingInstance._address)
+        await this.hubInstance.methods.setProfileAddress(this.profileInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
-        await this.escrowInstance.methods.setReading(this.readingInstance._address)
+
+        this.logger.log('Deploying holdingContract');
+        [this.holdingDeploymentReceipt, this.holdingInstance] = await this.deployContract(
+            this.web3, this.holdingContract, this.holdingContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setHoldingAddress(this.holdingInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
-        await this.readingInstance.methods.setBidding(this.biddingInstance._address)
-            .send({ from: accounts[7], gas: 3000000 })
-            .on('error', console.error);
-        await this.readingInstance.methods.transferOwnership(this.escrowInstance._address)
-            .send({ from: accounts[7], gas: 3000000 })
-            .on('error', console.error);
-        await this.escrowInstance.methods.transferOwnership(this.biddingInstance._address)
+
+        this.logger.log('Deploying readingContract');
+        [this.readingDeploymentReceipt, this.readingInstance] = await this.deployContract(
+            this.web3, this.readingContract, this.readingContractData,
+            [this.hubInstance._address], accounts[7],
+        );
+
+        await this.hubInstance.methods.setReadingAddress(this.readingInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -216,19 +265,28 @@ class LocalBlockchain {
         });
     }
 
-    get otContractAddress() {
-        return this.otFingerprintInstance._address;
+    get hubContractAddress() {
+        return this.hubInstance._address;
     }
+
+    get profileStorageContractAddress() {
+        return this.profileStorageInstance._address;
+    }
+
+    get holdingStorageContractAddress() {
+        return this.holdingStorageInstance._address;
+    }
+
     get tokenContractAddress() {
         return this.tokenInstance._address;
     }
 
-    get escrowContractAddress() {
-        return this.escrowInstance._address;
+    get profileContractAddress() {
+        return this.profileInstance._address;
     }
 
-    get biddingContractAddress() {
-        return this.biddingInstance._address;
+    get holdingContractAddress() {
+        return this.holdingInstance._address;
     }
 
     get readingContractAddress() {

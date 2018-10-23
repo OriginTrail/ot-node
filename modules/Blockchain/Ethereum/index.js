@@ -50,6 +50,7 @@ class Ethereum {
         // Holding contract data
         const holdingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding.json');
         this.holdingContractAddress = await this._getHoldingContractAddress();
+        console.log(this.holdingContractAddress);
         this.holdingContractAbi = JSON.parse(holdingAbiFile);
         this.holdingContract = new this.web3.eth
             .Contract(this.holdingContractAbi, this.holdingContractAddress);
@@ -57,6 +58,7 @@ class Ethereum {
         // Token contract data
         const tokenAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/token.json');
         this.tokenContractAddress = await this._getTokenContractAddress();
+        console.log(this.tokenContractAddress);
         this.tokenContractAbi = JSON.parse(tokenAbiFile);
         this.tokenContract = new this.web3.eth.Contract(
             this.tokenContractAbi,
@@ -66,6 +68,7 @@ class Ethereum {
         // Reading contract data
         const readingAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/reading.json');
         this.readingContractAddress = await this._getReadingContractAddress();
+        console.log(this.readingContractAddress);
         this.readingContractAbi = JSON.parse(readingAbiFile);
         this.readingContract = new this.web3.eth.Contract(
             this.readingContractAbi,
@@ -75,6 +78,7 @@ class Ethereum {
         // Profile contract data
         const profileAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile.json');
         this.profileContractAddress = await this._getProfileContractAddress();
+        console.log(this.profileContractAddress);
         this.profileContractAbi = JSON.parse(profileAbiFile);
         this.profileContract = new this.web3.eth.Contract(
             this.profileContractAbi,
@@ -84,6 +88,7 @@ class Ethereum {
         // Profile storage contract data
         const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
         this.profileStorageContractAddress = await this._getProfileStorageContractAddress();
+        console.log(this.profileStorageContractAddress);
         this.profileStorageContractAbi = JSON.parse(profileStorageAbiFile);
         this.profileStorageContract = new this.web3.eth.Contract(
             this.profileStorageContractAbi,
@@ -93,6 +98,7 @@ class Ethereum {
         // Holding storage contract data
         const holdingStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/holding-storage.json');
         this.holdingStorageContractAddress = await this._getHoldingStorageContractAddress();
+        console.log(this.holdingStorageContractAddress);
         this.holdingStorageContractAbi = JSON.parse(holdingStorageAbiFile);
         this.holdingStorageContract = new this.web3.eth.Contract(
             this.holdingStorageContractAbi,
