@@ -152,7 +152,7 @@ class Utilities {
      */
     static getLogger() {
         let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
 
@@ -250,6 +250,12 @@ class Utilities {
      * @return {*}
      */
     static transformLog(level, msg) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
+            return {
+                level,
+                msg,
+            };
+        }
         if (msg.startsWith('connection timed out')) {
             return null;
         }
