@@ -504,7 +504,7 @@ class Ethereum {
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),
-                    data_set_id: event.returnValues.dataSetId,
+                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
                     block: event.blockNumber,
                     timestamp,
                     finished: 0,

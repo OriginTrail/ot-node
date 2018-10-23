@@ -47,7 +47,7 @@ class ProfileService {
             new BN(profileMinStake, 10), identityExists, identity,
         );
         if (!identityExists) {
-            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => eventData.profile.includes(this.config.node_wallet));
+            const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
             if (event) {
                 this._saveIdentity(event.newIdentity);
                 this.logger.notify(`Identity created for node ${this.config.identity}`);
@@ -89,7 +89,7 @@ class ProfileService {
      * @private
      */
     _saveIdentity(identity) {
-        this.config.erc725Identity = identity;
+        this.config.erc725Identity = Utilities.normalizeHex(identity);
 
         const identityFilePath = path.join(
             this.config.appDataPath,
