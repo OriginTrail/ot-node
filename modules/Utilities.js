@@ -831,10 +831,12 @@ class Utilities {
      * @returns {string} Normalized hex number
      */
     static normalizeHex(number) {
-        if (!number.toLowerCase().startsWith('0x')) {
-            return `0x${number}`;
+        if (number == null) {
+            return null;
         }
-        return number;
+        number = number.toLowerCase();
+        const denormalized = number.startsWith('0x') ? number.substring(2) : number;
+        return `0x${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
     }
 
     /**
@@ -843,10 +845,34 @@ class Utilities {
      * @returns {string} Normalized hex number
      */
     static denormalizeHex(number) {
-        if (number.startsWith('0x')) {
-            return number.substring(2);
+        if (number == null) {
+            return null;
         }
-        return number;
+        number = number.toLowerCase();
+        const denormalized = number.startsWith('0x') ? number.substring(2) : number;
+        return `${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
+    }
+
+    /**
+     * Compares two strings ignoring case
+     * @param str1
+     * @param str2
+     * @return {boolean}
+     */
+    static compareIgnoreCase(str1, str2) {
+        return str1.toLowerCase() === str2.toLowerCase();
+    }
+
+    /**
+     * Compare HEX numbers in string representation
+     * @param hex1
+     * @param hex2
+     * @return {*}
+     */
+    static compareHexStrings(hex1, hex2) {
+        const denormalized1 = Utilities.denormalizeHex(hex1);
+        const denormalized2 = Utilities.denormalizeHex(hex2);
+        return new BN(denormalized1, 16).eq(new BN(denormalized2, 16));
     }
 
     /**

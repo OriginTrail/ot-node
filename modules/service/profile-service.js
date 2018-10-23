@@ -89,7 +89,7 @@ class ProfileService {
      * @private
      */
     _saveIdentity(identity) {
-        this.config.erc725Identity = identity;
+        this.config.erc725Identity = Utilities.normalizeHex(identity);
 
         const identityFilePath = path.join(
             this.config.appDataPath,
