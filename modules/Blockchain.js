@@ -361,6 +361,10 @@ class Blockchain {
     async getOfferDifficulty(offerId) {
         return this.blockchain.getOfferDifficulty(offerId);
     }
+
+    async getBalances() {
+        return this.blockchain.getBalances();
+    }
 }
 
 module.exports = Blockchain;

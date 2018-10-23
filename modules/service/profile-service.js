@@ -30,7 +30,7 @@ class ProfileService {
             this.logger.notify(`Identity has already been created for node ${this.config.identity}`);
         }
 
-        if (identityExists && await this._isProfileCreated()) {
+        if (identityExists && await this.isProfileCreated()) {
             this.logger.notify(`Profile has already been created for node ${this.config.identity}`);
             return;
         }
@@ -61,9 +61,8 @@ class ProfileService {
     /**
      * Is profile created
      * @returns {Promise<boolean>}
-     * @private
      */
-    async _isProfileCreated() {
+    async isProfileCreated() {
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
         return !new BN(profile.stake, 10).eq(new BN(0, 10));
     }
