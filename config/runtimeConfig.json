@@ -64,25 +64,26 @@
   },
   "production": {
     "network": {
-      "id": "TestnetV1.0.4b",
+      "id": "TestnetV1.0.5b",
       "bootstraps": [
-        "https://188.166.112.98:5278/#94220fcf314c41f810e6a62c74d152be213b34d2"
+        "https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56",
+        "https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e"
       ],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "blockchainContracts": {
       "otContractAddress": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
       "tokenContractAddress": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrowContractAddress": "0x3e92827355bb83b6e03651fd60adeb58b8a23a23",
-      "biddingContractAddress": "0xd86ff1a0756dd28f81a9e7370f1b093222e93702",
-      "readingContractAddress": "0x0fad6ef9bc5ba09f26673c822d5cdca83576bb8a"
+      "escrowContractAddress": "0xb823f23ed744b9bb60dc64e84aa4ad95025424af",
+      "biddingContractAddress": "0xf46bd0c6ed201ce3ef95e120bac526e1a864f8f8",
+      "readingContractAddress": "0xb31116d5f5418271d44a0b481fd58f6b009d44bb"
     },
     "bugSnag": {
-      "releaseStage": "stablebroken"
+      "releaseStage": "testnet"
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
-      "branch": "feature/network-fix"
+      "branch": "master"
     }
   }
 }

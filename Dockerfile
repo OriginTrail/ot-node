@@ -28,8 +28,8 @@ RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remot
 ADD testnet/papertrail.yml /etc/log_files.yml
 
 #Clone the project
-RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/feature/network-fix
-RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-feature-network-fix ot-node
+RUN wget -O ot-node.zip https://codeload.github.com/OriginTrail/ot-node/zip/master
+RUN unzip ot-node.zip -d . && rm ot-node.zip && mv ot-node-master ot-node
 
 RUN cp -a /tmp/node_modules /ot-node
 

@@ -35,7 +35,7 @@ class DataReplication {
 
         ImportUtilities.sort(data.vertices);
 
-        // // TODO: Move test generation outside sendPayload(.
+        // TODO: Move test generation outside sendPayload(.
         const tests = Challenge.generateTests(
             data.contact, options.import_id.toString(), 20,
             options.start_time, options.start_time + options.total_time,
