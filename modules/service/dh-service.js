@@ -765,7 +765,7 @@ class DHService {
 
         encodedVertices.forEach((encodedVertex) => {
             const foundIds =
-                encodedVertex.imports.filter(value => importIds.indexOf(value) !== -1);
+                encodedVertex.datasets.filter(value => importIds.indexOf(value) !== -1);
 
             switch (foundIds.length) {
             case 1:
@@ -845,7 +845,7 @@ class DHService {
         }
 
         // Check if import came from DC side.
-        const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+        const dataInfo = await Models.data_info.find({ where: { data_set_id: importId } });
 
         if (dataInfo) {
             const verticesPromise = this.graphStorage.findVerticesByImportId(importId);

@@ -109,7 +109,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.imports),
+                imports: JSON.parse(response.datasets),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -152,7 +152,7 @@ class EventEmitter {
                 }
 
                 const normalizedImport = ImportUtilities
-                    .normalizeImport(result.vertices, result.edges);
+                    .normalizeImport(importId, result.vertices, result.edges);
 
                 data.response.send(normalizedImport);
             } catch (error) {
@@ -200,6 +200,7 @@ class EventEmitter {
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
+                            importId,
                             result.vertices,
                             result.edges,
                         ),

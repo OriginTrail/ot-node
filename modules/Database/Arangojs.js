@@ -1,6 +1,7 @@
 const { Database } = require('arangojs');
 const request = require('superagent');
 const Utilities = require('../Utilities');
+const { denormalizeGraph, normalizeGraph } = require('./graph-converter');
 
 const IGNORE_DOUBLE_INSERT = true;
 
@@ -190,7 +191,7 @@ class ArangoJS {
                                                 FOR v${count} IN ot_vertices
                                             LET objects = (
                                                 FOR w${count}, e IN 1..1
-                                            OUTBOUND v${count}._id GRAPH "origintrail_graph"
+                                            OUTBOUND v${count}._id ot_edges
                                             FILTER e.edge_type == "IDENTIFIES"
                                             AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
                                             RETURN w${count})
@@ -235,6 +236,8 @@ class ArangoJS {
         }
 
         queryString += ')';
+
+        console.log(queryString);
 
         return this.runQuery(queryString, params);
     }
@@ -675,34 +678,61 @@ class ArangoJS {
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
-        for (const i in vertices) {
-            if (vertices[i][data_id]) {
-                delete vertices[i][data_id].privateData;
-                vertices[i] = {
-                    _dc_key: vertices[i]._dc_key,
-                    _key: vertices[i]._key,
-                    data: vertices[i][data_id].data,
-                    vertex_type: vertices[i].vertex_type,
-                    uid: vertices[i].uid,
-                };
+        // for (const i in vertices) {
+        //     if (vertices[i][data_id]) {
+        //         delete vertices[i][data_id].privateData;
+        //
+        //         delete vertices[i][data_id].data.quantityList;
+        //         delete vertices[i][data_id].data.inputQuantityList;
+        //         delete vertices[i][data_id].data.outputQuantityList;
+        //
+        //         delete vertices[i][data_id].data.private_salt;
+        //
+        //         for (const key in vertices[i][data_id].data.quantities) {
+        //             for (const qkey in vertices[i][data_id].data.quantities[key].inputs) {
+        //                 delete vertices[i][data_id].data.quantities[key].inputs[qkey].private;
+        //             }
+        //
+        //             for (const qkey in vertices[i][data_id].data.quantities[key].outputs) {
+        //                 delete vertices[i][data_id].data.quantities[key].outputs[qkey].private;
+        //             }
+        //         }
+        //
+        //         delete vertices[i].private;
+        //
+        //         vertices[i] = {
+        //             _dc_key: vertices[i]._dc_key,
+        //             _key: vertices[i]._key,
+        //             data: vertices[i][data_id].data,
+        //             vertex_type: vertices[i].vertex_type,
+        //             uid: vertices[i].uid,
+        //             datasets: vertices[i].datasets,
+        //             sender_id: vertices[i].sender_id,
+        //         };
+        //
+        //         for (const key in vertices[i]) {
+        //             if (vertices[i][key] == null) {
+        //                 delete vertices[i][key];
+        //             }
+        //         }
+        //     }
+        // }
 
-                for (const key in vertices[i]) {
-                    if (vertices[i][key] == null) {
-                        delete vertices[i][key];
-                    }
-                }
-            }
+        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices;
+
+        if (normalizedVertices.length === 0) {
+            return [];
         }
 
         // Check if packed to fix issue with double classes.
-        const filtered = vertices.filter(v => v._dc_key);
+        const filtered = normalizedVertices.filter(v => v._dc_key);
         if (filtered.length > 0) {
-            return vertices;
+            return normalizedVertices;
         }
 
         const objectClasses = await this.findObjectClassVertices();
 
-        return vertices.concat(objectClasses);
+        return normalizedVertices.concat(objectClasses);
     }
 
     async findObjectClassVertices() {
@@ -727,16 +757,36 @@ class ArangoJS {
      * @return {Promise}
      */
     async findEvent(senderId, partnerId, documentId, bizStep) {
-        const queryString = 'FOR v IN ot_vertices ' +
-            'FILTER v.identifiers.document_id == @documentId AND @senderId in v.partner_id AND v.sender_id in @partnerId ' +
-            'RETURN v';
-        const params = {
-            partnerId,
-            documentId,
-            senderId,
-        };
+        // 'FILTER v.identifiers.document_id == @documentId
+        // AND @senderId in v.partner_id AND v.sender_id in @partnerId ' +
+        //  'RETURN v';
+
+        const queryString = `FOR v IN ot_vertices
+            FILTER v.vertex_type == 'EVENT'
+            RETURN v`;
+        const params = {};
         const result = await this.runQuery(queryString, params);
-        return result.filter(event => event.data.bizStep && event.data.bizStep.endsWith(bizStep));
+
+        return result.filter((event) => {
+            if (partnerId.indexOf(event.sender_id) !== -1) {
+                for (const key in event) {
+                    if (event[key].data) {
+                        const { data } = event[key];
+
+                        if (data.bizStep
+                            && data.bizStep.endsWith(bizStep)
+                            && data.extension
+                            && data.extension.extension
+                            && data.extension.extension.documentId === documentId) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        });
+
+        return [];
     }
 
     /**

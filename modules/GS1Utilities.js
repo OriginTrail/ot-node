@@ -221,13 +221,15 @@ class GS1Utilities {
         let inputQuantities = [];
         let outputQuantities = [];
         const { extension } = event;
+
+        const batchVerticesMap = {};
+
+        for (const batch of batchVertices) {
+            batchVerticesMap[batch.identifiers.uid] = batch;
+        }
+
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
-            const batchVerticesMap = {};
-
-            for (const batch of batchVertices) {
-                batchVerticesMap[batch.identifiers.uid] = batch;
-            }
 
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
@@ -299,7 +301,7 @@ class GS1Utilities {
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
                         unit: elem.uom,
-                        r: batchVertices[elem.epcClass].randomness,
+                        r: batchVerticesMap[elem.epcClass].randomness,
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
@@ -307,7 +309,7 @@ class GS1Utilities {
                         object: inputQuantity.object,
                         quantity: parseInt(inputQuantity.quantity, 10),
                         unit: inputQuantity.unit,
-                        r: batchVertices[inputQuantity.object].randomness,
+                        r: batchVerticesMap[inputQuantity.object].randomness,
                     });
                 }
             }
@@ -317,7 +319,7 @@ class GS1Utilities {
                         object: elem.epcClass,
                         quantity: parseInt(elem.quantity, 10),
                         unit: elem.uom,
-                        r: batchVertices[elem.epcClass].randomness,
+                        r: batchVerticesMap[elem.epcClass].randomness,
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
@@ -325,7 +327,7 @@ class GS1Utilities {
                         object: outputQuantity.object,
                         quantity: parseInt(outputQuantity.quantity, 10),
                         unit: outputQuantity.unit,
-                        r: batchVertices[outputQuantity.object].randomness,
+                        r: batchVerticesMap[outputQuantity.object].randomness,
                     });
                 }
             }

@@ -4,7 +4,7 @@ const xsd = require('libxml-xsd');
 const Utilities = require('./Utilities');
 const models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
-const { denormalizeGraph } = require('./Database/graph-converter');
+const { denormalizeGraph, normalizeGraph } = require('./Database/graph-converter');
 
 class GS1Importer {
     /**
@@ -70,26 +70,26 @@ class GS1Importer {
             switch (vocabularyElement.type) {
             case 'urn:ot:object:actor':
                 actors = actors
-                // eslint-disable-next-line
-                    .concat(await this._parseActors(
+                    // eslint-disable-next-line
+                        .concat(await this._parseActors(
                         senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:product':
                 products = products
-                // eslint-disable-next-line
-                    .concat(await this._parseProducts(
+                    // eslint-disable-next-line
+                        .concat(await this._parseProducts(
                         senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:batch':
                 batches = batches
-                // eslint-disable-next-line
-                    .concat(await this._parseBatches(
+                    // eslint-disable-next-line
+                        .concat(await this._parseBatches(
                         senderId, vocabularyElement.VocabularyElementList));
                 break;
             case 'urn:ot:object:location':
                 locations = locations
-                // eslint-disable-next-line
-                    .concat(await this._parseLocations(
+                    // eslint-disable-next-line
+                        .concat(await this._parseLocations(
                         senderId, vocabularyElement.VocabularyElementList));
                 break;
             default:
@@ -237,7 +237,7 @@ class GS1Importer {
             if (actor.extension) {
                 if (actor.extension.private) {
                     // eslint-disable-next-line
-                    await this.helper.handlePrivate(senderId, actor.id, actor.extension.private, data, privateData, product.private_salt);
+                    await this.helper.handlePrivate(senderId, actor.id, actor.extension.private, data, privateData, actor.private_salt);
                 }
             }
 
@@ -272,7 +272,7 @@ class GS1Importer {
             if (product.extension) {
                 if (product.extension.private) {
                     // eslint-disable-next-line
-                    await this.helper.handlePrivate(senderId, product.id, product.extension.private, data, privateData, batch.private_salt);
+                    await this.helper.handlePrivate(senderId, product.id, product.extension.private, data, privateData, product.private_salt);
                 }
             }
 
@@ -414,19 +414,19 @@ class GS1Importer {
                             }
 
                             // eslint-disable-next-line
-                            const shippingEventVertex = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
-                            if (shippingEventVertex.length > 0) {
+                            const shippingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'shipping');
+                            for (const shippingEventVertex of shippingEventVertices) {
                                 currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, shippingEventVertex[0]._key, eventKey),
-                                    _from: `${shippingEventVertex[0]._key}`,
+                                    _key: this.helper.createKey('event_connection', senderId, shippingEventVertex._key, eventKey),
+                                    _from: `${shippingEventVertex._key}`,
                                     _to: `${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
                                     transaction_flow: 'OUTPUT',
                                 });
                                 currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, eventKey, shippingEventVertex[0]._key),
+                                    _key: this.helper.createKey('event_connection', senderId, eventKey, shippingEventVertex._key),
                                     _from: `${eventKey}`,
-                                    _to: `${shippingEventVertex[0]._key}`,
+                                    _to: `${shippingEventVertex._key}`,
                                     edge_type: 'EVENT_CONNECTION',
                                     transaction_flow: 'INPUT',
                                 });
@@ -458,8 +458,8 @@ class GS1Importer {
                             const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                             if (receivingEventVertices.length > 0) {
                                 currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
-                                    _from: `${receivingEventVertices[0]._key}`,
+                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices._key, eventKey),
+                                    _from: `${receivingEventVertices._key}`,
                                     _to: `${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
                                     transaction_flow: 'INPUT',
@@ -477,8 +477,10 @@ class GS1Importer {
                 }
             }
             if (!eventKey) {
-                eventKey = this.helper.createKey('event', senderId, identifiers, data);
+                eventKey = this.helper.createKey('event', senderId, identifiers.id);
             }
+
+            data.partner_id = event.partner_id;
 
             const eventVertex = {
                 _key: eventKey,
@@ -678,7 +680,7 @@ class GS1Importer {
                         const id_type = identifier;
                         const id_value = vertex.identifiers[id_type];
                         const object_key = vertex._key;
-                        const id_key = this.helper.createKey('identifier', id_type, id_value);
+                        const id_key = this.helper.createKey('identifier', sender, id_type, id_value);
 
                         identifiers.push({
                             _key: id_key,
@@ -707,10 +709,7 @@ class GS1Importer {
                 }
             }
 
-            const { vertices: denormalizedVertices } = denormalizeGraph(importId, allVertices, []);
-            await Promise.all(denormalizedVertices.map(vertex => this.db.addVertex(vertex)));
-            await Promise.all(identifiers.map(vertex => this.db.addVertex(vertex)));
-
+            // Adding sender ID for all edges
             const allEdges = locationEdges
                 .concat(eventEdges)
                 .concat(batchEdges)
@@ -721,6 +720,15 @@ class GS1Importer {
                     return edge;
                 });
 
+            // Removing sender ID from EVENT_CONNECTION edges
+            for (const edge of allEdges) {
+                if (edge.edge_type === 'EVENT_CONNECTION') {
+                    delete edge.sender_id;
+                }
+            }
+
+            // Connecting edges with real vertex keys
+            // TODO: Data layer refactor
             for (const edge of allEdges) {
                 const to = edge._to;
                 const from = edge._from;
@@ -743,63 +751,157 @@ class GS1Importer {
                 }
             }
 
-            allEdges.map((e) => {
-                e.inTransaction = true;
-                return e;
-            });
-            await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
+            allVertices.push(...identifiers);
 
-            // updates
-            await Promise.all(updates);
-            await Promise.all(allVertices.concat(identifiers).map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
-            await Promise.all(allEdges.map(edge => this.db.updateImports('ot_edges', edge._key, importId)));
+            const { vertices: denormalizedVertices, edges: denormalizedEdges } = denormalizeGraph(
+                importId,
+                allVertices,
+                allEdges,
+            );
 
-            let edgesPerImport = await this.db.findEdgesByImportId(importId);
-            edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
-            edgesPerImport = edgesPerImport.map((edge) => {
-                delete edge.private;
-                return edge;
-            });
+            const { vertices: normalizedVertices, edges: normalizedEdges } = normalizeGraph(
+                importId,
+                denormalizedVertices,
+                denormalizedEdges,
+            );
 
-            let verticesPerImport = await this.db.findVerticesByImportId(importId);
-            verticesPerImport = verticesPerImport.map((vertex) => {
-                delete vertex.private;
-                return vertex;
-            });
+            const objectClasses = await this.db.findObjectClassVertices();
 
-            dataSetId = ImportUtilities.importHash(verticesPerImport, edgesPerImport);
+            const dataSetId = ImportUtilities.importHash(
+                importId,
+                normalizedVertices.concat(objectClasses),
+                normalizedEdges,
+            );
+
             const dataInfo = await models.data_info.find({ where: { data_set_id: dataSetId } });
             if (dataInfo) {
                 throw new Error(`Data set ${dataSetId} has already been imported`);
             }
-            await this.db.replaceDataSets(importId, dataSetId);
+            // eslint-disable-next-line
+            const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } = denormalizeGraph(dataSetId, allVertices, allEdges);
+
+            await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
+            allEdges.map((e) => {
+                e.inTransaction = true;
+                return e;
+            });
+            await Promise.all(newDenormalizedEdges.map(edge => this.db.addEdge(edge)));
+
+            // updates
+            await Promise.all(updates);
+            await Promise.all(newDenormalizedVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, dataSetId)));
+            await Promise.all(newDenormalizedEdges.map((edge) => {
+                if (edge.edge_type !== 'EVENT_CONNECTION') {
+                    return this.db.updateImports('ot_edges', edge._key, dataSetId);
+                }
+                return [];
+            }));
+
+            await this.db.commit();
+
+            return {
+                vertices: normalizedVertices,
+                edges: normalizedEdges,
+                data_set_id: dataSetId,
+                wallet: senderWallet,
+            };
         } catch (e) {
             this.log.warn(`Failed to import data. ${e}`);
             await this.db.rollback(); // delete elements in transaction
             await this.db.removeDataSetId(importId);
             throw e;
         }
-        await this.db.commit();
-
-        let edgesPerImport = await this.db.findEdgesByImportId(dataSetId);
-        edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
-        edgesPerImport = edgesPerImport.map((edge) => {
-            delete edge.private;
-            return edge;
-        });
-
-        let verticesPerImport = await this.db.findVerticesByImportId(dataSetId);
-        verticesPerImport = verticesPerImport.map((vertex) => {
-            delete vertex.private;
-            return vertex;
-        });
-        return {
-            vertices: verticesPerImport,
-            edges: edgesPerImport,
-            data_set_id: dataSetId,
-            wallet: senderWallet,
-        };
     }
+
+
+    //     const { vertices: denormalizedVertices } = denormalizeGraph(importId, allVertices, );
+    //     const { vertices: normalizedVertices } = normalizeGraph(importId, denormalizedVertices);
+    //
+    //     const hashVertices = normalizedVertices;
+    //     const hashEdges = allEdges;
+    //
+    //     dataSetId = ImportUtilities.importHash(importId, denormalizedVertices, hashEdges);
+    //     const importVertices = denormalizeGraph(dataSetId, normalizedVertices, []).vertices;
+    //
+    //     await Promise.all(importVertices.map(vertex => this.db.addVertex(vertex)));
+    //
+    //     allEdges.map((e) => {
+    //         e.inTransaction = true;
+    //         return e;
+    //     });
+    //     await Promise.all(allEdges.map(edge => this.db.addEdge(edge)));
+    //
+    //     // updates
+    //     await Promise.all(updates);
+    //     await Promise.all(hashVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, importId)));
+    //     await Promise.all(hashEdges.map((edge) => {
+    //         if (edge.edge_type !== 'EVENT_CONNECTION') {
+    //             return this.db.updateImports('ot_edges', edge._key, importId);
+    //         }
+    //         return [];
+    //     }));
+    //
+    //     // let edgesPerImport = await this.db.findEdgesByImportId(importId);
+    //     // edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+    //     // edgesPerImport = edgesPerImport.map((edge) => {
+    //     //     delete edge.private;
+    //     //     delete edge.datasets;
+    //     //     return edge;
+    //     // });
+    //     //
+    //     // let verticesPerImport = await this.db.findVerticesByImportId(importId);
+    //     // verticesPerImport = verticesPerImport.map((vertex) => {
+    //     //     delete vertex.private;
+    //     //     delete vertex.datasets;
+    //     //     return vertex;
+    //     // });
+    //
+    //
+    //     const dataInfo = await models.data_info.find({ where: { data_set_id: dataSetId } });
+    //     if (dataInfo) {
+    //         throw new Error(`Data set ${dataSetId} has already been imported`);
+    //     }
+    // } catch (e) {
+    //     this.log.warn(`Failed to import data. ${e}`);
+    //     await this.db.rollback(); // delete elements in transaction
+    //     await this.db.removeDataSetId(importId);
+    //     throw e;
+    // }
+    // await this.db.commit();
+    //
+    // let edgesPerImport = await this.db.findEdgesByImportId(dataSetId);
+    // edgesPerImport = edgesPerImport.filter(edge => edge.edge_type !== 'EVENT_CONNECTION');
+    // edgesPerImport = edgesPerImport.map((edge) => {
+    //     delete edge.private;
+    //     return edge;
+    // });
+    //
+    // const verticesPerImport = normalizeGraph(
+    //     dataSetId,
+    //     await this.db.findVerticesByImportId(dataSetId),
+    //     [],
+    // ).vertices;
+    // // verticesPerImport = verticesPerImport.map((vertex) => {
+    // //
+    // //     return vertex;
+    // // });
+    //
+    // console.log(JSON.stringify(verticesPerImport));
+    //
+    // console.log(JSON.stringify({
+    //     vertices: verticesPerImport,
+    //     edges: edgesPerImport,
+    //     data_set_id: dataSetId,
+    //     wallet: senderWallet,
+    // }));
+    //
+    // return {
+    //     vertices: verticesPerImport,
+    //     edges: edgesPerImport,
+    //     data_set_id: dataSetId,
+    //     wallet: senderWallet,
+    // };
+    // }
 
     /**
      * Import GS1 contents
