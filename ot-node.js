@@ -691,6 +691,32 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/get-contact/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Get contact node ID ${nodeId}`);
+            const result = await context.transport.getContact(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get('/api/network/find/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Find node ID ${nodeId}`);
+            const result = await context.transport.findNode(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
         server.get('/api/replication/:replication_id', (req, res) => {
             log.api('GET: Replication status request received');
 

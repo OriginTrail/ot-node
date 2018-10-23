@@ -142,6 +142,7 @@ class Transport {
                     halt(err);
                     return;
                 }
+                this.logger.debug(`Calling ${fn} operation failed at ${iteration} iteration. Contact ${contactId}, ${err}.\n${err.stack}`);
                 throw err;
             }
         }, opts);
@@ -160,6 +161,14 @@ class Transport {
      */
     dumpContacts() {
         return this.network.dumpContacts();
+    }
+
+    async findNode(nodeId) {
+        return this.network.findNode(nodeId);
+    }
+
+    async getContact(contactId) {
+        return this.network.node.getContact(contactId);
     }
 }
 
