@@ -447,8 +447,7 @@ class OTNode {
         }
 
         const challenger = container.resolve('challenger');
-        // TODO [network-fix]: Enable
-        // await challenger.startChallenging();
+        await challenger.startChallenging();
 
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();

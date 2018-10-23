@@ -1,15 +1,9 @@
-/**
- * @module kadence/logger
- */
-
 const { Transform } = require('stream');
 
-
 /**
- * Logs all incoming messages
+ * Logs only kad related incoming messages
  */
 class IncomingMessageLogger extends Transform {
-
     /**
      * @constructor
      * @param {AbstractNode~logger} logger - Logger to use
@@ -23,31 +17,27 @@ class IncomingMessageLogger extends Transform {
      * @private
      */
     _transform(data, enc, callback) {
-        let [rpc, ident] = data;
+        const [rpc, ident] = data;
 
         if (!ident.payload.params[0] || !ident.payload.params[1]) {
             return callback();
         }
 
         if (rpc.payload.method && rpc.payload.method.includes('kad-')) {
-            this.logger.api(
-                `received ${rpc.payload.method} (${rpc.payload.id}) from ` +
+            this.logger.api(`received ${rpc.payload.method} (${rpc.payload.id}) from ` +
                 `${ident.payload.params[0]} ` +
                 `(${ident.payload.params[1].hostname}:` +
-                `${ident.payload.params[1].port})`,
-            );
+                `${ident.payload.params[1].port})`);
         }
 
         callback(null, data);
     }
-
 }
 
 /**
- * Logs all outgoing messages
+ * Logs only kad related  outgoing messages
  */
 class OutgoingMessageLogger extends Transform {
-
     /**
      * @constructor
      * @param {AbstractNode~logger} logger - Logger to use
@@ -61,22 +51,19 @@ class OutgoingMessageLogger extends Transform {
      * @private
      */
     _transform(data, enc, callback) {
-        let [rpc,, recv] = data;
+        const [rpc,, recv] = data;
 
         if (!recv[0] || !recv[1]) {
             return callback();
         }
 
         if (rpc.method && rpc.method.includes('kad-')) {
-            this.logger.api(
-                `sending ${rpc.method} (${rpc.id}) to ${recv[0]} ` +
-                `(${recv[1].hostname}:${recv[1].port})`,
-            );
+            this.logger.api(`sending ${rpc.method} (${rpc.id}) to ${recv[0]} ` +
+                `(${recv[1].hostname}:${recv[1].port})`);
         }
 
         callback(null, data);
     }
-
 }
 
 module.exports = {

@@ -297,22 +297,20 @@ class Kademlia {
             }
 
             let connected = false;
-            const promises = bootstrapNodes.map((node) => {
-                return new Promise((acc, rej) => {
-                    const contact = kadence.utils.parseContactURL(node);
-                    this.log.debug(`Joining ${contact[0]}`);
-                    this.node.join(contact, (err) => {
-                        if (err) {
-                            this.log.warn(`Failed to join ${contact[0]}`);
-                            acc(false);
-                            return;
-                        }
-                        this.log.info(`Connected to ${contact[0]}(${contact[1].hostname}:${contact[1].port})`);
-                        connected = true;
-                        acc(true);
-                    });
+            const promises = bootstrapNodes.map(node => new Promise((acc, rej) => {
+                const contact = kadence.utils.parseContactURL(node);
+                this.log.debug(`Joining ${contact[0]}`);
+                this.node.join(contact, (err) => {
+                    if (err) {
+                        this.log.warn(`Failed to join ${contact[0]}`);
+                        acc(false);
+                        return;
+                    }
+                    this.log.info(`Connected to ${contact[0]}(${contact[1].hostname}:${contact[1].port})`);
+                    connected = true;
+                    acc(true);
                 });
-            });
+            }));
             await Promise.all(promises);
             accept(connected);
         });
