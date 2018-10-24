@@ -47,7 +47,7 @@ class DhOfferFinalizedCommand extends Command {
                 const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
                 const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
 
-                if (holders.includes(Utilities.denormalizeHex(this.config.erc725Identity))) {
+                if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
                     bid.status = 'CHOSEN';
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
                 } else {
