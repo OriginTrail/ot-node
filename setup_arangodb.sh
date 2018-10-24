@@ -8,8 +8,8 @@ NAME=ArangoDB-$VERSION
 
 if [ ! -d "$DIR/$NAME" ]; then
   # download ArangoDB
-  echo "curl -L -o $NAME.tar.gz https://www.arangodb.org/repositories/travisCI/$NAME.tar.gz"
-  curl -L -o $NAME.tar.gz https://www.arangodb.org/repositories/travisCI/$NAME.tar.gz
+  echo "curl -L -o $NAME.tar.gz https://www.arangodb.com/repositories/travisCI/$NAME.tar.gz"
+  curl -L -o $NAME.tar.gz https://www.arangodb.com/repositories/travisCI/$NAME.tar.gz
   echo "tar zxf $NAME.tar.gz"
   tar zxf $NAME.tar.gz
 fi
