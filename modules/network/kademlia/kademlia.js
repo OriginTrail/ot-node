@@ -42,7 +42,7 @@ class Kademlia {
     }
 
     async bootstrapFindContact(contactId) {
-        const bootstrapNodes = this.config.network_bootstrap_nodes;
+        const bootstrapNodes = this.config.network.bootstraps;
 
         for (let i = 0; i < bootstrapNodes.length; i += 1) {
             const node = bootstrapNodes[i];
@@ -222,9 +222,9 @@ class Kademlia {
                 this.node.rpc.serializer.prepend(new OutgoingMessage(this.log));
             }
             // Cast network nodes to an array
-            if (typeof this.config.network_bootstrap_nodes === 'string') {
-                this.config.network_bootstrap_nodes =
-                    this.config.network_bootstrap_nodes.trim().split();
+            if (typeof this.config.network.bootstraps === 'string') {
+                this.config.network.bootstraps =
+                    this.config.network.bootstraps.trim().split();
             }
 
             this._registerRoutes();
