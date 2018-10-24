@@ -679,15 +679,12 @@ class EventEmitter {
             }
             let {
                 dcNodeId,
-                offerId,
-                dataSetId,
             } = eventData;
 
-            offerId = Utilities.normalizeHex(offerId);
-            dcNodeId = Utilities.denormalizeHex(dcNodeId);
-            dataSetId = Utilities.normalizeHex(dataSetId);
-
+            dcNodeId = Utilities.denormalizeHex(dcNodeId).substring(26);
             const {
+                offerId,
+                dataSetId,
                 dataSetSizeInBytes,
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
