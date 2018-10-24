@@ -142,7 +142,7 @@
     "strip-ansi": "^5.0.0",
     "superagent": "^3.8.3",
     "truffle": "5.0.0-beta.1",
-    "truffle-hdwallet-provider": "0.0.5",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.0",
     "umzug": "^2.1.0",
     "underscore": "^1.9.0",
     "utf8": "^3.0.0",
