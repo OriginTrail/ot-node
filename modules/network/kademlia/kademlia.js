@@ -611,7 +611,7 @@ class Kademlia {
                 });
             };
 
-            node.payloadRequest = async (message, contactId) => {
+            node.replicationResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-replication-response', { message }, [contactId, contact], (err, res) => {
