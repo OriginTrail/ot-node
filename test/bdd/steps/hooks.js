@@ -1,5 +1,12 @@
 /* eslint-disable prefer-arrow-callback */
 require('dotenv').config();
+const { Database } = require('arangojs');
+const rc = require('rc');
+const defaultConfig = require('../../../config/config.json').development;
+const pjson = require('../../../package.json');
+
+const config = rc(pjson.name, defaultConfig);
+
 
 if (process.env.NODE_ENV !== 'development') {
     console.error('This process requires to run in "development" environment. Please change NODE_ENV.');
@@ -61,10 +68,25 @@ After(function (testCase, done) {
     done();
 });
 
-AfterAll(() => {
-    // TODO: After-all.
-    // Delete all Arango dbs.
-    // Drop all data to artifacts.
+AfterAll(async function () {
+    // Delete almost all Arango dbs.
+    const systemDb = new Database();
+    systemDb.useBasicAuth(config.database.username, config.database.password);
+
+    const listOfDatabases = await systemDb.listDatabases();
+
+    listOfDatabases.forEach(async function (databaseItem) {
+        if (databaseItem.includes('origintrail-test-')) {
+            try {
+                await systemDb.dropDatabase(databaseItem);
+            } catch (error) {
+                this.logger.log(`Oops, failed to delete database: ${databaseItem}`);
+                this.logger.error(error);
+            }
+        }
+    });
+
+    // TODO: Drop all data to artifacts.
 });
 
 process.on('unhandledRejection', (reason, p) => {
