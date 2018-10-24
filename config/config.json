@@ -56,19 +56,15 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0xd5b0c40a179a35bad10ad52e6ee9fbf0df86f09d",
-      "bidding_contract_address": "0xd82e889ec14db740ca8898675511acc0c787359d",
-      "reading_contract_address": "0xb92bfecbcdb6af8d089ff90db6e20b199fbdd04f",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": ""
     },
     "network": {
       "id": "Devnet",
-      "bootstraps": ["https://46.101.38.216:5278/#fed6e96ff27ef1c288cc8b7853807ed00e85e8f7"],
+      "bootstraps": ["https://46.101.38.216:5278/#173399dd1ed336db2a95e1c100ca9b6b9f0996fb"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "bugSnag": {
@@ -144,13 +140,9 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0xca5c15b2cf68fbc20148298f17e48617a71df63c",
-      "bidding_contract_address": "0xab1d06de6fb69de76739281cd0478931f9fff083",
-      "reading_contract_address": "0xe8d8277bc7a6587f150c6c65aeb688ac21082966",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": ""
     },
@@ -232,13 +224,9 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0x6103d41059145b72f7ce5760910c017838454bca",
-      "bidding_contract_address": "0x4e3f704a3a8e874cf576606ed3b2a5e7bff37ad5",
-      "reading_contract_address": "0x35459b23d3eae1c82b8f349e9df4d28bc11ac5a9",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": ""
     },
@@ -320,13 +308,9 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0x34248a6e9db421a6f03757efc2a8069df9747161",
-      "bidding_contract_address": "0x20d7ca2f13c2703a594962956312ae1f56219213",
-      "reading_contract_address": "0xa244abf02eb198261215b4a9693cf2b4e96bcf13",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": ""
     },
