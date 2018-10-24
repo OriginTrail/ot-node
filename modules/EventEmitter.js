@@ -681,7 +681,7 @@ class EventEmitter {
                 dcNodeId,
             } = eventData;
 
-            dcNodeId = Utilities.denormalizeHex(dcNodeId).substring(26);
+            dcNodeId = Utilities.denormalizeHex(dcNodeId).substring(24);
             const {
                 offerId,
                 dataSetId,
