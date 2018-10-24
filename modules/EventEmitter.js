@@ -363,8 +363,8 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id, import_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${import_id}`);
+            const { query_id, reply_id, data_set_id } = data;
+            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -380,7 +380,7 @@ class EventEmitter {
                 return;
             }
             try {
-                dvController.handleDataReadRequest(query_id, import_id, reply_id);
+                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);

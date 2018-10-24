@@ -51,16 +51,16 @@ class DVController {
     /**
      * Handles data read request
      * @param queryId
-     * @param importId
+     * @param dataSetId
      * @param replyId
      */
-    handleDataReadRequest(queryId, importId, replyId) {
+    handleDataReadRequest(queryId, dataSetId, replyId) {
         this.commandExecutor.add({
             name: 'dvDataReadRequestCommand',
             delay: 0,
             data: {
                 queryId,
-                importId,
+                dataSetId,
                 replyId,
             },
             transactional: false,
