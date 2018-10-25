@@ -1048,15 +1048,6 @@ class Utilities {
     }
 
     /**
-     * Is bootstrap node?
-     * @param config
-     * @return {number}
-     */
-    static isBootstrapNode(config) {
-        return parseInt(config.is_bootstrap_node, 10);
-    }
-
-    /**
      * Strip values from config to be used for storing.
      * @param config Application config
      */

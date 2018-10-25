@@ -308,7 +308,7 @@ class Kademlia {
             const bootstrapNodes = this.config.network.bootstraps;
             utilities.shuffle(bootstrapNodes);
 
-            if (utilities.isBootstrapNode(this.config)) {
+            if (this.config.is_bootstrap_node) {
                 this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
             } else {
                 this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
@@ -346,7 +346,7 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
-        if (utilities.isBootstrapNode(this.config)) {
+        if (this.config.is_bootstrap_node) {
             // async
             this.node.use('kad-find-contact', (request, response, next) => {
                 this.log.debug('kad-find-contact received');
