@@ -41,6 +41,10 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 rpc_node_host: 'http://localhost', // TODO use from instance
                 rpc_node_port: 7545,
             },
+            network: {
+                bootstraps: ['https://localhost:5278/#ba9f7526f803490e631859c75d56e5ab25a47a33'],
+                remoteWhitelist: ['localhost'],
+            },
         },
     });
 
@@ -76,6 +80,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done)
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                dc_choose_time: 60000, // 1 minute
             },
         });
         this.state.nodes.push(newNode);
