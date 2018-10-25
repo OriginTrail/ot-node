@@ -1,4 +1,5 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
+const PluginService = require('./Blockchain/plugin/blockchain-plugin-service');
 
 class Blockchain {
     /**
@@ -6,10 +7,11 @@ class Blockchain {
      * @param ctx IoC context
      */
     constructor(ctx) {
-        this.config = ctx.config.blockchain;
-        this.emitter = ctx.emitter;
-        this.web3 = ctx.web3;
         this.log = ctx.logger;
+        this.web3 = ctx.web3;
+        this.emitter = ctx.emitter;
+        this.config = ctx.config.blockchain;
+        this.pluginService = new PluginService(ctx);
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':
@@ -18,6 +20,7 @@ class Blockchain {
         default:
             this.log.error('Unsupported blockchain', this.config.blockchain_title);
         }
+        this.pluginService.bootstrap();
     }
 
     /**
@@ -26,6 +29,16 @@ class Blockchain {
      */
     async initialize() {
         await this.blockchain.initialize();
+    }
+
+    /**
+     * Executes specific plugin
+     * @param name  - Plugin name
+     * @param data  - Plugin data
+     * @return {Promise<void>}
+     */
+    async executePlugin(name, data) {
+        return this.pluginService.execute(name, data);
     }
 
     /**
