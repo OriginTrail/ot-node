@@ -24,7 +24,7 @@ class DcOfferTaskCommand extends Command {
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex')),
+                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0')),
                 finished: 0,
             },
         });
@@ -81,7 +81,7 @@ class DcOfferTaskCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex')),
+            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex').padStart(64, '0')),
         });
         return data;
     }

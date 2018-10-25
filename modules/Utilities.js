@@ -110,7 +110,7 @@ class Utilities {
      */
     static getLogger() {
         let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
 
@@ -208,6 +208,12 @@ class Utilities {
      * @return {*}
      */
     static transformLog(level, msg) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
+            return {
+                level,
+                msg,
+            };
+        }
         if (msg.startsWith('connection timed out')) {
             return null;
         }
@@ -828,39 +834,33 @@ class Utilities {
     /**
      * Normalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static normalizeHex(number) {
         if (number == null) {
             return null;
         }
         number = number.toLowerCase();
-        const denormalized = number.startsWith('0x') ? number.substring(2) : number;
-        return `0x${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
+        if (!number.startsWith('0x')) {
+            return `0x${number}`;
+        }
+        return number;
     }
 
     /**
      * Denormalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static denormalizeHex(number) {
         if (number == null) {
             return null;
         }
         number = number.toLowerCase();
-        const denormalized = number.startsWith('0x') ? number.substring(2) : number;
-        return `${new BN(denormalized, 16).toString('hex')}`.toLowerCase();
-    }
-
-    /**
-     * Compares two strings ignoring case
-     * @param str1
-     * @param str2
-     * @return {boolean}
-     */
-    static compareIgnoreCase(str1, str2) {
-        return str1.toLowerCase() === str2.toLowerCase();
+        if (number.startsWith('0x')) {
+            return number.substring(2);
+        }
+        return number;
     }
 
     /**

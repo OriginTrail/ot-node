@@ -21,7 +21,7 @@ class DVDataReadRequestCommand extends Command {
      * @param transaction
      */
     async execute(command, transaction) {
-        const { queryId, importId, replyId } = command.data;
+        const { queryId, dataSetId, replyId } = command.data;
         /*
             dataReadRequestObject = {
             message: {
@@ -39,7 +39,7 @@ class DVDataReadRequestCommand extends Command {
          */
 
         const dataInfo = await Models.data_info.findOne({
-            where: { import_id: importId },
+            where: { data_set_id: dataSetId },
         });
         if (dataInfo) {
             this.logger.trace(`I've already stored data for import ID ${importId}. Purchase ignored.`);
@@ -55,7 +55,7 @@ class DVDataReadRequestCommand extends Command {
 
         const message = {
             id: offer.reply_id,
-            import_id: importId,
+            data_set_id: dataSetId,
             wallet: this.config.node_wallet,
             nodeId: this.config.identity,
         };

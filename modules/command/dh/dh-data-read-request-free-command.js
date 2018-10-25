@@ -39,7 +39,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
         // TODO in order to avoid getting a different import.
         const {
-            nodeId, wallet, id, import_id,
+            nodeId, wallet, id, data_set_id,
         } = message;
         try {
             // Check is it mine offer.
@@ -57,7 +57,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
             // TODO: Only one import ID used. Later we'll support replication from multiple imports.
             // eslint-disable-next-line
-            const importId = import_id;
+            const importId = data_set_id;
 
             const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
             const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
@@ -70,7 +70,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
             const dataInfo = await Models.data_info.findOne({
                 where: {
-                    import_id: importId,
+                    data_set_id: importId,
                 },
             });
 
@@ -82,11 +82,13 @@ class DHDataReadRequestFreeCommand extends Command {
             ImportUtilities.deleteInternal(vertices);
 
             // Get replication key and then encrypt data.
-            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+            const holdingDataModel = await Models.holding_data.find({
+                where: { data_set_id: importId },
+            });
 
             if (holdingDataModel) {
                 const holdingData = holdingDataModel.get({ plain: true });
-                const dataPublicKey = holdingData.data_public_key;
+                const dataPublicKey = holdingData.litigation_public_key;
                 const replicationPrivateKey = holdingData.distribution_private_key;
 
                 Graph.decryptVertices(
@@ -123,7 +125,7 @@ class DHDataReadRequestFreeCommand extends Command {
                     vertices,
                     edges,
                 },
-                import_id: importId, // TODO: Temporal. Remove it.
+                data_set_id: importId, // TODO: Temporal. Remove it.
                 transaction_hash: dataInfo.transaction_hash,
             };
             const dataReadResponseObject = {
