@@ -43,6 +43,7 @@ contract Hub is Ownable{
     address public profileAddress;
     address public holdingAddress;
     address public readingAddress;
+    address public approvalAddress;
 
     address public profileStorageAddress;
     address public holdingStorageAddress;
@@ -74,6 +75,11 @@ contract Hub is Ownable{
         emit ContractsChanged();
     }
 
+    function setApprovalAddress(address newApprovalAddress)
+    public onlyOwner {
+        approvalAddress = newApprovalAddress;
+        emit ContractsChanged();
+    }
 
 
     function setProfileStorageAddress(address newpPofileStorageAddress)
