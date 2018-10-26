@@ -60,7 +60,21 @@
       "gas_price": "5000000000",
       "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "Devnet",
@@ -145,7 +159,21 @@
       "gas_price": "5000000000",
       "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "StagenetV1.0.0",
@@ -230,7 +258,21 @@
       "gas_price": "5000000000",
       "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "StablenetV1.0.0",
@@ -315,7 +357,21 @@
       "gas_price": "5000000000",
       "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "PirotV1.0.0",
