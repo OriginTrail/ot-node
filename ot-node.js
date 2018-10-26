@@ -728,7 +728,7 @@ class OTNode {
         });
 
         /** Get root hash for provided data query
-         * @param Query params: dc_wallet, import_id
+         * @param Query params: data_set_id
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');

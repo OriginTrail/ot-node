@@ -21,29 +21,33 @@ Feature: Test basic network features
     And I wait for replications to finish
     Then the last import should be the same on all nodes that replicated data
 
-  @doesntwork
-  Scenario: Check that second gs1 import does not mess up first import hash value
-    Given I setup 2 nodes
+  @itworks
+  Scenario: Check that second gs1 import does not mess up first import's hash value
+    Given I setup 4 nodes
     And I start the nodes
     And I use 1st node as DC
     And I import "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1
     Given I initiate the replication
-    And I wait for replications to finish
-    And I remember previous import's fingerprint value and details
+    And I wait for 10 seconds
+    And I remember previous import's fingerprint value
     And I import "importers/xml_examples/Basic/02_Green_to_pink_shipment.xml" as GS1
-    Then checking again first import hash should point to remembered value
+    And I initiate the replication
+    And I wait for 10 seconds
+    Then checking again first import's root hash should point to remembered value
 
   @doesntwork
-  Scenario: Check that second wot import does not mess up first import hash value
-    Given I setup 2 nodes
+  Scenario: Check that second wot import does not mess up first import's hash value
+    Given I setup 4 nodes
     And I start the nodes
     And I use 1st node as DC
     And I import "importers/json_examples/WOT_Example_1.json" as WOT
     Given I initiate the replication
-    And I wait for replications to finish
-    And I remember previous import's fingerprint value and details
+    And I wait for 10 seconds
+    And I remember previous import's fingerprint value
     And I import "importers/json_examples/WOT_Example_2.json" as WOT
-    Then checking again first import hash should point to remembered value
+    And I initiate the replication
+    And I wait for 10 seconds
+    Then checking again first import's root hash should point to remembered value
 
   @doesntwork
   Scenario: Smoke check data-layer basic endpoints

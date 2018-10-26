@@ -35,24 +35,26 @@ async function apiImportInfo(nodeRpcUrl, importId) {
 }
 
 /**
- * Fetch api/fingerprint?dc_wallet={{dc_wallet}}&import_id={{import_id}}
+ * Fetch api/fingerprint?data_set_id={{data_set_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {string} dcWallet DC Wallet address
- * @param {string} importId ID.
+ * @param {string} jsonQuery
  * @return {Promise.<FingerprintInfo>}
  */
-async function apiFingerprint(nodeRpcUrl, dcWallet, importId) {
+async function apiFingerprint(nodeRpcUrl, datSetId) {
     return new Promise((accept, reject) => {
         request(
-            `${nodeRpcUrl}/api/fingerprint?dc_wallet=${dcWallet}&import_id=${importId}`,
-            { json: true },
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/fingerprint?data_set_id=${datSetId}`,
+                json: true,
+            },
             (err, res, body) => {
                 if (err) {
                     reject(err);
                     return;
                 }
-
                 accept(body);
             },
         );
