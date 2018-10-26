@@ -1,6 +1,6 @@
 {
   "name": "origintrail-node",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -10,11 +10,14 @@
     "test": "nyc mocha --exit $(find test -name '*.js' ! -path 'test/bdd/*')",
     "test:unit": "nyc mocha --exit $(find test/modules -name '*.js')",
     "test:unit:nocov": "mocha --exit $(find test/modules -name '*.js')",
+    "test:sm": "nyc mocha --exit $(find test/modules/command -name '*.js')",
+    "test:sm:nocov": "mocha --exit $(find test/modules/command -name '*.js')",
     "test:api": "nyc mocha --exit $(find test/api -name '*.js')",
     "test:api:nocov": "mocha --exit $(find test/api -name '*.js')",
     "test:protocol": "nyc mocha --exit $(find test/protocol -name '*.js')",
     "test:protocol:nocov": "mocha --exit $(find test/protocol -name '*.js')",
-    "test:bdd": "cucumber-js --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd": "cucumber-js --tags @experiment --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
+    "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "start": "node node_version_check.js && node ot-node.js",
     "bootstrap": "npm run setup:hard",
