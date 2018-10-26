@@ -111,7 +111,7 @@ class Kademlia {
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
-        this.log.notify(`My identity: ${this.identity}`);
+        this.log.notify(`My network identity: ${this.identity}`);
         this.config.identity = this.identity;
     }
 
