@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
 /**
@@ -29,7 +30,7 @@ class DcOfferFinalizedCommand extends Command {
                 const {
                     offerId: eventOfferId,
                 } = JSON.parse(e.data);
-                return offerId === eventOfferId;
+                return Utilities.compareHexStrings(offerId, eventOfferId);
             });
             if (event) {
                 event.finished = true;
@@ -42,7 +43,7 @@ class DcOfferFinalizedCommand extends Command {
                 offer.message = 'Offer has been finalized';
                 await offer.save({ fields: ['status', 'message'] });
 
-                await this.replicationService.deleteOfferDir(offer.id);
+                await this.replicationService.cleanup(offer.id);
                 return Command.empty();
             }
         }
@@ -62,7 +63,7 @@ class DcOfferFinalizedCommand extends Command {
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.deleteOfferDir(offer.id);
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

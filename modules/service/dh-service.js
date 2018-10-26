@@ -87,7 +87,6 @@ class DHService {
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
         tokenAmountPerHolder, dataSetId,
     ) {
-        dcNodeId = dcNodeId.substring(26);
         if (dcNodeId === this.config.identity) {
             return; // the offer is mine
         }
@@ -98,9 +97,8 @@ class DHService {
 
         this.logger.notify(`Offer ${offerId} has been created by ${dcNodeId}.`);
 
-        // use LIKE because of some SC related issues
         const dataInfo = await Models.data_info.findOne({
-            where: { data_set_id: { [Op.like]: `${Utilities.normalizeHex(dataSetId.toString('hex'))}%` } },
+            where: { data_set_id: dataSetId },
         });
         if (dataInfo) {
             this.logger.info(`I've already stored data for data set ${dataSetId}. Ignoring.`);

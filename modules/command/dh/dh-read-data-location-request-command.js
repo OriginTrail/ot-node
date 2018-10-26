@@ -38,9 +38,9 @@ class DHReadDataLocationRequestCommand extends Command {
         const graphImports = await this.graphStorage.findImportIds(msgQuery);
         // Filter imports not stored in local DB.
         let imports = await Models.data_info.findAll({
-            attributes: ['import_id'],
+            attributes: ['data_set_id'],
             where: {
-                import_id: {
+                data_set_id: {
                     [Op.in]: graphImports,
                 },
             },
@@ -53,7 +53,7 @@ class DHReadDataLocationRequestCommand extends Command {
         }
 
         // Convert to string array.
-        imports = imports.map(i => i.import_id);
+        imports = imports.map(i => i.data_set_id);
 
         // Check if the import came from network. In more details I can only
         // distribute data gotten from someone else.
@@ -87,16 +87,16 @@ class DHReadDataLocationRequestCommand extends Command {
 
         const dataInfos = await Models.data_info.findAll({
             where: {
-                import_id: {
+                data_set_id: {
                     [Op.in]: replicatedImportIds,
                 },
             },
         });
 
-        const importObjects = replicatedImportIds.map((importId) => {
-            const size = dataInfos.find(di => di.import_id === importId).data_size;
+        const importObjects = replicatedImportIds.map((dataSetId) => {
+            const size = dataInfos.find(di => di.data_set_id === dataSetId).data_size;
             return {
-                import_id: importId,
+                data_set_id: dataSetId,
                 size,
                 calculated_price: new BN(size, 10).mul(new BN(dataPrice, 10)).toString(),
             };

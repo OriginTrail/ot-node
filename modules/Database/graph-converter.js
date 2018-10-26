@@ -44,9 +44,6 @@ function normalizeGraph(importId, vertices, edges) {
 
     vertices.forEach((vertex) => {
         const normalizedVertex = {};
-
-        console.log(JSON.stringify(vertex));
-
         if (vertex.vertex_type !== 'IDENTIFIER' && vertex[importId]) {
             normalizedVertex.data = vertex[importId].data;
 

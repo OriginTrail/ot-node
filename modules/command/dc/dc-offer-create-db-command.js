@@ -56,11 +56,11 @@ class DCOfferCreateDbCommand extends Command {
      */
     pack(data) {
         Object.assign(data, {
-            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex')),
-            dataRootHash: Utilities.normalizeHex(data.dataRootHash.toString('hex')),
-            redLitigationHash: Utilities.normalizeHex(data.redLitigationHash.toString('hex')),
-            greenLitigationHash: Utilities.normalizeHex(data.greenLitigationHash.toString('hex')),
-            blueLitigationHash: Utilities.normalizeHex(data.blueLitigationHash.toString('hex')),
+            dataSetId: Utilities.normalizeHex(data.dataSetId.toString('hex').padStart(64, '0')),
+            dataRootHash: Utilities.normalizeHex(data.dataRootHash.toString('hex').padStart(64, '0')),
+            redLitigationHash: Utilities.normalizeHex(data.redLitigationHash.toString('hex').padStart(64, '0')),
+            greenLitigationHash: Utilities.normalizeHex(data.greenLitigationHash.toString('hex').padStart(64, '0')),
+            blueLitigationHash: Utilities.normalizeHex(data.blueLitigationHash.toString('hex').padStart(64, '0')),
             holdingTimeInMinutes: data.holdingTimeInMinutes.toString(),
             tokenAmountPerHolder: data.tokenAmountPerHolder.toString(),
             dataSizeInBytes: data.dataSizeInBytes.toString(),

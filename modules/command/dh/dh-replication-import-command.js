@@ -118,6 +118,16 @@ class DhReplicationImportCommand extends Command {
             data_size: dataSize,
         });
 
+        // Store holding information and generate keys for eventual data replication.
+        await Models.holding_data.create({
+            data_set_id: dataSetId,
+            source_wallet: dcWallet,
+            litigation_public_key: litigationPublicKey,
+            distribution_public_key: distributionPublicKey,
+            distribution_private_key: distributionPrivateKey,
+            distribution_epk: distributionEpk,
+        });
+
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
 
         const toSign = [

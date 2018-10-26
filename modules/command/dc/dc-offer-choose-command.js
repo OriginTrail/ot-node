@@ -83,7 +83,7 @@ class DCOfferChooseCommand extends Command {
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.deleteOfferDir(offer.id);
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 
@@ -95,7 +95,7 @@ class DCOfferChooseCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferChooseCommand',
-            delay: 2 * 60 * 1000,
+            delay: this.config.dc_choose_time,
             transactional: false,
         };
         Object.assign(command, map);

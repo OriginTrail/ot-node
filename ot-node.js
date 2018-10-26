@@ -12,6 +12,7 @@ const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
+const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const restify = require('restify');
 const fs = require('fs');
 const path = require('path');
@@ -234,49 +235,6 @@ function notifyEvent(message, metadata, subsystem) {
  * Main node object
  */
 class OTNode {
-    // TODO move this to Blockchain layer
-    async getBalances(Utilities, config, web3, initial) {
-        let enoughETH = false;
-        // let enoughtTRAC = false;
-        try {
-            const etherBalance = await Utilities.getBalanceInEthers(
-                web3,
-                config.node_wallet,
-            );
-            if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet fore running ot-node');
-                enoughETH = false;
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughETH = true;
-                log.info(`Balance of ETH: ${etherBalance}`);
-            }
-
-            // TODO enable this check with Blockchain agnosticism in mind
-            // const atracBalance = await Utilities.getAlphaTracTokenBalance(
-            //     web3,
-            //     config.node_wallet,
-            //     config.blockchain.token_contract_address,
-            // );
-            // if (atracBalance <= 0) {
-            //     enoughtTRAC = false;
-            //     console.log('Please get some ATRAC in the node wallet fore running ot-node');
-            //     if (initial) {
-            //         process.exit(1);
-            //     }
-            // } else {
-            //     enoughtTRAC = true;
-            //     log.info(`Balance of ATRAC: ${atracBalance}`);
-            // }
-        } catch (error) {
-            console.log(error);
-            notifyBugsnag(error);
-        }
-        // return enoughETH && enoughtTRAC;
-        return enoughETH;
-    }
     /**
      * OriginTrail node system bootstrap function
      */
@@ -377,15 +335,6 @@ class OTNode {
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
-        // check does node_wallet has sufficient Ether and ATRAC tokens
-        if (process.env.NODE_ENV !== 'test') {
-            appState.enoughFunds = await this.getBalances(Utilities, config, web3, true);
-            setInterval(async () => {
-                appState.enoughFunds = await this.getBalances(Utilities, config, web3, false);
-            }, 1800000);
-        } else {
-            appState.enoughFunds = true;
-        }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
@@ -394,7 +343,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -415,6 +364,7 @@ class OTNode {
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
@@ -440,6 +390,28 @@ class OTNode {
         const profileService = container.resolve('profileService');
 
         emitter.initialize();
+
+        // check does node_wallet has sufficient funds
+        if (process.env.NODE_ENV !== 'development') {
+            try {
+                appState.enoughFunds = await blockchain.getBalances();
+                if (appState.enoughFunds === false && !await profileService.isProfileCreated()) {
+                    log.warn('Insufficient funds to create profile');
+                    process.exit(1);
+                }
+            } catch (err) {
+                notifyBugsnag(err);
+            }
+            setInterval(async () => {
+                try {
+                    appState.enoughFunds = await blockchain.getBalances();
+                } catch (err) {
+                    notifyBugsnag(err);
+                }
+            }, 1800000);
+        } else {
+            appState.enoughFunds = true;
+        }
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -691,6 +663,32 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/get-contact/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Get contact node ID ${nodeId}`);
+            const result = await context.transport.getContact(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get('/api/network/find/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Find node ID ${nodeId}`);
+            const result = await context.transport.findNode(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
         server.get('/api/replication/:replication_id', (req, res) => {
             log.api('GET: Replication status request received');
 
@@ -856,17 +854,17 @@ class OTNode {
             log.api('POST: Network read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-              || req.body.import_id == null) {
+              || req.body.data_set_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
                 return;
             }
-            const { query_id, reply_id, import_id } = req.body;
+            const { query_id, reply_id, data_set_id } = req.body;
 
             emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
-                import_id,
+                data_set_id,
                 response: res,
             });
         });

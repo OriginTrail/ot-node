@@ -3,15 +3,19 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('holding_data', {
         id: {
             allowNull: false,
-            autoIncrement: false,
+            autoIncrement: true,
             primaryKey: true,
+            type: Sequelize.INTEGER,
+        },
+        data_set_id: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
         source_wallet: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_public_key: {
+        litigation_public_key: {
             allowNull: false,
             type: Sequelize.STRING,
         },
@@ -23,7 +27,7 @@ module.exports = {
             allowNull: true, // Only DH who got data from DC have it.
             type: Sequelize.STRING,
         },
-        epk: {
+        distribution_epk: {
             allowNull: false,
             type: Sequelize.STRING,
         },

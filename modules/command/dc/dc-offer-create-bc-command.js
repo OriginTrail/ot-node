@@ -53,6 +53,11 @@ class DCOfferCreateBcCommand extends Command {
         offer.message = 'Offer has been published to Blockchain';
         await offer.save({ fields: ['status', 'message'] });
 
+        await this.blockchain.executePlugin('fingerprint-plugin', {
+            dataSetId,
+            dataRootHash,
+        });
+
         const { data } = command;
         return this.continueSequence(this.pack(data), command.sequence);
     }
@@ -69,7 +74,7 @@ class DCOfferCreateBcCommand extends Command {
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.deleteOfferDir(offer.id);
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 
