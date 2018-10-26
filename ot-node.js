@@ -469,6 +469,7 @@ class OTNode {
         await commandExecutor.init();
         await commandExecutor.replay();
         await commandExecutor.start();
+        appState.started = true;
     }
 
     /**

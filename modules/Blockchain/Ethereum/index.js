@@ -13,8 +13,10 @@ class Ethereum {
         emitter,
         web3,
         logger,
+        appState,
     }) {
         // Loading Web3
+        this.appState = appState;
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
@@ -611,7 +613,11 @@ class Ethereum {
     async subscribeToEventPermanent(event) {
         const startBlockNumber = await this.web3.eth.getBlockNumber();
 
-        const handle = setInterval(async () => {
+        const that = this;
+        return setInterval(async () => {
+            if (!that.appState.started) {
+                return;
+            }
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
                 block: { [Op.gte]: startBlockNumber },
@@ -627,8 +633,6 @@ class Ethereum {
                 });
             }
         }, 2000);
-
-        return handle;
     }
 
     /**

@@ -27,7 +27,7 @@ class ProfileService {
         let identityExists = false;
         if (this.config.erc725Identity) {
             identityExists = true;
-            this.logger.notify(`Identity has already been created for node ${this.config.identity}`);
+            this.logger.notify(`Identity has already been created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
         }
 
         if (identityExists && await this.isProfileCreated()) {
@@ -50,7 +50,7 @@ class ProfileService {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
             if (event) {
                 this._saveIdentity(event.newIdentity);
-                this.logger.notify(`Identity created for node ${this.config.identity}`);
+                this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
                 return;
             }
         }
