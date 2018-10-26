@@ -81,6 +81,15 @@ class Ethereum {
             this.profileContractAddress,
         );
 
+        // Approval contract data
+        const approvalAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/approval.json');
+        this.approvalContractAddress = await this._getApprovalContractAddress();
+        this.approvalContractAbi = JSON.parse(approvalAbiFile);
+        this.approvalContract = new this.web3.eth.Contract(
+            this.approvalContractAbi,
+            this.approvalContractAddress,
+        );
+
         // Profile storage contract data
         const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
         this.profileStorageContractAddress = await this._getProfileStorageContractAddress();
@@ -158,6 +167,20 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`Profile contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Approval contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getApprovalContractAddress() {
+        this.log.trace('Asking Hub for Approval contract address...');
+        const address = await this.hubContract.methods.approvalAddress().call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Approval contract address is ${address}`);
         return address;
     }
 
@@ -876,6 +899,14 @@ class Ethereum {
         return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Get all approved nodes
+     */
+    async getApprovedNodes() {
+        this.log.trace('getApprovedNodes()');
+        return this.approvalContract.methods.getApprovedNodes().call();
     }
 
     /**

@@ -362,6 +362,13 @@ class Blockchain {
         return this.blockchain.getOfferDifficulty(offerId);
     }
 
+    /**
+     * Get all approved nodes
+     */
+    async getApprovedNodes() {
+        return this.blockchain.getApprovedNodes();
+    }
+
     async getBalances() {
         return this.blockchain.getBalances();
     }
