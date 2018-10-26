@@ -88,8 +88,10 @@ function normalizeGraph(importId, vertices, edges) {
     });
 
     edges.forEach((edge) => {
-        delete edge.datasets;
-        normalizedEdges.push(edge);
+        if (edge.edge_type !== 'EVENT_CONNECTION') {
+            delete edge.datasets;
+            normalizedEdges.push(edge);
+        }
     });
 
     return {
