@@ -759,8 +759,6 @@ class GS1Importer {
                 allEdges,
             );
 
-            console.log();
-
             const { vertices: normalizedVertices, edges: normalizedEdges } = normalizeGraph(
                 importId,
                 denormalizedVertices,
