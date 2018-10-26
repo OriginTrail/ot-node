@@ -682,46 +682,6 @@ class ArangoJS {
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
-        // for (const i in vertices) {
-        //     if (vertices[i][data_id]) {
-        //         delete vertices[i][data_id].privateData;
-        //
-        //         delete vertices[i][data_id].data.quantityList;
-        //         delete vertices[i][data_id].data.inputQuantityList;
-        //         delete vertices[i][data_id].data.outputQuantityList;
-        //
-        //         delete vertices[i][data_id].data.private_salt;
-        //
-        //         for (const key in vertices[i][data_id].data.quantities) {
-        //             for (const qkey in vertices[i][data_id].data.quantities[key].inputs) {
-        //                 delete vertices[i][data_id].data.quantities[key].inputs[qkey].private;
-        //             }
-        //
-        //             for (const qkey in vertices[i][data_id].data.quantities[key].outputs) {
-        //                 delete vertices[i][data_id].data.quantities[key].outputs[qkey].private;
-        //             }
-        //         }
-        //
-        //         delete vertices[i].private;
-        //
-        //         vertices[i] = {
-        //             _dc_key: vertices[i]._dc_key,
-        //             _key: vertices[i]._key,
-        //             data: vertices[i][data_id].data,
-        //             vertex_type: vertices[i].vertex_type,
-        //             uid: vertices[i].uid,
-        //             datasets: vertices[i].datasets,
-        //             sender_id: vertices[i].sender_id,
-        //         };
-        //
-        //         for (const key in vertices[i]) {
-        //             if (vertices[i][key] == null) {
-        //                 delete vertices[i][key];
-        //             }
-        //         }
-        //     }
-        // }
-
         const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices;
 
         if (normalizedVertices.length === 0) {
