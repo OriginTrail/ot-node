@@ -166,7 +166,7 @@ Given(/^I import "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, im
 
     const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
 
-    expect(importResponse).to.have.keys(['import_hash', 'import_id', 'message', 'wallet']);
+    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
     this.state.lastImport = importResponse;
 });
 
@@ -197,13 +197,13 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
                     return;
                 }
 
-                if (body.import_hash !== this.state.lastImport.import_hash) {
-                    reject(Error(`Import hash differs: ${body.import_hash} !== ${this.state.lastImport.import_hash}.`));
+                if (body.import_hash !== this.state.lastImport.data_set_id) {
+                    reject(Error(`Import hash differs: ${body.import_hash} !== ${this.state.lastImport.data_set_id}.`));
                     return;
                 }
                 const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
-                if (calculatedImportHash !== this.state.lastImport.import_hash) {
-                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.import_hash}.`));
+                if (calculatedImportHash !== this.state.lastImport.data_set_id) {
+                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`));
                     return;
                 }
                 accept();
@@ -224,7 +224,7 @@ Given(/^I initiate the replication$/, function () {
             headers: { 'Content-Type': 'application/json' },
             url: `${dc.state.node_rpc_url}/api/replication`,
             body: {
-                import_id: this.state.lastImport.import_id,
+                data_set_id: this.state.lastImport.data_set_id,
             },
             json: true,
         }, (err, res, body) => {

@@ -3,14 +3,14 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @experiment
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
+  @experiment
   Scenario: Test replication DC -> DH
-    Given the replication factor is 4
+    Given the replication difficulty is 0
     And I setup 5 nodes
     And I start the nodes
     And I use 1st node as DC
