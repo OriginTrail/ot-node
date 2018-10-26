@@ -864,6 +864,7 @@ class DHService {
             'LitigationInitiated',
             'LitigationCompleted',
             'EscrowVerified',
+            'NodeApproved',
         ]);
     }
 }

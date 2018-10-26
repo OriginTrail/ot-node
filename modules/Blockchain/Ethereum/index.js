@@ -111,6 +111,7 @@ class Ethereum {
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
             PROFILE_CONTRACT: this.profileContract,
+            APPROVAL_CONTRACT: this.approvalContract,
         };
     }
 
