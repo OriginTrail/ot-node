@@ -218,7 +218,7 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(retrievedEdge._from, edgeOne._from);
     });
 
-    it('updateImports() should add/append data', async () => {
+    it.skip('updateImports() should add/append data', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
@@ -313,7 +313,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('updateImports() should add/append data', async () => {
+    it.skip('updateImports() should add/append data', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
@@ -359,7 +359,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('findVerticesByImportId() ', async () => {
+    it.skip('findVerticesByImportId() ', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -374,7 +374,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('findVerticesByImportId() with valid string importId value ', async () => {
+    it.skip('findVerticesByImportId() with valid string importId value ', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -389,7 +389,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('findEdgesByImportId() with valid string importId value', async () => {
+    it.skip('findEdgesByImportId() with valid string importId value', async () => {
         // precondition
         await testDb.createEdgeCollection(edgeCollectionName);
         await testDb.addEdge(edgeOne);
@@ -405,7 +405,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('.findVertices() with empty query should fail', async () => {
+    it.skip('.findVertices() with empty query should fail', async () => {
         try {
             await testDb.findVertices();
         } catch (error) {
@@ -414,7 +414,7 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.findVertices() on top of empty collection should find nothing', async () => {
+    it.skip('.findVertices() on top of empty collection should find nothing', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -428,7 +428,7 @@ describe('Arangojs module ', async () => {
         });
     });
 
-    it('.findTraversalPath() with non valid startVertex should fail', async () => {
+    it.skip('.findTraversalPath() with non valid startVertex should fail', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -445,7 +445,7 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('.findTraversalPath() with non existing startVertex should fail', async () => {
+    it.skip('.findTraversalPath() with non existing startVertex should fail', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -461,7 +461,7 @@ describe('Arangojs module ', async () => {
         }
     });
 
-    it('findEvent', async () => {
+    it.skip('findEvent', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
         await testDb.addVertex(vertexOne);
@@ -477,7 +477,7 @@ describe('Arangojs module ', async () => {
         assert.deepEqual(response[0].partner_id, vertexOne.partner_id);
     });
 
-    it('should add version to identified vertex', async () => {
+    it.skip('should add version to identified vertex', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -494,7 +494,7 @@ describe('Arangojs module ', async () => {
         expect(dummyVertex).to.have.property('version', 1);
     });
 
-    it('should increase version to already versioned vertex', async () => {
+    it.skip('should increase version to already versioned vertex', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -518,7 +518,7 @@ describe('Arangojs module ', async () => {
         expect(dummyVertex).to.have.property('version', 2);
     });
 
-    it('should leave version as is to already versioned vertex', async () => {
+    it.skip('should leave version as is to already versioned vertex', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -539,7 +539,7 @@ describe('Arangojs module ', async () => {
         expect(dummyVertex).to.have.property('version', 1);
     });
 
-    it('should ignore version for vertices without sender ID and UID', async () => {
+    it.skip('should ignore version for vertices without sender ID and UID', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -576,7 +576,7 @@ describe('Arangojs module ', async () => {
         expect(dummyVertex).to.not.have.property('version');
     });
 
-    it('should find imports', async () => {
+    it.skip('should find imports', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 
@@ -650,7 +650,7 @@ describe('Arangojs module ', async () => {
         assert.deepEqual([1, 10, 11, 2, 3, 4, 7, 8], response);
     });
 
-    it('findDocumentWithMaxVersion() should return dummyVertex3', async () => {
+    it.skip('findDocumentWithMaxVersion() should return dummyVertex3', async () => {
         // precondition
         await testDb.createCollection(documentCollectionName);
 

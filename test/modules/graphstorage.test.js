@@ -135,7 +135,7 @@ describe('GraphStorage module', () => {
         assert.containsAllKeys(await myGraphStorage.addEdge(edgeOne), ['_key']);
     });
 
-    it('findVerticesByImportId() ', async () => {
+    it.skip('findVerticesByImportId() ', async () => {
         // precondition
         await myGraphStorage.addVertex(vertexOne);
 

@@ -883,7 +883,7 @@ class Ethereum {
      * @returns {Promise<boolean>}
      */
     async getBalances() {
-        this.log.trace('Checking ballances');
+        this.log.trace('Checking balances');
         let enoughETH = true;
         let enoughATRAC = true;
         try {
@@ -892,7 +892,7 @@ class Ethereum {
                 this.config.wallet_address,
             );
             this.log.info(`Balance of ETH: ${etherBalance}`);
-            if (etherBalance <= 0) {
+            if (etherBalance <= 0.01) {
                 enoughETH = false;
             }
 
@@ -902,7 +902,7 @@ class Ethereum {
                 this.tokenContractAddress,
             );
             this.log.info(`Balance of ATRAC: ${atracBalance}`);
-            if (enoughATRAC <= 0) {
+            if (atracBalance <= 100) {
                 enoughATRAC = false;
             }
         } catch (error) {
