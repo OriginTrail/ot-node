@@ -1,5 +1,4 @@
 const Ethereum = require('./Blockchain/Ethereum/index.js');
-const PluginService = require('./Blockchain/plugin/blockchain-plugin-service');
 
 class Blockchain {
     /**
@@ -11,7 +10,7 @@ class Blockchain {
         this.web3 = ctx.web3;
         this.emitter = ctx.emitter;
         this.config = ctx.config.blockchain;
-        this.pluginService = new PluginService(ctx);
+        this.pluginService = ctx.blockchainPluginService;
 
         switch (this.config.blockchain_title) {
         case 'Ethereum':

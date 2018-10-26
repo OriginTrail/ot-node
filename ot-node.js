@@ -12,6 +12,7 @@ const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
+const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const restify = require('restify');
 const fs = require('fs');
 const path = require('path');
@@ -363,6 +364,7 @@ class OTNode {
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
