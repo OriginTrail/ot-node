@@ -45,6 +45,8 @@ function normalizeGraph(importId, vertices, edges) {
     vertices.forEach((vertex) => {
         const normalizedVertex = {};
 
+        console.log(JSON.stringify(vertex));
+
         if (vertex.vertex_type !== 'IDENTIFIER' && vertex[importId]) {
             normalizedVertex.data = vertex[importId].data;
 
@@ -55,6 +57,7 @@ function normalizeGraph(importId, vertices, edges) {
             if (normalizedVertex.data) {
                 if (normalizedVertex.data.extension) {
                     delete normalizedVertex.data.extension.quantityList;
+                    delete normalizedVertex.data.extension.childQuantityList;
                 }
             }
 
@@ -71,7 +74,7 @@ function normalizeGraph(importId, vertices, edges) {
                 }
 
                 for (const qkey in normalizedVertex.data.quantities[key].outputs) {
-                    delete normalizedVertex.data.quantities[key].inputs[qkey].private;
+                    delete normalizedVertex.data.quantities[key].outputs[qkey].private;
                 }
             }
 

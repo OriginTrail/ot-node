@@ -165,7 +165,7 @@ class ArangoJS {
      */
     async findImportIds(inputQuery) {
         const results = await this.dataLocationQuery(inputQuery);
-        return results[0];
+        return results[0].datasets;
     }
 
     /**
@@ -229,13 +229,19 @@ class ArangoJS {
         }
 
 
-        queryString += ' RETURN INTERSECTION(v_res1[0].datasets';
+        queryString += ' RETURN {datasets: INTERSECTION(v_res1[0].datasets';
 
         for (let i = 1; i < count; i += 1) {
             queryString += `, v_res${i}[0].datasets`;
         }
 
-        queryString += ')';
+        queryString += '), objects: INTERSECTION(v_res1[0].objects';
+
+        for (let i = 1; i < count; i += 1) {
+            queryString += `, v_res${i}[0].objects`;
+        }
+        queryString += ')}';
+
         return this.runQuery(queryString, params);
     }
 
@@ -253,6 +259,7 @@ class ArangoJS {
             IN 1 .. ${depth}
             OUTBOUND 'ot_vertices/${startVertex._key}'
             ot_edges
+            OPTIONS {bfs: false, uniqueVertices: 'path'}
             RETURN path`;
 
         const rawGraph = await this.runQuery(queryString);

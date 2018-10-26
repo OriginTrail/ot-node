@@ -755,9 +755,11 @@ class GS1Importer {
 
             const { vertices: denormalizedVertices, edges: denormalizedEdges } = denormalizeGraph(
                 importId,
-                allVertices,
+                Utilities.copyObject(allVertices),
                 allEdges,
             );
+
+            console.log();
 
             const { vertices: normalizedVertices, edges: normalizedEdges } = normalizeGraph(
                 importId,

@@ -207,6 +207,20 @@ class GS1Utilities {
         return this.db.findVertexWithMaxVersion(senderId, uid);
     }
 
+    quantityUnits(quantityList) {
+        const quantities = {};
+
+        for (const quantityElement of quantityList) {
+            if (quantities[quantityElement.unit] == null) {
+                quantities[quantityElement.unit] = 0;
+            }
+
+            quantities[quantityElement.unit] += quantityElement.quantity;
+        }
+
+        return quantities;
+    }
+
     /**
      * Zero knowledge processing
      * @param senderId
@@ -230,7 +244,6 @@ class GS1Utilities {
 
         if (categories.includes('Ownership') || categories.includes('Transport') ||
             categories.includes('Observation')) {
-
             const bizStep = this.ignorePattern(event.bizStep, 'urn:epcglobal:cbv:bizstep:');
 
             const { quantityList } = extension;
@@ -292,6 +305,80 @@ class GS1Utilities {
                     });
                 }
             }
+        } else if (event.parentID) {
+            // Aggregation event
+
+            const units = [];
+
+            // Packing
+            if (event.action === 'ADD') {
+                const { childQuantityList: inputQuantityList } = event.extension;
+
+                if (inputQuantityList) {
+                    const tmpInputQuantities = this.arrayze(inputQuantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
+                            r: batchVerticesMap[elem.epcClass].randomness,
+                        }));
+                    for (const inputQuantity of tmpInputQuantities) {
+                        // eslint-disable-next-line
+                            inputQuantities.push({
+                            object: inputQuantity.object,
+                            quantity: parseInt(inputQuantity.quantity, 10),
+                            unit: inputQuantity.unit,
+                            r: batchVerticesMap[inputQuantity.object].randomness,
+                        });
+                    }
+
+                    const quantities = this.quantityUnits(inputQuantities);
+
+                    for (const unit in quantities) {
+                        outputQuantities.push({
+                            object: event.parentID,
+                            quantity: quantities[unit],
+                            unit,
+                            r: batchVerticesMap[event.parentID].randomness,
+                        });
+                    }
+                }
+            } else {
+                // Unpacking
+                const { childQuantityList: outputQuantityList } = event.extension;
+
+                if (outputQuantityList) {
+                    const tmpOutputQuantities = this.arrayze(outputQuantityList.quantityElement)
+                        .map(elem => ({
+                            object: elem.epcClass,
+                            quantity: parseInt(elem.quantity, 10),
+                            unit: elem.uom,
+                            r: batchVerticesMap[elem.epcClass].randomness,
+                        }));
+
+                    for (const outputQuantity of tmpOutputQuantities) {
+                    // eslint-disable-next-line
+                    outputQuantities.push({
+                            object: outputQuantity.object,
+                            quantity: parseInt(outputQuantity.quantity, 10),
+                            unit: outputQuantity.unit,
+                            r: batchVerticesMap[outputQuantity.object].randomness,
+                        });
+                    }
+                }
+
+
+                const quantities = this.quantityUnits(outputQuantities);
+
+                for (const unit in quantities) {
+                    inputQuantities.push({
+                        object: event.parentID,
+                        quantity: quantities[unit],
+                        unit,
+                        r: batchVerticesMap[event.parentID].randomness,
+                    });
+                }
+            }
         } else {
             // Transformation
             const { inputQuantityList, outputQuantityList } = event;
@@ -305,7 +392,7 @@ class GS1Utilities {
                     }));
                 for (const inputQuantity of tmpInputQuantities) {
                     // eslint-disable-next-line
-                    inputQuantities.push({
+                        inputQuantities.push({
                         object: inputQuantity.object,
                         quantity: parseInt(inputQuantity.quantity, 10),
                         unit: inputQuantity.unit,
@@ -323,7 +410,7 @@ class GS1Utilities {
                     }));
                 for (const outputQuantity of tmpOutputQuantities) {
                     // eslint-disable-next-line
-                    outputQuantities.push({
+                        outputQuantities.push({
                         object: outputQuantity.object,
                         quantity: parseInt(outputQuantity.quantity, 10),
                         unit: outputQuantity.unit,
