@@ -39,6 +39,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
+const ApprovalService = require('./modules/service/approval-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
@@ -358,6 +359,7 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
@@ -386,6 +388,8 @@ class OTNode {
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
 
         emitter.initialize();
 
