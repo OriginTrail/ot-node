@@ -86,13 +86,13 @@ class ImportController {
         this.logger.api('GET: import_info.');
         const queryObject = req.query;
 
-        if (queryObject.import_id === undefined) {
+        if (queryObject.data_set_id == null) {
             res.send({ status: 400, message: 'Missing parameter!', data: [] });
             return;
         }
 
         this.emitter.emit('api-import-info', {
-            importId: queryObject.import_id,
+            dataSetId: queryObject.data_set_id,
             response: res,
         });
     }
