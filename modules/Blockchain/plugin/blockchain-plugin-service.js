@@ -42,6 +42,10 @@ class BlockchainPluginService {
      * @return {Promise<void>}
      */
     async execute(name, data) {
+        const plugin = this.plugins[name];
+        if (plugin == null) {
+            return;
+        }
         return this.plugins[name].execute(data);
     }
 
