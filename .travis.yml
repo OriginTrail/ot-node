@@ -22,7 +22,7 @@ script:
   - npm start &>arangodb.log &
   - sleep 10
   - jobs
-  - kill %1
+  - if [ -n "$(jobs -p)" ]; then kill %1; fi
   # compile and check Smart Contracts
   - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &>ganache.log &
   - cd modules/Blockchain/Ethereum
