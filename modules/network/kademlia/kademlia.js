@@ -366,6 +366,10 @@ class Kademlia {
 
                             if (contact.length === 2 && contact[1].hostname) {
                                 response.send({ contact: contact[1] });
+                            } else {
+                                // Should not happen ever.
+                                this.log.warn(`Invalid contact received form peer-cache: ${JSON.stringify(contact)}`);
+                                response.send([]);
                             }
                         } else {
                             response.send([]);
@@ -523,11 +527,19 @@ class Kademlia {
                             }
                             return new Promise(async (accept, reject) => {
                                 this.log.debug(`Asking bootstrap for contact: ${contactId}.`);
-
-                                const freshContact =
-                                    await this.bootstrapFindContact(contactId);
-                                this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                                accept(freshContact);
+                                try {
+                                    const freshContact =
+                                        await this.bootstrapFindContact(contactId);
+                                    if (freshContact) {
+                                        this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                    } else {
+                                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                                    }
+                                    accept(freshContact);
+                                } catch (error) {
+                                    this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
+                                    accept(null);
+                                }
                             });
                         });
                     }
@@ -535,14 +547,19 @@ class Kademlia {
 
                 this.log.debug(`No knowledge about contact ${contactId}. Asking bootstrap for it.`);
                 return new Promise(async (accept, reject) => {
-                    const freshContact =
-                        await this.bootstrapFindContact(contactId);
-                    if (freshContact) {
-                        this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                    } else {
-                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                    try {
+                        const freshContact =
+                            await this.bootstrapFindContact(contactId);
+                        if (freshContact) {
+                            this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                        } else {
+                            this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                        }
+                        accept(freshContact);
+                    } catch (error) {
+                        this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
+                        accept(null);
                     }
-                    accept(freshContact);
                 });
             };
 

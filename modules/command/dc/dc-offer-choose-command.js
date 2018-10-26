@@ -95,7 +95,7 @@ class DCOfferChooseCommand extends Command {
     default(map) {
         const command = {
             name: 'dcOfferChooseCommand',
-            delay: 5 * 60 * 1000,
+            delay: this.config.dc_choose_time,
             transactional: false,
         };
         Object.assign(command, map);

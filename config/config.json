@@ -81,7 +81,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "staging": {
     "identity": null,
@@ -165,7 +166,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "stable": {
     "identity": null,
@@ -249,7 +251,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "production": {
     "identity": null,
@@ -333,6 +336,7 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   }
 }

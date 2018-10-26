@@ -16,26 +16,26 @@ Given(/^the blockchain is set up$/, { timeout: 60000 }, function (done) {
     }).catch(error => done(error));
 });
 
-Given(/^the replication factor is (\d+)$/, async function (replicationFactor) {
+Given(/^the replication difficulty is (\d+)$/, async function (difficulty) {
     expect(
         this.state.localBlockchain && this.state.localBlockchain.isInitialized,
         'localBlockchain not initialized',
     ).to.be.equal(true);
 
-    let currentModifier =
-        await this.state.localBlockchain.biddingInstance.methods.replication_modifier().call();
+    let currentDifficulty =
+        await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
 
-    if (currentModifier !== replicationFactor.toString()) {
-        this.logger.log(`Changing replication modifier to ${replicationFactor}.`);
-        await this.state.localBlockchain.biddingInstance.methods
-            .setReplicationModifier(replicationFactor).send({
+    if (currentDifficulty !== difficulty.toString()) {
+        this.logger.log(`Changing difficulty modifier to ${difficulty}.`);
+        await this.state.localBlockchain.holdingInstance.methods
+            .setDifficulty(difficulty).send({
                 // TODO: Add access to original wallet.
                 from: (await this.state.localBlockchain.web3.eth.getAccounts())[7],
                 gas: 3000000,
             }).on('error', (error) => { throw error; });
 
-        currentModifier =
-            await this.state.localBlockchain.biddingInstance.methods.replication_modifier().call();
-        expect(currentModifier).to.be.equal(replicationFactor.toString());
+        currentDifficulty =
+            await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
+        expect(currentDifficulty).to.be.equal(difficulty.toString());
     }
 });
