@@ -452,6 +452,7 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
+        await transport.start();
 
         // Initialise API
         this.startRPC();

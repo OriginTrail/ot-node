@@ -36,6 +36,13 @@ class Transport {
             throw new Error(`Failed to construct network transport. Network type '${this.networkType}' is invalid.`);
         }
         await this.network.initialize();
+    }
+
+    /**
+     * Starts the transport
+     * @return {Promise<void>}
+     */
+    async start() {
         await this.network.start();
     }
 
