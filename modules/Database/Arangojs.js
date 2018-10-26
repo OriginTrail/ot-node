@@ -789,8 +789,6 @@ class ArangoJS {
             }
             return false;
         });
-
-        return [];
     }
 
     /**
