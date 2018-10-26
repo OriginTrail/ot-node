@@ -144,7 +144,7 @@ class RegisterNode {
 
     setConfig() {
         return new Promise(async (resolve, reject) => {
-            if (!localConfiguration.node_wallet) {
+            if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
                 const { wallet, pk } = await this.generateWallet();
                 localConfiguration.node_wallet = wallet;
                 localConfiguration.node_private_key = pk;
