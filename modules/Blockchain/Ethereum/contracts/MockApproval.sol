@@ -38,7 +38,7 @@ contract Ownable {
 
 }
 
-contract Approval is Ownable{
+contract MockApproval is Ownable{
 	mapping (address => bool) public identityApproved;
 	mapping (bytes32 => bool) public nodeIdApproved;
 
