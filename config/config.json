@@ -56,19 +56,29 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0xd5b0c40a179a35bad10ad52e6ee9fbf0df86f09d",
-      "bidding_contract_address": "0xd82e889ec14db740ca8898675511acc0c787359d",
-      "reading_contract_address": "0xb92bfecbcdb6af8d089ff90db6e20b199fbdd04f",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "Devnet",
-      "bootstraps": ["https://46.101.38.216:5278/#fed6e96ff27ef1c288cc8b7853807ed00e85e8f7"],
+      "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "bugSnag": {
@@ -85,7 +95,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "staging": {
     "identity": null,
@@ -144,15 +155,25 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0xca5c15b2cf68fbc20148298f17e48617a71df63c",
-      "bidding_contract_address": "0xab1d06de6fb69de76739281cd0478931f9fff083",
-      "reading_contract_address": "0xe8d8277bc7a6587f150c6c65aeb688ac21082966",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "StagenetV1.0.0",
@@ -173,7 +194,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "stable": {
     "identity": null,
@@ -232,15 +254,25 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0x6103d41059145b72f7ce5760910c017838454bca",
-      "bidding_contract_address": "0x4e3f704a3a8e874cf576606ed3b2a5e7bff37ad5",
-      "reading_contract_address": "0x35459b23d3eae1c82b8f349e9df4d28bc11ac5a9",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
       "id": "StablenetV1.0.0",
@@ -261,7 +293,8 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   },
   "production": {
     "identity": null,
@@ -320,30 +353,37 @@
     "blockchain": {
       "blockchain_title": "Ethereum",
       "network_id": "rinkeby",
-      "gas_limit": "800000",
+      "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "ot_contract_address": "0xc47ab060e064e9291d723e14ddf4122bc121624b",
-      "token_contract_address": "0x98d9a611ad1b5761bdc1daac42c48e4d54cf5882",
-      "escrow_contract_address": "0x34248a6e9db421a6f03757efc2a8069df9747161",
-      "bidding_contract_address": "0x20d7ca2f13c2703a594962956312ae1f56219213",
-      "reading_contract_address": "0xa244abf02eb198261215b4a9693cf2b4e96bcf13",
+      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
-      "rpc_node_port": ""
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
     },
     "network": {
-      "id": "TestnetV1.0.2b",
-      "bootstraps": [
-        "https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56",
-        "https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e]"
-      ],
+      "id": "PirotV1.0.0",
+      "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
     },
     "bugSnag": {
-      "releaseStage": "testnet"
+      "releaseStage": "pirot"
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
-      "branch": "master"
+      "branch": "feature/pirot"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 60,
@@ -352,6 +392,7 @@
     "dh_max_holding_time_in_minutes": 100,
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
-    "deposit_on_demand": true
+    "deposit_on_demand": true,
+    "dc_choose_time": 300000
   }
 }

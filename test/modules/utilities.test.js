@@ -25,7 +25,7 @@ describe('Utilities module', () => {
                     'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
                     'dh_min_reputation', 'dh_min_stake_amount', 'max_token_amount_per_dh', 'total_escrow_time_in_milliseconds',
                     'is_bootstrap_node', 'houston_password', 'enable_debug_logs_level', 'reverse_tunnel_address', 'reverse_tunnel_port',
-                    'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_litigation_interval_in_minutes',
+                    'autoUpdater', 'bugSnag', 'network', 'dataSetStorage', 'dc_holding_time_in_minutes', 'dc_choose_time', 'dc_litigation_interval_in_minutes',
                     'dc_token_amount_per_holder', 'dh_max_holding_time_in_minutes', 'dh_min_litigation_interval_in_minutes', 'dh_min_token_price',
                     'erc725_identity_filepath', 'deposit_on_demand'],
                 `Some config items are missing in config for environment '${environment}'`,
@@ -37,8 +37,7 @@ describe('Utilities module', () => {
             assert.hasAllKeys(
                 config.blockchain, [
                     'blockchain_title', 'network_id', 'gas_limit', 'gas_price',
-                    'ot_contract_address', 'token_contract_address', 'escrow_contract_address',
-                    'bidding_contract_address', 'reading_contract_address', 'rpc_node_host', 'rpc_node_port'],
+                    'hub_contract_address', 'rpc_node_host', 'rpc_node_port', 'plugins'],
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
@@ -86,10 +85,8 @@ describe('Utilities module', () => {
     it('loadSelectedBlockchainInfo()', async () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
-            assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit',
-                'gas_price', 'ot_contract_address', 'reading_contract_address',
-                'token_contract_address', 'escrow_contract_address',
-                'rpc_node_host', 'rpc_node_port', 'bidding_contract_address']);
+            assert.hasAllKeys(config.blockchain, ['blockchain_title', 'network_id', 'gas_limit', 'plugins',
+                'gas_price', 'hub_contract_address', 'rpc_node_host', 'rpc_node_port']);
             assert.equal(config.blockchain.blockchain_title, 'Ethereum');
         });
     });

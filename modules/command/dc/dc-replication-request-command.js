@@ -36,10 +36,7 @@ class DCReplicationRequestCommand extends Command {
         const colors = ['red', 'green', 'blue'];
         const color = colors[Utilities.getRandomInt(2)];
 
-        const offerDirPath = this.replicationService.getOfferDirPath(offer.id);
-        const colorFilePath = path.join(offerDirPath, `${color}.json`);
-
-        const replication = JSON.parse(await Utilities.fileContents(colorFilePath));
+        const replication = await this.replicationService.loadReplication(offer.id, color);
         await models.replicated_data.create({
             dh_id: identity,
             dh_wallet: wallet.toLowerCase(),

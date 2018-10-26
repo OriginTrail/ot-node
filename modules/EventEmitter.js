@@ -360,8 +360,8 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id, import_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${import_id}`);
+            const { query_id, reply_id, data_set_id } = data;
+            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -377,7 +377,7 @@ class EventEmitter {
                 return;
             }
             try {
-                dvController.handleDataReadRequest(query_id, import_id, reply_id);
+                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
@@ -674,14 +674,18 @@ class EventEmitter {
             if (!appState.enoughFunds) {
                 return;
             }
-            const {
-                dataSetSizeInBytes,
+            let {
                 dcNodeId,
+            } = eventData;
+
+            dcNodeId = Utilities.denormalizeHex(dcNodeId).substring(24);
+            const {
+                offerId,
+                dataSetId,
+                dataSetSizeInBytes,
                 holdingTimeInMinutes,
                 litigationIntervalInMinutes,
-                offerId,
                 tokenAmountPerHolder,
-                dataSetId,
             } = eventData;
 
             try {
@@ -776,10 +780,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-replication-response', async (request) => {
             logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
 
             const message = transport.extractMessage(request);
@@ -820,10 +821,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-replication-request', async (request) => {
             const message = transport.extractMessage(request);
             const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
@@ -837,10 +835,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-replication-finished', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-replication-finished', async (request) => {
             const dhNodeId = transport.extractSenderID(request);
             const replicationFinishedMessage = transport.extractMessage(request);
             const { wallet } = transport.extractSenderInfo(request);
@@ -892,10 +887,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-location-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-location-response', async (request) => {
             logger.info('DH confirms possesion of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
@@ -915,10 +907,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-read-request', async (request) => {
             logger.info('Request for data read received');
 
             const dataReadRequestObject = transport.extractMessage(request);
@@ -933,10 +922,7 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-read-response', async (request) => {
             logger.info('Encrypted data received');
 
             const reqStatus = transport.extractRequestStatus(request);
@@ -963,9 +949,7 @@ class EventEmitter {
 
         // async
         this._on('kad-send-encrypted-key', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+            await transport.sendResponse(response, []);
             logger.info('Initial info received to unlock data');
 
             const encryptedPaddedKeyObject = transport.extractMessage(request);
@@ -995,9 +979,7 @@ class EventEmitter {
 
         // async
         this._on('kad-encrypted-key-process-result', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+            await transport.sendResponse(response, []);
             const senderId = transport.extractSenderID(request);
             const { status } = transport.extractMessage(request);
             if (status === 'SUCCESS') {
