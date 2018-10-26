@@ -109,7 +109,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.imports),
+                imports: JSON.parse(response.datasets),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -151,14 +151,10 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+                const normalizedImport = ImportUtilities
+                    .normalizeImport(importId, result.vertices, result.edges);
 
-                if (rawData) {
-                    data.response.send(result);
-                } else {
-                    data.response
-                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
-                }
+                data.response.send(normalizedImport);
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);
@@ -203,10 +199,12 @@ class EventEmitter {
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
+                            importId,
                             result.vertices,
                             result.edges,
                         ),
                         import_hash: ImportUtilities.importHash(
+                            importId,
                             result.vertices,
                             result.edges,
                         ),

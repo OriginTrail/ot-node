@@ -49,7 +49,7 @@ class DhReplicationImportCommand extends Command {
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
         const calculatedDataSetId =
-            await ImportUtilities.importHash(decryptedVertices, edges);
+            await ImportUtilities.importHash(dataSetId, decryptedVertices, edges);
 
         if (dataSetId !== calculatedDataSetId) {
             throw new Error(`Calculated data set ID ${calculatedDataSetId} differs from DC data set ID ${dataSetId}`);

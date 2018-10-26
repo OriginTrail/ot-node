@@ -656,6 +656,7 @@ describe.skip('Protocol tests', () => {
                 edges,
             );
             const importHash = ImportUtilities.importHash(
+                importId,
                 normalized.vertices,
                 normalized.edges,
             );
