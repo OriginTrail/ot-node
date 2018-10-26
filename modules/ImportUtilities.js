@@ -117,6 +117,7 @@ class ImportUtilities {
 
     /**
      * Calculate import hash
+     * @param dataSetId Data set ID
      * @param vertices  Import vertices
      * @param edges     Import edges
      * @returns {*}

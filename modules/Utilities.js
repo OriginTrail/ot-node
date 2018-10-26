@@ -110,7 +110,7 @@ class Utilities {
      */
     static getLogger() {
         let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
 
@@ -208,6 +208,12 @@ class Utilities {
      * @return {*}
      */
     static transformLog(level, msg) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
+            return {
+                level,
+                msg,
+            };
+        }
         if (msg.startsWith('connection timed out')) {
             return null;
         }
@@ -828,10 +834,14 @@ class Utilities {
     /**
      * Normalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static normalizeHex(number) {
-        if (!number.toLowerCase().startsWith('0x')) {
+        if (number == null) {
+            return null;
+        }
+        number = number.toLowerCase();
+        if (!number.startsWith('0x')) {
             return `0x${number}`;
         }
         return number;
@@ -840,13 +850,29 @@ class Utilities {
     /**
      * Denormalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static denormalizeHex(number) {
+        if (number == null) {
+            return null;
+        }
+        number = number.toLowerCase();
         if (number.startsWith('0x')) {
             return number.substring(2);
         }
         return number;
+    }
+
+    /**
+     * Compare HEX numbers in string representation
+     * @param hex1
+     * @param hex2
+     * @return {*}
+     */
+    static compareHexStrings(hex1, hex2) {
+        const denormalized1 = Utilities.denormalizeHex(hex1);
+        const denormalized2 = Utilities.denormalizeHex(hex2);
+        return new BN(denormalized1, 16).eq(new BN(denormalized2, 16));
     }
 
     /**
