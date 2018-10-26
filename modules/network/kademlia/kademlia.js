@@ -513,7 +513,7 @@ class Kademlia {
 
                         this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
                         return new Promise((accept, reject) => {
-                            this.node.ping(contact, (error) => {
+                            this.node.ping(peerContactArray, (error) => {
                                 if (error) {
                                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
                                     accept(null);
