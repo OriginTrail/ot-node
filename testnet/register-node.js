@@ -25,6 +25,7 @@ let dbPath;
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
     Models.sequelize.options.storage = path.join(localConfiguration.appDataPath, 'system.db');
+    console.log(`congigDir given as param '${argv.configDir}'.`);
 } else {
     localConfiguration.appDataPath = path.join(
         homedir,
@@ -35,6 +36,7 @@ if (argv.configDir) {
 
 if (fs.existsSync(path.join(localConfiguration.appDataPath, 'config.json'))) {
     const storedConfig = JSON.parse(fs.readFileSync(path.join(localConfiguration.appDataPath, 'config.json'), 'utf8'));
+    console.log(`Found previous configuration\n${storedConfig}`);
     Object.assign(localConfiguration, storedConfig);
 }
 
