@@ -530,7 +530,11 @@ class Kademlia {
                                 try {
                                     const freshContact =
                                         await this.bootstrapFindContact(contactId);
-                                    this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                    if (freshContact) {
+                                        this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                    } else {
+                                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                                    }
                                     accept(freshContact);
                                 } catch (error) {
                                     this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
