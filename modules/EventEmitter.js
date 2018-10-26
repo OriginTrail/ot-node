@@ -667,11 +667,26 @@ class EventEmitter {
     _initializeBlockchainEmitter() {
         const {
             dhService,
+            approvalService,
             logger,
             config,
             appState,
             notifyError,
         } = this.ctx;
+
+        this._on('eth-NodeApproved', async (eventData) => {
+            let {
+                approvedNodeId,
+            } = eventData;
+
+            approvedNodeId = Utilities.denormalizeHex(approvedNodeId).substring(24);
+
+            try {
+                await approvalService.addApprovedNode(approvedNodeId);
+            } catch (e) {
+                logger.warn(e.message);
+            }
+        });
 
         this._on('eth-OfferCreated', async (eventData) => {
             if (!appState.enoughFunds) {
