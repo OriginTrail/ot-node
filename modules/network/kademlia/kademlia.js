@@ -32,6 +32,7 @@ class Kademlia {
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.notifyError = ctx.notifyError;
         this.config = ctx.config;
+        this.approvalService = ctx.approvalService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
         if (this.config.test_network) {
@@ -176,7 +177,7 @@ class Kademlia {
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
                 try {
-                    if (!that.validateContact(contact)) {
+                    if (!that.validateContact(identity, contact)) {
                         that.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
                         return;
                     }
@@ -191,7 +192,7 @@ class Kademlia {
             };
 
             this.node.use((request, response, next) => {
-                if (!that.validateContact(request.contact[1])) {
+                if (!that.validateContact(request.contact[0], request.contact[1])) {
                     return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
                 next();
@@ -813,7 +814,7 @@ class Kademlia {
      * @param contact Contact to check
      * @returns {boolean} true if contact is in the same network.
      */
-    validateContact(contact) {
+    validateContact(identity, contact) {
         if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
             if (this.config.local_network_only && ip.isPublic(contact.hostname)) {
                 return false;
@@ -825,6 +826,9 @@ class Kademlia {
             return false;
         }
 
+        if (this.config.requireApproval && !this.approvalService.isApproved(identity)) {
+            return false;
+        }
         return true;
     }
 
