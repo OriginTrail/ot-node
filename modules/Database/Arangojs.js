@@ -682,6 +682,12 @@ class ArangoJS {
         const params = { importId: data_id };
         const vertices = await this.runQuery(queryString, params);
 
+        const normalizedVertices = normalizeGraph(data_id, vertices, []).vertices;
+
+        if (normalizedVertices.length === 0) {
+            return [];
+        }
+
         // Check if packed to fix issue with double classes.
         const filtered = normalizedVertices.filter(v => v._dc_key);
         if (filtered.length > 0) {
@@ -743,8 +749,6 @@ class ArangoJS {
             }
             return false;
         });
-
-        return [];
     }
 
     /**
