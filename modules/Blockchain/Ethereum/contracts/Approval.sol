@@ -40,24 +40,32 @@ contract Ownable {
 
 contract Approval is Ownable{
 	mapping (address => bool) public identityApproved;
-	mapping (bytes32 => bool) public nodeIdApproved;
+
+    bytes20[] public approvedNodes;
 
 	function identityHasApproval(address identity)
     public view returns(bool) {
         return identityApproved[identity];
     }
 
-    function nodeHasApproval(bytes32 nodeId)
-    public view returns(bool) {
-        return nodeIdApproved[nodeId];
+    event NodeApproved(bytes20 nodeId);
+
+    function getApprovedNodes() public view returns(bytes20[]){
+        return approvedNodes;
+    }
+    
+    function approveNode(address identity, bytes20 nodeId) 
+    public onlyOwner {
+        if(identity != address(0)) identityApproved[identity] = true;
+        if(nodeId != bytes20(0)) {
+            approvedNodes.push(nodeId);
+            emit NodeApproved(nodeId);
+        }
     }
 
-	function setApproval(address identity, bytes32 nodeId, bool newApproval) 
+	function setIdentityApproval(address identity, bool newApproval) 
 	public onlyOwner {
 		if(identity != address(0) && newApproval != identityApproved[identity])
 			identityApproved[identity] = newApproval;
-
-		if(nodeId != bytes32(0) && newApproval != nodeIdApproved[nodeId])
-			nodeIdApproved[nodeId] = newApproval;
 	}
 }
