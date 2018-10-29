@@ -25,10 +25,9 @@ class ApprovalService {
         for (var i = allNodes.length - 1; i >= 0; i -= 1) {
             promises[i] = this.blockchain.nodeHasApproval(allNodes[i]);
         }
-        const nodeApproved = await Promise.all(promises);
 
         for (i = 0; i < allNodes.length; i += 1) {
-            if (nodeApproved[i] === true) {
+            if (promises[i] === true) {
                 allNodes[i] = allNodes[i].toLowerCase();
                 allNodes[i] = Utilities.normalizeHex(allNodes[i]);
                 if (allNodes[i].length > 42) {
