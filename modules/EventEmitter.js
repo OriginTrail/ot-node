@@ -675,14 +675,24 @@ class EventEmitter {
         } = this.ctx;
 
         this._on('eth-NodeApproved', async (eventData) => {
-            let {
+            const {
                 approvedNodeId,
             } = eventData;
 
-            approvedNodeId = Utilities.denormalizeHex(approvedNodeId).substring(24);
-
             try {
                 await approvalService.addApprovedNode(approvedNodeId);
+            } catch (e) {
+                logger.warn(e.message);
+            }
+        });
+
+        this._on('eth-NodeRemoved', async (eventData) => {
+            const {
+                removedNodeId,
+            } = eventData;
+
+            try {
+                await approvalService.removeApprovedNode(removedNodeId);
             } catch (e) {
                 logger.warn(e.message);
             }
