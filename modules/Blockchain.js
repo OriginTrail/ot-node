@@ -363,10 +363,18 @@ class Blockchain {
     }
 
     /**
-     * Get all approved nodes
+     * Get all nodes which were added in the approval array
      */
-    async getApprovedNodes() {
-        return this.blockchain.getApprovedNodes();
+    async getAddedNodes() {
+        return this.blockchain.getAddedNodes();
+    }
+
+    /**
+     * Check if a specific node still has approval
+     * @param nodeId
+     */
+    async nodeHasApproval(nodeId) {
+        return this.blockchain.nodeHasApproval(nodeId);
     }
 
     async getBalances() {

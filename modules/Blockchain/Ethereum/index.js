@@ -903,11 +903,21 @@ class Ethereum {
     }
 
     /**
-     * Get all approved nodes
+     * Get all nodes which were added in the approval array
      */
-    async getApprovedNodes() {
-        this.log.trace('getApprovedNodes()');
-        return this.approvalContract.methods.getApprovedNodes().call();
+    async getAddedNodes() {
+        this.log.trace('getAllNodes()');
+        return this.approvalContract.methods.getAllNodes().call();
+    }
+
+    /**
+     * Check if a specific node still has approval
+     * @param nodeId
+     */
+    async nodeHasApproval(nodeId) {
+        nodeId = Utilities.normalizeHex(nodeId);
+        this.log.trace(`nodeHasApproval(${nodeId})`);
+        return this.approvalContract.methods.nodeHasApproval(nodeId).call();
     }
 
     /**
