@@ -458,8 +458,8 @@ class GS1Importer {
                             const receivingEventVertices = await this.db.findEvent(senderId, event.partner_id, identifiers.document_id, 'receiving');
                             if (receivingEventVertices.length > 0) {
                                 currentEventEdges.push({
-                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices._key, eventKey),
-                                    _from: `${receivingEventVertices._key}`,
+                                    _key: this.helper.createKey('event_connection', senderId, receivingEventVertices[0]._key, eventKey),
+                                    _from: `${receivingEventVertices[0]._key}`,
                                     _to: `${eventKey}`,
                                     edge_type: 'EVENT_CONNECTION',
                                     transaction_flow: 'INPUT',

@@ -12,6 +12,12 @@ function denormalizeGraph(importId, vertices, edges) {
             // TODO: Clean quantity list
             denormalizedVertex[importId].data = vertex.data;
 
+            if (vertex.data && vertex.data.epcList) {
+                if (!Array.isArray(vertex.data.epcList)) {
+                    vertex.data.epcList = [vertex.data.epcList];
+                }
+            }
+
             if (vertex.identifiers) {
                 denormalizedVertex.uid = vertex.identifiers.uid;
             }

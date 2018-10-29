@@ -25,7 +25,7 @@ class DHReadDataLocationRequestCommand extends Command {
      */
     async execute(command) {
         const {
-            msgNodeId, msgWallet, msgQuery, msgId,
+            msgNodeId, msgWallet, msgQuery, msgId, encrypted,
         } = command.data;
 
         // Check if mine publish.
@@ -35,7 +35,7 @@ class DHReadDataLocationRequestCommand extends Command {
         }
 
         // Handle query here.
-        const graphImports = await this.graphStorage.findImportIds(msgQuery);
+        const graphImports = await this.graphStorage.findImportIds(msgQuery, encrypted);
         // Filter imports not stored in local DB.
         let imports = await Models.data_info.findAll({
             attributes: ['data_set_id'],

@@ -92,12 +92,12 @@ class GraphStorage {
      * @param dataLocationQuery
      * @return {Promise}
      */
-    findImportIds(dataLocationQuery) {
+    findImportIds(dataLocationQuery, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findImportIds(dataLocationQuery).then((result) => {
+                this.db.findImportIds(dataLocationQuery, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

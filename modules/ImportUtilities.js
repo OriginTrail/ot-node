@@ -22,6 +22,7 @@ class ImportUtilities {
                 vertex._dc_key = vertex._key;
                 vertex._key = uuidv4();
             }
+            vertex.encrypted = true;
         }
         // map _from and _to
         const find = (key) => {
@@ -40,6 +41,8 @@ class ImportUtilities {
             if (to) {
                 edge._to = to;
             }
+
+            edge.encrypted = true;
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
@@ -62,6 +65,7 @@ class ImportUtilities {
                 vertex._key = vertex._dc_key;
                 delete vertex._dc_key;
             }
+            delete vertex.encrypted;
         }
         for (const edge of edges) {
             if (edge._dc_key) {
@@ -75,6 +79,7 @@ class ImportUtilities {
                     edge._to = mapping[edge._to];
                 }
             }
+            delete edge.encrypted;
         }
     }
 

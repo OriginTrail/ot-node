@@ -109,7 +109,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.datasets),
+                datasets: JSON.parse(response.imports),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -397,7 +397,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id, true);
 
                     response.status(200);
                     response.send({
