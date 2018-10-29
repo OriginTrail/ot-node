@@ -495,6 +495,7 @@ class OTNode {
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+        await transport.start();
     }
 
     /**
