@@ -111,7 +111,7 @@ class Kademlia {
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
-        this.log.notify(`My identity: ${this.identity}`);
+        this.log.notify(`My network identity: ${this.identity}`);
         this.config.identity = this.identity;
     }
 
@@ -513,12 +513,14 @@ class Kademlia {
 
                         this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
                         return new Promise((accept, reject) => {
-                            this.node.ping(contact, (error) => {
+                            this.node.ping(peerContactArray, (error) => {
                                 if (error) {
                                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
                                     accept(null);
                                     return;
                                 }
+                                this.log.debug(`Add contact ${contactId} to routing table.`);
+                                this.node.router.addContactByNodeId(contactId, contact);
                                 accept(contact);
                             });
                         }).then((contact) => {
@@ -532,6 +534,8 @@ class Kademlia {
                                         await this.bootstrapFindContact(contactId);
                                     if (freshContact) {
                                         this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                        this.log.debug(`Add contact ${contactId} to routing table.`);
+                                        this.node.router.addContactByNodeId(contactId, freshContact);
                                     } else {
                                         this.log.debug(`Bootstrap find failed for: ${contactId}.`);
                                     }
@@ -552,6 +556,8 @@ class Kademlia {
                             await this.bootstrapFindContact(contactId);
                         if (freshContact) {
                             this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                            this.log.debug(`Add contact ${contactId} to routing table.`);
+                            this.node.router.addContactByNodeId(contactId, freshContact);
                         } else {
                             this.log.debug(`Bootstrap find failed for: ${contactId}.`);
                         }

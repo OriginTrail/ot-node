@@ -233,7 +233,7 @@ Given(/^I initiate the replication$/, function () {
                 return;
             }
 
-            if (!body.replication_id) {
+            if (!body.offer_id) {
                 reject(Error('Failed to replicate.'));
                 return;
             }
@@ -317,16 +317,15 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
-Given(/^I remember previous import's fingerprint value and details$/, async function () {
+Given(/^I remember previous import's fingerprint value$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodesWalletAddress !== 'null', 'Nodes wallet should be non null value').to.be.equal(true);
 
     const { dc } = this.state;
 
-    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, dc.state.nodesWalletAddress, this.state.lastImport.import_id);
-    expect(myFingerprint).to.have.keys(['import_hash', 'root_hash']);
-    expect(Utilities.isZeroHash(myFingerprint.import_hash), 'import hash value should not be zero hash').to.be.equal(false);
+    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    expect(myFingerprint).to.have.keys(['root_hash']);
     expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
     // TODO need better namings
@@ -334,19 +333,17 @@ Given(/^I remember previous import's fingerprint value and details$/, async func
     this.state.lastMinusOneImport = this.state.lastImport;
 });
 
-Then(/^checking again first import hash should point to remembered value$/, async function () {
+Then(/^checking again first import's root hash should point to remembered value$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodesWalletAddress !== 'null', 'Nodes wallet should be non null value').to.be.equal(true);
 
     const { dc } = this.state;
 
-    const firstImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, dc.state.nodesWalletAddress, this.state.lastMinusOneImport.import_id);
-    expect(firstImportFingerprint).to.have.keys(['import_hash', 'root_hash']);
-    expect(Utilities.isZeroHash(firstImportFingerprint.import_hash), 'import hash value should not be zero hash').to.be.equal(false);
+    const firstImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastMinusOneImport.data_set_id);
+    expect(firstImportFingerprint).to.have.keys(['root_hash']);
     expect(Utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-    expect(firstImportFingerprint.import_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.import_hash);
     expect(firstImportFingerprint.root_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
     expect(deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint), 'import and root has in both scenario should be indentical').to.be.equal(true);
 });

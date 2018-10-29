@@ -452,6 +452,7 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
+        await transport.start();
 
         // Initialise API
         this.startRPC();
@@ -468,6 +469,7 @@ class OTNode {
         await commandExecutor.init();
         await commandExecutor.replay();
         await commandExecutor.start();
+        appState.started = true;
     }
 
     /**
@@ -493,6 +495,7 @@ class OTNode {
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+        await transport.start();
     }
 
     /**
@@ -726,7 +729,7 @@ class OTNode {
         });
 
         /** Get root hash for provided data query
-         * @param Query params: dc_wallet, import_id
+         * @param Query params: data_set_id
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');
