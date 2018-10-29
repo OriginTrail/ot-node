@@ -1,7 +1,4 @@
-const path = require('path');
-
 const Command = require('../command');
-const Utilities = require('../../Utilities');
 
 /**
  * Prepare offer parameters (litigation/distribution hashes, etc.)
@@ -26,8 +23,7 @@ class DCOfferPrepareCommand extends Command {
 
         const colorsInfo = await this.replicationService.createReplications(internalOfferId);
         const distLitRootHashes = (await Promise.all(colorsInfo.map(async (cInfo) => {
-            const offerDirPath = this.replicationService.getOfferDirPath(internalOfferId);
-            await Utilities.writeContentsToFile(offerDirPath, `${cInfo.color}.json`, JSON.stringify(cInfo, null, 2));
+            await this.replicationService.saveReplication(internalOfferId, cInfo.color, cInfo);
 
             const hashes = {};
             hashes[`${cInfo.color}LitigationHash`] = cInfo.litigationRootHash;

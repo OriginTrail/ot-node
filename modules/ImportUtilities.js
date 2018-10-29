@@ -121,7 +121,7 @@ class ImportUtilities {
      */
     static importHash(vertices, edges) {
         const normalized = ImportUtilities.normalizeImport(vertices, edges);
-        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
+        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)).padStart(64, '0'));
     }
 
     /**

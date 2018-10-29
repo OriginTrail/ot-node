@@ -72,7 +72,7 @@ class DcOfferMiningStatusCommand extends Command {
         offer.message = `Offer for data set ${dataSetId} has not been started.`;
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.deleteOfferDir(offer.id);
+        await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 

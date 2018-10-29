@@ -1,6 +1,6 @@
 {
   "name": "origintrail-node",
-  "version": "1.4.1",
+  "version": "2.0.1",
   "description": "OriginTrail node",
   "main": ".eslintrc.js",
   "config": {
@@ -62,7 +62,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^4.1.4",
+    "@kadenceproject/kadence": "^4.2.0",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",
@@ -142,7 +142,7 @@
     "strip-ansi": "^5.0.0",
     "superagent": "^3.8.3",
     "truffle": "5.0.0-beta.1",
-    "truffle-hdwallet-provider": "0.0.5",
+    "truffle-hdwallet-provider": "^1.0.0-web3one.0",
     "umzug": "^2.1.0",
     "underscore": "^1.9.0",
     "utf8": "^3.0.0",

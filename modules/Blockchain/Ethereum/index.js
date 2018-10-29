@@ -112,9 +112,11 @@ class Ethereum {
      */
     async _getHoldingContractAddress() {
         this.log.trace('Asking Hub for Holding contract address...');
-        return this.hubContract.methods.holdingAddress().call({
+        const address = await this.hubContract.methods.holdingAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`Holding contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -124,9 +126,11 @@ class Ethereum {
      */
     async _getTokenContractAddress() {
         this.log.trace('Asking Hub for Token contract address...');
-        return this.hubContract.methods.tokenAddress().call({
+        const address = await this.hubContract.methods.tokenAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`Token contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -135,10 +139,12 @@ class Ethereum {
      * @private
      */
     async _getReadingContractAddress() {
-        this.log.trace('Asking Hub for Holding contract address...');
-        return this.hubContract.methods.readingAddress().call({
+        this.log.trace('Asking Hub for Reading contract address...');
+        const address = await this.hubContract.methods.readingAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`Reading contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -148,9 +154,11 @@ class Ethereum {
      */
     async _getProfileContractAddress() {
         this.log.trace('Asking Hub for Profile contract address...');
-        return this.hubContract.methods.profileAddress().call({
+        const address = await this.hubContract.methods.profileAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`Profile contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -160,9 +168,11 @@ class Ethereum {
      */
     async _getProfileStorageContractAddress() {
         this.log.trace('Asking Hub for ProfileStorage contract address...');
-        return this.hubContract.methods.profileStorageAddress().call({
+        const address = await this.hubContract.methods.profileStorageAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`ProfileStorage contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -172,9 +182,11 @@ class Ethereum {
      */
     async _getHoldingStorageContractAddress() {
         this.log.trace('Asking Hub for HoldingStorage contract address...');
-        return this.hubContract.methods.holdingStorageAddress().call({
+        const address = await this.hubContract.methods.holdingStorageAddress().call({
             from: this.config.wallet_address,
         });
+        this.log.trace(`HoldingStorage contract address is ${address}`);
+        return address;
     }
 
     /**
@@ -504,7 +516,7 @@ class Ethereum {
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),
-                    data_set_id: event.returnValues.dataSetId,
+                    data_set_id: Utilities.normalizeHex(event.returnValues.dataSetId),
                     block: event.blockNumber,
                     timestamp,
                     finished: 0,
@@ -864,6 +876,39 @@ class Ethereum {
         return this.holdingStorageContract.methods.getOfferDifficulty(offerId).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Check balances
+     * @returns {Promise<boolean>}
+     */
+    async getBalances() {
+        this.log.trace('Checking ballances');
+        let enoughETH = true;
+        let enoughATRAC = true;
+        try {
+            const etherBalance = await Utilities.getBalanceInEthers(
+                this.web3,
+                this.config.wallet_address,
+            );
+            this.log.info(`Balance of ETH: ${etherBalance}`);
+            if (etherBalance <= 0) {
+                enoughETH = false;
+            }
+
+            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+                this.web3,
+                this.config.wallet_address,
+                this.tokenContractAddress,
+            );
+            this.log.info(`Balance of ATRAC: ${atracBalance}`);
+            if (enoughATRAC <= 0) {
+                enoughATRAC = false;
+            }
+        } catch (error) {
+            throw new Error(error);
+        }
+        return enoughETH && enoughATRAC;
     }
 }
 

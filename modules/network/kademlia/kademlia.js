@@ -13,6 +13,7 @@ const leveldown = require('leveldown');
 const PeerCache = require('./peer-cache');
 const ip = require('ip');
 const KadenceUtils = require('@kadenceproject/kadence/lib/utils.js');
+const { IncomingMessage, OutgoingMessage } = require('./logger');
 
 const pjson = require('../../../package.json');
 
@@ -39,6 +40,25 @@ class Kademlia {
             kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
         }
     }
+
+    async bootstrapFindContact(contactId) {
+        const bootstrapNodes = this.config.network.bootstraps;
+
+        for (let i = 0; i < bootstrapNodes.length; i += 1) {
+            const node = bootstrapNodes[i];
+            const bootstrapContact = kadence.utils.parseContactURL(node);
+
+            // eslint-disable-next-line no-await-in-loop
+            const response = await this.node.findContact(contactId, bootstrapContact[0]);
+
+            if (response && response.contact) {
+                return response.contact;
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * Initializes keys
@@ -197,14 +217,17 @@ class Kademlia {
             }
 
             // Use verbose logging if enabled
-            if (this.config.verbose_logging) {
-                this.node.rpc.deserializer.append(new kadence.logger.IncomingMessage(this.log));
-                this.node.rpc.serializer.prepend(new kadence.logger.OutgoingMessage(this.log));
+            if (process.env.LOGS_LEVEL_DEBUG) {
+                this.node.rpc.deserializer.append(new IncomingMessage(this.log));
+                this.node.rpc.serializer.prepend(new OutgoingMessage(this.log));
+            }
+            // Cast network nodes to an array
+            if (typeof this.config.network.bootstraps === 'string') {
+                this.config.network.bootstraps =
+                    this.config.network.bootstraps.trim().split();
             }
 
-            if (!this.config.is_bootstrap_node) {
-                this._registerRoutes();
-            }
+            this._registerRoutes();
 
             this.node.listen(this.config.node_port, async () => {
                 this.log.notify(`OT Node listening at https://${this.node.contact.hostname}:${this.node.contact.port}`);
@@ -278,111 +301,44 @@ class Kademlia {
 
     /**
      * Try to join network
-     * Note: this method tries to find possible bootstrap nodes from cache as well
+     * Note: this method tries to find possible bootstrap nodes
      */
-    async _joinNetwork(myContact) {
-        const bootstrapNodes = this.config.network.bootstraps;
-        utilities.shuffle(bootstrapNodes);
+    async _joinNetwork() {
+        return new Promise(async (accept, reject) => {
+            const bootstrapNodes = this.config.network.bootstraps;
+            utilities.shuffle(bootstrapNodes);
 
-        const peercachePlugin = this.node.peercache;
-        const peers = await peercachePlugin.getBootstrapCandidates();
-        let nodes = _.uniq(bootstrapNodes.concat(peers));
-        nodes = nodes.slice(0, 5); // take no more than 5 peers for joining
+            if (this.config.is_bootstrap_node) {
+                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
+            } else {
+                this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
+            }
 
-        if (this.config.is_bootstrap_node) {
-            this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s). Running as a Bootstrap node`);
-            this.log.info(`Found additional ${peers.length} peers in peer cache`);
-        } else {
-            this.log.info(`Found ${bootstrapNodes.length} provided bootstrap node(s)`);
-            this.log.info(`Found additional ${peers.length} peers in peer cache`);
-        }
+            this.log.info(`Sync with network from ${bootstrapNodes.length} unique peers`);
+            if (bootstrapNodes.length === 0) {
+                this.log.info('No bootstrap seeds provided and no known profiles');
+                this.log.info('Running in seed mode (waiting for connections)');
+                accept(true);
+                return;
+            }
 
-        this.log.info(`Sync with network from ${nodes.length} unique peers`);
-        if (nodes.length === 0) {
-            this.log.info('No bootstrap seeds provided and no known profiles');
-            this.log.info('Running in seed mode (waiting for connections)');
-
-            this.node.router.events.once('add', async (identity) => {
-                this.config.network.bootstraps = [
-                    kadence.utils.getContactURL([
-                        identity,
-                        this.node.router.getContactByNodeId(identity),
-                    ]),
-                ];
-                await this._joinNetwork(myContact);
-            });
-            return true;
-        }
-
-        const func = url => new Promise((resolve, reject) => {
-            try {
-                this.log.info(`Syncing with peers via ${url}.`);
-                const contact = kadence.utils.parseContactURL(url);
-
-                this._join(contact, (err) => {
+            let connected = false;
+            const promises = bootstrapNodes.map(node => new Promise((acc, rej) => {
+                const contact = kadence.utils.parseContactURL(node);
+                this.log.debug(`Joining ${contact[0]}`);
+                this.node.join(contact, (err) => {
                     if (err) {
-                        reject(err);
+                        this.log.warn(`Failed to join ${contact[0]}`);
+                        acc(false);
                         return;
                     }
-                    if (this.node.router.size >= 1) {
-                        resolve(url);
-                    } else {
-                        resolve(null);
-                    }
+                    this.log.info(`Connected to ${contact[0]}(${contact[1].hostname}:${contact[1].port})`);
+                    connected = true;
+                    acc(true);
                 });
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        let result;
-        for (const node of nodes) {
-            try {
-                // eslint-disable-next-line
-                result = await func(node);
-                if (result) {
-                    break;
-                }
-            } catch (e) {
-                this.log.warn(`Failed to join via ${node}`);
-            }
-        }
-
-        if (result) {
-            this.log.important('Initial sync with other peers done');
-
-            setTimeout(() => {
-                this.node.refresh(this.node.router.getClosestBucket() + 1);
-            }, 5000);
-            return true;
-        } else if (this.config.is_bootstrap_node) {
-            this.log.info('Bootstrap node couldn\'t contact peers. Waiting for some peers.');
-            return true;
-        }
-        return false;
-    }
-
-    _join([identity, contact], callback) {
-        /* istanbul ignore else */
-        if (callback) {
-            this.node.once('join', callback);
-            this.node.once('error', callback);
-        }
-
-        this.node.router.addContactByNodeId(identity, contact);
-        async.series([
-            next => this.node.iterativeFindNode(this.identity.toString('hex'), next),
-        ], (err) => {
-            if (err) {
-                this.node.emit('error', err);
-            } else {
-                this.node.emit('join');
-            }
-
-            if (callback) {
-                this.node.removeListener('join', callback);
-                this.node.removeListener('error', callback);
-            }
+            }));
+            await Promise.all(promises);
+            accept(connected);
         });
     }
 
@@ -390,6 +346,45 @@ class Kademlia {
      * Register Kademlia routes and error handlers
      */
     _registerRoutes() {
+        if (this.config.is_bootstrap_node) {
+            // async
+            this.node.use('kad-find-contact', (request, response, next) => {
+                this.log.debug('kad-find-contact received');
+
+                try {
+                    const contactId = request.params.message.contact;
+
+                    let contact = this.node.router.getContactByNodeId(contactId);
+                    if (contact && contact.hostname) {
+                        response.send({ contact });
+                        return;
+                    }
+
+                    this.node.peercache.getExternalPeerInfo(contactId).then((peerContact) => {
+                        if (peerContact) {
+                            contact = KadenceUtils.parseContactURL(peerContact);
+
+                            if (contact.length === 2 && contact[1].hostname) {
+                                response.send({ contact: contact[1] });
+                            }
+                        } else {
+                            response.send([]);
+                        }
+                    }).catch(error => response.error(error));
+                } catch (error) {
+                    response.error(error);
+                }
+            });
+
+            // error handler
+            this.node.use('kad-find-contact', (err, request, response, next) => {
+                this.log.warn(`kad-find-contact error received. ${err}`);
+                response.error(err);
+            });
+
+            return;
+        }
+
         this.node.quasar.quasarSubscribe('kad-data-location-request', (message, err) => {
             this.log.info('New location request received');
             this.emitter.emit('kad-data-location-request', message);
@@ -398,37 +393,43 @@ class Kademlia {
         // async
         this.node.use('kad-replication-response', (request, response, next) => {
             this.log.debug('kad-replication-response received');
-            this.emitter.emit('kad-replication-response', request, response);
+            this.emitter.emit('kad-replication-response', request);
+            response.send([]);
         });
 
         // async
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
-            this.emitter.emit('kad-replication-request', request, response);
+            this.emitter.emit('kad-replication-request', request);
+            response.send([]);
         });
 
         // async
         this.node.use('kad-replication-finished', (request, response, next) => {
             this.log.debug('kad-replication-finished received');
-            this.emitter.emit('kad-replication-finished', request, response);
+            this.emitter.emit('kad-replication-finished', request);
+            response.send([]);
         });
 
         // async
         this.node.use('kad-data-location-response', (request, response, next) => {
             this.log.debug('kad-data-location-response received');
-            this.emitter.emit('kad-data-location-response', request, response);
+            this.emitter.emit('kad-data-location-response', request);
+            response.send([]);
         });
 
         // async
         this.node.use('kad-data-read-request', (request, response, next) => {
             this.log.debug('kad-data-read-request received');
-            this.emitter.emit('kad-data-read-request', request, response);
+            this.emitter.emit('kad-data-read-request', request);
+            response.send([]);
         });
 
         // async
         this.node.use('kad-data-read-response', (request, response, next) => {
             this.log.debug('kad-data-read-response received');
-            this.emitter.emit('kad-data-read-response', request, response);
+            this.emitter.emit('kad-data-read-response', request);
+            response.send([]);
         });
 
         // async
@@ -441,18 +442,6 @@ class Kademlia {
         this.node.use('kad-encrypted-key-process-result', (request, response, next) => {
             this.log.debug('kad-encrypted-key-process-result received');
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
-        });
-
-        // async
-        this.node.use('kad-verify-import-request', (request, response, next) => {
-            this.log.debug('kad-verify-import-request received');
-            this.emitter.emit('kad-verify-import-request', request, response);
-        });
-
-        // async
-        this.node.use('kad-verify-import-response', (request, response, next) => {
-            this.log.debug('kad-verify-import-response received');
-            this.emitter.emit('kad-verify-import-response', request, response);
         });
 
         // sync
@@ -470,16 +459,14 @@ class Kademlia {
 
         // error handler
         this.node.use('kad-replication-response', (err, request, response, next) => {
-            response.send({
-                error: 'kad-replication-response error',
-            });
+            this.log.warn(`kad-replication-response error received. ${err}`);
+            response.error(err);
         });
 
         // error handler
         this.node.use('kad-replication-finished', (err, request, response, next) => {
-            response.send({
-                error: 'kad-replication-finished error',
-            });
+            this.log.warn(`kad-replication-finished error received. ${err}`);
+            response.error(err);
         });
 
         // Define a global custom error handler rule
@@ -487,11 +474,10 @@ class Kademlia {
             if (err instanceof NetworkRequestIgnoredError.constructor) {
                 this.log.debug(`Network request ignored. Contact ${JSON.stringify(request.contact)}`);
                 response.send([]);
-                return;
+            } else if (err) {
+                this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
+                response.error(err.message);
             }
-
-            this.log.warn(`KADemlia error. ${err}. Request: ${request}.`);
-            response.send({ error: err.message });
         });
 
         // creates Kadence plugin for RPC calls
@@ -505,31 +491,59 @@ class Kademlia {
 
             /**
              * Gets contact by ID
-             * @param retry Should retry to find it?
              * @param contactId Contact ID
              * @returns {{"{": Object}|Array}
              */
-            node.getContact = async (contactId, retry) => {
+            node.getContact = async (contactId) => {
                 let contact = node.router.getContactByNodeId(contactId);
                 if (contact && contact.hostname) {
+                    this.log.debug(`Found contact in routing table. ${contactId} - ${contact.hostname}:${contact.port}`);
                     return contact;
                 }
-                contact = await this.node.peercache.getExternalPeerInfo(contactId);
-                if (contact) {
-                    const contactInfo = KadenceUtils.parseContactURL(contact);
-                    // refresh bucket
-                    if (contactInfo) {
-                        // eslint-disable-next-line
-                        contact = contactInfo[1];
-                        this.node.router.addContactByNodeId(contactId, contact);
+                const peerContact = await this.node.peercache.getExternalPeerInfo(contactId);
+                if (peerContact) {
+                    const peerContactArray = KadenceUtils.parseContactURL(peerContact);
+
+                    if (peerContactArray.length === 2 && peerContactArray[1].hostname) {
+                        [, contact] = peerContactArray;
+
+                        this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
+                        return new Promise((accept, reject) => {
+                            this.node.ping(contact, (error) => {
+                                if (error) {
+                                    this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
+                                    accept(null);
+                                    return;
+                                }
+                                accept(contact);
+                            });
+                        }).then((contact) => {
+                            if (contact) {
+                                return contact;
+                            }
+                            return new Promise(async (accept, reject) => {
+                                this.log.debug(`Asking bootstrap for contact: ${contactId}.`);
+
+                                const freshContact =
+                                    await this.bootstrapFindContact(contactId);
+                                this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                accept(freshContact);
+                            });
+                        });
                     }
                 }
-                if (contact && contact.hostname) {
-                    return contact;
-                }
-                // try to find out about the contact from peers
-                await node.refreshContact(contactId, retry);
-                return this.node.router.getContactByNodeId(contactId);
+
+                this.log.debug(`No knowledge about contact ${contactId}. Asking bootstrap for it.`);
+                return new Promise(async (accept, reject) => {
+                    const freshContact =
+                        await this.bootstrapFindContact(contactId);
+                    if (freshContact) {
+                        this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                    } else {
+                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                    }
+                    accept(freshContact);
+                });
             };
 
             /**
@@ -576,6 +590,26 @@ class Kademlia {
                     this.notifyError(e);
                 }
             });
+
+            node.findContact = async (contactToFind, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send(
+                        'kad-find-contact',
+                        {
+                            message: { contact: contactToFind },
+                        },
+                        [contactId, contact],
+                        (err, res) => {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(res);
+                            }
+                        },
+                    );
+                });
+            };
 
             node.replicationResponse = async (message, contactId) => {
                 const contact = await node.getContact(contactId);
@@ -829,6 +863,23 @@ class Kademlia {
             }
         });
         return message;
+    }
+
+    async findNode(contactId) {
+        return new Promise((accept, reject) => {
+            this.node.iterativeFindNode(contactId, (error, result) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+
+                accept({
+                    contact: this.node.router.getContactByNodeId(contactId),
+                    neighbors: result,
+                });
+                accept(result);
+            });
+        });
     }
 }
 

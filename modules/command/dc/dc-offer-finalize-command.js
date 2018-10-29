@@ -19,6 +19,7 @@ class DCOfferFinalizeCommand extends Command {
         this.dcService = ctx.dcService;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -44,7 +45,7 @@ class DCOfferFinalizeCommand extends Command {
         const confirmations = [];
         for (const identity of nodeIdentifiers) {
             const replication = replications.find(r => identity.includes(r.dh_identity));
-            colors.push(this._castColor(replication.color));
+            colors.push(this.replicationService.castColorToNumber(replication.color));
             confirmations.push(replication.confirmation);
         }
 
@@ -116,23 +117,6 @@ class DCOfferFinalizeCommand extends Command {
             };
         }
         return Command.empty();
-    }
-
-    /**
-     * Casts color to number (needed for Blockchain)
-     * @param color
-     */
-    _castColor(color) {
-        switch (color.toLowerCase()) {
-        case 'red':
-            return new BN(0, 10);
-        case 'green':
-            return new BN(1, 10);
-        case 'blue':
-            return new BN(2, 10);
-        default:
-            throw new Error(`Failed to cast color ${color}`);
-        }
     }
 
     /**
