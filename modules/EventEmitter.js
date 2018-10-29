@@ -109,7 +109,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.imports),
+                imports: JSON.parse(response.datasets),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -151,14 +151,10 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+                const normalizedImport = ImportUtilities
+                    .normalizeImport(importId, result.vertices, result.edges);
 
-                if (rawData) {
-                    data.response.send(result);
-                } else {
-                    data.response
-                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
-                }
+                data.response.send(normalizedImport);
             } catch (error) {
                 logger.error(`Failed to get vertices for import ID ${importId}.`);
                 notifyError(error);
@@ -170,21 +166,21 @@ class EventEmitter {
         });
 
         this._on('api-import-info', async (data) => {
-            const { importId } = data;
-            logger.info(`Get imported vertices triggered for import ID ${importId}`);
+            const { dataSetId } = data;
+            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+                const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
                 if (!dataInfo) {
-                    logger.info(`Import data for import ID ${importId} does not exist.`);
+                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
                     data.response.status(404);
                     data.response.send({
-                        message: `Import data for import ID ${importId} does not exist`,
+                        message: `Import data for data set ID ${dataSetId} does not exist`,
                     });
                     return;
                 }
 
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 // Check if packed to fix issue with double classes.
                 const filtered = result.vertices.filter(v => v._dc_key);
@@ -194,7 +190,7 @@ class EventEmitter {
                 }
 
                 const dataimport =
-                    await Models.data_info.findOne({ where: { import_id: importId } });
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
                 if (result.vertices.length === 0 || dataimport == null) {
                     data.response.status(204);
@@ -203,10 +199,7 @@ class EventEmitter {
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
-                            result.vertices,
-                            result.edges,
-                        ),
-                        import_hash: ImportUtilities.importHash(
+                            dataSetId,
                             result.vertices,
                             result.edges,
                         ),
@@ -216,7 +209,7 @@ class EventEmitter {
                     });
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -252,10 +245,9 @@ class EventEmitter {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
                 data.response.send(dataimports.map(di => ({
-                    import_id: di.import_id,
+                    data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
-                    import_hash: di.import_hash,
                     data_size: di.data_size,
                     transaction_hash: di.transaction_hash,
                     data_provider_wallet: di.data_provider_wallet,
