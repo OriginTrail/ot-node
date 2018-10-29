@@ -519,6 +519,8 @@ class Kademlia {
                                     accept(null);
                                     return;
                                 }
+                                this.log.debug(`Add contact ${contactId} to routing table.`);
+                                this.node.router.addContactByNodeId(contactId, contact);
                                 accept(contact);
                             });
                         }).then((contact) => {
@@ -532,6 +534,8 @@ class Kademlia {
                                         await this.bootstrapFindContact(contactId);
                                     if (freshContact) {
                                         this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                        this.log.debug(`Add contact ${contactId} to routing table.`);
+                                        this.node.router.addContactByNodeId(contactId, freshContact);
                                     } else {
                                         this.log.debug(`Bootstrap find failed for: ${contactId}.`);
                                     }
@@ -552,6 +556,8 @@ class Kademlia {
                             await this.bootstrapFindContact(contactId);
                         if (freshContact) {
                             this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                            this.log.debug(`Add contact ${contactId} to routing table.`);
+                            this.node.router.addContactByNodeId(contactId, freshContact);
                         } else {
                             this.log.debug(`Bootstrap find failed for: ${contactId}.`);
                         }
