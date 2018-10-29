@@ -1,5 +1,24 @@
 [
 	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "nodeId",
+				"type": "bytes20"
+			}
+		],
+		"name": "nodeHasApproval",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"constant": false,
 		"inputs": [
 			{
@@ -11,7 +30,7 @@
 				"type": "bytes20"
 			}
 		],
-		"name": "approveNode",
+		"name": "approve",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
@@ -37,22 +56,21 @@
 		"type": "function"
 	},
 	{
-		"constant": true,
+		"constant": false,
 		"inputs": [
 			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "approvedNodes",
-		"outputs": [
+				"name": "identity",
+				"type": "address"
+			},
 			{
-				"name": "",
+				"name": "nodeId",
 				"type": "bytes20"
 			}
 		],
+		"name": "removeApproval",
+		"outputs": [],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -91,11 +109,30 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "getApprovedNodes",
+		"name": "getAllNodes",
 		"outputs": [
 			{
 				"name": "",
 				"type": "bytes20[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "bytes20"
+			}
+		],
+		"name": "nodeApproved",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"payable": false,
@@ -114,6 +151,25 @@
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "allNodes",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bytes20"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -144,6 +200,18 @@
 			}
 		],
 		"name": "NodeApproved",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"name": "nodeId",
+				"type": "bytes20"
+			}
+		],
+		"name": "NodeRemoved",
 		"type": "event"
 	},
 	{

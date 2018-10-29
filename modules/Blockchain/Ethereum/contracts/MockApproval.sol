@@ -39,25 +39,51 @@ contract Ownable {
 }
 
 contract MockApproval is Ownable{
-	mapping (address => bool) public identityApproved;
-	mapping (bytes32 => bool) public nodeIdApproved;
+    bytes20[] public allNodes;
+    mapping (bytes20 => bool) public nodeApproved;
+    mapping (address => bool) public identityApproved;
 
-	function identityHasApproval(address identity)
-    public view returns(bool) {
+    event NodeApproved(bytes20 nodeId);
+    event NodeRemoved(bytes20 nodeId);
+
+    function identityHasApproval(address identity)
+    public pure returns(bool) {
         return true;
     }
 
-    function nodeHasApproval(bytes32 nodeId)
-    public view returns(bool) {
+    function nodeHasApproval(bytes20 nodeId)
+    public pure returns(bool) {
         return true;
     }
 
-	function setApproval(address identity, bytes32 nodeId, bool newApproval) 
-	public onlyOwner {
-		if(identity != address(0) && newApproval != identityApproved[identity])
-			identityApproved[identity] = newApproval;
+    function getAllNodes() public view returns(bytes20[]){
+        return allNodes;
+    }
+    
+    function approve(address identity, bytes20 nodeId) 
+    public onlyOwner {
+        if(identity != address(0)) identityApproved[identity] = true;
+        if(nodeId != bytes20(0)) {
+            allNodes.push(nodeId);
+            nodeApproved[nodeId] = true;
+            emit NodeApproved(nodeId);
+        }
+    }
 
-		if(nodeId != bytes32(0) && newApproval != nodeIdApproved[nodeId])
-			nodeIdApproved[nodeId] = newApproval;
-	}
+    function removeApproval(address identity, bytes20 nodeId) 
+    public onlyOwner {
+        if(identity != address(0) && identityApproved[identity]){
+            identityApproved[identity] = false;
+        }
+        if(nodeId != bytes20(0) && nodeApproved[nodeId]){
+            nodeApproved[nodeId] = false;
+            emit NodeRemoved(nodeId);
+        }
+    }
+
+    function setIdentityApproval(address identity, bool newApproval) 
+    public onlyOwner {
+        if(identity != address(0) && newApproval != identityApproved[identity])
+            identityApproved[identity] = newApproval;
+    }
 }

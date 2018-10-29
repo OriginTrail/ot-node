@@ -39,27 +39,45 @@ contract Ownable {
 }
 
 contract Approval is Ownable{
+    bytes20[] public allNodes;
+    mapping (bytes20 => bool) public nodeApproved;
 	mapping (address => bool) public identityApproved;
 
-    bytes20[] public approvedNodes;
+    event NodeApproved(bytes20 nodeId);
+    event NodeRemoved(bytes20 nodeId);
 
 	function identityHasApproval(address identity)
     public view returns(bool) {
         return identityApproved[identity];
     }
 
-    event NodeApproved(bytes20 nodeId);
+    function nodeHasApproval(bytes20 nodeId)
+    public view returns(bool) {
+        return nodeApproved[nodeId];
+    }
 
-    function getApprovedNodes() public view returns(bytes20[]){
-        return approvedNodes;
+    function getAllNodes() public view returns(bytes20[]){
+        return allNodes;
     }
     
-    function approveNode(address identity, bytes20 nodeId) 
+    function approve(address identity, bytes20 nodeId) 
     public onlyOwner {
         if(identity != address(0)) identityApproved[identity] = true;
         if(nodeId != bytes20(0)) {
-            approvedNodes.push(nodeId);
+            allNodes.push(nodeId);
+            nodeApproved[nodeId] = true;
             emit NodeApproved(nodeId);
+        }
+    }
+
+    function removeApproval(address identity, bytes20 nodeId) 
+    public onlyOwner {
+        if(identity != address(0) && identityApproved[identity]){
+            identityApproved[identity] = false;
+        }
+        if(nodeId != bytes20(0) && nodeApproved[nodeId]){
+            nodeApproved[nodeId] = false;
+            emit NodeRemoved(nodeId);
         }
     }
 
