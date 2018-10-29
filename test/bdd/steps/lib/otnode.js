@@ -153,7 +153,9 @@ class OtNode extends EventEmitter {
     }
 
     _processExited(code) {
-        assert(code === 0);
+        if (code !== 0) {
+            throw Error(`Node '${this.options.configDir}' exited with ${code}.`);
+        }
         this.process = null;
         this.logStream.end();
         this.logger.log(`Node ${this.id} finished. Exit code ${code}.`);
