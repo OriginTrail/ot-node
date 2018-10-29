@@ -535,6 +535,7 @@ class Kademlia {
                                     if (freshContact) {
                                         this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
                                         this.log.debug(`Add contact ${contactId} to routing table.`);
+                                        // eslint-disable-next-line max-len
                                         this.node.router.addContactByNodeId(contactId, freshContact);
                                     } else {
                                         this.log.debug(`Bootstrap find failed for: ${contactId}.`);
