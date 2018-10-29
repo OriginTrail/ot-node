@@ -211,7 +211,7 @@ class EventEmitter {
                             result.edges,
                         ),
                         root_hash: dataimport.root_hash,
-                        transaction: dataimport.transaction_hash,
+                        transaction_hash: dataimport.transaction_hash,
                         data_provider_wallet: dataimport.data_provider_wallet,
                     });
                 }
