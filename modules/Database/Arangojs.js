@@ -694,14 +694,14 @@ class ArangoJS {
         if (encrypted) {
             queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false) 
-                            AND (v.encrypted == true || v.vertex_type == 'IDENTIFIER') != false 
+                            AND POSITION(v.datasets, @importId, false)  != false 
+                            AND (v.encrypted == true)
                             SORT v._key RETURN v`;
         } else {
             queryString = `FOR v IN ot_vertices 
                             FILTER v.datasets != null 
-                            AND POSITION(v.datasets, @importId, false) 
-                            AND (v.encrypted != true) != false 
+                            AND POSITION(v.datasets, @importId, false) != false 
+                            AND (v.encrypted != true)
                             SORT v._key RETURN v`;
         }
 
@@ -737,7 +737,7 @@ class ArangoJS {
             queryString = 'FOR v IN ot_edges ' +
                 'FILTER v.datasets != null ' +
                 'AND POSITION(v.datasets, @importId, false) != false ' +
-                'AND v.encrypted = true ' +
+                'AND v.encrypted == true ' +
                 'SORT v._key ' +
                 'RETURN v';
         } else {

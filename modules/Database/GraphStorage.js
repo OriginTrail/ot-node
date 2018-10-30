@@ -269,12 +269,12 @@ class GraphStorage {
      * @param importId   Import ID
      * @return {Promise}
      */
-    findVerticesByImportId(importId) {
+    findVerticesByImportId(importId, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVerticesByImportId(importId).then((result) => {
+                this.db.findVerticesByImportId(importId, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -288,12 +288,12 @@ class GraphStorage {
      * @param import_id       Import ID
      * @returns {Promise}
      */
-    findEdgesByImportId(import_id) {
+    findEdgesByImportId(import_id, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findEdgesByImportId(import_id).then((result) => {
+                this.db.findEdgesByImportId(import_id, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

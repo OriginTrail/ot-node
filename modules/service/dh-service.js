@@ -813,13 +813,13 @@ class DHService {
      * @param importId ID of import.
      * @returns {Promise<*>}
      */
-    async getImport(importId) {
+    async getImport(importId, encrypted) {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { id: importId } });
 
         if (holdingData) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 

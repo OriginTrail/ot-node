@@ -143,7 +143,7 @@ class EventEmitter {
             const { import_id: importId } = data;
             logger.info(`Get vertices trigered for import ID ${importId}`);
             try {
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(importId, false);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -153,6 +153,7 @@ class EventEmitter {
 
                 const normalizedImport = ImportUtilities
                     .normalizeImport(importId, result.vertices, result.edges);
+
 
                 data.response.send(normalizedImport);
             } catch (error) {
@@ -919,6 +920,7 @@ class EventEmitter {
         // async
         this._on('kad-data-read-response', async (request) => {
             logger.info('Encrypted data received');
+            console.log(request);
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);

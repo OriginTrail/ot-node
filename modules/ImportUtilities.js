@@ -93,21 +93,6 @@ class ImportUtilities {
         ImportUtilities.sort(edges);
         ImportUtilities.sort(vertices);
 
-        // let normEdges = null;
-        // if (edges) {
-        //     normEdges = edges.map(e => utilities.sortObject({
-        //         _key: e._key,
-        //         _from: e._from,
-        //         _to: e._to,
-        //         edge_type: e.edge_type,
-        //     }));
-        // }
-        //
-        // let normVertices = null;
-        // if (vertices) {
-        //     normVertices = normalizeGraph(dataSetId, vertices, []).vertices;
-        // }
-
         const { vertices: normVertices, edges: normEdges } = normalizeGraph(
             dataSetId,
             vertices,

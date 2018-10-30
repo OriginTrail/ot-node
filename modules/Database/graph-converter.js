@@ -62,22 +62,22 @@ function normalizeGraph(importId, vertices, edges) {
                     delete normalizedVertex.data.extension.quantityList;
                     delete normalizedVertex.data.extension.childQuantityList;
                 }
-            }
 
-            delete normalizedVertex.data.privateData;
-            delete normalizedVertex.data.inputEPCList;
-            delete normalizedVertex.data.inputQuantityList;
+                delete normalizedVertex.data.privateData;
+                delete normalizedVertex.data.inputEPCList;
+                delete normalizedVertex.data.inputQuantityList;
 
-            delete normalizedVertex.data.outputEPCList;
-            delete normalizedVertex.data.outputQuantityList;
+                delete normalizedVertex.data.outputEPCList;
+                delete normalizedVertex.data.outputQuantityList;
 
-            for (const key in normalizedVertex.data.quantities) {
-                for (const qkey in normalizedVertex.data.quantities[key].inputs) {
-                    delete normalizedVertex.data.quantities[key].inputs[qkey].private;
-                }
+                for (const key in normalizedVertex.data.quantities) {
+                    for (const qkey in normalizedVertex.data.quantities[key].inputs) {
+                        delete normalizedVertex.data.quantities[key].inputs[qkey].private;
+                    }
 
-                for (const qkey in normalizedVertex.data.quantities[key].outputs) {
-                    delete normalizedVertex.data.quantities[key].outputs[qkey].private;
+                    for (const qkey in normalizedVertex.data.quantities[key].outputs) {
+                        delete normalizedVertex.data.quantities[key].outputs[qkey].private;
+                    }
                 }
             }
 
