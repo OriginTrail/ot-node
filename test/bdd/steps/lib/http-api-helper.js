@@ -15,13 +15,13 @@ const path = require('path');
  * Fetch /api/import_info?import_id={{import_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {string} importId ID.
+ * @param dataSetId Data-set ID
  * @return {Promise.<ImportInfo>}
  */
-async function apiImportInfo(nodeRpcUrl, importId) {
+async function apiImportInfo(nodeRpcUrl, dataSetId) {
     return new Promise((accept, reject) => {
         request(
-            `${nodeRpcUrl}/api/import_info?import_id=${importId}`,
+            `${nodeRpcUrl}/api/import_info?data_set_id=${dataSetId}`,
             { json: true },
             (err, res, body) => {
                 if (err) {
@@ -173,6 +173,35 @@ async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
     });
 }
 
+/**
+ * Fetch /api/replication response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param data_set_id Data-set ID
+ * @return {Promise}
+ */
+async function apiReplication(nodeRpcUrl, data_set_id) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/replication`,
+                json: true,
+                body: {
+                    data_set_id,
+                },
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
 
 module.exports = {
     apiImport,
@@ -181,4 +210,5 @@ module.exports = {
     apiQueryLocal,
     apiQueryLocalImport,
     apiQueryLocalImportByImportId,
+    apiReplication,
 };

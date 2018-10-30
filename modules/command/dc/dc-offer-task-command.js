@@ -21,16 +21,15 @@ class DcOfferTaskCommand extends Command {
     async execute(command) {
         const { dataSetId, internalOfferId } = command.data;
 
+        const dataSetIdNorm = Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0'));
         const event = await Models.events.findOne({
             where: {
                 event: 'OfferTask',
-                data_set_id: Utilities.normalizeHex(dataSetId.toString('hex').padStart(64, '0')),
+                data_set_id: dataSetIdNorm,
                 finished: 0,
             },
         });
         if (event) {
-            this.logger.trace(`Offer successfully started for data set ${dataSetId}`);
-
             event.finished = true;
             await event.save({ fields: ['finished'] });
 
@@ -53,6 +52,8 @@ class DcOfferTaskCommand extends Command {
             offer.status = 'STARTED';
             offer.message = 'Offer has been successfully started. Waiting for DHs...';
             await offer.save({ fields: ['task', 'offer_id', 'status', 'message'] });
+
+            this.logger.trace(`Offer successfully started for data set ${dataSetIdNorm}. Offer ID ${eventOfferId}. Internal offer ID ${internalOfferId}.`);
             return this.continueSequence(this.pack(command.data), command.sequence);
         }
         return Command.repeat();

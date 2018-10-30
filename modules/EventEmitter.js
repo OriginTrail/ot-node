@@ -1,11 +1,12 @@
+const bytes = require('utf8-length');
+const events = require('events');
+
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
+const Graph = require('./Graph');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
-const bytes = require('utf8-length');
-
-const events = require('events');
 
 class EventEmitter {
     /**
@@ -169,7 +170,8 @@ class EventEmitter {
             const { dataSetId } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
                 if (!dataInfo) {
                     logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
@@ -180,6 +182,10 @@ class EventEmitter {
                     return;
                 }
 
+                // Check if data came from replication.
+                const holdingData =
+                    await Models.holding_data.findOne({ where: { data_set_id: dataSetId } });
+
                 const result = await dhService.getImport(dataSetId);
 
                 // Check if packed to fix issue with double classes.
@@ -189,27 +195,52 @@ class EventEmitter {
                     ImportUtilities.unpackKeys(result.vertices, result.edges);
                 }
 
-                const dataimport =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
-
-                if (result.vertices.length === 0 || dataimport == null) {
+                if (result.vertices.length === 0) {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
                     data.response.status(200);
-                    data.response.send({
-                        import: ImportUtilities.normalizeImport(
+                    if (!holdingData) {
+                        // Local import
+                        data.response.send({
+                            import: ImportUtilities.normalizeImport(
+                                dataSetId,
+                                result.vertices,
+                                result.edges,
+                            ),
+                            root_hash: dataInfo.root_hash,
+                            transaction: dataInfo.transaction_hash,
+                            data_provider_wallet: dataInfo.data_provider_wallet,
+                        });
+                    } else {
+                        // Replicated import.
+                        const importNormalized = ImportUtilities.normalizeImport(
                             dataSetId,
                             result.vertices,
                             result.edges,
-                        ),
-                        root_hash: dataimport.root_hash,
-                        transaction: dataimport.transaction_hash,
-                        data_provider_wallet: dataimport.data_provider_wallet,
-                    });
+                        );
+
+                        Graph.decryptVertices(
+                            importNormalized.vertices,
+                            holdingData.litigation_public_key,
+                        );
+
+                        const merkle = await ImportUtilities.merkleStructure(
+                            importNormalized.vertices.filter(vertex =>
+                                vertex.vertex_type !== 'CLASS'),
+                            importNormalized.edges,
+                        );
+
+                        data.response.send({
+                            import: importNormalized,
+                            root_hash: merkle.tree.getRoot(),
+                            transaction: dataInfo.transaction_hash,
+                            data_provider_wallet: dataInfo.data_provider_wallet,
+                        });
+                    }
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for data set ID ${dataSetId}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
