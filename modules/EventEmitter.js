@@ -535,7 +535,11 @@ class EventEmitter {
                     where: { data_set_id: dataSetId },
                 });
                 if (dataset == null) {
-                    throw new Error('This data set does not exist in the database');
+                    data.response.status(404);
+                    data.response.send({
+                        message: 'This data set does not exist in the database',
+                    });
+                    return;
                 }
 
                 if (dataSizeInBytes == null) {
