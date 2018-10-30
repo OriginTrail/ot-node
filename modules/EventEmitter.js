@@ -611,7 +611,7 @@ class EventEmitter {
             try {
                 logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
 
-                await profileService.depositTokens(atrac_amount);
+                await profileService.depositToken(atrac_amount);
                 remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
 
                 data.response.status(200);

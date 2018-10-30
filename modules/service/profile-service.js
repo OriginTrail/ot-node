@@ -124,8 +124,8 @@ class ProfileService {
     async depositToken(amount) {
         const walletBalance = await Utilities.getAlphaTracTokenBalance(
             this.web3,
-            this.blockchain.config.wallet_address,
-            this.blockchain.config.token_contract_address,
+            this.config.node_wallet,
+            this.blockchain.blockchain.tokenContractAddress,
         );
 
         if (amount > parseFloat(walletBalance)) {
@@ -135,7 +135,7 @@ class ProfileService {
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
         await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
-        await this.blockchain.depositTokens(new BN(mATRAC));
+        await this.blockchain.depositTokens(this.config.erc725Identity, new BN(mATRAC));
 
         this.logger.trace(`${amount} ATRAC deposited on your profile`);
 
