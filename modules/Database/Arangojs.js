@@ -167,10 +167,8 @@ class ArangoJS {
         const results = await this.dataLocationQuery(inputQuery, encrypted);
         if (results.length > 0) {
             return results[0].datasets;
-        } else {
-            return [];
         }
-
+        return [];
     }
 
     /**
