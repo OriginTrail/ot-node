@@ -3,13 +3,12 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @itworks
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @doesntwork
+  @itworks
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes

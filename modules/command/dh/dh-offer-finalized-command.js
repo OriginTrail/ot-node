@@ -30,7 +30,8 @@ class DhOfferFinalizedCommand extends Command {
                 const {
                     offerId: eventOfferId,
                 } = JSON.parse(e.data);
-                return offerId === eventOfferId;
+                this.logger.important(`${offerId}, ${eventOfferId}`);
+                return Utilities.compareHexStrings(offerId, eventOfferId);
             });
             if (event) {
                 event.finished = true;
