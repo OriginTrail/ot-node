@@ -32,9 +32,9 @@ class DCOfferCreateDbCommand extends Command {
         const offer = await models.offers.findOne({ where: { id: internalOfferId } });
         offer.holding_time_in_minutes = holdingTimeInMinutes.toString();
         offer.token_amount_per_holder = tokenAmountPerHolder.toString();
-        offer.red_litigation_hash = redLitigationHash.toString();
-        offer.blue_litigation_hash = blueLitigationHash.toString();
-        offer.green_litigation_hash = greenLitigationHash.toString();
+        offer.red_litigation_hash = redLitigationHash.toString('hex');
+        offer.blue_litigation_hash = blueLitigationHash.toString('hex');
+        offer.green_litigation_hash = greenLitigationHash.toString('hex');
         offer.litigation_interval_in_minutes = litigationIntervalInMinutes.toString();
         offer.message = 'Offer has been prepared for BC.';
         offer.status = 'PREPARED';
