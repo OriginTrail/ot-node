@@ -93,7 +93,7 @@ class ApprovalService {
             nodeId = nodeId.substr(-40, 40);
             nodeId = Utilities.normalizeHex(nodeId);
         }
-        return this.approvedNodes.contains(nodeId);
+        return (this.approvedNodes.indexOf(nodeId) !== -1);
     }
 }
 
