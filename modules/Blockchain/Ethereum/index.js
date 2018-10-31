@@ -914,6 +914,14 @@ class Ethereum {
         }
         return enoughETH && enoughATRAC;
     }
+
+    /**
+     * Token contract address getter
+     * @return {any|*}
+     */
+    getTokenContractAddress() {
+        return this.tokenContractAddress;
+    }
 }
 
 module.exports = Ethereum;
