@@ -134,26 +134,26 @@ class ProfileService {
         );
 
         if (amount > parseFloat(walletBalance)) {
-            throw new Error(`Wallet balance: ${walletBalance} ATRAC`);
+            throw new Error(`Wallet balance: ${walletBalance} TRAC`);
         }
 
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
-        await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
+        await this.blockchain.increaseProfileApproval(new BN(mATRAC));
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this.blockchain.depositTokens(blockchainIdentity, new BN(mATRAC));
 
-        this.logger.trace(`${amount} ATRAC deposited on your profile`);
+        this.logger.notify(`${amount} TRAC deposited on your profile`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInATRAC} ATRAC`);
+        this.logger.info(`Wallet balance: ${balanceInATRAC} TRAC`);
 
         const profile = await this.blockchain.getProfile(blockchainIdentity);
         const profileBalance = profile.stake;
         const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-        this.logger.info(`Profile balance: ${profileBalanceInATRAC} ATRAC`);
+        this.logger.info(`Profile balance: ${profileBalanceInATRAC} TRAC`);
     }
 
     /**
