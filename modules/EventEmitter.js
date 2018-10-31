@@ -924,7 +924,6 @@ class EventEmitter {
         // async
         this._on('kad-data-read-response', async (request) => {
             logger.info('Encrypted data received');
-            console.log(request);
 
             const reqStatus = transport.extractRequestStatus(request);
             const reqMessage = transport.extractMessage(request);

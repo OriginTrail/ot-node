@@ -83,9 +83,7 @@ class DVDataReadResponseFreeCommand extends Command {
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
-        //
-        // console.log(Utilities.sortObject(vertices);
-        // console.log(edges);
+
 
         ImportUtilities.sort(vertices);
         ImportUtilities.sort(edges);
