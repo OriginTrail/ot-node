@@ -516,7 +516,7 @@ class Kademlia {
                             this.node.ping(peerContactArray, (error) => {
                                 if (error) {
                                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
-                                    accept(null);
+                                    reject(Error(`Contact ${contactId} not reachable: ${error}.`));
                                     return;
                                 }
                                 accept(contact);
@@ -532,13 +532,14 @@ class Kademlia {
                                         await this.bootstrapFindContact(contactId);
                                     if (freshContact) {
                                         this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                        accept(freshContact);
                                     } else {
                                         this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                                        reject(Error(`Bootstrap find failed for: ${contactId}.`));
                                     }
-                                    accept(freshContact);
                                 } catch (error) {
                                     this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
-                                    accept(null);
+                                    reject(Error(`Bootstrap find failed for: ${contactId}.`));
                                 }
                             });
                         });
@@ -554,11 +555,15 @@ class Kademlia {
                             this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
                         } else {
                             this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                            reject(Error(`Bootstrap find failed for: ${contactId}.`));
+                            return;
                         }
                         accept(freshContact);
                     } catch (error) {
                         this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
-                        accept(null);
+                        reject(Error(`Failed to get contact: ${contactId}. Error: ${error}`));
+                        return;
+
                     }
                 });
             };
