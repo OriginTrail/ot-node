@@ -455,7 +455,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"atrac_amount\": 1\n}"
+					"raw": "{ \n\t\"trac_amount\": 1\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/deposit",
@@ -482,7 +482,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"atrac_amount\": 15\n\t\n}"
+					"raw": "{ \n\t\"trac_amount\": 15\n\t\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/withdraw",
