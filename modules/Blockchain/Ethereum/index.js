@@ -683,12 +683,16 @@ class Ethereum {
             const eventData = await Models.events.findAll({ where });
             if (eventData) {
                 eventData.forEach(async (data) => {
-                    emitCallback({
-                        name: `eth-${data.event}`,
-                        value: JSON.parse(data.dataValues.data),
-                    });
-                    data.finished = true;
-                    await data.save();
+                    try {
+                        emitCallback({
+                            name: `eth-${data.event}`,
+                            value: JSON.parse(data.dataValues.data),
+                        });
+                        data.finished = true;
+                        await data.save();
+                    } catch (error) {
+                        this.log.error(error);
+                    }
                 });
             }
         }, 2000);

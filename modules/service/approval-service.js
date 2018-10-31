@@ -21,9 +21,9 @@ class ApprovalService {
     async initialize() {
         const allNodes = await this.blockchain.getAddedNodes();
         const nodeApproved = await this.blockchain.getNodeStatuses();
-        var approvedNodes = [];
+        const approvedNodes = [];
 
-        for (var i = 0; i < allNodes.length; i += 1) {
+        for (let i = 0; i < allNodes.length; i += 1) {
             if (nodeApproved[i] === true) {
                 allNodes[i] = allNodes[i].toLowerCase();
                 allNodes[i] = Utilities.normalizeHex(allNodes[i]);
