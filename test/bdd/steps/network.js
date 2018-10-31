@@ -36,7 +36,6 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
-                password: '',
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
