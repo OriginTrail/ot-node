@@ -919,7 +919,7 @@ class OTNode {
         });
 
         server.get('/api/consensus/:sender_id', (req, res) => {
-            log.api('GET: List imports request received.');
+            log.api('GET: Consensus check events request received.');
 
             if (req.params.sender_id == null) {
                 res.status(400);

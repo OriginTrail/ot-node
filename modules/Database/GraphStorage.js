@@ -200,6 +200,10 @@ class GraphStorage {
         return this.db.identify();
     }
 
+    async getConsensusEvents(sender_id) {
+        return this.db.getConsensusEvents(sender_id);
+    }
+
     /**
     * Get version of selected graph database
     * @returns {Promise<any>}
