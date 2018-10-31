@@ -27,7 +27,7 @@ class ProfileService {
         let identityExists = false;
         if (this.config.erc725Identity) {
             identityExists = true;
-            this.logger.notify(`Identity has already been created for node ${this.config.identity}`);
+            this.logger.notify(`Identity has already been created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
         }
 
         if (identityExists && await this.isProfileCreated()) {
@@ -50,7 +50,7 @@ class ProfileService {
             const event = await this.blockchain.subscribeToEvent('IdentityCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.node_wallet));
             if (event) {
                 this._saveIdentity(event.newIdentity);
-                this.logger.notify(`Identity created for node ${this.config.identity}`);
+                this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
                 return;
             }
         }
@@ -121,11 +121,11 @@ class ProfileService {
      * @param amount
      * @returns {Promise<void>}
      */
-    async depositToken(amount) {
+    async depositTokens(amount) {
         const walletBalance = await Utilities.getAlphaTracTokenBalance(
             this.web3,
-            this.blockchain.config.wallet_address,
-            this.blockchain.config.token_contract_address,
+            this.config.node_wallet,
+            this.blockchain.getTokenContractAddress(),
         );
 
         if (amount > parseFloat(walletBalance)) {
@@ -135,13 +135,20 @@ class ProfileService {
         const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
         await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
-        await this.blockchain.depositTokens(new BN(mATRAC));
+
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this.blockchain.depositTokens(blockchainIdentity, new BN(mATRAC));
 
         this.logger.trace(`${amount} ATRAC deposited on your profile`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Profile balance: ${balanceInATRAC} ATRAC`);
+        this.logger.info(`Wallet balance: ${balanceInATRAC} ATRAC`);
+
+        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profileBalance = profile.stake;
+        const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInATRAC} ATRAC`);
     }
 
     /**

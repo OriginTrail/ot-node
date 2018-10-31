@@ -42,7 +42,7 @@ class DVDataReadRequestCommand extends Command {
             where: { data_set_id: dataSetId },
         });
         if (dataInfo) {
-            this.logger.trace(`I've already stored data for import ID ${importId}. Purchase ignored.`);
+            this.logger.trace(`I've already stored data for data set ID ${dataSetId}. Purchase ignored.`);
             return Command.empty();
         }
 

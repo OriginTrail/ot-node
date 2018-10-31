@@ -5,6 +5,7 @@ const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
+const { denormalizeGraph, normalizeGraph } = require('./Database/graph-converter');
 
 /**
  * Import related utilities
@@ -21,6 +22,7 @@ class ImportUtilities {
                 vertex._dc_key = vertex._key;
                 vertex._key = uuidv4();
             }
+            vertex.encrypted = true;
         }
         // map _from and _to
         const find = (key) => {
@@ -39,6 +41,8 @@ class ImportUtilities {
             if (to) {
                 edge._to = to;
             }
+
+            edge.encrypted = true;
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
@@ -61,6 +65,7 @@ class ImportUtilities {
                 vertex._key = vertex._dc_key;
                 delete vertex._dc_key;
             }
+            delete vertex.encrypted;
         }
         for (const edge of edges) {
             if (edge._dc_key) {
@@ -74,6 +79,7 @@ class ImportUtilities {
                     edge._to = mapping[edge._to];
                 }
             }
+            delete edge.encrypted;
         }
     }
 
@@ -83,29 +89,15 @@ class ImportUtilities {
      * @param edges     Import edges
      * @returns {{edges: *, vertices: *}}
      */
-    static normalizeImport(vertices, edges) {
+    static normalizeImport(dataSetId, vertices, edges) {
         ImportUtilities.sort(edges);
         ImportUtilities.sort(vertices);
 
-        let normEdges = null;
-        if (edges) {
-            normEdges = edges.map(e => utilities.sortObject({
-                _key: e._key,
-                identifiers: e.identifiers,
-                _from: e._from,
-                _to: e._to,
-                edge_type: e.edge_type,
-            }));
-        }
-
-        let normVertices = null;
-        if (vertices) {
-            normVertices = vertices.map(v => utilities.sortObject({
-                _key: v._key,
-                identifiers: v.identifiers,
-                data: v.data,
-            }));
-        }
+        const { vertices: normVertices, edges: normEdges } = normalizeGraph(
+            dataSetId,
+            vertices,
+            edges,
+        );
 
         return {
             edges: normEdges,
@@ -115,13 +107,14 @@ class ImportUtilities {
 
     /**
      * Calculate import hash
+     * @param dataSetId Data set ID
      * @param vertices  Import vertices
      * @param edges     Import edges
      * @returns {*}
      */
-    static importHash(vertices, edges) {
-        const normalized = ImportUtilities.normalizeImport(vertices, edges);
-        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)).padStart(64, '0'));
+    static importHash(dataSetId, vertices, edges) {
+        const normalized = ImportUtilities.normalizeImport(dataSetId, vertices, edges);
+        return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
     }
 
     /**
@@ -215,7 +208,7 @@ class ImportUtilities {
      */
     static deleteInternal(vertices) {
         for (const vertex of vertices) {
-            delete vertex.imports;
+            delete vertex.datasets;
             delete vertex.private;
             delete vertex.version;
         }

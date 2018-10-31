@@ -1,11 +1,12 @@
+const bytes = require('utf8-length');
+const events = require('events');
+
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
+const Graph = require('./Graph');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
-const bytes = require('utf8-length');
-
-const events = require('events');
 
 class EventEmitter {
     /**
@@ -109,7 +110,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.imports),
+                datasets: JSON.parse(response.imports),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -140,10 +141,10 @@ class EventEmitter {
         });
 
         this._on('api-query-local-import', async (data) => {
-            const { import_id: importId } = data;
-            logger.info(`Get vertices trigered for import ID ${importId}`);
+            const { data_set_id: dataSetId } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -151,16 +152,13 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+                const normalizedImport = ImportUtilities
+                    .normalizeImport(dataSetId, result.vertices, result.edges);
 
-                if (rawData) {
-                    data.response.send(result);
-                } else {
-                    data.response
-                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
-                }
+
+                data.response.send(normalizedImport);
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -170,21 +168,22 @@ class EventEmitter {
         });
 
         this._on('api-import-info', async (data) => {
-            const { importId } = data;
-            logger.info(`Get imported vertices triggered for import ID ${importId}`);
+            const { dataSetId } = data;
+            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
                 if (!dataInfo) {
-                    logger.info(`Import data for import ID ${importId} does not exist.`);
+                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
                     data.response.status(404);
                     data.response.send({
-                        message: `Import data for import ID ${importId} does not exist`,
+                        message: `Import data for data set ID ${dataSetId} does not exist`,
                     });
                     return;
                 }
 
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 // Check if packed to fix issue with double classes.
                 const filtered = result.vertices.filter(v => v._dc_key);
@@ -193,34 +192,28 @@ class EventEmitter {
                     ImportUtilities.unpackKeys(result.vertices, result.edges);
                 }
 
-                const dataimport =
-                    await Models.data_info.findOne({ where: { import_id: importId } });
-
-                if (result.vertices.length === 0 || dataimport == null) {
+                if (result.vertices.length === 0) {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
+                            dataSetId,
                             result.vertices,
                             result.edges,
                         ),
-                        import_hash: ImportUtilities.importHash(
-                            result.vertices,
-                            result.edges,
-                        ),
-                        root_hash: dataimport.root_hash,
-                        transaction: dataimport.transaction_hash,
-                        data_provider_wallet: dataimport.data_provider_wallet,
+                        root_hash: dataInfo.root_hash,
+                        transaction: dataInfo.transaction_hash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
                     });
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: error.toString(),
                 });
             }
         });
@@ -252,10 +245,9 @@ class EventEmitter {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
                 data.response.send(dataimports.map(di => ({
-                    import_id: di.import_id,
+                    data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
-                    import_hash: di.import_hash,
                     data_size: di.data_size,
                     transaction_hash: di.transaction_hash,
                     data_provider_wallet: di.data_provider_wallet,
@@ -399,7 +391,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id, true);
 
                     response.status(200);
                     response.send({
@@ -498,20 +490,21 @@ class EventEmitter {
         };
 
         this._on('api-offer-status', async (data) => {
-            const { external_id } = data;
-            logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await Models.offers.findOne({ where: { external_id } });
+            const { replicationId } = data;
+            logger.info(`Offer status for internal ID ${replicationId} triggered.`);
+            const offer = await Models.offers.findOne({ where: { id: replicationId } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
                     status: offer.status,
                     message: offer.message,
+                    offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for external ID ${external_id}`);
+                logger.error(`There is no offer for interanl ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
-                    message: 'Offer not found',
+                    message: 'Replication not found',
                 });
             }
         });
@@ -543,7 +536,11 @@ class EventEmitter {
                     where: { data_set_id: dataSetId },
                 });
                 if (dataset == null) {
-                    throw new Error('This data set does not exist in the database');
+                    data.response.status(404);
+                    data.response.send({
+                        message: 'This data set does not exist in the database',
+                    });
+                    return;
                 }
 
                 if (dataSizeInBytes == null) {
@@ -554,14 +551,15 @@ class EventEmitter {
                     dataRootHash = dataset.root_hash;
                 }
 
-                const offerId = await dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
                     dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
-                    offer_id: offerId,
+                    replication_id: replicationId,
+                    data_set_id: dataSetId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);

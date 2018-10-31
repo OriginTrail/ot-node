@@ -12,6 +12,7 @@ const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
+const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const restify = require('restify');
 const fs = require('fs');
 const path = require('path');
@@ -342,7 +343,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -364,6 +365,7 @@ class OTNode {
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
@@ -453,6 +455,7 @@ class OTNode {
             notifyBugsnag(e);
             process.exit(1);
         }
+        await transport.start();
 
         // Initialise API
         this.startRPC();
@@ -469,6 +472,7 @@ class OTNode {
         await commandExecutor.init();
         await commandExecutor.replay();
         await commandExecutor.start();
+        appState.started = true;
     }
 
     /**
@@ -497,6 +501,7 @@ class OTNode {
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+        await transport.start();
 
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();
@@ -715,8 +720,8 @@ class OTNode {
                 return;
             }
 
-            const externalId = req.params.replication_id;
-            if (externalId == null) {
+            const replicationId = req.params.replication_id;
+            if (replicationId == null) {
                 log.error('Invalid request. You need to provide replication ID');
                 res.status = 400;
                 res.send({
@@ -724,7 +729,7 @@ class OTNode {
                 });
             } else {
                 const queryObject = {
-                    external_id: externalId,
+                    replicationId,
                     response: res,
                 };
                 emitter.emit('api-offer-status', queryObject);
@@ -745,7 +750,7 @@ class OTNode {
         });
 
         /** Get root hash for provided data query
-         * @param Query params: dc_wallet, import_id
+         * @param Query params: data_set_id
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');

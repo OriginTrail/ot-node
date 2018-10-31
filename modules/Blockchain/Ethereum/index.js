@@ -13,8 +13,10 @@ class Ethereum {
         emitter,
         web3,
         logger,
+        appState,
     }) {
         // Loading Web3
+        this.appState = appState;
         this.emitter = emitter;
         this.web3 = web3;
         this.log = logger;
@@ -635,7 +637,11 @@ class Ethereum {
     async subscribeToEventPermanent(event) {
         const startBlockNumber = await this.web3.eth.getBlockNumber();
 
-        const handle = setInterval(async () => {
+        const that = this;
+        return setInterval(async () => {
+            if (!that.appState.started) {
+                return;
+            }
             const where = {
                 [Op.or]: event.map(e => ({ event: e })),
                 block: { [Op.gte]: startBlockNumber },
@@ -651,8 +657,6 @@ class Ethereum {
                 });
             }
         }, 2000);
-
-        return handle;
     }
 
     /**
@@ -961,7 +965,7 @@ class Ethereum {
      * @returns {Promise<boolean>}
      */
     async getBalances() {
-        this.log.trace('Checking ballances');
+        this.log.trace('Checking balances');
         let enoughETH = true;
         let enoughATRAC = true;
         try {
@@ -970,7 +974,7 @@ class Ethereum {
                 this.config.wallet_address,
             );
             this.log.info(`Balance of ETH: ${etherBalance}`);
-            if (etherBalance <= 0) {
+            if (etherBalance <= 0.01) {
                 enoughETH = false;
             }
 
@@ -980,13 +984,21 @@ class Ethereum {
                 this.tokenContractAddress,
             );
             this.log.info(`Balance of ATRAC: ${atracBalance}`);
-            if (enoughATRAC <= 0) {
+            if (atracBalance <= 100) {
                 enoughATRAC = false;
             }
         } catch (error) {
             throw new Error(error);
         }
         return enoughETH && enoughATRAC;
+    }
+
+    /**
+     * Token contract address getter
+     * @return {any|*}
+     */
+    getTokenContractAddress() {
+        return this.tokenContractAddress;
     }
 }
 

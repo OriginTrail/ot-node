@@ -112,7 +112,7 @@ class Kademlia {
         );
         this.identity = kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex');
 
-        this.log.notify(`My identity: ${this.identity}`);
+        this.log.notify(`My network identity: ${this.identity}`);
         this.config.identity = this.identity;
     }
 
@@ -367,6 +367,10 @@ class Kademlia {
 
                             if (contact.length === 2 && contact[1].hostname) {
                                 response.send({ contact: contact[1] });
+                            } else {
+                                // Should not happen ever.
+                                this.log.warn(`Invalid contact received form peer-cache: ${JSON.stringify(contact)}`);
+                                response.send([]);
                             }
                         } else {
                             response.send([]);
@@ -510,25 +514,40 @@ class Kademlia {
 
                         this.log.debug(`Found contact in peer cache. ${contactId} - ${contact.hostname}:${contact.port}.`);
                         return new Promise((accept, reject) => {
-                            this.node.ping(contact, (error) => {
+                            this.node.ping(peerContactArray, (error) => {
                                 if (error) {
                                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
                                     accept(null);
                                     return;
                                 }
+                                this.log.debug(`Contact ${contactId} reachable at ${contact.hostname}:${contact.port}.`);
                                 accept(contact);
                             });
                         }).then((contact) => {
                             if (contact) {
+                                this.node.router.addContactByNodeId(contactId, contact);
                                 return contact;
                             }
                             return new Promise(async (accept, reject) => {
                                 this.log.debug(`Asking bootstrap for contact: ${contactId}.`);
-
-                                const freshContact =
-                                    await this.bootstrapFindContact(contactId);
-                                this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                                accept(freshContact);
+                                try {
+                                    const freshContact =
+                                        await this.bootstrapFindContact(contactId);
+                                    if (freshContact) {
+                                        this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                        this.node.router.addContactByNodeId(
+                                            contactId,
+                                            freshContact,
+                                        );
+                                        accept(freshContact);
+                                    } else {
+                                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                                        reject(Error(`Bootstrap find failed for: ${contactId}.`));
+                                    }
+                                } catch (error) {
+                                    this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
+                                    reject(Error(`Bootstrap find failed for: ${contactId}.`));
+                                }
                             });
                         });
                     }
@@ -536,14 +555,21 @@ class Kademlia {
 
                 this.log.debug(`No knowledge about contact ${contactId}. Asking bootstrap for it.`);
                 return new Promise(async (accept, reject) => {
-                    const freshContact =
-                        await this.bootstrapFindContact(contactId);
-                    if (freshContact) {
-                        this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                    } else {
-                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                    try {
+                        const freshContact =
+                            await this.bootstrapFindContact(contactId);
+                        if (freshContact) {
+                            this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                            this.node.router.addContactByNodeId(contactId, freshContact);
+                            accept(freshContact);
+                        } else {
+                            this.log.debug(`Bootstrap find failed for: ${contactId}.`);
+                            reject(Error(`Bootstrap find failed for: ${contactId}.`));
+                        }
+                    } catch (error) {
+                        this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
+                        reject(Error(`Failed to get contact: ${contactId}. Error: ${error}`));
                     }
-                    accept(freshContact);
                 });
             };
 
