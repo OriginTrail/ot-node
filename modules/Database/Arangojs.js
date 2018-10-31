@@ -182,9 +182,6 @@ class ArangoJS {
             sender_id,
         });
 
-        console.log(sender_id);
-        console.log(res);
-
         const ownershipEvents = [];
 
         for (const event of res) {
@@ -200,7 +197,6 @@ class ArangoJS {
         const promises = [];
 
         for (const event of ownershipEvents) {
-            console.log('key: ', event.side1._key);
             const query = `FOR v, e IN 1..1 OUTBOUND @senderEventKey ot_edges
             FILTER e.edge_type == 'EVENT_CONNECTION'
             RETURN v`;
@@ -208,8 +204,6 @@ class ArangoJS {
         }
 
         const side2Vertices = await Promise.all(promises);
-
-        console.log(side2Vertices);
 
         for (const i in side2Vertices) {
             const side2Vertex = side2Vertices[i][0];
