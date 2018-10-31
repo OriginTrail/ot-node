@@ -656,6 +656,42 @@ class Ethereum {
     }
 
     /**
+     * Subscribes to Blockchain event with a callback specified
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * Callback function will be executed when the event is emitted.
+     * @param event Event to listen to
+     * @param callback function to be executed
+     * @returns {number | Object} Event handle
+     */
+    async subscribeToEventPermanentWithCallback(event, emitCallback) {
+        const startBlockNumber = await this.web3.eth.getBlockNumber();
+
+        const handle = setInterval(async () => {
+            const where = {
+                [Op.or]: event.map(e => ({ event: e })),
+                block: { [Op.gte]: startBlockNumber },
+                finished: 0,
+            };
+
+            const eventData = await Models.events.findAll({ where });
+            if (eventData) {
+                eventData.forEach(async (data) => {
+                    emitCallback({
+                        name: `eth-${data.event}`,
+                        value: JSON.parse(data.dataValues.data),
+                    });
+                    data.finished = true;
+                    await data.save();
+                });
+            }
+        }, 2000);
+
+        return handle;
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1

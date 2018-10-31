@@ -206,6 +206,20 @@ class Blockchain {
     }
 
     /**
+     * Subscribes to Blockchain event with a callback specified
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * Callback function will be executed when the event is emitted.
+     * @param event Event to listen to
+     * @param callback function to be executed
+     * @returns {number | Object} Event handle
+     */
+    async subscribeToEventPermanentWithCallback(event, callback) {
+        return this.blockchain.subscribeToEventPermanentWithCallback(event, callback);
+    }
+
+    /**
      * Gets all past events for the contract
      * @param contractName
      */
