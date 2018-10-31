@@ -124,8 +124,8 @@ class DHService {
 
         if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
-            this.logger.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
+            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC] per byte/min`);
+            this.logger.info(`My price ${formatMyPrice}[mTRAC] per byte/min`);
             return;
         }
 
@@ -333,6 +333,7 @@ class DHService {
                 msgNodeId,
                 msgWallet,
                 msgQuery,
+                encrypted: true,
             },
         });
     }
@@ -727,7 +728,7 @@ class DHService {
         await this.blockchain.answerLitigation(importId, answer);
     }
 
-    async dataLocationQuery(queryId) {
+    async dataLocationQuery(queryId, encrypted) {
         const networkQuery = await Models.network_queries.find({ where: { id: queryId } });
         const validationError = ObjectValidator.validateSearchQueryObject(networkQuery);
         if (validationError) {
@@ -739,7 +740,7 @@ class DHService {
 
         // Fetch the results.
         const importIds =
-            await this.graphStorage.findImportIds(networkQuery.query);
+            await this.graphStorage.findImportIds(networkQuery.query, encrypted);
         const decryptKeys = {};
 
         // Get decode keys.
@@ -758,10 +759,10 @@ class DHService {
         }
 
         const encodedVertices =
-            await this.graphStorage.dataLocationQuery(networkQuery.query);
+            await this.graphStorage.dataLocationQuery(networkQuery.query, encrypted);
         const vertices = [];
 
-        encodedVertices.forEach((encodedVertex) => {
+        encodedVertices[0].objects.forEach((encodedVertex) => {
             const foundIds =
                 encodedVertex.datasets.filter(value => importIds.indexOf(value) !== -1);
 
@@ -809,52 +810,42 @@ class DHService {
      * Returns given import's vertices and edges and decrypt them if needed.
      *
      * Method will return object in following format { vertices: [], edges: [] }.
-     * @param importId ID of import.
+     * @param dataSetId ID of data-set.
      * @returns {Promise<*>}
      */
-    async getImport(importId) {
+    async getImport(dataSetId) {
         // Check if import came from DH replication or reading replication.
-        const holdingData = await Models.holding_data.find({ where: { id: importId } });
+        const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
 
         if (holdingData) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, true);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, true);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 
             const encodedVertices = values[0];
             const edges = values[1];
-            const decryptKey = holdingData.data_public_key;
+            const decryptKey = holdingData.litigation_public_key;
             const vertices = [];
 
-            encodedVertices.forEach((encodedVertex) => {
-                const decryptedVertex = Utilities.copyObject(encodedVertex);
-                if (decryptedVertex.vertex_type !== 'CLASS') {
-                    decryptedVertex.data =
-                        Encryption.decryptObject(
-                            encodedVertex.data,
-                            decryptKey,
-                        );
-                }
-                vertices.push(decryptedVertex);
-            });
+            Graph.decryptVertices(encodedVertices, decryptKey);
 
-            return { vertices, edges };
+            return { vertices: encodedVertices, edges };
         }
 
         // Check if import came from DC side.
-        const dataInfo = await Models.data_info.find({ where: { data_set_id: importId } });
+        const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
         if (dataInfo) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, false);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, false);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 
             return { vertices: values[0], edges: values[1] };
         }
 
-        throw Error(`Cannot find import for import ID ${importId}.`);
+        throw Error(`Cannot find import for data-set ID ${dataSetId}.`);
     }
 
     async listenToBlockchainEvents() {

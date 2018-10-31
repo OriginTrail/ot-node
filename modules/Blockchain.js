@@ -68,7 +68,10 @@ class Blockchain {
      * @return {Promise<any>}
      */
     createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
-        return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
+        return this.blockchain.createProfile(
+            profileNodeId, initialBalance, isSender725,
+            blockchainIdentity,
+        );
     }
 
     /**
@@ -376,6 +379,14 @@ class Blockchain {
 
     async getBalances() {
         return this.blockchain.getBalances();
+    }
+
+    /**
+     * Token contract address getter
+     * @return {any|*}
+     */
+    getTokenContractAddress() {
+        return this.blockchain.getTokenContractAddress();
     }
 }
 

@@ -3,6 +3,7 @@ const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
+const uuidv4 = require('uuid/v4');
 
 class Ethereum {
     /**
@@ -514,7 +515,7 @@ class Ethereum {
                 }
                 /* eslint-disable-next-line */
                 await Models.events.create({
-                    id: event.id,
+                    id: uuidv4(),
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),
@@ -889,7 +890,7 @@ class Ethereum {
     async getBalances() {
         this.log.trace('Checking balances');
         let enoughETH = true;
-        let enoughATRAC = true;
+        let enoughTRAC = true;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 this.web3,
@@ -900,19 +901,27 @@ class Ethereum {
                 enoughETH = false;
             }
 
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+            const tracBalance = await Utilities.getTracTokenBalance(
                 this.web3,
                 this.config.wallet_address,
                 this.tokenContractAddress,
             );
-            this.log.info(`Balance of ATRAC: ${atracBalance}`);
-            if (atracBalance <= 100) {
-                enoughATRAC = false;
+            this.log.info(`Balance of TRAC: ${tracBalance}`);
+            if (tracBalance <= 100) {
+                enoughTRAC = false;
             }
         } catch (error) {
             throw new Error(error);
         }
-        return enoughETH && enoughATRAC;
+        return enoughETH && enoughTRAC;
+    }
+
+    /**
+     * Token contract address getter
+     * @return {any|*}
+     */
+    getTokenContractAddress() {
+        return this.tokenContractAddress;
     }
 }
 

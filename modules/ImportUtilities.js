@@ -22,6 +22,7 @@ class ImportUtilities {
                 vertex._dc_key = vertex._key;
                 vertex._key = uuidv4();
             }
+            vertex.encrypted = true;
         }
         // map _from and _to
         const find = (key) => {
@@ -40,6 +41,8 @@ class ImportUtilities {
             if (to) {
                 edge._to = to;
             }
+
+            edge.encrypted = true;
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
@@ -62,6 +65,7 @@ class ImportUtilities {
                 vertex._key = vertex._dc_key;
                 delete vertex._dc_key;
             }
+            delete vertex.encrypted;
         }
         for (const edge of edges) {
             if (edge._dc_key) {
@@ -75,6 +79,7 @@ class ImportUtilities {
                     edge._to = mapping[edge._to];
                 }
             }
+            delete edge.encrypted;
         }
     }
 
@@ -87,21 +92,6 @@ class ImportUtilities {
     static normalizeImport(dataSetId, vertices, edges) {
         ImportUtilities.sort(edges);
         ImportUtilities.sort(vertices);
-
-        // let normEdges = null;
-        // if (edges) {
-        //     normEdges = edges.map(e => utilities.sortObject({
-        //         _key: e._key,
-        //         _from: e._from,
-        //         _to: e._to,
-        //         edge_type: e.edge_type,
-        //     }));
-        // }
-        //
-        // let normVertices = null;
-        // if (vertices) {
-        //     normVertices = normalizeGraph(dataSetId, vertices, []).vertices;
-        // }
 
         const { vertices: normVertices, edges: normEdges } = normalizeGraph(
             dataSetId,

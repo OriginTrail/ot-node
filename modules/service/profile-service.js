@@ -51,11 +51,16 @@ class ProfileService {
             if (event) {
                 this._saveIdentity(event.newIdentity);
                 this.logger.notify(`Identity created for node ${this.config.identity}. Identity is ${this.config.erc725Identity}.`);
-                return;
+            } else {
+                throw new Error('Identity could not be confirmed in timely manner. Please, try again later.');
             }
         }
-        this.logger.notify(`Profile created for node ${this.config.identity}`);
-        throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
+        const event = await this.blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, eventData => Utilities.compareHexStrings(eventData.profile, this.config.erc725Identity));
+        if (event) {
+            this.logger.notify(`Profile created for node ${this.config.identity}.`);
+        } else {
+            throw new Error('Profile could not be confirmed in timely manner. Please, try again later.');
+        }
     }
 
     /**
@@ -121,27 +126,34 @@ class ProfileService {
      * @param amount
      * @returns {Promise<void>}
      */
-    async depositToken(amount) {
-        const walletBalance = await Utilities.getAlphaTracTokenBalance(
+    async depositTokens(amount) {
+        const walletBalance = await Utilities.getTracTokenBalance(
             this.web3,
-            this.blockchain.config.wallet_address,
-            this.blockchain.config.token_contract_address,
+            this.config.node_wallet,
+            this.blockchain.getTokenContractAddress(),
         );
 
         if (amount > parseFloat(walletBalance)) {
-            throw new Error(`Wallet balance: ${walletBalance} ATRAC`);
+            throw new Error(`Wallet balance: ${walletBalance} TRAC`);
         }
 
-        const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
+        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
-        await this.blockchain.increaseBiddingApproval(new BN(mATRAC));
-        await this.blockchain.depositTokens(new BN(mATRAC));
+        await this.blockchain.increaseProfileApproval(new BN(mTRAC));
 
-        this.logger.trace(`${amount} ATRAC deposited on your profile`);
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this.blockchain.depositTokens(blockchainIdentity, new BN(mTRAC));
+
+        this.logger.notify(`${amount} TRAC deposited on your profile`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Profile balance: ${balanceInATRAC} ATRAC`);
+        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+
+        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profileBalance = profile.stake;
+        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
@@ -150,11 +162,11 @@ class ProfileService {
      * @return {Promise<void>}
      */
     async withdrawTokens(amount) {
-        const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
+        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
         await this.commandExecutor.add({
             name: 'tokenWithdrawalStartCommand',
             data: {
-                amount: mATRAC,
+                amount: mTRAC,
             },
         });
         this.logger.info(`Token withdrawal started for amount ${amount}.`);

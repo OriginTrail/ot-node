@@ -699,8 +699,8 @@ class OTNode {
                 return;
             }
 
-            const externalId = req.params.replication_id;
-            if (externalId == null) {
+            const replicationId = req.params.replication_id;
+            if (replicationId == null) {
                 log.error('Invalid request. You need to provide replication ID');
                 res.status = 400;
                 res.send({
@@ -708,7 +708,7 @@ class OTNode {
                 });
             } else {
                 const queryObject = {
-                    external_id: externalId,
+                    replicationId,
                     response: res,
                 };
                 emitter.emit('api-offer-status', queryObject);
@@ -815,10 +815,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/local/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:data_set_id', (req, res) => {
             log.api('GET: Local import request received.');
 
-            if (!req.params.import_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -827,7 +827,7 @@ class OTNode {
             }
 
             emitter.emit('api-query-local-import', {
-                import_id: req.params.import_id,
+                data_set_id: req.params.data_set_id,
                 request: req,
                 response: res,
             });
@@ -876,11 +876,11 @@ class OTNode {
         server.post('/api/deposit', (req, res) => {
             log.api('POST: Deposit tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-deposit-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -893,11 +893,11 @@ class OTNode {
         server.post('/api/withdraw', (req, res) => {
             log.api('POST: Withdraw tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-withdraw-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -914,6 +914,20 @@ class OTNode {
             log.api('GET: List imports request received.');
 
             emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        server.get('/api/consensus/:sender_id', (req, res) => {
+            log.api('GET: List imports request received.');
+
+            if (req.params.sender_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+
+            emitter.emit('api-consensus-events', {
+                sender_id: req.params.sender_id,
                 response: res,
             });
         });

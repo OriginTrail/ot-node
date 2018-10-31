@@ -1,11 +1,12 @@
+const bytes = require('utf8-length');
+const events = require('events');
+
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
+const Graph = require('./Graph');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
-const bytes = require('utf8-length');
-
-const events = require('events');
 
 class EventEmitter {
     /**
@@ -109,7 +110,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.datasets),
+                datasets: JSON.parse(response.imports),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -140,10 +141,10 @@ class EventEmitter {
         });
 
         this._on('api-query-local-import', async (data) => {
-            const { import_id: importId } = data;
-            logger.info(`Get vertices trigered for import ID ${importId}`);
+            const { data_set_id: dataSetId } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -152,11 +153,12 @@ class EventEmitter {
                 }
 
                 const normalizedImport = ImportUtilities
-                    .normalizeImport(importId, result.vertices, result.edges);
+                    .normalizeImport(dataSetId, result.vertices, result.edges);
+
 
                 data.response.send(normalizedImport);
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -165,11 +167,26 @@ class EventEmitter {
             }
         });
 
+        this._on('api-consensus-events', async (data) => {
+            const { sender_id, response } = data;
+            try {
+                const events = await this.graphStorage.getConsensusEvents(sender_id);
+                data.response.send({
+                    events,
+                });
+            } catch (err) {
+                console.log(err);
+                response.status(400);
+                response.send({ message: 'Bad Request' });
+            }
+        });
+
         this._on('api-import-info', async (data) => {
             const { dataSetId } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
             try {
-                const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
                 if (!dataInfo) {
                     logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
@@ -189,10 +206,7 @@ class EventEmitter {
                     ImportUtilities.unpackKeys(result.vertices, result.edges);
                 }
 
-                const dataimport =
-                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
-
-                if (result.vertices.length === 0 || dataimport == null) {
+                if (result.vertices.length === 0) {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
@@ -203,17 +217,17 @@ class EventEmitter {
                             result.vertices,
                             result.edges,
                         ),
-                        root_hash: dataimport.root_hash,
-                        transaction_hash: dataimport.transaction_hash,
-                        data_provider_wallet: dataimport.data_provider_wallet,
+                        root_hash: dataInfo.root_hash,
+                        transaction: dataInfo.transaction_hash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
                     });
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for data set ID ${dataSetId}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: error.toString(),
                 });
             }
         });
@@ -391,7 +405,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id, true);
 
                     response.status(200);
                     response.send({
@@ -490,20 +504,21 @@ class EventEmitter {
         };
 
         this._on('api-offer-status', async (data) => {
-            const { external_id } = data;
-            logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await Models.offers.findOne({ where: { external_id } });
+            const { replicationId } = data;
+            logger.info(`Offer status for internal ID ${replicationId} triggered.`);
+            const offer = await Models.offers.findOne({ where: { id: replicationId } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
                     status: offer.status,
                     message: offer.message,
+                    offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for external ID ${external_id}`);
+                logger.error(`There is no offer for interanl ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
-                    message: 'Offer not found',
+                    message: 'Replication not found',
                 });
             }
         });
@@ -535,7 +550,11 @@ class EventEmitter {
                     where: { data_set_id: dataSetId },
                 });
                 if (dataset == null) {
-                    throw new Error('This data set does not exist in the database');
+                    data.response.status(404);
+                    data.response.send({
+                        message: 'This data set does not exist in the database',
+                    });
+                    return;
                 }
 
                 if (dataSizeInBytes == null) {
@@ -546,14 +565,15 @@ class EventEmitter {
                     dataRootHash = dataset.root_hash;
                 }
 
-                const offerId = await dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
                     dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
-                    offer_id: offerId,
+                    replication_id: replicationId,
+                    data_set_id: dataSetId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
@@ -602,17 +622,17 @@ class EventEmitter {
         });
 
         this._on('api-deposit-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
+                logger.info(`Deposit ${trac_amount} TRAC to profile triggered`);
 
-                await profileService.depositTokens(atrac_amount);
-                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
+                await profileService.depositTokens(trac_amount);
+                remoteControl.tokenDepositSucceeded(`${trac_amount} TRAC deposited to your profile`);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
+                    message: `Successfully deposited ${trac_amount} TRAC to profile`,
                 });
             } catch (error) {
                 logger.error(`Failed to deposit tokens. ${error}.`);
@@ -626,20 +646,20 @@ class EventEmitter {
         });
 
         this._on('api-withdraw-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+                logger.info(`Withdraw ${trac_amount} TRAC to wallet triggered`);
 
-                await profileService.withdrawTokens(atrac_amount);
+                await profileService.withdrawTokens(trac_amount);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Withdraw operation started for amount ${atrac_amount}.`,
+                    message: `Withdraw operation started for amount ${trac_amount}.`,
                 });
                 // TODO notify Houston
                 // remoteControl.tokensWithdrawSucceeded
-                // (`Successfully withdrawn ${atrac_amount} ATRAC`);
+                // (`Successfully withdrawn ${trac_amount} TRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 notifyError(error);
