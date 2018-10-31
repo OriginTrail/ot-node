@@ -699,8 +699,8 @@ class OTNode {
                 return;
             }
 
-            const externalId = req.params.replication_id;
-            if (externalId == null) {
+            const replicationId = req.params.replication_id;
+            if (replicationId == null) {
                 log.error('Invalid request. You need to provide replication ID');
                 res.status = 400;
                 res.send({
@@ -708,7 +708,7 @@ class OTNode {
                 });
             } else {
                 const queryObject = {
-                    external_id: externalId,
+                    replicationId,
                     response: res,
                 };
                 emitter.emit('api-offer-status', queryObject);

@@ -490,20 +490,21 @@ class EventEmitter {
         };
 
         this._on('api-offer-status', async (data) => {
-            const { external_id } = data;
-            logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await Models.offers.findOne({ where: { external_id } });
+            const { replicationId } = data;
+            logger.info(`Offer status for internal ID ${replicationId} triggered.`);
+            const offer = await Models.offers.findOne({ where: { id: replicationId } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
                     status: offer.status,
                     message: offer.message,
+                    offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for external ID ${external_id}`);
+                logger.error(`There is no offer for interanl ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
-                    message: 'Offer not found',
+                    message: 'Replication not found',
                 });
             }
         });
@@ -550,14 +551,15 @@ class EventEmitter {
                     dataRootHash = dataset.root_hash;
                 }
 
-                const offerId = await dcService.createOffer(
+                const replicationId = await dcService.createOffer(
                     dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
                     dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
-                    offer_id: offerId,
+                    replication_id: replicationId,
+                    data_set_id: dataSetId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
