@@ -49,6 +49,7 @@ contract Approval is Ownable{
 
 	function identityHasApproval(address identity)
     public view returns(bool) {
+        if(allNodes.length == 0) return true;
         return identityApproved[identity];
     }
 
