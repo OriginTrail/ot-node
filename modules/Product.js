@@ -183,7 +183,6 @@ class Product {
     getTrailByQuery(queryObject) {
         return new Promise((resolve, reject) => {
             this.getTrail(queryObject).then((res) => {
-                console.log('ovde');
                 resolve(res);
             }).catch((err) => {
                 reject(err);
