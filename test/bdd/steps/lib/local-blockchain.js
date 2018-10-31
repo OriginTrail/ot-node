@@ -119,6 +119,7 @@ class LocalBlockchain {
                 this.compileContracts();
                 await this.deployContracts();
                 assert(this.hubContractAddress !== '0x0000000000000000000000000000000000000000');
+                assert(this.approvalContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.profileStorageContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.holdingStorageContractAddress !== '0x0000000000000000000000000000000000000000');
                 assert(this.tokenContractAddress !== '0x0000000000000000000000000000000000000000');
@@ -132,6 +133,7 @@ class LocalBlockchain {
 
     compileContracts() {
         const hubSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Hub.sol'), 'utf8');
+        const approvalSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Approval.sol'), 'utf8');
         const profileStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ProfileStorage.sol'), 'utf8');
         const holdingStorageSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/HoldingStorage.sol'), 'utf8');
         const tokenSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/TracToken.sol'), 'utf8');
@@ -154,6 +156,10 @@ class LocalBlockchain {
                 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
             },
         }, 1);
+
+        this.approvalContractData = `0x${compileResult.contracts['Approval.sol:Approval'].bytecode}`;
+        this.approvalContractAbi = JSON.parse(compileResult.contracts['Approval.sol:Approval'].interface);
+        this.approvalContract = new this.web3.eth.Contract(this.approvalContractAbi);
 
         this.profileStorageContractData = `0x${compileResult.contracts['ProfileStorage.sol:ProfileStorage'].bytecode}`;
         this.profileStorageContractAbi = JSON.parse(compileResult.contracts['ProfileStorage.sol:ProfileStorage'].interface);
@@ -187,6 +193,16 @@ class LocalBlockchain {
             this.web3, this.hubContract, this.hubContractData,
             [], accounts[7],
         );
+        this.logger.log('Deploying ApprovalContract');
+        [this.approvalDeploymentReceipt, this.approvalInstance] = await this.deployContract(
+            this.web3, this.approvalContract, this.approvalContractData,
+            [], accounts[7],
+        );
+
+        await this.hubInstance.methods.setApprovalAddress(this.profileStorageInstance._address)
+            .send({ from: accounts[7], gas: 3000000 })
+            .on('error', console.error);
+
         this.logger.log('Deploying profileStorageContract');
         [this.profileStorageDeploymentReceipt, this.profileStorageInstance] = await this.deployContract(
             this.web3, this.profileStorageContract, this.profileStorageContractData,
