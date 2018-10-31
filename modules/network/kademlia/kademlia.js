@@ -516,13 +516,15 @@ class Kademlia {
                             this.node.ping(peerContactArray, (error) => {
                                 if (error) {
                                     this.log.debug(`Contact ${contactId} not reachable: ${error}.`);
-                                    reject(Error(`Contact ${contactId} not reachable: ${error}.`));
+                                    accept(null);
                                     return;
                                 }
+                                this.log.debug(`Contact ${contactId} reachable at ${contact.hostname}:${contact.port}.`);
                                 accept(contact);
                             });
                         }).then((contact) => {
                             if (contact) {
+                                this.node.router.addContactByNodeId(contactId, contact);
                                 return contact;
                             }
                             return new Promise(async (accept, reject) => {
@@ -532,6 +534,10 @@ class Kademlia {
                                         await this.bootstrapFindContact(contactId);
                                     if (freshContact) {
                                         this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                                        this.node.router.addContactByNodeId(
+                                            contactId,
+                                            freshContact,
+                                        );
                                         accept(freshContact);
                                     } else {
                                         this.log.debug(`Bootstrap find failed for: ${contactId}.`);
@@ -553,17 +559,15 @@ class Kademlia {
                             await this.bootstrapFindContact(contactId);
                         if (freshContact) {
                             this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
+                            this.node.router.addContactByNodeId(contactId, freshContact);
+                            accept(freshContact);
                         } else {
                             this.log.debug(`Bootstrap find failed for: ${contactId}.`);
                             reject(Error(`Bootstrap find failed for: ${contactId}.`));
-                            return;
                         }
-                        accept(freshContact);
                     } catch (error) {
                         this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
                         reject(Error(`Failed to get contact: ${contactId}. Error: ${error}`));
-                        return;
-
                     }
                 });
             };
