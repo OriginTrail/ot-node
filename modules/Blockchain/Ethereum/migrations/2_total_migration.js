@@ -121,7 +121,7 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
-        console.log(`\t Approval contract address: \t\t\t${approval.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
@@ -170,7 +170,7 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
-        console.log(`\t Approval contract address: \t\t\t${approval.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
