@@ -21,8 +21,6 @@ var web3;
 
 var Ganache = require('ganache-core');
 
-var _ = require('lodash');
-
 // Helper variables
 var errored = true;
 var DC_identity;
@@ -46,13 +44,25 @@ const litigationIntervalInMinutes = new BN(10);
 var privateKeys = [];
 var identities = [];
 
+// Contracts used in test
+var trac;
+var profile;
+var holding;
+var holdingStorage;
+var profileStorage;
+var util;
+
 // eslint-disable-next-line no-undef
 contract('Offer testing', async (accounts) => {
     // eslint-disable-next-line no-undef
     before(async () => {
         // Get contracts used in hook
-        const trac = await TracToken.deployed();
-        const profile = await Profile.deployed();
+        trac = await TracToken.deployed();
+        profile = await Profile.deployed();
+        holding = await Holding.deployed();
+        holdingStorage = await HoldingStorage.deployed();
+        profileStorage = await ProfileStorage.deployed();
+        util = await TestingUtilities.deployed();
 
         privateKeys = [
             '0x02b39cac1532bef9dba3e36ec32d3de1e9a88f1dda597d3ac6e2130aed9adc4e',
@@ -106,10 +116,6 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should create an offer', async () => {
-        // Get instances of contracts used in the test
-        const holding = await Holding.deployed();
-        const holdingStorage = await HoldingStorage.deployed();
-
         let res = await holding.createOffer(
             DC_identity,
             dataSetId,
@@ -144,12 +150,6 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test finalizing offer', async () => {
-        // Get instances of contracts used in the test
-        const holding = await Holding.deployed();
-        const util = await TestingUtilities.deployed();
-        const holdingStorage = await HoldingStorage.deployed();
-        const profileStorage = await ProfileStorage.deployed();
-
         let res = await holding.createOffer(
             DC_identity,
             dataSetId,
@@ -263,12 +263,6 @@ contract('Offer testing', async (accounts) => {
 
     // eslint-disable-next-line no-undef
     it('Should test token transfers for holding', async () => {
-        // Get instances of contracts used in the test
-        const holding = await Holding.deployed();
-        const util = await TestingUtilities.deployed();
-        const holdingStorage = await HoldingStorage.deployed();
-        const profileStorage = await ProfileStorage.deployed();
-
         // wait for holding job to expire
         if (errored) assert(false, 'Test cannot run without previous test succeeding');
         await new Promise(resolve => setTimeout(resolve, 65000));
@@ -297,5 +291,48 @@ contract('Offer testing', async (accounts) => {
         res = await profileStorage.profile.call(DC_identity);
         assert(initialStakeDC.sub(tokenAmountPerHolder.mul(new BN(3))).eq(res.stake), 'Stake amount incorrect for DC');
         assert((new BN(0)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC');
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should test difficulty override', async () => {
+        let res = await holding.difficultyOverride.call();
+        assert(
+            res.isZero(),
+            `Initial difficulty ovverride incorrect, got ${res.toString()} instead of 0!`,
+        );
+
+        const difficultyToSet = new BN(100);
+        // Execute tested function
+        await holding.setDifficulty(difficultyToSet, { from: accounts[0] });
+
+        res = await holding.difficultyOverride.call();
+        assert(
+            difficultyToSet.eq(res),
+            `Initial difficulty ovverride incorrect, got ${res.toString()} instead of ${difficultyToSet.toString()}!`,
+        );
+
+        // Create offer to check difficulty to be written
+        res = await holding.createOffer(
+            DC_identity,
+            dataSetId,
+            dataRootHash,
+            redLitigationHash,
+            greenLitigationHash,
+            blueLitigationHash,
+            dcNodeId,
+            holdingTimeInMinutes,
+            tokenAmountPerHolder,
+            dataSetSizeInBytes,
+            litigationIntervalInMinutes,
+            { from: DC_wallet },
+        );
+        // eslint-disable-next-line prefer-destructuring
+        offerId = res.logs[0].args.offerId;
+        res = await holdingStorage.offer.call(offerId);
+
+        assert(
+            difficultyToSet.eq(res.difficulty),
+            `Written difficulty ovverride incorrect, got ${res.difficulty.toString()} instead of ${difficultyToSet.toString()}!`,
+        );
     });
 });

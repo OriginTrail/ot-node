@@ -16,7 +16,7 @@ var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
 
-const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(25)));
+const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
 
 module.exports = async (deployer, network, accounts) => {
     let hub;
