@@ -153,7 +153,7 @@ class LocalBlockchain {
 
         compileResult = solc.compile({
             sources: {
-                'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
+                'Approval.sol': approvalSource, 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
             },
         }, 1);
 
@@ -199,7 +199,7 @@ class LocalBlockchain {
             [], accounts[7],
         );
 
-        await this.hubInstance.methods.setApprovalAddress(this.profileStorageInstance._address)
+        await this.hubInstance.methods.setApprovalAddress(this.approvalInstance._address)
             .send({ from: accounts[7], gas: 3000000 })
             .on('error', console.error);
 
@@ -314,6 +314,10 @@ class LocalBlockchain {
 
     get hubContractAddress() {
         return this.hubInstance._address;
+    }
+
+    get approvalContractAddress() {
+        return this.approvalInstance._address;
     }
 
     get profileStorageContractAddress() {
