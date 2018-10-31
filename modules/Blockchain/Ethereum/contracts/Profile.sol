@@ -53,13 +53,17 @@ contract Profile {
 
             profileStorage.setStake(address(newIdentity), initialBalance);
             profileStorage.setNodeId(address(newIdentity), profileNodeId);
+
+            emit ProfileCreated(address(newIdentity), initialBalance);
         }
         else {
             // Verify sender
             require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
-            
+
             profileStorage.setStake(identity, initialBalance);
             profileStorage.setNodeId(identity, profileNodeId);
+
+            emit ProfileCreated(identity, initialBalance);
         }
 
         if(initialBalance > minimalStake) {
