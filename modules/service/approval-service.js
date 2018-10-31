@@ -20,15 +20,10 @@ class ApprovalService {
      */
     async initialize() {
         const allNodes = await this.blockchain.getAddedNodes();
+        const nodeApproved = await this.blockchain.getNodeStatuses();
         var approvedNodes = [];
 
-        var promises = [];
-        for (var i = allNodes.length - 1; i >= 0; i -= 1) {
-            promises[i] = this.blockchain.nodeHasApproval(allNodes[i]);
-        }
-        const nodeApproved = await Promise.all(promises);
-
-        for (i = 0; i < allNodes.length; i += 1) {
+        for (var i = 0; i < allNodes.length; i += 1) {
             if (nodeApproved[i] === true) {
                 allNodes[i] = allNodes[i].toLowerCase();
                 allNodes[i] = Utilities.normalizeHex(allNodes[i]);
@@ -87,6 +82,9 @@ class ApprovalService {
     }
 
     isApproved(nodeId) {
+        if (this.approvedNodes.length === 0) {
+            return true;
+        }
         nodeId = nodeId.toLowerCase();
         nodeId = Utilities.normalizeHex(nodeId);
         if (nodeId.length > 42) {

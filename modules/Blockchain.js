@@ -396,6 +396,13 @@ class Blockchain {
     }
 
     /**
+     * Get the statuses of all nodes which were added in the approval array
+     */
+    async getNodeStatuses() {
+        return this.blockchain.getNodeStatuses();
+    }
+
+    /**
      * Check if a specific node still has approval
      * @param nodeId
      */

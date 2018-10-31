@@ -951,6 +951,14 @@ class Ethereum {
     }
 
     /**
+     * Get the statuses of all nodes which were added in the approval array
+     */
+    async getNodeStatuses() {
+        this.log.trace('getNodeStatuses()');
+        return this.approvalContract.methods.getNodeStatuses().call();
+    }
+
+    /**
      * Check if a specific node still has approval
      * @param nodeId
      */
