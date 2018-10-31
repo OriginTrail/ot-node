@@ -36,6 +36,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
+                password: '',
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
@@ -221,7 +222,7 @@ Given(/^I initiate the replication$/, async function () {
     const { dc } = this.state;
     const response = await httpApiHelper.apiReplication(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-    if (!response.offer_id) {
+    if (!response.replication_id) {
         throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
     }
 
