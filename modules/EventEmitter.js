@@ -141,10 +141,10 @@ class EventEmitter {
         });
 
         this._on('api-query-local-import', async (data) => {
-            const { import_id: importId } = data;
-            logger.info(`Get vertices trigered for import ID ${importId}`);
+            const { data_set_id: dataSetId } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(importId, false);
+                const result = await dhService.getImport(dataSetId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -153,12 +153,12 @@ class EventEmitter {
                 }
 
                 const normalizedImport = ImportUtilities
-                    .normalizeImport(importId, result.vertices, result.edges);
+                    .normalizeImport(dataSetId, result.vertices, result.edges);
 
 
                 data.response.send(normalizedImport);
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -183,10 +183,6 @@ class EventEmitter {
                     return;
                 }
 
-                // Check if data came from replication.
-                const holdingData =
-                    await Models.holding_data.findOne({ where: { data_set_id: dataSetId } });
-
                 const result = await dhService.getImport(dataSetId);
 
                 // Check if packed to fix issue with double classes.
@@ -201,51 +197,23 @@ class EventEmitter {
                     data.response.send(result);
                 } else {
                     data.response.status(200);
-                    if (!holdingData) {
-                        // Local import
-                        data.response.send({
-                            import: ImportUtilities.normalizeImport(
-                                dataSetId,
-                                result.vertices,
-                                result.edges,
-                            ),
-                            root_hash: dataInfo.root_hash,
-                            transaction: dataInfo.transaction_hash,
-                            data_provider_wallet: dataInfo.data_provider_wallet,
-                        });
-                    } else {
-                        // Replicated import.
-                        const importNormalized = ImportUtilities.normalizeImport(
+                    data.response.send({
+                        import: ImportUtilities.normalizeImport(
                             dataSetId,
                             result.vertices,
                             result.edges,
-                        );
-
-                        Graph.decryptVertices(
-                            importNormalized.vertices,
-                            holdingData.litigation_public_key,
-                        );
-
-                        const merkle = await ImportUtilities.merkleStructure(
-                            importNormalized.vertices.filter(vertex =>
-                                vertex.vertex_type !== 'CLASS'),
-                            importNormalized.edges,
-                        );
-
-                        data.response.send({
-                            import: importNormalized,
-                            root_hash: merkle.tree.getRoot(),
-                            transaction: dataInfo.transaction_hash,
-                            data_provider_wallet: dataInfo.data_provider_wallet,
-                        });
-                    }
+                        ),
+                        root_hash: dataInfo.root_hash,
+                        transaction: dataInfo.transaction_hash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
+                    });
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: error.toString(),
                 });
             }
         });

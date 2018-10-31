@@ -377,6 +377,14 @@ class Blockchain {
     async getBalances() {
         return this.blockchain.getBalances();
     }
+
+    /**
+     * Token contract address getter
+     * @return {any|*}
+     */
+    getTokenContractAddress() {
+        return this.blockchain.getTokenContractAddress();
+    }
 }
 
 module.exports = Blockchain;

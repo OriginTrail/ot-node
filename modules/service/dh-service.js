@@ -810,52 +810,42 @@ class DHService {
      * Returns given import's vertices and edges and decrypt them if needed.
      *
      * Method will return object in following format { vertices: [], edges: [] }.
-     * @param importId ID of import.
+     * @param dataSetId ID of data-set.
      * @returns {Promise<*>}
      */
-    async getImport(importId, encrypted) {
+    async getImport(dataSetId) {
         // Check if import came from DH replication or reading replication.
-        const holdingData = await Models.holding_data.find({ where: { id: importId } });
+        const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
 
         if (holdingData) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, true);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, true);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 
             const encodedVertices = values[0];
             const edges = values[1];
-            const decryptKey = holdingData.data_public_key;
+            const decryptKey = holdingData.litigation_public_key;
             const vertices = [];
 
-            encodedVertices.forEach((encodedVertex) => {
-                const decryptedVertex = Utilities.copyObject(encodedVertex);
-                if (decryptedVertex.vertex_type !== 'CLASS') {
-                    decryptedVertex.data =
-                        Encryption.decryptObject(
-                            encodedVertex.data,
-                            decryptKey,
-                        );
-                }
-                vertices.push(decryptedVertex);
-            });
+            Graph.decryptVertices(encodedVertices, decryptKey);
 
-            return { vertices, edges };
+            return { vertices: encodedVertices, edges };
         }
 
         // Check if import came from DC side.
-        const dataInfo = await Models.data_info.find({ where: { data_set_id: importId } });
+        const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
         if (dataInfo) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, false);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, false);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
 
             return { vertices: values[0], edges: values[1] };
         }
 
-        throw Error(`Cannot find import for import ID ${importId}.`);
+        throw Error(`Cannot find import for data-set ID ${dataSetId}.`);
     }
 
     async listenToBlockchainEvents() {
