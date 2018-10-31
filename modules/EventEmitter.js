@@ -110,7 +110,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.datasets),
+                datasets: JSON.parse(response.imports),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -144,7 +144,7 @@ class EventEmitter {
             const { import_id: importId } = data;
             logger.info(`Get vertices trigered for import ID ${importId}`);
             try {
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(importId, false);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -154,6 +154,7 @@ class EventEmitter {
 
                 const normalizedImport = ImportUtilities
                     .normalizeImport(importId, result.vertices, result.edges);
+
 
                 data.response.send(normalizedImport);
             } catch (error) {
@@ -422,7 +423,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id, true);
 
                     response.status(200);
                     response.send({
@@ -566,7 +567,11 @@ class EventEmitter {
                     where: { data_set_id: dataSetId },
                 });
                 if (dataset == null) {
-                    throw new Error('This data set does not exist in the database');
+                    data.response.status(404);
+                    data.response.send({
+                        message: 'This data set does not exist in the database',
+                    });
+                    return;
                 }
 
                 if (dataSizeInBytes == null) {

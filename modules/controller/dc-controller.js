@@ -32,7 +32,12 @@ class DCController {
                 where: { data_set_id: req.body.data_set_id },
             });
             if (dataset == null) {
-                throw new Error('This data set does not exist in the database');
+                this.logger.info('Invalid request');
+                res.status(404);
+                res.send({
+                    message: 'This data set does not exist in the database',
+                });
+                return;
             }
 
             const queryObject = {
