@@ -40,6 +40,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
+const ApprovalService = require('./modules/service/approval-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
@@ -302,9 +303,12 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState });
+            await this.startBootstrapNode({ appState }, web3);
             this.startRPC();
             return;
         }
@@ -332,10 +336,6 @@ class OTNode {
             process.exit(1);
         }
 
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
-
-
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -359,6 +359,7 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
@@ -388,6 +389,8 @@ class OTNode {
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
 
         emitter.initialize();
 
@@ -476,13 +479,17 @@ class OTNode {
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }) {
+    async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
         container.register({
             emitter: awilix.asValue({}),
+            web3: awilix.asValue(web3),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
@@ -496,6 +503,20 @@ class OTNode {
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
+
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
+
+        this.listenBlockchainEvents(blockchain);
+        blockchain.subscribeToEventPermanentWithCallback([
+            'NodeApproved',
+            'NodeRemoved',
+        ], (eventData) => {
+            approvalService.handleApprovalEvent(eventData);
+        });
     }
 
     /**
@@ -513,6 +534,7 @@ class OTNode {
                 working = true;
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
