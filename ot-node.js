@@ -302,9 +302,12 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState });
+            await this.startBootstrapNode({ appState }, web3);
             this.startRPC();
             return;
         }
@@ -331,10 +334,6 @@ class OTNode {
             notifyBugsnag(err);
             process.exit(1);
         }
-
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
-
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
@@ -476,13 +475,16 @@ class OTNode {
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }) {
+    async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
         container.register({
             emitter: awilix.asValue({}),
+            web3: awilix.asValue(web3),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
@@ -495,6 +497,20 @@ class OTNode {
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
+
+        this.listenBlockchainEvents(blockchain);
+        blockchain.subscribeToEventPermanentWithCallback([
+            'NodeApproved',
+            'NodeRemoved',
+        ], (eventData) => {
+            approvalService.handleApprovalEvent(eventData);
+        });
     }
 
     /**
@@ -512,6 +528,7 @@ class OTNode {
                 working = true;
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
