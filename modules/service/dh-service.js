@@ -865,6 +865,7 @@ class DHService {
             'LitigationCompleted',
             'EscrowVerified',
             'NodeApproved',
+            'NodeRemoved',
         ]);
     }
 }
