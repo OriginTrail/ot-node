@@ -622,17 +622,17 @@ class EventEmitter {
         });
 
         this._on('api-deposit-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
+                logger.info(`Deposit ${trac_amount} TRAC to profile triggered`);
 
-                await profileService.depositTokens(atrac_amount);
-                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
+                await profileService.depositTokens(trac_amount);
+                remoteControl.tokenDepositSucceeded(`${trac_amount} TRAC deposited to your profile`);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
+                    message: `Successfully deposited ${trac_amount} TRAC to profile`,
                 });
             } catch (error) {
                 logger.error(`Failed to deposit tokens. ${error}.`);
@@ -646,20 +646,20 @@ class EventEmitter {
         });
 
         this._on('api-withdraw-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+                logger.info(`Withdraw ${trac_amount} TRAC to wallet triggered`);
 
-                await profileService.withdrawTokens(atrac_amount);
+                await profileService.withdrawTokens(trac_amount);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Withdraw operation started for amount ${atrac_amount}.`,
+                    message: `Withdraw operation started for amount ${trac_amount}.`,
                 });
                 // TODO notify Houston
                 // remoteControl.tokensWithdrawSucceeded
-                // (`Successfully withdrawn ${atrac_amount} ATRAC`);
+                // (`Successfully withdrawn ${trac_amount} TRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 notifyError(error);

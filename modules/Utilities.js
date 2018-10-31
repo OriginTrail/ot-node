@@ -435,13 +435,13 @@ class Utilities {
     }
 
     /**
-     * Get wallet's ATRAC token balance in Ether
+     * Get wallet's TRAC token balance in Ether
      * @param web3 Instance of Web3
      * @param wallet Address of the wallet.
      * @param tokenContractAddress Contract address.
      * @returns {Promise<string |  | Object>}
      */
-    static async getAlphaTracTokenBalance(web3, wallet, tokenContractAddress) {
+    static async getTracTokenBalance(web3, wallet, tokenContractAddress) {
         const walletDenormalized = this.denormalizeHex(wallet);
         // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
         const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);

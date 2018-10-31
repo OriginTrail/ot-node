@@ -337,7 +337,7 @@ class RemoteControl {
      * @param wallet
      */
     getBalance() {
-        Utilities.getAlphaTracTokenBalance(
+        Utilities.getTracTokenBalance(
             this.web3, this.config.node_wallet,
             this.config.blockchain.token_contract_address,
         ).then((trac) => {

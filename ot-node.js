@@ -876,11 +876,11 @@ class OTNode {
         server.post('/api/deposit', (req, res) => {
             log.api('POST: Deposit tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-deposit-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -893,11 +893,11 @@ class OTNode {
         server.post('/api/withdraw', (req, res) => {
             log.api('POST: Withdraw tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-withdraw-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
