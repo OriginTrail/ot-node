@@ -40,6 +40,7 @@ contract Ownable {
 
 contract Approval is Ownable{
     bytes20[] public allNodes;
+    bool[] public hasApproval;
     mapping (bytes20 => bool) public nodeApproved;
 	mapping (address => bool) public identityApproved;
 
@@ -59,25 +60,39 @@ contract Approval is Ownable{
     function getAllNodes() public view returns(bytes20[]){
         return allNodes;
     }
+
+    function getNodeStatuses() public view returns(bool[]){
+        return hasApproval;
+    }
     
-    function approve(address identity, bytes20 nodeId) 
+    function approve(address identity, bytes20 nodeId, uint256 nodeIndex) 
     public onlyOwner {
         if(identity != address(0)) identityApproved[identity] = true;
+
         if(nodeId != bytes20(0)) {
-            allNodes.push(nodeId);
-            nodeApproved[nodeId] = true;
-            emit NodeApproved(nodeId);
+            if(nodeIndex < allNodes.length && allNodes[nodeIndex] == nodeId && !hasApproval[nodeIndex]) {
+                hasApproval[nodeIndex] = true;
+            }
+            else {
+                allNodes.push(nodeId);
+                hasApproval.push(true);
+                nodeApproved[nodeId] = true;
+                emit NodeApproved(nodeId);
+            }
         }
     }
 
-    function removeApproval(address identity, bytes20 nodeId) 
+    function removeApproval(address identity, bytes20 nodeId, uint256 nodeIndex) 
     public onlyOwner {
         if(identity != address(0) && identityApproved[identity]){
             identityApproved[identity] = false;
         }
         if(nodeId != bytes20(0) && nodeApproved[nodeId]){
-            nodeApproved[nodeId] = false;
-            emit NodeRemoved(nodeId);
+            if(allNodes[nodeIndex] == nodeId && hasApproval[nodeIndex]) {
+                hasApproval[nodeIndex] = false;
+                nodeApproved[nodeId] = false;
+                emit NodeRemoved(nodeId);
+            }
         }
     }
 
