@@ -3,6 +3,25 @@
 		"constant": true,
 		"inputs": [
 			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "hasApproval",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
 				"name": "nodeId",
 				"type": "bytes20"
 			}
@@ -16,24 +35,6 @@
 		],
 		"payable": false,
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "identity",
-				"type": "address"
-			},
-			{
-				"name": "nodeId",
-				"type": "bytes20"
-			}
-		],
-		"name": "approve",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -65,12 +66,52 @@
 			{
 				"name": "nodeId",
 				"type": "bytes20"
+			},
+			{
+				"name": "nodeIndex",
+				"type": "uint256"
 			}
 		],
 		"name": "removeApproval",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "nodeId",
+				"type": "bytes20"
+			},
+			{
+				"name": "nodeIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "approve",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "getNodeStatuses",
+		"outputs": [
+			{
+				"name": "",
+				"type": "bool[]"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
