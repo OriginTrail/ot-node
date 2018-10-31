@@ -95,6 +95,20 @@ class ApprovalService {
         }
         return (this.approvedNodes.indexOf(nodeId) !== -1);
     }
+
+    handleApprovalEvent(eventData) {
+        const {
+            nodeId,
+        } = eventData.value;
+
+        if (eventData.name === 'eth-NodeApproved') {
+            this.addApprovedNode(nodeId);
+        } else if (eventData.name === 'eth-NodeRemoved') {
+            this.removeApprovedNode(nodeId);
+        } else {
+            this.logger.warn('Caught event without specified callback');
+        }
+    }
 }
 
 module.exports = ApprovalService;
