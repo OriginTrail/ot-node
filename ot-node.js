@@ -815,10 +815,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/local/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:data_set_id', (req, res) => {
             log.api('GET: Local import request received.');
 
-            if (!req.params.import_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -827,7 +827,7 @@ class OTNode {
             }
 
             emitter.emit('api-query-local-import', {
-                import_id: req.params.import_id,
+                data_set_id: req.params.data_set_id,
                 request: req,
                 response: res,
             });
