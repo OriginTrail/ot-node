@@ -488,6 +488,7 @@ class OTNode {
             emitter: awilix.asValue({}),
             web3: awilix.asValue(web3),
             blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
