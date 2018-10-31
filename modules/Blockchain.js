@@ -68,7 +68,10 @@ class Blockchain {
      * @return {Promise<any>}
      */
     createProfile(profileNodeId, initialBalance, isSender725, blockchainIdentity) {
-        return this.blockchain.createProfile(profileNodeId, initialBalance, isSender725);
+        return this.blockchain.createProfile(
+            profileNodeId, initialBalance, isSender725,
+            blockchainIdentity,
+        );
     }
 
     /**

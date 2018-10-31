@@ -940,6 +940,20 @@ class OTNode {
             });
         });
 
+        server.get('/api/consensus/:sender_id', (req, res) => {
+            log.api('GET: List imports request received.');
+
+            if (req.params.sender_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+
+            emitter.emit('api-consensus-events', {
+                sender_id: req.params.sender_id,
+                response: res,
+            });
+        });
+
         /**
          * Temporary route used for HTTP network prototype
          */

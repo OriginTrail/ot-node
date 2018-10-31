@@ -3,6 +3,7 @@ const Transactions = require('./Transactions');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models');
 const Op = require('sequelize/lib/operators');
+const uuidv4 = require('uuid/v4');
 
 class Ethereum {
     /**
@@ -538,7 +539,7 @@ class Ethereum {
                 }
                 /* eslint-disable-next-line */
                 await Models.events.create({
-                    id: event.id,
+                    id: uuidv4(),
                     contract: contractName,
                     event: event.event,
                     data: JSON.stringify(event.returnValues),

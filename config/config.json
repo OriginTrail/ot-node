@@ -59,7 +59,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
+      "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -359,7 +359,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
+      "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [

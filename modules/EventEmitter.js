@@ -167,6 +167,20 @@ class EventEmitter {
             }
         });
 
+        this._on('api-consensus-events', async (data) => {
+            const { sender_id, response } = data;
+            try {
+                const events = await this.graphStorage.getConsensusEvents(sender_id);
+                data.response.send({
+                    events,
+                });
+            } catch (err) {
+                console.log(err);
+                response.status(400);
+                response.send({ message: 'Bad Request' });
+            }
+        });
+
         this._on('api-import-info', async (data) => {
             const { dataSetId } = data;
             logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
