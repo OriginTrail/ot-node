@@ -3,6 +3,7 @@ const bytes = require('utf8-length');
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
+const Graph = require('../../Graph');
 
 /**
  * Handles data read response for free.
@@ -83,6 +84,10 @@ class DVDataReadResponseFreeCommand extends Command {
             throw errorMessage;
         }
 
+
+        ImportUtilities.sort(vertices);
+        ImportUtilities.sort(edges);
+
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
         const rootHash = merkle.tree.getRoot();
@@ -96,6 +101,12 @@ class DVDataReadResponseFreeCommand extends Command {
         }
 
         try {
+            await this.importer.importJSON({
+                vertices: message.data.vertices,
+                edges: message.data.edges,
+                dataSetId,
+                wallet: dcWallet,
+            }, false);
             await this.importer.importJSON({
                 vertices: message.data.vertices,
                 edges: message.data.edges,

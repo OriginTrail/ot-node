@@ -58,7 +58,7 @@ class Product {
 
             const dlQuery = this.convertToDataLocationQuery(queryObject);
 
-            this.graphStorage.dataLocationQuery(dlQuery).then(async (response) => {
+            this.graphStorage.dataLocationQuery(dlQuery, false).then(async (response) => {
                 if (response[0].objects.length === 0) {
                     resolve([]);
                     return;

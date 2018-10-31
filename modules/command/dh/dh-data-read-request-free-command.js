@@ -59,8 +59,8 @@ class DHDataReadRequestFreeCommand extends Command {
             // eslint-disable-next-line
             const importId = data_set_id;
 
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, true);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, true);
 
             const values = await Promise.all([verticesPromise, edgesPromise]);
             const vertices = values[0];

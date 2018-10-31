@@ -2,6 +2,7 @@
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');
+const graphConverter = require('./Database/graph-converter');
 
 class Importer {
     constructor(ctx) {
@@ -11,6 +12,7 @@ class Importer {
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.helper = ctx.gs1Utilities;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -107,13 +109,64 @@ class Importer {
             return edge;
         }));
 
+        const denormalizedVertices = graphConverter.denormalizeGraph(
+            dataSetId,
+            vertices,
+            edges,
+        ).vertices;
+
         // TODO: Use transaction here.
-        await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
+        await Promise.all(denormalizedVertices.map(vertex => this.graphStorage.addVertex(vertex))
             .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
         await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
             .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
 
         this.log.info('JSON import complete');
+
+        if (!packKeys) {
+            vertices.forEach(async (vertex) => {
+                if (vertex.vertex_type === 'EVENT') {
+                    if (vertex.data && vertex.data.categories.indexOf('Ownership') !== -1) {
+                        let sender = '';
+                        if (this.helper.ignorePattern(vertex.data.bizStep, 'urn:epcglobal:cbv:bizstep:') === 'shipping') {
+                            sender = true;
+                        } else {
+                            sender = false;
+                        }
+
+                        let step = '';
+                        if (sender) {
+                            step = 'receiving';
+                        } else {
+                            step = 'shipping';
+                        }
+                        // eslint-disable-next-line
+                        const connectingEventVertices = await this.graphStorage.findEvent(
+                            vertex.sender_id,
+                            vertex.data.partner_id,
+                            vertex.data.extension.extension.documentId,
+                            step,
+                        );
+                        if (connectingEventVertices.length > 0) {
+                            await this.graphStorage.addEdge({
+                                _key: this.helper.createKey('event_connection', vertex.sender_id, connectingEventVertices[0]._key, vertex._key),
+                                _from: `${connectingEventVertices[0]._key}`,
+                                _to: `${vertex._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                            await this.graphStorage.addEdge({
+                                _key: this.helper.createKey('event_connection', vertex.sender_id, vertex._key, connectingEventVertices[0]._key),
+                                _from: `${vertex._key}`,
+                                _to: `${connectingEventVertices[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                        }
+                    }
+                }
+            });
+        }
 
         return {
             vertices,

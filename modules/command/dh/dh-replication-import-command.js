@@ -95,6 +95,13 @@ class DhReplicationImportCommand extends Command {
         const calculatedDistPublicKey = Encryption.unpackEPK(distributionEpk);
         ImportUtilities.immutableDecryptVertices(distEncVertices, calculatedDistPublicKey);
 
+        await this.importer.importJSON({
+            dataSetId,
+            vertices: decryptedVertices,
+            edges,
+            wallet: dcWallet,
+        }, false);
+
         let importResult = await this.importer.importJSON({
             dataSetId,
             vertices: litigationVertices,
