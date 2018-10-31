@@ -263,7 +263,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     expect(dc.state.replications.length, 'Not every node replicated data.').to.equal(this.state.nodes.length - 1);
 
     // Get offer ID for last import.
-    const lastOfferId = dc.state.offers.internalIDs[this.state.lastReplication.offer_id].offerId;
+    const lastOfferId = dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
