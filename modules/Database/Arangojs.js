@@ -171,6 +171,49 @@ class ArangoJS {
         return [];
     }
 
+    async getConsensusEvents(sender_id) {
+        const query = `FOR v IN ot_vertices
+                       FILTER v.vertex_type == 'EVENT'
+                       AND v.sender_id == @sender_id
+                       AND v.encrypted != true
+                       RETURN v`;
+
+        const res = await this.runQuery(query, {
+            sender_id,
+        });
+
+        const ownershipEvents = [];
+
+        for (const event of res) {
+            for (const key in event) {
+                if (event[key].data) {
+                    if (event[key].data.categories.indexOf('Ownership')) {
+                        ownershipEvents.push({ side1: event });
+                    }
+                }
+            }
+        }
+
+        const promises = [];
+
+        for (const event of ownershipEvents) {
+            const query = `FOR v, e IN 1..1 OUTBOUND @senderEventKey ot_edges
+            FILTER e.edge_type == 'EVENT_CONNECTION'
+            RETURN v`;
+            promises.push(this.runQuery(query, { senderEventKey: `ot_vertices/${event.side1._key}` }));
+        }
+
+        const side2Vertices = await Promise.all(promises);
+
+        for (const i in side2Vertices) {
+            const side2Vertex = side2Vertices[i][0];
+            ownershipEvents[i].side2 = side2Vertex;
+        }
+
+        return ownershipEvents;
+    }
+
+
     /**
      * Finds vertices by query defined in DataLocationRequestObject
      * @param inputQuery
