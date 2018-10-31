@@ -674,25 +674,25 @@ class EventEmitter {
             notifyError,
         } = this.ctx;
 
-        this._on('eth-NodeApproved', async (eventData) => {
+        this._on('eth-NodeApproved', (eventData) => {
             const {
-                approvedNodeId,
+                nodeId,
             } = eventData;
 
             try {
-                await approvalService.addApprovedNode(approvedNodeId);
+                approvalService.addApprovedNode(nodeId);
             } catch (e) {
                 logger.warn(e.message);
             }
         });
 
-        this._on('eth-NodeRemoved', async (eventData) => {
+        this._on('eth-NodeRemoved', (eventData) => {
             const {
-                removedNodeId,
+                nodeId,
             } = eventData;
 
             try {
-                await approvalService.removeApprovedNode(removedNodeId);
+                approvalService.removeApprovedNode(nodeId);
             } catch (e) {
                 logger.warn(e.message);
             }
