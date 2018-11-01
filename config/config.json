@@ -130,7 +130,6 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
-    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
