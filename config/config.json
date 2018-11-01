@@ -376,7 +376,7 @@
     },
     "network": {
       "id": "PirotV1.0.0",
-      "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
+      "bootstraps": ["https://46.101.38.216:5278/#941d1226cef9e4b52531113944a0a692508614d2"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 12
