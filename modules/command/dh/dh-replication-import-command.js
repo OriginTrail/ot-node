@@ -88,7 +88,7 @@ class DhReplicationImportCommand extends Command {
             Utilities.denormalizeHex(distributionRootHash),
         ];
         const senderAddress = Encryption.extractSignerAddress(toCheck, distributionSignature);
-        if (senderAddress.toUpperCase() !== dcWallet.toUpperCase()) {
+        if (!Utilities.compareHexStrings(senderAddress, dcWallet)) {
             throw new Error(`Failed to validate DC ${dcWallet} signature for offer ${offerId}`);
         }
 
