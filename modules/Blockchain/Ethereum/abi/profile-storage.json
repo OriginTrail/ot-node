@@ -392,6 +392,20 @@
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newHubAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setHubAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "name": "hubAddress",
