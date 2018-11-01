@@ -28,7 +28,7 @@ class PayOutCommand extends Command {
             where: { offer_id: offerId },
         });
         if (bid) {
-            this.logger.important(`There is no bid for offer ${offerId}. Cannot execute pay out.`);
+            this.logger.important(`There is no bid for offer ${offerId}. Cannot execute payout.`);
             return;
         }
         await this.blockchain.payOut(Utilities.normalizeHex(this.config.erc725Identity), offerId);
