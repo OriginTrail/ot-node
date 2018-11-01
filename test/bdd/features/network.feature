@@ -3,6 +3,7 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
+  @itworks
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes

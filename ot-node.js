@@ -40,6 +40,7 @@ const Product = require('./modules/Product');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
+const ApprovalService = require('./modules/service/approval-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
@@ -302,9 +303,12 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState });
+            await this.startBootstrapNode({ appState }, web3);
             this.startRPC();
             return;
         }
@@ -332,10 +336,6 @@ class OTNode {
             process.exit(1);
         }
 
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
-
-
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -359,6 +359,7 @@ class OTNode {
             product: awilix.asClass(Product).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
@@ -388,6 +389,8 @@ class OTNode {
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
         const profileService = container.resolve('profileService');
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
 
         emitter.initialize();
 
@@ -462,9 +465,6 @@ class OTNode {
             await remoteControl.connect();
         }
 
-        const challenger = container.resolve('challenger');
-        await challenger.startChallenging();
-
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
@@ -476,13 +476,17 @@ class OTNode {
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }) {
+    async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
         container.register({
             emitter: awilix.asValue({}),
+            web3: awilix.asValue(web3),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
@@ -496,6 +500,20 @@ class OTNode {
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
         await transport.start();
+
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
+
+        this.listenBlockchainEvents(blockchain);
+        blockchain.subscribeToEventPermanentWithCallback([
+            'NodeApproved',
+            'NodeRemoved',
+        ], (eventData) => {
+            approvalService.handleApprovalEvent(eventData);
+        });
     }
 
     /**
@@ -513,6 +531,7 @@ class OTNode {
                 working = true;
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -815,10 +834,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/local/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:data_set_id', (req, res) => {
             log.api('GET: Local import request received.');
 
-            if (!req.params.import_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -827,7 +846,7 @@ class OTNode {
             }
 
             emitter.emit('api-query-local-import', {
-                import_id: req.params.import_id,
+                data_set_id: req.params.data_set_id,
                 request: req,
                 response: res,
             });
@@ -876,11 +895,11 @@ class OTNode {
         server.post('/api/deposit', (req, res) => {
             log.api('POST: Deposit tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-deposit-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -893,11 +912,11 @@ class OTNode {
         server.post('/api/withdraw', (req, res) => {
             log.api('POST: Withdraw tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-withdraw-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -919,7 +938,7 @@ class OTNode {
         });
 
         server.get('/api/consensus/:sender_id', (req, res) => {
-            log.api('GET: List imports request received.');
+            log.api('GET: Consensus check events request received.');
 
             if (req.params.sender_id == null) {
                 res.status(400);
@@ -928,6 +947,14 @@ class OTNode {
 
             emitter.emit('api-consensus-events', {
                 sender_id: req.params.sender_id,
+                response: res,
+            });
+        });
+
+        server.get('/api/info', (req, res) => {
+            log.api('GET: Node information request received.');
+
+            emitter.emit('api-node-info', {
                 response: res,
             });
         });

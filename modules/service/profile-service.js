@@ -111,7 +111,7 @@ class ProfileService {
      */
     async payOut(offerId) {
         await this.commandExecutor.add({
-            name: 'payOutCommand',
+            name: 'dhPayOutCommand',
             delay: 0,
             transactional: false,
             data: {
@@ -127,7 +127,7 @@ class ProfileService {
      * @returns {Promise<void>}
      */
     async depositTokens(amount) {
-        const walletBalance = await Utilities.getAlphaTracTokenBalance(
+        const walletBalance = await Utilities.getTracTokenBalance(
             this.web3,
             this.config.node_wallet,
             this.blockchain.getTokenContractAddress(),
@@ -137,23 +137,23 @@ class ProfileService {
             throw new Error(`Wallet balance: ${walletBalance} TRAC`);
         }
 
-        const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
+        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
 
-        await this.blockchain.increaseProfileApproval(new BN(mATRAC));
+        await this.blockchain.increaseProfileApproval(new BN(mTRAC));
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        await this.blockchain.depositTokens(blockchainIdentity, new BN(mATRAC));
+        await this.blockchain.depositTokens(blockchainIdentity, new BN(mTRAC));
 
         this.logger.notify(`${amount} TRAC deposited on your profile`);
 
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const balanceInATRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInATRAC} TRAC`);
+        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
 
         const profile = await this.blockchain.getProfile(blockchainIdentity);
         const profileBalance = profile.stake;
-        const profileBalanceInATRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-        this.logger.info(`Profile balance: ${profileBalanceInATRAC} TRAC`);
+        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
@@ -162,11 +162,11 @@ class ProfileService {
      * @return {Promise<void>}
      */
     async withdrawTokens(amount) {
-        const mATRAC = this.web3.utils.toWei(amount.toString(), 'ether');
+        const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
         await this.commandExecutor.add({
             name: 'tokenWithdrawalStartCommand',
             data: {
-                amount: mATRAC,
+                amount: mTRAC,
             },
         });
         this.logger.info(`Token withdrawal started for amount ${amount}.`);

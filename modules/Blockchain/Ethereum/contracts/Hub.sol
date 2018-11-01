@@ -43,6 +43,7 @@ contract Hub is Ownable{
     address public profileAddress;
     address public holdingAddress;
     address public readingAddress;
+    address public approvalAddress;
 
     address public profileStorageAddress;
     address public holdingStorageAddress;
@@ -74,21 +75,44 @@ contract Hub is Ownable{
         emit ContractsChanged();
     }
 
+    function setApprovalAddress(address newApprovalAddress)
+    public onlyOwner {
+        approvalAddress = newApprovalAddress;
+        emit ContractsChanged();
+    }
 
 
     function setProfileStorageAddress(address newpPofileStorageAddress)
     public onlyOwner {
         profileStorageAddress = newpPofileStorageAddress;
+        emit ContractsChanged();
     }
 
     function setHoldingStorageAddress(address newHoldingStorageAddress)
     public onlyOwner {
         holdingStorageAddress = newHoldingStorageAddress;
+        emit ContractsChanged();
     }
     
     function setReadingStorageAddress(address newReadingStorageAddress)
     public onlyOwner {
         readingStorageAddress = newReadingStorageAddress;
+        emit ContractsChanged();
     }
 
+    function isContract(address sender) 
+    public view returns (bool) {
+        if(sender == owner ||
+           sender == tokenAddress ||
+           sender == profileAddress ||
+           sender == holdingAddress ||
+           sender == readingAddress ||
+           sender == approvalAddress ||
+           sender == profileStorageAddress ||
+           sender == holdingStorageAddress ||
+           sender == readingStorageAddress) {
+            return true;
+        }
+        return false;
+    }
 }

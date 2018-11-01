@@ -84,6 +84,15 @@ class Ethereum {
             this.profileContractAddress,
         );
 
+        // Approval contract data
+        const approvalAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/approval.json');
+        this.approvalContractAddress = await this._getApprovalContractAddress();
+        this.approvalContractAbi = JSON.parse(approvalAbiFile);
+        this.approvalContract = new this.web3.eth.Contract(
+            this.approvalContractAbi,
+            this.approvalContractAddress,
+        );
+
         // Profile storage contract data
         const profileStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/profile-storage.json');
         this.profileStorageContractAddress = await this._getProfileStorageContractAddress();
@@ -105,6 +114,7 @@ class Ethereum {
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
             PROFILE_CONTRACT: this.profileContract,
+            APPROVAL_CONTRACT: this.approvalContract,
         };
     }
 
@@ -161,6 +171,20 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`Profile contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Approval contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getApprovalContractAddress() {
+        this.log.trace('Asking Hub for Approval contract address...');
+        const address = await this.hubContract.methods.approvalAddress().call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Approval contract address is ${address}`);
         return address;
     }
 
@@ -637,6 +661,46 @@ class Ethereum {
     }
 
     /**
+     * Subscribes to Blockchain event with a callback specified
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * Callback function will be executed when the event is emitted.
+     * @param event Event to listen to
+     * @param callback function to be executed
+     * @returns {number | Object} Event handle
+     */
+    async subscribeToEventPermanentWithCallback(event, emitCallback) {
+        const startBlockNumber = await this.web3.eth.getBlockNumber();
+
+        const handle = setInterval(async () => {
+            const where = {
+                [Op.or]: event.map(e => ({ event: e })),
+                block: { [Op.gte]: startBlockNumber },
+                finished: 0,
+            };
+
+            const eventData = await Models.events.findAll({ where });
+            if (eventData) {
+                eventData.forEach(async (data) => {
+                    try {
+                        emitCallback({
+                            name: `eth-${data.event}`,
+                            value: JSON.parse(data.dataValues.data),
+                        });
+                        data.finished = true;
+                        await data.save();
+                    } catch (error) {
+                        this.log.error(error);
+                    }
+                });
+            }
+        }, 2000);
+
+        return handle;
+    }
+
+    /**
      * Checks if the node would rank in the top n + 1 network bids.
      * @param importId Offer import id
      * @returns {Promisse<any>} boolean whether node would rank in the top n + 1
@@ -863,6 +927,17 @@ class Ethereum {
     }
 
     /**
+     * Get withdrawal time
+     * @return {Promise<any>}
+     */
+    async getProfileWithdrawalTime() {
+        this.log.trace('Get withdrawal time from blockchain');
+        return this.profileContract.methods.withdrawalTime().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
      * Get profile by wallet
      * @param identity
      */
@@ -884,13 +959,39 @@ class Ethereum {
     }
 
     /**
+     * Get all nodes which were added in the approval array
+     */
+    async getAddedNodes() {
+        this.log.trace('getAllNodes()');
+        return this.approvalContract.methods.getAllNodes().call();
+    }
+
+    /**
+     * Get the statuses of all nodes which were added in the approval array
+     */
+    async getNodeStatuses() {
+        this.log.trace('getNodeStatuses()');
+        return this.approvalContract.methods.getNodeStatuses().call();
+    }
+
+    /**
+     * Check if a specific node still has approval
+     * @param nodeId
+     */
+    async nodeHasApproval(nodeId) {
+        nodeId = Utilities.normalizeHex(nodeId);
+        this.log.trace(`nodeHasApproval(${nodeId})`);
+        return this.approvalContract.methods.nodeHasApproval(nodeId).call();
+    }
+
+    /**
      * Check balances
      * @returns {Promise<boolean>}
      */
     async getBalances() {
         this.log.trace('Checking balances');
         let enoughETH = true;
-        let enoughATRAC = true;
+        let enoughTRAC = true;
         try {
             const etherBalance = await Utilities.getBalanceInEthers(
                 this.web3,
@@ -901,19 +1002,19 @@ class Ethereum {
                 enoughETH = false;
             }
 
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
+            const tracBalance = await Utilities.getTracTokenBalance(
                 this.web3,
                 this.config.wallet_address,
                 this.tokenContractAddress,
             );
-            this.log.info(`Balance of ATRAC: ${atracBalance}`);
-            if (atracBalance <= 100) {
-                enoughATRAC = false;
+            this.log.info(`Balance of TRAC: ${tracBalance}`);
+            if (tracBalance <= 100) {
+                enoughTRAC = false;
             }
         } catch (error) {
             throw new Error(error);
         }
-        return enoughETH && enoughATRAC;
+        return enoughETH && enoughTRAC;
     }
 
     /**

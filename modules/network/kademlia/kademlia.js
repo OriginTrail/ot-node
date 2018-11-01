@@ -32,13 +32,13 @@ class Kademlia {
         this.kademliaUtilities = ctx.kademliaUtilities;
         this.notifyError = ctx.notifyError;
         this.config = ctx.config;
+        this.approvalService = ctx.approvalService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
-        if (this.config.test_network) {
-            this.log.warn('Node is running in test mode, difficulties are reduced');
-            kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-            kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-        }
+        kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
+        kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
+        this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
+        this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
     }
 
     async bootstrapFindContact(contactId) {
@@ -176,7 +176,7 @@ class Kademlia {
             // Override node's _updateContact method to filter contacts.
             this.node._updateContact = (identity, contact) => {
                 try {
-                    if (!that.validateContact(contact)) {
+                    if (!that.validateContact(identity, contact)) {
                         that.log.debug(`Ignored contact ${identity}. Hostname ${contact.hostname}. Network ID ${contact.network_id}.`);
                         return;
                     }
@@ -191,7 +191,7 @@ class Kademlia {
             };
 
             this.node.use((request, response, next) => {
-                if (!that.validateContact(request.contact[1])) {
+                if (!that.validateContact(request.contact[0], request.contact[1])) {
                     return next(new NetworkRequestIgnoredError('Contact not valid.', request));
                 }
                 next();
@@ -207,6 +207,26 @@ class Kademlia {
                     this.config.embedded_peercache_path,
                 )));
             this.log.info('Peercache initialised');
+
+            this.node.spartacus = this.node.plugin(kadence.spartacus(
+                this.xprivkey,
+                this.index,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            ));
+            this.log.info('Spartacus initialised');
+
+            this.node.hashcash = this.node.plugin(kadence.hashcash({
+                methods: [
+                    'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
+                    'kad-replication-response', 'kad-replication-finished',
+                    'kad-data-location-response', 'kad-data-read-request',
+                    'kad-data-read-response', 'kad-send-encrypted-key',
+                    'kad-encrypted-key-process-result',
+                    'kad-replication-response', 'kad-replication-finished',
+                ],
+                difficulty: this.config.network.solutionDifficulty,
+            }));
+            this.log.info('Hashcash initialised');
 
             if (this.config.onion_enabled) {
                 this.enableOnion();
@@ -266,6 +286,7 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
+                privateKey: this.xprivkey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
@@ -839,7 +860,7 @@ class Kademlia {
      * @param contact Contact to check
      * @returns {boolean} true if contact is in the same network.
      */
-    validateContact(contact) {
+    validateContact(identity, contact) {
         if (ip.isV4Format(contact.hostname) || ip.isV6Format(contact.hostname)) {
             if (this.config.local_network_only && ip.isPublic(contact.hostname)) {
                 return false;
@@ -851,6 +872,9 @@ class Kademlia {
             return false;
         }
 
+        if (this.config.requireApproval && !this.approvalService.isApproved(identity)) {
+            return false;
+        }
         return true;
     }
 

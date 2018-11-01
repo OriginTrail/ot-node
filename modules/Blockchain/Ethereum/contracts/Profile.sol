@@ -2,7 +2,7 @@ pragma solidity ^0.4.23;
 
 import {SafeMath} from './SafeMath.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
-import {Hub} from './Hub.sol';
+import {Ownable, Hub} from './Hub.sol';
 import {Identity, ERC725} from './Identity.sol';
 import {ERC20} from './TracToken.sol';
 
@@ -218,5 +218,17 @@ contract Profile {
         profileStorage.setStake(receiver, profileStorage.getStake(receiver).add(amount));
 
         emit TokensTransferred(sender, receiver, amount);
+    }
+
+    function setMinimalStake(uint256 newMinimalStake) 
+    public {
+        require (msg.sender == hub.owner(), "Function can only be called by hub owner!");
+        if(minimalStake != newMinimalStake) minimalStake = newMinimalStake;
+    }
+
+    function setWithdrawalTime(uint256 newWithdrawalTime) 
+    public {
+        require (msg.sender == hub.owner(), "Function can only be called by hub owner!");
+        if(withdrawalTime != newWithdrawalTime) withdrawalTime = newWithdrawalTime;
     }
 }

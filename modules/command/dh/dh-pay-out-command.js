@@ -1,15 +1,17 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 
+const Models = require('../../../models/index');
+
 /**
  * Starts token withdrawal operation
  */
-class TokenWithdrawalCommand extends Command {
+class DhPayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
     }
@@ -20,13 +22,20 @@ class TokenWithdrawalCommand extends Command {
      */
     async execute(command) {
         const {
-            amount,
+            offerId,
         } = command.data;
 
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId, status: 'CHOSEN' },
+        });
+        if (!bid) {
+            this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
+            return Command.empty();
+        }
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
-        await this.blockchain.withdrawTokens(blockchainIdentity);
-        this.logger.important(`Token withdrawal for amount ${amount} completed.`);
+        await this.blockchain.payOut(blockchainIdentity, offerId);
+        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
         await this._printBalances(blockchainIdentity);
         return Command.empty();
     }
@@ -55,9 +64,8 @@ class TokenWithdrawalCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'tokenWithdrawalCommand',
-            delay: 30000,
-            retries: 3,
+            name: 'dhPayOutCommand',
+            delay: 0,
             transactional: false,
         };
         Object.assign(command, map);
@@ -65,4 +73,4 @@ class TokenWithdrawalCommand extends Command {
     }
 }
 
-module.exports = TokenWithdrawalCommand;
+module.exports = DhPayOutCommand;
