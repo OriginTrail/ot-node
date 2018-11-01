@@ -8,8 +8,10 @@ const hdkey = require('hdkey');
 const kadence = require('@kadenceproject/kadence');
 const argv = require('minimist')(process.argv.slice(2));
 
-let cpus = 1;
+let cpus = 0;
 let testNetwork = 1;
+let solutionDifficulty = 20;
+let identityDifficulty = 8;
 const solvers = [];
 
 /**
@@ -47,7 +49,11 @@ function forkIdentityDerivationSolver(c, xprv, index, derivationPath, events) {
         console.error(`Derivation ${c} error, ${err.message}`);
     });
 
-    const options = { test_network: testNetwork };
+
+    const options = {
+        solutionDifficulty,
+        identityDifficulty,
+    };
     solver.send([xprv, index, derivationPath, options]);
 
     return solver;
@@ -63,8 +69,8 @@ function forkIdentityDerivationSolver(c, xprv, index, derivationPath, events) {
 async function spawnIdentityDerivationProcesses(xprivkey, path, events) {
     // How many process can we run
     if (cpus === 0) {
-        console.info('There are no derivation processes running');
-        return;
+        cpus = os.cpus().length;
+        console.info(`Using ${cpus} cores for derivation.`);
     }
     if (os.cpus().length < cpus) {
         console.error('Refusing to start more solvers than cpu cores');
@@ -130,6 +136,13 @@ async function solveIdentity(xprivkey, path) {
 
 if (argv.cpus) {
     cpus = argv.cpus;
+}
+if (argv.identityDifficulty) {
+    identityDifficulty = argv.identityDifficulty;
+}
+
+if (argv.solutionDifficulty) {
+    solutionDifficulty = argv.solutionDifficulty;
 }
 
 async function main() {

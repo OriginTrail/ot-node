@@ -35,11 +35,10 @@ class Kademlia {
         this.approvalService = ctx.approvalService;
 
         kadence.constants.T_RESPONSETIMEOUT = this.config.request_timeout;
-        if (this.config.test_network) {
-            this.log.warn('Node is running in test mode, difficulties are reduced');
-            kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-            kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-        }
+        kadence.constants.SOLUTION_DIFFICULTY = this.config.network.solutionDifficulty;
+        kadence.constants.IDENTITY_DIFFICULTY = this.config.network.identityDifficulty;
+        this.log.info(`Network solution difficulty ${kadence.constants.SOLUTION_DIFFICULTY}.`);
+        this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
     }
 
     async bootstrapFindContact(contactId) {
@@ -209,6 +208,26 @@ class Kademlia {
                 )));
             this.log.info('Peercache initialised');
 
+            this.node.spartacus = this.node.plugin(kadence.spartacus(
+                this.xprivkey,
+                this.index,
+                kadence.constants.HD_KEY_DERIVATION_PATH,
+            ));
+            this.log.info('Spartacus initialised');
+
+            this.node.hashcash = this.node.plugin(kadence.hashcash({
+                methods: [
+                    'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
+                    'kad-replication-response', 'kad-replication-finished',
+                    'kad-data-location-response', 'kad-data-read-request',
+                    'kad-data-read-response', 'kad-send-encrypted-key',
+                    'kad-encrypted-key-process-result',
+                    'kad-replication-response', 'kad-replication-finished',
+                ],
+                difficulty: this.config.network.solutionDifficulty,
+            }));
+            this.log.info('Hashcash initialised');
+
             if (this.config.onion_enabled) {
                 this.enableOnion();
             }
@@ -267,6 +286,7 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
+                privateKey: this.xprivkey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
