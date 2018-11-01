@@ -9,6 +9,7 @@ class TokenWithdrawalCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
+        this.web3 = ctx.web3;
         this.blockchain = ctx.blockchain;
         this.remoteControl = ctx.remoteControl;
     }
@@ -21,9 +22,30 @@ class TokenWithdrawalCommand extends Command {
         const {
             amount,
         } = command.data;
-        await this.blockchain.withdrawTokens(Utilities.normalizeHex(this.config.erc725Identity));
+
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this._printBalances(blockchainIdentity);
+        await this.blockchain.withdrawTokens(blockchainIdentity);
         this.logger.important(`Token withdrawal for amount ${amount} completed.`);
+        await this._printBalances(blockchainIdentity);
         return Command.empty();
+    }
+
+    /**
+     * Print balances
+     * @param blockchainIdentity
+     * @return {Promise<void>}
+     * @private
+     */
+    async _printBalances(blockchainIdentity) {
+        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+
+        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profileBalance = profile.stake;
+        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
@@ -34,7 +56,8 @@ class TokenWithdrawalCommand extends Command {
     default(map) {
         const command = {
             name: 'tokenWithdrawalCommand',
-            delay: 0,
+            delay: 30000,
+            retries: 3,
             transactional: false,
         };
         Object.assign(command, map);
