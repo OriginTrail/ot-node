@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
         offer_id: DataTypes.STRING,
         dc_node_id: DataTypes.STRING,
         data_size_in_bytes: DataTypes.STRING,
+        holding_time_in_minutes: DataTypes.INTEGER,
         litigation_interval_in_minutes: DataTypes.INTEGER,
         token_amount: DataTypes.STRING,
         status: DataTypes.STRING,

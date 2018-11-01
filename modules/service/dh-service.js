@@ -145,6 +145,7 @@ class DHService {
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
             token_amount: tokenAmountPerHolder,
+            holding_time_in_minutes: holdingTimeInMinutes,
             deposited: false,
             status: 'PENDING',
         });
