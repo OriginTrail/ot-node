@@ -35,6 +35,7 @@ class PayOutCommand extends Command {
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
         await this._printBalances(blockchainIdentity);
         await this.blockchain.payOut(blockchainIdentity, offerId);
+        this.logger.important(`Payout for offer ${offerId} successfully completed.`);
         await this._printBalances(blockchainIdentity);
         return Command.empty();
     }
