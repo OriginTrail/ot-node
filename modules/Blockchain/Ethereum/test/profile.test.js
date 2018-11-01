@@ -456,6 +456,9 @@ contract('Profile contract testing', async (accounts) => {
         const profileStorage = await ProfileStorage.deployed();
         const util = await TestingUtilities.deployed();
 
+        // Set withdrawal time to 10 seconds for faster testing
+        await profile.setWithdrawalTime(new BN(10));
+
         // Get initial balances
         var initialStakes = [];
         var initialStakesReserved = [];
@@ -493,7 +496,7 @@ contract('Profile contract testing', async (accounts) => {
                 `Stake not matching for account ${i}, expected ${initialStakesReserved[i].toString()}, got ${res.stakeReserved.toString()}!`,
             );
             assert(
-                timestamps[i].add(new BN(300)).gte(res.withdrawalTimestamp),
+                timestamps[i].add(new BN(10)).gte(res.withdrawalTimestamp),
                 `Withdrawal timestamp incorrect for account ${i}!`,
             );
             assert(
@@ -511,12 +514,14 @@ contract('Profile contract testing', async (accounts) => {
             );
         }
 
+        // Revert profile withdrawal time to its initial value
+        await profile.setWithdrawalTime(new BN(300));
+
         errored = false;
     });
 
     // eslint-disable-next-line no-undef
-    it('Should complete token withdrawal process', async function test() {
-        this.timeout(330000);
+    it('Should complete token withdrawal process', async () => {
         // Get contracts used in hook
         const trac = await TracToken.deployed();
         const profile = await Profile.deployed();
@@ -525,7 +530,7 @@ contract('Profile contract testing', async (accounts) => {
 
         if (errored) assert(false, 'No use of running a test after previous test failed');
         // Wait other half of the withdrawal delay
-        await new Promise(resolve => setTimeout(resolve, 300000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
         // Get initial balances
         var initialBalances = [];
