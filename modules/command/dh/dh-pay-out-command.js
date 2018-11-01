@@ -29,7 +29,7 @@ class DhPayOutCommand extends Command {
             where: { offer_id: offerId, status: 'CHOSEN' },
         });
         if (!bid) {
-            this.logger.important(`There is no bid for offer ${offerId}. Cannot execute payout.`);
+            this.logger.important(`There is no successful bid for offer ${offerId}. Cannot execute payout.`);
             return Command.empty();
         }
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
