@@ -216,7 +216,7 @@ class DHService {
                     [Op.ne]: bidId,
                 },
                 status: {
-                    [Op.in]: ['PENDING', 'SENT'],
+                    [Op.in]: ['SENT'],
                 },
                 deposit: {
                     [Op.ne]: null,
