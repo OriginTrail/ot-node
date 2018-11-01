@@ -6,6 +6,7 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
+const sleep = require('sleep-async')().Promise;
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
@@ -94,6 +95,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
 });
 
 Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
+    expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
     setTimeout(accept, waitTime * 1000);
 }));
 
@@ -424,4 +426,122 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
     // check that lastImport.import_hash and sha256 calculated hash are matching
     const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
+});
+
+Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
+    const nodeCountSoFar = this.state.nodes.length;
+    console.log(`node count so far: ${nodeCountSoFar}`);
+    console.log(`Total number of LocalBlockchain.wallets() is: ${LocalBlockchain.wallets().length}`);
+    expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - nodeCountSoFar);
+
+    for (let i = nodeCountSoFar; i < nodeCountSoFar + nodeCount; i += 1) {
+        const newNode = new OtNode({
+            nodeConfiguration: {
+                node_wallet: LocalBlockchain.wallets()[i].address,
+                node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                node_port: 6000 + i,
+                node_rpc_port: 9000 + i,
+                node_remote_control_port: 4000 + i,
+                network: {
+                    bootstraps: ['https://localhost:5278/#ba9f7526f803490e631859c75d56e5ab25a47a33'],
+                    remoteWhitelist: ['localhost'],
+                },
+                database: {
+                    database: `origintrail-test-${uuidv4()}`,
+                },
+                blockchain: {
+                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                    rpc_node_host: 'http://localhost', // TODO use from instance
+                    rpc_node_port: 7545,
+                },
+                local_network_only: true,
+            },
+        });
+        this.state.nodes.push(newNode);
+        newNode.initialize();
+        this.logger.log(`Additional node set up at ${newNode.options.configDir}`);
+    }
+    done();
+});
+
+Given(/^I start additional node[s]*$/, { timeout: 60000 }, function (done) {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+    const additionalNodesStarts = [];
+    this.state.nodes.forEach((node) => {
+        if (!node.isRunning) {
+            additionalNodesStarts.push(new Promise((accept, reject) => {
+                node.once('initialized', () => accept());
+                node.once('error', reject);
+            }));
+        }
+        if (!node.started) {
+            node.start();
+        }
+    });
+    Promise.all(additionalNodesStarts).then(() => done());
+});
+
+Given(/^DV publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network/, { timeout: 90000 }, async function (path, value, opcode) {
+    console.log(path, value, opcode);
+    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    const { dv } = this.state;
+
+    // TODO find way to pass jsonQuery directly to step definition
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const queryNetworkResponse = await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
+    expect(Object.keys(queryNetworkResponse), 'Reponse should have message and query_id').to.have.members(['message', 'query_id']);
+    expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
+    this.state.queryNetworkId = queryNetworkResponse.query_id;
+    return new Promise((accept, reject) => {
+        dv.once('dv-network-query-processed', () => accept());
+        dv.once('error', reject);
+    });
+});
+
+Given(/^I wait for a response for last network query$/, { timeout: 120000 }, async function () {
+    // expect(this.state.query_id, 'query_id should be defined').to.not.be.undefined;
+    const { dv } = this.state;
+    const myId = this.state.queryNetworkId;
+    let queryNetworkResponses;
+
+    // let attempt = 0;
+    // let timedPings = setInterval(async function(){
+    //     queryNetworkResponses = await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    //     if (queryNetworkResponses.length > 0){
+    //         stopInterval = true;
+    //         console.log(queryNetworkResponses);
+    //         clearInterval(timedPings);
+    //     } else {
+    //         console.log(queryNetworkResponses);
+    //         if (attempt > 10){
+    //             clearInterval(timedPings);
+    //         }else{
+    //             attempt++;
+    //         }
+    //     }
+    // }, 5000);
+
+    queryNetworkResponses = await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses = await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses = await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses = await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+
 });

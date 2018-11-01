@@ -61,3 +61,20 @@ Feature: Test basic network features
     Then api-query-local-import response should have certain structure
     Given I call api-query-local-import-importId endpoint for last import
     Then api-query-local-import-importId response should have certain structure
+
+  @itworks2
+  Scenario: DC->DH->DV replication + DV network read + DV purchase
+    Given the replication difficulty is 0 
+    And I setup 5 nodes
+    And I start the nodes
+    And I use 1st node as DC
+    And I import "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    Then the last import's hash should be the same as one manually calculated
+    Given I initiate the replication
+    And I wait for replications to finish
+    Then the last import should be the same on all nodes that replicated data
+    Given I additionally setup 1 node
+    And I start additional nodes
+    And I use 6th node as DV
+    Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
+    And I wait for a response for last network query

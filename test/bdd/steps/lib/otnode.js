@@ -39,6 +39,7 @@ class OtNode extends EventEmitter {
         this.logger = logger || console;
 
         this.initialized = false;
+        this.started = false;
     }
 
     initialize() {
@@ -78,13 +79,14 @@ class OtNode extends EventEmitter {
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
 
-        this.logger.log(`Node created at: '${this.options.configDir}'.`);
+        this.logger.log(`Node initialized at: '${this.options.configDir}'.`);
         this.initialized = true;
     }
 
     start() {
         assert(!this.process);
         assert(this.initialized);
+        assert(!this.stared);
         this.logger.log(`Starting node ${this.id}.`);
         // Starting node should be done with following code:
         // this.process = spawn('npm', ['start', '--', `--configDir=${this.options.configDir}`]);
@@ -108,6 +110,8 @@ class OtNode extends EventEmitter {
             input: this.process.stderr,
         });
         this.lineReaderStdErr.on('line', data => this._processOutput(data));
+        this.logger.log(`Node '${this.id}' has been started.`);
+        this.started = true;
     }
 
     stop() {
@@ -180,11 +184,14 @@ class OtNode extends EventEmitter {
             assert(offerId);
             this.state.offersFinalized.push(offerId);
             this.emit('offer-finalized', offerId);
+        } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
+            console.log('dv-network-query-processed emitted');
+            this.emit('dv-network-query-processed');
         }
     }
 
     get isRunning() {
-        return this.initialized && !!this.process;
+        return this.initialized && this.started && !!this.process;
     }
 
     _processExited(code) {

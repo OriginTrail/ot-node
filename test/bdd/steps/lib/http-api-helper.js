@@ -203,6 +203,60 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
     });
 }
 
+/**
+ * Fetch api/query/network response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {json} jsonQuery
+ * @return {Promise.<NetworkQueryId>}
+ */
+async function apiQueryNetwork(nodeRpcUrl, jsonQuery) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'POST',
+                uri: `${nodeRpcUrl}/api/query/network`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * Fetch api/query/{{query_id}}/responses response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} queryNetworkId
+ * @return {Promise}
+ */
+async function apiQueryNetworkResponses(nodeRpcUrl, queryNetworkId) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                uri: `${nodeRpcUrl}/api/query/${queryNetworkId}/responses`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                console.log('HIT ME!!!');
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportInfo,
@@ -211,4 +265,6 @@ module.exports = {
     apiQueryLocalImport,
     apiQueryLocalImportByImportId,
     apiReplication,
+    apiQueryNetwork,
+    apiQueryNetworkResponses,
 };
