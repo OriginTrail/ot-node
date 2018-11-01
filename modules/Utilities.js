@@ -828,7 +828,7 @@ class Utilities {
             signature.s,
         );
 
-        return signedAddress.toLowerCase() === message.wallet.toLowerCase();
+        return Utilities.compareHexStrings(signedAddress, message.wallet);
     }
 
     /**
