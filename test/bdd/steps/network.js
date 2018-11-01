@@ -45,13 +45,13 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 rpc_node_port: 7545,
             },
             network: {
-                bootstraps: ['https://localhost:5278/#ba9f7526f803490e631859c75d56e5ab25a47a33'],
+                bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost'],
             },
         },
     });
 
-    bootstrapNode.options.identity = bootstrapIdentity.ba9f7526f803490e631859c75d56e5ab25a47a33;
+    bootstrapNode.options.identity = bootstrapIdentity.ff62cb1f692431d901833d55b93c7d991b4087f1;
     bootstrapNode.initialize();
     this.state.bootstraps.push(bootstrapNode);
 
@@ -71,7 +71,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
                 network: {
-                    bootstraps: ['https://localhost:5278/#ba9f7526f803490e631859c75d56e5ab25a47a33'],
+                    bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                     remoteWhitelist: ['localhost'],
                 },
                 database: {
