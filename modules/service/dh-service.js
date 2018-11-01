@@ -124,8 +124,8 @@ class DHService {
 
         if (dhMinTokenPrice.gt(new BN(tokenAmountPerHolder, 10))) {
             this.logger.info(`Offer ${offerId} too cheap for me.`);
-            this.logger.info(`Maximum price offered ${formatMaxPrice}[mATRAC] per byte/min`);
-            this.logger.info(`My price ${formatMyPrice}[mATRAC] per byte/min`);
+            this.logger.info(`Maximum price offered ${formatMaxPrice}[mTRAC] per byte/min`);
+            this.logger.info(`My price ${formatMyPrice}[mTRAC] per byte/min`);
             return;
         }
 
@@ -175,7 +175,7 @@ class DHService {
             this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
 
             Object.assign(data, {
-                amount: remainder.toString(),
+                amount: Utilities.normalizeHex(remainder.toString('hex')),
             });
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
@@ -855,6 +855,8 @@ class DHService {
             'LitigationInitiated',
             'LitigationCompleted',
             'EscrowVerified',
+            'NodeApproved',
+            'NodeRemoved',
         ]);
     }
 }

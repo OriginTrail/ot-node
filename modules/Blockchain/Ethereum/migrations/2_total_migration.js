@@ -6,15 +6,17 @@ var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
 var Reading = artifacts.require('Reading'); // eslint-disable-line no-undef
+var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 
 var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
 
 var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-undef
+var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
 
-const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(25)));
+const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
 
 module.exports = async (deployer, network, accounts) => {
     let hub;
@@ -23,6 +25,7 @@ module.exports = async (deployer, network, accounts) => {
     let profile;
     let holding;
     let reading;
+    let approval;
 
     let profileStorage;
     let holdingStorage;
@@ -52,6 +55,8 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        approval = await deployer.deploy(MockApproval);
+        await hub.setApprovalAddress(approval.address);
 
         token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
         await hub.setTokenAddress(token.address);
@@ -92,6 +97,8 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
+        approval = await deployer.deploy(Approval);
+        await hub.setApprovalAddress(approval.address);
 
         token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
         await hub.setTokenAddress(token.address);
@@ -114,6 +121,7 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
@@ -162,6 +170,7 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log('\n\n \t Contract adressess on ganache:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
         console.log(`\t Token contract address: \t\t${token.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
@@ -194,10 +203,14 @@ module.exports = async (deployer, network, accounts) => {
         holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setHoldingAddress(holding.address);
 
+        approval = await deployer.deploy(Approval, { gas: 6000000, from: accounts[0] });
+        await hub.setApprovalAddress(approval.address);
+
         console.log('\n\n \t Contract adressess on rinkeby:');
         console.log(`\t Hub contract address: \t\t\t${hub.address}`);
         console.log(`\t Profile contract address: \t\t${profile.address}`);
         console.log(`\t Holding contract address: \t\t${holding.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);

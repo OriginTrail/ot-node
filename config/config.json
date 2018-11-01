@@ -56,7 +56,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
+      "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -96,7 +96,8 @@
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000
+    "dc_choose_time": 300000,
+    "requireApproval": false
   },
   "staging": {
     "identity": null,
@@ -129,6 +130,7 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
+    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
@@ -155,7 +157,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
+      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -195,7 +197,8 @@
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000
+    "dc_choose_time": 300000,
+    "requireApproval": false
   },
   "stable": {
     "identity": null,
@@ -254,7 +257,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0x7560b6B2a89549bD521a588f2d3fe6eDfB71C2e1",
+      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -294,7 +297,8 @@
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000
+    "dc_choose_time": 300000,
+    "requireApproval": false
   },
   "production": {
     "identity": null,
@@ -353,7 +357,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "5000000000",
-      "hub_contract_address": "0xf290AdCE91Bb974D6837125A2304ad41D3847803",
+      "hub_contract_address": "0x2d341bAe4fFB51F25F6d49Fd7cE6E96ABf4e0473",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -393,6 +397,7 @@
     "dh_min_token_price": 1,
     "dh_min_litigation_interval_in_minutes": 1,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000
+    "dc_choose_time": 300000,
+    "requireApproval": false
   }
 }
