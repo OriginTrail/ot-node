@@ -1,6 +1,8 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 
+const Models = require('../../../models');
+
 /**
  * Starts token withdrawal operation
  */
@@ -22,6 +24,13 @@ class PayOutCommand extends Command {
             offerId,
         } = command.data;
 
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (bid) {
+            this.logger.important(`There is no bid for offer ${offerId}. Cannot execute pay out.`);
+            return;
+        }
         await this.blockchain.payOut(Utilities.normalizeHex(this.config.erc725Identity), offerId);
         return Command.empty();
     }
