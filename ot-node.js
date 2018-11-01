@@ -954,6 +954,14 @@ class OTNode {
             });
         });
 
+        server.get('/api/info', (req, res) => {
+            log.api('GET: Node information request received.');
+
+            emitter.emit('api-node-info', {
+                response: res,
+            });
+        });
+
         /**
          * Temporary route used for HTTP network prototype
          */
