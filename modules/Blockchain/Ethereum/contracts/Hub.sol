@@ -97,4 +97,19 @@ contract Hub is Ownable{
         readingStorageAddress = newReadingStorageAddress;
     }
 
+    function isContract(address sender) 
+    public view returns (bool) {
+        if(sender == owner ||
+           sender == tokenAddress ||
+           sender == profileAddress ||
+           sender == holdingAddress ||
+           sender == readingAddress ||
+           sender == approvalAddress ||
+           sender == profileStorageAddress ||
+           sender == holdingStorageAddress ||
+           sender == readingStorageAddress) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -11,16 +11,16 @@ contract ProfileStorage {
         activeNodes = 1;
     }
     
-    modifier onlyProfile(){
-        require(msg.sender == hub.profileAddress(),
-        "Function can only be called by Profile contract!");
+    modifier onlyContracts(){
+        require(hub.isContract(msg.sender),
+        "Function can only be called by contracts!");
         _;
     }
 
     uint256 public activeNodes;
 
     function setActiveNodes(uint256 newActiveNodes) 
-    public onlyProfile {
+    public onlyContracts {
         activeNodes = newActiveNodes;
     }
 
@@ -65,31 +65,31 @@ contract ProfileStorage {
     }
     
     function setStake(address identity, uint256 stake) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].stake = stake;
     }
     function setStakeReserved(address identity, uint256 stakeReserved) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].stakeReserved = stakeReserved;
     }
     function setReputation(address identity, uint256 reputation) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].reputation = reputation;
     }
     function setWithdrawalPending(address identity, bool withdrawalPending) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].withdrawalPending = withdrawalPending;
     }
     function setWithdrawalTimestamp(address identity, uint256 withdrawalTimestamp) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].withdrawalTimestamp = withdrawalTimestamp;
     }
     function setWithdrawalAmount(address identity, uint256 withdrawalAmount) 
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].withdrawalAmount = withdrawalAmount;
     }
     function setNodeId(address identity, bytes32 nodeId)
-    public onlyProfile {
+    public onlyContracts {
         profile[identity].nodeId = nodeId;
     }
 
@@ -99,7 +99,7 @@ contract ProfileStorage {
         address identity2,
         address identity3,
         uint256 amount)
-    public onlyProfile {
+    public onlyContracts {
         profile[payer].stakeReserved += (amount * 3);
         profile[identity1].stakeReserved += amount;
         profile[identity2].stakeReserved += amount;
@@ -107,8 +107,12 @@ contract ProfileStorage {
     }
 
     function transferTokens(address wallet, uint256 amount)
-    public onlyProfile {
+    public onlyContracts {
         ERC20 token = ERC20(hub.tokenAddress());
         token.transfer(wallet, amount);
+    }
+    function setHubAddress(address newHubAddress)
+    public onlyContracts {
+        hub = Hub(newHubAddress);
     }
 }
