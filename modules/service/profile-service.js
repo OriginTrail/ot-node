@@ -111,7 +111,7 @@ class ProfileService {
      */
     async payOut(offerId) {
         await this.commandExecutor.add({
-            name: 'payOutCommand',
+            name: 'dhPayOutCommand',
             delay: 0,
             transactional: false,
             data: {

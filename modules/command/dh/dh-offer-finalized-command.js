@@ -49,13 +49,14 @@ class DhOfferFinalizedCommand extends Command {
 
                 if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
                     bid.status = 'CHOSEN';
+                    await bid.save({ fields: ['status'] });
                     this.logger.important(`I've been chosen for offer ${offerId}.`);
 
                     const scheduledTime = (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
                     return {
                         commands: [
                             {
-                                name: 'payOutCommand',
+                                name: 'dhPayOutCommand',
                                 delay: scheduledTime,
                                 transactional: false,
                                 data: {
@@ -65,10 +66,10 @@ class DhOfferFinalizedCommand extends Command {
                         ],
                     };
                 }
-                bid.status = 'NOT_CHOSEN';
-                this.logger.important(`I haven't been chosen for offer ${offerId}.`);
 
+                bid.status = 'NOT_CHOSEN';
                 await bid.save({ fields: ['status'] });
+                this.logger.important(`I haven't been chosen for offer ${offerId}.`);
                 return Command.empty();
             }
         }

@@ -1,12 +1,12 @@
 const Command = require('../command');
 const Utilities = require('../../Utilities');
 
-const Models = require('../../../models');
+const Models = require('../../../models/index');
 
 /**
  * Starts token withdrawal operation
  */
-class PayOutCommand extends Command {
+class DhPayOutCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.web3 = ctx.web3;
@@ -26,7 +26,7 @@ class PayOutCommand extends Command {
         } = command.data;
 
         const bid = await Models.bids.findOne({
-            where: { offer_id: offerId },
+            where: { offer_id: offerId, status: 'CHOSEN' },
         });
         if (!bid) {
             this.logger.important(`There is no bid for offer ${offerId}. Cannot execute payout.`);
@@ -64,7 +64,7 @@ class PayOutCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'payOutCommand',
+            name: 'dhPayOutCommand',
             delay: 0,
             transactional: false,
         };
@@ -73,4 +73,4 @@ class PayOutCommand extends Command {
     }
 }
 
-module.exports = PayOutCommand;
+module.exports = DhPayOutCommand;
