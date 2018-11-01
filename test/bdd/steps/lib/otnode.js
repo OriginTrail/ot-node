@@ -43,11 +43,12 @@ class OtNode extends EventEmitter {
 
     initialize() {
         mkdirp.sync(this.options.configDir);
-        execSync(`npm run setup -- --configDir=${this.options.configDir}`);
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
         fs.writeFileSync(
-            path.join(this.options.configDir, 'config.json'),
-            JSON.stringify(this.options.nodeConfiguration),
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
         );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
 
         if (this.options.identity) {
             fs.writeFileSync(
@@ -92,7 +93,7 @@ class OtNode extends EventEmitter {
         // Enable debug here process.env.NODE_DEBUG = 'https';
         this.process = spawn(
             'node',
-            ['ot-node.js', `--configDir=${this.options.configDir}`],
+            ['ot-node.js', `--configDir=${this.options.configDir}`, '--config', `${this.configFilePath}`],
             { cwd: path.join(__dirname, '../../../../') },
         );
         this.process.on('close', code => this._processExited(code));

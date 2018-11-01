@@ -16,10 +16,10 @@ describe('Utilities module', () => {
             const config = configJson[environment];
             assert.hasAllKeys(
                 config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'node_ip', 'logs_level_debug',
-                    'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs', 'test_network_enabled',
+                    'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs',
                     'ssl_certificate_path', 'identity_filepath', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
-                    'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled', 'test_network',
+                    'control_port_enabled', 'control_port', 'control_sock_enabled', 'control_sock', 'onion_enabled',
                     'ssl_authority_paths', 'node_rpc_port',
                     'remote_control_enabled', 'probability_threshold',
                     'read_stake_factor', 'dh_max_time_mins', 'dh_price', 'dh_stake_factor', 'send_logs_to_origintrail',
@@ -41,7 +41,7 @@ describe('Utilities module', () => {
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.network, ['id', 'bootstraps', 'remoteWhitelist'],
+                config.network, ['id', 'bootstraps', 'remoteWhitelist', 'identityDifficulty', 'solutionDifficulty'],
                 `Some config items are missing in config.network for environment '${environment}'`,
             );
             assert.hasAllKeys(

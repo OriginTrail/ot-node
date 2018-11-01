@@ -8,7 +8,6 @@
     "node_rpc_port": 8900,
     "remote_control_enabled": true,
     "node_remote_control_port": 3000,
-    "test_network_enabled": true,
     "is_bootstrap_node": false,
     "send_logs": false,
     "logs_level_debug": true,
@@ -19,7 +18,7 @@
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
     "erc725_identity_filepath": "erc725_identity.json",
-    "cpus": 1,
+    "cpus": 0,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
     "onion_virtual_port": "4043",
@@ -31,7 +30,6 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
-    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
@@ -79,7 +77,9 @@
     "network": {
       "id": "Devnet",
       "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
+      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "solutionDifficulty": 20,
+      "identityDifficulty": 8
     },
     "bugSnag": {
       "releaseStage": "development"
@@ -107,7 +107,6 @@
     "node_rpc_port": 8900,
     "remote_control_enabled": true,
     "node_remote_control_port": 3000,
-    "test_network_enabled": true,
     "is_bootstrap_node": false,
     "send_logs": false,
     "logs_level_debug": true,
@@ -118,7 +117,7 @@
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
     "erc725_identity_filepath": "erc725_identity.json",
-    "cpus": 1,
+    "cpus": 0,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
     "onion_virtual_port": "4043",
@@ -130,7 +129,6 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
-    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
@@ -178,7 +176,9 @@
     "network": {
       "id": "StagenetV1.0.0",
       "bootstraps": ["https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41"],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
+      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "solutionDifficulty": 20,
+      "identityDifficulty": 14
     },
     "bugSnag": {
       "releaseStage": "staging"
@@ -206,7 +206,6 @@
     "node_rpc_port": 8900,
     "remote_control_enabled": true,
     "node_remote_control_port": 3000,
-    "test_network_enabled": true,
     "is_bootstrap_node": false,
     "send_logs": false,
     "logs_level_debug": true,
@@ -217,7 +216,7 @@
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
     "erc725_identity_filepath": "erc725_identity.json",
-    "cpus": 1,
+    "cpus": 0,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
     "onion_virtual_port": "4043",
@@ -229,7 +228,6 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
-    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
@@ -277,7 +275,9 @@
     "network": {
       "id": "StablenetV1.0.0",
       "bootstraps": ["https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d"],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
+      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "solutionDifficulty": 20,
+      "identityDifficulty": 14
     },
     "bugSnag": {
       "releaseStage": "stable"
@@ -305,7 +305,6 @@
     "node_rpc_port": 8900,
     "remote_control_enabled": true,
     "node_remote_control_port": 3000,
-    "test_network_enabled": true,
     "is_bootstrap_node": false,
     "send_logs": false,
     "logs_level_debug": true,
@@ -316,7 +315,7 @@
     "ssl_certificate_path": "kademlia.crt",
     "identity_filepath": "identity.json",
     "erc725_identity_filepath": "erc725_identity.json",
-    "cpus": 1,
+    "cpus": 0,
     "embedded_wallet_directory": "wallet.dat",
     "embedded_peercache_path": "peercache",
     "onion_virtual_port": "4043",
@@ -328,7 +327,6 @@
     "control_sock_enabled": false,
     "control_sock": 12000,
     "onion_enabled": false,
-    "test_network": true,
     "ssl_authority_paths": [],
     "send_logs_to_origintrail": false,
     "enable_debug_logs_level": false,
@@ -376,7 +374,9 @@
     "network": {
       "id": "PirotV1.0.0",
       "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"]
+      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "solutionDifficulty": 20,
+      "identityDifficulty": 14
     },
     "bugSnag": {
       "releaseStage": "pirot"

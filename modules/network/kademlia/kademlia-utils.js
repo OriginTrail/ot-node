@@ -51,8 +51,7 @@ class KademliaUtils {
           `possible indices tested in the last ${ms(Date.now() - start)}`);
         }, 60000);
 
-        this.log.info(`Solving identity derivation index with ${this.config.cpus} ` +
-        'solver processes, this can take a while...');
+        this.log.info('Solving identity derivation index. This can take a while...');
 
         events.on('attempt', () => attempts += 1);
 
@@ -83,10 +82,11 @@ class KademliaUtils {
     */
     async spawnIdentityDerivationProcesses(xprivkey, path, events) {
         // How many process can we run
-        const { cpus } = this.config;
+        let { cpus } = this.config;
 
         if (cpus === 0) {
-            return this.log.info('There are no derivation processes running');
+            cpus = os.cpus().length;
+            this.log.info(`Using ${cpus} cores for derivation.`);
         }
         if (os.cpus().length < cpus) {
             return this.log.error('Refusing to start more solvers than cpu cores');
@@ -110,7 +110,7 @@ class KademliaUtils {
         return new Promise((resolve, reject) => {
             events.once('index', (i) => {
                 events.removeAllListeners();
-                // this.solvers.forEach(s => s.kill('SIGTERM'));
+                this.solvers.forEach(s => s.kill('SIGTERM'));
                 resolve(i);
             });
         });
@@ -149,7 +149,10 @@ class KademliaUtils {
             this.log.error(`Derivation ${c} error, ${err.message}`);
         });
 
-        const options = { test_network: this.config.test_network };
+        const options = {
+            solutionDifficulty: this.config.network.solutionDifficulty,
+            identityDifficulty: this.config.network.identityDifficulty,
+        };
         solver.send([xprv, index, derivationPath, options]);
 
         return solver;
@@ -215,11 +218,7 @@ class KademliaUtils {
    */
     checkIdentity(identity) {
         if (!identity.validate()) {
-            this.log.warn(`Identity is not yet generated. Identity derivation not yet solved - ${identity.index} is invalid`);
-            const [xprivkey, childIndex] =
-                deasync(this.solveIdentity(identity.xprv, identity.path));
-            identity.xprv = xprivkey;
-            identity.index = childIndex;
+            throw Error('Identity is not valid. Provide valid one or generate new one.');
         }
     }
 }

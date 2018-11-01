@@ -16,10 +16,11 @@ const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const ImportUtilities = require('../../../modules/ImportUtilities');
 
+// Identity difficulty 8.
 const bootstrapIdentity = {
-    ba9f7526f803490e631859c75d56e5ab25a47a33: {
-        xprivkey: 'xprv9s21ZrQH143K4MkqK5soWDhkWWzhCauPCvb1faFfvp1kaLTMV76CScnYHWZNALh3YXEPJNkAcesHidcoVSpP7efcDhnEQDQYkWxEnZtDMYR',
-        index: 0,
+    ff62cb1f692431d901833d55b93c7d991b4087f1: {
+        xprivkey: 'xprv9s21ZrQH143K3HeLBdzpC75mK2nW8HSsrLRm7RU7yS3W6hNQFibGTYiWpAKAsJm6LQPyp6khWQ5mGvFVPeMqehQj1pUCkTWMTw1G5HHJow5',
+        index: 1610612758,
     },
 };
 
