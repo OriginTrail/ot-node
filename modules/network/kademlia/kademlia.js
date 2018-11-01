@@ -368,44 +368,7 @@ class Kademlia {
      */
     _registerRoutes() {
         if (this.config.is_bootstrap_node) {
-            // async
-            this.node.use('kad-find-contact', (request, response, next) => {
-                this.log.debug('kad-find-contact received');
-
-                try {
-                    const contactId = request.params.message.contact;
-
-                    let contact = this.node.router.getContactByNodeId(contactId);
-                    if (contact && contact.hostname) {
-                        response.send({ contact });
-                        return;
-                    }
-
-                    this.node.peercache.getExternalPeerInfo(contactId).then((peerContact) => {
-                        if (peerContact) {
-                            contact = KadenceUtils.parseContactURL(peerContact);
-
-                            if (contact.length === 2 && contact[1].hostname) {
-                                response.send({ contact: contact[1] });
-                            } else {
-                                // Should not happen ever.
-                                this.log.warn(`Invalid contact received form peer-cache: ${JSON.stringify(contact)}`);
-                                response.send([]);
-                            }
-                        } else {
-                            response.send([]);
-                        }
-                    }).catch(error => response.error(error));
-                } catch (error) {
-                    response.error(error);
-                }
-            });
-
-            // error handler
-            this.node.use('kad-find-contact', (err, request, response, next) => {
-                this.log.warn(`kad-find-contact error received. ${err}`);
-                response.error(err);
-            });
+            // TODO: add here custom methods for bootstrap.
 
             return;
         }
@@ -545,116 +508,49 @@ class Kademlia {
                             });
                         }).then((contact) => {
                             if (contact) {
-                                this.node.router.addContactByNodeId(contactId, contact);
                                 return contact;
                             }
-                            return new Promise(async (accept, reject) => {
-                                this.log.debug(`Asking bootstrap for contact: ${contactId}.`);
-                                try {
-                                    const freshContact =
-                                        await this.bootstrapFindContact(contactId);
-                                    if (freshContact) {
-                                        this.log.debug(`Got contact for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                                        this.node.router.addContactByNodeId(
-                                            contactId,
-                                            freshContact,
-                                        );
-                                        accept(freshContact);
-                                    } else {
-                                        this.log.debug(`Bootstrap find failed for: ${contactId}.`);
-                                        reject(Error(`Bootstrap find failed for: ${contactId}.`));
+                            return new Promise((accept, reject) => {
+                                this.log.debug(`Searching for contact: ${contactId}.`);
+                                this.node.iterativeFindNode(contactId, (err, result) => {
+                                    if (err) {
+                                        reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                                        return;
                                     }
-                                } catch (error) {
-                                    this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
-                                    reject(Error(`Bootstrap find failed for: ${contactId}.`));
-                                }
+                                    if (result && Array.isArray(result)) {
+                                        const contact = result.find(c => c[0] === contactId);
+                                        if (contact) {
+                                            accept(contact[1]);
+                                        } else {
+                                            reject(Error(`Failed to find contact ${contactId}`));
+                                        }
+                                    } else {
+                                        reject(Error(`Failed to find contact ${contactId}`));
+                                    }
+                                });
                             });
                         });
                     }
                 }
 
-                this.log.debug(`No knowledge about contact ${contactId}. Asking bootstrap for it.`);
+                this.log.debug(`No knowledge about contact ${contactId}, searching for it.`);
                 return new Promise(async (accept, reject) => {
-                    try {
-                        const freshContact =
-                            await this.bootstrapFindContact(contactId);
-                        if (freshContact) {
-                            this.log.debug(`Bootstrap find done for: ${contactId}. ${freshContact.hostname}:${freshContact.port}.`);
-                            this.node.router.addContactByNodeId(contactId, freshContact);
-                            accept(freshContact);
-                        } else {
-                            this.log.debug(`Bootstrap find failed for: ${contactId}.`);
-                            reject(Error(`Bootstrap find failed for: ${contactId}.`));
-                        }
-                    } catch (error) {
-                        this.log.debug(`Failed to get contact: ${contactId}. Error: ${error}`);
-                        reject(Error(`Failed to get contact: ${contactId}. Error: ${error}`));
-                    }
-                });
-            };
-
-            /**
-             * Tries to refresh buckets based on contact ID
-             * @param contactId
-             * @param retry
-             * @return {Promise}
-             */
-            node.refreshContact = async (contactId, retry) => new Promise(async (resolve) => {
-                const _refresh = () => new Promise((resolve, reject) => {
-                    this.node.iterativeFindNode(contactId, (err) => {
+                    this.node.iterativeFindNode(contactId, (err, result) => {
                         if (err) {
-                            reject(err);
-                        } else {
-                            const contact = this.node.router.getContactByNodeId(contactId);
-                            if (contact && contact.hostname) {
-                                resolve(contact);
+                            reject(Error(`Failed to find contact ${contactId}. ${err}`));
+                            return;
+                        }
+                        if (result && Array.isArray(result)) {
+                            const contact = result.find(c => c[0] === contactId);
+                            if (contact) {
+                                accept(contact[1]);
                             } else {
-                                resolve(null);
+                                reject(Error(`Failed to find contact ${contactId}`));
                             }
+                        } else {
+                            reject(Error(`Failed to find contact ${contactId}`));
                         }
                     });
-                });
-
-                try {
-                    if (retry) {
-                        for (let i = 1; i <= 3; i += 1) {
-                            // eslint-disable-next-line no-await-in-loop
-                            const contact = await _refresh();
-                            if (contact) {
-                                resolve(contact);
-                                return;
-                            }
-                            // eslint-disable-next-line
-                            await sleep.sleep((2 ** i) * 1000);
-                        }
-                    } else {
-                        await _refresh(contactId, retry);
-                    }
-
-                    resolve(null);
-                } catch (e) {
-                    // failed to refresh buckets (should not happen)
-                    this.notifyError(e);
-                }
-            });
-
-            node.findContact = async (contactToFind, contactId) => {
-                const contact = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send(
-                        'kad-find-contact',
-                        {
-                            message: { contact: contactToFind },
-                        },
-                        [contactId, contact],
-                        (err, res) => {
-                            if (err) {
-                                reject(err);
-                            } else {
-                                resolve(res);
-                            }
-                        },
-                    );
                 });
             };
 
