@@ -9,16 +9,16 @@ contract HoldingStorage {
         hub = Hub(hubAddress);
     }
 
-    modifier onlyHolding() {
-        require(msg.sender == hub.holdingAddress(),
-        "Function can only be called by Holding contract!");
+    modifier onlyContracts() {
+        require(hub.isContract(msg.sender),
+        "Function can only be called by contracts!");
         _;
     }
 
     mapping(bytes32 => bytes32) public fingerprint;
 
     function setFingerprint(bytes32 dataSetId, bytes32 dataRootHash)
-    public onlyHolding {
+    public onlyContracts {
         fingerprint[dataSetId] = dataRootHash;
     }
 
@@ -82,43 +82,43 @@ contract HoldingStorage {
     }
 
     function setOfferCreator (bytes32 offerId, address creator)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].creator = creator;
     }
     function setOfferDataSetId (bytes32 offerId, bytes32 dataSetId)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].dataSetId = dataSetId;
     }
     function setOfferHoldingTimeInMinutes (bytes32 offerId, uint256 holdingTimeInMinutes)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
     }
     function setOfferTokenAmountPerHolder (bytes32 offerId, uint256 tokenAmountPerHolder)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].tokenAmountPerHolder = tokenAmountPerHolder;
     }
     function setOfferTask (bytes32 offerId, bytes32 task)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].task = task;
     }
     function setOfferDifficulty (bytes32 offerId, uint256 difficulty)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].difficulty = difficulty;
     }
     function setOfferRedLitigationHash (bytes32 offerId, bytes32 redLitigationHash)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].redLitigationHash = redLitigationHash;
     }
     function setOfferGreenLitigationHash (bytes32 offerId, bytes32 greenLitigationHash)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].greenLitigationHash = greenLitigationHash;
     }
     function setOfferBlueLitigationHash (bytes32 offerId, bytes32 blueLitigationHash)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].blueLitigationHash = blueLitigationHash;
     }
     function setOfferStartTime (bytes32 offerId, uint256 startTime)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].startTime = startTime;
     }
     function setOfferParameters (
@@ -129,7 +129,7 @@ contract HoldingStorage {
         uint256 tokenAmountPerHolder,
         bytes32 task,
         uint256 difficulty)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].creator = creator;
         offer[offerId].dataSetId = dataSetId;
         offer[offerId].holdingTimeInMinutes = holdingTimeInMinutes;
@@ -142,7 +142,7 @@ contract HoldingStorage {
         bytes32 redLitigationHash,
         bytes32 greenLitigationHash,
         bytes32 blueLitigationHash)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].redLitigationHash = redLitigationHash;
         offer[offerId].greenLitigationHash = greenLitigationHash;
         offer[offerId].blueLitigationHash = blueLitigationHash;
@@ -159,7 +159,7 @@ contract HoldingStorage {
         bytes32 offerId,
         address[] identities,
         uint8[] litigationEncryptionTypes)
-    public onlyHolding {
+    public onlyContracts {
         offer[offerId].startTime = block.timestamp;
 
         holder[offerId][identities[0]].stakedAmount = offer[offerId].tokenAmountPerHolder;
@@ -175,11 +175,11 @@ contract HoldingStorage {
             holder[offerId][identities[2]].litigationEncryptionType = litigationEncryptionTypes[2];
     }
     function setHolderStakedAmount (bytes32 offerId, address identity, uint256 stakedAmount)
-    public onlyHolding {
+    public onlyContracts {
         holder[offerId][identity].stakedAmount = stakedAmount;
     }
     function setHolderLitigationEncryptionType(bytes32 offerId, address identity, uint256 litigationEncryptionType)
-    public onlyHolding {
+    public onlyContracts {
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
     }
 
@@ -190,5 +190,9 @@ contract HoldingStorage {
     function getHolderLitigationEncryptionType(bytes32 offerId, address identity)
     public view returns(uint256 litigationEncryptionType) {
         return holder[offerId][identity].litigationEncryptionType;
+    }
+    function setHubAddress(address newHubAddress)
+    public onlyContracts {
+        hub = Hub(newHubAddress);
     }
 }

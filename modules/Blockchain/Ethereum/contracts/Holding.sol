@@ -5,6 +5,7 @@ import {ERC725} from './ERC725.sol';
 import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
 import {Profile} from './Profile.sol';
+import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
 
 contract Holding is Ownable {
@@ -35,7 +36,7 @@ contract Holding is Ownable {
     uint256 holdingTimeInMinutes, uint256 tokenAmountPerHolder, uint256 dataSetSizeInBytes, uint256 litigationIntervalInMinutes) public {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
-
+        require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
         // First we check that the paramaters are valid
         require(dataRootHash != 0, "Data root hash cannot be zero");
         require(redLitigationHash != 0, "Litigation hash cannot be zero");
@@ -125,6 +126,7 @@ contract Holding is Ownable {
     public {
         // Verify sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
         // Verify holder
         uint256 amountToTransfer = holdingStorage.getHolderStakedAmount(bytes32(offerId), identity);

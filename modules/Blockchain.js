@@ -83,6 +83,14 @@ class Blockchain {
     }
 
     /**
+     * Gets withdrawal time
+     * @return {Promise<*>}
+     */
+    async getProfileWithdrawalTime() {
+        return this.blockchain.getProfileWithdrawalTime();
+    }
+
+    /**
      * Increase token approval for escrow contract
      * @param {number} tokenAmountIncrease
      * @returns {Promise}
@@ -218,6 +226,20 @@ class Blockchain {
      */
     async subscribeToEventPermanent(event) {
         return this.blockchain.subscribeToEventPermanent(event);
+    }
+
+    /**
+     * Subscribes to Blockchain event with a callback specified
+     *
+     * Calling this method will subscribe to Blockchain's event which will be
+     * emitted globally using globalEmitter.
+     * Callback function will be executed when the event is emitted.
+     * @param event Event to listen to
+     * @param callback function to be executed
+     * @returns {number | Object} Event handle
+     */
+    async subscribeToEventPermanentWithCallback(event, callback) {
+        return this.blockchain.subscribeToEventPermanentWithCallback(event, callback);
     }
 
     /**
@@ -375,6 +397,28 @@ class Blockchain {
      */
     async getOfferDifficulty(offerId) {
         return this.blockchain.getOfferDifficulty(offerId);
+    }
+
+    /**
+     * Get all nodes which were added in the approval array
+     */
+    async getAddedNodes() {
+        return this.blockchain.getAddedNodes();
+    }
+
+    /**
+     * Get the statuses of all nodes which were added in the approval array
+     */
+    async getNodeStatuses() {
+        return this.blockchain.getNodeStatuses();
+    }
+
+    /**
+     * Check if a specific node still has approval
+     * @param nodeId
+     */
+    async nodeHasApproval(nodeId) {
+        return this.blockchain.nodeHasApproval(nodeId);
     }
 
     async getBalances() {
