@@ -27,12 +27,32 @@ class PayOutCommand extends Command {
         const bid = await Models.bids.findOne({
             where: { offer_id: offerId },
         });
-        if (bid) {
+        if (!bid) {
             this.logger.important(`There is no bid for offer ${offerId}. Cannot execute payout.`);
-            return;
+            return Command.empty();
         }
-        await this.blockchain.payOut(Utilities.normalizeHex(this.config.erc725Identity), offerId);
+        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
+        await this._printBalances(blockchainIdentity);
+        await this.blockchain.payOut(blockchainIdentity, offerId);
+        await this._printBalances(blockchainIdentity);
         return Command.empty();
+    }
+
+    /**
+     * Print balances
+     * @param blockchainIdentity
+     * @return {Promise<void>}
+     * @private
+     */
+    async _printBalances(blockchainIdentity) {
+        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
+        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
+        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+
+        const profile = await this.blockchain.getProfile(blockchainIdentity);
+        const profileBalance = profile.stake;
+        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
+        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
