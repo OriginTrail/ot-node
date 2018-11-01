@@ -151,6 +151,7 @@ contract HoldingStorage {
 
     struct HolderDefinition {
         uint256 stakedAmount;
+        uint256 paidAmount;
         uint256 litigationEncryptionType;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
@@ -178,6 +179,10 @@ contract HoldingStorage {
     public onlyContracts {
         holder[offerId][identity].stakedAmount = stakedAmount;
     }
+    function setHolderPaidAmount (bytes32 offerId, address identity, uint256 paidAmount)
+    public onlyContracts {
+        holder[offerId][identity].paidAmount = paidAmount;
+    }
     function setHolderLitigationEncryptionType(bytes32 offerId, address identity, uint256 litigationEncryptionType)
     public onlyContracts {
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
@@ -186,6 +191,10 @@ contract HoldingStorage {
     function getHolderStakedAmount (bytes32 offerId, address identity)
     public view returns(uint256 stakedAmount) {
         return holder[offerId][identity].stakedAmount;
+    }
+    function getHolderPaidAmount (bytes32 offerId, address identity)
+    public view returns(uint256 paidAmount) {
+        return holder[offerId][identity].paidAmount;
     }
     function getHolderLitigationEncryptionType(bytes32 offerId, address identity)
     public view returns(uint256 litigationEncryptionType) {
