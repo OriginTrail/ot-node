@@ -1,117 +1,17 @@
 [
   {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "task",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setOfferTask",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "blueLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setOfferBlueLitigationHash",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "constant": true,
     "inputs": [
       {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferDifficulty",
-    "outputs": [
-      {
-        "name": "difficulty",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "identities",
-        "type": "address[]"
-      },
-      {
-        "name": "litigationEncryptionTypes",
-        "type": "uint8[]"
-      }
-    ],
-    "name": "setHolders",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferRedLitigationHash",
-    "outputs": [
-      {
-        "name": "redLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "identity",
+        "name": "sender",
         "type": "address"
       }
     ],
-    "name": "getHolderLitigationEncryptionType",
+    "name": "isContract",
     "outputs": [
       {
-        "name": "litigationEncryptionType",
-        "type": "uint256"
+        "name": "",
+        "type": "bool"
       }
     ],
     "payable": false,
@@ -122,37 +22,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "redLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setOfferRedLitigationHash",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "identity",
+        "name": "newTokenAddress",
         "type": "address"
-      },
-      {
-        "name": "stakedAmount",
-        "type": "uint256"
       }
     ],
-    "name": "setHolderStakedAmount",
+    "name": "setTokenAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -161,7 +35,91 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "hub",
+    "name": "readingStorageAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newReadingAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setReadingAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "readingAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newReadingStorageAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setReadingStorageAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newProfileAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setProfileAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newHoldingStorageAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setHoldingStorageAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "profileAddress",
     "outputs": [
       {
         "name": "",
@@ -174,150 +132,11 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "identity",
-        "type": "address"
-      }
-    ],
-    "name": "getHolderStakedAmount",
+    "inputs": [],
+    "name": "owner",
     "outputs": [
       {
-        "name": "stakedAmount",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "greenLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setOfferGreenLitigationHash",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferTokenAmountPerHolder",
-    "outputs": [
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "creator",
-        "type": "address"
-      },
-      {
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      },
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      },
-      {
-        "name": "task",
-        "type": "bytes32"
-      },
-      {
-        "name": "difficulty",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOfferParameters",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOfferHoldingTimeInMinutes",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "dataSetId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setOfferDataSetId",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferCreator",
-    "outputs": [
-      {
-        "name": "creator",
+        "name": "",
         "type": "address"
       }
     ],
@@ -329,23 +148,11 @@
     "constant": false,
     "inputs": [
       {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "redLitigationHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "greenLitigationHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "blueLitigationHash",
-        "type": "bytes32"
+        "name": "newpPofileStorageAddress",
+        "type": "address"
       }
     ],
-    "name": "setOfferLitigationHashes",
+    "name": "setProfileStorageAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -353,227 +160,26 @@
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "fingerprint",
+    "inputs": [],
+    "name": "tokenAddress",
     "outputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOfferTokenAmountPerHolder",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "bytes32"
-      },
       {
         "name": "",
         "type": "address"
       }
     ],
-    "name": "holder",
-    "outputs": [
-      {
-        "name": "stakedAmount",
-        "type": "uint256"
-      },
-      {
-        "name": "litigationEncryptionType",
-        "type": "uint256"
-      }
-    ],
     "payable": false,
     "stateMutability": "view",
     "type": "function"
   },
   {
     "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferHoldingTimeInMinutes",
+    "inputs": [],
+    "name": "holdingStorageAddress",
     "outputs": [
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "newHubAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setHubAddress",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "creator",
-        "type": "address"
-      }
-    ],
-    "name": "setOfferCreator",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferDataSetId",
-    "outputs": [
-      {
-        "name": "dataSetId",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "identity",
-        "type": "address"
-      },
-      {
-        "name": "litigationEncryptionType",
-        "type": "uint256"
-      }
-    ],
-    "name": "setHolderLitigationEncryptionType",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "difficulty",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOfferDifficulty",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
       {
         "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "offer",
-    "outputs": [
-      {
-        "name": "creator",
         "type": "address"
-      },
-      {
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "name": "holdingTimeInMinutes",
-        "type": "uint256"
-      },
-      {
-        "name": "tokenAmountPerHolder",
-        "type": "uint256"
-      },
-      {
-        "name": "task",
-        "type": "bytes32"
-      },
-      {
-        "name": "difficulty",
-        "type": "uint256"
-      },
-      {
-        "name": "redLitigationHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "greenLitigationHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "blueLitigationHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "startTime",
-        "type": "uint256"
       }
     ],
     "payable": false,
@@ -584,15 +190,67 @@
     "constant": false,
     "inputs": [
       {
-        "name": "dataSetId",
-        "type": "bytes32"
-      },
-      {
-        "name": "dataRootHash",
-        "type": "bytes32"
+        "name": "newApprovalAddress",
+        "type": "address"
       }
     ],
-    "name": "setFingerprint",
+    "name": "setApprovalAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "holdingAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "approvalAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "profileStorageAddress",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -602,105 +260,37 @@
     "constant": false,
     "inputs": [
       {
-        "name": "offerId",
-        "type": "bytes32"
-      },
-      {
-        "name": "startTime",
-        "type": "uint256"
+        "name": "newHoldingAddress",
+        "type": "address"
       }
     ],
-    "name": "setOfferStartTime",
+    "name": "setHoldingAddress",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferStartTime",
-    "outputs": [
-      {
-        "name": "startTime",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
+    "anonymous": false,
+    "inputs": [],
+    "name": "ContractsChanged",
+    "type": "event"
   },
   {
-    "constant": true,
+    "anonymous": false,
     "inputs": [
       {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferTask",
-    "outputs": [
+        "indexed": true,
+        "name": "previousOwner",
+        "type": "address"
+      },
       {
-        "name": "task",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferBlueLitigationHash",
-    "outputs": [
-      {
-        "name": "blueLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "offerId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "getOfferGreenLitigationHash",
-    "outputs": [
-      {
-        "name": "greenLitigationHash",
-        "type": "bytes32"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "name": "hubAddress",
+        "indexed": true,
+        "name": "newOwner",
         "type": "address"
       }
     ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
+    "name": "OwnershipTransferred",
+    "type": "event"
   }
 ]
