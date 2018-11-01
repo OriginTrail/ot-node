@@ -43,7 +43,8 @@ class DcOfferFinalizedCommand extends Command {
                 offer.message = 'Offer has been finalized';
                 await offer.save({ fields: ['status', 'message'] });
 
-                await this.replicationService.cleanup(offer.id);
+                // TODO return cleanup when bug is resolved
+                // await this.replicationService.cleanup(offer.id);
                 return Command.empty();
             }
         }
@@ -63,7 +64,8 @@ class DcOfferFinalizedCommand extends Command {
         offer.message = `Offer for ${offerId} has not been finalized.`;
         await offer.save({ fields: ['status', 'message'] });
 
-        await this.replicationService.cleanup(offer.id);
+        // TODO return cleanup when bug is resolved
+        // await this.replicationService.cleanup(offer.id);
         return Command.empty();
     }
 
