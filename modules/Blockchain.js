@@ -83,6 +83,14 @@ class Blockchain {
     }
 
     /**
+     * Gets withdrawal time
+     * @return {Promise<*>}
+     */
+    async getProfileWithdrawalTime() {
+        return this.blockchain.getProfileWithdrawalTime();
+    }
+
+    /**
      * Increase token approval for escrow contract
      * @param {number} tokenAmountIncrease
      * @returns {Promise}

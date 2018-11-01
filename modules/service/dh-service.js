@@ -175,7 +175,7 @@ class DHService {
             this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
 
             Object.assign(data, {
-                amount: remainder.toString(),
+                amount: Utilities.normalizeHex(remainder.toString('hex')),
             });
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',

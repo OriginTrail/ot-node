@@ -927,6 +927,17 @@ class Ethereum {
     }
 
     /**
+     * Get withdrawal time
+     * @return {Promise<any>}
+     */
+    async getProfileWithdrawalTime() {
+        this.log.trace('Get withdrawal time from blockchain');
+        return this.profileContract.methods.withdrawalTime().call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
      * Get profile by wallet
      * @param identity
      */
