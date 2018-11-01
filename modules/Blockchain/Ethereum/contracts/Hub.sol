@@ -85,16 +85,19 @@ contract Hub is Ownable{
     function setProfileStorageAddress(address newpPofileStorageAddress)
     public onlyOwner {
         profileStorageAddress = newpPofileStorageAddress;
+        emit ContractsChanged();
     }
 
     function setHoldingStorageAddress(address newHoldingStorageAddress)
     public onlyOwner {
         holdingStorageAddress = newHoldingStorageAddress;
+        emit ContractsChanged();
     }
     
     function setReadingStorageAddress(address newReadingStorageAddress)
     public onlyOwner {
         readingStorageAddress = newReadingStorageAddress;
+        emit ContractsChanged();
     }
 
     function isContract(address sender) 
