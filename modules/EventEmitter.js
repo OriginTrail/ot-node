@@ -97,7 +97,26 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
+            transport,
         } = this.ctx;
+
+        this._on('api-node-info', async (data) => {
+            try {
+                const system = await transport.getNetworkInfo();
+                data.response.status(200);
+                data.response.send({
+                    system,
+                    config,
+                });
+            } catch (err) {
+                logger.error('Failed to get node info');
+                notifyError(err);
+                data.response.status(500);
+                data.response.send({
+                    message: err,
+                });
+            }
+        });
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
