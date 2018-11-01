@@ -524,6 +524,13 @@ class GS1Importer {
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'INPUT_BATCH',
                     });
+
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
+                        _to: `${eventKey}`,
+                        _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                        edge_type: 'INPUT_BATCH',
+                    });
                 }
             }
 
