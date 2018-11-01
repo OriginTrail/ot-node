@@ -310,7 +310,7 @@ class Encryption {
             types.push('uint256');
             args.push(new BN(value, 16));
         }
-        return `0x${abi.soliditySHA3(types, args).toString('hex')}`;
+        return Utilities.normalizeHex(abi.soliditySHA3(types, args).toString('hex').padStart(64, '0'));
     }
 
     /**

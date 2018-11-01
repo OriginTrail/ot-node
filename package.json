@@ -65,7 +65,7 @@
   "snyk": true,
   "dependencies": {
     "@garbados/merkle-tree": "^1.0.3-alpha",
-    "@kadenceproject/kadence": "^4.2.0",
+    "@kadenceproject/kadence": "git+http://git@gitlab.com/kadence/kadence#v4.3.0",
     "ajv": "^5.5.2",
     "arangojs": "^5.8.0",
     "async": "^2.6.0",

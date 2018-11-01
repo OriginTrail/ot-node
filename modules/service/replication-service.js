@@ -113,14 +113,11 @@ class ReplicationService {
      * @return {Promise<void>}
      */
     async cleanup(internalOfferId) {
+        delete this.replicationCache[internalOfferId];
 
-        // TODO return cleanup when bug is resolved
-        // delete this.replicationCache[internalOfferId];
-        //
-        // this.logger.info(`Deleting replications directory and
-        // cache for offer with internal ID ${internalOfferId}`);
-        // const offerDirPath = this._getOfferDirPath(internalOfferId);
-        // await Utilities.deleteDirectory(offerDirPath);
+        this.logger.info(`Deleting replications directory and cache for offer with internal ID ${internalOfferId}`);
+        const offerDirPath = this._getOfferDirPath(internalOfferId);
+        await Utilities.deleteDirectory(offerDirPath);
     }
 
     /**

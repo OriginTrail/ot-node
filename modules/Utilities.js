@@ -828,7 +828,7 @@ class Utilities {
             signature.s,
         );
 
-        return signedAddress === message.wallet;
+        return Utilities.compareHexStrings(signedAddress, message.wallet);
     }
 
     /**

@@ -176,7 +176,7 @@ class DHService {
             this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
 
             Object.assign(data, {
-                amount: Utilities.normalizeHex(remainder.toString('hex')),
+                amount: remainder.toString(),
             });
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
@@ -216,7 +216,7 @@ class DHService {
                     [Op.ne]: bidId,
                 },
                 status: {
-                    [Op.in]: ['PENDING', 'SENT'],
+                    [Op.in]: ['SENT'],
                 },
                 deposit: {
                     [Op.ne]: null,
