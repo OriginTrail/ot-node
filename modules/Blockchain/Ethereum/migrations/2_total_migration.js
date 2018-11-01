@@ -216,6 +216,47 @@ module.exports = async (deployer, network, accounts) => {
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
 
         break;
+    case 'live':
+        await deployer.deploy(Hub, { gas: 6000000, from: accounts[0] })
+            .then((result) => {
+                hub = result;
+            });
+
+        await hub.setTokenAddress('0xaA7a9CA87d3694B5755f213B5D04094b8d0F0A6F');
+
+        profileStorage = await deployer.deploy(
+            ProfileStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setProfileStorageAddress(profileStorage.address);
+
+        holdingStorage = await deployer.deploy(
+            HoldingStorage,
+            hub.address,
+            { gas: 6000000, from: accounts[0] },
+        );
+        await hub.setHoldingStorageAddress(holdingStorage.address);
+
+        profile = await deployer.deploy(Profile, hub.address, { gas: 6000000, from: accounts[0] });
+        await hub.setProfileAddress(profile.address);
+
+        holding = await deployer.deploy(Holding, hub.address, { gas: 6000000, from: accounts[0] });
+        await hub.setHoldingAddress(holding.address);
+
+        approval = await deployer.deploy(Approval, { gas: 6000000, from: accounts[0] });
+        await hub.setApprovalAddress(approval.address);
+
+        console.log('\n\n \t Contract adressess on mainnet:');
+        console.log(`\t Hub contract address: \t\t\t${hub.address}`);
+        console.log(`\t Profile contract address: \t\t${profile.address}`);
+        console.log(`\t Holding contract address: \t\t${holding.address}`);
+        console.log(`\t Approval contract address: \t\t${approval.address}`);
+
+        console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
+        console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+
+        break;
     default:
         console.warn('Please use one of the following network identifiers: ganache, mock, test, or rinkeby');
         break;
