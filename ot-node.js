@@ -465,9 +465,6 @@ class OTNode {
             await remoteControl.connect();
         }
 
-        const challenger = container.resolve('challenger');
-        await challenger.startChallenging();
-
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
