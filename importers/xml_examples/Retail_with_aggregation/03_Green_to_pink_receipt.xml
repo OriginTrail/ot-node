@@ -65,16 +65,6 @@
                                 </children>
                             </VocabularyElement>
                             
-                            <VocabularyElement id="urn:epc:id:sgln:Building_Orange">
-                                <attribute id="urn:ot:object:location:category">Building</attribute>
-                                <attribute id="urn:ot:object:location:description">Retail store</attribute>
-                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_Orange</attribute>
-                                <children>
-                                    <id>urn:epc:id:sgln:Building_Orange_V5</id>
-                                    <id>urn:epc:id:sgln:Building_Orange_V6</id>
-                                </children>
-                            </VocabularyElement>
-                            
                         </VocabularyElementList>
                     </Vocabulary>
                     

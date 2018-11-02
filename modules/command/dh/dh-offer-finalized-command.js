@@ -1,16 +1,15 @@
-const Models = require('../../../models/index');
 const Command = require('../command');
+const Utilities = require('../../Utilities');
+const Models = require('../../../models/index');
 
 /**
- * Checks whether offer is finalized from the DH side
+ * Repeatable command that checks whether offer is ready or not
  */
-class DHOfferFinalizedCommand extends Command {
+class DhOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
         this.config = ctx.config;
-        this.transport = ctx.transport;
-        this.remoteControl = ctx.remoteControl;
     }
 
     /**
@@ -18,72 +17,81 @@ class DHOfferFinalizedCommand extends Command {
      * @param command
      */
     async execute(command) {
-        const { importId } = command.data;
+        const { offerId } = command.data;
 
-        const event = await Models.events.findOne({ where: { event: 'OfferFinalized', import_id: importId, finished: 0 } });
-        if (event) {
-            event.finished = true;
-            await event.save({ fields: ['finished'] });
-
-            const eventModelBids = await Models.events.findAll({
-                where:
-                    {
-                        event: 'BidTaken',
-                        import_id: importId,
-                    },
+        const events = await Models.events.findAll({
+            where: {
+                event: 'OfferFinalized',
+                finished: 0,
+            },
+        });
+        if (events) {
+            const event = events.find((e) => {
+                const {
+                    offerId: eventOfferId,
+                } = JSON.parse(e.data);
+                return Utilities.compareHexStrings(offerId, eventOfferId);
             });
-            if (!eventModelBids) {
-                // Probably contract failed since no event fired.
-                this.logger.info(`BidTaken not received for offer ${importId}.`);
-                return Command.empty();
-            }
+            if (event) {
+                event.finished = true;
+                await event.save({ fields: ['finished'] });
 
-            let bidTakenEvent = null;
-            for (const e of eventModelBids) {
-                const eventBidData = JSON.parse(e.data);
+                this.logger.important(`Offer ${offerId} finalized`);
 
-                if (eventBidData.DH_wallet === this.config.node_wallet) {
-                    bidTakenEvent = e;
-                    break;
+                const {
+                    holder1,
+                    holder2,
+                    holder3,
+                } = JSON.parse(event.data);
+
+                const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
+                const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+
+                if (holders.includes(Utilities.normalizeHex(this.config.erc725Identity))) {
+                    bid.status = 'CHOSEN';
+                    await bid.save({ fields: ['status'] });
+                    this.logger.important(`I've been chosen for offer ${offerId}.`);
+
+                    const scheduledTime = (bid.holding_time_in_minutes * 60 * 1000) + (60 * 1000);
+                    return {
+                        commands: [
+                            {
+                                name: 'dhPayOutCommand',
+                                delay: scheduledTime,
+                                transactional: false,
+                                data: {
+                                    offerId,
+                                },
+                            },
+                        ],
+                    };
                 }
-            }
 
-            if (!bidTakenEvent) {
-                this.logger.info(`Bid not taken for offer ${importId}.`);
-                this.remoteControl.bidNotTaken(`Bid not taken for offer ${importId}.`);
+                bid.status = 'NOT_CHOSEN';
+                await bid.save({ fields: ['status'] });
+                this.logger.important(`I haven't been chosen for offer ${offerId}.`);
                 return Command.empty();
             }
-
-            const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
-            const bid = bidModel.get({ plain: true });
-            this.remoteControl.replicationRequestSent(importId);
-            await this.transport.replicationRequest({
-                import_id: importId,
-                wallet: this.config.node_wallet,
-            }, bid.dc_id);
-            return Command.empty();
         }
         return Command.repeat();
     }
 
     /**
-     * Recover system from failure
+     * Execute strategy when event is too late
      * @param command
-     * @param err
      */
-    async recover(command, err) {
-        const { importId } = command.data;
+    async expired(command) {
+        const { offerId } = command.data;
 
-        const bidModel = await Models.bids.findOne({ where: { import_id: importId } });
-        const bid = bidModel.get({ plain: true });
-
-        this.logger.warn(`Failed to send replication request to ${bid.dc_id}. ${err}`);
-        // TODO Cancel bid here.
-        this.remoteControl.replicationReqestFailed(`Failed to send replication request ${err}`);
+        this.logger.important(`I haven't been chosen for offer ${offerId}. Offer has not been finalized.`);
+        const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+        bid.status = 'NOT_CHOSEN';
+        await bid.save({ fields: ['status'] });
+        return Command.empty();
     }
 
     /**
-     * Builds default FinalizeOfferReadyCommand
+     * Builds default AddCommand
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}
      */
@@ -91,8 +99,8 @@ class DHOfferFinalizedCommand extends Command {
         const command = {
             name: 'dhOfferFinalizedCommand',
             delay: 0,
-            period: 5000,
-            deadline_at: Date.now() + (5 * 60 * 1000),
+            period: 10 * 1000,
+            deadline_at: Date.now() + (10 * 60 * 1000),
             transactional: false,
         };
         Object.assign(command, map);
@@ -100,4 +108,4 @@ class DHOfferFinalizedCommand extends Command {
     }
 }
 
-module.exports = DHOfferFinalizedCommand;
+module.exports = DhOfferFinalizedCommand;

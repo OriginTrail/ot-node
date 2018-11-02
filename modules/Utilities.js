@@ -21,6 +21,7 @@ const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
+const rimraf = require('rimraf');
 
 const pjson = require('../package.json');
 const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
@@ -109,7 +110,7 @@ class Utilities {
      */
     static getLogger() {
         let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG === 1) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
 
@@ -207,6 +208,12 @@ class Utilities {
      * @return {*}
      */
     static transformLog(level, msg) {
+        if (process.env.LOGS_LEVEL_DEBUG) {
+            return {
+                level,
+                msg,
+            };
+        }
         if (msg.startsWith('connection timed out')) {
             return null;
         }
@@ -428,13 +435,13 @@ class Utilities {
     }
 
     /**
-     * Get wallet's ATRAC token balance in Ether
+     * Get wallet's TRAC token balance in Ether
      * @param web3 Instance of Web3
      * @param wallet Address of the wallet.
      * @param tokenContractAddress Contract address.
      * @returns {Promise<string |  | Object>}
      */
-    static async getAlphaTracTokenBalance(web3, wallet, tokenContractAddress) {
+    static async getTracTokenBalance(web3, wallet, tokenContractAddress) {
         const walletDenormalized = this.denormalizeHex(wallet);
         // '0x70a08231' is the contract 'balanceOf()' ERC20 token function in hex.
         const contractData = (`0x70a08231000000000000000000000000${walletDenormalized}`);
@@ -821,16 +828,20 @@ class Utilities {
             signature.s,
         );
 
-        return signedAddress === message.wallet;
+        return Utilities.compareHexStrings(signedAddress, message.wallet);
     }
 
     /**
      * Normalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static normalizeHex(number) {
-        if (!number.toLowerCase().startsWith('0x')) {
+        if (number == null) {
+            return null;
+        }
+        number = number.toLowerCase();
+        if (!number.startsWith('0x')) {
             return `0x${number}`;
         }
         return number;
@@ -839,13 +850,29 @@ class Utilities {
     /**
      * Denormalizes hex number
      * @param number     Hex number
-     * @returns {string} Normalized hex number
+     * @returns {string|null} Normalized hex number
      */
     static denormalizeHex(number) {
+        if (number == null) {
+            return null;
+        }
+        number = number.toLowerCase();
         if (number.startsWith('0x')) {
             return number.substring(2);
         }
         return number;
+    }
+
+    /**
+     * Compare HEX numbers in string representation
+     * @param hex1
+     * @param hex2
+     * @return {*}
+     */
+    static compareHexStrings(hex1, hex2) {
+        const denormalized1 = Utilities.denormalizeHex(hex1);
+        const denormalized2 = Utilities.denormalizeHex(hex2);
+        return new BN(denormalized1, 16).eq(new BN(denormalized2, 16));
     }
 
     /**
@@ -983,6 +1010,19 @@ class Utilities {
                         }
                     });
                 }
+            });
+        });
+    }
+
+    /**
+     * Deletes directory recursively
+     * @param directoryPath
+     * @return {Promise}
+     */
+    static deleteDirectory(directoryPath) {
+        return new Promise((resolve) => {
+            rimraf(directoryPath, () => {
+                resolve();
             });
         });
     }

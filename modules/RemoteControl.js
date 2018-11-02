@@ -46,6 +46,7 @@ class RemoteControl {
         this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
         this.notifyError = ctx.notifyError;
+        this.profileService = ctx.profileService;
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -159,8 +160,8 @@ class RemoteControl {
                 this.getTotalIncome();
             });
 
-            this.socket.on('payout', (import_id) => {
-                this.payOut(import_id);
+            this.socket.on('payout', (offer_id) => {
+                this.payOut(offer_id);
             });
 
             this.socket.on('get-stake-per-holding', (import_id) => {
@@ -336,7 +337,7 @@ class RemoteControl {
      * @param wallet
      */
     getBalance() {
-        Utilities.getAlphaTracTokenBalance(
+        Utilities.getTracTokenBalance(
             this.web3, this.config.node_wallet,
             this.config.blockchain.token_contract_address,
         ).then((trac) => {
@@ -391,12 +392,12 @@ class RemoteControl {
 
     /**
      * Payout offer
-     * @param import_id
+     * @param offerId
      * @returns {Promise<void>}
      */
-    async payOut(import_id) {
-        await this.blockchain.payOut(import_id);
-        this.socket.emit('payout_complete', import_id);
+    async payOut(offerId) {
+        await this.profileService.payOut(offerId);
+        this.socket.emit('payout_initiated', offerId);
     }
 
     /**

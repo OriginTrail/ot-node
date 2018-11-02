@@ -14,7 +14,7 @@ const Storage = require('../../../../modules/Storage');
 const Utilities = require('../.././../../modules/Utilities');
 const GraphStorage = require('../.././../../modules/Database/GraphStorage');
 const CommandResolver = require('../.././../../modules/command/command-resolver');
-const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-database-command');
+const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/dc-offer-create-db-command');
 
 const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
@@ -85,15 +85,25 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
         myGraphStorage = await graphStorage.connect();
         myConfig = await container.resolve('config');
 
+        const dataSetId = `0x${'1234'.padStart(64, '0')}`;
+        const offer = await models.offers.create({
+            data_set_id: dataSetId,
+            message: 'Offer is pending',
+            status: 'PENDING',
+        });
+
         myCommand = {
             data: {
-                importId: Utilities.getRandomIntRange(1, 50),
-                replicationId: Utilities.getRandomIntRange(1, 50),
-                rootHash: '0xfe109af514aef462b86a02e032d1add2ce59a224cd095aa87716b1ad26aa08ca',
-                total_escrow_time: 9640000,
-                max_token_amount: Utilities.getRandomIntRange(5000, 10000),
-                min_stake_amount: Utilities.getRandomIntRange(1000, 2000),
-                min_reputation: Utilities.getRandomIntRange(1, 100),
+                dataSetId,
+                internalOfferId: offer.id,
+                dataRootHash: '0xfe109af514aef462b86a02e032d1add2ce59a224cd095aa87716b1ad26aa08ca',
+                redLitigationHash: `0x${'2456'.padStart(64, '0')}`,
+                blueLitigationHash: `0x${'2457'.padStart(64, '0')}`,
+                greenLitigationHash: `0x${'2458'.padStart(64, '0')}`,
+                holdingTimeInMinutes: 60,
+                tokenAmountPerHolder: Utilities.getRandomIntRange(5000, 10000),
+                litigationIntervalInMinutes: 10,
+                dataSizeInBytes: 1000,
             },
         };
 
@@ -109,18 +119,16 @@ describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
         await sleep.sleep(1000);
 
         const offer =
-            await models.offers.findOne({ where: { import_id: myCommand.data.importId } });
+            await models.offers.findOne({ where: { data_set_id: myCommand.data.dataSetId } });
 
-        assert.equal(myCommand.data.importId, offer.dataValues.import_id, 'imports do not match');
-        assert.equal(myCommand.data.replicationId, offer.dataValues.external_id, 'replication ids do not match');
-        assert.equal(myCommand.data.rootHash, offer.dataValues.data_hash, 'root hashs do not match');
-        assert.equal(myCommand.data.max_token_amount, offer.dataValues.max_token_amount, 'max token amounts do not match');
-        assert.equal(myCommand.data.min_stake_amount, offer.dataValues.min_stake_amount, 'min stake amounts do not match');
-        assert.equal(myCommand.data.min_reputation, offer.dataValues.min_reputation, 'min reputations do not match');
-        let temp = new BN(myCommand.data.total_escrow_time);
-        temp = temp.div(new BN(60000));
-        assert.equal(offer.dataValues.total_escrow_time.toString(), temp.toString(), 'total_escrow_time do not match');
-        assert.equal('PENDING', offer.dataValues.status, 'statuses do not match');
+        assert.equal(myCommand.data.dataSetId, offer.dataValues.data_set_id, 'data sets do not match');
+        assert.equal(myCommand.data.redLitigationHash, offer.dataValues.red_litigation_hash, 'red litigations hashes do not match');
+        assert.equal(myCommand.data.blueLitigationHash, offer.dataValues.blue_litigation_hash, 'blue litigations hashes do not match');
+        assert.equal(myCommand.data.greenLitigationHash, offer.dataValues.green_litigation_hash, 'green litigations hashes do not match');
+        assert.equal(myCommand.data.holdingTimeInMinutes, offer.dataValues.holding_time_in_minutes, 'holding time(s) in minute do not match');
+        assert.equal(myCommand.data.tokenAmountPerHolder, offer.dataValues.token_amount_per_holder, 'token amounts do not match');
+        assert.equal(myCommand.data.litigationIntervalInMinutes, offer.dataValues.litigation_interval_in_minutes, 'litigation intervals do not match');
+        assert.equal('PREPARED', offer.dataValues.status, 'statuses do not match');
     });
 
     after('Drop DB', async () => {

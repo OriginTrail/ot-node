@@ -1,11 +1,10 @@
 const kadence = require('@kadenceproject/kadence');
 const readLine = require('readline');
-const { EventEmitter } = require('events');
 
 process.once('message', ([xprv, index, path, options]) => {
-    if (options && options.test_network) {
-        kadence.constants.SOLUTION_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
-        kadence.constants.IDENTITY_DIFFICULTY = kadence.constants.TESTNET_DIFFICULTY;
+    if (options && options.solutionDifficulty && options.identityDifficulty) {
+        kadence.constants.SOLUTION_DIFFICULTY = options.solutionDifficulty;
+        kadence.constants.IDENTITY_DIFFICULTY = options.identityDifficulty;
     }
 
     const identity = new kadence.eclipse.EclipseIdentity(xprv, index, path);

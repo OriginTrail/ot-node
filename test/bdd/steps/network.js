@@ -1,4 +1,4 @@
-/* eslint-disable prefer-arrow-callback */
+/* eslint-disable prefer-arrow-callback, max-len */
 
 const {
     And, But, Given, Then, When,
@@ -6,20 +6,22 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
-const fs = require('fs');
-const path = require('path');
+const sleep = require('sleep-async')().Promise;
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
+const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
+const ImportUtilities = require('../../../modules/ImportUtilities');
 
+// Identity difficulty 8.
 const bootstrapIdentity = {
-    ba9f7526f803490e631859c75d56e5ab25a47a33: {
-        xprivkey: 'xprv9s21ZrQH143K4MkqK5soWDhkWWzhCauPCvb1faFfvp1kaLTMV76CScnYHWZNALh3YXEPJNkAcesHidcoVSpP7efcDhnEQDQYkWxEnZtDMYR',
-        index: 0,
+    ff62cb1f692431d901833d55b93c7d991b4087f1: {
+        xprivkey: 'xprv9s21ZrQH143K3HeLBdzpC75mK2nW8HSsrLRm7RU7yS3W6hNQFibGTYiWpAKAsJm6LQPyp6khWQ5mGvFVPeMqehQj1pUCkTWMTw1G5HHJow5',
+        index: 1610612758,
     },
 };
 
@@ -27,28 +29,30 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     expect(this.state.bootstraps).to.have.length(0);
     expect(nodeCount).to.be.equal(1); // Currently not supported more.
 
+    const walletCount = LocalBlockchain.wallets().length;
+
     const bootstrapNode = new OtNode({
         nodeConfiguration: {
-            node_wallet: LocalBlockchain.wallets()[9].address,
-            node_private_key: LocalBlockchain.wallets()[9].privateKey,
+            node_wallet: LocalBlockchain.wallets()[walletCount - 1].address,
+            node_private_key: LocalBlockchain.wallets()[walletCount - 1].privateKey,
             is_bootstrap_node: true,
             local_network_only: true,
             database: {
                 database: `origintrail-test-${uuidv4()}`,
             },
             blockchain: {
-                ot_contract_address: this.state.localBlockchain.otContractAddress,
-                token_contract_address: this.state.localBlockchain.tokenContractAddress,
-                escrow_contract_address: this.state.localBlockchain.escrowContractAddress,
-                bidding_contract_address: this.state.localBlockchain.biddingContractAddress,
-                reading_contract_address: this.state.localBlockchain.readingContractAddress,
+                hub_contract_address: this.state.localBlockchain.hubContractAddress,
                 rpc_node_host: 'http://localhost', // TODO use from instance
                 rpc_node_port: 7545,
+            },
+            network: {
+                bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
+                remoteWhitelist: ['localhost'],
             },
         },
     });
 
-    bootstrapNode.options.identity = bootstrapIdentity.ba9f7526f803490e631859c75d56e5ab25a47a33;
+    bootstrapNode.options.identity = bootstrapIdentity.ff62cb1f692431d901833d55b93c7d991b4087f1;
     bootstrapNode.initialize();
     this.state.bootstraps.push(bootstrapNode);
 
@@ -56,8 +60,8 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     bootstrapNode.start();
 });
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
-    expect(nodeCount).to.be.lessThan(11);
+Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
+    expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
 
     for (let i = 0; i < nodeCount; i += 1) {
         const newNode = new OtNode({
@@ -68,22 +72,19 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done)
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
                 network: {
-                    bootstraps: ['https://localhost:5278/#ba9f7526f803490e631859c75d56e5ab25a47a33'],
+                    bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                     remoteWhitelist: ['localhost'],
                 },
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
                 },
                 blockchain: {
-                    ot_contract_address: this.state.localBlockchain.otContractAddress,
-                    token_contract_address: this.state.localBlockchain.tokenContractAddress,
-                    escrow_contract_address: this.state.localBlockchain.escrowContractAddress,
-                    bidding_contract_address: this.state.localBlockchain.biddingContractAddress,
-                    reading_contract_address: this.state.localBlockchain.readingContractAddress,
+                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
                     rpc_node_host: 'http://localhost', // TODO use from instance
                     rpc_node_port: 7545,
                 },
                 local_network_only: true,
+                dc_choose_time: 60000, // 1 minute
             },
         });
         this.state.nodes.push(newNode);
@@ -93,11 +94,11 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done)
     done();
 });
 
-Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
-    setTimeout(accept, waitTime * 1000);
-}));
+Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, async function (waitTime) {
+    await sleep.sleep(waitTime * 1000);
+});
 
-Given(/^I start the nodes$/, { timeout: 60000 }, function (done) {
+Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -157,33 +158,20 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV]+)$/, function (nodeIndex, 
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 });
 
-Given(/^I import "([^"]*)"$/, function (xmlFilepath) {
+Given(/^I import "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
+    expect(importType, 'importType can only be GS1 or WOT.').to.satisfy(val => (val === 'GS1' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    return new Promise((accept, reject) => {
-        request.post({
-            headers: { 'Content-Type': 'application/json' },
-            url: `${dc.state.node_rpc_url}/api/import`,
-            json: true,
-            formData: {
-                importfile: fs.createReadStream(path.join(__dirname, '../../../', xmlFilepath)),
-                importtype: 'GS1',
-            },
-        }, (error, response, body) => {
-            if (error) {
-                reject(error);
-                return;
-            }
+    const host = dc.state.node_rpc_url;
 
-            expect(body).to.have.keys(['import_hash', 'import_id', 'message', 'wallet']);
 
-            this.state.lastImport = body;
-            accept();
-        });
-    });
+    const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
+
+    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
+    this.state.lastImport = importResponse;
 });
 
 Then(/^the last import's hash should be the same as one manually calculated$/, function () {
@@ -195,7 +183,7 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
     const { dc } = this.state;
     return new Promise((accept, reject) => {
         request(
-            `${dc.state.node_rpc_url}/api/import_info?import_id=${this.state.lastImport.import_id}`,
+            `${dc.state.node_rpc_url}/api/import_info?data_set_id=${this.state.lastImport.data_set_id}`,
             { json: true },
             (err, res, body) => {
                 if (err) {
@@ -208,56 +196,38 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
                 //     'import_hash', 'root_hash', 'import',
                 //     'transaction', 'data_provider_wallet',
                 // ]);
-                if (!body.import || !body.import.vertices || !body.import.vertices) {
-                    reject(Error('Response should contain import: { vertices: ..., edges: ... }'));
+                if (!body.import || !body.import.vertices || !body.import.edges) {
+                    reject(Error(`Response should contain import: { vertices: ..., edges: ... }\n${JSON.stringify(body)}`));
                     return;
                 }
 
-                if (body.import_hash !== this.state.lastImport.import_hash) {
-                    reject(Error(`Import hash differs: ${body.import_hash} !== ${this.state.lastImport.import_hash}.`));
-                    return;
-                }
                 const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
-                if (calculatedImportHash !== this.state.lastImport.import_hash) {
-                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.import_hash}.`));
+                if (calculatedImportHash !== this.state.lastImport.data_set_id) {
+                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`));
                     return;
                 }
+
+                // TODO: Calculate root hash here and test it against body.root_hash.
                 accept();
             },
         );
     });
 });
 
-Given(/^I initiate the replication$/, function () {
+Given(/^I initiate the replication$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    return new Promise((accept, reject) => {
-        request.post({
-            headers: { 'Content-Type': 'application/json' },
-            url: `${dc.state.node_rpc_url}/api/replication`,
-            body: {
-                import_id: this.state.lastImport.import_id,
-            },
-            json: true,
-        }, (err, res, body) => {
-            if (err) {
-                reject(err);
-                return;
-            }
+    const response = await httpApiHelper.apiReplication(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-            if (!body.replication_id) {
-                reject(Error('Failed to replicate.'));
-                return;
-            }
+    if (!response.replication_id) {
+        throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
+    }
 
-            this.state.lastReplication = body;
-            accept();
-        });
-    });
+    this.state.lastReplication = response;
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
@@ -268,18 +238,15 @@ Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function ()
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const promises = [];
+
+    // All nodes including DC emit offer-finalized.
     this.state.nodes.forEach((node) => {
-        if (node.state.identity !== this.state.dc.state.identity) {
-            promises.push(new Promise((accept, reject) => {
-                node.once('key-verified', (importId) => {
-                    if (importId === this.state.lastImport.import_id) {
-                        accept();
-                    } else {
-                        reject(Error(`Import ID differs. Expected ${this.state.lastImport.import_id}, got ${importId}.`));
-                    }
-                });
-            }));
-        }
+        promises.push(new Promise((acc) => {
+            node.once('offer-finalized', (offerId) => {
+                // TODO: Change API to connect internal offer ID and external offer ID.
+                acc();
+            });
+        }));
     });
 
     return Promise.all(promises);
@@ -294,42 +261,211 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     const { dc } = this.state;
 
+    // Expect everyone to have data
+    expect(dc.state.replications.length, 'Not every node replicated data.').to.equal(this.state.nodes.length - 1);
+
+    // Get offer ID for last import.
+    const lastOfferId = dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+
     // Assumed it hasn't been changed in between.
-    const currentModifier =
-        await this.state.localBlockchain.biddingInstance.methods
-            .replication_modifier().call();
-    expect(currentModifier).to.be.equal(dc.state.holdingData.length.toString());
+    const currentDifficulty =
+        await this.state.localBlockchain.holdingInstance.methods.difficultyOverride().call();
+
+    // TODO: Check how many actually was chosen.
+    let chosenCount = 0;
+    this.state.nodes.forEach(node => (
+        chosenCount += (node.state.takenBids.includes(lastOfferId) ? 1 : 0)));
+
+    if (currentDifficulty > 0) {
+        expect(currentDifficulty).to.equal(chosenCount);
+    } else {
+        // From holding contract:
+        let difficulty = 0;
+        if (Math.log2(this.state.nodes.length) <= 4) {
+            difficulty = 1;
+        } else {
+            difficulty = 4 + (((Math.log2(this.state.nodes.length) - 4) * 10000) / 13219);
+        }
+
+        // TODO: test the task's difficulty.
+        expect(chosenCount).to.equal(3);
+    }
 
     // Get original import info.
     const dcImportInfo =
-        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.import_id);
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
 
     const promises = [];
-    dc.state.holdingData.forEach((holdingData) => {
-        const { importId, dhWallet } = holdingData;
+    dc.state.replications.forEach(({ internalOfferId, dhId }) => {
+        if (dc.state.offers.internalIDs[internalOfferId].dataSetId === this.state.lastImport.data_set_id) {
+            const node =
+                this.state.nodes.find(node => node.state.identity === dhId);
 
-        expect(importId).to.be.equal(this.state.lastImport.import_id);
-
-        const node =
-            this.state.nodes.find(node => node.options.nodeConfiguration.node_wallet === dhWallet);
-
-        if (!node) {
-            throw Error(`Failed to find node with wallet: ${dhWallet}.`);
-        }
-
-        promises.push(new Promise(async (accept, reject) => {
-            const dhImportInfo =
-                await httpApiHelper.apiImportInfo(node.state.node_rpc_url, importId);
-            // TODO: fix different root hashes error.
-            dhImportInfo.root_hash = dcImportInfo.root_hash;
-            if (deepEqual(dcImportInfo, dhImportInfo)) {
-                accept();
-            } else {
-                reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`));
+            if (!node) {
+                throw Error(`Failed to find node with ID: ${dhId}.`);
             }
-        }));
+
+            promises.push(new Promise(async (accept, reject) => {
+                const dhImportInfo =
+                    await httpApiHelper.apiImportInfo(node.state.node_rpc_url, this.state.lastImport.data_set_id);
+                // TODO: fix different root hashes error.
+                dhImportInfo.root_hash = dcImportInfo.root_hash;
+                if (deepEqual(dcImportInfo, dhImportInfo)) {
+                    accept();
+                } else {
+                    reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`));
+                }
+            }));
+        }
     });
 
     return Promise.all(promises);
 });
 
+Given(/^I remember previous import's fingerprint value$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodesWalletAddress !== 'null', 'Nodes wallet should be non null value').to.be.equal(true);
+
+    const { dc } = this.state;
+
+    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    expect(myFingerprint).to.have.keys(['root_hash']);
+    expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+    // TODO need better namings
+    this.state.lastMinusOneImportFingerprint = myFingerprint;
+    this.state.lastMinusOneImport = this.state.lastImport;
+});
+
+Then(/^checking again first import's root hash should point to remembered value$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodesWalletAddress !== 'null', 'Nodes wallet should be non null value').to.be.equal(true);
+
+    const { dc } = this.state;
+
+    const firstImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastMinusOneImport.data_set_id);
+    expect(firstImportFingerprint).to.have.keys(['root_hash']);
+    expect(Utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+    expect(firstImportFingerprint.root_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
+    expect(deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint), 'import and root has in both scenario should be indentical').to.be.equal(true);
+});
+
+Given(/^I call api-query-local with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const response = await httpApiHelper.apiQueryLocal(host, jsonQuery);
+    this.state.apiQueryLocalResponse = response;
+});
+
+Given(/^I call api-query-local-import with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const response = await httpApiHelper.apiQueryLocalImport(host, jsonQuery);
+    this.state.apiQueryLocalImportResponse = response;
+});
+
+Given(/^I call api-query-local-import-importId endpoint for last import$/, async function () {
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+    const lastImportId = this.state.lastImport.import_id;
+
+    const response = await httpApiHelper.apiQueryLocalImportByImportId(host, lastImportId);
+    this.state.apiQueryLocalImportByImportIdResponse = response;
+});
+
+Then(/^api-query-local response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
+
+    expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
+    expect(this.state.apiQueryLocalResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
+});
+
+Then(/^api-query-local-import response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
+
+    expect(this.state.apiQueryLocalImportResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
+    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
+});
+
+Then(/^api-query-local-import-importId response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalImportByImportIdResponse, 'apiQueryLocalImportByImportId should have given some result').to.be.equal(true);
+
+    expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
+    // check that lastImport.import_hash and sha256 calculated hash are matching
+    const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
+    expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
+});
+
+Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+    // TODO expect tokenCount < profileBalance
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    await httpApiHelper.apiWithdraw(host, tokenCount);
+});
+
+Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const promises = [];
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-initiated', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-completed', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-command-completed', () => accept());
+    }));
+
+    return Promise.all(promises);
+});
+
+Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    expect(!!dc.state.newProfileBalance, 'newProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldProfileBalance, 'oldProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+
+    expect(dc.state.oldProfileBalance - dc.state.newProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    expect(dc.state.newWalletBalance - dc.state.oldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+});

@@ -1,15 +1,16 @@
 
 module.exports = (sequelize, DataTypes) => {
-    var holding_data = sequelize.define('holding_data', {
+    const holding_data = sequelize.define('holding_data', {
+        data_set_id: DataTypes.STRING,
         source_wallet: DataTypes.STRING,
-        data_public_key: DataTypes.STRING,
+        litigation_public_key: DataTypes.STRING,
         distribution_public_key: DataTypes.STRING,
         distribution_private_key: DataTypes.STRING,
-        epk: DataTypes.STRING,
+        distribution_epk: DataTypes.STRING,
     }, {
         tableName: 'holding_data',
     });
-    holding_data.associate = function (models) {
+    holding_data.associate = (models) => {
     // associations can be defined here
     };
     return holding_data;

@@ -12,6 +12,14 @@ const lineReader = require('readline');
 
 const defaultConfiguration = require('../../../../config/config.json').development;
 
+
+const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
+const identityRegex = /\b[0-9A-F]{40}\b/gi;
+const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
+const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
+const walletAmountRegex = /\b\d+\b/g;
+
 /**
  * OtNode represent small wrapper over a running OT Node.
  *
@@ -36,11 +44,12 @@ class OtNode extends EventEmitter {
 
     initialize() {
         mkdirp.sync(this.options.configDir);
-        execSync(`npm run setup -- --configDir=${this.options.configDir}`);
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
         fs.writeFileSync(
-            path.join(this.options.configDir, 'config.json'),
-            JSON.stringify(this.options.nodeConfiguration),
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
         );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
 
         if (this.options.identity) {
             fs.writeFileSync(
@@ -50,14 +59,26 @@ class OtNode extends EventEmitter {
         }
 
         this.state = {};
-        this.state.addedBids = []; // List of import IDs.
-        this.state.notTakenBids = [];
-        // Valid replications (DH side). List of import IDs.
+        this.state.addedBids = []; // List of offer IDs (DH side).
+        this.state.takenBids = []; // List of offer IDs (DH side).
+        // Valid replications (DH side). List of internal offer IDs and their replications DH IDs
+        // in pairs. { internalOfferId, dhId }.
         this.state.replications = [];
         // Valid replications (DC side). List of objects { importId, dhWallet }.
         this.state.holdingData = [];
-        // Verified escrows for own imports. List of import IDs.
-        this.state.escrowsVerified = [];
+        // Offers finalized. List of offer IDs.
+        this.state.offersFinalized = [];
+        // grab node's wallet address
+        this.state.nodesWalletAddress = null;
+
+        // Dict of offers created:
+        // { offerIDs: { id: { dataSetId, internalID },
+        //  internalIDs: { id: { dataSetId, offerID } } }
+        this.state.offers = {};
+        this.state.oldWalletBalance = null;
+        this.state.newWalletBalance = null;
+        this.state.oldProfileBalance = null;
+        this.state.newProfileBalance = null;
 
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
@@ -74,9 +95,10 @@ class OtNode extends EventEmitter {
         // this.process = spawn('npm', ['start', '--', `--configDir=${this.options.configDir}`]);
         // The problem is with it spawns two child process thus creating the problem when
         // sending the SIGINT in order to close it.
+        // Enable debug here process.env.NODE_DEBUG = 'https';
         this.process = spawn(
             'node',
-            ['ot-node.js', `--configDir=${this.options.configDir}`],
+            ['ot-node.js', `--configDir=${this.options.configDir}`, '--config', `${this.configFilePath}`],
             { cwd: path.join(__dirname, '../../../../') },
         );
         this.process.on('close', code => this._processExited(code));
@@ -107,11 +129,10 @@ class OtNode extends EventEmitter {
             this.logger.log(`Node ${this.id} initialized.`);
             this.state.initialized = true;
             this.emit('initialized');
-        } else if (line.includes('My identity: ')) {
+        } else if (line.includes('My network identity: ')) {
             // Expected something like:
-            // 'My identity: f299588d23ebbdc2da51ad423e03d66721ac0e18'
-            const expression = /\b[0-9A-F]{40}\b/gi;
-            [this.state.identity] = line.match(expression);
+            // 'My network identity: f299588d23ebbdc2da51ad423e03d66721ac0e18'
+            [this.state.identity] = line.match(identityRegex);
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
         } else if (line.includes('API exposed at')) {
             // Expected something like:
@@ -123,22 +144,68 @@ class OtNode extends EventEmitter {
             // OT Node listening at https://f63f6c1e9425e79726e26cff0808659ddd16b417.diglet.origintrail.io:443
             // TODO: Poor man's parsing. Use regular expressions.
             this.state.node_url = line.substr(line.search('OT Node listening at ') + 'OT Node listening at '.length, line.length - 1);
-        } else if (line.match(/Bid for .+ successfully added/gi)) {
-            this.state.addedBids.push(line.match(/\b0x[0-9A-F]{64}\b/gi)[0]);
-        } else if (line.match(/Bid not taken for offer .+\./gi)) {
-            this.state.notTakenBids.push(line.match(/\b0x[0-9A-F]{64}\b/gi)[0]);
-        } else if (line.match(/Offer for import .+ finalized/gi)) {
-            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
-            this.emit('offer-finalized', importId);
-        } else if (line.match(/Key verification for import .+ succeeded/gi)) {
-            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
-            this.state.replications.push(importId);
-            this.emit('key-verified', importId);
-        } else if (line.match(/Holding data for offer .+ and contact .+ successfully verified. Challenges taking place\.\.\./gi)) {
-            const importId = line.match(/\b0x[0-9A-F]{64}\b/gi)[0];
-            const dhWallet = line.match(/\b0x[0-9A-F]{40}\b/gi)[0];
-            this.state.holdingData.push({ importId, dhWallet });
-            this.emit('holding-data', { importId, dhWallet });
+        } else if (line.match(/[DH] Replication finished for offer ID .+/gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            assert(offerId);
+            this.state.addedBids.push(offerId);
+            this.emit('replication-finished', offerId);
+        } else if (line.match(/I've been chosen for offer .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            this.state.takenBids.push(offerId);
+        } else if (line.match(/Replication for offer ID .+ sent to .+/gi)) {
+            const internalOfferId = line.match(uuidRegex)[0];
+            const dhId = line.match(identityRegex)[0];
+            assert(internalOfferId);
+            assert(dhId);
+            this.state.replications.push({ internalOfferId, dhId });
+            this.emit('dh-replicated', { internalOfferId, dhId });
+        } else if (line.includes('Get profile by wallet ')) {
+            // note that node's wallet can also be access via nodeConfiguration directly
+            const wallet = line.match(walletRegex)[0];
+            assert(wallet);
+            this.state.nodesWalletAddress = wallet;
+        } else if (line.match(/Offer successfully started for data set .+\. Offer ID .+\. Internal offer ID .+\./gi)) {
+            const dataSetId = line.match(dataSetRegex)[0];
+            const offerId = line.match(offerIdRegex)[1];
+            const internalOfferId = line.match(uuidRegex)[0];
+            assert(dataSetId);
+            assert(offerId);
+            assert(internalOfferId);
+
+            deepExtend(this.state.offers, {
+                offerIDs: { [offerId]: { dataSetId, internalOfferId } },
+                internalIDs: { [internalOfferId]: { dataSetId, offerId } },
+            });
+        } else if (line.match(/Miner started for offer .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+        } else if (line.match(/Miner found a solution of offer .+\./gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+        } else if (line.match(/Offer .+ finalized/gi)) {
+            const offerId = line.match(offerIdRegex)[0];
+            assert(offerId);
+            this.state.offersFinalized.push(offerId);
+            this.emit('offer-finalized', offerId);
+        } else if (line.match(/Token withdrawal for amount .+ initiated/gi)) {
+            this.emit('withdraw-initiated');
+        } else if (line.match(/Token withdrawal for amount .+ completed/gi)) {
+            this.emit('withdraw-completed');
+        } else if (line.match(/Command tokenWithdrawalCommand and ID .+ processed/gi)) {
+            this.emit('withdraw-command-completed');
+        } else if (line.match(/New profile balance: .+ TRAC/gi)) {
+            const result1 = line.match(walletAmountRegex);
+            this.state.newProfileBalance = result1[result1.length - 1];
+        } else if (line.match(/New wallet balance: .+ TRAC/gi)) {
+            const result2 = line.match(walletAmountRegex);
+            this.state.newWalletBalance = result2[result2.length - 1];
+            assert(this.state.newWalletBalance);
+        } else if (line.match(/Old profile balance: .+ TRAC/gi)) {
+            const result3 = line.match(walletAmountRegex);
+            this.state.oldProfileBalance = result3[result3.length - 1];
+            assert(this.state.oldProfileBalance);
+        } else if (line.match(/Old wallet balance: .+ TRAC/gi)) {
+            const result4 = line.match(walletAmountRegex);
+            this.state.oldWalletBalance = result4[result4.length - 1];
+            assert(this.state.oldWalletBalance);
         }
     }
 
@@ -147,7 +214,9 @@ class OtNode extends EventEmitter {
     }
 
     _processExited(code) {
-        assert(code === 0);
+        if (code !== 0) {
+            throw Error(`Node '${this.options.configDir}' exited with ${code}.`);
+        }
         this.process = null;
         this.logStream.end();
         this.logger.log(`Node ${this.id} finished. Exit code ${code}.`);

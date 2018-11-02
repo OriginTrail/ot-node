@@ -38,7 +38,6 @@ class GraphStorage {
                         await this.__initDatabase__();
                         resolve(this.db);
                     } catch (error) {
-                        console.log(error);
                         reject(Error('Unable to connect to graph database'));
                     }
                     break;
@@ -93,12 +92,12 @@ class GraphStorage {
      * @param dataLocationQuery
      * @return {Promise}
      */
-    findImportIds(dataLocationQuery) {
+    findImportIds(dataLocationQuery, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findImportIds(dataLocationQuery).then((result) => {
+                this.db.findImportIds(dataLocationQuery, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -201,6 +200,10 @@ class GraphStorage {
         return this.db.identify();
     }
 
+    async getConsensusEvents(sender_id) {
+        return this.db.getConsensusEvents(sender_id);
+    }
+
     /**
     * Get version of selected graph database
     * @returns {Promise<any>}
@@ -270,12 +273,12 @@ class GraphStorage {
      * @param importId   Import ID
      * @return {Promise}
      */
-    findVerticesByImportId(importId) {
+    findVerticesByImportId(importId, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVerticesByImportId(importId).then((result) => {
+                this.db.findVerticesByImportId(importId, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -289,12 +292,12 @@ class GraphStorage {
      * @param import_id       Import ID
      * @returns {Promise}
      */
-    findEdgesByImportId(import_id) {
+    findEdgesByImportId(import_id, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findEdgesByImportId(import_id).then((result) => {
+                this.db.findEdgesByImportId(import_id, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);
@@ -427,6 +430,25 @@ class GraphStorage {
      */
     async rollback() {
         await this.db.rollback();
+    }
+
+    /**
+     * Replaces one data set ID with another
+     * @param oldDataSet    Old data set ID
+     * @param newDataSet    New data set ID
+     * @returns {Promise<void>}
+     */
+    async replaceDataSets(oldDataSet, newDataSet) {
+        return this.db.replaceDataSets(oldDataSet, newDataSet);
+    }
+
+    /**
+     * Remove data set ID in documents from collections
+     * @param dataSetID     Data set ID
+     * @returns {Promise<void>}
+     */
+    async removeDataSetId(dataSetID) {
+        return this.db.removeDataSetId(dataSetID);
     }
 
     /**
