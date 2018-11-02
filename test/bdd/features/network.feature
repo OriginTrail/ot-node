@@ -61,3 +61,13 @@ Feature: Test basic network features
     Then api-query-local-import response should have certain structure
     Given I call api-query-local-import-importId endpoint for last import
     Then api-query-local-import-importId response should have certain structure
+
+  @itworks
+  Scenario: Smoke check /api/withdraw endpoint
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    Given I attempt to withdraw 5 tokens from DC profile
+    Then Token withdrawal should be sucessfully completed from DC profile
+    And I wait for 5 seconds
+    Then wallet and profile balances should diff by 5

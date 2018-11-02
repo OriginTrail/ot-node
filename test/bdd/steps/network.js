@@ -6,6 +6,7 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
+const sleep = require('sleep-async')().Promise;
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
@@ -93,11 +94,11 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
-Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
-    setTimeout(accept, waitTime * 1000);
-}));
+Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, async function (waitTime) {
+    await sleep.sleep(waitTime * 1000);
+});
 
-Given(/^I start the nodes$/, { timeout: 3000000 }, function (done) {
+Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -424,4 +425,47 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
     // check that lastImport.import_hash and sha256 calculated hash are matching
     const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
+});
+
+Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+    // TODO expect tokenCount < profileBalance
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    await httpApiHelper.apiWithdraw(host, tokenCount);
+});
+
+Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    const promises = [];
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-initiated', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-completed', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-command-completed', () => accept());
+    }));
+
+    return Promise.all(promises);
+});
+
+Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+
+    expect(!!dc.state.newProfileBalance, 'newProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldProfileBalance, 'oldProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+
+    expect(dc.state.oldProfileBalance - dc.state.newProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    expect(dc.state.newWalletBalance - dc.state.oldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
 });
