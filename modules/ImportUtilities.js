@@ -99,10 +99,10 @@ class ImportUtilities {
             edges,
         );
 
-        return {
+        return utilities.sortObject({
             edges: normEdges,
             vertices: normVertices,
-        };
+        });
     }
 
     /**
