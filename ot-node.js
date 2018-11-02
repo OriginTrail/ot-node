@@ -12,6 +12,7 @@ const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
+const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const restify = require('restify');
 const fs = require('fs');
 const path = require('path');
@@ -24,7 +25,6 @@ const WOTImporter = require('./modules/WOTImporter');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
-const BN = require('bn.js');
 const bugsnag = require('bugsnag');
 const rc = require('rc');
 const mkdirp = require('mkdirp');
@@ -38,11 +38,14 @@ const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
-const ProfileService = require('./modules/ProfileService');
-const DataReplication = require('./modules/DataReplication');
+const MinerService = require('./modules/service/miner-service');
+const ApprovalService = require('./modules/service/approval-service');
+const ProfileService = require('./modules/service/profile-service');
+const ReplicationService = require('./modules/service/replication-service');
+const ImportController = require('./modules/controller/import-controller');
 const RestAPIValidator = require('./modules/validator/rest-api-validator');
+const APIUtilities = require('./modules/utility/api-utilities');
 
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
@@ -233,46 +236,6 @@ function notifyEvent(message, metadata, subsystem) {
  * Main node object
  */
 class OTNode {
-    async getBalances(Utilities, config, web3, initial) {
-        let enoughETH = false;
-        let enoughtTRAC = false;
-        try {
-            const etherBalance = await Utilities.getBalanceInEthers(
-                web3,
-                config.node_wallet,
-            );
-            if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet fore running ot-node');
-                enoughETH = false;
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughETH = true;
-                log.info(`Balance of ETH: ${etherBalance}`);
-            }
-
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                web3,
-                config.node_wallet,
-                config.blockchain.token_contract_address,
-            );
-            if (atracBalance <= 0) {
-                enoughtTRAC = false;
-                console.log('Please get some ATRAC in the node wallet fore running ot-node');
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughtTRAC = true;
-                log.info(`Balance of ATRAC: ${atracBalance}`);
-            }
-        } catch (error) {
-            console.log(error);
-            notifyBugsnag(error);
-        }
-        return enoughETH && enoughtTRAC;
-    }
     /**
      * OriginTrail node system bootstrap function
      */
@@ -327,6 +290,7 @@ class OTNode {
         // Seal config in order to prevent adding properties.
         // Allow identity to be added. Continuity.
         config.identity = '';
+        config.erc725Identity = '';
         Object.seal(config);
 
         // check for Updates
@@ -339,9 +303,12 @@ class OTNode {
             process.exit(1);
         }
 
+        const web3 =
+            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
+
         const appState = {};
         if (config.is_bootstrap_node) {
-            await this.startBootstrapNode({ appState });
+            await this.startBootstrapNode({ appState }, web3);
             this.startRPC();
             return;
         }
@@ -369,19 +336,6 @@ class OTNode {
             process.exit(1);
         }
 
-        const web3 =
-            new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
-
-        // check does node_wallet has sufficient Ether and ATRAC tokens
-        if (process.env.NODE_ENV !== 'test') {
-            appState.enoughFunds = await this.getBalances(Utilities, config, web3, true);
-            setInterval(async () => {
-                appState.enoughFunds = await this.getBalances(Utilities, config, web3, false);
-            }, 1800000);
-        } else {
-            appState.enoughFunds = true;
-        }
-
         // Create the container and set the injectionMode to PROXY (which is also the default).
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
@@ -389,7 +343,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -403,15 +357,15 @@ class OTNode {
             kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
-            dhService: awilix.asClass(DHService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
@@ -423,12 +377,44 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
+            apiUtilities: awilix.asClass(APIUtilities).singleton(),
+            importController: awilix.asClass(ImportController).singleton(),
+            minerService: awilix.asClass(MinerService).singleton(),
+            replicationService: awilix.asClass(ReplicationService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+        const profileService = container.resolve('profileService');
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
 
         emitter.initialize();
+
+        // check does node_wallet has sufficient funds
+        if (process.env.NODE_ENV !== 'development') {
+            try {
+                appState.enoughFunds = await blockchain.getBalances();
+                if (appState.enoughFunds === false && !await profileService.isProfileCreated()) {
+                    log.warn('Insufficient funds to create profile');
+                    process.exit(1);
+                }
+            } catch (err) {
+                notifyBugsnag(err);
+            }
+            setInterval(async () => {
+                try {
+                    appState.enoughFunds = await blockchain.getBalances();
+                } catch (err) {
+                    notifyBugsnag(err);
+                }
+            }, 1800000);
+        } else {
+            appState.enoughFunds = true;
+        }
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -455,11 +441,6 @@ class OTNode {
 
         // Starting the kademlia
         const transport = container.resolve('transport');
-        const blockchain = container.resolve('blockchain');
-
-        // Initialise API
-        this.startRPC(emitter);
-
         await transport.init(container.cradle);
 
         // Starting event listener on Blockchain
@@ -467,42 +448,48 @@ class OTNode {
         dhService.listenToBlockchainEvents();
 
         try {
-            await this.createProfile(blockchain);
+            await profileService.initProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
             notifyBugsnag(e);
             process.exit(1);
         }
+        await transport.start();
+
+        // Initialise API
+        this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
         }
 
-        const challenger = container.resolve('challenger');
-        await challenger.startChallenging();
-
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
+        await commandExecutor.start();
+        appState.started = true;
     }
 
     /**
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode({ appState }) {
+    async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
         container.register({
             emitter: awilix.asValue({}),
+            web3: awilix.asValue(web3),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
             appState: awilix.asValue(appState),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
@@ -512,6 +499,21 @@ class OTNode {
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+        await transport.start();
+
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
+
+        this.listenBlockchainEvents(blockchain);
+        blockchain.subscribeToEventPermanentWithCallback([
+            'NodeApproved',
+            'NodeRemoved',
+        ], (eventData) => {
+            approvalService.handleApprovalEvent(eventData);
+        });
     }
 
     /**
@@ -527,9 +529,9 @@ class OTNode {
         setInterval(() => {
             if (!working && Date.now() > deadline) {
                 working = true;
-                blockchain.getAllPastEvents('BIDDING_CONTRACT');
-                blockchain.getAllPastEvents('READING_CONTRACT');
-                blockchain.getAllPastEvents('ESCROW_CONTRACT');
+                blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -537,56 +539,9 @@ class OTNode {
     }
 
     /**
-     * Creates profile on the contract
-     */
-    async createProfile(blockchain) {
-        const { identity } = config;
-        const profileInfo = await blockchain.getProfile(config.node_wallet);
-        if (profileInfo.active) {
-            log.info(`Profile has already been created for ${identity}`);
-            if (
-                (new BN(profileInfo.token_amount_per_byte_minute)
-                    .eq(new BN(config.dh_price))) &&
-                (new BN(profileInfo.stake_amount_per_byte_minute)
-                    .eq(new BN(config.dh_stake_factor))) &&
-                (new BN(profileInfo.read_stake_factor)
-                    .eq(new BN(config.read_stake_factor))) &&
-                (new BN(profileInfo.max_escrow_time_in_minutes)
-                    .eq(new BN(config.dh_max_time_mins)))
-            ) {
-                return;
-            }
-
-            log.notify('Profile\'s config differs. Updating profile...');
-        } else {
-            log.notify(`Profile is being created for ${identity}. This could take a while...`);
-        }
-
-        await blockchain.createProfile(
-            config.identity,
-            new BN(config.dh_price, 10),
-            new BN(config.dh_stake_factor, 10),
-            config.read_stake_factor,
-            config.dh_max_time_mins,
-        );
-        const event = await blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, (eventData) => {
-            if (eventData.node_id) {
-                return eventData.node_id.includes(identity);
-            }
-            return false;
-        });
-        if (event) {
-            log.notify(`Profile created for node ${identity}`);
-        } else {
-            log.error('Profile could not be confirmed in timely manner. Please, try again later.');
-            process.exit(1);
-        }
-    }
-
-    /**
      * Start RPC server
      */
-    startRPC(emitter) {
+    startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -692,34 +647,17 @@ class OTNode {
 
         if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, emitter);
+            this.exposeAPIRoutes(server, context);
         }
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter) {
-        const authorize = (req, res) => {
-            const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            const remote_access = config.remote_access_whitelist;
-
-            // TODO: Temp solution for local network. Ignore whitelist.
-            if (ip.isLoopback(config.node_rpc_ip)) {
-                return true;
-            }
-
-            if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
-                res.status(403);
-                res.send({
-                    message: 'Unauthorized request',
-                    data: [],
-                });
-                return false;
-            }
-            return true;
-        };
-
+    exposeAPIRoutes(server, ctx) {
+        const {
+            emitter, importController, apiUtilities, dcController,
+        } = ctx;
 
         /**
          * Data import route
@@ -727,98 +665,14 @@ class OTNode {
          * @param importtype - (GS1/WOT)
          */
         server.post('/api/import', async (req, res) => {
-            log.api('POST: Import of data request received.');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.body === undefined) {
-                res.status(400);
-                res.send({
-                    message: 'Bad request',
-                });
-                return;
-            }
-
-            const supportedImportTypes = ['GS1', 'WOT'];
-
-            // Check if import type is valid
-            if (req.body.importtype === undefined ||
-                supportedImportTypes.indexOf(req.body.importtype) === -1) {
-                res.status(400);
-                res.send({
-                    message: 'Invalid import type',
-                });
-                return;
-            }
-
-            const importtype = req.body.importtype.toLowerCase();
-
-            // Check if file is provided
-            if (req.files !== undefined && req.files.importfile !== undefined) {
-                const inputFile = req.files.importfile.path;
-                try {
-                    const content = await Utilities.fileContents(inputFile);
-                    const queryObject = {
-                        content,
-                        contact: req.contact,
-                        replicate: req.body.replicate,
-                        response: res,
-                    };
-                    emitter.emit(`api-${importtype}-import-request`, queryObject);
-                } catch (e) {
-                    res.status(400);
-                    res.send({
-                        message: 'No import data provided',
-                    });
-                }
-            } else if (req.body.importfile !== undefined) {
-                // Check if import data is provided in request body
-                const queryObject = {
-                    content: req.body.importfile,
-                    contact: req.contact,
-                    replicate: req.body.replicate,
-                    response: res,
-                };
-                emitter.emit(`api-${importtype}-import-request`, queryObject);
-            } else {
-                // No import data provided
-                res.status(400);
-                res.send({
-                    message: 'No import data provided',
-                });
-            }
+            await importController.import(req, res);
         });
 
-        server.post('/api/replication', (req, res) => {
-            log.api('POST: Replication of imported data request received.');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.body !== undefined && req.body.import_id !== undefined && typeof req.body.import_id === 'string' &&
-                Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
-                Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
-                Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
-                const queryObject = {
-                    import_id: req.body.import_id,
-                    total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
-                    max_token_amount: req.body.max_token_amount_per_dh,
-                    min_stake_amount: req.body.dh_min_stake_amount,
-                    min_reputation: req.body.dh_min_reputation,
-                    response: res,
-                };
-                emitter.emit('api-create-offer', queryObject);
-            } else {
-                log.error('Invalid request');
-                res.status(400);
-                res.send({
-                    message: 'Invalid parameters!',
-                });
-            }
+        /**
+         * Create offer route
+         */
+        server.post('/api/replication', async (req, res) => {
+            await dcController.createOffer(req, res);
         });
 
         server.get('/api/dump/rt', (req, res) => {
@@ -831,15 +685,41 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/get-contact/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Get contact node ID ${nodeId}`);
+            const result = await context.transport.getContact(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get('/api/network/find/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Find node ID ${nodeId}`);
+            const result = await context.transport.findNode(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
         server.get('/api/replication/:replication_id', (req, res) => {
             log.api('GET: Replication status request received');
 
-            if (!authorize(req, res)) {
+            if (!apiUtilities.authorize(req, res)) {
                 return;
             }
 
-            const externalId = req.params.replication_id;
-            if (externalId == null) {
+            const replicationId = req.params.replication_id;
+            if (replicationId == null) {
                 log.error('Invalid request. You need to provide replication ID');
                 res.status = 400;
                 res.send({
@@ -847,7 +727,7 @@ class OTNode {
                 });
             } else {
                 const queryObject = {
-                    external_id: externalId,
+                    replicationId,
                     response: res,
                 };
                 emitter.emit('api-offer-status', queryObject);
@@ -868,7 +748,7 @@ class OTNode {
         });
 
         /** Get root hash for provided data query
-         * @param Query params: dc_wallet, import_id
+         * @param Query params: data_set_id
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');
@@ -954,10 +834,10 @@ class OTNode {
             });
         });
 
-        server.get('/api/query/local/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:data_set_id', (req, res) => {
             log.api('GET: Local import request received.');
 
-            if (!req.params.import_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -966,7 +846,7 @@ class OTNode {
             }
 
             emitter.emit('api-query-local-import', {
-                import_id: req.params.import_id,
+                data_set_id: req.params.data_set_id,
                 request: req,
                 response: res,
             });
@@ -996,17 +876,17 @@ class OTNode {
             log.api('POST: Network read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-              || req.body.import_id == null) {
+              || req.body.data_set_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
                 return;
             }
-            const { query_id, reply_id, import_id } = req.body;
+            const { query_id, reply_id, data_set_id } = req.body;
 
             emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
-                import_id,
+                data_set_id,
                 response: res,
             });
         });
@@ -1015,11 +895,11 @@ class OTNode {
         server.post('/api/deposit', (req, res) => {
             log.api('POST: Deposit tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-deposit-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -1032,11 +912,11 @@ class OTNode {
         server.post('/api/withdraw', (req, res) => {
             log.api('POST: Withdraw tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-withdraw-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -1045,25 +925,36 @@ class OTNode {
             }
         });
 
-        server.get('/api/import_info', (req, res) => {
-            log.api('GET: import_info.');
-            const queryObject = req.query;
-
-            if (queryObject.import_id === undefined) {
-                res.send({ status: 400, message: 'Missing parameter!', data: [] });
-                return;
-            }
-
-            emitter.emit('api-import-info', {
-                importId: queryObject.import_id,
-                response: res,
-            });
+        server.get('/api/import_info', async (req, res) => {
+            await importController.dataSetInfo(req, res);
         });
 
         server.get('/api/imports_info', (req, res) => {
             log.api('GET: List imports request received.');
 
             emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        server.get('/api/consensus/:sender_id', (req, res) => {
+            log.api('GET: Consensus check events request received.');
+
+            if (req.params.sender_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+
+            emitter.emit('api-consensus-events', {
+                sender_id: req.params.sender_id,
+                response: res,
+            });
+        });
+
+        server.get('/api/info', (req, res) => {
+            log.api('GET: Node information request received.');
+
+            emitter.emit('api-node-info', {
                 response: res,
             });
         });

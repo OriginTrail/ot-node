@@ -7,9 +7,10 @@ module.exports = {
             primaryKey: true,
             type: Sequelize.INTEGER,
         },
-        import_id: {
+        data_set_id: {
             allowNull: false,
             type: Sequelize.STRING,
+            unique: true,
         },
         data_provider_wallet: {
             allowNull: false,
@@ -20,10 +21,6 @@ module.exports = {
             type: Sequelize.INTEGER,
         },
         root_hash: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
-        import_hash: {
             allowNull: false,
             type: Sequelize.STRING,
         },

@@ -36,6 +36,13 @@ class Transport {
             throw new Error(`Failed to construct network transport. Network type '${this.networkType}' is invalid.`);
         }
         await this.network.initialize();
+    }
+
+    /**
+     * Starts the transport
+     * @return {Promise<void>}
+     */
+    async start() {
         await this.network.start();
     }
 
@@ -142,6 +149,7 @@ class Transport {
                     halt(err);
                     return;
                 }
+                this.logger.debug(`Calling ${fn} operation failed at ${iteration} iteration. Contact ${contactId}, ${err}.\n${err.stack}`);
                 throw err;
             }
         }, opts);
@@ -160,6 +168,14 @@ class Transport {
      */
     dumpContacts() {
         return this.network.dumpContacts();
+    }
+
+    async findNode(nodeId) {
+        return this.network.findNode(nodeId);
+    }
+
+    async getContact(contactId) {
+        return this.network.node.getContact(contactId);
     }
 }
 
