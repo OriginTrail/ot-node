@@ -24,10 +24,10 @@ class TokenWithdrawalCommand extends Command {
         } = command.data;
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        await this._printBalances(blockchainIdentity, "Old");
+        await this._printBalances(blockchainIdentity, 'Old');
         await this.blockchain.withdrawTokens(blockchainIdentity);
         this.logger.important(`Token withdrawal for amount ${amount} completed.`);
-        await this._printBalances(blockchainIdentity, "New");
+        await this._printBalances(blockchainIdentity, 'New');
         return Command.empty();
     }
 
