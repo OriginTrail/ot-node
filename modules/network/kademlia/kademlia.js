@@ -260,6 +260,7 @@ class Kademlia {
                         // eslint-disable-next-line
                         const connected = await this._joinNetwork(contact);
                         if (connected) {
+                            this.log.info('Joined to the network.');
                             resolve();
                             break;
                         }
@@ -268,7 +269,7 @@ class Kademlia {
                         this.notifyError(e);
                     }
 
-                    this.log.error(`Failed to join network, will retry in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
+                    this.log.trace(`Not joined to the network. Retrying in ${retryPeriodSeconds} seconds. Bootstrap nodes are probably not online.`);
                     // eslint-disable-next-line
                     await sleep.sleep(retryPeriodSeconds * 1000);
                 }
@@ -286,7 +287,7 @@ class Kademlia {
             new kadence.traverse.ReverseTunnelStrategy({
                 remotePort,
                 remoteAddress,
-                privateKey: this.xprivkey,
+                privateKey: this.node.spartacus.privateKey,
                 secureLocalConnection: true,
                 verboseLogging: false,
             }),
@@ -344,23 +345,33 @@ class Kademlia {
             }
 
             let connected = false;
-            const promises = bootstrapNodes.map(node => new Promise((acc, rej) => {
-                const contact = kadence.utils.parseContactURL(node);
-                this.log.debug(`Joining ${contact[0]}`);
+            const promises = bootstrapNodes.map(address => new Promise((acc, rej) => {
+                const contact = kadence.utils.parseContactURL(address);
+                this.log.debug(`Joining ${address}`);
                 this.node.join(contact, (err) => {
                     if (err) {
-                        this.log.warn(`Failed to join ${contact[0]}`);
+                        this.log.warn(`Failed to join ${address}`);
                         acc(false);
                         return;
                     }
-                    this.log.info(`Connected to ${contact[0]}(${contact[1].hostname}:${contact[1].port})`);
-                    connected = true;
+                    this.log.trace(`Finished joining to ${address})`);
+                    connected = this._isConnected();
                     acc(true);
                 });
             }));
+
             await Promise.all(promises);
             accept(connected);
         });
+    }
+
+    /**
+     * Returns if we consider we are connected to the network
+     * @return {boolean}
+     * @private
+     */
+    _isConnected() {
+        return this.node.router.size > 0;
     }
 
     /**
