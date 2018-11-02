@@ -51,6 +51,22 @@ class DCOfferCreateDbCommand extends Command {
     }
 
     /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { internalOfferId } = command.data;
+        const offer = await models.offers.findOne({ where: { id: internalOfferId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
+        return Command.empty();
+    }
+
+    /**
      * Pack data for DB
      * @param data
      */
