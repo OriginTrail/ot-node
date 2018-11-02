@@ -235,44 +235,48 @@ class ArangoJS {
                 throw new Error('OPCODE parameter is not defined');
             }
 
-            if (path.indexOf('identifiers.') === 0) {
-                const id_type = path.replace('identifiers.', '');
-                const id_value = value;
-                let filter = `LET v_res${count} = (
-                                                FOR v${count} IN ot_vertices
-                                            LET objects = (
-                                                FOR w${count}, e IN 1..1
-                                            OUTBOUND v${count}._id ot_edges
-                                            FILTER e.edge_type == "IDENTIFIES"
-                                            AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
-                                            AND v${count}.encrypted ${encOp} true
-                                            RETURN w${count})
-                                 `;
+            let id_type = path;
 
-                switch (opcode) {
-                case 'EQ':
-                    filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                         AND v${count}.id_type == "${id_type}"
-                                         AND v${count}.id_value == "${id_value}"
-                                         AND v${count}.encrypted ${encOp} true
-                                         `;
-                    break;
-                case 'IN':
-                    filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
-                                         AND v${count}.id_type == "${id_type}"
-                                         AND "${id_value}" IN v${count}.id_value
-                                         AND v${count}.encrypted ${encOp} true
-                                         `;
-                    break;
-                default:
-                    throw new Error(`OPCODE ${opcode} is not defined`);
-                }
-
-                filter += `RETURN {"datasets": v${count}.datasets, "objects": objects})
-                    `;
-
-                queryString += filter;
+            if (path.indexOf('identifiers.') == 0) {
+                id_type = id_type.replace('identifiers.', '');
             }
+
+            const id_value = value;
+            let filter = `LET v_res${count} = (
+                                            FOR v${count} IN ot_vertices
+                                        LET objects = (
+                                            FOR w${count}, e IN 1..1
+                                        OUTBOUND v${count}._id ot_edges
+                                        FILTER e.edge_type == "IDENTIFIES"
+                                        AND LENGTH(INTERSECTION(e.datasets, v${count}.datasets)) > 0
+                                        AND v${count}.encrypted ${encOp} true
+                                        RETURN w${count})
+                             `;
+
+            switch (opcode) {
+            case 'EQ':
+                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
+                                     AND v${count}.id_type == "${id_type}"
+                                     AND v${count}.id_value == "${id_value}"
+                                     AND v${count}.encrypted ${encOp} true
+                                     `;
+                break;
+            case 'IN':
+                filter += `FILTER v${count}.vertex_type == "IDENTIFIER"
+                                     AND v${count}.id_type == "${id_type}"
+                                     AND "${id_value}" IN v${count}.id_value
+                                     AND v${count}.encrypted ${encOp} true
+                                     `;
+                break;
+            default:
+                throw new Error(`OPCODE ${opcode} is not defined`);
+            }
+
+            filter += `RETURN {"datasets": v${count}.datasets, "objects": objects})
+                `;
+
+            queryString += filter;
+
             count += 1;
         }
 
@@ -791,7 +795,10 @@ class ArangoJS {
         }
 
         const params = { importId: data_id };
-        return this.runQuery(queryString, params);
+        const edges = await this.runQuery(queryString, params);
+        const normalizedEdges = normalizeGraph(data_id, [], edges).edges;
+
+        return normalizedEdges;
     }
 
     /**
@@ -914,5 +921,4 @@ class ArangoJS {
         return document;
     }
 }
-
 module.exports = ArangoJS;
