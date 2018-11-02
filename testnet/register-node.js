@@ -1,16 +1,12 @@
-const dotenv = require('dotenv');
+require('dotenv').config({ path: '../.env' });
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-const axios = require('axios');
 const ip = require('ip');
 const fs = require('fs');
 const rc = require('rc');
 const path = require('path');
 const homedir = require('os').homedir();
-const socket = require('socket.io-client')('wss://station.origintrail.io:3010');
 const Web3 = require('web3');
-const Umzug = require('umzug');
-const Models = require('../models');
+const deepExtend = require('deep-extend');
 const pjson = require('../package.json');
 const configjson = require('../config/config.json');
 const argv = require('minimist')(process.argv.slice(2));
@@ -19,12 +15,8 @@ const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
 
-// Path to system.db.
-let dbPath;
-
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
-    Models.sequelize.options.storage = path.join(localConfiguration.appDataPath, 'system.db');
     console.log(`congigDir given as param '${argv.configDir}'.`);
 } else {
     localConfiguration.appDataPath = path.join(
@@ -36,177 +28,59 @@ if (argv.configDir) {
 
 if (fs.existsSync(path.join(localConfiguration.appDataPath, 'config.json'))) {
     const storedConfig = JSON.parse(fs.readFileSync(path.join(localConfiguration.appDataPath, 'config.json'), 'utf8'));
-    console.log(`Found previous configuration\n${storedConfig}`);
+    console.log(`Found previous configuration\n${JSON.stringify(storedConfig, null, 4)}`);
     Object.assign(localConfiguration, storedConfig);
 }
 
-const umzug_migrations = new Umzug({
+function main() {
+    const externalConfig = {};
 
-    storage: 'sequelize',
-
-    storageOptions: {
-        sequelize: Models.sequelize,
-    },
-
-    migrations: {
-        params: [Models.sequelize.getQueryInterface(), Models.sequelize.constructor, () => {
-            throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
-        }],
-        path: './migrations',
-        pattern: /\.js$/,
-    },
-
-});
-
-const umzug_seeders = new Umzug({
-
-    storage: 'sequelize',
-
-    storageOptions: {
-        sequelize: Models.sequelize,
-        modelName: 'SeedsMeta',
-        tableName: 'SeedsMeta',
-    },
-
-    migrations: {
-        params: [Models.sequelize.getQueryInterface(), Models.sequelize.constructor, () => {
-            throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
-        }],
-        path: './seeders',
-        pattern: /\.js$/,
-    },
-
-});
-
-class RegisterNode {
-    constructor() {
-        this.setConfig().then((result) => {
-            web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
-                if (balance <= 0) {
-                    this.registerNode(result.ip, result.wallet);
-                } else {
-                    this.runNode();
-                }
-            });
-        });
+    if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY ||
+        web3.utils.isAddress(process.env.NODE_WALLET)) {
+        console.error('Wallet not provided! Please provide valid wallet.');
+    } else {
+        externalConfig.node_wallet = process.env.NODE_WALLET;
+        externalConfig.node_private_key = process.env.NODE_PRIVATE_KEY;
     }
 
-    socketSend(wallet, nodeIp) {
-        console.log('Entering sockets...');
-        socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
-        // socket.on('connect', () => {
-        // socket.emit('presence', { walletAddress: wallet, ipAddress: nodeIp, connected: true });
-        // });
+    if (process.env.ERC_725_IDENTITY) {
+        const erc725IdentityFilePath =
+            path.join(localConfiguration.appDataPath, localConfiguration.erc725_identity_filepath);
+        const content = { identity: process.env.ERC_725_IDENTITY };
+        fs.writeFileSync(erc725IdentityFilePath, JSON.stringify(content, null, 4));
+        console.log('Identity given: ', process.env.ERC_725_IDENTITY);
     }
 
-    generateWallet() {
-        return new Promise(async (resolve, reject) => {
-            const account = await web3.eth.accounts.create();
-            resolve({ wallet: account.address, pk: account.privateKey.substr(2) });
-        });
+    if (process.env.KAD_IDENTITY && process.env.KAD_IDENTITY_CHILD_INDEX) {
+        const identityFilePath =
+            path.join(localConfiguration.appDataPath, localConfiguration.identity_filepath);
+        const content = {
+            xprivkey: process.env.KAD_IDENTITY,
+            index: parseInt(process.env.KAD_IDENTITY_CHILD_INDEX, 10),
+        };
+        fs.writeFileSync(identityFilePath, JSON.stringify(content, null, 4));
+        console.log('Kademlia identity given: ', process.env.KAD_IDENTITY);
     }
 
-    async makeid() {
-        var text = '';
-        var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (var i = 0; i < 10; i += 1) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
+    if (process.env.IMPORT_WHITELIST) {
+        externalConfig.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
-    registerNode(ip, wallet) {
-        console.log(ip, wallet);
-        axios.post('https://station.origintrail.io/api/node/register', {
-            ip, wallet,
-        }).then((result) => {
-            console.log(result.data);
-            let counter = 0;
-            const checkBalanceInterval = setInterval(() => {
-                web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
-                    if (balance > 0) {
-                        clearInterval(checkBalanceInterval);
-                        this.runNode();
-                    } else {
-                        counter += 1;
-                        console.log(`Counting ${counter}`);
-                        if (counter > 20) {
-                            process.exit(3);
-                        }
-                    }
-                });
-            }, 20000);
-        }).catch((e) => {
-            console.log(e);
-            process.exit(3);
-        });
+    if (process.env.INSTALLATION === 'local') {
+        externalConfig.node_ip = '127.0.0.1'; // TODO remove
+    } else {
+        // TODO: Use system command for this.
+        externalConfig.node_ip = ip.address();
     }
 
-    setConfig() {
-        return new Promise(async (resolve, reject) => {
-            if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY) {
-                const { wallet, pk } = await this.generateWallet();
-                localConfiguration.node_wallet = wallet;
-                localConfiguration.node_private_key = pk;
-                process.env.NODE_WALLET = wallet;
-                process.env.NODE_PRIVATE_KEY = pk;
-            } else {
-                localConfiguration.node_wallet = process.env.NODE_WALLET;
-                localConfiguration.node_private_key = process.env.NODE_PRIVATE_KEY;
-            }
+    deepExtend(localConfiguration, externalConfig)
+    console.log('Configuration:');
+    console.log(JSON.stringify(externalConfig, null, 4));
 
-            if (process.env.INSTALLATION === 'local') {
-                localConfiguration.node_ip = '127.0.0.1'; // TODO remove
-            } else {
-                localConfiguration.node_ip = ip.address();
-            }
+    fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 
-            console.log(JSON.stringify(localConfiguration, null, 4));
-
-            fs.writeFile(`.${pjson.name}rc`, JSON.stringify(localConfiguration), (err) => {
-                if (fs.existsSync(dbPath)) {
-                    if (process.env.UPDATE !== undefined) {
-                        umzug_seeders.down({ to: 0 }).then((migrations) => {
-                            Models.sequelize.query('delete from sqlite_sequence where name=\'node_config\';');
-                            Models.sequelize.query('delete from sqlite_sequence where name=\'blockchain_data\';');
-                            Models.sequelize.query('delete from sqlite_sequence where name=\'graph_database\';');
-                            umzug_seeders.up().then((migrations) => {
-                                console.log('Configuration loaded...');
-                                resolve({
-                                    ip: localConfiguration.node_ip,
-                                    wallet: localConfiguration.node_wallet,
-                                });
-                            });
-                        });
-                    } else {
-                        console.log('Configuration not changed...');
-                        resolve({
-                            ip: localConfiguration.node_ip,
-                            wallet: localConfiguration.node_wallet,
-                        });
-                    }
-                } else {
-                    umzug_migrations.up().then((migrations) => {
-                        umzug_seeders.up().then((migrations) => {
-                            console.log('Configuration loaded...');
-                            resolve({
-                                ip: localConfiguration.node_ip,
-                                wallet: localConfiguration.node_wallet,
-                            });
-                        });
-                    });
-                }
-            });
-        });
-    }
-
-    runNode() {
-        const nodeIp = process.env.NODE_IP;
-        const wallet = process.env.NODE_WALLET;
-        this.socketSend(wallet, nodeIp);
-        // eslint-disable-next-line
-        require('../ot-node');
-    }
+    // eslint-disable-next-line
+    require('../ot-node');
 }
-// eslint-disable-next-line no-new
-(new RegisterNode());
+
+main();
