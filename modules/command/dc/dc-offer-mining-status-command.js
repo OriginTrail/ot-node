@@ -60,6 +60,22 @@ class DcOfferMiningStatusCommand extends Command {
     }
 
     /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { offerId } = command.data;
+        const offer = await Models.offers.findOne({ where: { offer_id: offerId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
+        return Command.empty();
+    }
+
+    /**
      * Execute strategy when event is too late
      * @param command
      */

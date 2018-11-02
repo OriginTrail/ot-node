@@ -1,4 +1,3 @@
-const BN = require('../../../node_modules/bn.js/lib/bn');
 const Command = require('../command');
 const models = require('../../../models/index');
 
@@ -82,6 +81,22 @@ class DcOfferMiningCompletedCommand extends Command {
 
         offer.status = 'FAILED';
         offer.message = 'Failed to find solution for DHs provided';
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
+        return Command.empty();
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { offerId } = command.data;
+        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });
 
         await this.replicationService.cleanup(offer.id);

@@ -1,4 +1,5 @@
 const Command = require('../command');
+const Models = require('../../../models/index');
 
 /**
  * Prepare offer parameters (litigation/distribution hashes, etc.)
@@ -34,6 +35,22 @@ class DCOfferPrepareCommand extends Command {
         const { data } = command;
         Object.assign(data, distLitRootHashes);
         return this.continueSequence(data, command.sequence);
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const { internalOfferId } = command.data;
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
+        offer.status = 'FAILED';
+        offer.message = err.message;
+        await offer.save({ fields: ['status', 'message'] });
+
+        await this.replicationService.cleanup(offer.id);
+        return Command.empty();
     }
 
     /**
