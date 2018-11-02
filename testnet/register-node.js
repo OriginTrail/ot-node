@@ -36,7 +36,7 @@ function main() {
     const externalConfig = {};
 
     if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY ||
-        web3.utils.isAddress(process.env.NODE_WALLET)) {
+        !web3.utils.isAddress(process.env.NODE_WALLET)) {
         console.error('Wallet not provided! Please provide valid wallet.');
     } else {
         externalConfig.node_wallet = process.env.NODE_WALLET;
