@@ -237,7 +237,7 @@ class ArangoJS {
 
             let id_type = path;
 
-            if (path.indexOf('identifiers.') == 0) {
+            if (path.indexOf('identifiers.') === 0) {
                 id_type = id_type.replace('identifiers.', '');
             }
 
