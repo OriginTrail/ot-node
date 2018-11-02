@@ -20,6 +20,7 @@
     "test:bdd:cov": " nyc cucumber-js --fail-fast --format progress-bar --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "test:bdd:verbose": "cucumber-js --fail-fast --format event-protocol --format-options '{\"colorsEnabled\": true}' test/bdd/ -r test/bdd/steps/",
     "start": "node node_version_check.js && node ot-node.js",
+    "debug:start": "node --nolazy --inspect-brk ot-node.js",
     "bootstrap": "npm run setup:hard",
     "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js add_db_backup.js check-updates.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
@@ -157,9 +158,5 @@
     "winston": "^2.4.3",
     "winston-loggly-bulk": "^2.0.3",
     "xml2js": "^0.4.19"
-  },
-  "auto-updater": {
-    "repo": "origintrail/ot-node",
-    "branch": "develop"
   }
 }

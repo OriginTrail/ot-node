@@ -676,11 +676,6 @@ class GS1Importer {
         });
 
         try {
-            allVertices.map((v) => {
-                v.inTransaction = true;
-                return v;
-            });
-
             for (const vertex of allVertices) {
                 if (vertex.identifiers !== null) {
                     for (const identifier in vertex.identifiers) {
@@ -787,6 +782,10 @@ class GS1Importer {
             // eslint-disable-next-line
             const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } = denormalizeGraph(dataSetId, allVertices, allEdges);
 
+            allVertices.map((v) => {
+                v.inTransaction = true;
+                return v;
+            });
             await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
             allEdges.map((e) => {
                 e.inTransaction = true;

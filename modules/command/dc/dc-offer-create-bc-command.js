@@ -68,8 +68,8 @@ class DCOfferCreateBcCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        const { offerId } = command.data;
-        const offer = await Models.offers.findOne({ where: { id: offerId } });
+        const { internalOfferId } = command.data;
+        const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
         offer.status = 'FAILED';
         offer.message = err.message;
         await offer.save({ fields: ['status', 'message'] });

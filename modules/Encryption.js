@@ -332,16 +332,18 @@ class Encryption {
      */
     static extractSignerAddress(dataArgs, signature) {
         const r = utils.toBuffer(signature.slice(0, 66));
-        const s = utils.toBuffer(`0x${signature.slice(66, 130)}`);
-        const v = Utilities.hexToNumber(utils.toBuffer(`0x${signature.slice(130, 132)}`).toString('hex'));
+        const s = utils.toBuffer(Utilities.normalizeHex(signature.slice(66, 130)));
+        const v = Utilities.hexToNumber(utils.toBuffer(Utilities.normalizeHex(signature.slice(130, 132))).toString('hex'));
 
         const dataHash = this.generateHash(dataArgs).slice(2);
-
-        const msg = `0x${abi.soliditySHA3(['bytes', 'bytes32'], [Buffer.from('\x19Ethereum Signed Message:\n32', 'utf-8'), new BN(dataHash, 16)]).toString('hex')}`;
+        const msg = Utilities.normalizeHex(abi.soliditySHA3(
+            ['bytes', 'uint256'],
+            [Buffer.from('\x19Ethereum Signed Message:\n32', 'utf-8'), new BN(dataHash, 16)],
+        ).toString('hex').padStart(64, '0'));
 
         const m = utils.toBuffer(msg);
         const pub = utils.ecrecover(m, v, r, s);
-        return `0x${utils.pubToAddress(pub).toString('hex')}`;
+        return Utilities.normalizeHex(utils.pubToAddress(pub).toString('hex'));
     }
 
     /**
