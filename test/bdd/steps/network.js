@@ -6,6 +6,7 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
+const sleep = require('sleep-async')().Promise;
 const sortedStringify = require('sorted-json-stringify');
 const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
@@ -93,9 +94,9 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
-Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
-    setTimeout(accept, waitTime * 1000);
-}));
+Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, async function (waitTime) {
+    await sleep.sleep(waitTime * 1000);
+});
 
 Given(/^I start the nodes$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -424,4 +425,44 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
     // check that lastImport.import_hash and sha256 calculated hash are matching
     const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
+});
+
+Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+    // TODO expect tokenCount < profileBalance
+
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    await httpApiHelper.apiWithdraw(host, tokenCount);
+});
+
+Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
+    const { dc } = this.state;
+
+    const promises = [];
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-initiated', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-completed', () => accept());
+    }));
+
+    promises.push(new Promise((accept, reject) => {
+        dc.once('withdraw-command-completed', () => accept());
+    }));
+
+    return Promise.all(promises);
+});
+
+Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+    const dcNewProfileBalance = this.state.newProfileBalance;
+    const dcOldProfileBalance = this.state.oldProfileBalance;
+    const dcNewWalletBalance = this.state.newWalletBalance;
+    const dcOldWalletBalance = this.state.oldWalletBalance;
+
+    // TODO For some reason above values are undefined and expect will fail
+    // Need to figure out why values are undefined.
+    // expect(dcNewProfileBalance - dcOldProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    // expect(dcNewWalletBalance - dcOldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
 });

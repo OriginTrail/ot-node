@@ -24,28 +24,29 @@ class TokenWithdrawalCommand extends Command {
         } = command.data;
 
         const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        await this._printBalances(blockchainIdentity);
+        await this._printBalances(blockchainIdentity, "Old");
         await this.blockchain.withdrawTokens(blockchainIdentity);
         this.logger.important(`Token withdrawal for amount ${amount} completed.`);
-        await this._printBalances(blockchainIdentity);
+        await this._printBalances(blockchainIdentity, "New");
         return Command.empty();
     }
 
     /**
      * Print balances
      * @param blockchainIdentity
+     * @param timeFrame string to describe before or after withdrawal operation
      * @return {Promise<void>}
      * @private
      */
-    async _printBalances(blockchainIdentity) {
+    async _printBalances(blockchainIdentity, timeFrame) {
         const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
         const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
+        this.logger.info(`${timeFrame} wallet balance: ${balanceInTRAC} TRAC`);
 
         const profile = await this.blockchain.getProfile(blockchainIdentity);
         const profileBalance = profile.stake;
         const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
+        this.logger.info(`${timeFrame} profile balance: ${profileBalanceInTRAC} TRAC`);
     }
 
     /**
