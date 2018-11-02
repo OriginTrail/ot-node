@@ -818,21 +818,6 @@ class DHService {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
 
-        // if (holdingData) {
-        //     const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, false);
-        //     const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, false);
-        //
-        //     const values = await Promise.all([verticesPromise, edgesPromise]);
-        //
-        //     const encodedVertices = values[0];
-        //     const edges = values[1];
-        //     const decryptKey = holdingData.litigation_public_key;
-        //     const vertices = [];
-        //
-        //     return { vertices: encodedVertices, edges };
-        // }
-
-        // Check if import came from DC side.
         const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
         if (dataInfo) {
