@@ -1,5 +1,5 @@
-const fs = require('fs');
-const ms = require('ms');
+/* eslint-disable no-console */
+
 const os = require('os');
 const path = require('path');
 const { fork } = require('child_process');
@@ -9,8 +9,7 @@ const kadence = require('@kadenceproject/kadence');
 const argv = require('minimist')(process.argv.slice(2));
 
 let cpus = 0;
-let testNetwork = 1;
-let solutionDifficulty = 20;
+let solutionDifficulty = 8;
 let identityDifficulty = 8;
 const solvers = [];
 
@@ -24,8 +23,6 @@ const solvers = [];
  * @return {*}
  */
 function forkIdentityDerivationSolver(c, xprv, index, derivationPath, events) {
-    console.info(`Forking derivation process ${c}`);
-
     const solver = fork(path.join(
         __dirname, '..', 'modules', 'network',
         'kademlia', 'workers', 'identity.js',
@@ -70,11 +67,9 @@ async function spawnIdentityDerivationProcesses(xprivkey, path, events) {
     // How many process can we run
     if (cpus === 0) {
         cpus = os.cpus().length;
-        console.info(`Using ${cpus} cores for derivation.`);
     }
     if (os.cpus().length < cpus) {
-        console.error('Refusing to start more solvers than cpu cores');
-        return;
+        throw Error('Refusing to start more solvers than cpu cores');
     }
 
     for (let c = 0; c < cpus; c += 1) {
@@ -84,9 +79,7 @@ async function spawnIdentityDerivationProcesses(xprivkey, path, events) {
         solvers.push(solver);
 
         solver.once('exit', (code) => {
-            if (code === 0) {
-                console.info(`Derivation solver ${c} exited normally`);
-            } else {
+            if (code !== 0) {
                 console.error(`Derivation solver ${c} exited with code ${code}`);
             }
         });
@@ -95,7 +88,7 @@ async function spawnIdentityDerivationProcesses(xprivkey, path, events) {
     return new Promise((resolve, reject) => {
         events.once('index', (i) => {
             events.removeAllListeners();
-            // this.solvers.forEach(s => s.kill('SIGTERM'));
+            solvers.forEach(s => s.kill('SIGTERM'));
             resolve(i);
         });
     });
@@ -106,14 +99,6 @@ async function solveIdentity(xprivkey, path) {
     const start = Date.now();
     let time;
     let attempts = 0;
-    const status = setInterval(() => {
-        console.trace('Still solving identity, ' +
-            `currently ${attempts} of ${kadence.constants.MAX_NODE_INDEX} ` +
-            `possible indices tested in the last ${ms(Date.now() - start)}`);
-    }, 60000);
-
-    console.info(`Solving identity derivation index with ${cpus} ` +
-        'solver processes, this can take a while...');
 
     events.on('attempt', () => attempts += 1);
 
@@ -127,9 +112,7 @@ async function solveIdentity(xprivkey, path) {
     }
 
     events.removeAllListeners();
-    clearInterval(status);
 
-    console.info(`Solved identity derivation index ${childIndex} in ${ms(time)}`);
     return [xprivkey, childIndex];
 }
 
@@ -157,7 +140,7 @@ async function main() {
         .derive(kadence.constants.HD_KEY_DERIVATION_PATH)
         .deriveChild(childIndex);
 
-    console.info(JSON.stringify({
+    console.log(JSON.stringify({
         [kadence.utils.toPublicKeyHash(childKey.publicKey).toString('hex')]: {
             xprivkey,
             index: childIndex,
