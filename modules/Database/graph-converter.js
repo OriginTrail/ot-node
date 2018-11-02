@@ -89,6 +89,7 @@ function normalizeGraph(importId, vertices, edges) {
     edges.forEach((edge) => {
         if (edge.edge_type !== 'EVENT_CONNECTION') {
             delete edge.datasets;
+            delete edge.encrypted;
             normalizedEdges.push(edge);
         }
     });
