@@ -64,8 +64,8 @@ Feature: Test basic network features
 
   @itworks
   Scenario: Smoke check /api/withdraw endpoint
-    Given I setup 4 nodes
-    And I start the nodes
+    Given I setup 1 node
+    And I start the node
     And I use 1st node as DC
     Given I attempt to withdraw 5 tokens from DC profile
     Then Token withdrawal should be sucessfully completed from DC profile

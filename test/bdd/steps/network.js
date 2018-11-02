@@ -98,7 +98,7 @@ Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, async function (wait
     await sleep.sleep(waitTime * 1000);
 });
 
-Given(/^I start the nodes$/, { timeout: 3000000 }, function (done) {
+Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
     expect(this.state.nodes.length).to.be.greaterThan(0);
 
@@ -429,6 +429,7 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
 
 Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
     // TODO expect tokenCount < profileBalance
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
@@ -437,6 +438,7 @@ Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000
 });
 
 Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
     const promises = [];
@@ -456,13 +458,14 @@ Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { tim
 });
 
 Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
-    const dcNewProfileBalance = this.state.newProfileBalance;
-    const dcOldProfileBalance = this.state.oldProfileBalance;
-    const dcNewWalletBalance = this.state.newWalletBalance;
-    const dcOldWalletBalance = this.state.oldWalletBalance;
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
 
-    // TODO For some reason above values are undefined and expect will fail
-    // Need to figure out why values are undefined.
-    // expect(dcNewProfileBalance - dcOldProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
-    // expect(dcNewWalletBalance - dcOldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    expect(!!dc.state.newProfileBalance, 'newProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldProfileBalance, 'oldProfileBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
+
+    expect(dc.state.oldProfileBalance - dc.state.newProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    expect(dc.state.newWalletBalance - dc.state.oldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
 });
