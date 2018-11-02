@@ -73,7 +73,7 @@ function main() {
         externalConfig.node_ip = ip.address();
     }
 
-    deepExtend(localConfiguration, externalConfig)
+    deepExtend(localConfiguration, externalConfig);
     console.log('Configuration:');
     console.log(JSON.stringify(externalConfig, null, 4));
 
