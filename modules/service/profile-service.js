@@ -138,22 +138,18 @@ class ProfileService {
         }
 
         const mTRAC = this.web3.utils.toWei(amount.toString(), 'ether');
-
-        await this.blockchain.increaseProfileApproval(new BN(mTRAC));
-
-        const blockchainIdentity = Utilities.normalizeHex(this.config.erc725Identity);
-        await this.blockchain.depositTokens(blockchainIdentity, new BN(mTRAC));
-
-        this.logger.notify(`${amount} TRAC deposited on your profile`);
-
-        const balance = await this.blockchain.getProfileBalance(this.config.node_wallet);
-        const balanceInTRAC = this.web3.utils.fromWei(balance, 'ether');
-        this.logger.info(`Wallet balance: ${balanceInTRAC} TRAC`);
-
-        const profile = await this.blockchain.getProfile(blockchainIdentity);
-        const profileBalance = profile.stake;
-        const profileBalanceInTRAC = this.web3.utils.fromWei(profileBalance, 'ether');
-        this.logger.info(`Profile balance: ${profileBalanceInTRAC} TRAC`);
+        await this.commandExecutor.add({
+            name: 'profileApprovalIncreaseCommand',
+            sequence: [
+                'depositTokensCommand',
+            ],
+            delay: 0,
+            data: {
+                amount: mTRAC,
+            },
+            transactional: false,
+        });
+        this.logger.notify(`Deposit for amount ${amount} initiated.`);
     }
 
     /**
