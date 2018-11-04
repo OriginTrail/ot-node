@@ -71,3 +71,12 @@ Feature: Test basic network features
     Then Token withdrawal should be sucessfully completed from DC profile
     And I wait for 5 seconds
     Then wallet and profile balances should diff by 5
+
+  @itworks
+  Scenario: Smoke check /api/deposit endpoint
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    Given I attempt to deposit 50 tokens from DC wallet
+    Then Token deposit should be sucessfully completed from DC wallet
+    Then wallet and profile balances should diff by 50
