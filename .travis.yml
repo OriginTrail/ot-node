@@ -3,6 +3,7 @@ node_js:
   - "9"
 env:
   - NODE_ENV=development
+  - LOGS_LEVEL_DEBUG=1
 sudo: enabled
 before_script:
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
