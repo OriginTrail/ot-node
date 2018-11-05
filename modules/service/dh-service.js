@@ -145,6 +145,7 @@ class DHService {
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
             token_amount: tokenAmountPerHolder,
+            holding_time_in_minutes: holdingTimeInMinutes,
             deposited: false,
             status: 'PENDING',
         });
@@ -175,7 +176,7 @@ class DHService {
             this.logger.warn(`Not enough tokens for offer ${offerId}. Minimum amount of tokens will be deposited automatically.`);
 
             Object.assign(data, {
-                amount: Utilities.normalizeHex(remainder.toString('hex')),
+                amount: remainder.toString(),
             });
             await this.commandExecutor.add({
                 name: 'profileApprovalIncreaseCommand',
@@ -215,7 +216,7 @@ class DHService {
                     [Op.ne]: bidId,
                 },
                 status: {
-                    [Op.in]: ['PENDING', 'SENT'],
+                    [Op.in]: ['SENT'],
                 },
                 deposit: {
                     [Op.ne]: null,
@@ -817,23 +818,6 @@ class DHService {
         // Check if import came from DH replication or reading replication.
         const holdingData = await Models.holding_data.find({ where: { data_set_id: dataSetId } });
 
-        if (holdingData) {
-            const verticesPromise = this.graphStorage.findVerticesByImportId(dataSetId, true);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(dataSetId, true);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-
-            const encodedVertices = values[0];
-            const edges = values[1];
-            const decryptKey = holdingData.litigation_public_key;
-            const vertices = [];
-
-            Graph.decryptVertices(encodedVertices, decryptKey);
-
-            return { vertices: encodedVertices, edges };
-        }
-
-        // Check if import came from DC side.
         const dataInfo = await Models.data_info.find({ where: { data_set_id: dataSetId } });
 
         if (dataInfo) {

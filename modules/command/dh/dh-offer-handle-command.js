@@ -41,6 +41,23 @@ class DHOfferHandleCommand extends Command {
     }
 
     /**
+     * Try to recover command
+     * @param command
+     * @param err
+     * @return {Promise<{commands: *[]}>}
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+        } = command.data;
+
+        const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+        bid.status = 'FAILED';
+        await bid.save({ fields: ['status'] });
+        return Command.empty();
+    }
+
+    /**
      * Builds default command
      * @param map
      * @returns {{add, data: *, delay: *, deadline: *}}

@@ -12,7 +12,7 @@ const path = require('path');
  */
 
 /**
- * Fetch /api/import_info?import_id={{import_id}}
+ * Fetch /api/import_info?data_set_id={{data_set_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param dataSetId Data-set ID
@@ -332,6 +332,37 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
     });
 }
 
+/**
+ * Fetch /api/withdraw response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {number} tokenCount
+ * @return {Promise}
+ */
+async function apiWithdraw(nodeRpcUrl, tokenCount) {
+    return new Promise((accept, reject) => {
+        const jsonQuery = {
+            trac_amount: tokenCount,
+        };
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/withdraw`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportInfo,
@@ -344,4 +375,5 @@ module.exports = {
     apiQueryNetwork,
     apiQueryNetworkResponses,
     apiReadNetwork,
+    apiWithdraw,
 };

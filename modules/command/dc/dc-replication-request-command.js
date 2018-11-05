@@ -28,8 +28,14 @@ class DCReplicationRequestCommand extends Command {
         const {
             offerId, wallet, identity, dhIdentity,
         } = command.data;
-        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
+        const offer = await models.offers.findOne({
+            where: {
+                offer_id: offerId,
+                status: 'STARTED',
+            },
+        });
         if (!offer) {
+            this.logger.info(`Cannot serve the replication for DH ${dhIdentity}. Offer ${offerId} is not in STARTED state.`);
             return Command.empty();
         }
 

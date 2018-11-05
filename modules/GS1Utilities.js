@@ -428,6 +428,18 @@ class GS1Utilities {
             batchVertex.data.quantities[eventId] = zkResponse.batches[batchVertex.identifiers.uid];
         }
 
+        if (event.epcList) {
+            event.epcList.epc = this.arrayze(event.epcList.epc);
+        }
+
+        if (event.inputEPCList) {
+            event.inputEPCList.epc = this.arrayze(event.inputEPCList.epc);
+        }
+
+        if (event.outputEPCList) {
+            event.outputEPCList.epc = this.arrayze(event.outputEPCList.epc);
+        }
+
         event.quantities = zkResponse.quantities;
     }
 }

@@ -88,7 +88,7 @@ class DhReplicationImportCommand extends Command {
             Utilities.denormalizeHex(distributionRootHash),
         ];
         const senderAddress = Encryption.extractSignerAddress(toCheck, distributionSignature);
-        if (senderAddress.toUpperCase() !== dcWallet.toUpperCase()) {
+        if (!Utilities.compareHexStrings(senderAddress, dcWallet)) {
             throw new Error(`Failed to validate DC ${dcWallet} signature for offer ${offerId}`);
         }
 
@@ -155,13 +155,30 @@ class DhReplicationImportCommand extends Command {
             commands: [
                 {
                     name: 'dhOfferFinalizedCommand',
-                    period: 5000,
+                    period: 10 * 1000,
                     data: {
                         offerId,
                     },
                 },
             ],
         };
+    }
+
+    /**
+     * Try to recover command
+     * @param command
+     * @param err
+     * @return {Promise<{commands: *[]}>}
+     */
+    async recover(command, err) {
+        const {
+            offerId,
+        } = command.data;
+
+        const bid = await Models.bids.findOne({ where: { offer_id: offerId } });
+        bid.status = 'FAILED';
+        await bid.save({ fields: ['status'] });
+        return Command.empty();
     }
 
     /**

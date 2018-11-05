@@ -524,6 +524,13 @@ class GS1Importer {
                         _to: `${EDGE_KEY_TEMPLATE + batchId}`,
                         edge_type: 'INPUT_BATCH',
                     });
+
+                    currentEventEdges.push({
+                        _key: this.helper.createKey('event_batch', senderId, batchId, eventKey),
+                        _to: `${eventKey}`,
+                        _from: `${EDGE_KEY_TEMPLATE + batchId}`,
+                        edge_type: 'INPUT_BATCH',
+                    });
                 }
             }
 
@@ -669,11 +676,6 @@ class GS1Importer {
         });
 
         try {
-            allVertices.map((v) => {
-                v.inTransaction = true;
-                return v;
-            });
-
             for (const vertex of allVertices) {
                 if (vertex.identifiers !== null) {
                     for (const identifier in vertex.identifiers) {
@@ -780,6 +782,10 @@ class GS1Importer {
             // eslint-disable-next-line
             const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } = denormalizeGraph(dataSetId, allVertices, allEdges);
 
+            allVertices.map((v) => {
+                v.inTransaction = true;
+                return v;
+            });
             await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
             allEdges.map((e) => {
                 e.inTransaction = true;

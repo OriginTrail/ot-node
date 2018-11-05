@@ -7,6 +7,28 @@
         "type": "bytes32"
       },
       {
+        "name": "identity",
+        "type": "address"
+      },
+      {
+        "name": "paidAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setHolderPaidAmount",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
+      },
+      {
         "name": "task",
         "type": "bytes32"
       }
@@ -219,6 +241,29 @@
       {
         "name": "offerId",
         "type": "bytes32"
+      },
+      {
+        "name": "identity",
+        "type": "address"
+      }
+    ],
+    "name": "getHolderPaidAmount",
+    "outputs": [
+      {
+        "name": "paidAmount",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "offerId",
+        "type": "bytes32"
       }
     ],
     "name": "getOfferTokenAmountPerHolder",
@@ -404,6 +449,10 @@
     "outputs": [
       {
         "name": "stakedAmount",
+        "type": "uint256"
+      },
+      {
+        "name": "paidAmount",
         "type": "uint256"
       },
       {

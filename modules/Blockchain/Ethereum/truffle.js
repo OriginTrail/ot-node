@@ -60,5 +60,15 @@ module.exports = {
             websockets: true,
             skipDryRun: true,
         },
+
+        live: {
+            host: 'localhost',
+            port: 8545,
+            provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${process.env.MAINNET_ACCESS_KEY}`),
+            network_id: 1,
+            gas: 6000000, // Gas limit used for deploys
+            websockets: true,
+            skipDryRun: true,
+        },
     },
 };

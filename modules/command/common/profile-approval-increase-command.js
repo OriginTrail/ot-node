@@ -17,7 +17,7 @@ class ProfileApprovalIncreaseCommand extends Command {
      */
     async execute(command) {
         const { amount } = command.data;
-        this.logger.notify(`Giving approval to profile contract for amount: ${amount}.`);
+        this.logger.notify(`Giving approval to profile contract for amount: ${amount} mTRAC.`);
 
         await this.blockchain.increaseProfileApproval(amount);
         return this.continueSequence(this.pack(command.data), command.sequence);

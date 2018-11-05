@@ -229,6 +229,6 @@ contract Profile {
     function setWithdrawalTime(uint256 newWithdrawalTime) 
     public {
         require (msg.sender == hub.owner(), "Function can only be called by hub owner!");
-        if(minimalStake != newWithdrawalTime) minimalStake = newWithdrawalTime;
+        if(withdrawalTime != newWithdrawalTime) withdrawalTime = newWithdrawalTime;
     }
 }

@@ -18,6 +18,7 @@ const walletRegex = /\b0x[0-9A-F]{40}\b/gi;
 const identityRegex = /\b[0-9A-F]{40}\b/gi;
 const offerIdRegex = /\b0x[0-9A-F]{64}\b/gi;
 const dataSetRegex = /\b0x[0-9A-F]{64}\b/gi;
+const walletAmountRegex = /\b\d+\b/g;
 
 /**
  * OtNode represent small wrapper over a running OT Node.
@@ -75,6 +76,11 @@ class OtNode extends EventEmitter {
         // { offerIDs: { id: { dataSetId, internalID },
         //  internalIDs: { id: { dataSetId, offerID } } }
         this.state.offers = {};
+
+        this.state.oldWalletBalance = null;
+        this.state.newWalletBalance = null;
+        this.state.oldProfileBalance = null;
+        this.state.newProfileBalance = null;
 
         // DV side. qeryId.dhIdentity = { replyId, dataSetIds: [...datasetIds] };
         this.state.dataLocationQueriesConfirmations = {};
@@ -236,6 +242,27 @@ class OtNode extends EventEmitter {
                     queryId, replyId, dataSetId,
                 },
             );
+        } else if (line.match(/Token withdrawal for amount .+ initiated/gi)) {
+            this.emit('withdraw-initiated');
+        } else if (line.match(/Token withdrawal for amount .+ completed/gi)) {
+            this.emit('withdraw-completed');
+        } else if (line.match(/Command tokenWithdrawalCommand and ID .+ processed/gi)) {
+            this.emit('withdraw-command-completed');
+        } else if (line.match(/New profile balance: .+ TRAC/gi)) {
+            const result1 = line.match(walletAmountRegex);
+            this.state.newProfileBalance = result1[result1.length - 1];
+        } else if (line.match(/New wallet balance: .+ TRAC/gi)) {
+            const result2 = line.match(walletAmountRegex);
+            this.state.newWalletBalance = result2[result2.length - 1];
+            assert(this.state.newWalletBalance);
+        } else if (line.match(/Old profile balance: .+ TRAC/gi)) {
+            const result3 = line.match(walletAmountRegex);
+            this.state.oldProfileBalance = result3[result3.length - 1];
+            assert(this.state.oldProfileBalance);
+        } else if (line.match(/Old wallet balance: .+ TRAC/gi)) {
+            const result4 = line.match(walletAmountRegex);
+            this.state.oldWalletBalance = result4[result4.length - 1];
+            assert(this.state.oldWalletBalance);
         }
     }
 
