@@ -68,9 +68,7 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     Given I attempt to withdraw 5 tokens from DC profile
-    Then Token withdrawal should be sucessfully completed from DC profile
-    And I wait for 5 seconds
-    Then wallet and profile balances should diff by 5
+    Then DC wallet and DC profile balances should diff by 5 with rounding error of 0.1
 
   @itworks
   Scenario: Smoke check /api/deposit endpoint
@@ -78,5 +76,4 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     Given I attempt to deposit 50 tokens from DC wallet
-    Then Token deposit should be sucessfully completed from DC wallet
-    Then wallet and profile balances should diff by 50
+    Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1

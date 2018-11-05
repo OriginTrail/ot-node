@@ -208,7 +208,7 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {number} tokenCount
- * @return {Promise}
+ * @return {Promise.<WithdrawInfo>}
  */
 async function apiWithdraw(nodeRpcUrl, tokenCount) {
     return new Promise((accept, reject) => {
@@ -239,7 +239,7 @@ async function apiWithdraw(nodeRpcUrl, tokenCount) {
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {number} tokenCount
- * @return {Promise}
+ * @return {Promise.<DepositInfo>}
  */
 async function apiDeposit(nodeRpcUrl, tokenCount) {
     return new Promise((accept, reject) => {

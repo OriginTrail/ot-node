@@ -1,4 +1,4 @@
-/* eslint-disable prefer-arrow-callback, max-len */
+/* eslint-disable prefer-arrow-callback, max-len, no-unused-expressions */
 
 const {
     And, But, Given, Then, When,
@@ -427,19 +427,12 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
-Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 420000 }, async function (tokenCount) {
     // TODO expect tokenCount < profileBalance
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
-
-    await httpApiHelper.apiWithdraw(host, tokenCount);
-});
-
-Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
 
     const promises = [];
     promises.push(new Promise((accept, reject) => {
@@ -454,10 +447,12 @@ Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { tim
         dc.once('withdraw-command-completed', () => accept());
     }));
 
+    await httpApiHelper.apiWithdraw(host, tokenCount);
+
     return Promise.all(promises);
 });
 
-Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding error of (\d+.\d{1,2})$/, function (tokenDiff, roundingError) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -466,8 +461,11 @@ Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) 
     expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
 
-    expect(Math.abs(dc.state.oldProfileBalance - dc.state.newProfileBalance), 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
-    expect(Math.abs(dc.state.newWalletBalance - dc.state.oldWalletBalance), 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    // .to.be.within(-roundingError,+roundingError) should take care of all possible rounding scanarios
+    const lowerLimit = tokenDiff - roundingError;
+    const upperLimit = tokenDiff + roundingError;
+    expect(Math.abs(dc.state.oldProfileBalance - dc.state.newProfileBalance) < upperLimit, 'Profile diff should be approx equal to withdrawal amount').to.be.true;
+    expect(Math.abs(dc.state.newWalletBalance - dc.state.oldWalletBalance) > lowerLimit, 'Wallet diff should be approx equal to withdrawal amount').to.be.true;
 });
 
 Given(/^I attempt to deposit (\d+) tokens from DC wallet*$/, { timeout: 120000 }, async function (tokenCount) {
@@ -476,13 +474,6 @@ Given(/^I attempt to deposit (\d+) tokens from DC wallet*$/, { timeout: 120000 }
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
-
-    await httpApiHelper.apiDeposit(host, tokenCount);
-});
-
-Then(/^Token deposit should be sucessfully completed from DC wallet$/, { timeout: 3000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
 
     const promises = [];
 
@@ -493,6 +484,8 @@ Then(/^Token deposit should be sucessfully completed from DC wallet$/, { timeout
     promises.push(new Promise((accept, reject) => {
         dc.once('deposit-command-completed', () => accept());
     }));
+
+    await httpApiHelper.apiDeposit(host, tokenCount);
 
     return Promise.all(promises);
 });
