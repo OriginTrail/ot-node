@@ -155,6 +155,7 @@ class DhReplicationImportCommand extends Command {
             commands: [
                 {
                     name: 'dhOfferFinalizedCommand',
+                    deadline_at: Date.now() + (10 * 60 * 1000),
                     period: 10 * 1000,
                     data: {
                         offerId,
