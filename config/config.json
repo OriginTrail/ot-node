@@ -345,7 +345,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
