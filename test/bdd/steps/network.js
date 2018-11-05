@@ -320,6 +320,7 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
                         node.state.node_rpc_url,
                         this.state.lastImport.data_set_id,
                     );
+                expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
                 // TODO: fix different root hashes error.
                 dhImportInfo.root_hash = dcImportInfo.root_hash;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
@@ -363,6 +364,8 @@ Then(/^the last import should be the same on all nodes that purchased data$/, as
     if (!deepEqual(dcImportInfo, dvImportInfo)) {
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
     }
+    expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
+    expect(dvImportInfo.transaction, 'DV transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {

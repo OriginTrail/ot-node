@@ -32,7 +32,7 @@ module.exports = {
             type: Sequelize.STRING,
         },
         transaction_hash: {
-            allowNull: true,
+            allowNull: false,
             type: Sequelize.STRING,
         },
     }),

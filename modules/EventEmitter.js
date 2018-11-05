@@ -232,10 +232,6 @@ class EventEmitter {
                     const transactionHash = await ImportUtilities
                         .getTransactionHash(dataSetId, dataInfo.origin);
 
-                    if (transactionHash == null) {
-                        throw new Error(`Failed to find transaction hash for data set ${dataSetId}`);
-                    }
-
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
