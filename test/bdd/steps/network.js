@@ -697,37 +697,28 @@ Given(/^the DV purchase import from the last query from (a DH|the DC)$/, functio
         .catch(error => done(error));
 });
 
-Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+Given(/^I attempt to withdraw (\d+) tokens from DC profile[s]*$/, { timeout: 420000 }, async function (tokenCount) {
     // TODO expect tokenCount < profileBalance
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
 
-    await httpApiHelper.apiWithdraw(host, tokenCount);
-});
-
-Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-
     const promises = [];
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-initiated', () => accept());
     }));
-
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-completed', () => accept());
     }));
-
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-command-completed', () => accept());
     }));
-
+    await httpApiHelper.apiWithdraw(host, tokenCount);
     return Promise.all(promises);
 });
 
-Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding error of (\d+.\d{1,2})$/, function (tokenDiff, roundingError) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -736,6 +727,25 @@ Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) 
     expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
 
-    expect(dc.state.oldProfileBalance - dc.state.newProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
-    expect(dc.state.newWalletBalance - dc.state.oldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    const lowerLimit = tokenDiff - roundingError;
+    const upperLimit = tokenDiff + roundingError;
+    expect(Math.abs(dc.state.oldProfileBalance - dc.state.newProfileBalance) < upperLimit, 'Profile diff should be approx equal to withdrawal amount').to.be.true;
+    expect(Math.abs(dc.state.newWalletBalance - dc.state.oldWalletBalance) > lowerLimit, 'Wallet diff should be approx equal to withdrawal amount').to.be.true;
+});
+
+Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 120000 }, async function (tokenCount) {
+    // TODO expect tokenCount < walletBalance
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const promises = [];
+    promises.push(new Promise((accept, reject) => {
+        dc.once('deposit-approved', () => accept());
+    }));
+    promises.push(new Promise((accept, reject) => {
+        dc.once('deposit-command-completed', () => accept());
+    }));
+    await httpApiHelper.apiDeposit(host, tokenCount);
+    return Promise.all(promises);
 });

@@ -263,6 +263,10 @@ class OtNode extends EventEmitter {
             const result4 = line.match(walletAmountRegex);
             this.state.oldWalletBalance = result4[result4.length - 1];
             assert(this.state.oldWalletBalance);
+        } else if (line.match(/Command profileApprovalIncreaseCommand and ID .+ processed/gi)) {
+            this.emit('deposit-approved');
+        } else if (line.match(/Command depositTokensCommand and ID .+ processed/gi)) {
+            this.emit('deposit-command-completed');
         }
     }
 
