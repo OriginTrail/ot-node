@@ -33,7 +33,13 @@ if (fs.existsSync(path.join(localConfiguration.appDataPath, 'config.json'))) {
 }
 
 function main() {
-    const externalConfig = {};
+    const localConfigPath = path.join('/ot-node/', `.${pjson.name}rc`);
+    let externalConfig = {};
+
+    // Use any previous saved configuration
+    if (fs.existsSync(localConfigPath)) {
+        externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+    }
 
     if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY ||
         !web3.utils.isAddress(process.env.NODE_WALLET)) {
