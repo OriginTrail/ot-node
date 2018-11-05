@@ -333,11 +333,16 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
 }
 
 /**
+ * @typedef {Object} WithdrawResponse
+ * @property {string} message informing that withdraw process was initiated.
+ */
+
+/**
  * Fetch /api/withdraw response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {number} tokenCount
- * @return {Promise}
+ * @return {Promise.<WithdrawResponse>}
  */
 async function apiWithdraw(nodeRpcUrl, tokenCount) {
     return new Promise((accept, reject) => {
@@ -349,6 +354,42 @@ async function apiWithdraw(nodeRpcUrl, tokenCount) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/withdraw`,
+                json: true,
+                body: jsonQuery,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
+/**
+ * @typedef {Object} DepositResponse
+ * @property {string} message informing that deposit process went fine.
+ */
+
+/**
+ * Fetch /api/deposit response
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {number} tokenCount
+ * @return {Promise.<DepositResponse>}
+ */
+async function apiDeposit(nodeRpcUrl, tokenCount) {
+    return new Promise((accept, reject) => {
+        const jsonQuery = {
+            trac_amount: tokenCount,
+        };
+        request(
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/deposit`,
                 json: true,
                 body: jsonQuery,
             },
@@ -376,4 +417,5 @@ module.exports = {
     apiQueryNetworkResponses,
     apiReadNetwork,
     apiWithdraw,
+    apiDeposit,
 };
