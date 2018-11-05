@@ -80,6 +80,7 @@ class DepositTokensCommand extends Command {
     default(map) {
         const command = {
             name: 'depositTokensCommand',
+            retries: 3,
             delay: 0,
             transactional: false,
         };
