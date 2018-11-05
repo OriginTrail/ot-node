@@ -45,7 +45,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-develop",
       "host": "localhost",
@@ -145,7 +145,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-staging",
       "host": "localhost",
@@ -245,7 +245,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-stable",
       "host": "localhost",
