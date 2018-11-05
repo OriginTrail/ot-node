@@ -109,7 +109,7 @@ class Utilities {
      * @returns {*} - log function
      */
     static getLogger() {
-        let logLevel = 'info';
+        let logLevel = 'trace';
         if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
