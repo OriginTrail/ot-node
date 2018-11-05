@@ -828,7 +828,7 @@ class Utilities {
             signature.s,
         );
 
-        return signedAddress === message.wallet;
+        return signedAddress.toLowerCase() === message.wallet.toLowerCase();
     }
 
     /**

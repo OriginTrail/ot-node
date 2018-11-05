@@ -819,7 +819,7 @@ class EventEmitter {
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -953,7 +953,7 @@ class EventEmitter {
                 const { message, messageSignature } = dataLocationResponseObject;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                     logger.warn(returnMessage);
                     return;
                 }
@@ -973,7 +973,8 @@ class EventEmitter {
             const { message, messageSignature } = dataReadRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                 logger.warn(returnMessage);
                 return;
             }
@@ -994,7 +995,8 @@ class EventEmitter {
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                console.log('kad-data-read-response', JSON.stringify(message), JSON.stringify(messageSignature));
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -1015,7 +1017,7 @@ class EventEmitter {
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 

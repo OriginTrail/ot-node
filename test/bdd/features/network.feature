@@ -62,7 +62,7 @@ Feature: Test basic network features
     Given I call api-query-local-import-importId endpoint for last import
     Then api-query-local-import-importId response should have certain structure
 
-  @itworks2
+  @itworks
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0 
     And I setup 5 nodes
@@ -77,4 +77,6 @@ Feature: Test basic network features
     And I start additional nodes
     And I use 6th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    And I wait for a response for last network query
+    Then all nodes with last import should answer to last network query
+    Given the DV purchase import from the last query from a DH
+    Then the last import should be the same on all nodes that purchased data

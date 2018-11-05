@@ -76,6 +76,12 @@ class OtNode extends EventEmitter {
         //  internalIDs: { id: { dataSetId, offerID } } }
         this.state.offers = {};
 
+        // DV side. qeryId.dhIdentity = { replyId, dataSetIds: [...datasetIds] };
+        this.state.dataLocationQueriesConfirmations = {};
+
+        // DV side. datasetId = { queryId, replyId }
+        this.state.purchasedDatasets = {};
+
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
 
@@ -187,11 +193,79 @@ class OtNode extends EventEmitter {
         } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
             console.log('dv-network-query-processed emitted');
             this.emit('dv-network-query-processed');
+        } else if (line.match(/DH .+ in query ID .+ and reply ID .+ confirms possession of data imports: '.+'/)) {
+            const identity = line.match(identityRegex)[0];
+            const queryId = line.match(uuidRegex)[0];
+            const replyId = line.match(uuidRegex)[1];
+            const dataSetIds = line.match(dataSetRegex);
+            assert(identity);
+            assert(queryId);
+            assert(replyId);
+            assert(dataSetIds);
+
+            if (!this.state.dataLocationQueriesConfirmations[queryId]) {
+                this.state.dataLocationQueriesConfirmations[queryId] = {};
+            }
+            if (!this.state.dataLocationQueriesConfirmations[queryId][identity]) {
+                this.state.dataLocationQueriesConfirmations[queryId][identity] = {
+                    dataSetIds: [],
+                };
+            }
+
+            this.state.dataLocationQueriesConfirmations[queryId][identity].dataSetIds
+                .push(...dataSetIds);
+            this.state.dataLocationQueriesConfirmations[queryId][identity].replyId = replyId;
+            this.emit(
+                'dh-confirms-imports',
+                {
+                    queryId, identity, dataSetIds, replyId,
+                },
+            );
+        } else if (line.match(/DataSet .+ purchased for query ID .+ reply ID .+\./)) {
+            const queryId = line.match(uuidRegex)[0];
+            const replyId = line.match(uuidRegex)[1];
+            const dataSetId = line.match(dataSetRegex)[0];
+            assert(queryId);
+            assert(replyId);
+            assert(dataSetId);
+
+            this.state.purchasedDatasets[dataSetId] = { queryId, replyId };
+            this.emit(
+                'dataset-purchase',
+                {
+                    queryId, replyId, dataSetId,
+                },
+            );
         }
     }
 
+    /**
+     * Returns weather the process is running or not.
+     * @return {boolean}
+     */
     get isRunning() {
         return this.initialized && this.started && !!this.process;
+    }
+
+    /**
+     * Returns array of node IDs of nodes that confirmed possession of the data for
+     * the given query,
+     *
+     * @param queryId {string} ID of the query.
+     * @param dataSetId {string} ID of the data-set.
+     * @return {string[]}
+     */
+    nodeConfirmsForDataSetId(queryId, dataSetId) {
+        const result = [];
+        if (this.state.dataLocationQueriesConfirmations[queryId]) {
+            const queryConfirms = this.state.dataLocationQueriesConfirmations[queryId];
+            Object.keys(queryConfirms).forEach((nodeId) => {
+                if (queryConfirms[nodeId].dataSetIds.includes(dataSetId)) {
+                    result.push(nodeId);
+                }
+            });
+        }
+        return result;
     }
 
     _processExited(code) {

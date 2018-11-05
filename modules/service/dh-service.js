@@ -333,7 +333,7 @@ class DHService {
                 msgNodeId,
                 msgWallet,
                 msgQuery,
-                encrypted: true,
+                encrypted: false,
             },
         });
     }
