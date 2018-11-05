@@ -294,8 +294,9 @@ class ImportUtilities {
             break;
         }
         default:
-            return null;
+            transactionHash = null;
         }
+        return transactionHash;
     }
 }
 
