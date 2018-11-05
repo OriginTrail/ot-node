@@ -280,14 +280,16 @@ class EventEmitter {
             try {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
-                data.response.send(dataimports.map(di => ({
+                const promises = dataimports.map(async di => ({
                     data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
                     data_size: di.data_size,
-                    transaction_hash: di.transaction_hash,
+                    transaction_hash: await ImportUtilities
+                        .getTransactionHash(di.data_set_id, di.origin),
                     data_provider_wallet: di.data_provider_wallet,
-                })));
+                }));
+                data.response.send(await Promise.all(promises));
             } catch (e) {
                 logger.error('Failed to get information about imports', e);
                 data.response.status(500);
