@@ -52,6 +52,12 @@ class DVDataReadResponseFreeCommand extends Command {
             transaction_hash,
         } = message;
 
+        // Store holding information and generate keys for eventual data replication.
+        await Models.purchased_data.create({
+            data_set_id: dataSetId,
+            transaction_hash,
+        });
+
         // Find the particular reply.
         const networkQueryResponse = await Models.network_query_responses.findOne({
             where: { reply_id: replyId },
@@ -129,7 +135,7 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
-            transaction_hash,
+            origin: 'PURCHASED',
         });
 
         this.logger.info(`Data set ID ${dataSetId} imported successfully.`);

@@ -229,6 +229,13 @@ class EventEmitter {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
+                    const transactionHash = await ImportUtilities
+                        .getTransactionHash(dataSetId, dataInfo.origin);
+
+                    if (transactionHash == null) {
+                        throw new Error(`Failed to find transaction hash for data set ${dataSetId}`);
+                    }
+
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
@@ -237,7 +244,7 @@ class EventEmitter {
                             result.edges,
                         ),
                         root_hash: dataInfo.root_hash,
-                        transaction: dataInfo.transaction_hash,
+                        transaction: transactionHash,
                         data_provider_wallet: dataInfo.data_provider_wallet,
                     });
                 }
