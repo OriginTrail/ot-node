@@ -22,6 +22,7 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
+require('winston-daily-rotate-file');
 
 const pjson = require('../package.json');
 const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
@@ -146,10 +147,15 @@ class Utilities {
                             'job',
                         ],
                     }),
-                    new (winston.transports.File)({
-                        filename: 'node.log',
+                    new (winston.transports.DailyRotateFile)({
+                        filename: 'otnode-%DATE%.log',
+                        datePattern: 'YYYY-MM-DD-HH',
+                        zippedArchive: true,
+                        maxSize: '20m',
+                        maxFiles: '14d',
                         json: false,
                         formatter: this.formatFileLogs,
+                        dirname: `logs`,
                     }),
                 ];
 
