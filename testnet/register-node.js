@@ -81,7 +81,10 @@ function main() {
 
     deepExtend(localConfiguration, externalConfig);
     console.log('Configuration:');
-    console.log(JSON.stringify(externalConfig, null, 4));
+    // Mask private key before printing it.
+    const externalConfigClean = Object.assign({}, externalConfig);
+    externalConfigClean.node_private_key = '*** MASKED ***';
+    console.log(JSON.stringify(externalConfigClean, null, 4));
 
     fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 
