@@ -39,7 +39,9 @@ class DCOfferChooseCommand extends Command {
         });
 
         const verifiedReplications = replications.map(r => r.status === 'VERIFIED');
-        this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
+        if (excludedDHs == null) {
+            this.logger.notify(`Replication window for ${offer.offer_id} is closed. Replicated to ${replications.length} peers. Verified ${verifiedReplications.length}.`);
+        }
 
         let identities = replications
             .map(r => Utilities.denormalizeHex(r.dh_identity).toLowerCase());
