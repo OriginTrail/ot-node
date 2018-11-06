@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions, max-len */
 
 const {
     And, But, Given, Then, When,
@@ -7,15 +7,13 @@ const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
 const sleep = require('sleep-async')().Promise;
-const sortedStringify = require('sorted-json-stringify');
-const { sha3_256 } = require('js-sha3');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
-const ImportUtilities = require('../../../modules/ImportUtilities');
+const utilities = require('./lib/utilities');
 
 // Identity difficulty 8.
 const bootstrapIdentity = {
@@ -204,7 +202,7 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
                     return;
                 }
 
-                const calculatedImportHash = `0x${sha3_256(sortedStringify(body.import, null, 0))}`;
+                const calculatedImportHash = utilities.calculateImportHash(body.import);
                 if (calculatedImportHash !== this.state.lastImport.data_set_id) {
                     reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`));
                     return;
@@ -411,7 +409,7 @@ Then(/^checking again first import's root hash should point to remembered value$
     ).to.be.equal(true);
 });
 
-Given(/^I call api-query-local with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+Given(/^I call queryLocal with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
 
@@ -431,7 +429,7 @@ Given(/^I call api-query-local with query consisting of path: "(\S+)", value: "(
     this.state.apiQueryLocalResponse = response;
 });
 
-Given(/^I call api-query-local-import with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+Given(/^I call queryLocalImport with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
 
@@ -451,42 +449,38 @@ Given(/^I call api-query-local-import with query consisting of path: "(\S+)", va
     this.state.apiQueryLocalImportResponse = response;
 });
 
-Given(/^I call api-query-local-import-importId endpoint for last import$/, async function () {
+Given(/^I call queryLocalImportDataSetId endpoint for last import$/, async function () {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
-    const lastImportId = this.state.lastImport.import_id;
+    const lastDataSetId = this.state.lastImport.data_set_id;
 
-    const response = await httpApiHelper.apiQueryLocalImportByImportId(host, lastImportId);
-    this.state.apiQueryLocalImportByImportIdResponse = response;
+    const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
+    this.state.apiQueryLocalImportByDataSetIdResponse = response;
 });
 
-Then(/^api-query-local response should have certain structure$/, function () {
+Then(/^queryLocal response should have certain structure$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
+    expect(this.state.apiQueryLocalResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
 });
 
-Then(/^api-query-local-import response should have certain structure$/, function () {
+Then(/^queryLocalImport response should have certain structure$/, function () {
     expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalImportResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match import id').to.be.equal(this.state.lastImport.import_id);
+    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
 });
 
-Then(/^api-query-local-import-importId response should have certain structure$/, function () {
-    expect(!!this.state.apiQueryLocalImportByImportIdResponse, 'apiQueryLocalImportByImportId should have given some result').to.be.equal(true);
+Then(/^queryLocalImportDataSetId response should have certain structure$/, function () {
+    expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
-    expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
-    // check that lastImport.import_hash and sha256 calculated hash are matching
-    const calculatedImportHash =
-        ImportUtilities.importHash(
-            this.state.apiQueryLocalImportByImportIdResponse.vertices,
-            this.state.apiQueryLocalImportByImportIdResponse.edges,
-        );
-    expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
+    expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
+    // check that lastImport.data_set_id and sha256 calculated hash are matching
+    const calculatedImportHash = utilities.calculateImportHash(this.state.apiQueryLocalImportByDataSetIdResponse);
+    expect(this.state.lastImport.data_set_id, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
 Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
@@ -564,47 +558,6 @@ Given(/^DV publishes query consisting of path: "(\S+)", value: "(\S+)" and opcod
     expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
     this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
-});
-
-Given(/^I wait for a response for last network query$/, { timeout: 120000 }, async function () {
-    // expect(this.state.query_id, 'query_id should be defined').to.not.be.undefined;
-    const { dv } = this.state;
-    const myId = this.state.lastQueryNetworkId;
-    let queryNetworkResponses;
-
-    // let attempt = 0;
-    // let timedPings = setInterval(async function(){
-    //     queryNetworkResponses =
-    //          await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
-    //     if (queryNetworkResponses.length > 0){
-    //         stopInterval = true;
-    //         console.log(queryNetworkResponses);
-    //         clearInterval(timedPings);
-    //     } else {
-    //         console.log(queryNetworkResponses);
-    //         if (attempt > 10){
-    //             clearInterval(timedPings);
-    //         }else{
-    //             attempt++;
-    //         }
-    //     }
-    // }, 5000);
-
-    queryNetworkResponses =
-        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
-    console.log(queryNetworkResponses);
-    await sleep.sleep(30000);
-    queryNetworkResponses =
-        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
-    console.log(queryNetworkResponses);
-    await sleep.sleep(30000);
-    queryNetworkResponses =
-        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
-    console.log(queryNetworkResponses);
-    await sleep.sleep(30000);
-    queryNetworkResponses =
-        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
-    console.log(queryNetworkResponses);
 });
 
 Then(/^all nodes with last import should answer to last network query$/, { timeout: 90000 }, async function () {

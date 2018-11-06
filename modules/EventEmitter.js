@@ -300,7 +300,7 @@ class EventEmitter {
         });
 
         this._on('api-query', (data) => {
-            logger.info(`Get veritces triggered with query ${JSON.stringify(data.query)}`);
+            logger.info(`Get vertices triggered with query ${JSON.stringify(data.query)}`);
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
