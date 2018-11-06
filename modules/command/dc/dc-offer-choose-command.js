@@ -65,6 +65,7 @@ class DCOfferChooseCommand extends Command {
                     period: 5000,
                     data: {
                         offerId: offer.offer_id,
+                        excludedDHs,
                     },
                 },
             ],
