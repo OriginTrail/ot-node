@@ -263,7 +263,7 @@ class ImportUtilities {
      * Gets transaction hash for the data set
      * @param dataSetId Data set ID
      * @param origin    Data set origin
-     * @return {Promise<null>}
+     * @return {Promise<string|null>}
      */
     static async getTransactionHash(dataSetId, origin) {
         let transactionHash = null;
@@ -294,7 +294,7 @@ class ImportUtilities {
             break;
         }
         default:
-            transactionHash = null;
+            throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
         }
         return transactionHash;
     }
