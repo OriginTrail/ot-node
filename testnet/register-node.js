@@ -59,7 +59,6 @@ function main() {
             index: parseInt(process.env.KAD_IDENTITY_CHILD_INDEX, 10),
         };
         fs.writeFileSync(identityFilePath, JSON.stringify(content, null, 4));
-        console.log('Kademlia identity given: ', process.env.KAD_IDENTITY);
     }
 
     if (process.env.IMPORT_WHITELIST) {

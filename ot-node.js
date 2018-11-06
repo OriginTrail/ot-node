@@ -435,8 +435,10 @@ class OTNode {
         if (!config.houston_password) {
             config.houston_password = uuidv4();
         }
+
+        fs.writeFileSync('houston.txt', config.houston_password);
         log.notify('================================================================');
-        log.notify(`Houston password: ${config.houston_password}`);
+        log.notify('Houston password stored in file                                 ');
         log.notify('================================================================');
 
         // Starting the kademlia
