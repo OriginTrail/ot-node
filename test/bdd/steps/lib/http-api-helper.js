@@ -136,15 +136,11 @@ async function apiImportsInfo(nodeRpcUrl) {
 }
 
 /**
- * @typedef {string} DataSetId
- */
-
-/**
  * Fetch /api/query/local response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {json} jsonQuery
- * @return {Promise.<[DataSetId]>}
+ * @return {Promise.<[string]>}
  */
 async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
     return new Promise((accept, reject) => {
@@ -188,34 +184,6 @@ async function apiQueryLocalImportByDataSetId(nodeRpcUrl, importId) {
                 headers: { 'Content-Type': 'application/json' },
                 uri: `${nodeRpcUrl}/api/query/local/import/${importId}`,
                 json: true,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-/**
- * Fetch /api/query/local/import response
- *
- * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {json} jsonQuery
- * @return {Promise.<[DataSetId]>}
- */
-async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
-    return new Promise((accept, reject) => {
-        request(
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import`,
-                json: true,
-                body: jsonQuery,
             },
             (err, res, body) => {
                 if (err) {
@@ -470,7 +438,6 @@ module.exports = {
     apiImportsInfo,
     apiFingerprint,
     apiQueryLocal,
-    apiQueryLocalImport,
     apiQueryLocalImportByDataSetId,
     apiReplication,
     apiQueryNetwork,
