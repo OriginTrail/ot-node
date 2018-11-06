@@ -49,18 +49,18 @@ Feature: Test basic network features
     And I wait for 10 seconds
     Then checking again first import's root hash should point to remembered value
 
-  @doesntwork
+  @itworks
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
     And I use 1st node as DC
     And I import "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1
-    Given I call api-query-local with query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
-    Then api-query-local response should have certain structure
-    Given I call api-query-local-import with query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
-    Then api-query-local-import response should have certain structure
-    Given I call api-query-local-import-importId endpoint for last import
-    Then api-query-local-import-importId response should have certain structure
+    Given I call queryLocal with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
+    Then queryLocal response should have certain structure
+    Given I call queryLocalImport with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
+    Then queryLocalImport response should have certain structure
+    Given I call queryLocalImportDataSetId endpoint for last import
+    Then queryLocalImportDataSetId response should have certain structure
 
   @itworks
   Scenario: DC->DH->DV replication + DV network read + DV purchase

@@ -35,6 +35,11 @@ async function apiImportInfo(nodeRpcUrl, dataSetId) {
 }
 
 /**
+ * @typedef {Object} FingerprintInfo
+ * @property {string} root_hash Merkle root-hash of the import (sorted import object).
+ */
+
+/**
  * Fetch api/fingerprint?data_set_id={{data_set_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
@@ -60,6 +65,13 @@ async function apiFingerprint(nodeRpcUrl, datSetId) {
         );
     });
 }
+
+/**
+ * @typedef {Object} Import
+ * @property {string} data_set_id Data-set ID.
+ * @property {string} message Message about successful import.
+ * @property {string} wallet Data provider wallet.
+ */
 
 /**
  * Fetch /api/import
@@ -124,11 +136,15 @@ async function apiImportsInfo(nodeRpcUrl) {
 }
 
 /**
+ * @typedef {string} DataSetId
+ */
+
+/**
  * Fetch /api/query/local response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {json} jsonQuery
- * @return {Promise}
+ * @return {Promise.<[DataSetId]>}
  */
 async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
     return new Promise((accept, reject) => {
@@ -152,13 +168,19 @@ async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
 }
 
 /**
- * Fetch /api/query/local/import/{{import_id}}
+ * @typedef {Object} QueryLocalImportByDataSetId
+ * @property {Array} edges arango edges
+ * @property {Array} vertices arango vertices
+ */
+
+/**
+ * Fetch /api/query/local/import/{{data_set_id}}
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {string} importId ID.
- * @return {Promise}
+ * @return {Promise.<QueryLocalImportByDataSetId>}
  */
-async function apiQueryLocalImportByImportId(nodeRpcUrl, importId) {
+async function apiQueryLocalImportByDataSetId(nodeRpcUrl, importId) {
     return new Promise((accept, reject) => {
         request(
             {
@@ -183,7 +205,7 @@ async function apiQueryLocalImportByImportId(nodeRpcUrl, importId) {
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {json} jsonQuery
- * @return {Promise}
+ * @return {Promise.<[DataSetId]>}
  */
 async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
     return new Promise((accept, reject) => {
@@ -207,11 +229,17 @@ async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
 }
 
 /**
+ * @typedef {Object} Replication
+ * @property {string} data_set_id Data-set ID.
+ * @property {string} replication_id Replication ID.
+ */
+
+/**
  * Fetch /api/replication response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param data_set_id Data-set ID
- * @return {Promise}
+ * @return {Promise.<Replication>}
  */
 async function apiReplication(nodeRpcUrl, data_set_id) {
     return new Promise((accept, reject) => {
@@ -443,7 +471,7 @@ module.exports = {
     apiFingerprint,
     apiQueryLocal,
     apiQueryLocalImport,
-    apiQueryLocalImportByImportId,
+    apiQueryLocalImportByDataSetId,
     apiReplication,
     apiQueryNetwork,
     apiQueryNetworkResponses,
