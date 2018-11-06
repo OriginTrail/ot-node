@@ -436,7 +436,7 @@ class OTNode {
             config.houston_password = uuidv4();
         }
 
-        fs.writeFileSync('houston.txt', config.houston_password);
+        fs.writeFileSync(path.join(config.appDataPath, 'houston.txt'), config.houston_password);
         log.notify('================================================================');
         log.notify('Houston password stored in file                                 ');
         log.notify('================================================================');
