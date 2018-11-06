@@ -55,12 +55,10 @@ Feature: Test basic network features
     And I start the nodes
     And I use 1st node as DC
     And I import "importers/xml_examples/Basic/01_Green_to_pink_shipment.xml" as GS1
-    Given I call queryLocal with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
-    Then queryLocal response should have certain structure
-    Given I call queryLocalImport with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" for last import
-    Then queryLocalImport response should have certain structure
-    Given I call queryLocalImportDataSetId endpoint for last import
-    Then queryLocalImportDataSetId response should have certain structure
+    Given I query DC node locally with path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ"
+    Then response should contain only last imported data set id
+    Given I query DC node locally for last imported data set id
+    Then response hash should match last imported data set id
 
   @itworks
   Scenario: DC->DH->DV replication + DV network read + DV purchase
