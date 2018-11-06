@@ -752,3 +752,31 @@ Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 12000
     await httpApiHelper.apiDeposit(host, tokenCount);
     return Promise.all(promises);
 });
+
+Given(/^DC calls consensus endpoint for sender: "(\S+)"$/, async function (senderId) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const consensusResponse = await httpApiHelper.apiConsensus(host, senderId);
+    expect(consensusResponse, 'Should have key called events').to.have.all.keys('events');
+    this.state.lastConsensusResponse = consensusResponse;
+});
+
+Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, function (eventsCount, matchesCount) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.lastConsensusResponse, 'lastConsensusResponse should be already defined').to.not.be.undefined;
+    expect(this.state.lastConsensusResponse, 'Should have key called events').to.have.all.keys('events');
+
+    const consensusEvents = this.state.lastConsensusResponse.events;
+    expect(consensusEvents, 'should be an Array').to.be.an.instanceof(Array);
+    expect(consensusEvents.length).to.be.equal(eventsCount);
+
+    let consesusMatches = 0;
+    consensusEvents.forEach((myElement) => {
+        if (Object.keys(myElement).toString() === 'side1,side2') {
+            consesusMatches += 1;
+        }
+    });
+    expect(consesusMatches).to.be.equal(matchesCount);
+});

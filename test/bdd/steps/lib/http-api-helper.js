@@ -404,6 +404,38 @@ async function apiDeposit(nodeRpcUrl, tokenCount) {
     });
 }
 
+/**
+ * @typedef {Object} ConsensusResponse
+ * @property {Object} events an array of events with side1 and/or side2 objects.
+ */
+
+/**
+ * Fetch /api/apiConsensus/{{sender_id}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} senderId ID of the sender, i.e. "urn:ot:object:actor:id:Company_Green"
+ * @return {Promise.<ConsensusResponse>}
+ */
+async function apiConsensus(nodeRpcUrl, senderId) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/consensus/${senderId}`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportInfo,
@@ -418,4 +450,5 @@ module.exports = {
     apiReadNetwork,
     apiWithdraw,
     apiDeposit,
+    apiConsensus,
 };

@@ -95,4 +95,17 @@ Feature: Test basic network features
     And I start the node
     And I use 1st node as DC
     Given I attempt to deposit 50 tokens from DC wallet
-    Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1 
+    Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1
+
+  @itworks
+  Scenario: Smoke check /api/consensus endpoint
+    Given I setup 1 node
+    And I start the node
+    And I use 1st node as DC
+    And I import "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
+    And I import "importers/xml_examples/Retail/02_Green_to_Pink_receipt.xml" as GS1
+    Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Green"
+    Then last consensus response should have 1 event with 1 match
+    Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
+    Then last consensus response should have 1 event with 1 match
+
