@@ -129,6 +129,12 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'PURCHASED',
+        });
+
+        // Store holding information and generate keys for eventual data replication.
+        await Models.purchased_data.create({
+            data_set_id: dataSetId,
             transaction_hash,
         });
 

@@ -33,7 +33,7 @@ class DCOfferCreateBcCommand extends Command {
             litigationIntervalInMinutes,
         } = command.data;
 
-        await this.blockchain.createOffer(
+        const result = await this.blockchain.createOffer(
             Utilities.normalizeHex(this.config.erc725Identity),
             dataSetId,
             dataRootHash,
@@ -49,9 +49,10 @@ class DCOfferCreateBcCommand extends Command {
         this.logger.important(`Offer with internal ID ${internalOfferId} for data set ${dataSetId} written to blockchain. Waiting for DHs...`);
 
         const offer = await Models.offers.findOne({ where: { id: internalOfferId } });
+        offer.transaction_hash = result.transactionHash;
         offer.status = 'PUBLISHED';
         offer.message = 'Offer has been published to Blockchain';
-        await offer.save({ fields: ['status', 'message'] });
+        await offer.save({ fields: ['status', 'message', 'transaction_hash'] });
 
         await this.blockchain.executePlugin('fingerprint-plugin', {
             dataSetId,

@@ -48,8 +48,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Couldn't find reply with ID ${id}.`);
             }
 
-            const offer = networkReplyModel.data;
-
             if (networkReplyModel.receiver_wallet !== wallet &&
                 networkReplyModel.receiver_identity) {
                 throw Error('Sorry not your read request');
@@ -97,6 +95,9 @@ class DHDataReadRequestFreeCommand extends Command {
                 );
             }
 
+            const transactionHash = await ImportUtilities
+                .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
+
             /*
             dataReadResponseObject = {
                 message: {
@@ -126,7 +127,7 @@ class DHDataReadRequestFreeCommand extends Command {
                     edges,
                 },
                 data_set_id: importId, // TODO: Temporal. Remove it.
-                transaction_hash: dataInfo.transaction_hash,
+                transaction_hash: transactionHash,
             };
             const dataReadResponseObject = {
                 message: replyMessage,

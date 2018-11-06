@@ -127,6 +127,7 @@ class DVService {
             data_provider_wallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'PURCHASED',
         });
 
         // Check if enough tokens. From smart contract:

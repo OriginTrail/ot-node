@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
         task: DataTypes.STRING,
         status: DataTypes.STRING,
         message: DataTypes.STRING,
+        transaction_hash: DataTypes.STRING(128),
     }, {});
     offers.associate = (models) => {
     // associations can be defined here
