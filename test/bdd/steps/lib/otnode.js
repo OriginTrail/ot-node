@@ -40,6 +40,7 @@ class OtNode extends EventEmitter {
         this.logger = logger || console;
 
         this.initialized = false;
+        this.started = false;
     }
 
     initialize() {
@@ -75,21 +76,29 @@ class OtNode extends EventEmitter {
         // { offerIDs: { id: { dataSetId, internalID },
         //  internalIDs: { id: { dataSetId, offerID } } }
         this.state.offers = {};
+
         this.state.oldWalletBalance = null;
         this.state.newWalletBalance = null;
         this.state.oldProfileBalance = null;
         this.state.newProfileBalance = null;
 
+        // DV side. qeryId.dhIdentity = { replyId, dataSetIds: [...datasetIds] };
+        this.state.dataLocationQueriesConfirmations = {};
+
+        // DV side. datasetId = { queryId, replyId }
+        this.state.purchasedDatasets = {};
+
         // Temp solution until node.log is moved to the configDir.
         this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
 
-        this.logger.log(`Node created at: '${this.options.configDir}'.`);
+        this.logger.log(`Node initialized at: '${this.options.configDir}'.`);
         this.initialized = true;
     }
 
     start() {
         assert(!this.process);
         assert(this.initialized);
+        assert(!this.stared);
         this.logger.log(`Starting node ${this.id}.`);
         // Starting node should be done with following code:
         // this.process = spawn('npm', ['start', '--', `--configDir=${this.options.configDir}`]);
@@ -113,6 +122,8 @@ class OtNode extends EventEmitter {
             input: this.process.stderr,
         });
         this.lineReaderStdErr.on('line', data => this._processOutput(data));
+        this.logger.log(`Node '${this.id}' has been started.`);
+        this.started = true;
     }
 
     stop() {
@@ -185,6 +196,52 @@ class OtNode extends EventEmitter {
             assert(offerId);
             this.state.offersFinalized.push(offerId);
             this.emit('offer-finalized', offerId);
+        } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
+            console.log('dv-network-query-processed emitted');
+            this.emit('dv-network-query-processed');
+        } else if (line.match(/DH .+ in query ID .+ and reply ID .+ confirms possession of data imports: '.+'/)) {
+            const identity = line.match(identityRegex)[0];
+            const queryId = line.match(uuidRegex)[0];
+            const replyId = line.match(uuidRegex)[1];
+            const dataSetIds = line.match(dataSetRegex);
+            assert(identity);
+            assert(queryId);
+            assert(replyId);
+            assert(dataSetIds);
+
+            if (!this.state.dataLocationQueriesConfirmations[queryId]) {
+                this.state.dataLocationQueriesConfirmations[queryId] = {};
+            }
+            if (!this.state.dataLocationQueriesConfirmations[queryId][identity]) {
+                this.state.dataLocationQueriesConfirmations[queryId][identity] = {
+                    dataSetIds: [],
+                };
+            }
+
+            this.state.dataLocationQueriesConfirmations[queryId][identity].dataSetIds
+                .push(...dataSetIds);
+            this.state.dataLocationQueriesConfirmations[queryId][identity].replyId = replyId;
+            this.emit(
+                'dh-confirms-imports',
+                {
+                    queryId, identity, dataSetIds, replyId,
+                },
+            );
+        } else if (line.match(/DataSet .+ purchased for query ID .+ reply ID .+\./)) {
+            const queryId = line.match(uuidRegex)[0];
+            const replyId = line.match(uuidRegex)[1];
+            const dataSetId = line.match(dataSetRegex)[0];
+            assert(queryId);
+            assert(replyId);
+            assert(dataSetId);
+
+            this.state.purchasedDatasets[dataSetId] = { queryId, replyId };
+            this.emit(
+                'dataset-purchase',
+                {
+                    queryId, replyId, dataSetId,
+                },
+            );
         } else if (line.match(/Token withdrawal for amount .+ initiated/gi)) {
             this.emit('withdraw-initiated');
         } else if (line.match(/Token withdrawal for amount .+ completed/gi)) {
@@ -206,11 +263,40 @@ class OtNode extends EventEmitter {
             const result4 = line.match(walletAmountRegex);
             this.state.oldWalletBalance = result4[result4.length - 1];
             assert(this.state.oldWalletBalance);
+        } else if (line.match(/Command profileApprovalIncreaseCommand and ID .+ processed/gi)) {
+            this.emit('deposit-approved');
+        } else if (line.match(/Command depositTokensCommand and ID .+ processed/gi)) {
+            this.emit('deposit-command-completed');
         }
     }
 
+    /**
+     * Returns weather the process is running or not.
+     * @return {boolean}
+     */
     get isRunning() {
-        return this.initialized && !!this.process;
+        return this.initialized && this.started && !!this.process;
+    }
+
+    /**
+     * Returns array of node IDs of nodes that confirmed possession of the data for
+     * the given query,
+     *
+     * @param queryId {string} ID of the query.
+     * @param dataSetId {string} ID of the data-set.
+     * @return {string[]}
+     */
+    nodeConfirmsForDataSetId(queryId, dataSetId) {
+        const result = [];
+        if (this.state.dataLocationQueriesConfirmations[queryId]) {
+            const queryConfirms = this.state.dataLocationQueriesConfirmations[queryId];
+            Object.keys(queryConfirms).forEach((nodeId) => {
+                if (queryConfirms[nodeId].dataSetIds.includes(dataSetId)) {
+                    result.push(nodeId);
+                }
+            });
+        }
+        return result;
     }
 
     _processExited(code) {

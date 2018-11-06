@@ -32,8 +32,8 @@ module.exports = {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        transaction_hash: {
-            allowNull: true,
+        origin: {
+            allowNull: false,
             type: Sequelize.STRING,
         },
     }),

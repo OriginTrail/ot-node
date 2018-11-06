@@ -229,6 +229,9 @@ class EventEmitter {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
+                    const transactionHash = await ImportUtilities
+                        .getTransactionHash(dataSetId, dataInfo.origin);
+
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
@@ -237,7 +240,7 @@ class EventEmitter {
                             result.edges,
                         ),
                         root_hash: dataInfo.root_hash,
-                        transaction: dataInfo.transaction_hash,
+                        transaction: transactionHash,
                         data_provider_wallet: dataInfo.data_provider_wallet,
                     });
                 }
@@ -277,14 +280,16 @@ class EventEmitter {
             try {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
-                data.response.send(dataimports.map(di => ({
+                const promises = dataimports.map(async di => ({
                     data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
                     data_size: di.data_size,
-                    transaction_hash: di.transaction_hash,
+                    transaction_hash: await ImportUtilities
+                        .getTransactionHash(di.data_set_id, di.origin),
                     data_provider_wallet: di.data_provider_wallet,
-                })));
+                }));
+                data.response.send(await Promise.all(promises));
             } catch (e) {
                 logger.error('Failed to get information about imports', e);
                 data.response.status(500);
@@ -484,7 +489,7 @@ class EventEmitter {
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
-                        transaction_hash: null,
+                        origin: 'IMPORTED',
                     }).catch((error) => {
                         logger.error(error);
                         notifyError(error);
@@ -819,7 +824,7 @@ class EventEmitter {
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -953,7 +958,7 @@ class EventEmitter {
                 const { message, messageSignature } = dataLocationResponseObject;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                     logger.warn(returnMessage);
                     return;
                 }
@@ -973,7 +978,8 @@ class EventEmitter {
             const { message, messageSignature } = dataReadRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                 logger.warn(returnMessage);
                 return;
             }
@@ -994,7 +1000,8 @@ class EventEmitter {
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                console.log('kad-data-read-response', JSON.stringify(message), JSON.stringify(messageSignature));
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -1015,7 +1022,7 @@ class EventEmitter {
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 

@@ -45,6 +45,7 @@ class DhReplicationImportCommand extends Command {
             litigationRootHash,
             distributionRootHash,
             distributionSignature,
+            transactionHash,
         } = command.data;
         const decryptedVertices =
             await ImportUtilities.immutableDecryptVertices(litigationVertices, litigationPublicKey);
@@ -123,6 +124,7 @@ class DhReplicationImportCommand extends Command {
             data_provider_wallet: importResult.wallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'HOLDING',
         });
 
         // Store holding information and generate keys for eventual data replication.
@@ -133,6 +135,7 @@ class DhReplicationImportCommand extends Command {
             distribution_public_key: distributionPublicKey,
             distribution_private_key: distributionPrivateKey,
             distribution_epk: distributionEpk,
+            transaction_hash: transactionHash,
         });
 
         this.logger.important(`[DH] Replication finished for offer ID ${offerId}`);
@@ -155,6 +158,7 @@ class DhReplicationImportCommand extends Command {
             commands: [
                 {
                     name: 'dhOfferFinalizedCommand',
+                    deadline_at: Date.now() + (10 * 60 * 1000),
                     period: 10 * 1000,
                     data: {
                         offerId,

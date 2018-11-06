@@ -1,4 +1,4 @@
-/* eslint-disable prefer-arrow-callback, max-len */
+/* eslint-disable no-unused-expressions */
 
 const {
     And, But, Given, Then, When,
@@ -46,6 +46,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 rpc_node_port: 7545,
             },
             network: {
+                // TODO: Connect other if using multiple.
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
                 remoteWhitelist: ['localhost'],
             },
@@ -72,7 +73,8 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 node_rpc_port: 9000 + i,
                 node_remote_control_port: 4000 + i,
                 network: {
-                    bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
+                    bootstraps: this.state.bootstraps.map(bootstrap =>
+                        `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
                     remoteWhitelist: ['localhost'],
                 },
                 database: {
@@ -94,9 +96,10 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     done();
 });
 
-Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, async function (waitTime) {
-    await sleep.sleep(waitTime * 1000);
-});
+Given(/^I wait for (\d+) second[s]*$/, { timeout: 600000 }, waitTime => new Promise((accept) => {
+    expect(waitTime, 'waiting time should be less then step timeout').to.be.lessThan(600);
+    setTimeout(accept, waitTime * 1000);
+}));
 
 Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     expect(this.state.bootstraps.length).to.be.greaterThan(0);
@@ -221,7 +224,11 @@ Given(/^I initiate the replication$/, async function () {
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
 
     const { dc } = this.state;
-    const response = await httpApiHelper.apiReplication(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const response =
+        await httpApiHelper.apiReplication(
+            dc.state.node_rpc_url,
+            this.state.lastImport.data_set_id,
+        );
 
     if (!response.replication_id) {
         throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
@@ -265,7 +272,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     expect(dc.state.replications.length, 'Not every node replicated data.').to.equal(this.state.nodes.length - 1);
 
     // Get offer ID for last import.
-    const lastOfferId = dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
+    const lastOfferId =
+        dc.state.offers.internalIDs[this.state.lastReplication.replication_id].offerId;
 
     // Assumed it hasn't been changed in between.
     const currentDifficulty =
@@ -297,7 +305,8 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
     const promises = [];
     dc.state.replications.forEach(({ internalOfferId, dhId }) => {
-        if (dc.state.offers.internalIDs[internalOfferId].dataSetId === this.state.lastImport.data_set_id) {
+        if (dc.state.offers.internalIDs[internalOfferId].dataSetId ===
+            this.state.lastImport.data_set_id) {
             const node =
                 this.state.nodes.find(node => node.state.identity === dhId);
 
@@ -307,19 +316,56 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
 
             promises.push(new Promise(async (accept, reject) => {
                 const dhImportInfo =
-                    await httpApiHelper.apiImportInfo(node.state.node_rpc_url, this.state.lastImport.data_set_id);
+                    await httpApiHelper.apiImportInfo(
+                        node.state.node_rpc_url,
+                        this.state.lastImport.data_set_id,
+                    );
+                expect(dhImportInfo.transaction, 'DH transaction hash should be defined').to.not.be.undefined;
                 // TODO: fix different root hashes error.
                 dhImportInfo.root_hash = dcImportInfo.root_hash;
                 if (deepEqual(dcImportInfo, dhImportInfo)) {
                     accept();
                 } else {
-                    reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dhImportInfo)}`));
+                    reject(Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} ` +
+                        `and ${JSON.stringify(dhImportInfo)}`));
                 }
             }));
         }
     });
 
     return Promise.all(promises);
+});
+
+Then(/^the last import should be the same on all nodes that purchased data$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const { dc, dv } = this.state;
+    const dataSetId = this.state.lastImport.data_set_id;
+
+    // Expect DV to have data.
+    expect(
+        dv.state.purchasedDatasets,
+        `Data-set ${dataSetId} was not purchased.`,
+    ).to.have.key(dataSetId);
+
+    // Get original import info.
+    const dcImportInfo =
+        await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const dvImportInfo =
+        await httpApiHelper.apiImportInfo(dv.state.node_rpc_url, this.state.lastImport.data_set_id);
+
+    // TODO: fix different root hashes error.
+    dvImportInfo.root_hash = dcImportInfo.root_hash;
+    if (!deepEqual(dcImportInfo, dvImportInfo)) {
+        throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
+    }
+    expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
+    expect(dvImportInfo.transaction, 'DV transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -329,7 +375,11 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
 
     const { dc } = this.state;
 
-    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const myFingerprint =
+        await httpApiHelper.apiFingerprint(
+            dc.state.node_rpc_url,
+            this.state.lastImport.data_set_id,
+        );
     expect(myFingerprint).to.have.keys(['root_hash']);
     expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
@@ -345,12 +395,20 @@ Then(/^checking again first import's root hash should point to remembered value$
 
     const { dc } = this.state;
 
-    const firstImportFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastMinusOneImport.data_set_id);
+    const firstImportFingerprint =
+        await httpApiHelper.apiFingerprint(
+            dc.state.node_rpc_url,
+            this.state.lastMinusOneImport.data_set_id,
+        );
     expect(firstImportFingerprint).to.have.keys(['root_hash']);
     expect(Utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
-    expect(firstImportFingerprint.root_hash).to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
-    expect(deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint), 'import and root has in both scenario should be indentical').to.be.equal(true);
+    expect(firstImportFingerprint.root_hash)
+        .to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
+    expect(
+        deepEqual(firstImportFingerprint, this.state.lastMinusOneImportFingerprint),
+        'import and root has in both scenario should be indentical',
+    ).to.be.equal(true);
 });
 
 Given(/^I call api-query-local with query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
@@ -423,41 +481,247 @@ Then(/^api-query-local-import-importId response should have certain structure$/,
 
     expect(Object.keys(this.state.apiQueryLocalImportByImportIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
     // check that lastImport.import_hash and sha256 calculated hash are matching
-    const calculatedImportHash = ImportUtilities.importHash(this.state.apiQueryLocalImportByImportIdResponse.vertices, this.state.apiQueryLocalImportByImportIdResponse.edges);
+    const calculatedImportHash =
+        ImportUtilities.importHash(
+            this.state.apiQueryLocalImportByImportIdResponse.vertices,
+            this.state.apiQueryLocalImportByImportIdResponse.edges,
+        );
     expect(this.state.lastImport.import_hash, 'Hashes should match').to.be.equal(calculatedImportHash);
 });
 
-Given(/^I attempt to withdraw (\d+) tokens from DC profile*$/, { timeout: 120000 }, async function (tokenCount) {
+Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nodeCount, done) {
+    const nodeCountSoFar = this.state.nodes.length;
+    expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - nodeCountSoFar);
+
+    for (let i = nodeCountSoFar; i < nodeCountSoFar + nodeCount; i += 1) {
+        const newNode = new OtNode({
+            nodeConfiguration: {
+                node_wallet: LocalBlockchain.wallets()[i].address,
+                node_private_key: LocalBlockchain.wallets()[i].privateKey,
+                node_port: 6000 + i,
+                node_rpc_port: 9000 + i,
+                node_remote_control_port: 4000 + i,
+                network: {
+                    bootstraps: this.state.bootstraps.map(bootstrap =>
+                        `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
+                    remoteWhitelist: ['localhost'],
+                },
+                database: {
+                    database: `origintrail-test-${uuidv4()}`,
+                },
+                blockchain: {
+                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                    rpc_node_host: 'http://localhost', // TODO use from instance
+                    rpc_node_port: 7545,
+                },
+                local_network_only: true,
+            },
+        });
+        this.state.nodes.push(newNode);
+        newNode.initialize();
+        this.logger.log(`Additional node set up at ${newNode.options.configDir}`);
+    }
+    done();
+});
+
+Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+    const additionalNodesStarts = [];
+    this.state.nodes.forEach((node) => {
+        if (!node.isRunning) {
+            additionalNodesStarts.push(new Promise((accept) => {
+                node.once('initialized', () => accept());
+            }));
+        }
+        if (!node.started) {
+            node.start();
+        }
+    });
+
+    return Promise.all(additionalNodesStarts);
+});
+
+Given(/^DV publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network/, { timeout: 90000 }, async function (path, value, opcode) {
+    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    const { dv } = this.state;
+
+    // TODO find way to pass jsonQuery directly to step definition
+    const jsonQuery = {
+        query:
+            [
+                {
+                    path,
+                    value,
+                    opcode,
+                },
+            ],
+    };
+    const queryNetworkResponse =
+        await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
+    expect(Object.keys(queryNetworkResponse), 'Reponse should have message and query_id').to.have.members(['message', 'query_id']);
+    expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
+    this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
+    return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
+});
+
+Given(/^I wait for a response for last network query$/, { timeout: 120000 }, async function () {
+    // expect(this.state.query_id, 'query_id should be defined').to.not.be.undefined;
+    const { dv } = this.state;
+    const myId = this.state.lastQueryNetworkId;
+    let queryNetworkResponses;
+
+    // let attempt = 0;
+    // let timedPings = setInterval(async function(){
+    //     queryNetworkResponses =
+    //          await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    //     if (queryNetworkResponses.length > 0){
+    //         stopInterval = true;
+    //         console.log(queryNetworkResponses);
+    //         clearInterval(timedPings);
+    //     } else {
+    //         console.log(queryNetworkResponses);
+    //         if (attempt > 10){
+    //             clearInterval(timedPings);
+    //         }else{
+    //             attempt++;
+    //         }
+    //     }
+    // }, 5000);
+
+    queryNetworkResponses =
+        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses =
+        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses =
+        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+    await sleep.sleep(30000);
+    queryNetworkResponses =
+        await httpApiHelper.apiQueryNetworkResponses(dv.state.node_rpc_url, myId);
+    console.log(queryNetworkResponses);
+});
+
+Then(/^all nodes with last import should answer to last network query$/, { timeout: 90000 }, async function () {
+    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const { dv } = this.state;
+
+    // Check which node has last import.
+    const promises = [];
+    const nodeCandidates = [];
+    this.state.nodes.forEach((node) => {
+        promises.push(new Promise(async (accept) => {
+            const body = await httpApiHelper.apiImportsInfo(node.state.node_rpc_url);
+            body.find((importInfo) => {
+                if (importInfo.data_set_id === this.state.lastImport.data_set_id) {
+                    nodeCandidates.push(node.state.identity);
+                    return true;
+                }
+                return false;
+            });
+            accept();
+        }));
+    });
+
+    await Promise.all(promises);
+
+    expect(nodeCandidates.length).to.be.greaterThan(2);
+
+    // At this point all data location queries can placed hence we wait.
+    const queryId = this.state.lastQueryNetworkId;
+
+    const startTime = Date.now();
+    return new Promise((accept, reject) => {
+        // const intervalHandler;
+        const intervalHandler = setInterval(async () => {
+            const confirmationsSoFar =
+                dv.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
+            if (Date.now() - startTime > 60000) {
+                clearTimeout(intervalHandler);
+                reject(Error('Not enough confirmations for query. ' +
+                    `Candidates: ${JSON.stringify(nodeCandidates)}, ` +
+                    `confirmations: ${JSON.stringify(confirmationsSoFar)}`));
+            }
+            if (confirmationsSoFar.length === nodeCandidates.length) {
+                clearTimeout(intervalHandler);
+                accept();
+            }
+        }, 3000);
+    });
+});
+
+Given(/^the DV purchase import from the last query from (a DH|the DC)$/, function (fromWhom, done) {
+    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const { dc, dv } = this.state;
+    const queryId = this.state.lastQueryNetworkId;
+    const dataSetId = this.state.lastImport.data_set_id;
+    let sellerNode;
+
+    const confirmationsSoFar =
+        dv.nodeConfirmsForDataSetId(queryId, dataSetId);
+
+    expect(confirmationsSoFar).to.have.length.greaterThan(0);
+
+    if (fromWhom === 'a DH') {
+        // Find first DH that replicated last import.
+        sellerNode = this.state.nodes.find(node => (node !== dc && node !== dv));
+    } else if (fromWhom === 'the DC') {
+        sellerNode = dc;
+    }
+
+    expect(sellerNode, 'Didn\'t find seller node.').to.not.be.undefined;
+    const { replyId } =
+        dv.state.dataLocationQueriesConfirmations[queryId][sellerNode.state.identity];
+
+    expect(replyId).to.not.be.undefined;
+
+    // Wait for purchase to happened and then exit.
+    dv.once('dataset-purchase', (purchase) => {
+        if (purchase.queryId === queryId &&
+            purchase.replyId === replyId &&
+            purchase.dataSetId === dataSetId) {
+            this.logger.info(`Purchase for data-set ID ${dataSetId} finished.`);
+            done();
+        }
+    });
+
+    // Initiate actual purchase.
+    httpApiHelper.apiReadNetwork(dv.state.node_rpc_url, queryId, replyId, dataSetId)
+        .catch(error => done(error));
+});
+
+Given(/^I attempt to withdraw (\d+) tokens from DC profile[s]*$/, { timeout: 420000 }, async function (tokenCount) {
     // TODO expect tokenCount < profileBalance
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
 
     const { dc } = this.state;
     const host = dc.state.node_rpc_url;
 
-    await httpApiHelper.apiWithdraw(host, tokenCount);
-});
-
-Then(/^Token withdrawal should be sucessfully completed from DC profile$/, { timeout: 600000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-
     const promises = [];
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-initiated', () => accept());
     }));
-
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-completed', () => accept());
     }));
-
     promises.push(new Promise((accept, reject) => {
         dc.once('withdraw-command-completed', () => accept());
     }));
-
+    await httpApiHelper.apiWithdraw(host, tokenCount);
     return Promise.all(promises);
 });
 
-Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) {
+Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding error of (\d+.\d{1,2})$/, function (tokenDiff, roundingError) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -466,6 +730,25 @@ Then(/^wallet and profile balances should diff by (\d+)$/, function (tokenDiff) 
     expect(!!dc.state.newWalletBalance, 'newWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!dc.state.oldWalletBalance, 'oldWalletBalance node not defined. Use other step to define it.').to.be.equal(true);
 
-    expect(dc.state.oldProfileBalance - dc.state.newProfileBalance, 'Profile diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
-    expect(dc.state.newWalletBalance - dc.state.oldWalletBalance, 'Wallet diff should be equal to withdrawal amount').to.be.equal(tokenDiff);
+    const lowerLimit = tokenDiff - roundingError;
+    const upperLimit = tokenDiff + roundingError;
+    expect(Math.abs(dc.state.oldProfileBalance - dc.state.newProfileBalance) < upperLimit, 'Profile diff should be approx equal to withdrawal amount').to.be.true;
+    expect(Math.abs(dc.state.newWalletBalance - dc.state.oldWalletBalance) > lowerLimit, 'Wallet diff should be approx equal to withdrawal amount').to.be.true;
+});
+
+Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 120000 }, async function (tokenCount) {
+    // TODO expect tokenCount < walletBalance
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    const { dc } = this.state;
+    const host = dc.state.node_rpc_url;
+
+    const promises = [];
+    promises.push(new Promise((accept, reject) => {
+        dc.once('deposit-approved', () => accept());
+    }));
+    promises.push(new Promise((accept, reject) => {
+        dc.once('deposit-command-completed', () => accept());
+    }));
+    await httpApiHelper.apiDeposit(host, tokenCount);
+    return Promise.all(promises);
 });
