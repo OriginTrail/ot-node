@@ -476,7 +476,10 @@
     },
     "network": {
       "id": "MarinerV1.0.0",
-      "bootstraps": [],
+      "bootstraps": [
+        "https://35.159.51.107:5278/#3e3f9f62aa3e55c4bc2e307e2164357e538466a5",
+        "https://142.93.13.94:5278/#6d3e620c2c4062e67ed16f86c2fd9c6fec739644"
+      ],
       "remoteWhitelist": ["127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 12
