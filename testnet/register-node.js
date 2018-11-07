@@ -11,9 +11,9 @@ const pjson = require('../package.json');
 const configjson = require('../config/config.json');
 const argv = require('minimist')(process.argv.slice(2));
 
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
+const web3 = new Web3(new Web3.providers.HttpProvider(`${localConfiguration.rpc_node_host}:${localConfiguration.rpc_node_port}`));
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
