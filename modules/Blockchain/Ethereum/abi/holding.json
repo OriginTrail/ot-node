@@ -72,6 +72,52 @@
 		"type": "function"
 	},
 	{
+		"constant": false,
+		"inputs": [
+			{
+				"name": "identity",
+				"type": "address"
+			},
+			{
+				"name": "creditor",
+				"type": "address"
+			},
+			{
+				"name": "offerId",
+				"type": "uint256"
+			},
+			{
+				"name": "shift",
+				"type": "uint256"
+			},
+			{
+				"name": "confirmation1",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation2",
+				"type": "bytes"
+			},
+			{
+				"name": "confirmation3",
+				"type": "bytes"
+			},
+			{
+				"name": "encryptionType",
+				"type": "uint8[]"
+			},
+			{
+				"name": "holderIdentity",
+				"type": "address[]"
+			}
+		],
+		"name": "finalizeOfferFromCredit",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"constant": true,
 		"inputs": [],
 		"name": "hub",

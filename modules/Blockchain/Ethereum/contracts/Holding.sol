@@ -7,6 +7,7 @@ import {ProfileStorage} from './ProfileStorage.sol';
 import {Profile} from './Profile.sol';
 import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
+import {Creditor, ERC20} from './Creditor.sol';
 
 contract Holding is Ownable {
     using SafeMath for uint256;
@@ -122,9 +123,52 @@ contract Holding is Ownable {
         emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
     }
 
-    function payOut(address identity, uint256 offerId)
+    function finalizeOfferFromCredit(address identity, address creditor, uint256 offerId, uint256 shift,
+        bytes confirmation1, bytes confirmation2, bytes confirmation3,
+        uint8[] encryptionType, address[] holderIdentity)
     public {
         // Verify sender
+        require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
+        require(identity == holdingStorage.getOfferCreator(bytes32(offerId)), "Offer can only be finalized by its creator!");
+
+        // Check if signatures match identities
+        require(ERC725(holderIdentity[0]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[0]))), confirmation1))), 4), "Wallet from holder 1 does not have encryption approval!");
+        require(ERC725(holderIdentity[1]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[1]))), confirmation2))), 4), "Wallet from holder 2 does not have encryption approval!");
+        require(ERC725(holderIdentity[2]).keyHasPurpose(keccak256(abi.encodePacked(ecrecovery(keccak256(abi.encodePacked(offerId,uint256(holderIdentity[2]))), confirmation3))), 4), "Wallet from holder 3 does not have encryption approval!");
+
+        // Verify task answer
+        require(((keccak256(abi.encodePacked(holderIdentity[0], holderIdentity[1], holderIdentity[2])) >> (shift * 4)) & bytes32((2 ** (4 * holdingStorage.getOfferDifficulty(bytes32(offerId)))) - 1))
+        == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
+
+        // Verify creditor
+        require(Creditor(creditor).allowance(msg.sender) >= holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3),
+            "Offer creator does not have enough credit to finalize offer!");
+        require(ERC20(hub.tokenAddress()).balanceOf(creditor) > holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)),
+            "Creditor does not have enough tokens for payment!");
+        require(ERC20(hub.tokenAddress()).allowance(creditor, address(this)) > holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)),
+            "Creditor has not given enough allowance to this contract to finalize offer!");
+        ERC20(hub.tokenAddress()).transferFrom(creditor, hub.profileStorageAddress(), holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)));
+        profileStorage.setStake(identity, profileStorage.getStake(identity).add(holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))));
+        Creditor(creditor).decreaseApproval(msg.sender, holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)));
+
+        // Secure funds from all parties
+        profile.reserveTokens(
+            identity,
+            holderIdentity[0],
+            holderIdentity[1],
+            holderIdentity[2],
+            holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))
+        );
+
+        // Write data into storage
+        holdingStorage.setHolders(bytes32(offerId), holderIdentity, encryptionType);
+
+        emit OfferFinalized(bytes32(offerId), holderIdentity[0], holderIdentity[1], holderIdentity[2]);
+    }
+
+    function payOut(address identity, uint256 offerId)
+    public {
+        // Verif1y sender
         require(ERC725(identity).keyHasPurpose(keccak256(abi.encodePacked(msg.sender)), 2));
         require(Approval(hub.approvalAddress()).identityHasApproval(identity), "Identity does not have approval for using the contract");
 
