@@ -1,4 +1,3 @@
-const Utilities = require('./Utilities');
 const logger = require('./logger');
 
 class Update {
