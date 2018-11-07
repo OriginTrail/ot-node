@@ -37,6 +37,7 @@ const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
+const Logger = require('./modules/logger');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');

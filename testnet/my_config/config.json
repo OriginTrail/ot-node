@@ -1,0 +1,30 @@
+{
+    "node_wallet": "0x56406D8D0deb20d096138319aE9a1af58aDe5a7d",
+    "node_private_key": "d81d1d4690f1c10de544cca91d25c6f901258ce7031de71a21223e652e8d92a9",
+    "node_port": 5278,
+    "request_timeout": 20000,
+    "cpus": 0,
+    "network": {
+        "id": "Devnet",
+        "bootstraps": [
+            "https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"
+        ],
+        "remoteWhitelist": [
+            "54.93.223.161",
+            "127.0.0.1"
+        ],
+        "solutionDifficulty": 8,
+        "identityDifficulty": 8
+    },
+    "node_rpc_port": 8900,
+    "dh_price": "250000000000",
+    "dh_stake_factor": "250000000000",
+    "dh_max_time_mins": "100000",
+    "max_token_amount_per_dh": "500000000000",
+    "dh_min_stake_amount": "100000000000",
+    "read_stake_factor": "1",
+    "control_port_enabled": false,
+    "remote_control_enabled": true,
+    "send_logs": false,
+    "houston_password": null
+}
