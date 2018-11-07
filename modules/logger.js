@@ -38,7 +38,7 @@ class Logger {
                     new (winston.transports.Console)({
                         colorize: 'all',
                         timestamp: true,
-                        formatter: args => `${new Date().toISOString()} - ${Logger.colorize(args.level)} - ${Logger.colorize(args.level, args.message)}`,
+                        formatter: args => `${new Date().toISOString()} - ${Logger._colorize(args.level)} - ${Logger._colorize(args.level, args.message)}`,
                         stderrLevels: [
                             'trace',
                             'notify',
@@ -84,7 +84,7 @@ class Logger {
 
                 // enable Papertrail
                 transports.push(new winston.transports.Papertrail({
-                    logFormat: (level, message) => `${new Date().toISOString()} - ${Logger.colorize(level)} - ${Logger.colorize(level, message)}`,
+                    logFormat: (level, message) => `${new Date().toISOString()} - ${Logger._colorize(level)} - ${Logger._colorize(level, message)}`,
                     level: logLevel,
                     levels: {
                         trace: 7,
@@ -148,9 +148,10 @@ class Logger {
      * Colorize message based on its level
      * @param level - Logging level
      * @param message - Message
+     * @private
      * @return {*}
      */
-    static colorize(level, message) {
+    static _colorize(level, message) {
         const customColors = {
             trace: 'grey',
             notify: 'green',
