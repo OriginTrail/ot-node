@@ -446,7 +446,7 @@ describe.skip('Protocol tests', () => {
                 blockchain: awilix.asClass(Blockchain).singleton(),
                 network: awilix.asClass(MockNetwork).singleton(),
                 graphStorage: awilix.asValue(new MockGraphStorage()),
-                challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
+                challenger: awilix.asValue({ startChallennodeWeb3ging: () => { logger.info('start challenging.'); } }),
                 logger: awilix.asValue(logger),
                 remoteControl: awilix.asClass(MockRemoteControl),
                 commandExecutor: awilix.asClass(CommandExecutor).singleton(),

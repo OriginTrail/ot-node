@@ -19,7 +19,7 @@ const awilix = require('awilix');
 const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
 
-const logger = require('../../modules/logger');
+const logger = require('../../../../modules/logger');
 
 describe.skip('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     this.timeout(5000);
