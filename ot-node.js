@@ -58,7 +58,7 @@ global.__basedir = __dirname;
 let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
-    ['development', 'staging', 'stable', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
+    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
         process.env.NODE_ENV : 'development'];
 
 let config;
