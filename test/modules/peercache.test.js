@@ -7,7 +7,6 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const uuidv4 = require('uuid/v4');
-const Utilities = require('../../modules/Utilities');
 const PeerCache = require('../../modules/network/kademlia/peer-cache');
 
 const logger = require('../../modules/logger');
