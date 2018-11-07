@@ -10,7 +10,7 @@ const uuidv4 = require('uuid/v4');
 const Utilities = require('../../modules/Utilities');
 const PeerCache = require('../../modules/network/kademlia/peer-cache');
 
-const logger = Utilities.getLogger();
+const logger = require('../../modules/logger');
 
 /**
  * Dummy contact for testing purposes

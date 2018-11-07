@@ -37,7 +37,6 @@ const argv = require('minimist')(process.argv.slice(2));
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
-const Logger = require('./modules/logger');
 const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
@@ -51,8 +50,9 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 

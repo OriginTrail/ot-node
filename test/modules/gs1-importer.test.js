@@ -26,6 +26,7 @@ const models = require('../../models');
 const Web3 = require('web3');
 const fs = require('fs');
 const awilix = require('awilix');
+const logger = require('../../modules/logger');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -88,10 +89,9 @@ describe('GS1 Importer tests', () => {
 
         const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
-        const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
-            logger: awilix.asValue(Utilities.getLogger()),
+            logger: awilix.asValue(logger),
             gs1Importer: awilix.asClass(GS1Importer),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),

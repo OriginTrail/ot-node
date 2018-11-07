@@ -14,6 +14,7 @@ const rc = require('rc');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
+const logger = require('../../modules/logger');
 
 describe('WOT Importer tests', () => {
     const databaseName = 'wot-test';
@@ -54,7 +55,6 @@ describe('WOT Importer tests', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
             wotImporter: awilix.asClass(WOTImporter),

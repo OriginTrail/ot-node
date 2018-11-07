@@ -19,7 +19,7 @@ const DCOfferCreateDatabaseCommand = require('../.././../../modules/command/dc/d
 const defaultConfig = require('../../../../config/config.json').development;
 const pjson = require('../../../../package.json');
 
-const logger = Utilities.getLogger();
+const logger = require('../../modules/logger');
 
 describe('Checks DCOfferCreateDatabaseCommand execute() logic', function () {
     this.timeout(5000);

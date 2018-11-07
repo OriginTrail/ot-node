@@ -3,9 +3,7 @@ require('dotenv').config();
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
-const moment = require('moment');
 const ipaddr = require('ipaddr.js');
-const Storage = require('./Storage');
 const _ = require('lodash');
 const _u = require('underscore');
 const randomString = require('randomstring');
@@ -22,10 +20,9 @@ const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
 
-class Utilities {
-    constructor() {
-    }
+const logger = require('./logger');
 
+class Utilities {
     /**
      * Creates new hash import ID.
      * @returns {*}
@@ -90,14 +87,6 @@ class Utilities {
     }
 
     /**
-     * Returns winston logger
-     * @returns {*} - log function
-     */
-    static getLogger() {
-
-    }
-
-    /**
      * Check if origintrail database exists, in case of arangoDB create one
      * @returns {Promise<any>}
      */
@@ -153,7 +142,7 @@ class Utilities {
                 }
                 break;
             default:
-                Utilities.getLogger.error(config.database.provider);
+                logger.error(config.database.provider);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -298,8 +287,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
-            const log = this.getLogger();
-            log.info('Callback not defined!');
+            logger.info('Callback not defined!');
         }
     }
 
@@ -345,7 +333,6 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = Utilities.getLogger();
         // try {
         //     if (!fs.existsSync(`${__dirname}/../keys`)) {
         //         fs.mkdirSync(`${__dirname}/../keys`);
@@ -445,7 +432,7 @@ class Utilities {
                 .then((result) => {
                     resolve(web3.utils.hexToNumber(result));
                 }).catch((error) => {
-                    Utilities.getLogger().error(error);
+                    logger.error(error);
                     reject(error);
                 });
         });

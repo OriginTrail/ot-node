@@ -8,11 +8,10 @@ const awilix = require('awilix');
 const rc = require('rc');
 
 const Transport = require('../../modules/network/transport');
-const Utilities = require('../../modules/Utilities');
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
 
-const logger = Utilities.getLogger();
+const logger = require('../../modules/logger');
 
 /**
  * Simple Kademlia node mock

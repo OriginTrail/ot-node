@@ -6,10 +6,19 @@ require('winston-loggly-bulk');
 const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
 
 const colors = require('colors/safe');
+const pjson = require('../package.json');
+
+const DEFAULT_LOGGLY_SUBDOMAIN = 'origintrail.loggly.com';
+const DEFAULT_LOGGLY_INPUT_TOKEN = 'abfd90ee-ced9-49c9-be1a-850316aaa306';
+
+const DEFAULT_PAPERTRAIL_PORT = 39178;
+const DEFAULT_PAPERTRAIL_HOST = 'logs4.papertrailapp.com';
+
+const DEFAULT_LOG_LEVEL = 'trace';
 
 class Logger {
     constructor() {
-        this.logger = Logger._create();
+        this._logger = Logger._create();
     }
 
     /**
@@ -18,7 +27,7 @@ class Logger {
      * @private
      */
     static _create() {
-        let logLevel = 'trace';
+        let logLevel = process.env.LOG_LEVEL ? process.env.LOG_LEVEL : DEFAULT_LOG_LEVEL;
         if (process.env.LOGS_LEVEL_DEBUG) {
             logLevel = 'debug';
         }
@@ -55,15 +64,28 @@ class Logger {
                 ];
 
             if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
+                const logglySubdomain = process.env.LOGGLY_SUBDOMAIN ?
+                    process.env.LOGGLY_SUBDOMAIN : DEFAULT_LOGGLY_SUBDOMAIN;
+                const logglyInputToken = process.env.LOGGLY_INPUT_TOKEN ?
+                    process.env.LOGGLY_INPUT_TOKEN : DEFAULT_LOGGLY_INPUT_TOKEN;
+
+                // enable Loggly
                 transports.push(new (winston.transports.Loggly)({
-                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
-                    subdomain: 'origintrail.loggly.com',
+                    inputToken: logglyInputToken,
+                    subdomain: logglySubdomain,
                     tags: [process.env.NODE_ENV, runtimeConfigJson.network.id, pjson.version],
                     json: true,
                 }));
+
+                const papertrailHost = process.env.PAPERTRAIL_HOST ?
+                    process.env.PAPERTRAIL_HOST : DEFAULT_PAPERTRAIL_HOST;
+                const papertrailPort = process.env.PAPERTRAIL_PORT ?
+                    process.env.PAPERTRAIL_PORT : DEFAULT_PAPERTRAIL_PORT;
+
+                // enable Papertrail
                 transports.push(new winston.transports.Papertrail({
                     logFormat: (level, message) => `${new Date().toISOString()} - ${Logger.colorize(level)} - ${Logger.colorize(level, message)}`,
-                    level: 'trace',
+                    level: logLevel,
                     levels: {
                         trace: 7,
                         notify: 6,
@@ -74,8 +96,8 @@ class Logger {
                         error: 1,
                         api: 0,
                     },
-                    host: 'logs4.papertrailapp.com',
-                    port: 39178,
+                    host: papertrailHost,
+                    port: papertrailPort,
                     meta: '',
                 }));
             }
@@ -94,7 +116,7 @@ class Logger {
                     debug: 8,
                 },
                 rewriters: [
-                    () => null,
+                    () => null, // disable metadata, we don't use it
                 ],
                 transports,
             });
@@ -237,9 +259,29 @@ class Logger {
  */
 const proxy = () => new Proxy(new Logger(), {
     get(target, propKey) {
-        return target.logger(propKey);
+        return target._logger[propKey];
     },
 });
 
-module.exports = proxy;
+const LOGGER_INSTANCE = proxy();
+
+// ensure the API is never changed
+Object.freeze(LOGGER_INSTANCE);
+
+// create a unique, global symbol name
+// -----------------------------------
+const LOGGER_KEY = Symbol.for('origintrail.otnode.logger');
+
+// check if the global object has this symbol
+// add it if it does not have the symbol, yet
+// ------------------------------------------
+
+const globalSymbols = Object.getOwnPropertySymbols(global);
+const hasLogger = (globalSymbols.indexOf(LOGGER_KEY) > -1);
+
+if (!hasLogger) {
+    global[LOGGER_KEY] = LOGGER_INSTANCE;
+}
+
+module.exports = global[LOGGER_KEY];
 
