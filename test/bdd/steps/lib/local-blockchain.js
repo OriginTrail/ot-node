@@ -144,6 +144,7 @@ class LocalBlockchain {
         const safeMathSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/SafeMath.sol'), 'utf8');
         const identitySource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Identity.sol'), 'utf8');
         const byteArrSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/ByteArr.sol'), 'utf8');
+        const creditorSource = fs.readFileSync(path.join(__dirname, '../../../../modules/Blockchain/Ethereum/contracts/Creditor.sol'), 'utf8');
 
 
         let compileResult = solc.compile({ sources: { 'Hub.sol': hubSource } }, 1);
@@ -153,7 +154,7 @@ class LocalBlockchain {
 
         compileResult = solc.compile({
             sources: {
-                'Approval.sol': approvalSource, 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource,
+                'Approval.sol': approvalSource, 'ProfileStorage.sol': profileStorageSource, 'TracToken.sol': tokenSource, 'Hub.sol': hubSource, 'HoldingStorage.sol': holdingStorageSource, 'Reading.sol': readingSource, 'Profile.sol': profileSource, 'Holding.sol': holdingSource, 'ERC725.sol': eRC725Source, 'SafeMath.sol': safeMathSource, 'Identity.sol': identitySource, 'ByteArr.sol': byteArrSource, 'Creditor.sol': creditorSource,
             },
         }, 1);
 
