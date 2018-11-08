@@ -56,16 +56,6 @@ class DHDataReadRequestFreeCommand extends Command {
             // TODO: Only one import ID used. Later we'll support replication from multiple imports.
             // eslint-disable-next-line
             const importId = data_set_id;
-
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, true);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, true);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
-
-            ImportUtilities.unpackKeys(vertices, edges);
-
             const dataInfo = await Models.data_info.findOne({
                 where: {
                     data_set_id: importId,
@@ -76,6 +66,15 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const encrypted = dataInfo.origin === 'HOLDING';
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
+            const edges = values[1];
+
+            ImportUtilities.unpackKeys(vertices, edges);
             ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
 
