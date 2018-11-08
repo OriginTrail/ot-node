@@ -562,9 +562,10 @@ Then(/^all nodes with last import should answer to last network query$/, { timeo
 
     await Promise.all(promises);
 
-    expect(nodeCandidates.length).to.be.greaterThan(2);
+    expect(nodeCandidates.length).to.be.greaterThan(0);
 
-    // At this point all data location queries can placed hence we wait.
+
+    // At this point all data location queries can be placed hence we wait.
     const queryId = this.state.lastQueryNetworkId;
 
     const startTime = Date.now();
@@ -709,4 +710,18 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
         }
     });
     expect(consesusMatches).to.be.equal(matchesCount);
+});
+
+Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('replication-window-closed', () => {
+        done();
+    });
 });

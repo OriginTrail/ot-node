@@ -267,6 +267,9 @@ class OtNode extends EventEmitter {
             this.emit('deposit-approved');
         } else if (line.match(/Command depositTokensCommand and ID .+ processed/gi)) {
             this.emit('deposit-command-completed');
+        } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
+            this.emit('replication-window-closed');
+            console.log('replication window closed');
         }
     }
 
