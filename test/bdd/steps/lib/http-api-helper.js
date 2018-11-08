@@ -233,6 +233,12 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
 }
 
 /**
+ * @typedef {Object} NetworkQueryId
+ * @property {string} message Human informative message about query status.
+ * @property {string} query_id Network query ID.
+ */
+
+/**
  * Fetch api/query/network response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
