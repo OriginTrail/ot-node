@@ -13,7 +13,7 @@ class APIUtilities {
      */
     authorize(req, res) {
         const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        const remote_access = this.config.remote_access_whitelist;
+        const remote_access = this.config.network.remoteWhitelist;
 
         if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
             res.status(403);
