@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ed39baaa-0016-4a8f-801b-27324e9fdf44",
+		"_postman_id": "eb8e304f-5b3e-4272-b420-14ab73000f2f",
 		"name": "OriginTrail",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -12,11 +12,11 @@
 					"listen": "test",
 					"script": {
 						"id": "ed9219f5-1661-4e6f-b15b-dcc3532d1792",
-						"type": "text/javascript",
 						"exec": [
 							"var data = JSON.parse(responseBody);",
-							"postman.setEnvironmentVariable(\"import_id\", data.import_id);"
-						]
+							"postman.setEnvironmentVariable(\"data_set_id\", data.data_set_id);"
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -39,8 +39,8 @@
 						},
 						{
 							"key": "importfile",
-							"value": "",
-							"type": "file"
+							"type": "file",
+							"src": ""
 						}
 					]
 				},
@@ -66,13 +66,16 @@
 			"response": []
 		},
 		{
-			"name": "/api/import_info?import_id={{import_id}}",
+			"name": "/api/import_info?data_set_id={{data_set_id}}",
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
-					"raw": "{{baseUrl}}/api/import_info?import_id={{import_id}}",
+					"raw": "{{baseUrl}}/api/import_info?data_set_id={{data_set_id}}",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -82,8 +85,8 @@
 					],
 					"query": [
 						{
-							"key": "import_id",
-							"value": "{{import_id}}"
+							"key": "data_set_id",
+							"value": "{{data_set_id}}"
 						}
 					]
 				}
@@ -95,9 +98,12 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
-					"raw": "{{baseUrl}}/api/trail?vertex_type={{vertex_type}}",
+					"raw": "{{baseUrl}}/api/trail?identifiers.uid=urn:epc:id:sgtin:Batch_1",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -108,12 +114,12 @@
 					"query": [
 						{
 							"key": "vertex_type",
-							"value": "{{vertex_type}}"
+							"value": "{{vertex_type}}",
+							"disabled": true
 						},
 						{
-							"key": "uid",
-							"value": "{{uid}}",
-							"disabled": true
+							"key": "identifiers.uid",
+							"value": "urn:epc:id:sgtin:Batch_1"
 						}
 					]
 				},
@@ -131,7 +137,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/fingerprint?dc_wallet={{dc_wallet}}&import_id={{import_id}}",
+					"raw": "{{baseUrl}}/api/fingerprint?data_set_id={{data_set_id}}",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -141,12 +147,8 @@
 					],
 					"query": [
 						{
-							"key": "dc_wallet",
-							"value": "{{dc_wallet}}"
-						},
-						{
-							"key": "import_id",
-							"value": "{{import_id}}"
+							"key": "data_set_id",
+							"value": "{{data_set_id}}"
 						}
 					]
 				},
@@ -161,11 +163,11 @@
 					"listen": "test",
 					"script": {
 						"id": "2b457da8-3339-415a-b249-e34366d01bf3",
-						"type": "text/javascript",
 						"exec": [
 							"var data = JSON.parse(responseBody);",
 							"postman.setEnvironmentVariable(\"replication_id\", data.replication_id);"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -176,8 +178,8 @@
 					"mode": "formdata",
 					"formdata": [
 						{
-							"key": "import_id",
-							"value": "{{import_id}}",
+							"key": "data_set_id",
+							"value": "{{data_set_id}}",
 							"type": "text"
 						}
 					]
@@ -197,19 +199,13 @@
 			"response": []
 		},
 		{
-			"name": "/api/replication/:{replication_id}",
+			"name": "/api/replication/{{replication_id}}",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"body": {
-					"mode": "formdata",
-					"formdata": [
-						{
-							"key": "import_id",
-							"value": "0xa3f2b70718bbc5f4a136fda16ef77e5af568c33e1ccfeabee979cc90d88553b1",
-							"type": "text"
-						}
-					]
+					"mode": "raw",
+					"raw": ""
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/replication/{{replication_id}}",
@@ -233,11 +229,11 @@
 					"listen": "test",
 					"script": {
 						"id": "ff7307dc-b908-49e3-9fa9-e468c8af9344",
-						"type": "text/javascript",
 						"exec": [
 							"var data = JSON.parse(responseBody);",
 							"postman.setEnvironmentVariable(\"query_id\", data.query_id);"
-						]
+						],
+						"type": "text/javascript"
 					}
 				}
 			],
@@ -251,7 +247,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"identifiers.id\",\n                \"value\": \"urn:epc:id:sgtin:Batch_1\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/network",
@@ -333,12 +329,12 @@
 						},
 						{
 							"key": "reply_id",
-							"value": "fef3542c-44ac-4ee0-b12f-24c2b0375dbf",
+							"value": "9d1e76fc-412e-4dbf-940f-e49f282f5e7e",
 							"type": "text"
 						},
 						{
-							"key": "import_id",
-							"value": "{{import_id}}",
+							"key": "data_set_id",
+							"value": "{{data_set_id}}",
 							"type": "text"
 						}
 					]
@@ -370,7 +366,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"ACTOR\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
+					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"identifiers.id\",\n                \"value\": \"urn:epc:id:sgtin:Batch_1\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/query/local",
@@ -388,37 +384,7 @@
 			"response": []
 		},
 		{
-			"name": "/api/query/local/import",
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"query\":\n        [\n            {\n                \"path\": \"vertex_type\",\n                \"value\": \"BATCH\",\n                \"opcode\": \"EQ\"\n            }\n        ]\n}"
-				},
-				"url": {
-					"raw": "{{baseUrl}}/api/query/local/import",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"api",
-						"query",
-						"local",
-						"import"
-					]
-				},
-				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-import-post"
-			},
-			"response": []
-		},
-		{
-			"name": "/api/query/local/import:{import_id}",
+			"name": "/api/query/local/import/{{data_set_id}}",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -427,7 +393,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{baseUrl}}/api/query/local/import/{{import_id}}",
+					"raw": "{{baseUrl}}/api/query/local/import/{{data_set_id}}",
 					"host": [
 						"{{baseUrl}}"
 					],
@@ -436,7 +402,7 @@
 						"query",
 						"local",
 						"import",
-						"{{import_id}}"
+						"{{data_set_id}}"
 					]
 				},
 				"description": "http://docs.origintrail.io/en/latest/introduction-to-api.html#api-query-local-import-import-id-get"
@@ -455,7 +421,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"trac_amount\": 1\n}"
+					"raw": "{\n\t\"trac_amount\": 30\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/deposit",
@@ -482,7 +448,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{ \n\t\"trac_amount\": 15\n\t\n}"
+					"raw": "{ \n\t\"trac_amount\": 20\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/withdraw",
@@ -496,6 +462,73 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "api/imports_info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/imports_info",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"imports_info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/consensus/{{sender_id}}",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/consensus/{{sender_id}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"consensus",
+						"{{sender_id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "1ccf7142-6701-41db-b0df-9babc9410bc8",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "0beff278-7c08-49bb-b9eb-4cba2d750627",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }
