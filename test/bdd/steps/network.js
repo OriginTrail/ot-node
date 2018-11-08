@@ -409,12 +409,14 @@ Then(/^checking again first import's root hash should point to remembered value$
     ).to.be.equal(true);
 });
 
-Given(/^I call queryLocal with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+Given(/^I query ([DC|DH|DV]+) node locally with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (targetNode, path, value, opcode) {
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
+
     const jsonQuery = {
         query:
             [
@@ -429,52 +431,27 @@ Given(/^I call queryLocal with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"
     this.state.apiQueryLocalResponse = response;
 });
 
-Given(/^I call queryLocalImport with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-    const jsonQuery = {
-        query:
-            [
-                {
-                    path,
-                    value,
-                    opcode,
-                },
-            ],
-    };
-    const response = await httpApiHelper.apiQueryLocalImport(host, jsonQuery);
-    this.state.apiQueryLocalImportResponse = response;
-});
-
-Given(/^I call queryLocalImportDataSetId endpoint for last import$/, async function () {
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
     const lastDataSetId = this.state.lastImport.data_set_id;
 
     const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
     this.state.apiQueryLocalImportByDataSetIdResponse = response;
 });
 
-Then(/^queryLocal response should have certain structure$/, function () {
+Then(/^response should contain only last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
     expect(this.state.apiQueryLocalResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
 });
 
-Then(/^queryLocalImport response should have certain structure$/, function () {
-    expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
-
-    expect(this.state.apiQueryLocalImportResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
-});
-
-Then(/^queryLocalImportDataSetId response should have certain structure$/, function () {
+Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
     expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
@@ -585,9 +562,10 @@ Then(/^all nodes with last import should answer to last network query$/, { timeo
 
     await Promise.all(promises);
 
-    expect(nodeCandidates.length).to.be.greaterThan(2);
+    expect(nodeCandidates.length).to.be.greaterThan(0);
 
-    // At this point all data location queries can placed hence we wait.
+
+    // At this point all data location queries can be placed hence we wait.
     const queryId = this.state.lastQueryNetworkId;
 
     const startTime = Date.now();
@@ -732,4 +710,18 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
         }
     });
     expect(consesusMatches).to.be.equal(matchesCount);
+});
+
+Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('replication-window-closed', () => {
+        done();
+    });
 });

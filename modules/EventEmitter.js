@@ -254,27 +254,6 @@ class EventEmitter {
             }
         });
 
-        this._on('api-get-imports', async (data) => {
-            logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
-
-            try {
-                const res = await product.getImports(data.query);
-                if (res.length === 0) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-                data.response.send(res);
-            } catch (error) {
-                logger.error(`Failed to get imports for query ${JSON.stringify(data.query)}`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
-            }
-        });
-
         this._on('api-imports-info', async (data) => {
             logger.debug('Get import ids');
             try {

@@ -855,26 +855,6 @@ class OTNode {
             });
         });
 
-        server.post('/api/query/local/import', (req, res, next) => {
-            log.api('GET: Local query import request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-get-imports', {
-                query: queryObject,
-                response: res,
-            });
-        });
-
         server.post('/api/read/network', (req, res) => {
             log.api('POST: Network read request received.');
 
