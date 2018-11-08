@@ -254,20 +254,22 @@ class Logger {
     }
 }
 
+const LOGGER_INSTANCE = new Logger();
+
+// ensure the API is never changed
+Object.freeze(LOGGER_INSTANCE);
+
 /**
  * Creates simple proxy to logger underneath
  * @returns {Logger}
  */
-const proxy = () => new Proxy(new Logger(), {
+const proxy = () => new Proxy(LOGGER_INSTANCE, {
     get(target, propKey) {
         return target._logger[propKey];
     },
 });
 
-const LOGGER_INSTANCE = proxy();
-
-// ensure the API is never changed
-Object.freeze(LOGGER_INSTANCE);
+const LOGGER_PROXY_INSTANCE = proxy();
 
 // create a unique, global symbol name
 // -----------------------------------
@@ -281,7 +283,7 @@ const globalSymbols = Object.getOwnPropertySymbols(global);
 const hasLogger = (globalSymbols.indexOf(LOGGER_KEY) > -1);
 
 if (!hasLogger) {
-    global[LOGGER_KEY] = LOGGER_INSTANCE;
+    global[LOGGER_KEY] = LOGGER_PROXY_INSTANCE;
 }
 
 module.exports = global[LOGGER_KEY];
