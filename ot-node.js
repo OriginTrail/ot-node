@@ -50,8 +50,9 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 

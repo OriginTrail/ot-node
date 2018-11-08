@@ -3,7 +3,7 @@ const rimraf = require('rimraf');
 const npm = require('npm-cmd');
 const Utilities = require('./modules/Utilities');
 
-const log = Utilities.getLogger();
+const log = require('./modules/logger');
 
 const Umzug = require('umzug');
 
