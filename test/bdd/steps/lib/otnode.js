@@ -197,7 +197,6 @@ class OtNode extends EventEmitter {
             this.state.offersFinalized.push(offerId);
             this.emit('offer-finalized', offerId);
         } else if (line.match(/Command dvHandleNetworkQueryResponsesCommand and ID .+ processed/gi)) {
-            console.log('dv-network-query-processed emitted');
             this.emit('dv-network-query-processed');
         } else if (line.match(/DH .+ in query ID .+ and reply ID .+ confirms possession of data imports: '.+'/)) {
             const identity = line.match(identityRegex)[0];
@@ -267,6 +266,8 @@ class OtNode extends EventEmitter {
             this.emit('deposit-approved');
         } else if (line.match(/Command depositTokensCommand and ID .+ processed/gi)) {
             this.emit('deposit-command-completed');
+        } else if (line.match(/Replication window for .+ is closed\. Replicated to .+ peers\. Verified .+\./gi)) {
+            this.emit('replication-window-closed');
         }
     }
 

@@ -300,7 +300,7 @@ class Kademlia {
                         acc(false);
                         return;
                     }
-                    this.log.trace(`Finished joining to ${address})`);
+                    this.log.trace(`Finished joining to ${address}`);
                     connected = this._isConnected();
                     acc(true);
                 });

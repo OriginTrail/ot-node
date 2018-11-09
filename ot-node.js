@@ -484,6 +484,14 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asValue({}),
             web3: awilix.asValue(web3),
@@ -851,26 +859,6 @@ class OTNode {
             emitter.emit('api-query-local-import', {
                 data_set_id: req.params.data_set_id,
                 request: req,
-                response: res,
-            });
-        });
-
-        server.post('/api/query/local/import', (req, res, next) => {
-            log.api('GET: Local query import request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-get-imports', {
-                query: queryObject,
                 response: res,
             });
         });
