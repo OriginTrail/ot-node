@@ -141,15 +141,15 @@ contract Holding is Ownable {
         == holdingStorage.getOfferTask(bytes32(offerId)), "Submitted identities do not answer the task correctly!");
 
         // Verify creditor
-        require(Creditor(creditor).allowance(msg.sender) >= holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3),
+        require(Creditor(creditor).allowance(identity) >= holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3),
             "Offer creator does not have enough credit to finalize offer!");
-        require(ERC20(hub.tokenAddress()).balanceOf(creditor) > holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)),
+        require(ERC20(hub.tokenAddress()).balanceOf(creditor) >= holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3),
             "Creditor does not have enough tokens for payment!");
-        require(ERC20(hub.tokenAddress()).allowance(creditor, address(this)) > holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)),
+        require(ERC20(hub.tokenAddress()).allowance(creditor, address(this)) >= holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3),
             "Creditor has not given enough allowance to this contract to finalize offer!");
-        ERC20(hub.tokenAddress()).transferFrom(creditor, hub.profileStorageAddress(), holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)));
-        profileStorage.setStake(identity, profileStorage.getStake(identity).add(holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))));
-        Creditor(creditor).decreaseApproval(msg.sender, holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)));
+        ERC20(hub.tokenAddress()).transferFrom(creditor, hub.profileStorageAddress(), holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3));
+        profileStorage.setStake(identity, profileStorage.getStake(identity).add((holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId))).mul(3)));
+        Creditor(creditor).decreaseApproval(identity, holdingStorage.getOfferTokenAmountPerHolder(bytes32(offerId)).mul(3));
 
         // Secure funds from all parties
         profile.reserveTokens(
