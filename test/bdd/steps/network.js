@@ -46,7 +46,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             network: {
                 // TODO: Connect other if using multiple.
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
-                remoteWhitelist: ['localhost'],
+                remoteWhitelist: ['localhost', '127.0.0.1'],
             },
         },
     });
@@ -73,7 +73,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
                 network: {
                     bootstraps: this.state.bootstraps.map(bootstrap =>
                         `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost'],
+                    remoteWhitelist: ['localhost', '127.0.0.1'],
                 },
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
