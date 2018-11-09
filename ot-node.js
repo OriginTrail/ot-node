@@ -310,7 +310,7 @@ class OTNode {
         const appState = {};
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState }, web3);
-            this.startRPC();
+            await this.startRPC();
             return;
         }
 
@@ -461,7 +461,7 @@ class OTNode {
         await transport.start();
 
         // Initialise API
-        this.startRPC();
+        await this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -544,7 +544,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC() {
+    async startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -644,9 +644,28 @@ class OTNode {
             serverListenAddress = '0.0.0.0';
         }
 
-        server.listen(config.node_rpc_port, serverListenAddress, () => {
+        // promisified server.listen()
+        const startServer = () => {
+            return new Promise((resolve, reject) => {
+                server.listen(config.node_rpc_port, serverListenAddress, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        };
+
+        try {
+            await startServer(server, serverListenAddress);
             log.notify(`API exposed at  ${server.url}`);
-        });
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
 
         if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
@@ -741,8 +760,13 @@ class OTNode {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get('/api/trail', (req, res) => {
+        server.get('/api/trail', (req, res, next) => {
             log.api('GET: Trail request received.');
+
+            const error = RestAPIValidator.validateNotEmptyQuery(req.query);
+            if (error) {
+                return next(error);
+            }
             const queryObject = req.query;
             emitter.emit('api-trail', {
                 query: queryObject,

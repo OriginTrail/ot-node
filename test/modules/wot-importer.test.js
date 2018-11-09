@@ -7,6 +7,7 @@ const path = require('path');
 const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const WOTImporter = require('../../modules/WOTImporter.js');
+const GS1Utilities = require('../../modules/GS1Utilities');
 const Utilities = require('../../modules/Utilities');
 const awilix = require('awilix');
 const rc = require('rc');
@@ -57,8 +58,10 @@ describe('WOT Importer tests', () => {
 
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
+            logger: awilix.asValue(logger),
             wotImporter: awilix.asClass(WOTImporter),
             graphStorage: awilix.asValue(graphStorage),
+            gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             config: awilix.asValue(config),
         });
         await graphStorage.connect();

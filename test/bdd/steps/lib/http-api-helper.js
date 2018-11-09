@@ -464,6 +464,39 @@ async function apiConsensus(nodeRpcUrl, senderId) {
     });
 }
 
+/**
+ * @typedef {Object} TrailResponse
+ * @property {Object} Graph that contains trails from a specified start batch.
+ */
+
+/**
+ * Fetch /api/trail/{{query}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} query Query to be searched for starting vertex
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiTrail(nodeRpcUrl, query) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                qs: query,
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/trail`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
     apiImportInfo,
@@ -479,4 +512,5 @@ module.exports = {
     apiWithdraw,
     apiDeposit,
     apiConsensus,
+    apiTrail,
 };
