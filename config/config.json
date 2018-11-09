@@ -75,6 +75,7 @@
       ]
     },
     "network": {
+      "hostname": "127.0.0.1",
       "id": "Devnet",
       "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
