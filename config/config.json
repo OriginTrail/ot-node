@@ -76,7 +76,7 @@
     },
     "network": {
       "id": "Devnet",
-      "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
+      "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 8
@@ -156,7 +156,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
+      "hub_contract_address": "0x0A0253150F35D9a766e450D6F749fFFD2B21eEC6",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -176,7 +176,7 @@
     },
     "network": {
       "id": "StagenetV1.0.0",
-      "bootstraps": ["https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41"],
+      "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 12
@@ -455,7 +455,7 @@
       "blockchain_title": "Ethereum",
       "network_id": "mainnet",
       "gas_limit": "1500000",
-      "gas_price": "5000000000",
+      "gas_price": "20000000000",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "rpc_node_host": "https://mainnet.infura.io/7c072f60df864d22884e705c5bf3d83f",
       "rpc_node_port": "",
