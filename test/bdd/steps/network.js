@@ -46,7 +46,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
             network: {
                 // TODO: Connect other if using multiple.
                 bootstraps: ['https://localhost:5278/#ff62cb1f692431d901833d55b93c7d991b4087f1'],
-                remoteWhitelist: ['localhost'],
+                remoteWhitelist: ['localhost', '127.0.0.1'],
             },
         },
     });
