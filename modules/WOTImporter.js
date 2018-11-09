@@ -105,6 +105,13 @@ class WOTImporter {
                 edges,
             );
 
+        const { vertices: normalizedVertices, edges: normalizedEdges } =
+            GraphConverter.normalizeGraph(
+                dataSetId,
+                Utilities.copyObject(newDenormalizedVertices),
+                newDenormalizedEdges,
+            );
+
         await Promise.all(newDenormalizedEdges.map(edge => this.db.addEdge(edge)));
         await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
 
@@ -113,8 +120,8 @@ class WOTImporter {
 
         return {
             status: 'success',
-            vertices,
-            edges,
+            vertices: normalizedVertices,
+            edges: normalizedEdges,
             data_set_id: dataSetId,
             wallet: sender.wallet,
         };
