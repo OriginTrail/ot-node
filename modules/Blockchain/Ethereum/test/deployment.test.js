@@ -7,6 +7,7 @@ var Hub = artifacts.require('Hub'); // eslint-disable-line no-undef
 
 var Profile = artifacts.require('Profile'); // eslint-disable-line no-undef
 var Holding = artifacts.require('Holding'); // eslint-disable-line no-undef
+var Approval = artifacts.require('Approval'); // eslint-disable-line no-undef
 
 var ProfileStorage = artifacts.require('ProfileStorage'); // eslint-disable-line no-undef
 var HoldingStorage = artifacts.require('HoldingStorage'); // eslint-disable-line no-undef
@@ -87,6 +88,28 @@ contract('Deployment tests', async () => {
             })
             .catch((err) => {
                 assert(false, 'Holding contract is not deployed!');
+            });
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should get Approval contract and verify its value in the hub contract', async () => {
+        const hub = await Hub.deployed();
+        const res = await hub.approvalAddress.call();
+        assert.notEqual(
+            res,
+            '0x0000000000000000000000000000000000000000',
+            'Approval contract address in Hub is not set!',
+        );
+        await Approval.deployed()
+            .then((instance) => {
+                assert.equal(
+                    instance.address,
+                    res,
+                    'Deployed instance address and address in hub contract do not match!',
+                );
+            })
+            .catch((err) => {
+                assert(false, 'Approval contract is not deployed!');
             });
     });
 
