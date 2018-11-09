@@ -27,6 +27,7 @@ var Ganache = require('ganache-core');
 var errored = true;
 var DC_identity;
 var DC_wallet;
+var DC_index;
 var offerId;
 var tokensToDeposit = (new BN(5)).mul(new BN(10).pow(new BN(20)));
 
@@ -56,9 +57,14 @@ var profileStorage;
 var util;
 var creditorContract;
 var creditorWallet;
+var creditorIndex;
 
 // eslint-disable-next-line no-undef
 contract('Offer tests with creditor', async (accounts) => {
+    const initialState = {};
+    const finalState = {};
+    const delta = {};
+
     // eslint-disable-next-line no-undef
     before(async () => {
         // Get contracts used in hook
@@ -119,57 +125,119 @@ contract('Offer tests with creditor', async (accounts) => {
 
         DC_wallet = accounts[accounts.length - 1];
         DC_identity = identities[identities.length - 1];
+        DC_index = accounts.length - 1;
 
         creditorWallet = accounts[accounts.length - 2];
+        creditorIndex = accounts.length - 2;
 
         // Generate creditor
         creditorContract = await Creditor.new(hub.address, { from: creditorWallet });
     });
 
     // eslint-disable-next-line no-undef
-    it('Should increase DC credit', async () => {
-        const initialBalance = await trac.balanceOf.call(creditorContract.address);
-        const initialAllowance = await creditorContract.allowance.call(DC_wallet);
-        const initialApproval = await trac.allowance.call(
+    beforeEach('Get initial values', async () => {
+        initialState.creditorWalletTracBalance =
+            await trac.balanceOf.call(creditorWallet);
+        initialState.creditorContractTracBalance =
+            await trac.balanceOf.call(creditorContract.address);
+        initialState.DCcreditorContracCreditAllowance =
+            await creditorContract.allowance.call(DC_identity);
+        initialState.holdingContractCreditorContractTracAllowance = await trac.allowance.call(
             creditorContract.address,
             holding.address,
         );
+        initialState.profileStorageTracBalance = await trac.balanceOf.call(profileStorage.address);
 
-        assert(initialBalance.isZero(), 'Initial allowance in Creditor contract must be 0!');
-        assert(initialAllowance.isZero(), 'Initial allowance in Creditor contract must be 0!');
-        assert(initialApproval.isZero(), 'Initial approval of Holding contract must be 0!');
+        const helperString = [];
+        const promises = [];
+        for (let i = 0; i < accounts.length; i += 1) {
+            helperString[i] = `account${i}TracBalance`;
+            helperString[accounts.length + i] = `profile${i}Stake`;
+            helperString[(2 * accounts.length) + i] = `profile${i}StakeReserved`;
 
-        // Execute tested function
+            promises[i] = trac.balanceOf.call(accounts[i]);
+            promises[accounts.length + i] = profileStorage.getStake.call(identities[i]);
+            promises[(2 * accounts.length) + i] =
+                profileStorage.getStakeReserved.call(identities[i]);
+        }
+        const res = await Promise.all(promises);
+        for (let i = 0; i < 3 * accounts.length; i += 1) {
+            initialState[helperString[i]] = res[i];
+        }
+
+        Object.keys(initialState).forEach((key) => {
+            delta[key] = new BN(0);
+        });
+    });
+
+    // eslint-disable-next-line no-undef
+    afterEach('Get final values', async () => {
+        finalState.creditorWalletTracBalance =
+            await trac.balanceOf.call(creditorWallet);
+        finalState.creditorContractTracBalance =
+            await trac.balanceOf.call(creditorContract.address);
+        finalState.DCcreditorContracCreditAllowance =
+            await creditorContract.allowance.call(DC_identity);
+        finalState.holdingContractCreditorContractTracAllowance = await trac.allowance.call(
+            creditorContract.address,
+            holding.address,
+        );
+        finalState.profileStorageTracBalance = await trac.balanceOf.call(profileStorage.address);
+
+        const helperString = [];
+        const promises = [];
+        for (let i = 0; i < accounts.length; i += 1) {
+            helperString[i] = `account${i}TracBalance`;
+            helperString[accounts.length + i] = `profile${i}Stake`;
+            helperString[(2 * accounts.length) + i] = `profile${i}StakeReserved`;
+
+            promises[i] = trac.balanceOf.call(accounts[i]);
+            promises[accounts.length + i] = profileStorage.getStake.call(identities[i]);
+            promises[(2 * accounts.length) + i] =
+                profileStorage.getStakeReserved.call(identities[i]);
+        }
+        const res = await Promise.all(promises);
+        for (let i = 0; i < 3 * accounts.length; i += 1) {
+            finalState[helperString[i]] = res[i];
+        }
+
+        Object.keys(delta).forEach((key) => {
+            if (!delta[key].isZero()) {
+                console.log(`${key}:\n initialState: ${initialState[key].toString()} \n finalState: ${finalState[key].toString()} \n delta: ${delta[key].toString()}`);
+                assert(finalState[key].eq(initialState[key].add(delta[key])), `${key} not changed correctly, got ${finalState[key]} but expected ${initialState[key].add(delta[key])}`);
+            }
+        });
+    });
+
+    // eslint-disable-next-line no-undef
+    it('Should increase DC credit', async () => {
+        assert(initialState.creditorContractTracBalance.isZero(), 'Initial balance of Creditor contract must be 0!');
+        assert(initialState.DCcreditorContracCreditAllowance.isZero(), 'Initial allowance in Creditor contract must be 0!');
+        assert(initialState.holdingContractCreditorContractTracAllowance.isZero(), 'Initial approval of Holding contract must be 0!');
+
         await trac.transfer(
             creditorContract.address,
             tokenAmountPerHolder.mul(new BN(3)),
             { from: creditorWallet },
         );
+        delta.creditorWalletTracBalance = tokenAmountPerHolder.mul(new BN(3)).neg();
+        delta.creditorContractTracBalance = tokenAmountPerHolder.mul(new BN(3));
+        delta[`account${creditorIndex}TracBalance`] = tokenAmountPerHolder.mul(new BN(3)).neg();
+
         await creditorContract.increaseApproval(
-            DC_wallet,
+            DC_identity,
             tokenAmountPerHolder.mul(new BN(3)),
             { from: creditorWallet },
         );
-
-        const newBalance = await creditorContract.allowance.call(DC_wallet);
-        const newAllowance = await creditorContract.allowance.call(DC_wallet);
-        const newApproval = await trac.allowance.call(creditorContract.address, holding.address);
-        assert(
-            newBalance.eq(tokenAmountPerHolder.mul(new BN(3))),
-            `Incorrect balance of creditor contract, got ${newBalance} instead of ${tokenAmountPerHolder.mul(new BN(3))}!`,
-        );
-        assert(
-            newAllowance.eq(tokenAmountPerHolder.mul(new BN(3))),
-            `Incorrect approval amount given to DC, got ${newAllowance} instead of ${tokenAmountPerHolder.mul(new BN(3))}!`,
-        );
-        assert(
-            newApproval.eq(tokenAmountPerHolder.mul(new BN(3))),
-            `Incorrect approval given to Holding contract, got ${newAllowance} instead of ${tokenAmountPerHolder.mul(new BN(3))}!`,
-        );
+        delta.DCcreditorContracCreditAllowance =
+            tokenAmountPerHolder.mul(new BN(3));
+        delta.holdingContractCreditorContractTracAllowance =
+            tokenAmountPerHolder.mul(new BN(3));
     });
 
     // eslint-disable-next-line no-undef
     it('Should finalize an offer using credit', async () => {
+        // Execute tested function and set expected deltas
         let res = await holding.createOffer(
             DC_identity,
             dataSetId,
@@ -213,10 +281,10 @@ contract('Offer tests with creditor', async (accounts) => {
         }
 
         // Getting confirmations
-        var confimations = [];
+        var confirmations = [];
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
-            confimations[i] = await web3.eth.accounts.sign(hashes[i], privateKeys[i]);
+            confirmations[i] = await web3.eth.accounts.sign(hashes[i], privateKeys[i]);
         }
 
         res = await holding.finalizeOfferFromCredit(
@@ -224,21 +292,26 @@ contract('Offer tests with creditor', async (accounts) => {
             creditorContract.address,
             offerId,
             shift,
-            confimations[0].signature,
-            confimations[1].signature,
-            confimations[2].signature,
+            confirmations[0].signature,
+            confirmations[1].signature,
+            confirmations[2].signature,
             [new BN(0), new BN(1), new BN(2)],
             [identities[0], identities[1], identities[2]],
             { from: DC_wallet },
         );
 
+        delta.creditorContractTracBalance = tokenAmountPerHolder.mul(new BN(3)).neg();
+        delta.profileStorageTracBalance = tokenAmountPerHolder.mul(new BN(3));
+        delta.holdingContractCreditorContractTracAllowance =
+            tokenAmountPerHolder.mul(new BN(3)).neg();
+
+        delta[`profile${DC_index}Stake`] = tokenAmountPerHolder.mul(new BN(3));
+        delta.DCcreditorContracCreditAllowance = tokenAmountPerHolder.mul(new BN(3)).neg();
+
+        delta[`profile${DC_index}StakeReserved`] = tokenAmountPerHolder.mul(new BN(3));
         for (i = 0; i < 3; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            res = await profileStorage.profile.call(identities[i]);
-            assert(tokenAmountPerHolder.eq(res.stakeReserved), `Reserved stake amount incorrect for account ${i}!`);
+            delta[`profile${i}StakeReserved`] = tokenAmountPerHolder;
         }
-        res = await profileStorage.profile.call(DC_identity);
-        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res.stakeReserved), 'Reserved stake amount incorrect for DC!');
 
         for (i = 0; i < 3; i += 1) {
             // eslint-disable-next-line no-await-in-loop
@@ -247,13 +320,5 @@ contract('Offer tests with creditor', async (accounts) => {
             assert(tokenAmountPerHolder.eq(res.stakedAmount), 'Token amount not matching!');
             assert.equal(res.litigationEncryptionType, i, 'Red litigation hash not matching!');
         }
-
-        for (i = 0; i < confimations.length; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            res = await profileStorage.getStakeReserved.call(identities[i]);
-            assert(tokenAmountPerHolder.eq(res), 'Tokens reserved not matching');
-        }
-        res = await profileStorage.getStakeReserved.call(DC_identity);
-        assert(tokenAmountPerHolder.mul(new BN(3)).eq(res), 'Tokens reserved for DC not matching');
     });
 });
