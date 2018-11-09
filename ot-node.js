@@ -484,6 +484,14 @@ class OTNode {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asValue({}),
             web3: awilix.asValue(web3),
