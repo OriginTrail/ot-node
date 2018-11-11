@@ -390,7 +390,7 @@
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
-      "branch": "feature/pirot"
+      "branch": "feature/network-addressing"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,
