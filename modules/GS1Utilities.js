@@ -278,6 +278,7 @@ class GS1Utilities {
                     }
                 }
             } else {
+                // eslint-disable-next-line no-lonely-if
                 if (quantityList && quantityList.quantityElement) {
                     // receiving output
                     if (categories.includes('Ownership')) {

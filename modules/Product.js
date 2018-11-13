@@ -10,6 +10,7 @@ class Product {
     constructor(ctx) {
         this.graphStorage = ctx.graphStorage;
         this.ctx = ctx;
+        this.log = ctx.logger;
     }
 
     /**
@@ -80,7 +81,7 @@ class Product {
                 }
                 resolve(responseData);
             }).catch((error) => {
-                console.log(error);
+                this.log.error(error);
                 reject(error);
             });
         });
