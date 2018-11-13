@@ -334,15 +334,17 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
-Then(/^the last import should be the same on all nodes that purchased data$/, async function () {
+Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async function (whichDV) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc, dv } = this.state;
+    const { dc } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
+
     const dataSetId = this.state.lastImport.data_set_id;
 
     // Expect DV to have data.
@@ -363,27 +365,7 @@ Then(/^the last import should be the same on all nodes that purchased data$/, as
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
     }
     expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
-    expect(dvImportInfo.transaction, 'DV transaction hash should be defined').to.not.be.undefined;
-
-    // specific to scenario with 2nd DV
-    if (this.state.dv2) {
-        const { dv2 } = this.state;
-        // Expect DV2 to have data.
-        expect(
-            dv2.state.purchasedDatasets,
-            `Data-set ${dataSetId} was not purchased.`,
-        ).to.have.key(dataSetId);
-
-        const dv2ImportInfo =
-            await httpApiHelper.apiImportInfo(dv2.state.node_rpc_url, this.state.lastImport.data_set_id);
-
-        dv2ImportInfo.root_hash = dcImportInfo.root_hash;
-
-        if (!deepEqual(dcImportInfo, dv2ImportInfo)) {
-            throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dv2ImportInfo)}`);
-        }
-        expect(dv2ImportInfo.transaction, 'DV2 transaction hash should be defined').to.not.be.undefined;
-    }
+    expect(dvImportInfo.transaction, 'DV/DV2 transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -534,19 +516,9 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
 });
 
 Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network$/, { timeout: 90000 }, async function (whichDV, path, value, opcode) {
-    let requesterNode;
-    expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    if (whichDV === 'DV') {
-        expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv } = this.state;
-        requesterNode = dv;
-    } else {
-        expect(!!this.state.dv2, 'DV2 node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv2 } = this.state;
-        requesterNode = dv2;
-    }
-    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
 
+    const dv = this.state[whichDV.toLowerCase()];
 
     // TODO find way to pass jsonQuery directly to step definition
     const jsonQuery = {
@@ -560,26 +532,18 @@ Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" 
             ],
     };
     const queryNetworkResponse =
-        await httpApiHelper.apiQueryNetwork(requesterNode.state.node_rpc_url, jsonQuery);
+        await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
     expect(Object.keys(queryNetworkResponse), 'Reponse should have message and query_id').to.have.members(['message', 'query_id']);
     expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
     this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
-    return new Promise((accept, reject) => requesterNode.once('dv-network-query-processed', () => accept()));
+    return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
 Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
-    let requesterNode;
-    expect(whichDV, 'Query can made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    if (whichDV === 'DV') {
-        expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv } = this.state;
-        requesterNode = dv;
-    } else {
-        expect(!!this.state.dv2, 'DV2 node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv2 } = this.state;
-        requesterNode = dv2;
-    }
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
+
+    const dv = this.state[whichDV.toLowerCase()];
 
     // Check which node has last import.
     const promises = [];
@@ -594,7 +558,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
                 }
                 return false;
             });
-            // TODO check that nodeCandidates [] elements are all unique values
+            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
             accept();
         }));
     });
@@ -612,7 +576,7 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
         // const intervalHandler;
         const intervalHandler = setInterval(async () => {
             const confirmationsSoFar =
-                requesterNode.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
+                dv.nodeConfirmsForDataSetId(queryId, this.state.lastImport.data_set_id);
             if (Date.now() - startTime > 60000) {
                 clearTimeout(intervalHandler);
                 reject(Error('Not enough confirmations for query. ' +
@@ -628,33 +592,27 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
 });
 
 Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
-    let requesterNode;
     expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    if (whichDV === 'DV') {
-        expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv } = this.state;
-        requesterNode = dv;
-    } else {
-        expect(!!this.state.dv2, 'DV2 node not defined. Use other step to define it.').to.be.equal(true);
-        const { dv2 } = this.state;
-        requesterNode = dv2;
-    }
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
+
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
     const { dc } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
+
     const queryId = this.state.lastQueryNetworkId;
     const dataSetId = this.state.lastImport.data_set_id;
     let sellerNode;
 
     const confirmationsSoFar =
-        requesterNode.nodeConfirmsForDataSetId(queryId, dataSetId);
+        dv.nodeConfirmsForDataSetId(queryId, dataSetId);
 
     expect(confirmationsSoFar).to.have.length.greaterThan(0);
 
     if (fromWhom === 'a DH') {
         // Find first DH that replicated last import.
-        sellerNode = this.state.nodes.find(node => (node !== dc && node !== requesterNode));
+        sellerNode = this.state.nodes.find(node => (node !== dc && node !== dv));
     } else if (fromWhom === 'the DC') {
         sellerNode = dc;
     } else if (fromWhom === 'a DV') {
@@ -667,22 +625,22 @@ Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a
 
     expect(sellerNode, 'Didn\'t find seller node.').to.not.be.undefined;
     const { replyId } =
-        requesterNode.state.dataLocationQueriesConfirmations[queryId][sellerNode.state.identity];
+        dv.state.dataLocationQueriesConfirmations[queryId][sellerNode.state.identity];
 
     expect(replyId).to.not.be.undefined;
 
     // Wait for purchase to happened and then exit.
-    requesterNode.once('dataset-purchase', (purchase) => {
+    dv.once('dataset-purchase', (purchase) => {
         if (purchase.queryId === queryId &&
             purchase.replyId === replyId &&
             purchase.dataSetId === dataSetId) {
-            this.logger.info(`${requesterNode.state.identity} finished purchase for data-set ID ${dataSetId} from sellerNode ${sellerNode.state.identity}`);
+            this.logger.info(`${dv.state.identity} finished purchase for data-set ID ${dataSetId} from sellerNode ${sellerNode.state.identity}`);
             done();
         }
     });
 
     // Initiate actual purchase.
-    httpApiHelper.apiReadNetwork(requesterNode.state.node_rpc_url, queryId, replyId, dataSetId)
+    httpApiHelper.apiReadNetwork(dv.state.node_rpc_url, queryId, replyId, dataSetId)
         .catch(error => done(error));
 });
 
