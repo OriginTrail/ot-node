@@ -7,7 +7,7 @@ const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
 
-Then(/^the traversal from batch "(\S+)" should contain (\d+) vertice[s]* of type (\S+)/, { timeout: 120000 }, async function (batch, numberOfVertices, vertexType) {
+Then(/^the traversal from batch "(\S+)" should contain (\d+) trail[s]* and (\d+) vertice[s]* of type (\S+)/, { timeout: 120000 }, async function (batch, numberOfTrails, numberOfVertices, vertexType) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
 
@@ -18,7 +18,7 @@ Then(/^the traversal from batch "(\S+)" should contain (\d+) vertice[s]* of type
 
     expect(trails, 'should not be null').to.not.be.undefined;
     expect(trails, 'should be an Array').to.be.an.instanceof(Array);
-    expect(trails.length, 'length should be one').to.be.equal(1);
+    expect(trails.length, `should be ${numberOfTrails} trail(s)`).to.be.equal(numberOfTrails);
 
     let foundVertices = 0;
     const trail = trails[0].data;

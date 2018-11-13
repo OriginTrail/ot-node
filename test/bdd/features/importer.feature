@@ -23,4 +23,4 @@ Feature: Test basic importer features
     And I use 1st node as DC
     And I import "importers/xml_examples/Retail/01_Green_to_pink_shipment.xml" as GS1
     And I import "importers/json_examples/WOT_Example_1.json" as WOT
-    Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 2 vertices of type EVENT
+    Then the traversal from batch "urn:epc:id:sgtin:Batch_1" should contain 1 trail and 2 vertices of type EVENT
