@@ -28,6 +28,18 @@ class RestApiValidator {
         }
         return null;
     }
+
+    /**
+     * Validate that query exists
+     * @param query
+     * @returns {*}
+     */
+    static validateNotEmptyQuery(query) {
+        if (query == null || Object.keys(query).length === 0) {
+            return new errors.BadRequestError('Query is missing');
+        }
+        return null;
+    }
 }
 
 module.exports = RestApiValidator;
