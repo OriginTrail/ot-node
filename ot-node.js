@@ -645,17 +645,15 @@ class OTNode {
         }
 
         // promisified server.listen()
-        const startServer = () => {
-            return new Promise((resolve, reject) => {
-                server.listen(config.node_rpc_port, serverListenAddress, (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
+        const startServer = () => new Promise((resolve, reject) => {
+            server.listen(config.node_rpc_port, serverListenAddress, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
             });
-        };
+        });
 
         try {
             await startServer(server, serverListenAddress);
