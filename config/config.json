@@ -178,7 +178,7 @@
       "id": "StagenetV1.0.0",
       "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 20,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -278,7 +278,7 @@
       "id": "StablenetV1.0.0",
       "bootstraps": ["https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 20,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -378,7 +378,7 @@
       "id": "PirotV1.0.0",
       "bootstraps": ["https://46.101.38.216:5278/#941d1226cef9e4b52531113944a0a692508614d2"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 20,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -481,7 +481,7 @@
         "https://142.93.13.94:5278/#6d3e620c2c4062e67ed16f86c2fd9c6fec739644"
       ],
       "remoteWhitelist": ["127.0.0.1"],
-      "solutionDifficulty": 20,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
