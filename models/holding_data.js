@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
         distribution_public_key: DataTypes.STRING,
         distribution_private_key: DataTypes.STRING,
         distribution_epk: DataTypes.STRING,
+        transaction_hash: DataTypes.STRING(128),
     }, {
         tableName: 'holding_data',
     });

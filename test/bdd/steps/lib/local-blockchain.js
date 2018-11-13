@@ -193,7 +193,7 @@ class LocalBlockchain {
             this.web3, this.hubContract, this.hubContractData,
             [], accounts[7],
         );
-        this.logger.log('Deploying ApprovalContract');
+        this.logger.log('Deploying approvalContract');
         [this.approvalDeploymentReceipt, this.approvalInstance] = await this.deployContract(
             this.web3, this.approvalContract, this.approvalContractData,
             [], accounts[7],

@@ -121,9 +121,6 @@ class DVDataReadResponseFreeCommand extends Command {
             return Command.empty();
         }
 
-        this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
-        this.remoteControl.readNotification(`Data set ID ${dataSetId} imported successfully.`);
-
         const dataSize = bytes(JSON.stringify(vertices));
         await Models.data_info.create({
             data_set_id: dataSetId,
@@ -132,8 +129,19 @@ class DVDataReadResponseFreeCommand extends Command {
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'PURCHASED',
+        });
+
+        // Store holding information and generate keys for eventual data replication.
+        await Models.purchased_data.create({
+            data_set_id: dataSetId,
             transaction_hash,
         });
+
+        this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
+        this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +
+            `reply ID ${replyId}.`);
+        this.remoteControl.readNotification(`Data set ID ${dataSetId} imported successfully.`);
 
         return Command.empty();
     }

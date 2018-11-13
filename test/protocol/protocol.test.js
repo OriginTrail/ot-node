@@ -13,10 +13,10 @@ const Umzug = require('umzug');
 const BN = require('bn.js');
 const sleep = require('sleep-async')().Promise;
 const bytes = require('utf8-length');
+const logger = require('../../modules/logger');
 
 const Utilities = require('../../modules/Utilities');
 
-const logger = Utilities.getLogger();
 const ImportUtilities = require('../../modules/ImportUtilities');
 const Models = require('../../models');
 const Transactions = require('../../modules/Blockchain/Ethereum/Transactions');
@@ -45,7 +45,7 @@ describe.skip('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'migrations',
             },
-            logging: Utilities.getLogger().debug,
+            logging: logger.debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../migrations`,
@@ -59,7 +59,7 @@ describe.skip('Protocol tests', () => {
                 sequelize: Models.sequelize,
                 tableName: 'seeders',
             },
-            logging: Utilities.getLogger().debug,
+            logging: logger.debug,
             migrations: {
                 params: [Models.sequelize.getQueryInterface(), Models.Sequelize],
                 path: `${__dirname}/../../seeders`,
@@ -298,7 +298,6 @@ describe.skip('Protocol tests', () => {
     // TODO fix
     // const otFingerprintSource = fs.readFileSync('./modules/Blockchain/Ethereum/contracts/OTFingerprintStore.sol', 'utf8');
 
-    const log = Utilities.getLogger();
     const testNodes = [];
     let testNode1;
     let testNode2;
@@ -447,8 +446,8 @@ describe.skip('Protocol tests', () => {
                 blockchain: awilix.asClass(Blockchain).singleton(),
                 network: awilix.asClass(MockNetwork).singleton(),
                 graphStorage: awilix.asValue(new MockGraphStorage()),
-                challenger: awilix.asValue({ startChallennodeWeb3ging: () => { log.info('start challenging.'); } }),
-                logger: awilix.asValue(log),
+                challenger: awilix.asValue({ startChallennodeWeb3ging: () => { logger.info('start challenging.'); } }),
+                logger: awilix.asValue(logger),
                 remoteControl: awilix.asClass(MockRemoteControl),
                 commandExecutor: awilix.asClass(CommandExecutor).singleton(),
                 commandResolver: awilix.asClass(CommandResolver).singleton(),

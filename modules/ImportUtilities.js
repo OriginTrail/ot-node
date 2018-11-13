@@ -7,6 +7,8 @@ const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
 const { denormalizeGraph, normalizeGraph } = require('./Database/graph-converter');
 
+const Models = require('../models');
+
 /**
  * Import related utilities
  */
@@ -99,10 +101,10 @@ class ImportUtilities {
             edges,
         );
 
-        return {
+        return utilities.sortObject({
             edges: normEdges,
             vertices: normVertices,
-        };
+        });
     }
 
     /**
@@ -255,6 +257,46 @@ class ImportUtilities {
      */
     static immutableFilterClassVertices(vertices) {
         return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
+    }
+
+    /**
+     * Gets transaction hash for the data set
+     * @param dataSetId Data set ID
+     * @param origin    Data set origin
+     * @return {Promise<string|null>}
+     */
+    static async getTransactionHash(dataSetId, origin) {
+        let transactionHash = null;
+
+        switch (origin) {
+        case 'PURCHASED': {
+            const purchasedData = await Models.purchased_data.findOne({
+                where: { data_set_id: dataSetId },
+            });
+            transactionHash = purchasedData.transaction_hash;
+            break;
+        }
+        case 'HOLDING': {
+            const holdingData = await Models.holding_data.findOne({
+                where: { data_set_id: dataSetId },
+            });
+            transactionHash = holdingData.transaction_hash;
+            break;
+        }
+        case 'IMPORTED': {
+            // TODO support many offers for the same data set
+            const offers = await Models.offers.findAll({
+                where: { data_set_id: dataSetId },
+            });
+            if (offers.length > 0) {
+                transactionHash = offers[0].transaction_hash;
+            }
+            break;
+        }
+        default:
+            throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
+        }
+        return transactionHash;
     }
 }
 

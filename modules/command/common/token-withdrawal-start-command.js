@@ -32,6 +32,7 @@ class TokenWithdrawalStartCommand extends Command {
                 {
                     name: 'tokenWithdrawalWaitStartedCommand',
                     period: 5000,
+                    deadline_at: Date.now() + (5 * 60 * 1000),
                     data: command.data,
                 },
             ],

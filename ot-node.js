@@ -50,15 +50,16 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 
 let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
-    ['development', 'staging', 'stable', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
+    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
         process.env.NODE_ENV : 'development'];
 
 let config;
@@ -435,8 +436,10 @@ class OTNode {
         if (!config.houston_password) {
             config.houston_password = uuidv4();
         }
+
+        fs.writeFileSync(path.join(config.appDataPath, 'houston.txt'), config.houston_password);
         log.notify('================================================================');
-        log.notify(`Houston password: ${config.houston_password}`);
+        log.notify('Houston password stored in file                                 ');
         log.notify('================================================================');
 
         // Starting the kademlia
@@ -479,6 +482,14 @@ class OTNode {
     async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
         });
 
         container.register({
@@ -848,26 +859,6 @@ class OTNode {
             emitter.emit('api-query-local-import', {
                 data_set_id: req.params.data_set_id,
                 request: req,
-                response: res,
-            });
-        });
-
-        server.post('/api/query/local/import', (req, res, next) => {
-            log.api('GET: Local query import request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-get-imports', {
-                query: queryObject,
                 response: res,
             });
         });

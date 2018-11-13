@@ -30,7 +30,7 @@ class DcOfferMiningCompletedCommand extends Command {
         if (success) {
             this.logger.important(`Miner found a solution of offer ${offerId}.`);
 
-            const excludedDHs = await this.dcService.checkDhFunds(
+            let excludedDHs = await this.dcService.checkDhFunds(
                 solution.nodeIdentifiers,
                 offer.token_amount_per_holder,
             );
@@ -38,6 +38,10 @@ class DcOfferMiningCompletedCommand extends Command {
                 // send back to miner
                 this.logger.important(`DHs [${excludedDHs}] don't have enough funds for offer ${offerId}. Sending back to miner...`);
                 const { data } = command;
+
+                if (command.data.excludedDHs != null) {
+                    excludedDHs = excludedDHs.concat(command.data.excludedDHs);
+                }
                 Object.assign(data, {
                     excludedDHs,
                     internalOfferId: offer.id,

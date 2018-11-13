@@ -5,6 +5,7 @@ const sleep = require('sleep-async')().Promise;
 const BN = require('bn.js');
 const Utilities = require('../../Utilities.js');
 const { TransactionFailedError } = require('../../errors');
+const logger = require('../../logger');
 
 class Transactions {
     /**
@@ -14,7 +15,6 @@ class Transactions {
      * @param walletKey Wallet's private in Hex string without 0x at beginning
      */
     constructor(web3, wallet, walletKey) {
-        this.log = Utilities.getLogger();
         this.web3 = web3;
         this.privateKey = Buffer.from(walletKey, 'hex');
         this.walletAddress = wallet;
@@ -44,7 +44,7 @@ class Transactions {
                             throw new Error(error);
                         }
 
-                        this.log.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
+                        logger.trace(`Nonce too low / underpriced detected. Retrying. ${error.toString()}`);
                         // eslint-disable-next-line no-await-in-loop
                         await sleep.sleep(2000);
                     }
@@ -91,10 +91,10 @@ class Transactions {
 
         // If current ballance not enough for 300000 gas notify low ETH balance
         if (currentBalance.lt(requiredAmount)) {
-            this.log.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
+            logger.warn(`ETH balance running low! Your balance: ${currentBalance.toString()}  wei, while minimum required is: ${requiredAmount.toString()} wei`);
         }
 
-        this.log.trace(`Sending transaction to blockchain, nonce ${newTransaction.options.nonce}, balance is ${currentBalance.toString()}`);
+        logger.trace(`Sending transaction to blockchain, nonce ${newTransaction.options.nonce}, balance is ${currentBalance.toString()}`);
         return this.web3.eth.sendSignedTransaction(`0x${serializedTx}`);
     }
 

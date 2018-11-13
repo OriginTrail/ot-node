@@ -33,6 +33,7 @@ class DcOfferMiningStatusCommand extends Command {
                                 offerId,
                                 solution: mined.result,
                                 success: true,
+                                excludedDHs: command.data.excludedDHs,
                             },
                             transactional: false,
                         },
