@@ -222,7 +222,7 @@ class Kademlia {
                     'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
-                    'kad-replication-response', 'kad-replication-finished',
+                    'kad-replication-request',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
