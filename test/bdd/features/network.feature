@@ -77,7 +77,7 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases import from the last query from a DH
-    Then the last import should be the same on all nodes that purchased data
+    Then the last import should be the same on DC and DV nodes
 
   @itworks
   Scenario: Smoke check /api/withdraw endpoint
@@ -123,7 +123,7 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases import from the last query from the DC
-    Then the last import should be the same on all nodes that purchased data
+    Then the last import should be the same on DC and DV nodes
 
   @itworks
   Scenario: 2nd DV purchases data from 1st DV, no DHes
@@ -141,11 +141,12 @@ Feature: Test basic network features
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV
     Given the DV purchases import from the last query from the DC
-    Then the last import should be the same on all nodes that purchased data
+    Then the last import should be the same on DC and DV nodes
     Given I additionally setup 1 node
     And I start additional nodes
     And I use 3rd node as DV2
     Given DV2 publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
     Then all nodes with last import should answer to last network query by DV2
     Given the DV2 purchases import from the last query from a DV
-    Then the last import should be the same on all nodes that purchased data
+    Then the last import should be the same on DC and DV nodes
+    Then the last import should be the same on DC and DV2 nodes
