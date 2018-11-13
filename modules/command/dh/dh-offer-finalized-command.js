@@ -100,7 +100,7 @@ class DhOfferFinalizedCommand extends Command {
             name: 'dhOfferFinalizedCommand',
             delay: 0,
             period: 10 * 1000,
-            deadline_at: Date.now() + (10 * 60 * 1000),
+            deadline_at: Date.now() + (60 * 60 * 1000), // On hour.
             transactional: false,
         };
         Object.assign(command, map);
