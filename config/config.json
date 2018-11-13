@@ -96,7 +96,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "staging": {
@@ -196,7 +196,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "stable": {
@@ -296,7 +296,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "production": {
@@ -396,7 +396,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": true
   },
   "mariner": {
@@ -499,7 +499,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": true
   }
 }
