@@ -30,7 +30,7 @@ class RestApiValidator {
     }
 
     /**
-     * Validate body exists
+     * Validate that query exists
      * @param query
      * @returns {*}
      */
