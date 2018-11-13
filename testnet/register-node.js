@@ -72,13 +72,6 @@ function main() {
         externalConfig.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
-    if (process.env.INSTALLATION === 'local') {
-        externalConfig.node_ip = '127.0.0.1'; // TODO remove
-    } else {
-        // TODO: Use system command for this.
-        externalConfig.node_ip = ip.address();
-    }
-
     deepExtend(localConfiguration, externalConfig);
     console.log('Configuration:');
     // Mask private key before printing it.
