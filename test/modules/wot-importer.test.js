@@ -23,7 +23,7 @@ describe('WOT Importer tests', () => {
     const databaseName = 'wot-test';
     let graphStorage;
     let systemDb;
-    var wot;
+    let wot;
 
     const inputJsonFiles = [
         { args: [path.join(__dirname, '../../importers/json_examples/WOT_Example_1.json')] },

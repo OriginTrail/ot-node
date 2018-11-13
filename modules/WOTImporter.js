@@ -1,3 +1,4 @@
+const uuidv4 = require('uuid/v4');
 const Utilities = require('./Utilities');
 const ImportUtilities = require('./ImportUtilities');
 
@@ -31,7 +32,7 @@ class WOTImporter {
     async parse(payload) {
         const parsed = JSON.parse(payload);
         const { things, sender } = parsed.data;
-        const tmpDataSetId = 'tmp_data_set_id';
+        const tmpDataSetId = uuidv4();
 
         const edges = [];
         const vertices = [];
