@@ -113,7 +113,8 @@ class Kademlia {
             const { hostname } = this.config.network;
             if (!this.config.local_network_only && !this.config.traverse_nat_enabled) {
                 if (ip.isPrivate(hostname) || hostname === 'localhost') {
-                    throw Error('Please set node\'s hostname (address) to externally available');
+                    throw Error('Please set node\'s hostname (address) ' +
+                        'to something publicly visible.');
                 }
             }
 

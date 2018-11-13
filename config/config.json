@@ -2,7 +2,6 @@
   "development": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -103,7 +102,6 @@
   "staging": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -204,7 +202,6 @@
   "stable": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -305,7 +302,6 @@
   "production": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -409,7 +405,6 @@
   "mariner": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
