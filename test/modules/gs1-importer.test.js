@@ -526,8 +526,7 @@ describe('GS1 Importer tests', () => {
         const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
         const xmlWithoutSenderContactinfo = path.join(__dirname, 'test_xml/withoutSenderContactInfo.xml');
 
-
-        it('and throw an error about missing quantityElement', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.rejectedWith(TypeError, "Cannot read property 'quantityElement' of undefined"));
+        it('exceptionally, case xmlWithoutQuantityList should import with success', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.fulfilled);
 
         it('and throw an error related to missing bizStep', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
 
