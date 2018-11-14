@@ -278,23 +278,21 @@ class DCService {
         );
 
         const payload = {
-            payload: {
-                offer_id: offerId,
-                data_set_id: offer.data_set_id,
-                dc_wallet: this.config.node_wallet,
-                edges: replication.edges,
-                litigation_vertices: replication.litigationVertices,
-                litigation_public_key: replication.litigationPublicKey,
-                distribution_public_key: replication.distributionPublicKey,
-                distribution_private_key: replication.distributionPrivateKey,
-                distribution_epk_checksum: replication.distributionEpkChecksum,
-                litigation_root_hash: replication.litigationRootHash,
-                distribution_root_hash: replication.distributionRootHash,
-                distribution_epk: replication.distributionEpk,
-                distribution_signature: distributionSignature.signature,
-                transaction_hash: offer.transaction_hash,
-                distributionSignature,
-            },
+            offer_id: offerId,
+            data_set_id: offer.data_set_id,
+            dc_wallet: this.config.node_wallet,
+            edges: replication.edges,
+            litigation_vertices: replication.litigationVertices,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            distribution_signature: distributionSignature.signature,
+            transaction_hash: offer.transaction_hash,
+            distributionSignature,
         };
 
         // send replication to DH

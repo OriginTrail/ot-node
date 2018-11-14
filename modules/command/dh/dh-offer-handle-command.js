@@ -36,9 +36,9 @@ class DHOfferHandleCommand extends Command {
         bid.status = 'SENT';
         await bid.save({ fields: ['status'] });
 
-        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}`);
+        this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}. Response received.`);
 
-        const packedResponse = this._parseResponse(response);
+        const packedResponse = DHOfferHandleCommand._stripResponse(response);
         Object.assign(packedResponse, {
             dcNodeId,
         });
@@ -58,22 +58,22 @@ class DHOfferHandleCommand extends Command {
      * @param response  - Network response
      * @private
      */
-    _parseResponse(response) {
+    static _stripResponse(response) {
         return {
-            offerId: response.payload.offer_id,
-            dataSetId: response.payload.data_set_id,
-            edges: response.payload.edges,
-            litigationVertices: response.payload.litigation_vertices,
-            dcWallet: response.payload.dc_wallet,
-            litigationPublicKey: response.payload.litigation_public_key,
-            distributionPublicKey: response.payload.distribution_public_key,
-            distributionPrivateKey: response.payload.distribution_private_key,
-            distributionEpkChecksum: response.payload.distribution_epk_checksum,
-            litigationRootHash: response.payload.litigation_root_hash,
-            distributionRootHash: response.payload.distribution_root_hash,
-            distributionEpk: response.payload.distribution_epk,
-            distributionSignature: response.payload.distribution_signature,
-            transactionHash: response.payload.transaction_hash,
+            offerId: response.offer_id,
+            dataSetId: response.data_set_id,
+            edges: response.edges,
+            litigationVertices: response.litigation_vertices,
+            dcWallet: response.dc_wallet,
+            litigationPublicKey: response.litigation_public_key,
+            distributionPublicKey: response.distribution_public_key,
+            distributionPrivateKey: response.distribution_private_key,
+            distributionEpkChecksum: response.distribution_epk_checksum,
+            litigationRootHash: response.litigation_root_hash,
+            distributionRootHash: response.distribution_root_hash,
+            distributionEpk: response.distribution_epk,
+            distributionSignature: response.distribution_signature,
+            transactionHash: response.transaction_hash,
         };
     }
 
