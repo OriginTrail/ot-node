@@ -35,18 +35,27 @@ contract Creditor is Ownable {
 	}
 
 	function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-		require(msg.sender == owner || hub.isContract(msg.sender));
+		require(hub.isContract(msg.sender));
 
 		uint oldValue = allowed[_spender];
 		require (oldValue >= _subtractedValue);
 		
 		allowed[_spender] = oldValue.sub(_subtractedValue);
-		if(msg.sender == owner){
-			TracToken(hub.tokenAddress()).decreaseApproval(hub.holdingAddress(), _subtractedValue);
-		}
 		
-		emit Approval(_spender, allowed[msg.sender]);
+		emit Approval(_spender, allowed[_spender]);
 		return true;
 	}
+
+    function withdrawApproval (address _spender, uint _subtractedValue) onlyOwner public returns (bool success) {
+        uint oldValue = allowed[_spender];
+        require (oldValue >= _subtractedValue);
+
+        allowed[_spender] = oldValue.sub(_subtractedValue);
+        TracToken(hub.tokenAddress()).decreaseApproval(hub.holdingAddress(), _subtractedValue);
+        TracToken(hub.tokenAddress()).transfer(msg.sender, _subtractedValue);
+
+        emit Approval(_spender, allowed[_spender]);
+        return true;
+    }
 
 }
