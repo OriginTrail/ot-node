@@ -191,8 +191,7 @@ class Kademlia {
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
                     'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
-                    'kad-replication-response', 'kad-replication-finished',
-                    'kad-data-location-response', 'kad-data-read-request',
+                    'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
                     'kad-replication-request',
@@ -336,18 +335,10 @@ class Kademlia {
             this.emitter.emit('kad-data-location-request', message);
         });
 
-        // async
-        this.node.use('kad-replication-response', (request, response, next) => {
-            this.log.debug('kad-replication-response received');
-            this.emitter.emit('kad-replication-response', request);
-            response.send([]);
-        });
-
-        // async
+        // sync
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
-            this.emitter.emit('kad-replication-request', request);
-            response.send([]);
+            this.emitter.emit('kad-replication-request', request, response);
         });
 
         // async
@@ -401,12 +392,6 @@ class Kademlia {
             response.send({
                 error: 'kad-challenge-request error',
             });
-        });
-
-        // error handler
-        this.node.use('kad-replication-response', (err, request, response, next) => {
-            this.log.warn(`kad-replication-response error received. ${err}`);
-            response.error(err);
         });
 
         // error handler
@@ -507,19 +492,6 @@ class Kademlia {
                             }
                         } else {
                             reject(Error(`Failed to find contact ${contactId}`));
-                        }
-                    });
-                });
-            };
-
-            node.replicationResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replication-response', { message }, [contactId, contact], (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
                         }
                     });
                 });

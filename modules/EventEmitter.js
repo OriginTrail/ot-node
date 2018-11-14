@@ -822,49 +822,8 @@ class EventEmitter {
             }
         });
 
-        // async
-        this._on('kad-replication-response', async (request) => {
-            logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
-
-            const message = transport.extractMessage(request);
-            const dcNodeId = transport.extractSenderID(request);
-            const offerId = message.payload.offer_id;
-            const dataSetId = message.payload.data_set_id;
-            const { edges } = message.payload;
-            const litigationVertices = message.payload.litigation_vertices;
-            const dcWallet = message.payload.dc_wallet;
-            const litigationPublicKey = message.payload.litigation_public_key;
-            const distributionPublicKey = message.payload.distribution_public_key;
-            const distributionPrivateKey = message.payload.distribution_private_key;
-            const distributionEpkChecksum = message.payload.distribution_epk_checksum;
-            const litigationRootHash = message.payload.litigation_root_hash;
-            const distributionRootHash = message.payload.distribution_root_hash;
-            const distributionEpk = message.payload.distribution_epk;
-            const distributionSignature = message.payload.distribution_signature;
-            const transactionHash = message.payload.transaction_hash;
-
-            await dhService.handleReplicationImport(
-                offerId,
-                dataSetId,
-                dcNodeId,
-                dcWallet,
-                edges,
-                litigationVertices,
-                litigationPublicKey,
-                distributionPublicKey,
-                distributionPrivateKey,
-                distributionEpkChecksum,
-                litigationRootHash,
-                distributionRootHash,
-                distributionEpk,
-                distributionSignature,
-                transactionHash,
-            );
-            // TODO: send fail in case of fail.
-        });
-
-        // async
-        this._on('kad-replication-request', async (request) => {
+        // sync
+        this._on('kad-replication-request', async (request, response) => {
             const message = transport.extractMessage(request);
             const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
@@ -874,7 +833,24 @@ class EventEmitter {
                 logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            await dcService.handleReplicationRequest(offerId, wallet, identity, dhIdentity);
+            try {
+                await dcService.handleReplicationRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to handle replication request. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
+                }
+            }
         });
 
         // async
