@@ -49,10 +49,10 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        if (this.config.creditorEnabled) {
+        if (this.config.blockchain.creditorEnabled) {
             await this.blockchain.finalizeOfferFromCredit(
                 Utilities.normalizeHex(this.config.erc725Identity),
-                this.config.creditorContractAddress,
+                this.config.blockchain.creditorContractAddress,
                 offerId,
                 new BN(solution.shift, 10),
                 confirmations[0],

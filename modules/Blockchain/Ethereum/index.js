@@ -26,6 +26,8 @@ class Ethereum {
             wallet_address: config.node_wallet,
             node_private_key: config.node_private_key,
             erc725Identity: config.erc725Identity,
+            creditorEnabled: config.blockchain.creditorEnabled,
+            creditorContractAddress: config.blockchain.creditorContractAddress,
         };
         Object.assign(this.config, config.blockchain);
 
