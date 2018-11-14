@@ -117,7 +117,7 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
  * @param {string} importType
  * @return {Promise.<Import>}
  */
-async function apiImportContent(nodeRpcUrl, content, importType) {
+async function apiImportContent(nodeRpcUrl, content = '', importType = 'GS1') {
     return new Promise((accept, reject) => {
         request({
             method: 'POST',
