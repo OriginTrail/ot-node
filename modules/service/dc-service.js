@@ -1,4 +1,6 @@
 const BN = require('bn.js');
+const Utilities = require('../Utilities');
+const Encryption = require('../Encryption');
 
 const models = require('../../models');
 
@@ -6,10 +8,13 @@ const DEFAILT_NUMBER_OF_HOLDERS = 3;
 
 class DCService {
     constructor(ctx) {
+        this.web3 = ctx.web3;
+        this.transport = ctx.transport;
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.blockchain = ctx.blockchain;
         this.commandExecutor = ctx.commandExecutor;
+        this.replicationService = ctx.replicationService;
     }
 
     /**
@@ -214,9 +219,10 @@ class DCService {
      * @param wallet
      * @param identity
      * @param dhIdentity
+     * @param response
      * @returns {Promise<void>}
      */
-    async handleReplicationRequest(offerId, wallet, identity, dhIdentity) {
+    async handleReplicationRequest(offerId, wallet, identity, dhIdentity, response) {
         this.logger.info(`Request for replication of offer external ID ${offerId} received. Sender ${identity}`);
 
         if (!offerId || !wallet) {
@@ -242,17 +248,56 @@ class DCService {
             return;
         }
 
-        await this.commandExecutor.add({
-            name: 'dcReplicationRequestCommand',
-            delay: 0,
-            data: {
-                offerId,
-                wallet,
-                identity,
-                dhIdentity,
-            },
-            transactional: false,
+        const colors = ['red', 'green', 'blue'];
+        const color = colors[Utilities.getRandomInt(2)];
+
+        const replication = await this.replicationService.loadReplication(offer.id, color);
+        await models.replicated_data.create({
+            dh_id: identity,
+            dh_wallet: wallet.toLowerCase(),
+            dh_identity: dhIdentity.toLowerCase(),
+            offer_id: offer.offer_id,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            status: 'STARTED',
+            color,
         });
+
+        const toSign = [
+            Utilities.denormalizeHex(new BN(replication.distributionEpkChecksum).toString('hex')),
+            Utilities.denormalizeHex(replication.distributionRootHash),
+        ];
+        const distributionSignature = Encryption.signMessage(
+            this.web3, toSign,
+            Utilities.normalizeHex(this.config.node_private_key),
+        );
+
+        const payload = {
+            offer_id: offerId,
+            data_set_id: offer.data_set_id,
+            dc_wallet: this.config.node_wallet,
+            edges: replication.edges,
+            litigation_vertices: replication.litigationVertices,
+            litigation_public_key: replication.litigationPublicKey,
+            distribution_public_key: replication.distributionPublicKey,
+            distribution_private_key: replication.distributionPrivateKey,
+            distribution_epk_checksum: replication.distributionEpkChecksum,
+            litigation_root_hash: replication.litigationRootHash,
+            distribution_root_hash: replication.distributionRootHash,
+            distribution_epk: replication.distributionEpk,
+            distribution_signature: distributionSignature.signature,
+            transaction_hash: offer.transaction_hash,
+            distributionSignature,
+        };
+
+        // send replication to DH
+        await this.transport.sendResponse(response, payload);
+        this.logger.info(`Replication for offer ID ${offer.id} sent to ${identity}.`);
     }
 
     /**
