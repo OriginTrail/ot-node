@@ -202,10 +202,8 @@ contract('Offer tests with creditor', async (accounts) => {
         }
 
         Object.keys(delta).forEach((key) => {
-            if (!delta[key].isZero()) {
-                console.log(`${key}:\n initialState: ${initialState[key].toString()} \n finalState: ${finalState[key].toString()} \n delta: ${delta[key].toString()}`);
-                assert(finalState[key].eq(initialState[key].add(delta[key])), `${key} not changed correctly, got ${finalState[key]} but expected ${initialState[key].add(delta[key])}`);
-            }
+            console.log(`${key}:\n initialState: ${initialState[key].toString()} \n finalState: ${finalState[key].toString()} \n delta: ${delta[key].toString()}`);
+            assert(finalState[key].eq(initialState[key].add(delta[key])), `${key} not changed correctly, got ${finalState[key]} but expected ${initialState[key].add(delta[key])}`);
         });
     });
 
