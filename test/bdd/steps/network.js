@@ -96,7 +96,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
     bootstrapNode.start();
 });
 
-Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, configuration, done) {
+Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done) {
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
 
     for (let i = 0; i < nodeCount; i += 1) {
@@ -122,12 +122,6 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, conf
             local_network_only: true,
             dc_choose_time: 60000, // 1 minute
         };
-
-        const configurationOverride = unpackRawTable(configuration);
-        deepExtend(
-            nodeConfiguration,
-            configurationOverride,
-        );
 
         const newNode = new OtNode({
             nodeConfiguration,
@@ -831,4 +825,14 @@ Given(/^all API calls will not be authorized/, { timeout: 180000 }, function (do
         }));
     }
     Promise.all(promises).then(() => done());
+});
+
+Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = unpackRawTable(configuration);
+
+    for (const node of this.state.nodes) {
+        node.overrideConfiguration(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
 });
