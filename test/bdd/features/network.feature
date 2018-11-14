@@ -61,8 +61,8 @@ Feature: Test basic network features
     And I start additional nodes
     And I use 6th node as DV
     Given DV publishes query consisting of path: "identifiers.id", value: "urn:epc:id:sgtin:Batch_1" and opcode: "EQ" to the network
-    Then all nodes with last import should answer to last network query
-    Given the DV purchase import from the last query from a DH
+    Then all nodes with last import should answer to last network query by DV
+    Given the DV purchases import from the last query from a DH
     Then the last import should be the same on DC and DV nodes
 
   @itworks
