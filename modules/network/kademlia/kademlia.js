@@ -396,11 +396,10 @@ class Kademlia {
             response.send([]);
         });
 
-        // async
+        // sync
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
-            this.emitter.emit('kad-replication-request', request);
-            response.send([]);
+            this.emitter.emit('kad-replication-request', request, response);
         });
 
         // async

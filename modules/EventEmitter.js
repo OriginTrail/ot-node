@@ -863,8 +863,8 @@ class EventEmitter {
             // TODO: send fail in case of fail.
         });
 
-        // async
-        this._on('kad-replication-request', async (request) => {
+        // sync
+        this._on('kad-replication-request', async (request, response) => {
             const message = transport.extractMessage(request);
             const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
@@ -874,7 +874,10 @@ class EventEmitter {
                 logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            await dcService.handleReplicationRequest(offerId, wallet, identity, dhIdentity);
+            await dcService.handleReplicationRequest(
+                offerId, wallet, identity, dhIdentity,
+                response,
+            );
         });
 
         // async

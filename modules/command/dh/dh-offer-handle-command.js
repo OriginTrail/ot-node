@@ -24,7 +24,7 @@ class DHOfferHandleCommand extends Command {
         } = command.data;
 
         this.logger.trace(`Sending replication request for offer ${offerId} to ${dcNodeId}.`);
-        await this.transport.replicationRequest({
+        const response = await this.transport.replicationRequest({
             offerId,
             wallet: this.config.node_wallet,
             dhIdentity: this.config.erc725Identity,
@@ -37,7 +37,44 @@ class DHOfferHandleCommand extends Command {
         await bid.save({ fields: ['status'] });
 
         this.logger.notify(`Replication request for ${offerId} sent to ${dcNodeId}`);
-        return Command.empty();
+
+        const packedResponse = this._parseResponse(response);
+        Object.assign(packedResponse, {
+            dcNodeId,
+        });
+        return {
+            commands: [
+                {
+                    name: 'dhReplicationImportCommand',
+                    data: packedResponse,
+                    transactional: false,
+                },
+            ],
+        };
+    }
+
+    /**
+     * Parse network response
+     * @param response  - Network response
+     * @private
+     */
+    _parseResponse(response) {
+        return {
+            offerId: response.payload.offer_id,
+            dataSetId: response.payload.data_set_id,
+            edges: response.payload.edges,
+            litigationVertices: response.payload.litigation_vertices,
+            dcWallet: response.payload.dc_wallet,
+            litigationPublicKey: response.payload.litigation_public_key,
+            distributionPublicKey: response.payload.distribution_public_key,
+            distributionPrivateKey: response.payload.distribution_private_key,
+            distributionEpkChecksum: response.payload.distribution_epk_checksum,
+            litigationRootHash: response.payload.litigation_root_hash,
+            distributionRootHash: response.payload.distribution_root_hash,
+            distributionEpk: response.payload.distribution_epk,
+            distributionSignature: response.payload.distribution_signature,
+            transactionHash: response.payload.transaction_hash,
+        };
     }
 
     /**
