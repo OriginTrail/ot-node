@@ -32,7 +32,6 @@ const configDirs = [];
 const arangoDbs = [];
 const sqliteDbName = 'system.db';
 const peerCacheName = 'peercache';
-const configFileName = 'config.json';
 
 // Load config.
 const defaultConfig = configjson[process.env.NODE_ENV];
@@ -88,7 +87,6 @@ if (argv.hard) {
     configDirs.forEach((configPath) => {
         const dbPath = path.join(configPath, sqliteDbName);
         const peerCachePath = path.join(configPath, peerCacheName);
-        const configFilePath = path.join(configPath, configFileName);
         if (fs.existsSync(dbPath)) {
             console.info(`Removing '${dbPath}...'`);
             fs.unlinkSync(dbPath);
@@ -96,10 +94,6 @@ if (argv.hard) {
         if (fs.existsSync(peerCachePath)) {
             console.info(`Removing '${peerCachePath}...'`);
             fs.unlinkSync(peerCachePath);
-        }
-        if (fs.existsSync(configFilePath)) {
-            console.info(`Removing '${configFilePath}...'`);
-            fs.unlinkSync(configFilePath);
         }
     });
 }

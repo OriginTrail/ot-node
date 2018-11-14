@@ -78,11 +78,6 @@ try {
         );
     }
 
-    if (fs.existsSync(path.join(config.appDataPath, 'config.json'))) {
-        const storedConfig = JSON.parse(fs.readFileSync(path.join(config.appDataPath, 'config.json'), 'utf8'));
-        Object.assign(config, storedConfig);
-    }
-
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
         process.abort();
@@ -157,13 +152,6 @@ process.on('exit', (code) => {
         log.error(`Whoops, terminating with code: ${code}`);
     } else {
         log.debug(`Normal exiting with code: ${code}`);
-    }
-
-    // Save config
-    if (homedir && config.appDataPath) {
-        const configPath = path.join(config.appDataPath, 'config.json');
-        mkdirp.sync(config.appDataPath);
-        fs.writeFileSync(configPath, JSON.stringify(Utilities.stripAppConfig(config), null, 4));
     }
 });
 

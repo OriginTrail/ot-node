@@ -26,12 +26,6 @@ if (argv.configDir) {
     );
 }
 
-if (fs.existsSync(path.join(localConfiguration.appDataPath, 'config.json'))) {
-    const storedConfig = JSON.parse(fs.readFileSync(path.join(localConfiguration.appDataPath, 'config.json'), 'utf8'));
-    console.log(`Found previous configuration\n${JSON.stringify(storedConfig, null, 4)}`);
-    Object.assign(localConfiguration, storedConfig);
-}
-
 function main() {
     const localConfigPath = path.join('/ot-node/', `.${pjson.name}rc`);
     let externalConfig = {};
