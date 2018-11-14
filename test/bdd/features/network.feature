@@ -138,19 +138,19 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV2 nodes
 
   @itworks
-  Scenario: All API calls should be forbidden
+  Scenario: API calls should be forbidden
     Given I setup 1 node
     And I override configuration for all nodes
       | network.remoteWhitelist | 100.100.100.100 | 200.200.200.200 |
     And I start the node
     And I use 1st node as DC
-    Then all API calls will be forbidden
+    Then API calls will be forbidden
 
   @itworks
-  Scenario: All API calls should not be authorized
+  Scenario: API calls should not be authorized
     Given I setup 1 node
     And I override configuration for all nodes
       | auth_token_enabled | true |
     And I start the node
     And I use 1st node as DC
-    Then all API calls will not be authorized
+    Then API calls will not be authorized

@@ -775,7 +775,7 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
     });
 });
 
-Given(/^all API calls will be forbidden/, { timeout: 180000 }, function (done) {
+Given(/^API calls will be forbidden/, { timeout: 180000 }, function (done) {
     const { dc } = this.state;
 
     const methods = Object.keys(httpApiHelper);
@@ -800,7 +800,7 @@ Given(/^all API calls will be forbidden/, { timeout: 180000 }, function (done) {
     Promise.all(promises).then(() => done());
 });
 
-Given(/^all API calls will not be authorized/, { timeout: 180000 }, function (done) {
+Given(/^API calls will not be authorized/, { timeout: 180000 }, function (done) {
     const { dc } = this.state;
 
     const methods = Object.keys(httpApiHelper);
