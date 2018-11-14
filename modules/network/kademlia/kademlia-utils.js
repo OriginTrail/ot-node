@@ -37,6 +37,31 @@ class KademliaUtils {
     }
 
     /**
+     * Returns certificates based on configuration.
+     *
+     * If config.node_rpc_use_ssl enabled a certificate for RPC will be used
+     * (node_rpc_ssl_key_path, node_rpc_ssl_cert_path).
+     */
+    getCertificates() {
+        if (this.config.node_rpc_use_ssl) {
+            return {
+                key: fs.readFileSync(this.config.node_rpc_ssl_key_path),
+                cert: fs.readFileSync(this.config.node_rpc_ssl_cert_path),
+            };
+        }
+        return {
+            key: fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_keypath,
+            )),
+            cert: fs.readFileSync(path.join(
+                this.config.appDataPath,
+                this.config.ssl_certificate_path,
+            )),
+        };
+    }
+
+    /**
     * Mining a new identity
     * @return {Promise<void>}
     */

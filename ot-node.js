@@ -50,15 +50,16 @@ const APIUtilities = require('./modules/utility/api-utilities');
 const pjson = require('./package.json');
 const configjson = require('./config/config.json');
 
-const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 
 let context;
 const defaultConfig = configjson[
     process.env.NODE_ENV &&
-    ['development', 'staging', 'stable', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
+    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
         process.env.NODE_ENV : 'development'];
 
 let config;
@@ -309,7 +310,7 @@ class OTNode {
         const appState = {};
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState }, web3);
-            this.startRPC();
+            await this.startRPC();
             return;
         }
 
@@ -435,8 +436,10 @@ class OTNode {
         if (!config.houston_password) {
             config.houston_password = uuidv4();
         }
+
+        fs.writeFileSync(path.join(config.appDataPath, 'houston.txt'), config.houston_password);
         log.notify('================================================================');
-        log.notify(`Houston password: ${config.houston_password}`);
+        log.notify('Houston password stored in file                                 ');
         log.notify('================================================================');
 
         // Starting the kademlia
@@ -458,7 +461,7 @@ class OTNode {
         await transport.start();
 
         // Initialise API
-        this.startRPC();
+        await this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -479,6 +482,14 @@ class OTNode {
     async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
+        });
+
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
         });
 
         container.register({
@@ -541,7 +552,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC() {
+    async startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -641,9 +652,26 @@ class OTNode {
             serverListenAddress = '0.0.0.0';
         }
 
-        server.listen(config.node_rpc_port, serverListenAddress, () => {
-            log.notify(`API exposed at  ${server.url}`);
+        // promisified server.listen()
+        const startServer = () => new Promise((resolve, reject) => {
+            server.listen(config.node_rpc_port, serverListenAddress, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
         });
+
+        try {
+            await startServer(server, serverListenAddress);
+            log.notify(`API exposed at  ${server.url}`);
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
 
         if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
@@ -738,8 +766,13 @@ class OTNode {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get('/api/trail', (req, res) => {
+        server.get('/api/trail', (req, res, next) => {
             log.api('GET: Trail request received.');
+
+            const error = RestAPIValidator.validateNotEmptyQuery(req.query);
+            if (error) {
+                return next(error);
+            }
             const queryObject = req.query;
             emitter.emit('api-trail', {
                 query: queryObject,
@@ -848,26 +881,6 @@ class OTNode {
             emitter.emit('api-query-local-import', {
                 data_set_id: req.params.data_set_id,
                 request: req,
-                response: res,
-            });
-        });
-
-        server.post('/api/query/local/import', (req, res, next) => {
-            log.api('GET: Local query import request received.');
-
-            let error = RestAPIValidator.validateBodyRequired(req.body);
-            if (error) {
-                return next(error);
-            }
-
-            const queryObject = req.body.query;
-            error = RestAPIValidator.validateSearchQuery(queryObject);
-            if (error) {
-                return next(error);
-            }
-
-            emitter.emit('api-get-imports', {
-                query: queryObject,
                 response: res,
             });
         });

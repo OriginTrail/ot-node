@@ -1,6 +1,8 @@
-const fs = require('fs');
-const md5 = require('md5');
+const uuidv4 = require('uuid/v4');
 const Utilities = require('./Utilities');
+const ImportUtilities = require('./ImportUtilities');
+
+const GraphConverter = require('./Database/graph-converter');
 
 /**
  * Web Of Things model importer
@@ -13,6 +15,7 @@ class WOTImporter {
     constructor(ctx) {
         this.db = ctx.graphStorage;
         this.config = ctx.config;
+        this.helper = ctx.gs1Utilities;
     }
 
     static copyProperties(from, to) {
@@ -28,26 +31,99 @@ class WOTImporter {
      */
     async parse(payload) {
         const parsed = JSON.parse(payload);
-        const importId = Utilities.createImportId(this.config.node_wallet);
         const { things, sender } = parsed.data;
+        const tmpDataSetId = uuidv4();
 
         const edges = [];
         const vertices = [];
 
         for (const thingDesc of things) {
             // eslint-disable-next-line
-            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc, importId, sender);
+            const { thingEdges, thingVertices } = await this.parseThingDesc(thingDesc, sender);
             edges.push(...thingEdges);
             vertices.push(...thingVertices);
         }
 
-        await Promise.all(edges.map(edge => this.db.addEdge(edge)));
-        await Promise.all(vertices.map(vertex => this.db.addVertex(vertex)));
+        const identifiers = [];
+        const identifierEdges = [];
+
+        for (const vertex of vertices) {
+            if (vertex.identifiers !== null) {
+                for (const identifier in vertex.identifiers) {
+                    const id_type = identifier;
+                    const id_value = vertex.identifiers[id_type];
+                    const object_key = vertex._key;
+                    const id_key = this.helper.createKey('identifier', sender, id_type, id_value);
+
+                    identifiers.push({
+                        _key: id_key,
+                        id_type,
+                        id_value,
+                        vertex_type: 'IDENTIFIER',
+                        sender_id: sender.id,
+                    });
+
+                    identifierEdges.push({
+                        _key: this.helper.createKey('identifies', sender, id_key, vertex.identifiers.uid),
+                        _from: id_key,
+                        _to: object_key,
+                        edge_type: 'IDENTIFIES',
+                        sender_id: sender.id,
+                    });
+
+                    identifierEdges.push({
+                        _key: this.helper.createKey('identified_by', sender, vertex.identifiers.uid, id_key),
+                        _from: object_key,
+                        _to: id_key,
+                        edge_type: 'IDENTIFIED_BY',
+                        sender_id: sender.id,
+                    });
+                }
+            }
+        }
+
+        vertices.push(...identifiers);
+        edges.push(...identifierEdges);
+
+        const { vertices: denormalizedVertices, edges: denormalizedEdges } =
+            GraphConverter.denormalizeGraph(
+                tmpDataSetId,
+                Utilities.copyObject(vertices),
+                edges,
+            );
+
+        const objectClasses = await this.db.findObjectClassVertices();
+        const dataSetId = ImportUtilities.importHash(
+            tmpDataSetId,
+            denormalizedVertices.concat(objectClasses),
+            denormalizedEdges,
+        );
+
+        const { vertices: newDenormalizedVertices, edges: newDenormalizedEdges } =
+            GraphConverter.denormalizeGraph(
+                dataSetId,
+                Utilities.copyObject(vertices),
+                edges,
+            );
+
+        const { vertices: normalizedVertices, edges: normalizedEdges } =
+            GraphConverter.normalizeGraph(
+                dataSetId,
+                Utilities.copyObject(newDenormalizedVertices),
+                newDenormalizedEdges,
+            );
+
+        await Promise.all(newDenormalizedEdges.map(edge => this.db.addEdge(edge)));
+        await Promise.all(newDenormalizedVertices.map(vertex => this.db.addVertex(vertex)));
+
+        await Promise.all(denormalizedVertices.map(vertex => this.db.updateImports('ot_vertices', vertex._key, dataSetId)));
+        await Promise.all(denormalizedEdges.map(edge => this.db.updateImports('ot_edges', edge._key, dataSetId)));
+
         return {
             status: 'success',
-            vertices,
-            edges,
-            import_id: importId,
+            vertices: normalizedVertices,
+            edges: normalizedEdges,
+            data_set_id: dataSetId,
             wallet: sender.wallet,
         };
     }
@@ -55,11 +131,10 @@ class WOTImporter {
     /**
      * Parse single thing description (thing, model, properties, actions, etc.)
      * @param thingDesc
-     * @param importId
      * @param sender
      * @return {Promise<{thingEdges: Array, thingVertices: Array}>}
      */
-    async parseThingDesc(thingDesc, importId, sender) {
+    async parseThingDesc(thingDesc, sender) {
         const thingEdges = [];
         const thingVertices = [];
 
@@ -84,17 +159,16 @@ class WOTImporter {
         WOTImporter.copyProperties(model, actor.data.model);
         delete actor.data.id;
 
-        actor._key = md5(`actor_${senderId}_${JSON.stringify(actor.identifiers)}_${md5(JSON.stringify(actor.data))}`);
+        actor._key = this.helper.createKey('actor', senderId, id);
         thingVertices.push(actor);
 
         thingEdges.push({
-            _key: md5(`is_${senderId}_${actor._key}_ACTOR`),
+            _key: this.helper.createKey('is', senderId, actor._key, 'Actor'),
             _from: `${actor._key}`,
-            _to: 'ACTOR',
+            _to: 'Actor',
             edge_type: 'IS',
         });
-        const date = new Date(importId);
-        const eventId = `${senderId}:${date.toUTCString()}`.replace(/ /g, '_').replace(/,/g, '');
+        const eventId = new Date().toISOString();
         const event = {
             identifiers: {
                 id: eventId,
@@ -105,79 +179,88 @@ class WOTImporter {
                 categories: 'OBSERVE',
                 properties,
                 actions,
+                eventTime: eventId,
             },
             vertex_type: 'EVENT',
         };
-        event._key = md5(`event_${senderId}_${JSON.stringify(event.identifiers)}_${md5(JSON.stringify(event.data))}`);
+        event._key = this.helper.createKey('event', senderId, eventId);
         thingVertices.push(event);
 
         for (const ooId of observedObjects) {
-            // eslint-disable-next-line
-            const ooVertex = await this.db.findVertexWithMaxVersion(senderId, ooId);
-            if (ooVertex) {
-                thingEdges.push({
-                    _key: md5(`event_object_${senderId}_${event._key}_${ooVertex._key}`),
-                    _from: `${event._key}`,
-                    _to: `${ooVertex._key}`,
-                    edge_type: 'EVENT_OBJECT',
-                    identifiers: {
-                        uid: `event_object_${event.identifiers.id}_${ooVertex.identifiers.id}`,
-                    },
-                });
-                thingEdges.push({
-                    _key: md5(`event_object_${senderId}_${ooVertex._key}_${event._key}`),
-                    _from: `${ooVertex._key}`,
-                    _to: `${event._key}`,
-                    edge_type: 'EVENT_OBJECT',
-                    identifiers: {
-                        uid: `event_object_${ooVertex.identifiers.id}_${event.identifiers.id}`,
-                    },
-                });
-            }
+            const objectKey = this.helper.createKey('batch', senderId, ooId);
+            const objectVertex = {
+                _key: objectKey,
+                identifiers: {
+                    id: ooId,
+                    uid: ooId,
+                },
+                data: {
+                    note: 'observed object',
+                },
+                vertex_type: 'BATCH',
+            };
+            thingVertices.push(objectVertex);
+
+            thingEdges.push({
+                _key: this.helper.createKey('event_batch', senderId, event._key, ooId),
+                _from: `${event._key}`,
+                _to: `${objectVertex._key}`,
+                edge_type: 'EVENT_BATCH',
+            });
+            thingEdges.push({
+                _key: this.helper.createKey('event_batch', senderId, ooId, event._key),
+                _from: `${objectVertex._key}`,
+                _to: `${event._key}`,
+                edge_type: 'EVENT_BATCH',
+            });
         }
 
         if (readPoint) {
-            const rpVertex = await this.db.findVertexWithMaxVersion(senderId, readPoint.id);
-            if (rpVertex) {
-                thingEdges.push({
-                    _key: md5(`read_point_${senderId}_${event._key}_${rpVertex._key}`),
-                    _from: `${event._key}`,
-                    _to: `${rpVertex._key}`,
-                    edge_type: 'READ_POINT',
-                    identifiers: {
-                        uid: `read_point_${event.identifiers.id}_${rpVertex.identifiers.id}`,
-                    },
-                });
-            }
+            const locationKey = this.helper.createKey('location', senderId, readPoint.id);
+            const locationVertex = {
+                _key: locationKey,
+                identifiers: {
+                    id: readPoint.id,
+                    uid: readPoint.id,
+                },
+                data: {
+                    note: 'read point',
+                },
+                vertex_type: 'LOCATION',
+            };
+            thingVertices.push(locationVertex);
+
+            thingEdges.push({
+                _key: this.helper.createKey('read_point', senderId, event._key, readPoint.id),
+                _from: `${event._key}`,
+                _to: `${locationVertex._key}`,
+                edge_type: 'READ_POINT',
+            });
+
+            thingEdges.push({
+                _key: this.helper.createKey('is', senderId, locationKey, 'Location'),
+                _from: `${locationKey}`,
+                _to: 'Location',
+                edge_type: 'IS',
+            });
         }
 
         thingEdges.push({
-            _key: md5(`observed_by_${senderId}_${event._key}_${actor._key}`),
+            _key: this.helper.createKey('observed_by', senderId, event._key, actor._key),
             _from: `${event._key}`,
             _to: `${actor._key}`,
             edge_type: 'OBSERVED_BY',
-            identifiers: {
-                uid: `observed_by_${event.identifiers.id}_${actor.identifiers.id}`,
-            },
         });
 
         thingEdges.push({
-            _key: md5(`observed_${senderId}_${actor._key}_${event._key}`),
+            _key: this.helper.createKey('observed', senderId, actor._key, event._key),
             _from: `${actor._key}`,
             _to: `${event._key}`,
             edge_type: 'OBSERVED',
-            identifiers: {
-                uid: `observed_${actor.identifiers.id}_${event.identifiers.id}`,
-            },
         });
 
         const addProperties = (elem) => {
             elem.sender_id = senderId;
-            if (elem.imports) {
-                elem.imports.push(importId);
-            } else {
-                elem.imports = [importId];
-            }
             return elem;
         };
         thingEdges.map(addProperties);

@@ -3,10 +3,7 @@ require('dotenv').config();
 const soliditySha3 = require('solidity-sha3').default;
 const pem = require('pem');
 const fs = require('fs');
-const moment = require('moment');
 const ipaddr = require('ipaddr.js');
-const winston = require('winston');
-const Storage = require('./Storage');
 const _ = require('lodash');
 const _u = require('underscore');
 const randomString = require('randomstring');
@@ -17,23 +14,14 @@ const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 const numberToBN = require('number-to-bn');
-const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
 
-const pjson = require('../package.json');
-const runtimeConfigJson = require('../config/config.json')[process.env.NODE_ENV];
-
-require('winston-loggly-bulk');
-
+const logger = require('./logger');
 
 class Utilities {
-    constructor() {
-        this.getLogger();
-    }
-
     /**
      * Creates new hash import ID.
      * @returns {*}
@@ -79,13 +67,6 @@ class Utilities {
         });
     }
 
-    formatFileLogs(args) {
-        const date = moment().format('D/MM/YYYY hh:mm:ss');
-        const msg = `${date} - ${args.level} - ${args.message} - \n${JSON.stringify(args.meta, null, 2)}`;
-        return msg;
-    }
-
-
     /**
      * Check if there is a new version of ot-node
      * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
@@ -102,173 +83,6 @@ class Utilities {
                 resolve(res);
             }
         });
-    }
-
-    /**
-     * Returns winston logger
-     * @returns {*} - log function
-     */
-    static getLogger() {
-        let logLevel = 'trace';
-        if (process.env.LOGS_LEVEL_DEBUG) {
-            logLevel = 'debug';
-        }
-
-        const customColors = {
-            trace: 'grey',
-            notify: 'green',
-            debug: 'yellow',
-            info: 'white',
-            warn: 'yellow',
-            important: 'magenta',
-            error: 'red',
-            api: 'cyan',
-            job: 'cyan',
-        };
-
-        try {
-            const transports =
-                [
-                    new (winston.transports.Console)({
-                        colorize: 'all',
-                        timestamp: true,
-                        formatter: this.formatFileLogs,
-                        prettyPrint: object => JSON.stringify(object),
-                        stderrLevels: [
-                            'trace',
-                            'notify',
-                            'debug',
-                            'info',
-                            'warn',
-                            'important',
-                            'error',
-                            'api',
-                            'job',
-                        ],
-                    }),
-                    new (winston.transports.File)({
-                        filename: 'node.log',
-                        json: false,
-                        formatter: this.formatFileLogs,
-                    }),
-                ];
-
-            if (process.env.SEND_LOGS && parseInt(process.env.SEND_LOGS, 10)) {
-                transports.push(new (winston.transports.Loggly)({
-                    inputToken: 'abfd90ee-ced9-49c9-be1a-850316aaa306',
-                    subdomain: 'origintrail.loggly.com',
-                    tags: [process.env.NODE_ENV, runtimeConfigJson.network.id, pjson.version],
-                    json: true,
-                }));
-            }
-
-            const logger = new (winston.Logger)({
-                colors: customColors,
-                level: logLevel,
-                levels: {
-                    error: 0,
-                    important: 1,
-                    job: 2,
-                    api: 3,
-                    warn: 4,
-                    notify: 5,
-                    info: 6,
-                    trace: 7,
-                    debug: 8,
-                },
-                transports,
-            });
-            winston.addColors(customColors);
-
-            // Extend logger object to properly log 'Error' types
-            const origLog = logger.log;
-            logger.log = (level, msg) => {
-                if (msg instanceof Error) {
-                    // eslint-disable-next-line prefer-rest-params
-                    const args = Array.prototype.slice.call(arguments);
-                    args[1] = msg.stack;
-                    origLog.apply(logger, args);
-                } else {
-                    const transformed = Utilities.transformLog(level, msg);
-                    if (!transformed) {
-                        return;
-                    }
-                    origLog.apply(logger, [transformed.level, transformed.msg]);
-                }
-            };
-            return logger;
-        } catch (e) {
-            console.error('Failed to create logger', e);
-            process.exit(1);
-        }
-    }
-
-    /**
-     * Skips/Transforms third-party logs
-     * @return {*}
-     */
-    static transformLog(level, msg) {
-        if (process.env.LOGS_LEVEL_DEBUG) {
-            return {
-                level,
-                msg,
-            };
-        }
-        if (msg.startsWith('connection timed out')) {
-            return null;
-        }
-        if (msg.startsWith('negotiation error')) {
-            return null;
-        }
-        if (msg.includes('received late or invalid response')) {
-            return null;
-        }
-        if (msg.includes('error with remote connection')) {
-            return null;
-        }
-        if (msg.includes('remote connection encountered error')) {
-            return null;
-        }
-        if (msg.startsWith('updating peer profile')) {
-            return null;
-        }
-        if (msg.includes('client cannot service request at this time')) {
-            return null;
-        }
-        if (msg.includes('KADemlia error') && msg.includes('Message previously routed')) {
-            return null;
-        }
-        if (msg.includes('gateway timeout')) {
-            return null;
-        }
-        if (msg.startsWith('connect econnrefused')) {
-            return null;
-        }
-        if (msg.includes('unable to route to tunnel')) {
-            return null;
-        }
-        if (msg.includes('socket hang up')) {
-            return null;
-        }
-        if (msg.includes('getaddrinfo')) {
-            return null;
-        }
-        if (msg.includes('read econnreset')) {
-            return null;
-        }
-        if (msg.includes('connect etimedout')) {
-            return null;
-        }
-        if (msg.includes('connect ehostunreach')) {
-            return null;
-        }
-        if (msg.includes('ssl23_get_server_hello')) {
-            return null;
-        }
-        return {
-            level,
-            msg,
-        };
     }
 
     /**
@@ -327,7 +141,7 @@ class Utilities {
                 }
                 break;
             default:
-                Utilities.getLogger.error(config.database.provider);
+                logger.error(config.database.provider);
                 reject(Error('Database doesn\'t exists'));
             }
         });
@@ -472,8 +286,7 @@ class Utilities {
         if (typeof callback === 'function') {
             callback(callback_input);
         } else {
-            const log = this.getLogger();
-            log.info('Callback not defined!');
+            logger.info('Callback not defined!');
         }
     }
 
@@ -519,7 +332,6 @@ class Utilities {
      * @returns {void}
      */
     static checkOtNodeDirStructure() {
-        const log = Utilities.getLogger();
         // try {
         //     if (!fs.existsSync(`${__dirname}/../keys`)) {
         //         fs.mkdirSync(`${__dirname}/../keys`);
@@ -619,7 +431,7 @@ class Utilities {
                 .then((result) => {
                     resolve(web3.utils.hexToNumber(result));
                 }).catch((error) => {
-                    Utilities.getLogger().error(error);
+                    logger.error(error);
                     reject(error);
                 });
         });
@@ -953,21 +765,6 @@ class Utilities {
             [a[i], a[j]] = [a[j], a[i]];
         }
         return a;
-    }
-
-    /**
-     * Get external IP
-     * @returns {Promise}
-     */
-    static getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 
     /**

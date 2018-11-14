@@ -51,6 +51,9 @@ contract Holding is Ownable {
         // Writing data root hash if it wasn't previously set
         if(holdingStorage.fingerprint(bytes32(dataSetId)) == bytes32(0)){
             holdingStorage.setFingerprint(bytes32(dataSetId), bytes32(dataRootHash));
+        } else {
+            require(bytes32(dataRootHash) == holdingStorage.fingerprint(bytes32(dataSetId)),
+                "Cannot create offer with different data root hash!");
         }
 
         // Now we calculate the offerId, which should be unique

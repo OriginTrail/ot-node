@@ -1047,7 +1047,7 @@ class Ethereum {
                 this.config.wallet_address,
             );
             this.log.info(`Balance of ETH: ${etherBalance}`);
-            if (etherBalance <= 0.01) {
+            if (etherBalance < 0.01) {
                 enoughETH = false;
             }
 
@@ -1057,7 +1057,7 @@ class Ethereum {
                 this.tokenContractAddress,
             );
             this.log.info(`Balance of TRAC: ${tracBalance}`);
-            if (tracBalance <= 100) {
+            if (tracBalance < 100) {
                 enoughTRAC = false;
             }
         } catch (error) {

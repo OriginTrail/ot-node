@@ -11,9 +11,9 @@ const pjson = require('../package.json');
 const configjson = require('../config/config.json');
 const argv = require('minimist')(process.argv.slice(2));
 
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 const defaultConfig = configjson[process.env.NODE_ENV];
 const localConfiguration = rc(pjson.name, defaultConfig);
+const web3 = new Web3(new Web3.providers.HttpProvider(`${localConfiguration.blockchain.rpc_node_host}`));
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
@@ -72,16 +72,12 @@ function main() {
         externalConfig.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
-    if (process.env.INSTALLATION === 'local') {
-        externalConfig.node_ip = '127.0.0.1'; // TODO remove
-    } else {
-        // TODO: Use system command for this.
-        externalConfig.node_ip = ip.address();
-    }
-
     deepExtend(localConfiguration, externalConfig);
     console.log('Configuration:');
-    console.log(JSON.stringify(externalConfig, null, 4));
+    // Mask private key before printing it.
+    const externalConfigClean = Object.assign({}, externalConfig);
+    externalConfigClean.node_private_key = '*** MASKED ***';
+    console.log(JSON.stringify(externalConfigClean, null, 4));
 
     fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 

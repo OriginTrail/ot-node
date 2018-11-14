@@ -10,7 +10,7 @@ const argv = require('minimist')(process.argv.slice(2));
 
 let cpus = 0;
 let solutionDifficulty = 8;
-let identityDifficulty = 8;
+let identityDifficulty = 12;
 const solvers = [];
 
 /**

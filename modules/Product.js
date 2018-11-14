@@ -10,6 +10,7 @@ class Product {
     constructor(ctx) {
         this.graphStorage = ctx.graphStorage;
         this.ctx = ctx;
+        this.log = ctx.logger;
     }
 
     /**
@@ -70,13 +71,17 @@ class Product {
                 for (const start_vertex of response[0].objects) {
                     // eslint-disable-next-line
                    const virtualGraph = this.zeroKnowledge(await this.graphStorage.findTraversalPath(start_vertex, depth));
+                    const lastDatasetIndex = start_vertex.datasets.length - 1;
+                    const datasetId = start_vertex.datasets[lastDatasetIndex];
                     responseData.push({
                         start: start_vertex._key,
+                        batch: start_vertex[datasetId].data,
                         data: virtualGraph.data,
                     });
                 }
                 resolve(responseData);
             }).catch((error) => {
+                this.log.error(error);
                 reject(error);
             });
         });

@@ -18,6 +18,7 @@ const Utilities = require('../../modules/Utilities');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
+const logger = require('../../modules/logger');
 
 describe('Check ZK by quering /api/trail for EVENT vertices', () => {
     const databaseName = 'zk-test';
@@ -61,10 +62,9 @@ describe('Check ZK by quering /api/trail for EVENT vertices', () => {
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
-        const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
-            logger: awilix.asValue(Utilities.getLogger()),
+            logger: awilix.asValue(logger),
             gs1Importer: awilix.asClass(GS1Importer),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),

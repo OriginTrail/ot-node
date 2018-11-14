@@ -26,6 +26,7 @@ const models = require('../../models');
 const Web3 = require('web3');
 const fs = require('fs');
 const awilix = require('awilix');
+const logger = require('../../modules/logger');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -88,10 +89,9 @@ describe('GS1 Importer tests', () => {
 
         const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt'));
 
-        const logger = Utilities.getLogger();
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
-            logger: awilix.asValue(Utilities.getLogger()),
+            logger: awilix.asValue(logger),
             gs1Importer: awilix.asClass(GS1Importer),
             gs1Utilities: awilix.asClass(GS1Utilities),
             graphStorage: awilix.asValue(graphStorage),
@@ -526,8 +526,7 @@ describe('GS1 Importer tests', () => {
         const xmlWithoutCreationDateAndTime = path.join(__dirname, 'test_xml/withoutCreationDateAndTime.xml');
         const xmlWithoutSenderContactinfo = path.join(__dirname, 'test_xml/withoutSenderContactInfo.xml');
 
-
-        it('and throw an error about missing quantityElement', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.rejectedWith(TypeError, "Cannot read property 'quantityElement' of undefined"));
+        it('exceptionally, case xmlWithoutQuantityList should import with success', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutQuantityList))).to.be.fulfilled);
 
         it('and throw an error related to missing bizStep', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutBizStep))).to.be.rejectedWith(TypeError, "Cannot read property 'replace' of undefined"));
 

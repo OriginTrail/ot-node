@@ -12,7 +12,7 @@ var abi = require('ethereumjs-abi');
 
 var txutils = lightwallet.txutils;
 var config = utilities.getConfig();
-const log = utilities.getLogger();
+const log = require('../../logger');
 
 var wallet_address = config.blockchain.settings.ethereum.wallet_address;
 var private_key = config.blockchain.settings.ethereum.private_key;

@@ -57,9 +57,11 @@ class DVDataLocationResponseCommand extends Command {
         }
 
         // TODO: Fire socket notification for Houston
+        this.logger.trace(`DH ${nodeId} in query ID ${queryId} and reply ID ${replyId} ` +
+            `confirms possession of data imports: '${JSON.stringify(imports)}'`);
 
         if (!networkQueryResponse) {
-            this.log.error(`Failed to add query response. Reply ID ${replyId}.`);
+            this.logger.error(`Failed to add query response. Reply ID ${replyId}.`);
             throw Error('Internal error.');
         }
 
