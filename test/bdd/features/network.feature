@@ -124,3 +124,19 @@ Feature: Test basic network features
     Then all nodes with last import should answer to last network query
     Given the DV purchase import from the last query from the DC
     Then the last import should be the same on all nodes that purchased data
+
+  @itworks
+  Scenario: All API calls should be forbidden
+    Given I setup 1 node
+      | network.remoteWhitelist | 100.100.100.100 | 200.200.200.200 |
+    And I start the node
+    And I use 1st node as DC
+    Then all API calls will be forbidden
+
+  @itworks
+  Scenario: All API calls should not be authorized
+    Given I setup 1 node
+      | auth_token_enabled | true |
+    And I start the node
+    And I use 1st node as DC
+    Then all API calls will not be authorized
