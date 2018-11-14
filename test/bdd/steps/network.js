@@ -780,7 +780,6 @@ Given(/^all API calls will be forbidden/, { timeout: 180000 }, function (done) {
 
     const methods = Object.keys(httpApiHelper);
     methods.splice(methods.indexOf('apiImport'), 1); // TODO handle import
-    methods.splice(methods.indexOf('apiReadNetwork'), 1); // TODO handle read network
 
     const promises = [];
     for (const method of methods) {
@@ -806,7 +805,6 @@ Given(/^all API calls will not be authorized/, { timeout: 180000 }, function (do
 
     const methods = Object.keys(httpApiHelper);
     methods.splice(methods.indexOf('apiImport'), 1); // TODO handle import
-    methods.splice(methods.indexOf('apiReadNetwork'), 1); // TODO handle read network
 
     const promises = [];
     for (const method of methods) {

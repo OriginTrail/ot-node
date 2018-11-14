@@ -103,6 +103,42 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
 }
 
 /**
+ * @typedef {Object} Import
+ * @property {string} data_set_id Data-set ID.
+ * @property {string} message Message about successful import.
+ * @property {string} wallet Data provider wallet.
+ */
+
+/**
+ * Fetch /api/import
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} content
+ * @param {string} importType
+ * @return {Promise.<Import>}
+ */
+async function apiImportContent(nodeRpcUrl, content, importType) {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/import`,
+            json: true,
+            formData: {
+                importfile: content,
+                importtype: `${importType}`,
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
  * @typedef {Object} ImportsInfo
  * @property {string} data_set_id Data-set ID.
  * @property {Number} total_documents Number of documents in inport.
@@ -324,10 +360,6 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
                     reject(err);
                     return;
                 }
-                if (res.statusCode !== 200) {
-                    reject(Error(`/api/read/network failed. Body: ${body.toString()}`));
-                    return;
-                }
                 accept(body);
             },
         );
@@ -473,6 +505,7 @@ async function apiTrail(nodeRpcUrl, query) {
 
 module.exports = {
     apiImport,
+    apiImportContent,
     apiImportInfo,
     apiImportsInfo,
     apiFingerprint,

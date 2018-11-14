@@ -397,7 +397,10 @@ class EventEmitter {
                     message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
                 });
             } catch (e) {
-                failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`);
+                const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+                data.response.status(500);
+                data.response.send({ message });
+                failFunction(message);
                 notifyError(e);
             }
         });
