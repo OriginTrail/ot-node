@@ -833,10 +833,24 @@ class EventEmitter {
                 logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            await dcService.handleReplicationRequest(
-                offerId, wallet, identity, dhIdentity,
-                response,
-            );
+            try {
+                await dcService.handleReplicationRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to handle replication request. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
+
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
+                }
+            }
         });
 
         // async
