@@ -515,7 +515,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                 network: {
                     bootstraps: this.state.bootstraps.map(bootstrap =>
                         `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost'],
+                    remoteWhitelist: ['localhost', '127.0.0.1'],
                 },
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
