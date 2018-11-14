@@ -1,8 +1,7 @@
-const ip = require('ip');
-
 class APIUtilities {
     constructor(ctx) {
         this.config = ctx.config;
+        this.logger = ctx.logger;
     }
 
     /**
@@ -16,6 +15,8 @@ class APIUtilities {
         const remote_access = this.config.network.remoteWhitelist;
 
         if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
+            this.logger.trace(`Client ${request_ip} not authorized`);
+
             res.status(403);
             res.send({
                 message: 'Unauthorized request',
