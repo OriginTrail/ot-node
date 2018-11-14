@@ -43,6 +43,16 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.log.info('Selected blockchain: Ethereum');
+
+        if (this.config.creditorEnabled) {
+            // Loading contracts
+            this.creditorContractAddress = this.config.creditorContractAddress;
+
+            const creditorAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/creditor.json');
+            this.creditorContractAbi = JSON.parse(creditorAbiFile);
+            this.creditorContract =
+                new this.web3.eth.Contract(this.creditorContractAbi, this.creditorContractAddress);
+        }
     }
 
     /**
@@ -489,6 +499,45 @@ class Ethereum {
             this.holdingContractAbi, 'finalizeOffer',
             [
                 blockchainIdentity,
+                offerId,
+                shift,
+                confirmation1,
+                confirmation2,
+                confirmation3,
+                encryptionType,
+                holders,
+            ],
+            options,
+        );
+    }
+
+    /**
+     * Finalizes offer on Blockchain
+     * @returns {Promise<any>}
+     */
+    finalizeOfferFromCredit(
+        blockchainIdentity,
+        creditorAddress,
+        offerId,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.holdingContractAddress,
+        };
+
+        this.log.trace(`finalizeOfferFromCredit (${blockchainIdentity}, ${creditorAddress}, ${offerId}, ${shift}, ${confirmation1}, ${confirmation2}, ${confirmation3}, ${encryptionType}, ${holders})`);
+        return this.transactions.queueTransaction(
+            this.holdingContractAbi, 'finalizeOfferFromCredit',
+            [
+                blockchainIdentity,
+                creditorAddress,
                 offerId,
                 shift,
                 confirmation1,

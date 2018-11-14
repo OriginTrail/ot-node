@@ -57,6 +57,8 @@
       "gas_limit": "1500000",
       "gas_price": "5000000000",
       "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
+      "creditorContractAddress": "0xF0632fA70827121fBE29E194ABd31eb794A82B3B",
+      "creditorEnabled": true,
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [

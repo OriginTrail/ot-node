@@ -49,16 +49,31 @@ class DCOfferFinalizeCommand extends Command {
             confirmations.push(replication.confirmation);
         }
 
-        await this.blockchain.finalizeOffer(
-            Utilities.normalizeHex(this.config.erc725Identity),
-            offerId,
-            new BN(solution.shift, 10),
-            confirmations[0],
-            confirmations[1],
-            confirmations[2],
-            colors,
-            nodeIdentifiers,
-        );
+        if (this.config.creditorEnabled) {
+            await this.blockchain.finalizeOfferFromCredit(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                this.config.creditorContractAddress,
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+            );
+        } else {
+            await this.blockchain.finalizeOffer(
+                Utilities.normalizeHex(this.config.erc725Identity),
+                offerId,
+                new BN(solution.shift, 10),
+                confirmations[0],
+                confirmations[1],
+                confirmations[2],
+                colors,
+                nodeIdentifiers,
+            );
+        }
+
         return {
             commands: [
                 {

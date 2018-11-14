@@ -204,6 +204,27 @@ class Blockchain {
     }
 
     /**
+     * Finalizes offer on Blockchain
+     * @returns {Promise<any>}
+     */
+    finalizeOfferFromCredit(
+        blockchainIdentity,
+        creditorAddress,
+        offerId,
+        shift,
+        confirmation1,
+        confirmation2,
+        confirmation3,
+        encryptionType,
+        holders,
+    ) {
+        return this.blockchain.finalizeOfferFromCredit(
+            blockchainIdentity, creditorAddress, offerId, shift, confirmation1,
+            confirmation2, confirmation3, encryptionType, holders,
+        );
+    }
+
+    /**
     * Subscribe to a particular event
     * @param event
     * @param importId
