@@ -15,6 +15,8 @@ var MockHolding = artifacts.require('MockHolding'); // eslint-disable-line no-un
 var MockApproval = artifacts.require('MockApproval'); // eslint-disable-line no-undef
 var TestingUtilities = artifacts.require('TestingUtilities'); // eslint-disable-line no-undef
 
+var Creditor = artifacts.require('Creditor'); // eslint-disable-line no-undef
+
 
 const amountToMint = (new BN(5)).mul((new BN(10)).pow(new BN(30)));
 
@@ -29,6 +31,8 @@ module.exports = async (deployer, network, accounts) => {
 
     let profileStorage;
     let holdingStorage;
+
+    let creditor;
 
     var amounts = [];
     var recepients = [];
@@ -128,6 +132,11 @@ module.exports = async (deployer, network, accounts) => {
 
         console.log(`\t ProfileStorage contract address: \t${profileStorage.address}`);
         console.log(`\t HoldingStorage contract address: \t${holdingStorage.address}`);
+
+        creditor = await deployer.deploy(Creditor, hub.address);
+        console.log(`\t Creditor contract address: \t${creditor.address}`);
+
+        await token.transfer(creditor.address, amountToMint.div(new BN(2)));
 
         break;
     case 'mock':
