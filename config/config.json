@@ -244,7 +244,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-stable",
       "host": "localhost",
@@ -255,7 +255,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
+      "hub_contract_address": "0x6C314872A7e97A6F1dC7De2dc43D28500dd36f22",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
