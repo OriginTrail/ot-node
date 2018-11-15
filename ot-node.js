@@ -298,7 +298,6 @@ class OTNode {
         const appState = {};
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState }, web3);
-            await this.startRPC();
             return;
         }
 
@@ -449,7 +448,8 @@ class OTNode {
         await transport.start();
 
         // Initialise API
-        await this.startRPC();
+        const apiUtilities = container.resolve('apiUtilities');
+        await this.startRPC(apiUtilities);
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -494,6 +494,7 @@ class OTNode {
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
+            apiUtilities: awilix.asClass(APIUtilities).singleton(),
         });
 
         const transport = container.resolve('transport');
@@ -513,6 +514,9 @@ class OTNode {
         ], (eventData) => {
             approvalService.handleApprovalEvent(eventData);
         });
+
+        const apiUtilities = container.resolve('apiUtilities');
+        await this.startRPC(apiUtilities);
     }
 
     /**
@@ -539,8 +543,9 @@ class OTNode {
 
     /**
      * Start RPC server
+     * @param apiUtilities - API utilities instance
      */
-    async startRPC() {
+    async startRPC(apiUtilities) {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -609,27 +614,13 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
         server.use((request, response, next) => {
-            if (config.auth_token_enabled) {
-                const token = request.query.auth_token;
-
-                const deny = (message) => {
-                    log.trace(message);
-                    response.status(401);
-                    response.send({
-                        message,
-                    });
-                };
-
-                if (!token) {
-                    const msg = 'Failed to authorize. Auth token is missing';
-                    deny(msg);
-                    return;
-                }
-                if (token !== config.houston_password) {
-                    const msg = `Failed to authorize. Auth token ${token} is invalid`;
-                    deny(msg);
-                    return;
-                }
+            const result = apiUtilities.authorize(request);
+            if (result) {
+                response.status(result.status);
+                response.send({
+                    message: result.message,
+                });
+                return;
             }
             return next();
         });
@@ -704,6 +695,7 @@ class OTNode {
         server.get('/api/network/get-contact/:node_id', async (req, res) => {
             const nodeId = req.params.node_id;
             log.api(`Get contact node ID ${nodeId}`);
+
             const result = await context.transport.getContact(nodeId);
             const body = {};
 
@@ -717,6 +709,7 @@ class OTNode {
         server.get('/api/network/find/:node_id', async (req, res) => {
             const nodeId = req.params.node_id;
             log.api(`Find node ID ${nodeId}`);
+
             const result = await context.transport.findNode(nodeId);
             const body = {};
 
@@ -729,10 +722,6 @@ class OTNode {
 
         server.get('/api/replication/:replication_id', (req, res) => {
             log.api('GET: Replication status request received');
-
-            if (!apiUtilities.authorize(req, res)) {
-                return;
-            }
 
             const replicationId = req.params.replication_id;
             if (replicationId == null) {
@@ -773,6 +762,7 @@ class OTNode {
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');
+
             const queryObject = req.query;
             emitter.emit('api-get_root_hash', {
                 query: queryObject,
@@ -782,6 +772,7 @@ class OTNode {
 
         server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
+
             if (!req.params.query_id) {
                 res.status(400);
                 res.send({
@@ -797,6 +788,7 @@ class OTNode {
 
         server.get('/api/query/:query_id/responses', (req, res) => {
             log.api('GET: Local query responses request received.');
+
             if (!req.params.query_id) {
                 res.status(400);
                 res.send({

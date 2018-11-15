@@ -95,6 +95,22 @@ class OtNode extends EventEmitter {
         this.initialized = true;
     }
 
+    /**
+     * Overrides node configuration
+     * @param override - Configuration override
+     */
+    overrideConfiguration(override) {
+        this.options.nodeConfiguration = deepExtend(this.options.nodeConfiguration, override);
+
+        this.configFilePath = path.join(this.options.configDir, 'initial-configuration.json');
+        fs.writeFileSync(
+            this.configFilePath,
+            JSON.stringify(this.options.nodeConfiguration, null, 4),
+        );
+        execSync(`npm run setup -- --configDir=${this.options.configDir} --config ${this.configFilePath}`);
+        this.logger.log('Node configuration overridden.');
+    }
+
     start() {
         assert(!this.process);
         assert(this.initialized);
