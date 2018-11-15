@@ -4,6 +4,7 @@ const BN = require('bn.js');
 const xor = require('buffer-xor');
 const abi = require('ethereumjs-abi');
 const Utilities = require('./Utilities');
+const utils = require('ethereumjs-util');
 
 class Encryption {
     /**
@@ -245,7 +246,6 @@ class Encryption {
         }
 
         checksum = checksum.add(new BN(r2));
-
         return checksum.toString('hex');
     }
 
@@ -295,6 +295,55 @@ class Encryption {
         }
 
         return true;
+    }
+
+    /**
+     * Hash multiple data
+     * @param dataArgs
+     * @returns {string}
+     */
+    static generateHash(dataArgs) {
+        const types = [];
+        const args = [];
+
+        for (const value of dataArgs) {
+            types.push('uint256');
+            args.push(new BN(value, 16));
+        }
+        return Utilities.normalizeHex(abi.soliditySHA3(types, args).toString('hex').padStart(64, '0'));
+    }
+
+    /**
+     * Sign message arguments
+     * @param dataArgs
+     * @param privateKey (padded with 0x)
+     * @returns {Signature object}
+     */
+    static signMessage(web3, dataArgs, privateKey) {
+        const hash = this.generateHash(dataArgs);
+        return web3.eth.accounts.sign(hash, privateKey);
+    }
+
+    /**
+     * Extract signer's address from signature for given data
+     * @param dataArgs array
+     * @param signature
+     * @returns {string}
+     */
+    static extractSignerAddress(dataArgs, signature) {
+        const r = utils.toBuffer(signature.slice(0, 66));
+        const s = utils.toBuffer(Utilities.normalizeHex(signature.slice(66, 130)));
+        const v = Utilities.hexToNumber(utils.toBuffer(Utilities.normalizeHex(signature.slice(130, 132))).toString('hex'));
+
+        const dataHash = this.generateHash(dataArgs).slice(2);
+        const msg = Utilities.normalizeHex(abi.soliditySHA3(
+            ['bytes', 'uint256'],
+            [Buffer.from('\x19Ethereum Signed Message:\n32', 'utf-8'), new BN(dataHash, 16)],
+        ).toString('hex').padStart(64, '0'));
+
+        const m = utils.toBuffer(msg);
+        const pub = utils.ecrecover(m, v, r, s);
+        return Utilities.normalizeHex(utils.pubToAddress(pub).toString('hex'));
     }
 
     /**

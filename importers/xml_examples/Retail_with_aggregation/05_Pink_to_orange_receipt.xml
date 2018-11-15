@@ -3,26 +3,26 @@
     <EPCISHeader>
         <sbdh:StandardBusinessDocumentHeader>
             <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
-            <sbdh:Sender> <!-- Mandatory -->
-                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
-                <sbdh:ContactInformation> <!-- Mandatory-->
-                    <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
-                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>  <!-- Optional -->               
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Creator PROVIDER_ID-->
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact>
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>
                 </sbdh:ContactInformation>
             </sbdh:Sender>
-            <sbdh:Receiver><!-- Mandatory -->               
-                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Mandatory --> <!-- Creator PROVIDER_ID-->
-                <sbdh:ContactInformation> <!-- Mandatory-->
-                    <sbdh:Contact>Abraham Smith</sbdh:Contact> <!-- Mandatory -->
-                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>  <!-- Optional -->               
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Green</sbdh:Identifier> <!-- Creator PROVIDER_ID-->
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact>
+                    <sbdh:EmailAddress>abraham_Smith@green.com</sbdh:EmailAddress>
                 </sbdh:ContactInformation>
             </sbdh:Receiver>
-            <sbdh:DocumentIdentification> <!-- Mandatory-->
+            <sbdh:DocumentIdentification>
                 <sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
                 <sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
                 <sbdh:InstanceIdentifier>100002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
                 <sbdh:Type>Packing</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-                <sbdh:CreationDateAndTime>2018-01-01T11:11:52Z</sbdh:CreationDateAndTime> <!-- Optional -->     
+                <sbdh:CreationDateAndTime>2018-01-01T11:11:52Z</sbdh:CreationDateAndTime>
             </sbdh:DocumentIdentification>
         </sbdh:StandardBusinessDocumentHeader>
         <extension>
@@ -126,18 +126,18 @@
     <EPCISBody>
         <EventList>
             <ObjectEvent> <!-- Transport Receipt Orange-->               
-                <eventTime>2018-01-05T11:30:00.000-01:00</eventTime> <!-- Mandatory-->
-                <eventTimeZoneOffset>-01:00</eventTimeZoneOffset> <!-- Mandatory-->
+                <eventTime>2018-01-05T11:30:00.000-01:00</eventTime>
+                <eventTimeZoneOffset>-01:00</eventTimeZoneOffset>
                 <epcList>
                     <epc>urn:epc:id:sgtin:Pallet_1</epc>
                 </epcList>
-                <action>OBSERVE</action> <!-- Mandatory-->
-                <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep> <!-- Optional -->
-                <disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
-                <readPoint> <!-- Optional -->
+                <action>OBSERVE</action>
+                <bizStep>urn:epcglobal:cbv:bizstep:receiving</bizStep>
+                <disposition>urn:epcglobal:cbv:disp:active</disposition>
+                <readPoint>
                     <id>urn:epc:id:sgln:Building_Orange_V5</id>
                 </readPoint>
-                <bizLocation> <!-- Optional -->
+                <bizLocation>
                     <id>urn:epc:id:sgln:Building_Orange</id>
                 </bizLocation>
                 <extension>

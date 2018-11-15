@@ -3,8 +3,6 @@ const Storage = require('./Storage');
 const { Op } = require('sequelize');
 const Models = require('../models');
 
-const log = require('./Utilities').getLogger();
-
 class Challenge {
     /**
      * Generate test challenges for Data Holder

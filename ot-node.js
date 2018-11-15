@@ -12,41 +12,81 @@ const KademliaUtilities = require('./modules/network/kademlia/kademlia-utils');
 const Utilities = require('./modules/Utilities');
 const GraphStorage = require('./modules/Database/GraphStorage');
 const Blockchain = require('./modules/Blockchain');
+const BlockchainPluginService = require('./modules/Blockchain/plugin/blockchain-plugin-service');
 const restify = require('restify');
 const fs = require('fs');
+const path = require('path');
 const models = require('./models');
 const Storage = require('./modules/Storage');
 const Importer = require('./modules/importer');
 const GS1Importer = require('./modules/GS1Importer');
 const GS1Utilities = require('./modules/GS1Utilities');
 const WOTImporter = require('./modules/WOTImporter');
-const config = require('./modules/Config');
 const Challenger = require('./modules/Challenger');
 const RemoteControl = require('./modules/RemoteControl');
 const corsMiddleware = require('restify-cors-middleware');
-const BN = require('bn.js');
 const bugsnag = require('bugsnag');
-const ip = require('ip');
-
+const rc = require('rc');
+const mkdirp = require('mkdirp');
+const uuidv4 = require('uuid/v4');
 const awilix = require('awilix');
+const homedir = require('os').homedir();
+const ip = require('ip');
+const argv = require('minimist')(process.argv.slice(2));
 
 const Graph = require('./modules/Graph');
 const Product = require('./modules/Product');
 
 const EventEmitter = require('./modules/EventEmitter');
-const DHService = require('./modules/DHService');
 const DVService = require('./modules/DVService');
-const ProfileService = require('./modules/ProfileService');
-const DataReplication = require('./modules/DataReplication');
+const MinerService = require('./modules/service/miner-service');
+const ApprovalService = require('./modules/service/approval-service');
+const ProfileService = require('./modules/service/profile-service');
+const ReplicationService = require('./modules/service/replication-service');
+const ImportController = require('./modules/controller/import-controller');
+const RestAPIValidator = require('./modules/validator/rest-api-validator');
+const APIUtilities = require('./modules/utility/api-utilities');
 
 const pjson = require('./package.json');
+const configjson = require('./config/config.json');
 
-const log = Utilities.getLogger();
 const Web3 = require('web3');
+
+const log = require('./modules/logger');
 
 global.__basedir = __dirname;
 
 let context;
+const defaultConfig = configjson[
+    process.env.NODE_ENV &&
+    ['development', 'staging', 'stable', 'mariner', 'production'].indexOf(process.env.NODE_ENV) >= 0 ?
+        process.env.NODE_ENV : 'development'];
+
+let config;
+try {
+    // Load config.
+    config = rc(pjson.name, defaultConfig);
+
+    if (argv.configDir) {
+        config.appDataPath = argv.configDir;
+        models.sequelize.options.storage = path.join(config.appDataPath, 'system.db');
+    } else {
+        config.appDataPath = path.join(
+            homedir,
+            `.${pjson.name}rc`,
+            process.env.NODE_ENV,
+        );
+    }
+
+    if (!config.node_wallet || !config.node_private_key) {
+        console.error('Please provide valid wallet.');
+        process.abort();
+    }
+} catch (error) {
+    console.error(`Failed to read configuration. ${error}.`);
+    console.error(error.stack);
+    process.abort();
+}
 
 process.on('unhandledRejection', (reason, p) => {
     if (reason.message.startsWith('Invalid JSON RPC response')) {
@@ -66,7 +106,7 @@ process.on('unhandledRejection', (reason, p) => {
             {
                 user: {
                     id: config.node_wallet,
-                    identity: config.node_kademlia_id,
+                    identity: config.identity,
                     config: cleanConfig,
                 },
                 severity: 'error',
@@ -93,7 +133,7 @@ process.on('uncaughtException', (err) => {
         {
             user: {
                 id: config.node_wallet,
-                identity: config.node_kademlia_id,
+                identity: config.identity,
                 config: cleanConfig,
             },
             severity: 'error',
@@ -113,6 +153,11 @@ process.on('exit', (code) => {
     } else {
         log.debug(`Normal exiting with code: ${code}`);
     }
+});
+
+process.on('SIGINT', () => {
+    log.important('SIGINT caught. Exiting...');
+    process.exit(0);
 });
 
 function notifyBugsnag(error, metadata, subsystem) {
@@ -180,46 +225,6 @@ function notifyEvent(message, metadata, subsystem) {
  * Main node object
  */
 class OTNode {
-    async getBalances(Utilities, selectedBlockchain, web3, config, initial) {
-        let enoughETH = false;
-        let enoughtTRAC = false;
-        try {
-            const etherBalance = await Utilities.getBalanceInEthers(
-                web3,
-                selectedBlockchain.wallet_address,
-            );
-            if (etherBalance <= 0) {
-                console.log('Please get some ETH in the node wallet fore running ot-node');
-                enoughETH = false;
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughETH = true;
-                log.info(`Balance of ETH: ${etherBalance}`);
-            }
-
-            const atracBalance = await Utilities.getAlphaTracTokenBalance(
-                web3,
-                selectedBlockchain.wallet_address,
-                selectedBlockchain.token_contract_address,
-            );
-            if (atracBalance <= 0) {
-                enoughtTRAC = false;
-                console.log('Please get some ATRAC in the node wallet fore running ot-node');
-                if (initial) {
-                    process.exit(1);
-                }
-            } else {
-                enoughtTRAC = true;
-                log.info(`Balance of ATRAC: ${atracBalance}`);
-            }
-        } catch (error) {
-            console.log(error);
-            notifyBugsnag(error);
-        }
-        config.enoughFunds = enoughETH && enoughtTRAC;
-    }
     /**
      * OriginTrail node system bootstrap function
      */
@@ -231,7 +236,7 @@ class OTNode {
                     appVersion: pjson.version,
                     autoNotify: false,
                     sendCode: true,
-                    releaseStage: Utilities.runtimeConfig().bugSnag.releaseStage,
+                    releaseStage: config.bugSnag.releaseStage,
                     logger: {
                         info: log.info,
                         warn: log.warn,
@@ -259,76 +264,28 @@ class OTNode {
         log.important(`Running in ${process.env.NODE_ENV} environment.`);
 
         // sync models
-        Storage.models = (await models.sequelize.sync()).models;
-        Storage.db = models.sequelize;
-
-        // Loading config data
         try {
-            await Utilities.loadConfig();
-            log.info('Loaded system config');
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
+            Storage.models = (await models.sequelize.sync()).models;
+            Storage.db = models.sequelize;
+        } catch (error) {
+            if (error.constructor.name === 'ConnectionError') {
+                console.error('Failed to open database. Did you forget to run "npm run setup"?');
+                process.abort();
+            }
+            console.error(error);
+            process.abort();
         }
+
+        // Seal config in order to prevent adding properties.
+        // Allow identity to be added. Continuity.
+        config.identity = '';
+        config.erc725Identity = '';
+        Object.seal(config);
 
         // check for Updates
         try {
             log.info('Checking for updates');
-            await Utilities.checkForUpdates();
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
-        if (Utilities.isBootstrapNode()) {
-            await this.startBootstrapNode();
-            this.startRPC();
-            return;
-        }
-
-        // check if ArangoDB service is running at all
-        if (process.env.GRAPH_DATABASE === 'arangodb') {
-            try {
-                const responseFromArango = await Utilities.getArangoDbVersion();
-                log.info(`Arango server version ${responseFromArango.version} is up and running`);
-            } catch (err) {
-                log.error('Please make sure Arango server is up and running');
-                console.log(err);
-                notifyBugsnag(err);
-                process.exit(1);
-            }
-        }
-
-        let selectedDatabase;
-        // Loading selected graph database data
-        try {
-            selectedDatabase = await Utilities.loadSelectedDatabaseInfo();
-            log.info('Loaded selected database data');
-            config.database = selectedDatabase;
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
-        // Checking if selected graph database exists
-        try {
-            await Utilities.checkDoesStorageDbExists();
-            log.info('Storage database check done');
-        } catch (err) {
-            console.log(err);
-            notifyBugsnag(err);
-            process.exit(1);
-        }
-
-        let selectedBlockchain;
-        // Loading selected blockchain network
-        try {
-            selectedBlockchain = await Utilities.loadSelectedBlockchainInfo();
-            log.info(`Loaded selected blockchain network ${selectedBlockchain.blockchain_title}`);
-            config.blockchain = selectedBlockchain;
+            await Utilities.checkForUpdates(config.autoUpdater);
         } catch (err) {
             console.log(err);
             notifyBugsnag(err);
@@ -338,14 +295,33 @@ class OTNode {
         const web3 =
             new Web3(new Web3.providers.HttpProvider(`${config.blockchain.rpc_node_host}:${config.blockchain.rpc_node_port}`));
 
-        // check does node_wallet has sufficient Ether and ATRAC tokens
-        if (process.env.NODE_ENV !== 'test') {
-            await this.getBalances(Utilities, selectedBlockchain, web3, config, true);
-            setInterval(async () => {
-                await this.getBalances(Utilities, selectedBlockchain, web3, config);
-            }, 1800000);
-        } else {
-            config.enoughFunds = true;
+        const appState = {};
+        if (config.is_bootstrap_node) {
+            await this.startBootstrapNode({ appState }, web3);
+            return;
+        }
+
+        // check if ArangoDB service is running at all
+        if (config.database.provider === 'arangodb') {
+            try {
+                const responseFromArango = await Utilities.getArangoDbVersion(config);
+                log.info(`Arango server version ${responseFromArango.version} is up and running`);
+            } catch (err) {
+                log.error('Please make sure Arango server is up and running');
+                console.log(err);
+                notifyBugsnag(err);
+                process.exit(1);
+            }
+        }
+
+        // Checking if selected graph database exists
+        try {
+            await Utilities.checkDoesStorageDbExists(config);
+            log.info('Storage database check done');
+        } catch (err) {
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
         }
 
         // Create the container and set the injectionMode to PROXY (which is also the default).
@@ -355,7 +331,7 @@ class OTNode {
 
         context = container.cradle;
 
-        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js'], {
+        container.loadModules(['modules/command/**/*.js', 'modules/controller/**/*.js', 'modules/service/**/*.js', 'modules/Blockchain/plugin/hyperledger/*.js'], {
             formatName: 'camelCase',
             resolverOptions: {
                 lifetime: awilix.Lifetime.SINGLETON,
@@ -369,18 +345,19 @@ class OTNode {
             kademlia: awilix.asClass(Kademlia).singleton(),
             graph: awilix.asClass(Graph).singleton(),
             product: awilix.asClass(Product).singleton(),
-            dhService: awilix.asClass(DHService).singleton(),
             dvService: awilix.asClass(DVService).singleton(),
             profileService: awilix.asClass(ProfileService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             config: awilix.asValue(config),
+            appState: awilix.asValue(appState),
             web3: awilix.asValue(web3),
             importer: awilix.asClass(Importer).singleton(),
             blockchain: awilix.asClass(Blockchain).singleton(),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
             gs1Importer: awilix.asClass(GS1Importer).singleton(),
             gs1Utilities: awilix.asClass(GS1Utilities).singleton(),
             wotImporter: awilix.asClass(WOTImporter).singleton(),
-            graphStorage: awilix.asValue(new GraphStorage(selectedDatabase, log)),
+            graphStorage: awilix.asValue(new GraphStorage(config.database, log)),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             challenger: awilix.asClass(Challenger).singleton(),
             logger: awilix.asValue(log),
@@ -388,12 +365,44 @@ class OTNode {
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             notifyEvent: awilix.asFunction(() => notifyEvent).transient(),
             transport: awilix.asValue(Transport()),
+            apiUtilities: awilix.asClass(APIUtilities).singleton(),
+            importController: awilix.asClass(ImportController).singleton(),
+            minerService: awilix.asClass(MinerService).singleton(),
+            replicationService: awilix.asClass(ReplicationService).singleton(),
         });
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
         const emitter = container.resolve('emitter');
         const dhService = container.resolve('dhService');
         const remoteControl = container.resolve('remoteControl');
+        const profileService = container.resolve('profileService');
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
 
         emitter.initialize();
+
+        // check does node_wallet has sufficient funds
+        if (process.env.NODE_ENV !== 'development') {
+            try {
+                appState.enoughFunds = await blockchain.getBalances();
+                if (appState.enoughFunds === false && !await profileService.isProfileCreated()) {
+                    log.warn('Insufficient funds to create profile');
+                    process.exit(1);
+                }
+            } catch (err) {
+                notifyBugsnag(err);
+            }
+            setInterval(async () => {
+                try {
+                    appState.enoughFunds = await blockchain.getBalances();
+                } catch (err) {
+                    notifyBugsnag(err);
+                }
+            }, 1800000);
+        } else {
+            appState.enoughFunds = true;
+        }
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -410,73 +419,104 @@ class OTNode {
             process.exit(1);
         }
 
-        // Fetching Houston access password
-        models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-            log.notify('================================================================');
-            log.notify(`Houston password: ${res.value}`);
-            log.notify('================================================================');
-        });
+        // Fetch Houston access password
+        if (!config.houston_password) {
+            config.houston_password = uuidv4();
+        }
+
+        fs.writeFileSync(path.join(config.appDataPath, 'houston.txt'), config.houston_password);
+        log.notify('================================================================');
+        log.notify('Houston password stored in file                                 ');
+        log.notify('================================================================');
 
         // Starting the kademlia
         const transport = container.resolve('transport');
-        const blockchain = container.resolve('blockchain');
-
-        // Initialise API
-        this.startRPC(emitter);
-
         await transport.init(container.cradle);
-
-        models.node_config.update({ value: config.identity }, { where: { key: 'node_kademlia_id' } });
 
         // Starting event listener on Blockchain
         this.listenBlockchainEvents(blockchain);
         dhService.listenToBlockchainEvents();
 
         try {
-            await this.createProfile(blockchain);
+            await profileService.initProfile();
         } catch (e) {
             log.error('Failed to create profile');
             console.log(e);
             notifyBugsnag(e);
             process.exit(1);
         }
+        await transport.start();
 
-        if (parseInt(config.remote_control_enabled, 10)) {
-            log.info(`Remote control enabled and listening on port ${config.remote_control_port}`);
+        // Initialise API
+        const apiUtilities = container.resolve('apiUtilities');
+        await this.startRPC(apiUtilities);
+
+        if (config.remote_control_enabled) {
+            log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
             await remoteControl.connect();
         }
-
-        const challenger = container.resolve('challenger');
-        await challenger.startChallenging();
 
         const commandExecutor = container.resolve('commandExecutor');
         await commandExecutor.init();
         await commandExecutor.replay();
+        await commandExecutor.start();
+        appState.started = true;
     }
 
     /**
      * Starts bootstrap node
      * @return {Promise<void>}
      */
-    async startBootstrapNode() {
+    async startBootstrapNode({ appState }, web3) {
         const container = awilix.createContainer({
             injectionMode: awilix.InjectionMode.PROXY,
         });
 
+        container.loadModules(['modules/Blockchain/plugin/hyperledger/*.js'], {
+            formatName: 'camelCase',
+            resolverOptions: {
+                lifetime: awilix.Lifetime.SINGLETON,
+                register: awilix.asClass,
+            },
+        });
+
         container.register({
             emitter: awilix.asValue({}),
+            web3: awilix.asValue(web3),
+            blockchain: awilix.asClass(Blockchain).singleton(),
+            blockchainPluginService: awilix.asClass(BlockchainPluginService).singleton(),
+            approvalService: awilix.asClass(ApprovalService).singleton(),
             kademlia: awilix.asClass(Kademlia).singleton(),
             config: awilix.asValue(config),
-            dataReplication: awilix.asClass(DataReplication).singleton(),
+            appState: awilix.asValue(appState),
             remoteControl: awilix.asClass(RemoteControl).singleton(),
             logger: awilix.asValue(log),
             kademliaUtilities: awilix.asClass(KademliaUtilities).singleton(),
             notifyError: awilix.asFunction(() => notifyBugsnag).transient(),
             transport: awilix.asValue(Transport()),
+            apiUtilities: awilix.asClass(APIUtilities).singleton(),
         });
 
         const transport = container.resolve('transport');
         await transport.init(container.cradle);
+        await transport.start();
+
+        const blockchain = container.resolve('blockchain');
+        await blockchain.initialize();
+
+        const approvalService = container.resolve('approvalService');
+        await approvalService.initialize();
+
+        this.listenBlockchainEvents(blockchain);
+        blockchain.subscribeToEventPermanentWithCallback([
+            'NodeApproved',
+            'NodeRemoved',
+        ], (eventData) => {
+            approvalService.handleApprovalEvent(eventData);
+        });
+
+        const apiUtilities = container.resolve('apiUtilities');
+        await this.startRPC(apiUtilities);
     }
 
     /**
@@ -492,9 +532,9 @@ class OTNode {
         setInterval(() => {
             if (!working && Date.now() > deadline) {
                 working = true;
-                blockchain.getAllPastEvents('BIDDING_CONTRACT');
-                blockchain.getAllPastEvents('READING_CONTRACT');
-                blockchain.getAllPastEvents('ESCROW_CONTRACT');
+                blockchain.getAllPastEvents('HOLDING_CONTRACT');
+                blockchain.getAllPastEvents('PROFILE_CONTRACT');
+                blockchain.getAllPastEvents('APPROVAL_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }
@@ -502,56 +542,10 @@ class OTNode {
     }
 
     /**
-     * Creates profile on the contract
-     */
-    async createProfile(blockchain) {
-        const { identity } = config;
-        const profileInfo = await blockchain.getProfile(config.node_wallet);
-        if (profileInfo.active) {
-            log.info(`Profile has already been created for ${identity}`);
-            if (
-                (new BN(profileInfo.token_amount_per_byte_minute)
-                    .eq(new BN(config.dh_price))) &&
-                (new BN(profileInfo.stake_amount_per_byte_minute)
-                    .eq(new BN(config.dh_stake_factor))) &&
-                (new BN(profileInfo.read_stake_factor)
-                    .eq(new BN(config.read_stake_factor))) &&
-                (new BN(profileInfo.max_escrow_time_in_minutes)
-                    .eq(new BN(config.dh_max_time_mins)))
-            ) {
-                return;
-            }
-
-            log.notify('Profile\'s config differs. Updating profile...');
-        } else {
-            log.notify(`Profile is being created for ${identity}. This could take a while...`);
-        }
-
-        await blockchain.createProfile(
-            config.identity,
-            new BN(config.dh_price, 10),
-            new BN(config.dh_stake_factor, 10),
-            config.read_stake_factor,
-            config.dh_max_time_mins,
-        );
-        const event = await blockchain.subscribeToEvent('ProfileCreated', null, 5 * 60 * 1000, null, (eventData) => {
-            if (eventData.node_id) {
-                return eventData.node_id.includes(identity);
-            }
-            return false;
-        });
-        if (event) {
-            log.notify(`Profile created for node ${identity}`);
-        } else {
-            log.error('Profile could not be confirmed in timely manner. Please, try again later.');
-            process.exit(1);
-        }
-    }
-
-    /**
      * Start RPC server
+     * @param apiUtilities - API utilities instance
      */
-    startRPC(emitter) {
+    async startRPC(apiUtilities) {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -597,7 +591,7 @@ class OTNode {
             },
         };
 
-        if (config.node_rpc_use_ssl !== '0') {
+        if (config.node_rpc_use_ssl) {
             Object.assign(options, {
                 key: fs.readFileSync(config.node_rpc_ssl_key_path),
                 certificate: fs.readFileSync(config.node_rpc_ssl_cert_path),
@@ -620,27 +614,13 @@ class OTNode {
         server.pre(cors.preflight);
         server.use(cors.actual);
         server.use((request, response, next) => {
-            if (Utilities.authTokenEnabled()) {
-                const token = request.query.auth_token;
-
-                const deny = (message) => {
-                    log.trace(message);
-                    response.status(401);
-                    response.send({
-                        message,
-                    });
-                };
-
-                if (!token) {
-                    const msg = 'Failed to authorize. Auth token is missing';
-                    deny(msg);
-                    return;
-                }
-                if (token !== Utilities.getHoustonPassword()) {
-                    const msg = `Failed to authorize. Auth token ${token} is invalid`;
-                    deny(msg);
-                    return;
-                }
+            const result = apiUtilities.authorize(request);
+            if (result) {
+                response.status(result.status);
+                response.send({
+                    message: result.message,
+                });
+                return;
             }
             return next();
         });
@@ -651,40 +631,40 @@ class OTNode {
             serverListenAddress = '0.0.0.0';
         }
 
-        server.listen(parseInt(config.node_rpc_port, 10), serverListenAddress, () => {
-            log.notify(`API exposed at  ${server.url}`);
+        // promisified server.listen()
+        const startServer = () => new Promise((resolve, reject) => {
+            server.listen(config.node_rpc_port, serverListenAddress, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
         });
 
-        if (!Utilities.isBootstrapNode()) {
+        try {
+            await startServer(server, serverListenAddress);
+            log.notify(`API exposed at  ${server.url}`);
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
+
+        if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
-            this.exposeAPIRoutes(server, emitter);
+            this.exposeAPIRoutes(server, context);
         }
     }
 
     /**
      * API Routes
      */
-    exposeAPIRoutes(server, emitter) {
-        const authorize = (req, res) => {
-            const request_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-            const remote_access = config.remote_access_whitelist;
-
-            // TODO: Temp solution for local network. Ignore whitelist.
-            if (ip.isLoopback(config.node_rpc_ip)) {
-                return true;
-            }
-
-            if (remote_access.length > 0 && !remote_access.includes(request_ip)) {
-                res.status(403);
-                res.send({
-                    message: 'Unauthorized request',
-                    data: [],
-                });
-                return false;
-            }
-            return true;
-        };
-
+    exposeAPIRoutes(server, ctx) {
+        const {
+            emitter, importController, apiUtilities, dcController,
+        } = ctx;
 
         /**
          * Data import route
@@ -692,98 +672,14 @@ class OTNode {
          * @param importtype - (GS1/WOT)
          */
         server.post('/api/import', async (req, res) => {
-            log.api('POST: Import of data request received.');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.body === undefined) {
-                res.status(400);
-                res.send({
-                    message: 'Bad request',
-                });
-                return;
-            }
-
-            const supportedImportTypes = ['GS1', 'WOT'];
-
-            // Check if import type is valid
-            if (req.body.importtype === undefined ||
-                supportedImportTypes.indexOf(req.body.importtype) === -1) {
-                res.status(400);
-                res.send({
-                    message: 'Invalid import type',
-                });
-                return;
-            }
-
-            const importtype = req.body.importtype.toLowerCase();
-
-            // Check if file is provided
-            if (req.files !== undefined && req.files.importfile !== undefined) {
-                const inputFile = req.files.importfile.path;
-                try {
-                    const content = await Utilities.fileContents(inputFile);
-                    const queryObject = {
-                        content,
-                        contact: req.contact,
-                        replicate: req.body.replicate,
-                        response: res,
-                    };
-                    emitter.emit(`api-${importtype}-import-request`, queryObject);
-                } catch (e) {
-                    res.status(400);
-                    res.send({
-                        message: 'No import data provided',
-                    });
-                }
-            } else if (req.body.importfile !== undefined) {
-                // Check if import data is provided in request body
-                const queryObject = {
-                    content: req.body.importfile,
-                    contact: req.contact,
-                    replicate: req.body.replicate,
-                    response: res,
-                };
-                emitter.emit(`api-${importtype}-import-request`, queryObject);
-            } else {
-                // No import data provided
-                res.status(400);
-                res.send({
-                    message: 'No import data provided',
-                });
-            }
+            await importController.import(req, res);
         });
 
-        server.post('/api/replication', (req, res) => {
-            log.api('POST: Replication of imported data request received.');
-
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            if (req.body !== undefined && req.body.import_id !== undefined && typeof req.body.import_id === 'string' &&
-                Utilities.validateNumberParameter(req.body.total_escrow_time_in_minutes) &&
-                Utilities.validateStringParameter(req.body.max_token_amount_per_dh) &&
-                Utilities.validateStringParameter(req.body.dh_min_stake_amount) &&
-                Utilities.validateNumberParameterAllowZero(req.body.dh_min_reputation)) {
-                const queryObject = {
-                    import_id: req.body.import_id,
-                    total_escrow_time: req.body.total_escrow_time_in_minutes * 60000,
-                    max_token_amount: req.body.max_token_amount_per_dh,
-                    min_stake_amount: req.body.dh_min_stake_amount,
-                    min_reputation: req.body.dh_min_reputation,
-                    response: res,
-                };
-                emitter.emit('api-create-offer', queryObject);
-            } else {
-                log.error('Invalid request');
-                res.status(400);
-                res.send({
-                    message: 'Invalid parameters!',
-                });
-            }
+        /**
+         * Create offer route
+         */
+        server.post('/api/replication', async (req, res) => {
+            await dcController.createOffer(req, res);
         });
 
         server.get('/api/dump/rt', (req, res) => {
@@ -796,15 +692,39 @@ class OTNode {
             });
         });
 
+        server.get('/api/network/get-contact/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Get contact node ID ${nodeId}`);
+
+            const result = await context.transport.getContact(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
+        server.get('/api/network/find/:node_id', async (req, res) => {
+            const nodeId = req.params.node_id;
+            log.api(`Find node ID ${nodeId}`);
+
+            const result = await context.transport.findNode(nodeId);
+            const body = {};
+
+            if (result) {
+                Object.assign(body, result);
+            }
+            res.status(200);
+            res.send(body);
+        });
+
         server.get('/api/replication/:replication_id', (req, res) => {
             log.api('GET: Replication status request received');
 
-            if (!authorize(req, res)) {
-                return;
-            }
-
-            const externalId = req.params.replication_id;
-            if (externalId == null) {
+            const replicationId = req.params.replication_id;
+            if (replicationId == null) {
                 log.error('Invalid request. You need to provide replication ID');
                 res.status = 400;
                 res.send({
@@ -812,7 +732,7 @@ class OTNode {
                 });
             } else {
                 const queryObject = {
-                    external_id: externalId,
+                    replicationId,
                     response: res,
                 };
                 emitter.emit('api-offer-status', queryObject);
@@ -823,8 +743,13 @@ class OTNode {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get('/api/trail', (req, res) => {
+        server.get('/api/trail', (req, res, next) => {
             log.api('GET: Trail request received.');
+
+            const error = RestAPIValidator.validateNotEmptyQuery(req.query);
+            if (error) {
+                return next(error);
+            }
             const queryObject = req.query;
             emitter.emit('api-trail', {
                 query: queryObject,
@@ -833,10 +758,11 @@ class OTNode {
         });
 
         /** Get root hash for provided data query
-         * @param Query params: dc_wallet, import_id
+         * @param Query params: data_set_id
          */
         server.get('/api/fingerprint', (req, res) => {
             log.api('GET: Fingerprint request received.');
+
             const queryObject = req.query;
             emitter.emit('api-get_root_hash', {
                 query: queryObject,
@@ -846,6 +772,7 @@ class OTNode {
 
         server.get('/api/query/network/:query_id', (req, res) => {
             log.api('GET: Query for status request received.');
+
             if (!req.params.query_id) {
                 res.status(400);
                 res.send({
@@ -861,6 +788,7 @@ class OTNode {
 
         server.get('/api/query/:query_id/responses', (req, res) => {
             log.api('GET: Local query responses request received.');
+
             if (!req.params.query_id) {
                 res.status(400);
                 res.send({
@@ -874,55 +802,55 @@ class OTNode {
             });
         });
 
-        server.post('/api/query/network', (req, res) => {
+        server.post('/api/query/network', (req, res, next) => {
             log.api('POST: Network query request received.');
-            if (!req.body) {
-                res.status(400);
-                res.send({
-                    message: 'Body required.',
-                });
-                return;
+
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
             }
+
             const { query } = req.body;
-            if (query) {
-                emitter.emit('api-network-query', {
-                    query,
-                    response: res,
-                });
-            } else {
-                res.status(400);
-                res.send({
-                    message: 'Query required',
-                });
+            error = RestAPIValidator.validateSearchQuery(query);
+            if (error) {
+                return next(error);
             }
+
+            emitter.emit('api-network-query', {
+                query,
+                response: res,
+            });
         });
 
         /**
          * Get vertices by query
          * @param queryObject
          */
-        server.post('/api/query/local', (req, res) => {
+        server.post('/api/query/local', (req, res, next) => {
             log.api('POST: Local query request received.');
 
-            if (req.body == null || req.body.query == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
+            let error = RestAPIValidator.validateBodyRequired(req.body);
+            if (error) {
+                return next(error);
             }
 
+            const queryObject = req.body.query;
+            error = RestAPIValidator.validateSearchQuery(queryObject);
+            if (error) {
+                return next(error);
+            }
 
             // TODO: Decrypt returned vertices
-            const queryObject = req.body.query;
             emitter.emit('api-query', {
                 query: queryObject,
                 response: res,
             });
         });
 
-        server.get('/api/query/local/import/:import_id', (req, res) => {
+        server.get('/api/query/local/import/:data_set_id', (req, res) => {
             log.api('GET: Local import request received.');
 
-            if (!req.params.import_id) {
+            if (!req.params.data_set_id) {
                 res.status(400);
                 res.send({
                     message: 'Param required.',
@@ -931,44 +859,27 @@ class OTNode {
             }
 
             emitter.emit('api-query-local-import', {
-                import_id: req.params.import_id,
+                data_set_id: req.params.data_set_id,
                 request: req,
                 response: res,
             });
         });
 
-        server.post('/api/query/local/import', (req, res) => {
-            log.api('GET: Local query import request received.');
-
-            if (req.body == null || req.body.query == null) {
-                res.status(400);
-                res.send({ message: 'Bad request' });
-                return;
-            }
-
-            const queryObject = req.body.query;
-            emitter.emit('api-get-imports', {
-                query: queryObject,
-                response: res,
-            });
-        });
-
-
         server.post('/api/read/network', (req, res) => {
             log.api('POST: Network read request received.');
 
             if (req.body == null || req.body.query_id == null || req.body.reply_id == null
-              || req.body.import_id == null) {
+              || req.body.data_set_id == null) {
                 res.status(400);
                 res.send({ message: 'Bad request' });
                 return;
             }
-            const { query_id, reply_id, import_id } = req.body;
+            const { query_id, reply_id, data_set_id } = req.body;
 
             emitter.emit('api-choose-offer', {
                 query_id,
                 reply_id,
-                import_id,
+                data_set_id,
                 response: res,
             });
         });
@@ -977,11 +888,11 @@ class OTNode {
         server.post('/api/deposit', (req, res) => {
             log.api('POST: Deposit tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-deposit-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -994,11 +905,11 @@ class OTNode {
         server.post('/api/withdraw', (req, res) => {
             log.api('POST: Withdraw tokens request received.');
 
-            if (req.body !== null && typeof req.body.atrac_amount === 'number'
-                && req.body.atrac_amount > 0) {
-                const { atrac_amount } = req.body;
+            if (req.body !== null && typeof req.body.trac_amount === 'number'
+                && req.body.trac_amount > 0) {
+                const { trac_amount } = req.body;
                 emitter.emit('api-withdraw-tokens', {
-                    atrac_amount,
+                    trac_amount,
                     response: res,
                 });
             } else {
@@ -1007,25 +918,36 @@ class OTNode {
             }
         });
 
-        server.get('/api/import_info', (req, res) => {
-            log.api('GET: import_info.');
-            const queryObject = req.query;
-
-            if (queryObject.import_id === undefined) {
-                res.send({ status: 400, message: 'Missing parameter!', data: [] });
-                return;
-            }
-
-            emitter.emit('api-import-info', {
-                importId: queryObject.import_id,
-                response: res,
-            });
+        server.get('/api/import_info', async (req, res) => {
+            await importController.dataSetInfo(req, res);
         });
 
         server.get('/api/imports_info', (req, res) => {
             log.api('GET: List imports request received.');
 
             emitter.emit('api-imports-info', {
+                response: res,
+            });
+        });
+
+        server.get('/api/consensus/:sender_id', (req, res) => {
+            log.api('GET: Consensus check events request received.');
+
+            if (req.params.sender_id == null) {
+                res.status(400);
+                res.send({ message: 'Bad request' });
+            }
+
+            emitter.emit('api-consensus-events', {
+                sender_id: req.params.sender_id,
+                response: res,
+            });
+        });
+
+        server.get('/api/info', (req, res) => {
+            log.api('GET: Node information request received.');
+
+            emitter.emit('api-node-info', {
                 response: res,
             });
         });

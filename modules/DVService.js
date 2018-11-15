@@ -127,6 +127,7 @@ class DVService {
             data_provider_wallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'PURCHASED',
         });
 
         // Check if enough tokens. From smart contract:
@@ -152,7 +153,7 @@ class DVService {
 
         if (profileBalance.lt(condition)) {
             await this.blockchain.increaseBiddingApproval(condition.sub(profileBalance));
-            await this.blockchain.depositToken(condition.sub(profileBalance));
+            await this.blockchain.depositTokens(condition.sub(profileBalance));
         }
 
         // Sign escrow.

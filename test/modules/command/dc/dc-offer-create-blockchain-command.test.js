@@ -1,35 +1,30 @@
-/* eslint-disable max-len */
 const {
     describe, beforeEach, afterEach, it,
 } = require('mocha');
 const { assert } = require('chai');
-const DCOfferCreateBlockchainCommand = require('../../../../modules/command/dc/dc-offer-create-blockchain-command');
+const sleep = require('sleep-async')().Promise;
+const { Database } = require('arangojs');
+const BN = require('bn.js');
+const rc = require('rc');
+
+const DCOfferCreateBlockchainCommand = require('../../../../modules/command/dc/dc-offer-create-bc-command');
 const models = require('../../../../models');
 const Storage = require('../../../../modules/Storage');
-const BN = require('bn.js');
-const sleep = require('sleep-async')().Promise;
 const Utilities = require('../../../../modules/Utilities');
-const Blockchain = require('../../../../modules/Blockchain');
 const GraphStorage = require('../../../../modules/Database/GraphStorage');
-const { Database } = require('arangojs');
+
 const CommandResolver = require('../../../../modules/command/command-resolver');
 const awilix = require('awilix');
 
-const logger = Utilities.getLogger();
+const defaultConfig = require('../../../../config/config.json').development;
+const pjson = require('../../../../package.json');
 
-function buildSelectedDatabaseParam(databaseName) {
-    return {
-        username: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: databaseName,
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database_system: 'arango_db',
-    };
-}
+const logger = require('../../../../modules/logger');
 
-describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
+describe.skip('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     this.timeout(5000);
+    let config;
+    let selectedDatabase;
     let graphStorage;
     let systemDb;
     let myConfig;
@@ -78,7 +73,12 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
             return someInput;
         }
 
-        async createOffer(inputArg1, inputArg2, inputArg3, inputArg4, inputArg5, inputArg6, inputArg7, inputArg8, inputArg9, inputArg10) {
+        async createOffer(
+            inputArg1, inputArg2, inputArg3,
+            inputArg4, inputArg5, inputArg6,
+            inputArg7, inputArg8, inputArg9,
+            inputArg10,
+        ) {
             createOfferCalled = true;
             return 0;
         }
@@ -101,6 +101,10 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
     }
 
     beforeEach('Inject offer into system database', async () => {
+        config = rc(pjson.name, defaultConfig);
+        selectedDatabase = config.database;
+        selectedDatabase.database = databaseName;
+
         Storage.models = (await models.sequelize.sync()).models;
         Storage.db = models.sequelize;
 
@@ -114,7 +118,10 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
         await sleep.sleep(1000);
 
         systemDb = new Database();
-        systemDb.useBasicAuth(process.env.DB_USERNAME, process.env.DB_PASSWORD);
+        systemDb.useBasicAuth(
+            selectedDatabase.username,
+            selectedDatabase.password,
+        );
 
         // Drop test database if exist.
         const listOfDatabases = await systemDb.listDatabases();
@@ -124,10 +131,14 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
 
         await systemDb.createDatabase(
             databaseName,
-            [{ username: process.env.DB_USERNAME, passwd: process.env.DB_PASSWORD, active: true }],
+            [{
+                username: selectedDatabase.username,
+                passwd: selectedDatabase.password,
+                active: true,
+            }],
         );
 
-        graphStorage = new GraphStorage(buildSelectedDatabaseParam(databaseName), logger);
+        graphStorage = new GraphStorage(selectedDatabase, logger);
         myGraphStorage = await graphStorage.connect();
 
         myCommand = {
@@ -180,7 +191,7 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
-            config: awilix.asValue(Utilities.loadConfig()),
+            config: awilix.asValue(config),
             blockchain: awilix.asClass(MockBlockchainWithLowProfileBalance),
             remoteControl: awilix.asClass(MockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
@@ -212,7 +223,7 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
-            config: awilix.asValue(Utilities.loadConfig()),
+            config: awilix.asValue(config),
             blockchain: awilix.asClass(MockBlockchainWithHighProfileBalance),
             remoteControl: awilix.asClass(MockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
@@ -244,7 +255,7 @@ describe('Checks DCOfferCreateBlockchainCommand execute() logic', function () {
         container.register({
             logger: awilix.asValue(logger),
             graphStorage: awilix.asValue(graphStorage),
-            config: awilix.asValue(Utilities.loadConfig()),
+            config: awilix.asValue(config),
             blockchain: awilix.asClass(MockBlockchainWithEqualProfileBalance),
             remoteControl: awilix.asClass(MockRemoteControl),
             commandResolver: awilix.asClass(CommandResolver),
