@@ -1,0 +1,7 @@
+{
+    "node_wallet": "0x0556b6d87f011424c7b099040f03ad23774fe7fe",
+    "node_private_key": "askRadomirIfYouNeedIt",
+    "database": {
+      "password": "root"
+    }
+}

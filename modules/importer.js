@@ -2,6 +2,7 @@
 const Graph = require('./Graph');
 const ImportUtilities = require('./ImportUtilities');
 const Queue = require('better-queue');
+const graphConverter = require('./Database/graph-converter');
 
 class Importer {
     constructor(ctx) {
@@ -11,6 +12,7 @@ class Importer {
         this.log = ctx.logger;
         this.remoteControl = ctx.remoteControl;
         this.notifyError = ctx.notifyError;
+        this.helper = ctx.gs1Utilities;
 
         this.queue = new Queue((async (args, cb) => {
             const { type, data, future } = args;
@@ -84,7 +86,7 @@ class Importer {
         } = json_document;
 
         const {
-            import_id,
+            dataSetId,
             wallet,
         } = json_document;
 
@@ -107,18 +109,69 @@ class Importer {
             return edge;
         }));
 
+        const denormalizedVertices = graphConverter.denormalizeGraph(
+            dataSetId,
+            vertices,
+            edges,
+        ).vertices;
+
         // TODO: Use transaction here.
-        await Promise.all(vertices.map(vertex => this.graphStorage.addVertex(vertex))
+        await Promise.all(denormalizedVertices.map(vertex => this.graphStorage.addVertex(vertex))
             .concat(edges.map(edge => this.graphStorage.addEdge(edge))));
-        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, import_id))
-            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, import_id))));
+        await Promise.all(vertices.map(vertex => this.graphStorage.updateImports('ot_vertices', vertex, dataSetId))
+            .concat(edges.map(edge => this.graphStorage.updateImports('ot_edges', edge, dataSetId))));
 
         this.log.info('JSON import complete');
+
+        if (!packKeys) {
+            vertices.forEach(async (vertex) => {
+                if (vertex.vertex_type === 'EVENT') {
+                    if (vertex.data && vertex.data.categories.indexOf('Ownership') !== -1) {
+                        let sender = '';
+                        if (this.helper.ignorePattern(vertex.data.bizStep, 'urn:epcglobal:cbv:bizstep:') === 'shipping') {
+                            sender = true;
+                        } else {
+                            sender = false;
+                        }
+
+                        let step = '';
+                        if (sender) {
+                            step = 'receiving';
+                        } else {
+                            step = 'shipping';
+                        }
+                        // eslint-disable-next-line
+                        const connectingEventVertices = await this.graphStorage.findEvent(
+                            vertex.sender_id,
+                            vertex.data.partner_id,
+                            vertex.data.extension.extension.documentId,
+                            step,
+                        );
+                        if (connectingEventVertices.length > 0) {
+                            await this.graphStorage.addEdge({
+                                _key: this.helper.createKey('event_connection', vertex.sender_id, connectingEventVertices[0]._key, vertex._key),
+                                _from: `${connectingEventVertices[0]._key}`,
+                                _to: `${vertex._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'INPUT',
+                            });
+                            await this.graphStorage.addEdge({
+                                _key: this.helper.createKey('event_connection', vertex.sender_id, vertex._key, connectingEventVertices[0]._key),
+                                _from: `${vertex._key}`,
+                                _to: `${connectingEventVertices[0]._key}`,
+                                edge_type: 'EVENT_CONNECTION',
+                                transaction_flow: 'OUTPUT',
+                            });
+                        }
+                    }
+                }
+            });
+        }
 
         return {
             vertices,
             edges,
-            import_id,
+            data_set_id: dataSetId,
             wallet,
         };
     }
@@ -141,23 +194,20 @@ class Importer {
         }
 
         const {
-            import_id, wallet,
+            data_set_id, wallet,
         } = result;
 
         edges = Graph.sortVertices(edges);
         vertices = Graph.sortVertices(vertices);
-        const importHash = ImportUtilities.importHash(vertices, edges);
 
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
 
-        this.log.info(`Import id: ${import_id}`);
         this.log.info(`Root hash: ${merkle.tree.getRoot()}`);
-        this.log.info(`Import hash: ${importHash}`);
+        this.log.info(`Data set ID: ${data_set_id}`);
         return {
-            import_id,
+            data_set_id,
             root_hash: merkle.tree.getRoot(),
-            import_hash: importHash,
             total_documents: merkle.hashPairs.length,
             vertices,
             edges,
@@ -200,10 +250,10 @@ class Importer {
                 error: null,
             };
         } catch (error) {
-            this.log.error(`Import error: ${error}.`);
+            this.log.error(`Import error: ${error}.\n${error.stack}`);
             this.remoteControl.importError(`Import error: ${error}.`);
             this.notifyError(error);
-            const errorObject = { message: error.toString(), status: error.status };
+            const errorObject = { message: error.toString(), status: 400 };
             return {
                 response: null,
                 error: errorObject,

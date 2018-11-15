@@ -1,12 +1,12 @@
-const Graph = require('./Graph');
+const bytes = require('utf8-length');
+const events = require('events');
+
 const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
+const Graph = require('./Graph');
 const Models = require('../models');
-const Encryption = require('./Encryption');
 const ImportUtilities = require('./ImportUtilities');
-const bytes = require('utf8-length');
-
-const events = require('events');
+const ObjectValidator = require('./validator/object-validator');
 
 class EventEmitter {
     /**
@@ -18,6 +18,7 @@ class EventEmitter {
         this.product = ctx.product;
         this.web3 = ctx.web3;
         this.graphStorage = ctx.graphStorage;
+        this.appState = ctx.appState;
 
         this._MAPPINGS = {};
         this._MAX_LISTENERS = 15; // limits the number of listeners in order to detect memory leaks
@@ -30,6 +31,7 @@ class EventEmitter {
         this._initializeAPIEmitter();
         this._initializeP2PEmitter();
         this._initializeBlockchainEmitter();
+        this._initializeInternalEmitter();
     }
 
     /**
@@ -90,11 +92,31 @@ class EventEmitter {
             logger,
             remoteControl,
             config,
+            appState,
             profileService,
-            dcController,
+            dcService,
             dvController,
             notifyError,
+            transport,
         } = this.ctx;
+
+        this._on('api-node-info', async (data) => {
+            try {
+                const system = await transport.getNetworkInfo();
+                data.response.status(200);
+                data.response.send({
+                    system,
+                    config,
+                });
+            } catch (err) {
+                logger.error('Failed to get node info');
+                notifyError(err);
+                data.response.status(500);
+                data.response.send({
+                    message: err,
+                });
+            }
+        });
 
         this._on('api-network-query-responses', async (data) => {
             const { query_id } = data;
@@ -107,7 +129,7 @@ class EventEmitter {
             });
 
             responses = responses.map(response => ({
-                imports: JSON.parse(response.imports),
+                datasets: JSON.parse(response.imports),
                 data_size: response.data_size,
                 data_price: response.data_price,
                 stake_factor: response.stake_factor,
@@ -138,10 +160,10 @@ class EventEmitter {
         });
 
         this._on('api-query-local-import', async (data) => {
-            const { import_id: importId } = data;
-            logger.info(`Get vertices trigered for import ID ${importId}`);
+            const { data_set_id: dataSetId } = data;
+            logger.info(`Get vertices trigered for data-set ID ${dataSetId}`);
             try {
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 if (result.vertices.length === 0) {
                     data.response.status(204);
@@ -149,16 +171,13 @@ class EventEmitter {
                     data.response.status(200);
                 }
 
-                const rawData = 'raw-data' in data.request.headers && data.request.headers['raw-data'] === 'true';
+                const normalizedImport = ImportUtilities
+                    .normalizeImport(dataSetId, result.vertices, result.edges);
 
-                if (rawData) {
-                    data.response.send(result);
-                } else {
-                    data.response
-                        .send(ImportUtilities.normalizeImport(result.vertices, result.edges));
-                }
+
+                data.response.send(normalizedImport);
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data-set ID ${dataSetId}.`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
@@ -167,22 +186,37 @@ class EventEmitter {
             }
         });
 
-        this._on('api-import-info', async (data) => {
-            const { importId } = data;
-            logger.info(`Get imported vertices triggered for import ID ${importId}`);
+        this._on('api-consensus-events', async (data) => {
+            const { sender_id, response } = data;
             try {
-                const dataInfo = await Models.data_info.find({ where: { import_id: importId } });
+                const events = await this.graphStorage.getConsensusEvents(sender_id);
+                data.response.send({
+                    events,
+                });
+            } catch (err) {
+                console.log(err);
+                response.status(400);
+                response.send({ message: 'Bad Request' });
+            }
+        });
+
+        this._on('api-import-info', async (data) => {
+            const { dataSetId } = data;
+            logger.info(`Get imported vertices triggered for import ID ${dataSetId}`);
+            try {
+                const dataInfo =
+                    await Models.data_info.findOne({ where: { data_set_id: dataSetId } });
 
                 if (!dataInfo) {
-                    logger.info(`Import data for import ID ${importId} does not exist.`);
+                    logger.info(`Import data for data set ID ${dataSetId} does not exist.`);
                     data.response.status(404);
                     data.response.send({
-                        message: `Import data for import ID ${importId} does not exist`,
+                        message: `Import data for data set ID ${dataSetId} does not exist`,
                     });
                     return;
                 }
 
-                const result = await dhService.getImport(importId);
+                const result = await dhService.getImport(dataSetId);
 
                 // Check if packed to fix issue with double classes.
                 const filtered = result.vertices.filter(v => v._dc_key);
@@ -191,55 +225,33 @@ class EventEmitter {
                     ImportUtilities.unpackKeys(result.vertices, result.edges);
                 }
 
-                const dataimport =
-                    await Models.data_info.findOne({ where: { import_id: importId } });
-
-                if (result.vertices.length === 0 || dataimport == null) {
+                if (result.vertices.length === 0) {
                     data.response.status(204);
                     data.response.send(result);
                 } else {
+                    const transactionHash = await ImportUtilities
+                        .getTransactionHash(dataSetId, dataInfo.origin);
+
                     data.response.status(200);
                     data.response.send({
                         import: ImportUtilities.normalizeImport(
+                            dataSetId,
                             result.vertices,
                             result.edges,
                         ),
-                        import_hash: ImportUtilities.importHash(
-                            result.vertices,
-                            result.edges,
-                        ),
-                        root_hash: dataimport.root_hash,
-                        transaction: dataimport.transaction_hash,
-                        data_provider_wallet: dataimport.data_provider_wallet,
+                        root_hash: dataInfo.root_hash,
+                        transaction: transactionHash,
+                        data_provider_wallet: dataInfo.data_provider_wallet,
                     });
                 }
             } catch (error) {
-                logger.error(`Failed to get vertices for import ID ${importId}.`);
+                logger.error(`Failed to get vertices for data set ID ${dataSetId}. ${error}.${error.stack}`);
                 notifyError(error);
                 data.response.status(500);
                 data.response.send({
-                    message: error,
+                    message: error.toString(),
                 });
             }
-        });
-
-        this._on('api-get-imports', (data) => {
-            logger.info(`Get imports triggered with query ${JSON.stringify(data.query)}`);
-            product.getImports(data.query).then((res) => {
-                if (res.length === 0) {
-                    data.response.status(204);
-                } else {
-                    data.response.status(200);
-                }
-                data.response.send(res);
-            }).catch((error) => {
-                logger.error(`Failed to get imports for query ${JSON.stringify(data.query)}`);
-                notifyError(error);
-                data.response.status(500);
-                data.response.send({
-                    message: error,
-                });
-            });
         });
 
         this._on('api-imports-info', async (data) => {
@@ -247,15 +259,16 @@ class EventEmitter {
             try {
                 const dataimports = await Models.data_info.findAll();
                 data.response.status(200);
-                data.response.send(dataimports.map(di => ({
-                    import_id: di.import_id,
+                const promises = dataimports.map(async di => ({
+                    data_set_id: di.data_set_id,
                     total_documents: di.total_documents,
                     root_hash: di.root_hash,
-                    import_hash: di.import_hash,
                     data_size: di.data_size,
-                    transaction_hash: di.transaction_hash,
+                    transaction_hash: await ImportUtilities
+                        .getTransactionHash(di.data_set_id, di.origin),
                     data_provider_wallet: di.data_provider_wallet,
-                })));
+                }));
+                data.response.send(await Promise.all(promises));
             } catch (e) {
                 logger.error('Failed to get information about imports', e);
                 data.response.status(500);
@@ -266,7 +279,7 @@ class EventEmitter {
         });
 
         this._on('api-query', (data) => {
-            logger.info(`Get veritces triggered with query ${JSON.stringify(data.query)}`);
+            logger.info(`Get vertices triggered with query ${JSON.stringify(data.query)}`);
             product.getVertices(data.query).then((res) => {
                 if (res.length === 0) {
                     data.response.status(204);
@@ -285,30 +298,21 @@ class EventEmitter {
         });
 
         this._on('api-get_root_hash', (data) => {
-            const dcWallet = data.query.dc_wallet;
-            if (dcWallet == null) {
+            const dataSetId = data.query.data_set_id;
+            if (dataSetId == null) {
                 data.response.status(400);
                 data.response.send({
-                    message: 'dc_wallet parameter query is missing',
+                    message: 'data_set_id parameter query is missing',
                 });
                 return;
             }
-            const importId = data.query.import_id;
-            if (importId == null) {
-                data.response.status(400);
-                data.response.send({
-                    message: 'import_id parameter query is missing',
-                });
-                return;
-            }
-            logger.info(`Get root hash triggered with dcWallet ${dcWallet} and importId ${importId}`);
-            blockchain.getRootHash(dcWallet, importId).then((res) => {
-                if (res) {
-                    if (!Utilities.isZeroHash(res.graph_hash)) {
+            logger.info(`Get root hash triggered with data set ${dataSetId}`);
+            blockchain.getRootHash(dataSetId).then((dataRootHash) => {
+                if (dataRootHash) {
+                    if (!Utilities.isZeroHash(dataRootHash)) {
                         data.response.status(200);
                         data.response.send({
-                            root_hash: res.graph_hash,
-                            import_hash: res.import_hash,
+                            root_hash: dataRootHash,
                         });
                     } else {
                         data.response.status(404);
@@ -334,7 +338,7 @@ class EventEmitter {
 
         this._on('api-network-query', (data) => {
             logger.info(`Network-query handling triggered with query ${JSON.stringify(data.query)}.`);
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -357,7 +361,7 @@ class EventEmitter {
         });
 
         this._on('api-choose-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 return;
             }
             const failFunction = (error) => {
@@ -368,8 +372,8 @@ class EventEmitter {
                     data: [],
                 });
             };
-            const { query_id, reply_id, import_id } = data;
-            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${import_id}`);
+            const { query_id, reply_id, data_set_id } = data;
+            logger.info(`Choose offer triggered with query ID ${query_id}, reply ID ${reply_id} and import ID ${data_set_id}`);
 
             // TODO: Load offer reply from DB
             const offer = await Models.network_query_responses.findOne({
@@ -385,7 +389,7 @@ class EventEmitter {
                 return;
             }
             try {
-                dvController.handleDataReadRequest(query_id, import_id, reply_id);
+                dvController.handleDataReadRequest(query_id, data_set_id, reply_id);
                 logger.info(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 remoteControl.offerInitiated(`Read offer ${offer.id} for query ${offer.query_id} initiated.`);
                 data.response.status(200);
@@ -393,7 +397,10 @@ class EventEmitter {
                     message: `Read offer ${offer.id} for query ${offer.query_id} initiated.`,
                 });
             } catch (e) {
-                failFunction(`Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`);
+                const message = `Failed to handle offer ${offer.id} for query ${offer.query_id} handled. ${e}.`;
+                data.response.status(500);
+                data.response.send({ message });
+                failFunction(message);
                 notifyError(e);
             }
         });
@@ -404,7 +411,7 @@ class EventEmitter {
             const networkQuery = await Models.network_queries.find({ where: { id } });
             if (networkQuery.status === 'FINISHED') {
                 try {
-                    const vertices = await dhService.dataLocationQuery(id);
+                    const vertices = await dhService.dataLocationQuery(id, true);
 
                     response.status(200);
                     response.send({
@@ -432,7 +439,12 @@ class EventEmitter {
 
         const processImport = async (response, error, data) => {
             if (response === null) {
-                data.response.status(error.status);
+                if (typeof (error.status) !== 'number') {
+                    // TODO investigate why we get non numeric error.status
+                    data.response.status(500);
+                } else {
+                    data.response.status(error.status);
+                }
                 data.response.send({
                     message: error.message,
                 });
@@ -442,9 +454,8 @@ class EventEmitter {
             }
 
             const {
-                import_id,
+                data_set_id,
                 root_hash,
-                import_hash,
                 total_documents,
                 wallet, // TODO: Sender's wallet is ignored for now.
                 vertices,
@@ -454,14 +465,13 @@ class EventEmitter {
                 const dataSize = bytes(JSON.stringify(vertices));
                 await Models.data_info
                     .create({
-                        import_id,
+                        data_set_id,
                         root_hash,
-                        import_hash,
                         data_provider_wallet: config.node_wallet,
                         import_timestamp: new Date(),
                         total_documents,
                         data_size: dataSize,
-                        transaction_hash: null,
+                        origin: 'IMPORTED',
                     }).catch((error) => {
                         logger.error(error);
                         notifyError(error);
@@ -473,15 +483,17 @@ class EventEmitter {
                     });
 
                 if (data.replicate) {
-                    this.emit('api-create-offer', { import_id, import_hash, response: data.response });
+                    this.emit('api-create-offer', {
+                        dataSetId: data_set_id,
+                        dataSizeInBytes: dataSize,
+                        dataRootHash: root_hash,
+                        response: data.response,
+                    });
                 } else {
-                    await dcController.writeRootHash(import_id, root_hash, import_hash);
-
                     data.response.status(201);
                     data.response.send({
                         message: 'Import success',
-                        import_id,
-                        import_hash,
+                        data_set_id,
                         wallet: config.node_wallet,
                     });
                     remoteControl.importSucceeded();
@@ -498,26 +510,27 @@ class EventEmitter {
         };
 
         this._on('api-offer-status', async (data) => {
-            const { external_id } = data;
-            logger.info(`Offer status for external ID ${external_id} triggered.`);
-            const offer = await Models.offers.findOne({ where: { external_id } });
+            const { replicationId } = data;
+            logger.info(`Offer status for internal ID ${replicationId} triggered.`);
+            const offer = await Models.offers.findOne({ where: { id: replicationId } });
             if (offer) {
                 data.response.status(200);
                 data.response.send({
                     status: offer.status,
                     message: offer.message,
+                    offer_id: offer.offer_id,
                 });
             } else {
-                logger.error(`There is no offer for external ID ${external_id}`);
+                logger.error(`There is no offer for interanl ID ${replicationId}`);
                 data.response.status(404);
                 data.response.send({
-                    message: 'Offer not found',
+                    message: 'Replication not found',
                 });
             }
         });
 
         this._on('api-create-offer', async (data) => {
-            if (!config.enoughFunds) {
+            if (!appState.enoughFunds) {
                 data.response.status(400);
                 data.response.send({
                     message: 'Insufficient funds',
@@ -525,30 +538,48 @@ class EventEmitter {
                 return;
             }
             const {
-                import_id,
-                import_hash,
-                total_escrow_time,
-                max_token_amount,
-                min_stake_amount,
-                min_reputation,
+                dataSetId,
+                holdingTimeInMinutes,
+                tokenAmountPerHolder,
+                litigationIntervalInMinutes,
+            } = data;
+
+            let {
+                dataRootHash,
+                dataSizeInBytes,
             } = data;
 
             try {
-                logger.info(`Preparing to create offer for import ${import_id}`);
+                logger.info(`Preparing to create offer for data set ${dataSetId}`);
 
-                const dataimport = await Models.data_info.findOne({ where: { import_id } });
-                if (dataimport == null) {
-                    throw new Error('This import does not exist in the database');
+                const dataset = await Models.data_info.findOne({
+                    where: { data_set_id: dataSetId },
+                });
+                if (dataset == null) {
+                    data.response.status(404);
+                    data.response.send({
+                        message: 'This data set does not exist in the database',
+                    });
+                    return;
                 }
 
-                const replicationId = await dcController.createOffer(
-                    import_id, dataimport.root_hash, dataimport.total_documents, total_escrow_time,
-                    max_token_amount, min_stake_amount, min_reputation, import_hash,
+                if (dataSizeInBytes == null) {
+                    dataSizeInBytes = dataset.data_size;
+                }
+
+                if (dataRootHash == null) {
+                    dataRootHash = dataset.root_hash;
+                }
+
+                const replicationId = await dcService.createOffer(
+                    dataSetId, dataRootHash, holdingTimeInMinutes, tokenAmountPerHolder,
+                    dataSizeInBytes, litigationIntervalInMinutes,
                 );
 
                 data.response.status(201);
                 data.response.send({
                     replication_id: replicationId,
+                    data_set_id: dataSetId,
                 });
             } catch (error) {
                 logger.error(`Failed to create offer. ${error}.`);
@@ -597,17 +628,17 @@ class EventEmitter {
         });
 
         this._on('api-deposit-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Deposit ${atrac_amount} ATRAC to profile triggered`);
+                logger.info(`Deposit ${trac_amount} TRAC to profile triggered`);
 
-                await profileService.depositToken(atrac_amount);
-                remoteControl.tokenDepositSucceeded(`${atrac_amount} ATRAC deposited to your profile`);
+                await profileService.depositTokens(trac_amount);
+                remoteControl.tokenDepositSucceeded(`${trac_amount} TRAC deposited to your profile`);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully deposited ${atrac_amount} ATRAC to profile`,
+                    message: `Successfully deposited ${trac_amount} TRAC to profile`,
                 });
             } catch (error) {
                 logger.error(`Failed to deposit tokens. ${error}.`);
@@ -621,18 +652,20 @@ class EventEmitter {
         });
 
         this._on('api-withdraw-tokens', async (data) => {
-            const { atrac_amount } = data;
+            const { trac_amount } = data;
 
             try {
-                logger.info(`Withdraw ${atrac_amount} ATRAC to wallet triggered`);
+                logger.info(`Withdraw ${trac_amount} TRAC to wallet triggered`);
 
-                await profileService.withdrawToken(atrac_amount);
+                await profileService.withdrawTokens(trac_amount);
 
                 data.response.status(200);
                 data.response.send({
-                    message: `Successfully withdrawn ${atrac_amount} ATRAC to wallet ${config.node_wallet}`,
+                    message: `Withdraw operation started for amount ${trac_amount}.`,
                 });
-                remoteControl.tokensWithdrawSucceeded(`Successfully withdrawn ${atrac_amount} ATRAC`);
+                // TODO notify Houston
+                // remoteControl.tokensWithdrawSucceeded
+                // (`Successfully withdrawn ${trac_amount} TRAC`);
             } catch (error) {
                 logger.error(`Failed to withdraw tokens. ${error}.`);
                 notifyError(error);
@@ -652,98 +685,64 @@ class EventEmitter {
     _initializeBlockchainEmitter() {
         const {
             dhService,
+            approvalService,
             logger,
             config,
-            dhController,
+            appState,
             notifyError,
         } = this.ctx;
 
-        this._on('eth-OfferCreated', async (eventData) => {
-            if (!config.enoughFunds) {
-                return;
-            }
+        this._on('eth-NodeApproved', (eventData) => {
             const {
-                import_id,
-                DC_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                min_reputation,
-                data_hash,
-                data_size_in_bytes,
+                nodeId,
             } = eventData;
-
-            await dhController.handleOffer(
-                import_id, DC_node_id, total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                min_reputation, data_size_in_bytes, data_hash, false,
-            );
-        });
-
-        this._on('eth-AddedPredeterminedBid', async (eventData) => {
-            if (!config.enoughFunds) {
-                return;
-            }
-            const {
-                import_id,
-                DH_wallet,
-                DH_node_id,
-                total_escrow_time_in_minutes,
-                max_token_amount_per_byte_minute,
-                min_stake_amount_per_byte_minute,
-                data_size_in_bytes,
-            } = eventData;
-
-            if (DH_wallet !== config.node_wallet
-                || config.identity !== DH_node_id.substring(2, 42)) {
-                // Offer not for me.
-                return;
-            }
-
-            logger.info(`Added as predetermined for import ${import_id}`);
-
-            // TODO: This is a hack. DH doesn't know with whom to sign the offer.
-            // Try to dig it from events.
-            const createOfferEventEventModel = await Models.events.findOne({
-                where: {
-                    event: 'OfferCreated',
-                    import_id,
-                },
-            });
-
-            if (!createOfferEventEventModel) {
-                logger.warn(`Couldn't find event CreateOffer for offer ${import_id}.`);
-                return;
-            }
 
             try {
-                const createOfferEvent = createOfferEventEventModel.get({ plain: true });
-                const createOfferEventData = JSON.parse(createOfferEvent.data);
-
-                const dcNodeId = createOfferEventData.DC_node_id.substring(2, 42);
-                await dhController.handleOffer(
-                    import_id, dcNodeId, total_escrow_time_in_minutes,
-                    max_token_amount_per_byte_minute, min_stake_amount_per_byte_minute,
-                    createOfferEventData.min_reputation, data_size_in_bytes,
-                    createOfferEventData.data_hash, true,
-                );
-            } catch (error) {
-                logger.error(`Failed to handle predetermined bid. ${error}.`);
-                notifyError(error);
+                approvalService.addApprovedNode(nodeId);
+            } catch (e) {
+                logger.warn(e.message);
             }
         });
 
-        this._on('eth-offer-canceled', (event) => {
-            logger.info(`Ongoing offer ${event.import_id} canceled`);
+        this._on('eth-NodeRemoved', (eventData) => {
+            const {
+                nodeId,
+            } = eventData;
+
+            try {
+                approvalService.removeApprovedNode(nodeId);
+            } catch (e) {
+                logger.warn(e.message);
+            }
         });
 
-        this._on('eth-bid-taken', (event) => {
-            if (event.DH_wallet !== config.node_wallet) {
-                logger.notify(`Bid not accepted for offer ${event.import_id}`);
-                // Offer not for me.
+        this._on('eth-OfferCreated', async (eventData) => {
+            if (!appState.enoughFunds) {
                 return;
             }
-            logger.notify(`Bid accepted for offer ${event.import_id}`);
+            let {
+                dcNodeId,
+            } = eventData;
+
+            dcNodeId = Utilities.denormalizeHex(dcNodeId).substring(24);
+            const {
+                offerId,
+                dataSetId,
+                dataSetSizeInBytes,
+                holdingTimeInMinutes,
+                litigationIntervalInMinutes,
+                tokenAmountPerHolder,
+            } = eventData;
+
+            try {
+                await dhService.handleOffer(
+                    offerId, dcNodeId,
+                    dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
+                    tokenAmountPerHolder, dataSetId,
+                );
+            } catch (e) {
+                logger.warn(e.message);
+            }
         });
 
         this._on('eth-LitigationInitiated', async (eventData) => {
@@ -777,37 +776,6 @@ class EventEmitter {
                 logger.info(`Litigation has completed for import ${import_id}. DH has ${DH_was_penalized ? 'been penalized' : 'not been penalized'}`);
             }
         });
-
-        this._on('eth-EscrowVerified', async (eventData) => {
-            const {
-                import_id,
-                DH_wallet,
-            } = eventData;
-
-            if (config.node_wallet === DH_wallet) {
-                // Event is for me.
-                logger.trace(`Escrow for import ${import_id} verified`);
-                try {
-                    // TODO: Possible race condition if another bid for same import came meanwhile.
-                    const bid = await Models.bids.findOne({
-                        where: {
-                            import_id,
-                        },
-                        order: [
-                            ['id', 'DESC'],
-                        ],
-                    });
-
-                    if (!bid) {
-                        logger.warn(`Could not find bid for import ID ${import_id}. I won't be able to withdraw tokens.`);
-                        return;
-                    }
-                } catch (error) {
-                    logger.error(`Failed to get bid for import ID ${import_id}. ${error}.`);
-                    notifyError(error);
-                }
-            }
-        });
     }
 
     /**
@@ -818,12 +786,9 @@ class EventEmitter {
         const {
             dvService,
             logger,
-            dataReplication,
             transport,
-            blockchain,
-            remoteControl,
-            dhController,
-            dcController,
+            dhService,
+            dcService,
             dvController,
             notifyError,
         } = this.ctx;
@@ -835,10 +800,13 @@ class EventEmitter {
 
         this._on('kad-data-location-request', async (query) => {
             const { message, messageSignature } = query;
+            if (ObjectValidator.validateSearchQueryObject(message.query)) {
+                return;
+            }
             logger.info(`Request for data ${message.query[0].value} from DV ${message.wallet} received`);
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -849,7 +817,7 @@ class EventEmitter {
                     wallet: msgWallet,
                     query: msgQuery,
                 } = message;
-                await dhController.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
+                await dhService.handleDataLocationRequest(msgId, msgNodeId, msgWallet, msgQuery);
             } catch (error) {
                 const errorMessage = `Failed to process data location request. ${error}.`;
                 logger.warn(errorMessage);
@@ -857,135 +825,47 @@ class EventEmitter {
             }
         });
 
-        // async
-        this._on('kad-payload-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            logger.info(`Data for replication arrived from ${transport.extractSenderID(request)}`);
-
-            const message = transport.extractMessage(request);
-            const importId = message.payload.import_id;
-            const { vertices } = message.payload;
-            const { edges } = message.payload;
-            const wallet = message.payload.dc_wallet;
-            const publicKey = message.payload.public_key;
-            const transactionHash = message.payload.transaction_hash;
-
-            await dhController.handleReplicationImport(
-                importId, vertices,
-                edges, wallet, publicKey,
-                transactionHash,
-            );
-
-            // TODO: send fail in case of fail.
-        });
-
-        // async
+        // sync
         this._on('kad-replication-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
             const message = transport.extractMessage(request);
-            const { import_id, wallet } = message;
+            const { offerId, wallet, dhIdentity } = message;
             const { wallet: senderWallet } = transport.extractSenderInfo(request);
             const identity = transport.extractSenderID(request);
 
-            logger.info(`Request for replication of ${import_id} received. Sender ${identity}`);
-
-            if (!import_id || !wallet) {
-                logger.warn('Asked replication without providing import ID or wallet.');
-                return;
-            }
-
             if (senderWallet !== wallet) {
-                logger.warn(`Wallet in the message differs from replication request for import ID ${import_id}.`);
+                logger.warn(`Wallet in the message differs from replication request for offer ID ${offerId}.`);
             }
 
-            const offerModel = await Models.offers.findOne({
-                where: {
-                    import_id,
-                    status: { [Models.Sequelize.Op.in]: ['FINALIZING', 'FINALIZED'] },
-                },
-                order: [
-                    ['id', 'DESC'],
-                ],
-            });
-            if (!offerModel) {
-                logger.warn(`Replication request for offer I don't know: ${import_id}.`);
-                return;
-            }
+            try {
+                await dcService.handleReplicationRequest(
+                    offerId, wallet, identity, dhIdentity,
+                    response,
+                );
+            } catch (error) {
+                const errorMessage = `Failed to handle replication request. ${error}.`;
+                logger.warn(errorMessage);
+                notifyError(error);
 
-            const offer = offerModel.get({ plain: true });
-
-            // Check is it valid ID of replicator.
-            const offerDhIds = offer.dh_ids;
-            const offerWallets = offer.dh_wallets;
-
-            // TODO: Bids should -be stored for all predetermined and others and then checked here.
-            if (!offerDhIds.includes(identity) || !offerWallets.includes(senderWallet)) {
-                // Check escrow to see if it was a chosen bid. Expected status to be initiated.
-                const escrow = await blockchain.getEscrow(import_id, wallet);
-
-                if (escrow.escrow_status === 0) {
-                    // const errorMessage = `Replication request
-                    //  for offer you didn't apply: ${import_id}.`;
-                    logger.info(`DH ${identity} requested data without offer for import ID ${import_id}.`);
-                    return;
+                try {
+                    await transport.sendResponse(response, {
+                        status: 'fail',
+                    });
+                } catch (e) {
+                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`); // TODO handle this case
                 }
             }
-
-            const verticesPromise = this.graphStorage.findVerticesByImportId(offer.import_id);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(offer.import_id);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
-
-            ImportUtilities.deleteInternal(edges);
-            ImportUtilities.deleteInternal(vertices);
-
-            const keyPair = Encryption.generateKeyPair();
-            Graph.encryptVertices(vertices, keyPair.privateKey);
-
-            const replicatedData = await Models.replicated_data.create({
-                dh_id: identity,
-                import_id,
-                offer_id: offer.id,
-                data_private_key: keyPair.privateKey,
-                data_public_key: keyPair.publicKey,
-                status: 'PENDING',
-            });
-
-            const dataInfo = await Models.data_info.find({ where: { import_id } });
-
-            logger.info(`Preparing to send payload for ${import_id} to ${identity}`);
-            const data = {
-                contact: identity,
-                vertices,
-                edges,
-                import_id,
-                public_key: keyPair.publicKey,
-                root_hash: offer.data_hash,
-                data_provider_wallet: dataInfo.data_provider_wallet,
-                transaction_hash: dataInfo.transaction_hash,
-                total_escrow_time: offer.total_escrow_time,
-            };
-
-            dataReplication.sendPayload(data).then(() => {
-                logger.info(`Payload for ${import_id} sent to ${identity}.`);
-            }).catch((error) => {
-                logger.warn(`Failed to send payload to ${identity}. Replication ID ${replicatedData.id}. ${error}`);
-                notifyError(error);
-            });
         });
 
         // async
-        this._on('kad-replication-finished', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            logger.notify('Replication finished, preparing to start challenges');
+        this._on('kad-replication-finished', async (request) => {
+            const dhNodeId = transport.extractSenderID(request);
+            const replicationFinishedMessage = transport.extractMessage(request);
+            const { wallet } = transport.extractSenderInfo(request);
+            const { offerId, messageSignature, dhIdentity } = replicationFinishedMessage;
+            await dcService.verifyDHReplication(
+                offerId, messageSignature,
+                dhNodeId, dhIdentity, wallet,
+            );
         });
 
         // sync
@@ -1029,17 +909,14 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-location-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-location-response', async (request) => {
             logger.info('DH confirms possesion of required data');
             try {
                 const dataLocationResponseObject = transport.extractMessage(request);
                 const { message, messageSignature } = dataLocationResponseObject;
 
                 if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                    const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                     logger.warn(returnMessage);
                     return;
                 }
@@ -1052,28 +929,23 @@ class EventEmitter {
         });
 
         // async
-        this._on('kad-data-read-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-read-request', async (request) => {
             logger.info('Request for data read received');
 
             const dataReadRequestObject = transport.extractMessage(request);
             const { message, messageSignature } = dataReadRequestObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message}`;
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
+                const returnMessage = `We have a forger here. Signature doesn't match for message: ${message.toString()}`;
                 logger.warn(returnMessage);
                 return;
             }
-            await dhController.handleDataReadRequestFree(message);
+            await dhService.handleDataReadRequestFree(message);
         });
 
         // async
-        this._on('kad-data-read-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+        this._on('kad-data-read-response', async (request) => {
             logger.info('Encrypted data received');
 
             const reqStatus = transport.extractRequestStatus(request);
@@ -1086,7 +958,8 @@ class EventEmitter {
             const { message, messageSignature } = dataReadResponseObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                console.log('kad-data-read-response', JSON.stringify(message), JSON.stringify(messageSignature));
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -1100,16 +973,14 @@ class EventEmitter {
 
         // async
         this._on('kad-send-encrypted-key', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+            await transport.sendResponse(response, []);
             logger.info('Initial info received to unlock data');
 
             const encryptedPaddedKeyObject = transport.extractMessage(request);
             const { message, messageSignature } = encryptedPaddedKeyObject;
 
             if (!Utilities.isMessageSigned(this.web3, message, messageSignature)) {
-                logger.warn(`We have a forger here. Signature doesn't match for message: ${message}`);
+                logger.warn(`We have a forger here. Signature doesn't match for message: ${message.toString()}`);
                 return;
             }
 
@@ -1132,9 +1003,7 @@ class EventEmitter {
 
         // async
         this._on('kad-encrypted-key-process-result', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
+            await transport.sendResponse(response, []);
             const senderId = transport.extractSenderID(request);
             const { status } = transport.extractMessage(request);
             if (status === 'SUCCESS') {
@@ -1143,33 +1012,22 @@ class EventEmitter {
                 logger.notify(`DV ${senderId} failed to process the encrypted key`);
             }
         });
+    }
 
-        // async
-        this._on('kad-verify-import-request', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { wallet: dhWallet } = transport.extractSenderInfo(request);
-            const { epk, importId, encryptionKey } = transport.extractMessage(request);
+    /**
+     * Initializes internal emitter
+     * @private
+     */
+    _initializeInternalEmitter() {
+        const {
+            dcService,
+        } = this.ctx;
 
-            logger.info(`Request to verify encryption key of replicated data received from ${dhWallet}`);
-
-            const dcNodeId = transport.extractSenderID(request);
-            await dcController.verifyKeys(importId, dcNodeId, dhWallet, epk, encryptionKey);
-        });
-
-        // async
-        this._on('kad-verify-import-response', async (request, response) => {
-            await transport.sendResponse(response, {
-                status: 'OK',
-            });
-            const { status, import_id } = transport.extractMessage(request);
-            if (status === 'success') {
-                logger.notify(`Key verification for import ${import_id} succeeded`);
-                remoteControl.replicationVerificationStatus(`DC successfully verified replication for import ${import_id}`);
+        this._on('int-miner-solution', async (err, data) => {
+            if (err) {
+                await dcService.miningFailed(data.offerId);
             } else {
-                logger.notify(`Key verification for import ${import_id} failed`);
-                remoteControl.replicationVerificationStatus(`Key verification for import ${import_id} failed`);
+                await dcService.miningSucceed(data);
             }
         });
     }

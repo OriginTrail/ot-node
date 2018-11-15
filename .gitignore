@@ -14,6 +14,7 @@ node.log
 keys
 data
 modules/blockchain_interface/ethereum/build/*
+modules/Blockchain/Ethereum/test/development.test.js
 modules/Blockchain/Ethereum/build/
 hidden_service
 !*.gitkeep
@@ -28,3 +29,4 @@ Envoy.blade.php
 test.*
 db_backup/*
 newrelic_agent.log
+logs/*

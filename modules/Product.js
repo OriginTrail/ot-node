@@ -1,6 +1,8 @@
 const Utilities = require('./Utilities');
 const ZK = require('./ZK');
 
+const ObjectValidator = require('./validator/object-validator');
+
 /**
  * Encapsulates product related operations
  */
@@ -8,6 +10,7 @@ class Product {
     constructor(ctx) {
         this.graphStorage = ctx.graphStorage;
         this.ctx = ctx;
+        this.log = ctx.logger;
     }
 
     /**
@@ -17,12 +20,30 @@ class Product {
      */
     getVertices(queryObject) {
         return new Promise((resolve, reject) => {
+            const validationError = ObjectValidator.validateSearchQueryObject(queryObject);
+            if (validationError) {
+                reject(validationError);
+            }
             this.graphStorage.findImportIds(queryObject).then((vertices) => {
                 resolve(vertices);
             }).catch((err) => {
                 reject(err);
             });
         });
+    }
+
+
+    convertToDataLocationQuery(query) {
+        const dlQuery = [];
+        for (const key in query) {
+            dlQuery.push({
+                path: key,
+                value: query[key],
+                opcode: 'EQ',
+            });
+        }
+
+        return dlQuery;
     }
 
     /**
@@ -32,27 +53,35 @@ class Product {
      */
     getTrail(queryObject) {
         return new Promise((resolve, reject) => {
-            if (queryObject.restricted !== undefined) {
-                delete queryObject.restricted;
-            }
+            // if (queryObject.restricted !== undefined) {
+            //     delete queryObject.restricted;
+            // }
 
-            this.graphStorage.findVertices(queryObject).then((vertices) => {
-                if (vertices.length === 0) {
+            const dlQuery = this.convertToDataLocationQuery(queryObject);
+
+            this.graphStorage.dataLocationQuery(dlQuery, false).then(async (response) => {
+                if (!response[0] || response[0].length === 0 || response[0].objects.length === 0) {
                     resolve([]);
                     return;
                 }
 
-                const start_vertex = vertices[0];
+                const responseData = [];
                 const depth = this.graphStorage.getDatabaseInfo().max_path_length;
-                this.graphStorage.findTraversalPath(start_vertex, depth)
-                    .then((virtualGraph) => {
-                        virtualGraph = this.consensusCheck(virtualGraph);
-                        virtualGraph = this.zeroKnowledge(virtualGraph);
-                        resolve(virtualGraph.data);
-                    }).catch((err) => {
-                        reject(err);
+
+                for (const start_vertex of response[0].objects) {
+                    // eslint-disable-next-line
+                   const virtualGraph = this.zeroKnowledge(await this.graphStorage.findTraversalPath(start_vertex, depth));
+                    const lastDatasetIndex = start_vertex.datasets.length - 1;
+                    const datasetId = start_vertex.datasets[lastDatasetIndex];
+                    responseData.push({
+                        start: start_vertex._key,
+                        batch: start_vertex[datasetId].data,
+                        data: virtualGraph.data,
                     });
+                }
+                resolve(responseData);
             }).catch((error) => {
+                this.log.error(error);
                 reject(error);
             });
         });
@@ -92,14 +121,41 @@ class Product {
         for (const key in graph) {
             const vertex = graph[key];
             if (vertex.vertex_type === 'EVENT') {
-                vertex.zk_status = this._calculateZeroKnowledge(
-                    zk,
-                    vertex.data.quantities.inputs,
-                    vertex.data.quantities.outputs,
-                    vertex.data.quantities.e,
-                    vertex.data.quantities.a,
-                    vertex.data.quantities.zp,
-                );
+                const n = vertex.datasets.length;
+                const latestDataset = vertex.datasets[n - 1];
+                const results = [];
+
+                for (const unit in vertex[latestDataset].data.quantities) {
+                    results.push(this._calculateZeroKnowledge(
+                        zk,
+                        vertex[latestDataset].data.quantities[unit].inputs,
+                        vertex[latestDataset].data.quantities[unit].outputs,
+                        vertex[latestDataset].data.quantities[unit].e,
+                        vertex[latestDataset].data.quantities[unit].a,
+                        vertex[latestDataset].data.quantities[unit].zp,
+                    ));
+                }
+
+                let passed = 0;
+                let failed = 0;
+
+                for (const res of results) {
+                    if (res === 'PASSED') {
+                        passed += 1;
+                    } else {
+                        failed += 1;
+                    }
+                }
+
+                if (failed > 0) {
+                    if (passed > 0) {
+                        vertex.zk_status = 'PARTIAL';
+                    } else {
+                        vertex.zk_status = 'FAILED';
+                    }
+                } else {
+                    vertex.zk_status = 'PASSED';
+                }
             }
         }
         return virtualGraph;
@@ -139,7 +195,11 @@ class Product {
         });
     }
 
-    getImports(inputQuery) {
+    async getImports(inputQuery) {
+        const validationError = ObjectValidator.validateSearchQueryObject(inputQuery);
+        if (validationError) {
+            throw validationError;
+        }
         return this.graphStorage.findImportIds(inputQuery);
     }
 }
