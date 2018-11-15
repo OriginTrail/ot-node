@@ -779,7 +779,7 @@ Given(/^API calls will be forbidden/, { timeout: 180000 }, function (done) {
     const { dc } = this.state;
 
     const methods = Object.keys(httpApiHelper);
-    methods.splice(methods.indexOf('apiImport'), 1); // TODO handle import
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
 
     const promises = [];
     for (const method of methods) {
@@ -804,7 +804,7 @@ Given(/^API calls will not be authorized/, { timeout: 180000 }, function (done) 
     const { dc } = this.state;
 
     const methods = Object.keys(httpApiHelper);
-    methods.splice(methods.indexOf('apiImport'), 1); // TODO handle import
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
 
     const promises = [];
     for (const method of methods) {
