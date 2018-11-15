@@ -8,8 +8,11 @@ const { Database } = require('arangojs');
 const GraphStorage = require('../../modules/Database/GraphStorage');
 const WOTImporter = require('../../modules/WOTImporter.js');
 const Utilities = require('../../modules/Utilities');
+const GS1Utilities = require('../../modules/GS1Utilities');
+const ImportUtilities = require('../../modules/ImportUtilities');
 const awilix = require('awilix');
 const rc = require('rc');
+const { sha3_256 } = require('js-sha3');
 
 const defaultConfig = require('../../config/config.json').development;
 const pjson = require('../../package.json');
@@ -57,6 +60,8 @@ describe('WOT Importer tests', () => {
 
         graphStorage = new GraphStorage(config.database, logger);
         container.register({
+            logger: awilix.asValue(logger),
+            gs1Utilities: awilix.asClass(GS1Utilities),
             wotImporter: awilix.asClass(WOTImporter),
             graphStorage: awilix.asValue(graphStorage),
             config: awilix.asValue(config),
@@ -65,7 +70,7 @@ describe('WOT Importer tests', () => {
         wot = container.resolve('wotImporter');
     });
 
-    describe('Parse and Import JSON for n repetitive times', () => {
+    describe('Parse and Import JSON files', () => {
         const repetition = 5;
         inputJsonFiles.forEach((test) => {
             for (const i in Array.from({ length: repetition })) {
@@ -75,6 +80,24 @@ describe('WOT Importer tests', () => {
                     async () => wot.parse(await Utilities.fileContents(test.args[0])),
                 );
             }
+        });
+
+        it('should parse and import JSON and calculate correct data hash import hash', async () => {
+            const response = await wot
+                .parse(await Utilities.fileContents(inputJsonFiles[0].args[0]));
+            const { vertices, edges, data_set_id } = response;
+
+            const classVertices = await graphStorage.findObjectClassVertices();
+            vertices.push(...classVertices);
+
+            ImportUtilities.sort(edges);
+            ImportUtilities.sort(vertices);
+
+            const payload = { edges, vertices };
+            const sortedPayload = Utilities.sortObject(payload);
+
+            const hash = Utilities.normalizeHex(sha3_256(Utilities.stringify(sortedPayload, 0)));
+            assert.equal(hash, data_set_id, 'Data hash should equal dataset id');
         });
     });
 

@@ -78,11 +78,6 @@ try {
         );
     }
 
-    if (fs.existsSync(path.join(config.appDataPath, 'config.json'))) {
-        const storedConfig = JSON.parse(fs.readFileSync(path.join(config.appDataPath, 'config.json'), 'utf8'));
-        Object.assign(config, storedConfig);
-    }
-
     if (!config.node_wallet || !config.node_private_key) {
         console.error('Please provide valid wallet.');
         process.abort();
@@ -157,13 +152,6 @@ process.on('exit', (code) => {
         log.error(`Whoops, terminating with code: ${code}`);
     } else {
         log.debug(`Normal exiting with code: ${code}`);
-    }
-
-    // Save config
-    if (homedir && config.appDataPath) {
-        const configPath = path.join(config.appDataPath, 'config.json');
-        mkdirp.sync(config.appDataPath);
-        fs.writeFileSync(configPath, JSON.stringify(Utilities.stripAppConfig(config), null, 4));
     }
 });
 
@@ -310,7 +298,7 @@ class OTNode {
         const appState = {};
         if (config.is_bootstrap_node) {
             await this.startBootstrapNode({ appState }, web3);
-            this.startRPC();
+            await this.startRPC();
             return;
         }
 
@@ -461,7 +449,7 @@ class OTNode {
         await transport.start();
 
         // Initialise API
-        this.startRPC();
+        await this.startRPC();
 
         if (config.remote_control_enabled) {
             log.info(`Remote control enabled and listening on port ${config.node_remote_control_port}`);
@@ -552,7 +540,7 @@ class OTNode {
     /**
      * Start RPC server
      */
-    startRPC() {
+    async startRPC() {
         const options = {
             name: 'RPC server',
             version: pjson.version,
@@ -652,9 +640,26 @@ class OTNode {
             serverListenAddress = '0.0.0.0';
         }
 
-        server.listen(config.node_rpc_port, serverListenAddress, () => {
-            log.notify(`API exposed at  ${server.url}`);
+        // promisified server.listen()
+        const startServer = () => new Promise((resolve, reject) => {
+            server.listen(config.node_rpc_port, serverListenAddress, (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
         });
+
+        try {
+            await startServer(server, serverListenAddress);
+            log.notify(`API exposed at  ${server.url}`);
+        } catch (err) {
+            log.error('Failed to start RPC server');
+            console.log(err);
+            notifyBugsnag(err);
+            process.exit(1);
+        }
 
         if (!config.is_bootstrap_node) {
             // register API routes only if the node is not bootstrap
@@ -749,8 +754,13 @@ class OTNode {
          * Get trail from database
          * @param QueryObject - ex. {uid: abc:123}
          */
-        server.get('/api/trail', (req, res) => {
+        server.get('/api/trail', (req, res, next) => {
             log.api('GET: Trail request received.');
+
+            const error = RestAPIValidator.validateNotEmptyQuery(req.query);
+            if (error) {
+                return next(error);
+            }
             const queryObject = req.query;
             emitter.emit('api-trail', {
                 query: queryObject,

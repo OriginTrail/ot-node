@@ -84,8 +84,6 @@ class AutoUpdate {
                         log.warn('RESTARTING THE APP!');
                         umzug_migrations.up().then((migrations) => {
                             log.warn('Database migrated.');
-                            rimraf.sync('./data/*');
-                            rimraf.sync('./keys/*');
                             this.restartNode();
                         });
                     }

@@ -4,7 +4,7 @@
 .env
 .nyc_output
 .git
-.origintrail-noderc
+.origintrail_noderc
 node_modules
 keys
 data

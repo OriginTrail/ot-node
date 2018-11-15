@@ -5,7 +5,7 @@ const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
-const { denormalizeGraph, normalizeGraph } = require('./Database/graph-converter');
+const { normalizeGraph } = require('./Database/graph-converter');
 
 const Models = require('../models');
 

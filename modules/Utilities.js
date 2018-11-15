@@ -14,7 +14,6 @@ const neo4j = require('neo4j-driver').v1;
 const levenshtein = require('js-levenshtein');
 const BN = require('bn.js');
 const numberToBN = require('number-to-bn');
-const externalip = require('externalip');
 const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
@@ -766,21 +765,6 @@ class Utilities {
             [a[i], a[j]] = [a[j], a[i]];
         }
         return a;
-    }
-
-    /**
-     * Get external IP
-     * @returns {Promise}
-     */
-    static getExternalIp() {
-        return new Promise((resolve, reject) => {
-            externalip((err, ip) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(ip);
-            });
-        });
     }
 
     /**

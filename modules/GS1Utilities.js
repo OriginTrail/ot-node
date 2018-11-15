@@ -248,61 +248,66 @@ class GS1Utilities {
 
             const { quantityList } = extension;
             if (bizStep === 'shipping') {
-                // sending input
-                if (categories.includes('Ownership')) {
-                    outputQuantities = this.arrayze(quantityList.quantityElement)
-                        .map(elem => ({
-                            object: elem.epcClass,
-                            quantity: parseInt(elem.quantity, 10),
-                            unit: elem.uom,
-                            r: globalR,
-                        }));
-                } else {
-                    outputQuantities = this.arrayze(quantityList.quantityElement)
-                        .map(elem => ({
-                            object: elem.epcClass,
-                            quantity: parseInt(elem.quantity, 10),
-                            unit: elem.uom,
-                            r: batchVerticesMap[elem.epcClass].randomness,
-                        }));
-                }
+                if (quantityList && quantityList.quantityElement) {
+                    // sending input
+                    if (categories.includes('Ownership')) {
+                        outputQuantities = this.arrayze(quantityList.quantityElement)
+                            .map(elem => ({
+                                object: elem.epcClass,
+                                quantity: parseInt(elem.quantity, 10),
+                                unit: elem.uom,
+                                r: globalR,
+                            }));
+                    } else {
+                        outputQuantities = this.arrayze(quantityList.quantityElement)
+                            .map(elem => ({
+                                object: elem.epcClass,
+                                quantity: parseInt(elem.quantity, 10),
+                                unit: elem.uom,
+                                r: batchVerticesMap[elem.epcClass].randomness,
+                            }));
+                    }
 
-                for (const outputQ of outputQuantities) {
-                    inputQuantities.push({
-                        object: outputQ.object,
-                        quantity: parseInt(outputQ.quantity, 10),
-                        unit: outputQ.unit,
-                        r: batchVerticesMap[outputQ.object].randomness,
-                    });
+                    for (const outputQ of outputQuantities) {
+                        inputQuantities.push({
+                            object: outputQ.object,
+                            quantity: parseInt(outputQ.quantity, 10),
+                            unit: outputQ.unit,
+                            r: batchVerticesMap[outputQ.object].randomness,
+                        });
+                    }
                 }
             } else {
-                // receiving output
-                if (categories.includes('Ownership')) {
-                    inputQuantities = this.arrayze(quantityList.quantityElement)
-                        .map(elem => ({
-                            object: elem.epcClass,
-                            quantity: parseInt(elem.quantity, 10),
-                            unit: elem.uom,
-                            r: globalR,
-                        }));
-                } else {
-                    inputQuantities = this.arrayze(quantityList.quantityElement)
-                        .map(elem => ({
-                            object: elem.epcClass,
-                            quantity: parseInt(elem.quantity, 10),
-                            unit: elem.uom,
-                            r: batchVerticesMap[elem.epcClass].randomness,
-                        }));
-                }
+                // eslint-disable-next-line no-lonely-if
+                if (quantityList && quantityList.quantityElement) {
+                    // receiving output
+                    if (categories.includes('Ownership')) {
+                        inputQuantities = this.arrayze(quantityList.quantityElement)
+                            .map(elem => ({
+                                object: elem.epcClass,
+                                quantity: parseInt(elem.quantity, 10),
+                                unit: elem.uom,
+                                r: globalR,
+                            }));
+                    } else {
+                        inputQuantities = this.arrayze(quantityList.quantityElement)
+                            .map(elem => ({
+                                object: elem.epcClass,
+                                quantity: parseInt(elem.quantity, 10),
+                                unit: elem.uom,
+                                r: batchVerticesMap[elem.epcClass].randomness,
+                            }));
+                    }
 
-                for (const inputQ of inputQuantities) {
-                    // eslint-disable-next-line
-                    outputQuantities.push({
-                        object: inputQ.object,
-                        quantity: parseInt(inputQ.quantity, 10),
-                        unit: inputQ.unit,
-                        r: batchVerticesMap[inputQ.object].randomness,
-                    });
+                    for (const inputQ of inputQuantities) {
+                        // eslint-disable-next-line
+                        outputQuantities.push({
+                            object: inputQ.object,
+                            quantity: parseInt(inputQ.quantity, 10),
+                            unit: inputQ.unit,
+                            r: batchVerticesMap[inputQ.object].randomness,
+                        });
+                    }
                 }
             }
         } else if (event.parentID) {
@@ -314,7 +319,7 @@ class GS1Utilities {
             if (event.action === 'ADD') {
                 const { childQuantityList: inputQuantityList } = event.extension;
 
-                if (inputQuantityList) {
+                if (inputQuantityList && inputQuantityList.quantityElement) {
                     const tmpInputQuantities = this.arrayze(inputQuantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
@@ -347,7 +352,7 @@ class GS1Utilities {
                 // Unpacking
                 const { childQuantityList: outputQuantityList } = event.extension;
 
-                if (outputQuantityList) {
+                if (outputQuantityList && outputQuantityList.quantityElement) {
                     const tmpOutputQuantities = this.arrayze(outputQuantityList.quantityElement)
                         .map(elem => ({
                             object: elem.epcClass,
