@@ -277,6 +277,7 @@
       "hostname": "127.0.0.1",
       "id": "StablenetV1.0.0",
       "bootstraps": ["https://82.196.10.12:5278/#e1f7e488057bae70edca426b40ff9970cdf756f6"],
+      "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
