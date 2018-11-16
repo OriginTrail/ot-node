@@ -7,14 +7,14 @@
 				"type": "address"
 			},
 			{
-				"name": "_value",
+				"name": "_subtractedValue",
 				"type": "uint256"
 			}
 		],
-		"name": "approve",
+		"name": "withdrawApproval",
 		"outputs": [
 			{
-				"name": "",
+				"name": "success",
 				"type": "bool"
 			}
 		],
