@@ -59,7 +59,7 @@ module.exports = async (deployer, network, accounts) => {
         );
         await hub.setHoldingStorageAddress(holdingStorage.address);
 
-        approval = await deployer.deploy(MockApproval);
+        approval = await deployer.deploy(Approval);
         await hub.setApprovalAddress(approval.address);
 
         token = await deployer.deploy(TracToken, accounts[0], accounts[1], accounts[2]);
