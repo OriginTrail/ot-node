@@ -8,7 +8,8 @@ sudo: enabled
 addons:
   artifacts: true
     s3_region: "eu-central-1"
-    path: $ARTIFACTS_DIR
+    paths:
+      - $ARTIFACTS_DIR
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
