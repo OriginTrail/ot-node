@@ -92,8 +92,8 @@ class Logger {
                         notify: 3,
                         api: 4,
                         info: 5,
-                        debug: 6,
-                        trace: 7,
+                        trace: 6,
+                        debug: 7,
                     },
                     host: papertrailHost,
                     port: papertrailPort,
@@ -110,8 +110,8 @@ class Logger {
                     notify: 3,
                     api: 4,
                     info: 5,
-                    debug: 6,
-                    trace: 7,
+                    trace: 6,
+                    debug: 7,
                 },
                 rewriters: [
                     () => null, // disable metadata, we don't use it
