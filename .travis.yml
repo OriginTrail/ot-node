@@ -6,7 +6,9 @@ env:
   - ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
 sudo: enabled
 addons:
-  artifacts: true
+  artifacts:
+    s3_region: "eu-central-1"
+    paths: $ARTIFACTS_DIR
 before_script:
   - mkdir -p $ARTIFACTS_DIR
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
