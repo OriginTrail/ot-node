@@ -34,7 +34,7 @@ script:
   - cd modules/Blockchain/Ethereum
   - truffle test --network test > $ARTIFACTS_DIR/truffle-test.log
   - rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log
-  - cd ../../../
+  - cd $TRAVIS_BUILD_DIR
   - jobs
   - kill %1
 after_script:
