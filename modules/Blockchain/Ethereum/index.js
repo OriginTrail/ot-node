@@ -45,16 +45,6 @@ class Ethereum {
         this.hubContract = new this.web3.eth.Contract(this.hubContractAbi, this.hubContractAddress);
 
         this.log.info('Selected blockchain: Ethereum');
-
-        if (this.config.creditorEnabled) {
-            // Loading contracts
-            this.creditorContractAddress = this.config.creditorContractAddress;
-
-            const creditorAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/creditor.json');
-            this.creditorContractAbi = JSON.parse(creditorAbiFile);
-            this.creditorContract =
-                new this.web3.eth.Contract(this.creditorContractAbi, this.creditorContractAddress);
-        }
     }
 
     /**
