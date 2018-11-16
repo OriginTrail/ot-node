@@ -2,8 +2,7 @@ language: node_js
 node_js:
   - "9"
 env:
-  - NODE_ENV=development
-  - ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
 sudo: enabled
 addons:
   artifacts:
