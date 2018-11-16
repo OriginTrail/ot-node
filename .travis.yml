@@ -7,7 +7,6 @@ env:
 sudo: enabled
 addons:
   artifacts:
-    s3_region: "eu-central-1"
     paths: $ARTIFACTS_DIR
 before_script:
   - mkdir -p $ARTIFACTS_DIR
