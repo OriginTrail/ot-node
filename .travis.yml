@@ -3,8 +3,14 @@ node_js:
   - "9"
 env:
   - NODE_ENV=development
+  - ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
 sudo: enabled
+addons:
+  artifacts: true
+    s3_region: "eu-central-1"
+    path: $ARTIFACTS_DIR
 before_script:
+  - mkdir -p $ARTIFACTS_DIR
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
@@ -18,29 +24,18 @@ script:
   - npm run lint
   - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd; fi'
   # checks for arangodb based solution
-  - npm test 2> mocha-logs.log
-  - npm start &>arangodb.log &
+  - npm test 2> $ARTIFACTS_DIR/mocha-logs.log
+  - npm start &> $ARTIFACTS_DIR/app-start.log &
   - sleep 10
   - jobs
   - if [ -n "$(jobs -p)" ]; then kill %1; fi
   # compile and check Smart Contracts
-  - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &>ganache.log &
+  - ganache-cli -i 5777 -p 7545 -l 10000000 -m "aspect ask story desert profit engage tuition leave fade giraffe exclude brief" &> $ARTIFACTS_DIR/ganache.log &
   - cd modules/Blockchain/Ethereum
-  - truffle test --network test > ../../../truffle-test.log
-  - rm -rf build && truffle migrate --reset --compile-all --network ganache > ../../../truffle-migrate.log
+  - truffle test --network test > $ARTIFACTS_DIR/truffle-test.log
+  - rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log
   - cd ../../../
   - jobs
   - kill %1
 after_script:
-  - cat mocha-logs.log
-  - rm -f mocha-logs.log
-  - cat arangodb.log
-  - rm -f arangodb.log
-  - cat truffle-test.log
-  - rm -f truffle-test.log
-  - cat truffle-migrate.log
-  - rm -f truffle-migrate.log
-  # enable line bellow in case you are interested in reading ganache-cli logs
-  # - cat ganache.log
-  - rm -f ganache.log
   - kill -9 $(pgrep arangod)
