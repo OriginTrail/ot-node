@@ -31,7 +31,8 @@
     "setup:hard:all": "node ./scripts/setup.js --hard --all",
     "debug:test:unit": "mocha --inspect-brk --exit $(find test/modules -name '*.js')",
     "debug:test:api": "mocha --inspect-brk --exit $(find test/api -name '*.js')",
-    "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')"
+    "debug:test:protocol": "mocha --inspect-brk --exit $(find test/protocol -name '*.js')",
+    "ganache": "ganache-cli -i 5777 -p 8545 -l 10000000 >/dev/null & sleep 5 && tenderly proxy --proxy-port 7545"
   },
   "devDependencies": {
     "babel-eslint": "^8.2.6",
