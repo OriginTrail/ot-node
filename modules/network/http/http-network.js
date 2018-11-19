@@ -15,14 +15,6 @@ class HttpNetwork {
         this.logger.trace('Network initialized');
         this.node = {};
         this.register = {};
-        this.node.payloadRequest = async (message, contactId) => {
-            const data = {
-                type: 'kad-payload-request',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            await HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
 
         this.node.getContact = async contactId => (this.register[contactId]);
 
@@ -92,24 +84,6 @@ class HttpNetwork {
         this.node.sendEncryptedKeyProcessResult = async (message, contactId) => {
             const data = {
                 type: 'kad-encrypted-key-process-result',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            return HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
-
-        this.node.verifyImport = async (message, contactId) => {
-            const data = {
-                type: 'kad-verify-import-request',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            return HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
-
-        this.node.sendVerifyImportResponse = async (message, contactId) => {
-            const data = {
-                type: 'kad-verify-import-response',
                 message,
             };
             const contact = await this.node.getContact(contactId);

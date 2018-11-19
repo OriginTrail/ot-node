@@ -3,28 +3,28 @@
 	<EPCISHeader>
 		<sbdh:StandardBusinessDocumentHeader>
 			<sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
-			<sbdh:Sender><!-- Mandatory -->	
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Red</sbdh:Identifier>  <!-- Mandatory-->
-				<sbdh:ContactInformation> <!-- Mandatory-->
-					<sbdh:Contact>Carter Novitzki</sbdh:Contact> <!-- Mandatory -->
-					<sbdh:EmailAddress>c.novitzki@red.com</sbdh:EmailAddress> <!-- Optional -->
+			<sbdh:Sender>
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Red</sbdh:Identifier>
+				<sbdh:ContactInformation>
+					<sbdh:Contact>Carter Novitzki</sbdh:Contact>
+					<sbdh:EmailAddress>c.novitzki@red.com</sbdh:EmailAddress>
 				</sbdh:ContactInformation>		
 			</sbdh:Sender>
-			<sbdh:Receiver> <!-- Mandatory -->
-				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>  <!-- Mandatory-->
-				<sbdh:ContactInformation> <!-- Mandatory-->
-					<sbdh:Contact>Betty Johnson</sbdh:Contact> <!-- Mandatory -->
-					<sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress> <!-- Optional -->
+			<sbdh:Receiver>
+				<sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_Pink</sbdh:Identifier>
+				<sbdh:ContactInformation>
+					<sbdh:Contact>Betty Johnson</sbdh:Contact>
+					<sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress>
 				</sbdh:ContactInformation>
 			</sbdh:Receiver>
-			<sbdh:DocumentIdentification> <!-- Mandatory-->
+			<sbdh:DocumentIdentification>
 				<sbdh:Standard>GS1</sbdh:Standard> <!-- WE CAN PUT OUR IMPORTER VERSION -->
 				<sbdh:TypeVersion>V1.3</sbdh:TypeVersion> <!-- Document version-->
 				<sbdh:InstanceIdentifier>200002</sbdh:InstanceIdentifier> <!-- UNIQUE IDENTIFIER OF DOCUMENT - PRIMARY KEY IN ERP -->
 				<sbdh:Type>Shipment</sbdh:Type> <!-- DEFINED IN SCHEMA Example; order, invoice, debitCreditAdvice -->
-				<sbdh:CreationDateAndTime>2018-03-03T00:31:52Z</sbdh:CreationDateAndTime> <!-- Optional -->		
+				<sbdh:CreationDateAndTime>2018-03-03T00:31:52Z</sbdh:CreationDateAndTime>
 			</sbdh:DocumentIdentification>
-			<sbdh:BusinessScope> <!-- Optional -->
+			<sbdh:BusinessScope>
 				<sbdh:Scope>
 					<sbdh:Type>BusinessProcess</sbdh:Type>
 					<sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
@@ -97,22 +97,22 @@
 		<EventList>	
 			<ObjectEvent>
 				<!-- Transport Shipment-->
-				<eventTime>2018-04-03T08:00:00.000-04:00</eventTime> <!-- Mandatory-->
-				<eventTimeZoneOffset>-02:00</eventTimeZoneOffset> <!-- Mandatory-->				 
+				<eventTime>2018-04-03T08:00:00.000-04:00</eventTime>
+				<eventTimeZoneOffset>-02:00</eventTimeZoneOffset>
 				<epcList>
 					<epc>urn:epc:id:sgtin:Batch_1_PINKSHIP2</epc>
 				</epcList>
-				<action>OBSERVE</action> <!-- Mandatory-->
-				<bizStep>urn:epcglobal:cbv:bizstep:receipt</bizStep> <!-- Optional -->
-				<disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
-				<readPoint> <!-- Optional -->
+				<action>OBSERVE</action>
+				<bizStep>urn:epcglobal:cbv:bizstep:receipt</bizStep>
+				<disposition>urn:epcglobal:cbv:disp:active</disposition>
+				<readPoint>
 					<id>urn:epc:id:sgln:Building_Red_V5</id>
 				</readPoint>
-				<bizLocation> <!-- Optional -->
+				<bizLocation>
 					<id>urn:epc:id:sgln:Building_Red</id>
 				</bizLocation>
 				<extension>
-					<quantityList> <!-- Optional -->
+					<quantityList>
 						<quantityElement>			 
 							<epcClass>urn:epc:id:sgtin:Batch_1_PINKSHIP2</epcClass>
 							<quantity>6</quantity>

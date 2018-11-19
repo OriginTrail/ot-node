@@ -81,7 +81,7 @@ class DVHandleNetworkQueryResponsesCommand extends Command {
      * @param err
      */
     async recover(command, err) {
-        this.logger(`Failed to handle network query. ${err}.`);
+        this.logger.error(`Failed to handle network query. ${err}.`);
         return Command.empty();
     }
 }

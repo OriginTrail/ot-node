@@ -1,4 +1,5 @@
 const Utilities = require('../../modules/Utilities');
+const logger = require('../../modules/logger');
 
 const {
     describe, before, after, afterEach, it,
@@ -44,8 +45,7 @@ let testDb;
 
 describe.skip('Neo4j module ', async () => {
     before('create and use testDb db', async () => {
-        const log = Utilities.getLogger();
-        testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port, log);
+        testDb = new Neo4j(myUsername, myPassword, myDatabaseName, host, port, logger);
     });
 
     it('.identify() should return correct name', () => {
