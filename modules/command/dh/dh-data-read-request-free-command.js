@@ -39,7 +39,7 @@ class DHDataReadRequestFreeCommand extends Command {
 
         // TODO in order to avoid getting a different import.
         const {
-            nodeId, wallet, id, import_id,
+            nodeId, wallet, id, data_set_id,
         } = message;
         try {
             // Check is it mine offer.
@@ -48,8 +48,6 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Couldn't find reply with ID ${id}.`);
             }
 
-            const offer = networkReplyModel.data;
-
             if (networkReplyModel.receiver_wallet !== wallet &&
                 networkReplyModel.receiver_identity) {
                 throw Error('Sorry not your read request');
@@ -57,20 +55,10 @@ class DHDataReadRequestFreeCommand extends Command {
 
             // TODO: Only one import ID used. Later we'll support replication from multiple imports.
             // eslint-disable-next-line
-            const importId = import_id;
-
-            const verticesPromise = this.graphStorage.findVerticesByImportId(importId);
-            const edgesPromise = this.graphStorage.findEdgesByImportId(importId);
-
-            const values = await Promise.all([verticesPromise, edgesPromise]);
-            const vertices = values[0];
-            const edges = values[1];
-
-            ImportUtilities.unpackKeys(vertices, edges);
-
+            const importId = data_set_id;
             const dataInfo = await Models.data_info.findOne({
                 where: {
-                    import_id: importId,
+                    data_set_id: importId,
                 },
             });
 
@@ -78,15 +66,26 @@ class DHDataReadRequestFreeCommand extends Command {
                 throw Error(`Failed to get data info for import ID ${importId}.`);
             }
 
+            const encrypted = dataInfo.origin === 'HOLDING';
+            const verticesPromise = this.graphStorage.findVerticesByImportId(importId, encrypted);
+            const edgesPromise = this.graphStorage.findEdgesByImportId(importId, encrypted);
+
+            const values = await Promise.all([verticesPromise, edgesPromise]);
+            const vertices = values[0];
+            const edges = values[1];
+
+            ImportUtilities.unpackKeys(vertices, edges);
             ImportUtilities.deleteInternal(edges);
             ImportUtilities.deleteInternal(vertices);
 
             // Get replication key and then encrypt data.
-            const holdingDataModel = await Models.holding_data.find({ where: { id: importId } });
+            const holdingDataModel = await Models.holding_data.find({
+                where: { data_set_id: importId },
+            });
 
             if (holdingDataModel) {
                 const holdingData = holdingDataModel.get({ plain: true });
-                const dataPublicKey = holdingData.data_public_key;
+                const dataPublicKey = holdingData.litigation_public_key;
                 const replicationPrivateKey = holdingData.distribution_private_key;
 
                 Graph.decryptVertices(
@@ -94,6 +93,9 @@ class DHDataReadRequestFreeCommand extends Command {
                     dataPublicKey,
                 );
             }
+
+            const transactionHash = await ImportUtilities
+                .getTransactionHash(dataInfo.data_set_id, dataInfo.origin);
 
             /*
             dataReadResponseObject = {
@@ -123,8 +125,8 @@ class DHDataReadRequestFreeCommand extends Command {
                     vertices,
                     edges,
                 },
-                import_id: importId, // TODO: Temporal. Remove it.
-                transaction_hash: dataInfo.transaction_hash,
+                data_set_id: importId, // TODO: Temporal. Remove it.
+                transaction_hash: transactionHash,
             };
             const dataReadResponseObject = {
                 message: replyMessage,

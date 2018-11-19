@@ -3,6 +3,7 @@ const bytes = require('utf8-length');
 const Models = require('../../../models/index');
 const Command = require('../command');
 const ImportUtilities = require('../../ImportUtilities');
+const Graph = require('../../Graph');
 
 /**
  * Handles data read response for free.
@@ -45,7 +46,7 @@ class DVDataReadResponseFreeCommand extends Command {
         // Is it the chosen one?
         const replyId = message.id;
         const {
-            import_id: importId,
+            data_set_id: dataSetId,
             data_provider_wallet: dcWallet,
             wallet: dhWallet,
             transaction_hash,
@@ -73,22 +74,26 @@ class DVDataReadResponseFreeCommand extends Command {
         // Calculate root hash and check is it the same on the SC.
         const { vertices, edges } = message.data;
 
-        const fingerprint = await this.blockchain.getRootHash(dcWallet, importId);
+        const fingerprint = await this.blockchain.getRootHash(dataSetId);
 
-        if (!fingerprint.graph_hash) {
-            const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${importId}`;
+        if (!fingerprint) {
+            const errorMessage = `Couldn't not find fingerprint for Dc ${dcWallet} and import ID ${dataSetId}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
             throw errorMessage;
         }
 
+
+        ImportUtilities.sort(vertices);
+        ImportUtilities.sort(edges);
+
         const merkle = await ImportUtilities.merkleStructure(vertices.filter(vertex =>
             vertex.vertex_type !== 'CLASS'), edges);
         const rootHash = merkle.tree.getRoot();
 
-        if (fingerprint.graph_hash !== rootHash) {
-            const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${importId}`;
+        if (fingerprint !== rootHash) {
+            const errorMessage = `Fingerprint root hash doesn't match with one from data. Root hash ${rootHash}, first DH ${dhWallet}, import ID ${dataSetId}`;
             this.logger.warn(errorMessage);
             networkQuery.status = 'FAILED';
             await networkQuery.save({ fields: ['status'] });
@@ -99,7 +104,13 @@ class DVDataReadResponseFreeCommand extends Command {
             await this.importer.importJSON({
                 vertices: message.data.vertices,
                 edges: message.data.edges,
-                import_id: importId,
+                dataSetId,
+                wallet: dcWallet,
+            }, false);
+            await this.importer.importJSON({
+                vertices: message.data.vertices,
+                edges: message.data.edges,
+                dataSetId,
                 wallet: dcWallet,
             }, true);
         } catch (error) {
@@ -110,20 +121,27 @@ class DVDataReadResponseFreeCommand extends Command {
             return Command.empty();
         }
 
-        this.logger.info(`Import ID ${importId} imported successfully.`);
-        this.remoteControl.readNotification(`Import ID ${importId} imported successfully.`);
-
         const dataSize = bytes(JSON.stringify(vertices));
         await Models.data_info.create({
-            import_id: importId,
+            data_set_id: dataSetId,
             total_documents: vertices.length,
             root_hash: rootHash,
-            import_hash: fingerprint.import_hash,
             data_provider_wallet: dcWallet,
             import_timestamp: new Date(),
             data_size: dataSize,
+            origin: 'PURCHASED',
+        });
+
+        // Store holding information and generate keys for eventual data replication.
+        await Models.purchased_data.create({
+            data_set_id: dataSetId,
             transaction_hash,
         });
+
+        this.logger.info(`Data set ID ${dataSetId} imported successfully.`);
+        this.logger.trace(`DataSet ${dataSetId} purchased for query ID ${networkQueryResponse.query_id}, ` +
+            `reply ID ${replyId}.`);
+        this.remoteControl.readNotification(`Data set ID ${dataSetId} imported successfully.`);
 
         return Command.empty();
     }

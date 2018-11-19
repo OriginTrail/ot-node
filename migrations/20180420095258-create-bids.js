@@ -3,47 +3,40 @@ module.exports = {
     up: (queryInterface, Sequelize) => queryInterface.createTable('bids', {
         id: {
             allowNull: false,
-            autoIncrement: true,
             primaryKey: true,
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
         },
-        bid_index: {
-            allowNull: false,
-            type: Sequelize.INTEGER,
-        },
-        price: {
+        offer_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        import_id: {
+        dc_node_id: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        dc_wallet: {
+        data_size_in_bytes: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        dc_id: {
-            allowNull: false,
-            type: Sequelize.STRING,
-        },
-        total_escrow_time: {
+        litigation_interval_in_minutes: {
             allowNull: false,
             type: Sequelize.INTEGER,
         },
-        stake: {
+        token_amount: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_size_bytes: {
-            allowNull: false,
+        holding_time_in_minutes: {
+            type: Sequelize.INTEGER,
+        },
+        deposit: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
-        pd_bid: {
+        status: {
             allowNull: false,
-            type: Sequelize.BOOLEAN,
-            default: false,
+            type: Sequelize.STRING,
         },
     }),
-    down: (queryInterface, Sequelize) => queryInterface.dropTable('bids'),
+    down: queryInterface => queryInterface.dropTable('bids'),
 };

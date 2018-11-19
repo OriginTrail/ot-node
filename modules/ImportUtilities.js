@@ -5,6 +5,9 @@ const bytes = require('utf8-length');
 const utilities = require('./Utilities');
 const uuidv4 = require('uuid/v4');
 const { sha3_256 } = require('js-sha3');
+const { normalizeGraph } = require('./Database/graph-converter');
+
+const Models = require('../models');
 
 /**
  * Import related utilities
@@ -21,6 +24,7 @@ class ImportUtilities {
                 vertex._dc_key = vertex._key;
                 vertex._key = uuidv4();
             }
+            vertex.encrypted = true;
         }
         // map _from and _to
         const find = (key) => {
@@ -39,6 +43,8 @@ class ImportUtilities {
             if (to) {
                 edge._to = to;
             }
+
+            edge.encrypted = true;
         }
         for (const edge of edges) {
             if (!edge._dc_key) {
@@ -61,6 +67,7 @@ class ImportUtilities {
                 vertex._key = vertex._dc_key;
                 delete vertex._dc_key;
             }
+            delete vertex.encrypted;
         }
         for (const edge of edges) {
             if (edge._dc_key) {
@@ -74,6 +81,7 @@ class ImportUtilities {
                     edge._to = mapping[edge._to];
                 }
             }
+            delete edge.encrypted;
         }
     }
 
@@ -83,44 +91,31 @@ class ImportUtilities {
      * @param edges     Import edges
      * @returns {{edges: *, vertices: *}}
      */
-    static normalizeImport(vertices, edges) {
+    static normalizeImport(dataSetId, vertices, edges) {
         ImportUtilities.sort(edges);
         ImportUtilities.sort(vertices);
 
-        let normEdges = null;
-        if (edges) {
-            normEdges = edges.map(e => utilities.sortObject({
-                _key: e._key,
-                identifiers: e.identifiers,
-                _from: e._from,
-                _to: e._to,
-                edge_type: e.edge_type,
-            }));
-        }
+        const { vertices: normVertices, edges: normEdges } = normalizeGraph(
+            dataSetId,
+            vertices,
+            edges,
+        );
 
-        let normVertices = null;
-        if (vertices) {
-            normVertices = vertices.map(v => utilities.sortObject({
-                _key: v._key,
-                identifiers: v.identifiers,
-                data: v.data,
-            }));
-        }
-
-        return {
+        return utilities.sortObject({
             edges: normEdges,
             vertices: normVertices,
-        };
+        });
     }
 
     /**
      * Calculate import hash
+     * @param dataSetId Data set ID
      * @param vertices  Import vertices
      * @param edges     Import edges
      * @returns {*}
      */
-    static importHash(vertices, edges) {
-        const normalized = ImportUtilities.normalizeImport(vertices, edges);
+    static importHash(dataSetId, vertices, edges) {
+        const normalized = ImportUtilities.normalizeImport(dataSetId, vertices, edges);
         return utilities.normalizeHex(sha3_256(utilities.stringify(normalized, 0)));
     }
 
@@ -215,10 +210,93 @@ class ImportUtilities {
      */
     static deleteInternal(vertices) {
         for (const vertex of vertices) {
-            delete vertex.imports;
+            delete vertex.datasets;
             delete vertex.private;
             delete vertex.version;
         }
+    }
+
+    /**
+     * Encrypt vertices data with specified private key.
+     *
+     * All vertices that has data property will be encrypted with given private key.
+     * @param vertices Vertices to encrypt
+     * @param privateKey Encryption key
+     */
+    static immutableEncryptVertices(vertices, privateKey) {
+        const copy = utilities.copyObject(vertices);
+        for (const id in copy) {
+            const vertex = copy[id];
+            if (vertex.data) {
+                vertex.data = Encryption.encryptObject(vertex.data, privateKey);
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * Decrypts vertices with a public key
+     * @param vertices      Encrypted vertices
+     * @param public_key    Public key
+     * @returns {*}
+     */
+    static immutableDecryptVertices(vertices, public_key) {
+        const copy = utilities.copyObject(vertices);
+        for (const id in copy) {
+            if (copy[id].data) {
+                copy[id].data = Encryption.decryptObject(copy[id].data, public_key);
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * Filter CLASS vertices
+     * @param vertices
+     * @returns {*}
+     */
+    static immutableFilterClassVertices(vertices) {
+        return vertices.filter(vertex => vertex.vertex_type !== 'CLASS');
+    }
+
+    /**
+     * Gets transaction hash for the data set
+     * @param dataSetId Data set ID
+     * @param origin    Data set origin
+     * @return {Promise<string|null>}
+     */
+    static async getTransactionHash(dataSetId, origin) {
+        let transactionHash = null;
+
+        switch (origin) {
+        case 'PURCHASED': {
+            const purchasedData = await Models.purchased_data.findOne({
+                where: { data_set_id: dataSetId },
+            });
+            transactionHash = purchasedData.transaction_hash;
+            break;
+        }
+        case 'HOLDING': {
+            const holdingData = await Models.holding_data.findOne({
+                where: { data_set_id: dataSetId },
+            });
+            transactionHash = holdingData.transaction_hash;
+            break;
+        }
+        case 'IMPORTED': {
+            // TODO support many offers for the same data set
+            const offers = await Models.offers.findAll({
+                where: { data_set_id: dataSetId },
+            });
+            if (offers.length > 0) {
+                transactionHash = offers[0].transaction_hash;
+            }
+            break;
+        }
+        default:
+            throw new Error(`Failed to find transaction hash for ${dataSetId} and origin ${origin}. Origin not valid.`);
+        }
+        return transactionHash;
     }
 }
 

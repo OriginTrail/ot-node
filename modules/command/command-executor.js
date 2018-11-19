@@ -2,6 +2,8 @@ const async = require('async');
 const Models = require('../../models');
 const Command = require('./command');
 
+const sleep = require('sleep-async')().Promise;
+
 /**
  * Command statuses
  * @type {{failed: string, expired: string, started: string, pending: string, completed: string}}
@@ -30,10 +32,18 @@ class CommandExecutor {
         this.logger = ctx.logger;
         this.commandResolver = ctx.commandResolver;
         this.notifyError = ctx.notifyError;
+        this.started = false;
 
         this.parallelism = QUEUE_PARALLELISM;
+
+        const that = this;
         this.queue = async.queue(async (command, callback) => {
             try {
+                while (!that.started) {
+                    that.logger.trace('Command executor has not been started yet. Hibernating...');
+                    // eslint-disable-next-line
+                    await sleep.sleep(1000);
+                }
                 await this._execute(command);
             } catch (e) {
                 this.logger.error(`Something went really wrong! OT-node shutting down... ${e}`);
@@ -51,6 +61,16 @@ class CommandExecutor {
      */
     async init() {
         await this.startCleaner();
+        this.logger.trace('Command executor has been initialized...');
+    }
+
+    /**
+     * Starts the command executor
+     * @return {Promise<void>}
+     */
+    async start() {
+        this.started = true;
+        this.logger.trace('Command executor has been started...');
     }
 
     /**
@@ -102,6 +122,8 @@ class CommandExecutor {
                     await CommandExecutor._update(command, {
                         status: STATUS.repeating,
                     }, transaction);
+
+                    command.data = handler.pack(command.data);
                     await this.add(command, command.period, false);
                     return Command.repeat();
                 }
@@ -125,6 +147,7 @@ class CommandExecutor {
                 result.children.forEach(async e => this.add(e, e.delay, false));
             }
         } catch (e) {
+            this.notifyError(e);
             this.logger.error(`Failed to process command ${command.name} and ID ${command.id}. ${e}.\n${e.stack}`);
             try {
                 const result = await this._handleError(command, handler, e);

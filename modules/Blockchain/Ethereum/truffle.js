@@ -4,12 +4,17 @@ var HDWalletProvider = require('truffle-hdwallet-provider'); // eslint-disable-l
 var mnemonic = process.env.TRUFFLE_MNEMONIC;
 
 module.exports = {
-    solc: {
-        optimizer: {
-            enabled: true,
-            runs: 200,
+    compilers: {
+        solc: {
+            settings: {
+                optimizer: {
+                    enabled: true,
+                    runs: 200,
+                },
+            },
         },
     },
+
     networks: {
         development: {
             host: 'localhost',
@@ -25,7 +30,7 @@ module.exports = {
             network_id: '5777',
         },
 
-        mock: {
+        update: {
             host: 'localhost',
             port: 7545,
             gas: 6000000,
@@ -35,7 +40,14 @@ module.exports = {
         test: {
             host: 'localhost',
             port: 7545,
-            gas: 8000000,
+            gas: 6000000,
+            network_id: '5777',
+        },
+
+        mock: {
+            host: 'localhost',
+            port: 7545,
+            gas: 6000000,
             network_id: '5777',
         },
 
@@ -44,7 +56,19 @@ module.exports = {
             port: 8545,
             provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/${process.env.RINKEBY_ACCESS_KEY}`),
             network_id: 4,
-            gas: 4612388, // Gas limit used for deploys
+            gas: 6000000, // Gas limit used for deploys
+            websockets: true,
+            skipDryRun: true,
+        },
+
+        live: {
+            host: 'localhost',
+            port: 8545,
+            provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/${process.env.MAINNET_ACCESS_KEY}`),
+            network_id: 1,
+            gas: 6000000, // Gas limit used for deploys
+            websockets: true,
+            skipDryRun: true,
         },
     },
 };

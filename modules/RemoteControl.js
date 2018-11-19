@@ -1,4 +1,3 @@
-const config = require('./Config');
 const app = require('http').createServer();
 const remote = require('socket.io')(app);
 const Models = require('../models');
@@ -47,6 +46,7 @@ class RemoteControl {
         this.web3 = ctx.web3;
         this.socket = new SocketDecorator(ctx.logger);
         this.notifyError = ctx.notifyError;
+        this.profileService = ctx.profileService;
 
 
         remote.set('authorization', (handshakeData, callback) => {
@@ -57,9 +57,11 @@ class RemoteControl {
 
             try {
                 const password = match[1];
-                Models.node_config.findOne({ where: { key: 'houston_password' } }).then((res) => {
-                    callback(null, res.value === password);
-                });
+                if (this.config.houston_password) {
+                    callback(null, this.config.houston_password === password);
+                } else {
+                    this.log.warn('Houston password not set.');
+                }
             } catch (e) {
                 this.notifyError(e);
             }
@@ -87,20 +89,13 @@ class RemoteControl {
     }
 
     async connect() {
-        app.listen(config.remote_control_port);
+        app.listen(this.config.node_remote_control_port);
         await remote.on('connection', (socket) => {
             this.log.important('This is Houston. Roger. Out.');
             this.socket.initialize(socket);
             this.transport.getNetworkInfo().then((res) => {
                 socket.emit('system', { info: res });
-                var config = {};
-                Models.node_config.findAll()
-                    .then((rows) => {
-                        rows.forEach((row) => {
-                            config[row.key] = row.value;
-                        });
-                        socket.emit('config', config);
-                    });
+                socket.emit('config', this.config);
             }).then((res) => {
                 this.updateImports();
             });
@@ -165,8 +160,8 @@ class RemoteControl {
                 this.getTotalIncome();
             });
 
-            this.socket.on('payout', (import_id) => {
-                this.payOut(import_id);
+            this.socket.on('payout', (offer_id) => {
+                this.payOut(offer_id);
             });
 
             this.socket.on('get-stake-per-holding', (import_id) => {
@@ -189,12 +184,8 @@ class RemoteControl {
 
     updateConfigRow(data) {
         return new Promise((resolve, reject) => {
-            for (var key in data) {
-                const query = `UPDATE node_config SET value = '${data[key]}' WHERE key = '${key}';`;
-                Storage.db.query(query).then((res) => {
-
-                });
-            }
+            Object.assign(this.config, data);
+            // TODO: Save config here.
             resolve();
         });
     }
@@ -280,15 +271,9 @@ class RemoteControl {
      * Set this node to be bootstrap node
      */
     setMeAsBootstrap() {
-        Models.node_config.update({
-            value: '[]',
-        }, {
-            where: {
-                key: 'network_bootstrap_nodes',
-            },
-        }).then(() => {
-            this.restartNode();
-        });
+        this.config.is_bootstrap_node = true;
+        // TODO: save storage.
+        this.restartNode();
     }
 
     /**
@@ -296,15 +281,9 @@ class RemoteControl {
      * @param bootstrapNodes json
      */
     setBootstraps(bootstrapNodes) {
-        Models.node_config.update({
-            value: JSON.parse(bootstrapNodes),
-        }, {
-            where: {
-                key: 'network_bootstrap_nodes',
-            },
-        }).then(() => {
-            this.restartNode();
-        });
+        this.config.network_bootstrap_nodes = bootstrapNodes;
+        // TODO: save storage.
+        this.restartNode();
     }
 
     /**
@@ -358,13 +337,13 @@ class RemoteControl {
      * @param wallet
      */
     getBalance() {
-        Utilities.getAlphaTracTokenBalance(
-            this.web3, process.env.NODE_WALLET,
+        Utilities.getTracTokenBalance(
+            this.web3, this.config.node_wallet,
             this.config.blockchain.token_contract_address,
         ).then((trac) => {
             this.socket.emit('trac_balance', trac);
         });
-        web3.eth.getBalance(process.env.NODE_WALLET).then((balance) => {
+        web3.eth.getBalance(this.config.node_wallet).then((balance) => {
             this.socket.emit('balance', balance);
         });
     }
@@ -413,12 +392,12 @@ class RemoteControl {
 
     /**
      * Payout offer
-     * @param import_id
+     * @param offerId
      * @returns {Promise<void>}
      */
-    async payOut(import_id) {
-        await this.blockchain.payOut(import_id);
-        this.socket.emit('payout_complete', import_id);
+    async payOut(offerId) {
+        await this.profileService.payOut(offerId);
+        this.socket.emit('payout_initiated', offerId);
     }
 
     /**

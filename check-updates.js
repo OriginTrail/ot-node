@@ -3,7 +3,7 @@ const rimraf = require('rimraf');
 const npm = require('npm-cmd');
 const Utilities = require('./modules/Utilities');
 
-const log = Utilities.getLogger();
+const log = require('./modules/logger');
 
 const Umzug = require('umzug');
 
@@ -28,13 +28,18 @@ const umzug_migrations = new Umzug({
 });
 
 class AutoUpdate {
-    static update() {
-        const runtimeConfig = Utilities.runtimeConfig();
-        return new Promise(async (resolve, reject) => {
+    /**
+     * Check for the update.
+     * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
+     * @param {String} [options.branch] - Github repo's branch.
+     * @returns {Promise}
+     */
+    static update(options) {
+        return new Promise(async (resolve) => {
             var autoupdater = new AutoUpdater({
                 pathToJson: '',
-                repo: runtimeConfig.autoUpdater.repo,
-                branch: runtimeConfig.autoUpdater.branch,
+                repo: options.repo,
+                branch: options.branch,
                 autoupdate: false,
                 checkgit: true,
                 jsonhost: 'raw.githubusercontent.com',
@@ -79,8 +84,6 @@ class AutoUpdate {
                         log.warn('RESTARTING THE APP!');
                         umzug_migrations.up().then((migrations) => {
                             log.warn('Database migrated.');
-                            rimraf.sync('./data/*');
-                            rimraf.sync('./keys/*');
                             this.restartNode();
                         });
                     }

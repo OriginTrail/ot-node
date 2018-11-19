@@ -11,7 +11,7 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        import_id: {
+        dh_identity: {
             allowNull: false,
             type: Sequelize.STRING,
         },
@@ -19,12 +19,40 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_private_key: {
+        dh_wallet: {
             allowNull: false,
             type: Sequelize.STRING,
         },
-        data_public_key: {
+        color: {
             allowNull: false,
+            type: Sequelize.STRING,
+        },
+        litigation_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_public_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        litigation_root_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_root_hash: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        distribution_epk: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
+        confirmation: {
+            allowNull: true,
             type: Sequelize.STRING,
         },
         status: {
