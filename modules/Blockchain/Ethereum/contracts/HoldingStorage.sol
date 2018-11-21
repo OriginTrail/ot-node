@@ -148,11 +148,16 @@ contract HoldingStorage {
         offer[offerId].blueLitigationHash = blueLitigationHash;
     }
 
+    enum ChallengeStatus{inactive, started, answered};
 
     struct HolderDefinition {
         uint256 stakedAmount;
         uint256 paidAmount;
         uint256 litigationEncryptionType;
+
+        uint256 last_challenge_timestamp;
+        ChallengeStatus litigation_status;
+        address challenger_identity;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
