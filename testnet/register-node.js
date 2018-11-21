@@ -63,6 +63,9 @@ function main() {
     }
 
     if (process.env.IMPORT_WHITELIST) {
+        if (!externalConfig.network) {
+            externalConfig.network = {};
+        }
         externalConfig.network.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
