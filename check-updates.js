@@ -3,7 +3,7 @@ const rimraf = require('rimraf');
 const npm = require('npm-cmd');
 const Utilities = require('./modules/Utilities');
 
-const log = Utilities.getLogger();
+const log = require('./modules/logger');
 
 const Umzug = require('umzug');
 
@@ -84,8 +84,6 @@ class AutoUpdate {
                         log.warn('RESTARTING THE APP!');
                         umzug_migrations.up().then((migrations) => {
                             log.warn('Database migrated.');
-                            rimraf.sync('./data/*');
-                            rimraf.sync('./keys/*');
                             this.restartNode();
                         });
                     }

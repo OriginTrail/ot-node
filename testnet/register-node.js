@@ -26,12 +26,6 @@ if (argv.configDir) {
     );
 }
 
-if (fs.existsSync(path.join(localConfiguration.appDataPath, 'config.json'))) {
-    const storedConfig = JSON.parse(fs.readFileSync(path.join(localConfiguration.appDataPath, 'config.json'), 'utf8'));
-    console.log(`Found previous configuration\n${JSON.stringify(storedConfig, null, 4)}`);
-    Object.assign(localConfiguration, storedConfig);
-}
-
 function main() {
     const localConfigPath = path.join('/ot-node/', `.${pjson.name}rc`);
     let externalConfig = {};
@@ -69,14 +63,7 @@ function main() {
     }
 
     if (process.env.IMPORT_WHITELIST) {
-        externalConfig.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
-    }
-
-    if (process.env.INSTALLATION === 'local') {
-        externalConfig.node_ip = '127.0.0.1'; // TODO remove
-    } else {
-        // TODO: Use system command for this.
-        externalConfig.node_ip = ip.address();
+        externalConfig.network.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
     deepExtend(localConfiguration, externalConfig);

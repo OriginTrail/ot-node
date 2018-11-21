@@ -15,7 +15,7 @@ describe('Utilities module', () => {
         environments.forEach((environment) => {
             const config = configJson[environment];
             assert.hasAllKeys(
-                config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'node_ip', 'logs_level_debug',
+                config, ['node_rpc_ip', 'node_port', 'blockchain', 'database', 'identity', 'logs_level_debug',
                     'request_timeout', 'ssl_keypath', 'node_remote_control_port', 'send_logs',
                     'ssl_certificate_path', 'identity_filepath', 'cpus', 'embedded_wallet_directory',
                     'embedded_peercache_path', 'onion_virtual_port', 'traverse_nat_enabled', 'traverse_port_forward_ttl', 'verbose_logging',
@@ -41,7 +41,11 @@ describe('Utilities module', () => {
                 `Some config items are missing in config.blockchain for environment '${environment}'`,
             );
             assert.hasAllKeys(
-                config.network, ['id', 'bootstraps', 'remoteWhitelist', 'identityDifficulty', 'solutionDifficulty'],
+                config.network, [
+                    'id', 'hostname', 'bootstraps',
+                    'remoteWhitelist', 'identityDifficulty',
+                    'solutionDifficulty',
+                ],
                 `Some config items are missing in config.network for environment '${environment}'`,
             );
             assert.hasAllKeys(

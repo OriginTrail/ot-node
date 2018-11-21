@@ -4,7 +4,7 @@
 .env
 .nyc_output
 .git
-.origintrail-noderc
+.origintrail_noderc
 node_modules
 keys
 data
@@ -15,3 +15,4 @@ modules/blockchain_interface/ethereum/build/*
 modules/Blockchain/Ethereum/build/
 hidden_service
 modules/Database/system.db
+logs

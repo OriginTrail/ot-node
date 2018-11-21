@@ -41,25 +41,6 @@ class Kademlia {
         this.log.info(`Network identity difficulty ${kadence.constants.IDENTITY_DIFFICULTY}.`);
     }
 
-    async bootstrapFindContact(contactId) {
-        const bootstrapNodes = this.config.network.bootstraps;
-
-        for (let i = 0; i < bootstrapNodes.length; i += 1) {
-            const node = bootstrapNodes[i];
-            const bootstrapContact = kadence.utils.parseContactURL(node);
-
-            // eslint-disable-next-line no-await-in-loop
-            const response = await this.node.findContact(contactId, bootstrapContact[0]);
-
-            if (response && response.contact) {
-                return response.contact;
-            }
-        }
-
-        return null;
-    }
-
-
     /**
      * Initializes keys
      * @return {Promise<void>}
@@ -129,18 +110,17 @@ class Kademlia {
                 this.index,
             );
 
-            let kadServerHost = null;
-            if (this.config.local_network_only ||
-                this.config.traverse_nat_enabled ||
-                this.config.onion_enabled) {
-                kadServerHost = '127.0.0.1';
-            } else {
-                kadServerHost = await utilities.getExternalIp();
+            const { hostname } = this.config.network;
+            if (!this.config.local_network_only && !this.config.traverse_nat_enabled) {
+                if (ip.isPrivate(hostname) || hostname === 'localhost') {
+                    throw Error('Please set node\'s hostname (address) ' +
+                        'to something publicly visible.');
+                }
             }
 
             // Initialize public contact data
             const contact = {
-                hostname: kadServerHost,
+                hostname,
                 protocol: 'https:',
                 port: this.config.node_port,
                 xpub: parentKey.publicExtendedKey,
@@ -150,14 +130,7 @@ class Kademlia {
                 network_id: this.config.network.id,
             };
 
-            const key = fs.readFileSync(path.join(
-                this.config.appDataPath,
-                this.config.ssl_keypath,
-            ));
-            const cert = fs.readFileSync(path.join(
-                this.config.appDataPath,
-                this.config.ssl_certificate_path,
-            ));
+            const { key, cert } = this.kademliaUtilities.getCertificates();
             const ca = this.config.ssl_authority_paths.map(fs.readFileSync);
 
             // Initialize transport adapter
@@ -218,11 +191,10 @@ class Kademlia {
             this.node.hashcash = this.node.plugin(kadence.hashcash({
                 methods: [
                     'PUBLISH', 'SUBSCRIBE', 'kad-data-location-request',
-                    'kad-replication-response', 'kad-replication-finished',
-                    'kad-data-location-response', 'kad-data-read-request',
+                    'kad-replication-finished', 'kad-data-location-response', 'kad-data-read-request',
                     'kad-data-read-response', 'kad-send-encrypted-key',
                     'kad-encrypted-key-process-result',
-                    'kad-replication-response', 'kad-replication-finished',
+                    'kad-replication-request',
                 ],
                 difficulty: this.config.network.solutionDifficulty,
             }));
@@ -294,32 +266,6 @@ class Kademlia {
         ]));
     }
 
-    /**
-     * Enables Onion client
-     */
-    enableOnion() {
-        this.log.info('Use Tor for an anonymous overlay');
-        this.node.onion = this.node.plugin(kadence.onion({
-            dataDirectory: path.join(this.config.appDataPath, 'hidden_service'),
-            virtualPort: this.config.onion_virtual_port,
-            localMapping: `127.0.0.1:${this.config.node_port}`,
-            torrcEntries: {
-                LearnCircuitBuildTimeout: 0,
-                CircuitBuildTimeout: 40,
-                CircuitStreamTimeout: 30,
-                MaxCircuitDirtiness: 7200,
-                MaxClientCircuitsPending: 1024,
-                SocksTimeout: 41,
-                CloseHSClientCircuitsImmediatelyOnTimeout: 1,
-                CloseHSServiceRendCircuitsImmediatelyOnTimeout: 1,
-                SafeLogging: 0,
-                FetchDirInfoEarly: 1,
-                FetchDirInfoExtraEarly: 1,
-            },
-            passthroughLoggingEnabled: 1,
-        }));
-        this.log.info('Onion initialised');
-    }
 
     /**
      * Try to join network
@@ -354,7 +300,7 @@ class Kademlia {
                         acc(false);
                         return;
                     }
-                    this.log.trace(`Finished joining to ${address})`);
+                    this.log.trace(`Finished joining to ${address}`);
                     connected = this._isConnected();
                     acc(true);
                 });
@@ -389,18 +335,10 @@ class Kademlia {
             this.emitter.emit('kad-data-location-request', message);
         });
 
-        // async
-        this.node.use('kad-replication-response', (request, response, next) => {
-            this.log.debug('kad-replication-response received');
-            this.emitter.emit('kad-replication-response', request);
-            response.send([]);
-        });
-
-        // async
+        // sync
         this.node.use('kad-replication-request', (request, response, next) => {
             this.log.debug('kad-replication-request received');
-            this.emitter.emit('kad-replication-request', request);
-            response.send([]);
+            this.emitter.emit('kad-replication-request', request, response);
         });
 
         // async
@@ -454,12 +392,6 @@ class Kademlia {
             response.send({
                 error: 'kad-challenge-request error',
             });
-        });
-
-        // error handler
-        this.node.use('kad-replication-response', (err, request, response, next) => {
-            this.log.warn(`kad-replication-response error received. ${err}`);
-            response.error(err);
         });
 
         // error handler
@@ -560,19 +492,6 @@ class Kademlia {
                             }
                         } else {
                             reject(Error(`Failed to find contact ${contactId}`));
-                        }
-                    });
-                });
-            };
-
-            node.replicationResponse = async (message, contactId) => {
-                const contact = await node.getContact(contactId);
-                return new Promise((resolve, reject) => {
-                    node.send('kad-replication-response', { message }, [contactId, contact], (err, res) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve(res);
                         }
                     });
                 });

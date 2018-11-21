@@ -1,8 +1,8 @@
 {
   "data": {
     "sender": {
-      "id": "urn:ot:mda:actor:id:Company_1",
-      "wallet": "0xFfDDAd7BD40602B78C0649032D2532dEFa23A4C0"
+      "id": "urn:ot:object:actor:id:Company_Green",
+      "wallet": "0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0"
     },
     "things": [
       {

@@ -8,6 +8,7 @@ const uuidv4 = require('uuid/v4');
 const request = require('request');
 const sleep = require('sleep-async')().Promise;
 const { deepEqual } = require('jsprim');
+const deepExtend = require('deep-extend');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
@@ -22,6 +23,42 @@ const bootstrapIdentity = {
         index: 1610612758,
     },
 };
+
+/**
+ * Unpacks cucumber dictionary into simple dictionary
+ * @param rawTable
+ */
+function unpackRawTable(rawTable) {
+    const unpacked = {};
+    if (rawTable) {
+        for (const row of rawTable.rawTable) {
+            let value;
+            if (row.length > 1) {
+                value = [];
+                for (let index = 1; index < row.length; index += 1) {
+                    value.push(row[index]);
+                }
+            } else {
+                [, value] = row;
+            }
+
+            const keyParts = row[0].split('.');
+            if (keyParts.length === 1) {
+                unpacked[keyParts[0]] = value;
+            } else {
+                let current = unpacked;
+                for (let j = 0; j < keyParts.length - 1; j += 1) {
+                    if (!current[keyParts[j]]) {
+                        current[keyParts[j]] = {};
+                    }
+                    current = current[keyParts[j]];
+                }
+                current[keyParts[keyParts.length - 1]] = value;
+            }
+        }
+    }
+    return unpacked;
+}
 
 Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
@@ -63,29 +100,31 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
 
     for (let i = 0; i < nodeCount; i += 1) {
-        const newNode = new OtNode({
-            nodeConfiguration: {
-                node_wallet: LocalBlockchain.wallets()[i].address,
-                node_private_key: LocalBlockchain.wallets()[i].privateKey,
-                node_port: 6000 + i,
-                node_rpc_port: 9000 + i,
-                node_remote_control_port: 4000 + i,
-                network: {
-                    bootstraps: this.state.bootstraps.map(bootstrap =>
-                        `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost', '127.0.0.1'],
-                },
-                database: {
-                    database: `origintrail-test-${uuidv4()}`,
-                },
-                blockchain: {
-                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                    rpc_node_host: 'http://localhost', // TODO use from instance
-                    rpc_node_port: 7545,
-                },
-                local_network_only: true,
-                dc_choose_time: 60000, // 1 minute
+        const nodeConfiguration = {
+            node_wallet: LocalBlockchain.wallets()[i].address,
+            node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            node_port: 6000 + i,
+            node_rpc_port: 9000 + i,
+            node_remote_control_port: 4000 + i,
+            network: {
+                bootstraps: this.state.bootstraps.map(bootstrap =>
+                    `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
+                remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            database: {
+                database: `origintrail-test-${uuidv4()}`,
+            },
+            blockchain: {
+                hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                rpc_node_host: 'http://localhost', // TODO use from instance
+                rpc_node_port: 7545,
+            },
+            local_network_only: true,
+            dc_choose_time: 60000, // 1 minute
+        };
+
+        const newNode = new OtNode({
+            nodeConfiguration,
         });
         this.state.nodes.push(newNode);
         newNode.initialize();
@@ -149,17 +188,17 @@ Then(/^all nodes should be aware of each other$/, function (done) {
     Promise.all(promises).then(() => done());
 });
 
-Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV]+)$/, function (nodeIndex, nodeType) {
-    expect(nodeType, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeIndex, nodeType) {
+    expect(nodeType, 'Node type can only be DC, DH, DV or DV2.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV' || val === 'DV2'));
     expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
-    expect(nodeIndex, 'Invalid idex.').to.be.within(0, this.state.nodes.length);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
 
     this.logger.log(`Setting node '${nodeIndex}' as ${nodeType}.`);
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 });
 
-Given(/^I import "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
+Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
     expect(importType, 'importType can only be GS1 or WOT.').to.satisfy(val => (val === 'GS1' || val === 'WOT'));
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -215,7 +254,7 @@ Then(/^the last import's hash should be the same as one manually calculated$/, f
     });
 });
 
-Given(/^I initiate the replication$/, async function () {
+Given(/^DC initiates the replication$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
@@ -334,15 +373,16 @@ Then(/^the last import should be the same on all nodes that replicated data$/, a
     return Promise.all(promises);
 });
 
-Then(/^the last import should be the same on all nodes that purchased data$/, async function () {
+Then(/^the last import should be the same on DC and ([DV|DV2]+) nodes$/, async function (whichDV) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc, dv } = this.state;
+    const { dc } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
     const dataSetId = this.state.lastImport.data_set_id;
 
     // Expect DV to have data.
@@ -363,7 +403,7 @@ Then(/^the last import should be the same on all nodes that purchased data$/, as
         throw Error(`Objects not equal: ${JSON.stringify(dcImportInfo)} and ${JSON.stringify(dvImportInfo)}`);
     }
     expect(dcImportInfo.transaction, 'DC transaction hash should be defined').to.not.be.undefined;
-    expect(dvImportInfo.transaction, 'DV transaction hash should be defined').to.not.be.undefined;
+    expect(dvImportInfo.transaction, 'DV/DV2 transaction hash should be defined').to.not.be.undefined;
 });
 
 Given(/^I remember previous import's fingerprint value$/, async function () {
@@ -409,12 +449,14 @@ Then(/^checking again first import's root hash should point to remembered value$
     ).to.be.equal(true);
 });
 
-Given(/^I call queryLocal with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+Given(/^I query ([DC|DH|DV]+) node locally with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (targetNode, path, value, opcode) {
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
+
     const jsonQuery = {
         query:
             [
@@ -429,52 +471,27 @@ Given(/^I call queryLocal with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"
     this.state.apiQueryLocalResponse = response;
 });
 
-Given(/^I call queryLocalImport with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" for last import$/, async function (path, value, opcode) {
+Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
+    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
+    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
+    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
 
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-    const jsonQuery = {
-        query:
-            [
-                {
-                    path,
-                    value,
-                    opcode,
-                },
-            ],
-    };
-    const response = await httpApiHelper.apiQueryLocalImport(host, jsonQuery);
-    this.state.apiQueryLocalImportResponse = response;
-});
-
-Given(/^I call queryLocalImportDataSetId endpoint for last import$/, async function () {
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
+    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
     const lastDataSetId = this.state.lastImport.data_set_id;
 
     const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
     this.state.apiQueryLocalImportByDataSetIdResponse = response;
 });
 
-Then(/^queryLocal response should have certain structure$/, function () {
+Then(/^response should contain only last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
     expect(this.state.apiQueryLocalResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
     expect(this.state.apiQueryLocalResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
 });
 
-Then(/^queryLocalImport response should have certain structure$/, function () {
-    expect(!!this.state.apiQueryLocalImportResponse, 'apiQueryLocalImport should have given some result').to.be.equal(true);
-
-    expect(this.state.apiQueryLocalImportResponse.length, 'Response should contain preciselly one item').to.be.equal(1);
-    expect(this.state.apiQueryLocalImportResponse[0], 'Response should match data_set_id').to.be.equal(this.state.lastImport.data_set_id);
-});
-
-Then(/^queryLocalImportDataSetId response should have certain structure$/, function () {
+Then(/^response hash should match last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalImportByDataSetIdResponse, 'apiQueryLocalImportByDataSetId should have given some result').to.be.equal(true);
 
     expect(Object.keys(this.state.apiQueryLocalImportByDataSetIdResponse), 'response should contain edges and vertices').to.have.members(['edges', 'vertices']);
@@ -498,7 +515,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                 network: {
                     bootstraps: this.state.bootstraps.map(bootstrap =>
                         `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost'],
+                    remoteWhitelist: ['localhost', '127.0.0.1'],
                 },
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
@@ -536,10 +553,10 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Given(/^DV publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network/, { timeout: 90000 }, async function (path, value, opcode) {
-    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network$/, { timeout: 90000 }, async function (whichDV, path, value, opcode) {
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
-    const { dv } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
 
     // TODO find way to pass jsonQuery directly to step definition
     const jsonQuery = {
@@ -560,11 +577,11 @@ Given(/^DV publishes query consisting of path: "(\S+)", value: "(\S+)" and opcod
     return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
 });
 
-Then(/^all nodes with last import should answer to last network query$/, { timeout: 90000 }, async function () {
-    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dv } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
 
     // Check which node has last import.
     const promises = [];
@@ -579,15 +596,17 @@ Then(/^all nodes with last import should answer to last network query$/, { timeo
                 }
                 return false;
             });
+            // TODO check that nodeCandidates [] elements are all unique values, there must not be dupes
             accept();
         }));
     });
 
     await Promise.all(promises);
 
-    expect(nodeCandidates.length).to.be.greaterThan(2);
+    expect(nodeCandidates.length).to.be.greaterThan(0);
 
-    // At this point all data location queries can placed hence we wait.
+
+    // At this point all data location queries can be placed hence we wait.
     const queryId = this.state.lastQueryNetworkId;
 
     const startTime = Date.now();
@@ -610,12 +629,14 @@ Then(/^all nodes with last import should answer to last network query$/, { timeo
     });
 });
 
-Given(/^the DV purchase import from the last query from (a DH|the DC)$/, function (fromWhom, done) {
-    expect(!!this.state.dv, 'DV node not defined. Use other step to define it.').to.be.equal(true);
+Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
+    expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
+    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
 
-    const { dc, dv } = this.state;
+    const { dc } = this.state;
+    const dv = this.state[whichDV.toLowerCase()];
     const queryId = this.state.lastQueryNetworkId;
     const dataSetId = this.state.lastImport.data_set_id;
     let sellerNode;
@@ -630,6 +651,12 @@ Given(/^the DV purchase import from the last query from (a DH|the DC)$/, functio
         sellerNode = this.state.nodes.find(node => (node !== dc && node !== dv));
     } else if (fromWhom === 'the DC') {
         sellerNode = dc;
+    } else if (fromWhom === 'a DV') {
+        if (whichDV === 'DV') {
+            console.log('DV cant buy from DV');
+            process.exit(-1);
+        }
+        sellerNode = this.state.dv;
     }
 
     expect(sellerNode, 'Didn\'t find seller node.').to.not.be.undefined;
@@ -643,7 +670,7 @@ Given(/^the DV purchase import from the last query from (a DH|the DC)$/, functio
         if (purchase.queryId === queryId &&
             purchase.replyId === replyId &&
             purchase.dataSetId === dataSetId) {
-            this.logger.info(`Purchase for data-set ID ${dataSetId} finished.`);
+            this.logger.info(`${dv.state.identity} finished purchase for data-set ID ${dataSetId} from sellerNode ${sellerNode.state.identity}`);
             done();
         }
     });
@@ -732,4 +759,78 @@ Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, 
         }
     });
     expect(consesusMatches).to.be.equal(matchesCount);
+});
+
+Given(/^DC waits for replication window to close$/, { timeout: 180000 }, function (done) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('replication-window-closed', () => {
+        done();
+    });
+});
+
+Given(/^API calls will be forbidden/, { timeout: 180000 }, function (done) {
+    const { dc } = this.state;
+
+    const methods = Object.keys(httpApiHelper);
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
+
+    const promises = [];
+    for (const method of methods) {
+        promises.push(new Promise((resolve, reject) => {
+            httpApiHelper[method](dc.state.node_rpc_url).then((response) => {
+                if (response == null) {
+                    reject(new Error('No response'));
+                    return;
+                }
+                if (response.message !== 'Forbidden request') {
+                    reject(new Error('Request is not forbidden'));
+                    return;
+                }
+                resolve();
+            }).catch(err => reject(err));
+        }));
+    }
+    Promise.all(promises).then(() => done());
+});
+
+Given(/^API calls will not be authorized/, { timeout: 180000 }, function (done) {
+    const { dc } = this.state;
+
+    const methods = Object.keys(httpApiHelper);
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
+
+    const promises = [];
+    for (const method of methods) {
+        promises.push(new Promise((resolve, reject) => {
+            httpApiHelper[method](dc.state.node_rpc_url).then((response) => {
+                if (response == null) {
+                    reject(new Error('No response'));
+                    return;
+                }
+                if (response.message !== 'Failed to authorize. Auth token is missing') {
+                    reject(new Error('Request is authorized'));
+                    return;
+                }
+                resolve();
+            }).catch(err => reject(err));
+        }));
+    }
+    Promise.all(promises).then(() => done());
+});
+
+Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = unpackRawTable(configuration);
+
+    for (const node of this.state.nodes) {
+        node.overrideConfiguration(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
 });

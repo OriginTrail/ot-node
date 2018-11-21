@@ -2,7 +2,6 @@
   "development": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -75,8 +74,9 @@
       ]
     },
     "network": {
+      "hostname": "127.0.0.1",
       "id": "Devnet",
-      "bootstraps": ["https://46.101.38.216:5278/#d0fe3f2c8c3868f3c88f1647243d4b770eb057ea"],
+      "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
       "solutionDifficulty": 8,
       "identityDifficulty": 8
@@ -96,13 +96,12 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "staging": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -156,7 +155,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0xc362EEf31796378e730E5C69BD9B32Bb4B77ec31",
+      "hub_contract_address": "0x0A0253150F35D9a766e450D6F749fFFD2B21eEC6",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -175,10 +174,11 @@
       ]
     },
     "network": {
+      "hostname": "127.0.0.1",
       "id": "StagenetV1.0.0",
-      "bootstraps": ["https://188.166.3.182:5278/#2fee0c13ad5d2e4a6a90ce9f20a07720edbd0a41"],
+      "bootstraps": ["https://stagingbs.origintrial.me:5278/#1754b56ce26212eab45bc523c36e1d4bf57ea30e"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 8,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -189,20 +189,19 @@
       "branch": "release/staging"
     },
     "dataSetStorage": "data_set_storage",
-    "dc_holding_time_in_minutes": 10080,
-    "dc_token_amount_per_holder": "50000000000000000000",
+    "dc_holding_time_in_minutes": 1440,
+    "dc_token_amount_per_holder": "1",
     "dc_litigation_interval_in_minutes": 5,
-    "dh_max_holding_time_in_minutes": 10080,
-    "dh_min_token_price": "10000000000000000000",
+    "dh_max_holding_time_in_minutes": 1440,
+    "dh_min_token_price": "1",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "stable": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -275,10 +274,11 @@
       ]
     },
     "network": {
+      "hostname": "127.0.0.1",
       "id": "StablenetV1.0.0",
       "bootstraps": ["https://82.196.10.12:5278/#ca87147a501adf39eaa648c2b09735559ee3511d"],
       "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 8,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -296,13 +296,12 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": false
   },
   "production": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -356,7 +355,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x0d7AFe289B40d214EE79D0e1B3DbFF33D049A39D",
+      "hub_contract_address": "0xE2726Bc7c82d45601eF68DB9EED92af18D0C4E0f",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -375,18 +374,22 @@
       ]
     },
     "network": {
-      "id": "PirotV1.0.0",
-      "bootstraps": ["https://46.101.38.216:5278/#941d1226cef9e4b52531113944a0a692508614d2"],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
-      "solutionDifficulty": 8,
+      "hostname": "127.0.0.1",
+      "id": "TestnetV2.0.0b",
+      "bootstraps": [
+        "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
+        "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
+      ],
+      "remoteWhitelist": ["127.0.0.1", "localhost"],
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
-      "releaseStage": "pirot"
+      "releaseStage": "testnet"
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
-      "branch": "feature/pirot"
+      "branch": "master"
     },
     "dataSetStorage": "data_set_storage",
     "dc_holding_time_in_minutes": 10080,
@@ -396,13 +399,12 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
-    "requireApproval": true
+    "dc_choose_time": 600000,
+    "requireApproval": false
   },
   "mariner": {
     "identity": null,
     "houston_password": null,
-    "node_ip": "127.0.0.1",
     "node_port": 5278,
     "node_rpc_ip": "127.0.0.1",
     "node_rpc_port": 8900,
@@ -455,7 +457,7 @@
       "blockchain_title": "Ethereum",
       "network_id": "mainnet",
       "gas_limit": "1500000",
-      "gas_price": "5000000000",
+      "gas_price": "20000000000",
       "hub_contract_address": "0xa287d7134fb40bef071c932286bd2cd01efccf30",
       "rpc_node_host": "https://mainnet.infura.io/7c072f60df864d22884e705c5bf3d83f",
       "rpc_node_port": "",
@@ -475,13 +477,14 @@
       ]
     },
     "network": {
+      "hostname": "127.0.0.1",
       "id": "MarinerV1.0.0",
       "bootstraps": [
         "https://35.159.51.107:5278/#3e3f9f62aa3e55c4bc2e307e2164357e538466a5",
         "https://142.93.13.94:5278/#6d3e620c2c4062e67ed16f86c2fd9c6fec739644"
       ],
       "remoteWhitelist": ["127.0.0.1"],
-      "solutionDifficulty": 8,
+      "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
@@ -499,7 +502,7 @@
     "dh_min_token_price": "10000000000000000000",
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
-    "dc_choose_time": 300000,
+    "dc_choose_time": 600000,
     "requireApproval": true
   }
 }

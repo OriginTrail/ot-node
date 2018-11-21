@@ -15,14 +15,6 @@ class HttpNetwork {
         this.logger.trace('Network initialized');
         this.node = {};
         this.register = {};
-        this.node.replicationResponse = async (message, contactId) => {
-            const data = {
-                type: 'kad-replication-response',
-                message,
-            };
-            const contact = await this.node.getContact(contactId);
-            await HttpNetwork.send(contact.hostname, data, this.config.identity);
-        };
 
         this.node.getContact = async contactId => (this.register[contactId]);
 

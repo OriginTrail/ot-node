@@ -103,6 +103,42 @@ async function apiImport(nodeRpcUrl, importFilePath, importType) {
 }
 
 /**
+ * @typedef {Object} Import
+ * @property {string} data_set_id Data-set ID.
+ * @property {string} message Message about successful import.
+ * @property {string} wallet Data provider wallet.
+ */
+
+/**
+ * Fetch /api/import
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {string} content
+ * @param {string} importType
+ * @return {Promise.<Import>}
+ */
+async function apiImportContent(nodeRpcUrl, content = '', importType = 'GS1') {
+    return new Promise((accept, reject) => {
+        request({
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            url: `${nodeRpcUrl}/api/import`,
+            json: true,
+            formData: {
+                importfile: content,
+                importtype: `${importType}`,
+            },
+        }, (error, response, body) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            accept(body);
+        });
+    });
+}
+
+/**
  * @typedef {Object} ImportsInfo
  * @property {string} data_set_id Data-set ID.
  * @property {Number} total_documents Number of documents in inport.
@@ -136,15 +172,11 @@ async function apiImportsInfo(nodeRpcUrl) {
 }
 
 /**
- * @typedef {string} DataSetId
- */
-
-/**
  * Fetch /api/query/local response
  *
  * @param {string} nodeRpcUrl URL in following format http://host:port
  * @param {json} jsonQuery
- * @return {Promise.<[DataSetId]>}
+ * @return {Promise.<[string]>}
  */
 async function apiQueryLocal(nodeRpcUrl, jsonQuery) {
     return new Promise((accept, reject) => {
@@ -201,34 +233,6 @@ async function apiQueryLocalImportByDataSetId(nodeRpcUrl, importId) {
 }
 
 /**
- * Fetch /api/query/local/import response
- *
- * @param {string} nodeRpcUrl URL in following format http://host:port
- * @param {json} jsonQuery
- * @return {Promise.<[DataSetId]>}
- */
-async function apiQueryLocalImport(nodeRpcUrl, jsonQuery) {
-    return new Promise((accept, reject) => {
-        request(
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                uri: `${nodeRpcUrl}/api/query/local/import`,
-                json: true,
-                body: jsonQuery,
-            },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                accept(body);
-            },
-        );
-    });
-}
-
-/**
  * @typedef {Object} Replication
  * @property {string} data_set_id Data-set ID.
  * @property {string} replication_id Replication ID.
@@ -263,6 +267,12 @@ async function apiReplication(nodeRpcUrl, data_set_id) {
         );
     });
 }
+
+/**
+ * @typedef {Object} NetworkQueryId
+ * @property {string} message Human informative message about query status.
+ * @property {string} query_id Network query ID.
+ */
 
 /**
  * Fetch api/query/network response
@@ -348,10 +358,6 @@ async function apiReadNetwork(nodeRpcUrl, queryId, replyId, dataSetId) {
             (err, res, body) => {
                 if (err) {
                     reject(err);
-                    return;
-                }
-                if (res.statusCode !== 200) {
-                    reject(Error(`/api/read/network failed. Body: ${body.toString()}`));
                     return;
                 }
                 accept(body);
@@ -464,13 +470,46 @@ async function apiConsensus(nodeRpcUrl, senderId) {
     });
 }
 
+/**
+ * @typedef {Object} TrailResponse
+ * @property {Object} Graph that contains trails from a specified start batch.
+ */
+
+/**
+ * Fetch /api/trail/{{query}}
+ *
+ * @param {string} nodeRpcUrl URL in following format http://host:port
+ * @param {object} query Query to be searched for starting vertex
+ * @return {Promise.<TrailResponse>}
+ */
+async function apiTrail(nodeRpcUrl, query) {
+    return new Promise((accept, reject) => {
+        request(
+            {
+                method: 'GET',
+                qs: query,
+                headers: { 'Content-Type': 'application/json' },
+                uri: `${nodeRpcUrl}/api/trail`,
+                json: true,
+            },
+            (err, res, body) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                accept(body);
+            },
+        );
+    });
+}
+
 module.exports = {
     apiImport,
+    apiImportContent,
     apiImportInfo,
     apiImportsInfo,
     apiFingerprint,
     apiQueryLocal,
-    apiQueryLocalImport,
     apiQueryLocalImportByDataSetId,
     apiReplication,
     apiQueryNetwork,
@@ -479,4 +518,5 @@ module.exports = {
     apiWithdraw,
     apiDeposit,
     apiConsensus,
+    apiTrail,
 };
