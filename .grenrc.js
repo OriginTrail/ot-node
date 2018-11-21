@@ -5,7 +5,7 @@ module.exports = {
     "changelogFilename": "CHANGELOG.md",
     "ignore-labels": ["minor", "internal process"],
     "groupBy": {
-        "Features": ["enhancement"],
+        "Features": ["enhancement", "breaking change"],
         "Chore:": ["chore", "internal"],
         "Bug Fixes:": ["bug"]
     }
