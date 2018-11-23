@@ -8,6 +8,7 @@ const uuidv4 = require('uuid/v4');
 const request = require('request');
 const sleep = require('sleep-async')().Promise;
 const { deepEqual } = require('jsprim');
+const deepExtend = require('deep-extend');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
@@ -22,6 +23,42 @@ const bootstrapIdentity = {
         index: 1610612758,
     },
 };
+
+/**
+ * Unpacks cucumber dictionary into simple dictionary
+ * @param rawTable
+ */
+function unpackRawTable(rawTable) {
+    const unpacked = {};
+    if (rawTable) {
+        for (const row of rawTable.rawTable) {
+            let value;
+            if (row.length > 1) {
+                value = [];
+                for (let index = 1; index < row.length; index += 1) {
+                    value.push(row[index]);
+                }
+            } else {
+                [, value] = row;
+            }
+
+            const keyParts = row[0].split('.');
+            if (keyParts.length === 1) {
+                unpacked[keyParts[0]] = value;
+            } else {
+                let current = unpacked;
+                for (let j = 0; j < keyParts.length - 1; j += 1) {
+                    if (!current[keyParts[j]]) {
+                        current[keyParts[j]] = {};
+                    }
+                    current = current[keyParts[j]];
+                }
+                current[keyParts[keyParts.length - 1]] = value;
+            }
+        }
+    }
+    return unpacked;
+}
 
 Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, done) {
     expect(this.state.bootstraps).to.have.length(0);
@@ -63,29 +100,31 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
     expect(nodeCount).to.be.lessThan(LocalBlockchain.wallets().length - 1);
 
     for (let i = 0; i < nodeCount; i += 1) {
-        const newNode = new OtNode({
-            nodeConfiguration: {
-                node_wallet: LocalBlockchain.wallets()[i].address,
-                node_private_key: LocalBlockchain.wallets()[i].privateKey,
-                node_port: 6000 + i,
-                node_rpc_port: 9000 + i,
-                node_remote_control_port: 4000 + i,
-                network: {
-                    bootstraps: this.state.bootstraps.map(bootstrap =>
-                        `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost', '127.0.0.1'],
-                },
-                database: {
-                    database: `origintrail-test-${uuidv4()}`,
-                },
-                blockchain: {
-                    hub_contract_address: this.state.localBlockchain.hubContractAddress,
-                    rpc_node_host: 'http://localhost', // TODO use from instance
-                    rpc_node_port: 7545,
-                },
-                local_network_only: true,
-                dc_choose_time: 60000, // 1 minute
+        const nodeConfiguration = {
+            node_wallet: LocalBlockchain.wallets()[i].address,
+            node_private_key: LocalBlockchain.wallets()[i].privateKey,
+            node_port: 6000 + i,
+            node_rpc_port: 9000 + i,
+            node_remote_control_port: 4000 + i,
+            network: {
+                bootstraps: this.state.bootstraps.map(bootstrap =>
+                    `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
+                remoteWhitelist: ['localhost', '127.0.0.1'],
             },
+            database: {
+                database: `origintrail-test-${uuidv4()}`,
+            },
+            blockchain: {
+                hub_contract_address: this.state.localBlockchain.hubContractAddress,
+                rpc_node_host: 'http://localhost', // TODO use from instance
+                rpc_node_port: 7545,
+            },
+            local_network_only: true,
+            dc_choose_time: 60000, // 1 minute
+        };
+
+        const newNode = new OtNode({
+            nodeConfiguration,
         });
         this.state.nodes.push(newNode);
         newNode.initialize();
@@ -476,7 +515,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                 network: {
                     bootstraps: this.state.bootstraps.map(bootstrap =>
                         `${bootstrap.state.node_url}/#${bootstrap.state.identity}`),
-                    remoteWhitelist: ['localhost'],
+                    remoteWhitelist: ['localhost', '127.0.0.1'],
                 },
                 database: {
                     database: `origintrail-test-${uuidv4()}`,
@@ -734,4 +773,64 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
     dc.once('replication-window-closed', () => {
         done();
     });
+});
+
+Given(/^API calls will be forbidden/, { timeout: 180000 }, function (done) {
+    const { dc } = this.state;
+
+    const methods = Object.keys(httpApiHelper);
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
+
+    const promises = [];
+    for (const method of methods) {
+        promises.push(new Promise((resolve, reject) => {
+            httpApiHelper[method](dc.state.node_rpc_url).then((response) => {
+                if (response == null) {
+                    reject(new Error('No response'));
+                    return;
+                }
+                if (response.message !== 'Forbidden request') {
+                    reject(new Error('Request is not forbidden'));
+                    return;
+                }
+                resolve();
+            }).catch(err => reject(err));
+        }));
+    }
+    Promise.all(promises).then(() => done());
+});
+
+Given(/^API calls will not be authorized/, { timeout: 180000 }, function (done) {
+    const { dc } = this.state;
+
+    const methods = Object.keys(httpApiHelper);
+    methods.splice(methods.indexOf('apiImport'), 1); // we're already handling import content
+
+    const promises = [];
+    for (const method of methods) {
+        promises.push(new Promise((resolve, reject) => {
+            httpApiHelper[method](dc.state.node_rpc_url).then((response) => {
+                if (response == null) {
+                    reject(new Error('No response'));
+                    return;
+                }
+                if (response.message !== 'Failed to authorize. Auth token is missing') {
+                    reject(new Error('Request is authorized'));
+                    return;
+                }
+                resolve();
+            }).catch(err => reject(err));
+        }));
+    }
+    Promise.all(promises).then(() => done());
+});
+
+Given(/^I override configuration for all nodes*$/, { timeout: 120000 }, function (configuration, done) {
+    const configurationOverride = unpackRawTable(configuration);
+
+    for (const node of this.state.nodes) {
+        node.overrideConfiguration(configurationOverride);
+        this.logger.log(`Configuration updated for node ${node.id}`);
+    }
+    done();
 });

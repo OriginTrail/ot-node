@@ -30,6 +30,10 @@ class DHOfferHandleCommand extends Command {
             dhIdentity: this.config.erc725Identity,
         }, dcNodeId);
 
+        if (response.status === 'fail') {
+            throw new Error(`Failed to receive replication from ${dcNodeId} for offer ${offerId}`);
+        }
+
         const bid = await Models.bids.findOne({
             where: { offer_id: offerId },
         });

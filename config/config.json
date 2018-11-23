@@ -44,7 +44,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-develop",
       "host": "localhost",
@@ -144,7 +144,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-staging",
       "host": "localhost",
@@ -244,7 +244,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail-stable",
       "host": "localhost",
@@ -344,7 +344,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",
@@ -355,7 +355,7 @@
       "network_id": "rinkeby",
       "gas_limit": "1500000",
       "gas_price": "20000000000",
-      "hub_contract_address": "0x0d7AFe289B40d214EE79D0e1B3DbFF33D049A39D",
+      "hub_contract_address": "0xE2726Bc7c82d45601eF68DB9EED92af18D0C4E0f",
       "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
       "rpc_node_port": "",
       "plugins": [
@@ -375,17 +375,17 @@
     },
     "network": {
       "hostname": "127.0.0.1",
-      "id": "TestnetV1.0.5b",
+      "id": "TestnetV2.0.0b",
       "bootstraps": [
-        "https://46.101.233.127:5278/#a69e413b7916a22658e1435b498761ff3d922b56",
-        "https://82.196.6.215:5278/#d3167d777720c15e024b7e7ab41055bcdf1bf03e"
+        "https://46.101.233.127:5278/#41d7357b322ca75d1187b3163b510ff704e9a040",
+        "https://82.196.6.215:5278/#9e7f1ec47d0da65b9f2e004510ae366519290dff"
       ],
-      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "remoteWhitelist": ["127.0.0.1", "localhost"],
       "solutionDifficulty": 14,
       "identityDifficulty": 12
     },
     "bugSnag": {
-      "releaseStage": "pirot"
+      "releaseStage": "testnet"
     },
     "autoUpdater": {
       "repo": "OriginTrail/ot-node",
@@ -400,7 +400,7 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
-    "requireApproval": true
+    "requireApproval": false
   },
   "mariner": {
     "identity": null,
@@ -447,7 +447,7 @@
     "database": {
       "provider": "arangodb",
       "username": "root",
-      "password": "",
+      "password": "root",
       "port": 8529,
       "database": "origintrail",
       "host": "localhost",

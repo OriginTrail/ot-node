@@ -20,10 +20,6 @@ class DCController {
     async createOffer(req, res) {
         this.logger.api('POST: Replication of imported data request received.');
 
-        if (!this.apiUtilities.authorize(req, res)) {
-            return;
-        }
-
         if (req.body !== undefined && req.body.data_set_id !== undefined && typeof req.body.data_set_id === 'string' &&
             utilities.validateNumberParameter(req.body.holding_time_in_minutes) &&
             utilities.validateStringParameter(req.body.token_amount_per_holder) &&

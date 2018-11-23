@@ -15,10 +15,6 @@ class ImportController {
     async import(req, res) {
         this.logger.api('POST: Import of data request received.');
 
-        if (!this.apiUtilities.authorize(req, res)) {
-            return;
-        }
-
         if (req.body === undefined) {
             res.status(400);
             res.send({
@@ -84,8 +80,8 @@ class ImportController {
      */
     async dataSetInfo(req, res) {
         this.logger.api('GET: import_info.');
-        const queryObject = req.query;
 
+        const queryObject = req.query;
         if (queryObject.data_set_id == null) {
             res.send({ status: 400, message: 'Missing parameter!', data: [] });
             return;

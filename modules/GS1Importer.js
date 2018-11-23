@@ -684,13 +684,15 @@ class GS1Importer {
                         const object_key = vertex._key;
                         const id_key = this.helper.createKey('identifier', sender, id_type, id_value);
 
-                        identifiers.push({
-                            _key: id_key,
-                            id_type,
-                            id_value,
-                            vertex_type: 'IDENTIFIER',
-                            sender_id: senderId,
-                        });
+                        if (!identifiers.find(el => el._key === id_key)) {
+                            identifiers.push({
+                                _key: id_key,
+                                id_type,
+                                id_value,
+                                vertex_type: 'IDENTIFIER',
+                                sender_id: senderId,
+                            });
+                        }
 
                         identifierEdges.push({
                             _key: this.helper.createKey('identifies', sender, id_key, vertex.identifiers.uid),
