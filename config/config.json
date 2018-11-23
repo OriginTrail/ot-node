@@ -504,5 +504,105 @@
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
     "requireApproval": true
+  },
+  "autoupdater": {
+    "identity": null,
+    "houston_password": null,
+    "node_port": 5278,
+    "node_rpc_ip": "127.0.0.1",
+    "node_rpc_port": 8900,
+    "remote_control_enabled": true,
+    "node_remote_control_port": 3000,
+    "is_bootstrap_node": false,
+    "send_logs": false,
+    "logs_level_debug": true,
+    "reverse_tunnel_address": "diglet.origintrail.io",
+    "reverse_tunnel_port": 8443,
+    "request_timeout": 20000,
+    "ssl_keypath": "kademlia.key",
+    "ssl_certificate_path": "kademlia.crt",
+    "identity_filepath": "identity.json",
+    "erc725_identity_filepath": "erc725_identity.json",
+    "cpus": 0,
+    "embedded_wallet_directory": "wallet.dat",
+    "embedded_peercache_path": "peercache",
+    "onion_virtual_port": "4043",
+    "traverse_nat_enabled": false,
+    "traverse_port_forward_ttl": 0,
+    "verbose_logging": false,
+    "control_port_enabled": false,
+    "control_port": "5279",
+    "control_sock_enabled": false,
+    "control_sock": 12000,
+    "onion_enabled": false,
+    "ssl_authority_paths": [],
+    "send_logs_to_origintrail": false,
+    "enable_debug_logs_level": false,
+    "dh_stake_factor": "250000000000",
+    "read_stake_factor": "1",
+    "dh_max_time_mins": "100000",
+    "dh_price": "250000000000",
+    "total_escrow_time_in_milliseconds": "86400000",
+    "max_token_amount_per_dh": "500000000000",
+    "dh_min_stake_amount": "100000000000",
+    "dh_min_reputation": 0,
+    "probability_threshold": 10,
+    "database": {
+      "provider": "arangodb",
+      "username": "root",
+      "password": "root",
+      "port": 8529,
+      "database": "origintrail-develop",
+      "host": "localhost",
+      "max_path_length": 1000
+    },
+    "blockchain": {
+      "blockchain_title": "Ethereum",
+      "network_id": "rinkeby",
+      "gas_limit": "1500000",
+      "gas_price": "20000000000",
+      "hub_contract_address": "0xa13635b8D91BCdEC59067eE2Da7A17292578bB08",
+      "rpc_node_host": "https://rinkeby.infura.io/1WRiEqAQ9l4SW6fGdiDt",
+      "rpc_node_port": "",
+      "plugins": [
+        {
+          "enabled": false,
+          "provider": "Hyperledger",
+          "name": "fingerprint-plugin",
+          "config": {
+            "url": "URL",
+            "auth": {
+              "user": "USER",
+              "pass": "PASS"
+            }
+          }
+        }
+      ]
+    },
+    "network": {
+      "hostname": "127.0.0.1",
+      "id": "Devnet",
+      "bootstraps": ["https://developbs.origintrial.me:5278/#05edf19bd36906240503e2e2e2f18d13f8211d2f"],
+      "remoteWhitelist": ["54.93.223.161", "127.0.0.1"],
+      "solutionDifficulty": 8,
+      "identityDifficulty": 8
+    },
+    "bugSnag": {
+      "releaseStage": "autoupdater"
+    },
+    "autoUpdater": {
+      "repo": "OriginTrail/ot-node",
+      "branch": "feature/autoupdate"
+    },
+    "dataSetStorage": "data_set_storage",
+    "dc_holding_time_in_minutes": 10080,
+    "dc_token_amount_per_holder": "50000000000000000000",
+    "dc_litigation_interval_in_minutes": 5,
+    "dh_max_holding_time_in_minutes": 10080,
+    "dh_min_token_price": "10000000000000000000",
+    "dh_min_litigation_interval_in_minutes": 5,
+    "deposit_on_demand": true,
+    "dc_choose_time": 600000,
+    "requireApproval": false
   }
 }
