@@ -1,12 +1,27 @@
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 const request = require('request');
 const fs = require('fs');
-var Zip = require('machinepack-zip');
+const Zip = require('machinepack-zip');
+
+// function execSync(command, verbose = false) {
+//     return new Promise((resolve, reject) => {
+//         exec(command, (err, stdout, stderr) => {
+//             if (err) {
+//                 console.log(err);
+//                 reject(err);
+//             }
+//
+//             if (verbose) {
+//                 resolve({ stdout, stderr });
+//             } else {
+//                 resolve();
+//             }
+//         });
+//     });
+// }
 
 process.once('message', async ([options]) => {
-    console.log('STIGLE OPCIJE');
-    console.log(options);
-    const filename = `https://github.com/${options.repo}/archive/${options.branch}.zip`;
+    const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
     console.log(`Downloading update: ${filename} ...`);
     const response = await request(filename);
     const filestream = fs.createWriteStream('update.zip');
@@ -21,54 +36,44 @@ process.once('message', async ([options]) => {
             destination: '..',
         }).exec({
             error(err) {
-                console.log('-.-');
                 console.log(err);
             },
 
             success() {
-                console.log('Update extraction complete');
-                console.log(`Moving update to directory ${options.version}...`);
+                try {
+                    console.log('Update extraction complete');
+                    console.log(`Moving update to directory ${options.version}...`);
 
-                exec(`mv ../ot-node-develop ../${options.version}`, (err, stdout, stderr) => {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
+                    console.log('Cleaning update destination directory');
+                    execSync(`rm -rf ../${options.version}`);
+
+                    execSync(`mv ../ot-node-develop ../${options.version}`);
 
                     console.log(`Update has been moved to directory ${options.version}`);
                     console.log('Migrating node modules...');
 
-                    exec(`cp -r ./node_modules ../${options.version}`, (err, stdout, stderr) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
+                    execSync(`cp -r ./node_modules ../${options.version}`);
+                    console.log('Node modules migrated');
+                    console.log('Installing new node modules');
 
-                        console.log('Node modules migrated');
-                        console.log('Installing new node modules');
+                    execSync(`cd ../${options.version} && npm install`);
+                    console.log('npm modules have been installed');
+                    console.log('Migrating node configuration');
 
-                        exec(`cd ../${options.version} && npm install`, (err, stdout, stderr) => {
-                            if (err) {
-                                console.log(err);
-                                return;
-                            }
+                    execSync(`cp -r ./${options.appDataPath} ../${options.version} && cp .env ../../${options.version}`);
+                    console.log('Configuration migration complete');
 
-                            console.log('npm modules have been installed');
-                            console.log('Migrating node configuration');
-
-                            exec(`cp -r ./data ../${options.version} && cp -r ./dh1-config ../${options.version} && cp .env ../../${options.version}`, (err, stdout, stderr) => {
-                                if (err) {
-                                    console.log(err);
-                                    return;
-                                }
-
-                                console.log('Configuration migration complete');
-                            });
-                        });
-                    });
-                });
+                    console.log('Processing database migrations');
+                    execSync(`cd ../${options.version}`);
+                    execSync(`./node_modules/.bin/sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
+                    console.log(`Running seeders for '${options.appDataPath}'...`);
+                    execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
+                    console.log('Switching node version');
+                    execSync(`ln -sfn ${__dirname}/../${options.version} /ot-node/current`);
+                } catch (err) {
+                    console.log(err);
+                }
             },
         });
     });
-
 });

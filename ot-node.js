@@ -285,7 +285,7 @@ class OTNode {
         // check for Updates
         try {
             log.info('Checking for updates');
-            await Utilities.checkForUpdates(config.autoUpdater);
+            await Utilities.checkForUpdates(config);
         } catch (err) {
             console.log(err);
             notifyBugsnag(err);

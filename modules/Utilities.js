@@ -75,7 +75,7 @@ class Utilities {
      * @returns {Promise<any>}
      */
 
-    static checkForUpdates(options) {
+    static checkForUpdates(config) {
         return new Promise(async (resolve, reject) => {
             const updater = fork(path.join(__dirname, '..', 'autoupdater.js'), [], {
                 stdio: [0, 1, 2, 'ipc'],
@@ -86,7 +86,10 @@ class Utilities {
                 console.log('GOTOV UPDATE');
             });
 
+            const options = {};
+            options.appDataPath = config.appDataPath;
             options.version = 'v1.2.3';
+            options.autoUpdater = config.autoUpdater
 
             updater.send([options]);
             resolve('updater');
