@@ -18,6 +18,7 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
+const { fork } = require('child_process');
 
 const logger = require('./logger');
 
@@ -76,12 +77,19 @@ class Utilities {
 
     static checkForUpdates(options) {
         return new Promise(async (resolve, reject) => {
-            // eslint-disable-next-line
-            const Update = require('../check-updates');
-            const res = await Update.update(options);
-            if (res) {
-                resolve(res);
-            }
+            const updater = fork(path.join(__dirname, '..', 'autoupdater.js'), [], {
+                stdio: [0, 1, 2, 'ipc'],
+                env: process.env,
+            });
+
+            updater.on('message', (msg) => {
+                console.log('GOTOV UPDATE');
+            });
+
+            options.version = 'v1.2.3';
+
+            updater.send([options]);
+            resolve('updater');
         });
     }
 
