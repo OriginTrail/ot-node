@@ -384,7 +384,7 @@ class OTNode {
 
         // check does node_wallet has sufficient funds
         try {
-            appState.enoughFunds = await blockchain.getBalances();
+            appState.enoughFunds = await blockchain.hasEnoughFunds();
             const identityFilePath = path.join(
                 config.appDataPath,
                 config.erc725_identity_filepath,
@@ -392,7 +392,7 @@ class OTNode {
             // If ERC725 exist assume profile is created. No need to check for the funds
             if (!fs.existsSync(identityFilePath)) {
                 // Profile does not exists. Check if we have enough funds.
-                appState.enoughFunds = await blockchain.getBalances();
+                appState.enoughFunds = await blockchain.hasEnoughFunds();
                 if (!appState.enoughFunds) {
                     log.warn('Insufficient funds to create profile');
                     process.exit(1);
@@ -405,7 +405,7 @@ class OTNode {
         }
         setInterval(async () => {
             try {
-                appState.enoughFunds = await blockchain.getBalances();
+                appState.enoughFunds = await blockchain.hasEnoughFunds();
             } catch (err) {
                 notifyBugsnag(err);
             }
@@ -457,7 +457,7 @@ class OTNode {
         // Check if ERC725 has valid node ID.
         const profile = await blockchain.getProfile(config.erc725Identity);
 
-        if (profile.nodeId !== `0x${config.identity}000000000000000000000000`) {
+        if (profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
             throw Error('ERC725 profile not created for this node ID. ' +
                 `My identity ${config.identity}, profile's node id: ${profile.nodeId}.`);
         }
