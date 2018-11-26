@@ -24,8 +24,7 @@ COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Creating link
 RUN mkdir /ot-node && mkdir /ot-node/init
-RUN cd /ot-node
-RUN ln -s /ot-node/init current
+RUN ln -s /ot-node/init /ot-node/current
 
 # Add files
 COPY . /ot-node/current
