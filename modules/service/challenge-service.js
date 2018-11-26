@@ -40,7 +40,7 @@ class ChallengeService {
 
             const response = await this.transport.challengeRequest({
                 payload: {
-                    dataset_id: candidate.data_set_id,
+                    data_set_id: offer.data_set_id,
                     block_id: challenge.block_id,
                 },
             }, candidate.dh_id);
@@ -111,18 +111,20 @@ class ChallengeService {
     /**
      * Creates array of blocks based on the vertex data.
      * @note Last block can be smaller than desired blockSizeBytes.
-     * @param vertexData Vertex data in form { ..., data: "vertex-data" }
+     * @param vertices Vertex data in form { ..., data: "vertex-data" }
      * @param blockSizeBytes Desired size of each block.
      * @returns {Array} of blocks.
      */
-    getBlocks(vertexData, blockSizeBytes) {
+    getBlocks(vertices, blockSizeBytes) {
+        importUtilities.sort(vertices);
+
         const blocks = [];
         let block = String();
         let byteIndex = 0;
         let bytesToCopy = 0;
 
-        for (let i = 0; i < vertexData.length; i += 1) {
-            const { data } = vertexData[i];
+        for (let i = 0; i < vertices.length; i += 1) {
+            const { data } = vertices[i];
             if (data != null) {
                 for (let j = 0; j < data.length;) {
                     bytesToCopy = Math.min(blockSizeBytes, blockSizeBytes - byteIndex);
