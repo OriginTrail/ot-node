@@ -3,7 +3,6 @@ Feature: Test basic importer features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @itworks
   Scenario: Check that second WOT import does not mess up first import's hash value (same data set)
     Given I setup 1 node
     And I start the node
@@ -16,7 +15,6 @@ Feature: Test basic importer features
     Then the last import's hash should be the same as one manually calculated
     Then checking again first import's root hash should point to remembered value
 
-  @itworks
   Scenario: Check that WOT import is connecting to the same batch from GS1 import
     Given I setup 1 node
     And I start the node

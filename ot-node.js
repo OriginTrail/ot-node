@@ -383,26 +383,33 @@ class OTNode {
         emitter.initialize();
 
         // check does node_wallet has sufficient funds
-        if (process.env.NODE_ENV !== 'development') {
-            try {
-                appState.enoughFunds = await blockchain.getBalances();
-                if (appState.enoughFunds === false && !await profileService.isProfileCreated()) {
+        try {
+            appState.enoughFunds = await blockchain.hasEnoughFunds();
+            const identityFilePath = path.join(
+                config.appDataPath,
+                config.erc725_identity_filepath,
+            );
+            // If ERC725 exist assume profile is created. No need to check for the funds
+            if (!fs.existsSync(identityFilePath)) {
+                // Profile does not exists. Check if we have enough funds.
+                appState.enoughFunds = await blockchain.hasEnoughFunds();
+                if (!appState.enoughFunds) {
                     log.warn('Insufficient funds to create profile');
                     process.exit(1);
                 }
+            }
+        } catch (err) {
+            notifyBugsnag(err);
+            log.error(`Failed to check for funds. ${err.message}.`);
+            process.exit(1);
+        }
+        setInterval(async () => {
+            try {
+                appState.enoughFunds = await blockchain.hasEnoughFunds();
             } catch (err) {
                 notifyBugsnag(err);
             }
-            setInterval(async () => {
-                try {
-                    appState.enoughFunds = await blockchain.getBalances();
-                } catch (err) {
-                    notifyBugsnag(err);
-                }
-            }, 1800000);
-        } else {
-            appState.enoughFunds = true;
-        }
+        }, 1800000);
 
         // Connecting to graph database
         const graphStorage = container.resolve('graphStorage');
@@ -446,6 +453,14 @@ class OTNode {
             process.exit(1);
         }
         await transport.start();
+
+        // Check if ERC725 has valid node ID.
+        const profile = await blockchain.getProfile(config.erc725Identity);
+
+        if (!profile.nodeId.toLowerCase().startsWith(`0x${config.identity.toLowerCase()}`)) {
+            throw Error('ERC725 profile not created for this node ID. ' +
+                `My identity ${config.identity}, profile's node id: ${profile.nodeId}.`);
+        }
 
         // Initialise API
         const apiUtilities = container.resolve('apiUtilities');
