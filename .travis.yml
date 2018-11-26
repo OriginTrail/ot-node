@@ -9,6 +9,7 @@ addons:
     packages:
     - s3cmd
 before_script:
+  - s3cmd --configure
   - mkdir -p $ARTIFACTS_DIR
   - touch $ARTIFACTS_DIR/testfile
 #  - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
