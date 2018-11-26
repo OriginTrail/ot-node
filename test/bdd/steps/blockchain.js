@@ -53,15 +53,10 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
     const targetWallet = this.state.localBlockchain.web3.eth.accounts.create();
     const nodeWallet = node.options.nodeConfiguration.node_wallet;
 
-    console.log('target', JSON.stringify(targetWallet));
-
     if (currencyType === 'Ethers') {
         const balance = await this.state.localBlockchain.getBalanceInEthers(nodeWallet);
         const balanceBN = new BN(balance, 10);
         const toSend = balanceBN.sub(new BN(await web3.eth.getGasPrice(), 10).mul(new BN(21000)));
-        console.log('ethersWei', balance);
-        console.log('ethersWeiToSend', toSend.toString());
-        console.log('gasss', await web3.eth.getGasPrice());
         await web3.eth.sendTransaction({
             to: targetWallet.address,
             from: nodeWallet,
@@ -73,7 +68,6 @@ Given(/^the (\d+)[st|nd|rd|th]+ node's spend all the (Ethers|Tokens)$/, async fu
     } else if (currencyType === 'Tokens') {
         const balance =
             await this.state.localBlockchain.tokenInstance.methods.balanceOf(nodeWallet).call();
-        console.log('tokens', balance);
 
         await this.state.localBlockchain.tokenInstance.methods
             .transfer(targetWallet.address, balance)
