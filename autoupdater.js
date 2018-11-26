@@ -47,7 +47,10 @@ process.once('message', async ([options]) => {
                     console.log('Cleaning update destination directory');
                     execSync(`rm -rf ../${options.version}`);
 
-                    execSync(`mv ../ot-node-develop ../${options.version}`);
+                    let extractedFileName = options.autoUpdater.branch;
+                    console.log(extractedFileName);
+                    extractedFileName = `ot-node-${extractedFileName.replace('/', '-')}`;
+                    execSync(`mv ../${extractedFileName} ../${options.version}`);
 
                     console.log(`Update has been moved to directory ${options.version}`);
                     console.log('Migrating node modules...');
