@@ -677,7 +677,6 @@ class GS1Importer {
         });
 
         try {
-
             const sortedEvents = eventVertices.sort((a, b) => {
                 if (a._key < b._key) {
                     return -1;
