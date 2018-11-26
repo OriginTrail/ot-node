@@ -18,7 +18,7 @@ const sortedStringify = require('sorted-json-stringify');
 const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
-const { fork } = require('child_process');
+const { fork, spawn, execSync } = require('child_process');
 
 const logger = require('./logger');
 
@@ -83,7 +83,16 @@ class Utilities {
             });
 
             updater.on('message', (msg) => {
-                console.log('GOTOV UPDATE');
+                console.log('Update complete, restarting node...');
+
+                process.argv.shift();
+                spawn('/ot-node/current/ot-node.js', process.argv, {
+                    // cwd: process.cwd(),
+                    detached: true,
+                    stdio: 'inherit',
+                });
+
+                execSync('reboot');
             });
 
             const options = {};

@@ -21,6 +21,10 @@ const Zip = require('machinepack-zip');
 // }
 
 process.once('message', async ([options]) => {
+
+    process.send('complete');
+    process.exit(0);
+
     const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
     console.log(`Downloading update: ${filename} ...`);
     const response = await request(filename);
@@ -69,8 +73,11 @@ process.once('message', async ([options]) => {
                     console.log(`Running seeders for '${options.appDataPath}'...`);
                     execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
                     console.log('Switching node version');
+                    process.send('complete');
+                    process.exit(0);
                     execSync(`ln -sfn ${__dirname}/../${options.version} /ot-node/current`);
                 } catch (err) {
+                    // TODO: Rollback
                     console.log(err);
                 }
             },
