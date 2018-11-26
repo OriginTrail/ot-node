@@ -541,7 +541,7 @@ describe('GS1 Importer tests', () => {
     describe('Double event identifiers should fail', () => {
         const xmlDoubleIds = path.join(__dirname, 'test_xml/DoubleEventId.xml');
 
-        it('Should ail to import double event identifiers', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlDoubleIds))).to.rejectedWith(Error, 'Double event identifiers'));
+        it('Should fail to import double event identifiers', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlDoubleIds))).to.rejectedWith(Error, 'Double event identifiers'));
     });
 
     describe('Multiple same identifiers for different vertices should import correctly', () => {
