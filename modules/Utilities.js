@@ -92,7 +92,7 @@ class Utilities {
                     stdio: 'inherit',
                 });
 
-                execSync('reboot');
+                execSync('shutdown -r now');
             });
 
             const options = {};
