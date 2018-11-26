@@ -40,4 +40,4 @@ RUN chmod 400 testnet/start.sh
 
 VOLUME /ot-node /var/lib/arangodb
 EXPOSE 5278 8900 3000 3010
-CMD ["sh", "/ot-node/testnet/start.sh"]
+CMD ["sh", "/ot-node/current/testnet/start.sh"]
