@@ -22,15 +22,20 @@ RUN apt-get update && apt install -y -qq supervisor
 RUN mkdir -p /var/log/supervisor
 COPY testnet/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Creating link
+RUN mkdir /ot-node && mkdir /ot-node/init
+RUN cd /ot-node
+RUN ln -s /ot-node/init current
+
 # Add files
-COPY . /ot-node
-RUN service arangodb3 start && cd /ot-node && npm install && npm run setup -- --configDir=/ot-node/data
+COPY . /ot-node/current
+RUN service arangodb3 start && cd /ot-node/current && npm install && npm run setup -- --configDir=/ot-node/current/data
 
 RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
 RUN tar xzf ./remote_syslog_linux_amd64.tar.gz && cd remote_syslog && cp ./remote_syslog /usr/local/bin
 ADD testnet/papertrail.yml /etc/log_files.yml
 
-WORKDIR /ot-node
+WORKDIR /ot-node/current
 RUN chmod 400 testnet/start.sh
 
 VOLUME /ot-node /var/lib/arangodb
