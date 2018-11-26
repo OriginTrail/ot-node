@@ -35,12 +35,20 @@ function main() {
         externalConfig = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
     }
 
-    if (!process.env.NODE_WALLET || !process.env.NODE_PRIVATE_KEY ||
-        !web3.utils.isAddress(process.env.NODE_WALLET)) {
-        console.error('Wallet not provided! Please provide valid wallet.');
-    } else {
+    // Check for old env variables for the sake of compatibility.
+    if (process.env.NODE_WALLET) {
         externalConfig.node_wallet = process.env.NODE_WALLET;
+    }
+    if (process.env.NODE_PRIVATE_KEY) {
         externalConfig.node_private_key = process.env.NODE_PRIVATE_KEY;
+    }
+
+    if (!externalConfig.node_wallet ||
+        !externalConfig.node_private_key ||
+        !web3.utils.isAddress(externalConfig.node_wallet)) {
+        console.error('Wallet not provided! Please provide valid wallet.');
+        process.exit(1);
+        return;
     }
 
     if (process.env.ERC_725_IDENTITY) {
@@ -63,7 +71,10 @@ function main() {
     }
 
     if (process.env.IMPORT_WHITELIST) {
-        externalConfig.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
+        if (!externalConfig.network) {
+            externalConfig.network = {};
+        }
+        externalConfig.network.remoteWhitelist = process.env.IMPORT_WHITELIST.split(',');
     }
 
     deepExtend(localConfiguration, externalConfig);
