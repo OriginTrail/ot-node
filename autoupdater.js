@@ -21,10 +21,6 @@ const Zip = require('machinepack-zip');
 // }
 
 process.once('message', async ([options]) => {
-
-    process.send('complete');
-    process.exit(0);
-
     const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
     console.log(`Downloading update: ${filename} ...`);
     const response = await request(filename);
