@@ -27,7 +27,7 @@ class ChallengeService {
         const offer = await models.offers.findOne({ where: { offer_id: offerId } });
         const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id, false);
 
-        litigationCandidates.forEach(async (candidate) => {
+        const challenges = litigationCandidates.map(async (candidate) => {
             const numberOfTests = DEFAULT_NUMBER_OF_TESTS;
 
             const encryptedVertices = importUtilities
@@ -62,6 +62,7 @@ class ChallengeService {
                 this.logger.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
             }
         });
+        await Promise.all(challenges);
     }
 
     /**
