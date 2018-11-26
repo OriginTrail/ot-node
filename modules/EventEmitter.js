@@ -791,6 +791,7 @@ class EventEmitter {
             dcService,
             dvController,
             notifyError,
+            challengeService,
         } = this.ctx;
 
         // sync
@@ -873,13 +874,15 @@ class EventEmitter {
         this._on('kad-challenge-request', async (request, response) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.import_id}`);
+                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.data_set_id}`);
                 const challenge = message.payload;
 
                 const vertices = await this.graphStorage
                     .findVerticesByImportId(challenge.data_set_id, true);
-                const answer = Challenge.answerTestQuestion(challenge.block_id, vertices, 32);
-                logger.trace(`Sending answer to question for import ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
+                ImportUtilities.unpackKeys(vertices, []);
+                const answer =
+                    challengeService.answerTestQuestion(challenge.block_id, vertices, 32);
+                logger.trace(`Sending answer to question for data set ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
 
                 try {
                     await transport.sendResponse(response, {

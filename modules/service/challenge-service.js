@@ -109,6 +109,18 @@ class ChallengeService {
     }
 
     /**
+     * Returns answer block for given block ID, block size and vertex data.
+     * @param blockId ID of the required block.
+     * @param vertexData Original vertex data.
+     * @param blockSize Desired size of
+     * @returns {String}
+     */
+    answerTestQuestion(blockId, vertexData, blockSize) {
+        const blocks = this.getBlocks(vertexData, blockSize);
+        return blocks[blockId];
+    }
+
+    /**
      * Creates array of blocks based on the vertex data.
      * @note Last block can be smaller than desired blockSizeBytes.
      * @param vertices Vertex data in form { ..., data: "vertex-data" }
