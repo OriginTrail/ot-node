@@ -26,6 +26,5 @@ sudo yum install patch
 cd ~
 git clone -b master https://github.com/OriginTrail/ot-node.git
 cd ot-node && npm install
-cp .env.example .env
 
-echo "Installation complete. Please configure .env file."
+echo "Installation complete. Please configure .origintrail_noderc file."
