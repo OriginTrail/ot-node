@@ -5,10 +5,12 @@ env:
   - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
 sudo: enabled
 addons:
-  artifacts:
-    paths: $ARTIFACTS_DIR
+  apt:
+    packages:
+    -s3cmd
 before_script:
   - mkdir -p $ARTIFACTS_DIR
+  - touch $ARTIFACTS_DIR/testfile
 #  - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
 #  - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
 #  - chmod +x setup_arangodb.sh
@@ -37,4 +39,5 @@ script:
 #  - jobs
 #  - kill %1
 after_script:
+  - s3cmd put --recursive $ARTIFACTS_DIR/* s3://ot-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/
 #  - kill -9 $(pgrep arangod)
