@@ -297,8 +297,7 @@
     "dh_min_litigation_interval_in_minutes": 5,
     "deposit_on_demand": true,
     "dc_choose_time": 600000,
-    "requireApproval": false,
-    "auth_token_enabled" : true
+    "requireApproval": false
   },
   "production": {
     "identity": null,
