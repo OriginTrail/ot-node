@@ -68,8 +68,22 @@ class ProfileService {
      * @returns {Promise<boolean>}
      */
     async isProfileCreated() {
+        if (!this.config.erc725Identity) {
+            throw Error('ProfileService not initialized.');
+        }
+
         const profile = await this.blockchain.getProfile(this.config.erc725Identity);
-        return !new BN(profile.stake, 10).eq(new BN(0, 10));
+
+        const zero = new BN(0);
+        const stake = new BN(profile.stake, 10);
+        const stakeReserved = new BN(profile.stakeReserved, 10);
+        const reputation = new BN(profile.reputation, 10);
+        const withdrawalTimestamp = new BN(profile.withdrawalTimestamp, 10);
+        const withdrawalAmount = new BN(profile.withdrawalAmount, 10);
+        const nodeId = new BN(profile.nodeId, 10);
+        return !(stake.eq(zero) && stakeReserved.eq(zero) &&
+            reputation.eq(zero) && withdrawalTimestamp.eq(zero) &&
+            withdrawalAmount.eq(zero) && nodeId.eq(zero));
     }
 
     /**
