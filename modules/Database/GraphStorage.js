@@ -270,15 +270,16 @@ class GraphStorage {
 
     /**
      * Get list of vertices by import ID
-     * @param importId   Import ID
+     * @param datasetId -  Dataset ID
+     * @param encrypted - Data encrypted or not
      * @return {Promise}
      */
-    findVerticesByImportId(importId, encrypted) {
+    findVerticesByImportId(datasetId, encrypted) {
         return new Promise((resolve, reject) => {
             if (!this.db) {
                 reject(Error('Not connected to graph database'));
             } else {
-                this.db.findVerticesByImportId(importId, encrypted).then((result) => {
+                this.db.findVerticesByImportId(datasetId, encrypted).then((result) => {
                     resolve(result);
                 }).catch((err) => {
                     reject(err);

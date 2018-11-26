@@ -41,6 +41,7 @@ const EventEmitter = require('./modules/EventEmitter');
 const DVService = require('./modules/DVService');
 const MinerService = require('./modules/service/miner-service');
 const ApprovalService = require('./modules/service/approval-service');
+const ChallengeService = require('./modules/service/challenge-service');
 const ProfileService = require('./modules/service/profile-service');
 const ReplicationService = require('./modules/service/replication-service');
 const ImportController = require('./modules/controller/import-controller');
@@ -369,6 +370,7 @@ class OTNode {
             importController: awilix.asClass(ImportController).singleton(),
             minerService: awilix.asClass(MinerService).singleton(),
             replicationService: awilix.asClass(ReplicationService).singleton(),
+            challengeService: awilix.asClass(ChallengeService).singleton(),
         });
         const blockchain = container.resolve('blockchain');
         await blockchain.initialize();

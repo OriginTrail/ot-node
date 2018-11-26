@@ -1024,6 +1024,31 @@ class Ethereum {
     getTokenContractAddress() {
         return this.tokenContractAddress;
     }
+
+    /**
+     * Get offer by offer ID
+     * @param offerId - Offer ID
+     * @return {Promise<any>}
+     */
+    async getOffer(offerId) {
+        this.log.trace(`getOffer(offerId=${offerId})`);
+        return this.holdingStorageContract.methods.offer(offerId).call({
+            from: this.config.wallet_address,
+        });
+    }
+
+    /**
+     * Get holders for offer ID
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getHolder(offerId, holderIdentity) {
+        this.log.trace(`getHolder(offerId=${offerId}, holderIdentity=${holderIdentity})`);
+        return this.holdingStorageContract.methods.holder(offerId, holderIdentity).call({
+            from: this.config.wallet_address,
+        });
+    }
 }
 
 module.exports = Ethereum;

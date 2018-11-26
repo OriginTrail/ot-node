@@ -23,6 +23,7 @@ class ReplicationService {
         this.logger = ctx.logger;
         this.config = ctx.config;
         this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
         this.replicationCache = {};
     }
 
@@ -53,7 +54,7 @@ class ReplicationService {
                 );
 
                 ImportUtilities.sort(litEncVertices);
-                const litigationBlocks = Challenge.getBlocks(litEncVertices, 32);
+                const litigationBlocks = this.challengeService.getBlocks(litEncVertices, 32);
                 const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
                 const litRootHash = litigationBlocksMerkleTree.getRoot();
 

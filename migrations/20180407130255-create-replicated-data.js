@@ -27,6 +27,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        litigation_private_key: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         litigation_public_key: {
             allowNull: false,
             type: Sequelize.STRING,

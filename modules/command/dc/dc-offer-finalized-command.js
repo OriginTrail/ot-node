@@ -2,6 +2,8 @@ const Command = require('../command');
 const Utilities = require('../../Utilities');
 const Models = require('../../../models/index');
 
+const { Op } = Models.Sequelize;
+
 /**
  * Repeatable command that checks whether offer is ready or not
  */
@@ -9,6 +11,7 @@ class DcOfferFinalizedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.logger = ctx.logger;
+        this.challengeService = ctx.challengeService;
         this.replicationService = ctx.replicationService;
     }
 
@@ -44,6 +47,29 @@ class DcOfferFinalizedCommand extends Command {
                 await offer.save({ fields: ['status', 'message'] });
 
                 await this.replicationService.cleanup(offer.id);
+
+                const {
+                    holder1,
+                    holder2,
+                    holder3,
+                } = JSON.parse(event.data);
+
+                const holders = [holder1, holder2, holder3].map(h => Utilities.normalizeHex(h));
+                await Models.replicated_data.update(
+                    {
+                        status: 'HOLDING',
+                    },
+                    {
+                        where: {
+                            offer_id: offer.offer_id,
+                            dh_identity: {
+                                [Op.in]: holders,
+                            },
+                        },
+                    },
+                );
+
+                await this.challengeService.sendOfferChallenges(offerId);
                 return Command.empty();
             }
         }

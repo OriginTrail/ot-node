@@ -432,6 +432,25 @@ class Blockchain {
     getTokenContractAddress() {
         return this.blockchain.getTokenContractAddress();
     }
+
+    /**
+     * Get offer by ID
+     * @param offerId - offer ID
+     * @return {Promise<*>}
+     */
+    async getOffer(offerId) {
+        return this.blockchain.getOffer(offerId);
+    }
+
+    /**
+     * Get holders for offer ID
+     * @param offerId - Offer ID
+     * @param holderIdentity - Holder identity
+     * @return {Promise<any>}
+     */
+    async getHolder(offerId, holderIdentity) {
+        return this.blockchain.getHolder(offerId, holderIdentity);
+    }
 }
 
 module.exports = Blockchain;

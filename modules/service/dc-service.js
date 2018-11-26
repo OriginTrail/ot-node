@@ -257,6 +257,7 @@ class DCService {
             dh_wallet: wallet.toLowerCase(),
             dh_identity: dhIdentity.toLowerCase(),
             offer_id: offer.offer_id,
+            litigation_private_key: replication.litigationPrivateKey,
             litigation_public_key: replication.litigationPublicKey,
             distribution_public_key: replication.distributionPublicKey,
             distribution_private_key: replication.distributionPrivateKey,
