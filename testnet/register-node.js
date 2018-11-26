@@ -17,7 +17,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider(`${localConfiguration.bloc
 
 if (argv.configDir) {
     localConfiguration.appDataPath = argv.configDir;
-    console.log(`congigDir given as param '${argv.configDir}'.`);
+    console.log(`configDir given as param '${argv.configDir}'.`);
 } else {
     localConfiguration.appDataPath = path.join(
         homedir,
@@ -87,7 +87,7 @@ function main() {
     fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 
     // eslint-disable-next-line
-    require('../ot-node');
+    require('/ot-node/current');
 }
 
 main();
