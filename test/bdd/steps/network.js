@@ -86,6 +86,7 @@ Given(/^(\d+) bootstrap is running$/, { timeout: 80000 }, function (nodeCount, d
                 remoteWhitelist: ['localhost', '127.0.0.1'],
             },
         },
+        appDataBaseDir: this.parameters.appDataBaseDir,
     });
 
     bootstrapNode.options.identity = bootstrapIdentity.ff62cb1f692431d901833d55b93c7d991b4087f1;
@@ -125,6 +126,7 @@ Given(/^I setup (\d+) node[s]*$/, { timeout: 120000 }, function (nodeCount, done
 
         const newNode = new OtNode({
             nodeConfiguration,
+            appDataBaseDir: this.parameters.appDataBaseDir,
         });
         this.state.nodes.push(newNode);
         newNode.initialize();

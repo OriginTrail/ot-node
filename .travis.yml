@@ -3,7 +3,7 @@ language: node_js
 node_js:
   - "9"
 env:
-  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts
+  - NODE_ENV=development ARTIFACTS_DIR=$TRAVIS_BUILD_DIR/artifacts CUCUMBER_ARTIFACTS_DIR=$ARTIFACTS_DIR/cucumber
 sudo: enabled
 addons:
   apt:
@@ -11,6 +11,7 @@ addons:
     - s3cmd
 before_script:
   - mkdir -p $ARTIFACTS_DIR
+  - mkdir -p $CUCUMBER_ARTIFACTS_DIR
   - echo arangodb3 arangodb/password password root | sudo debconf-set-selections  # set username 'root'
   - echo arangodb3 arangodb/password_again password root | sudo debconf-set-selections  # set password 'root'
   - chmod +x setup_arangodb.sh
@@ -22,7 +23,7 @@ before_script:
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
-  - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd; fi'
+  - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd -- --world-parameters \'{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR", "keepFailedArtifacts": true}\'; fi'
   # checks for arangodb based solution
   - npm test 2> $ARTIFACTS_DIR/mocha-logs.log
   - npm start &> $ARTIFACTS_DIR/app-start.log &
