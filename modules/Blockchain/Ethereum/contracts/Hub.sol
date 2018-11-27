@@ -42,12 +42,14 @@ contract Hub is Ownable{
     address public tokenAddress;
     address public profileAddress;
     address public holdingAddress;
+    address public litigationAddress;
     address public readingAddress;
     address public approvalAddress;
 
     address public profileStorageAddress;
     address public holdingStorageAddress;
     address public readingStorageAddress;
+    address public litigationStorageAddress;
 
     event ContractsChanged();
 
@@ -66,6 +68,12 @@ contract Hub is Ownable{
     function setHoldingAddress(address newHoldingAddress)
     public onlyOwner {
         holdingAddress = newHoldingAddress;
+        emit ContractsChanged();
+    }
+
+    function setLitigationAddress(address newLitigationAddress)
+    public onlyOwner {
+        litigationAddress = newLitigationAddress;
         emit ContractsChanged();
     }
 
@@ -97,6 +105,12 @@ contract Hub is Ownable{
     function setReadingStorageAddress(address newReadingStorageAddress)
     public onlyOwner {
         readingStorageAddress = newReadingStorageAddress;
+        emit ContractsChanged();
+    }
+
+    function setLitigationStorageAddress(address newLitigationStorageAddress)
+    public onlyOwner {
+        litigationStorageAddress = newLitigationStorageAddress;
         emit ContractsChanged();
     }
 
