@@ -63,7 +63,7 @@ class DCChallengeCommand extends Command {
                 data_set_id: offer.data_set_id,
                 block_id: challenge.block_id,
                 challenge_id: challengeRecord.id,
-                litigator: this.config.identity,
+                litigator_id: this.config.identity,
             },
         }, dhId);
 

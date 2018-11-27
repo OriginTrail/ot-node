@@ -43,6 +43,9 @@ class ObjectValidator {
      * @return {*}
      */
     static validateChallengeRequest(message) {
+        if (message.payload == null) {
+            return new Error('Payload is missing');
+        }
         const blockId = message.payload.block_id;
         if (blockId == null) {
             return new Error('Block ID is missing');
@@ -55,6 +58,10 @@ class ObjectValidator {
         if (challengeId == null) {
             return new Error('Challenge ID is missing');
         }
+        const litigatorId = message.payload.litigator_id;
+        if (litigatorId == null) {
+            return new Error('Litigator ID is missing');
+        }
         return null;
     }
 
@@ -64,6 +71,9 @@ class ObjectValidator {
      * @return {*}
      */
     static validateChallengeResponse(message) {
+        if (message.payload == null) {
+            return new Error('Payload is missing');
+        }
         const challengeId = message.payload.challenge_id;
         if (challengeId == null) {
             return new Error('Challenge ID is missing');

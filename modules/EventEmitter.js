@@ -880,6 +880,7 @@ class EventEmitter {
                     message.payload.data_set_id,
                     message.payload.block_id,
                     message.payload.challenge_id,
+                    message.payload.litigator_id,
                 );
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
