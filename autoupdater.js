@@ -63,12 +63,12 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    execSync(`cp -r ./${options.appDataPath} ../${options.version} && cp .env ../../${options.version}`);
+                    execSync(`cp -r ${options.appDataPath} ../${options.version}`);
                     console.log('Configuration migration complete');
 
                     console.log('Processing database migrations');
                     execSync(`cd ../${options.version}`);
-                    execSync(`./node_modules/.bin/sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
+                    execSync(`sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
                     console.log(`Running seeders for '${options.appDataPath}'...`);
                     execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
                     console.log('Switching node version');
