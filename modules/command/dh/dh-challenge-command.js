@@ -32,8 +32,10 @@ class DHChallengeCommand extends Command {
         this.logger.trace(`Sending answer to question for data set ID ${datasetId}, block ID ${blockId}. Block ${answer}`);
 
         await this.transport.challengeResponse({
-            answer,
-            challenge_id: challengeId,
+            payload: {
+                answer,
+                challenge_id: challengeId,
+            },
         }, litigatorNodeId);
         return Command.empty();
     }
