@@ -47,30 +47,36 @@ class DCChallengeCommand extends Command {
 
         this.logger.trace(`Sending challenge to ${dhId}. Import ID ${dataSetId}, block ID ${challenge.block_id}.`);
 
-        const response = await this.transport.challengeRequest({
+        const currentTime = new Date().getTime();
+        const challengeRecord = await models.challenges.create({
+            dh_id: dhId,
+            data_set_id: dataSetId,
+            block_id: challenge.block_id,
+            expected_answer: challenge.answer,
+            start_time: currentTime,
+            end_time: currentTime + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
+        });
+
+        await this.transport.challengeRequest({
             payload: {
                 data_set_id: offer.data_set_id,
                 block_id: challenge.block_id,
+                challenge_id: challengeRecord.id,
             },
         }, dhId);
 
-        const status = this.transport.extractResponseStatus(response);
-        if (typeof status === 'undefined') {
-            this.logger.warn('challenge-request: Missing status');
-            return Command.empty();
-        }
-
-        if (status !== 'success') {
-            this.logger.trace('challenge-request: Response not successful.');
-            return Command.empty();
-        }
-
-        if (response.answer === challenge.answer) {
-            this.logger.trace('Successfully answered to challenge.');
-        } else {
-            this.logger.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-        }
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dcChallengeCheckCommand',
+                    delay: constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
+                    data: {
+                        challengeId: challengeRecord.id,
+                    },
+                    transactional: false,
+                },
+            ],
+        };
     }
 }
 

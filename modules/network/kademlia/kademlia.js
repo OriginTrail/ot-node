@@ -381,10 +381,18 @@ class Kademlia {
             this.emitter.emit('kad-encrypted-key-process-result', request, response);
         });
 
-        // sync
+        // async
         this.node.use('kad-challenge-request', (request, response, next) => {
             this.log.debug('kad-challenge-request received');
             this.emitter.emit('kad-challenge-request', request, response);
+            response.send([]);
+        });
+
+        // async
+        this.node.use('kad-challenge-response', (request, response, next) => {
+            this.log.debug('kad-challenge-response received');
+            this.emitter.emit('kad-challenge-response', request, response);
+            response.send([]);
         });
 
         // error handler
@@ -527,6 +535,19 @@ class Kademlia {
                 const contact = await node.getContact(contactId);
                 return new Promise((resolve, reject) => {
                     node.send('kad-challenge-request', { message }, [contactId, contact], (err, res) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(res);
+                        }
+                    });
+                });
+            };
+
+            node.challengeResponse = async (message, contactId) => {
+                const contact = await node.getContact(contactId);
+                return new Promise((resolve, reject) => {
+                    node.send('kad-challenge-response', { message }, [contactId, contact], (err, res) => {
                         if (err) {
                             reject(err);
                         } else {

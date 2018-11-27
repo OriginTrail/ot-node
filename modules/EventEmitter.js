@@ -1,9 +1,7 @@
 const bytes = require('utf8-length');
 const events = require('events');
 
-const Challenge = require('./Challenge');
 const Utilities = require('./Utilities');
-const Graph = require('./Graph');
 const Models = require('../models');
 const ImportUtilities = require('./ImportUtilities');
 const ObjectValidator = require('./validator/object-validator');
@@ -869,9 +867,8 @@ class EventEmitter {
             );
         });
 
-        // sync
-        // TODO this call should be refactored to be async
-        this._on('kad-challenge-request', async (request, response) => {
+        // async
+        this._on('kad-challenge-request', async (request) => {
             try {
                 const message = transport.extractMessage(request);
                 logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.data_set_id}`);
@@ -884,27 +881,31 @@ class EventEmitter {
                     challengeService.answerChallengeQuestion(challenge.block_id, vertices);
                 logger.trace(`Sending answer to question for data set ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
 
-                try {
-                    await transport.sendResponse(response, {
-                        status: 'success',
-                        answer,
-                    });
-                } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send challenge response for import ${challenge.import_id}. Error: ${e}.`);
-                }
+                await transport.challengeResponse({
+                    answer,
+                    challenge_id: message.challenge_id,
+                }, challenge.dh_id);
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);
+            }
+        });
 
-                try {
-                    await transport.sendResponse(response, {
-                        status: 'fail',
-                    });
-                } catch (e) {
-                    // TODO handle this case
-                    logger.error(`Failed to send response 'fail' status. Error: ${e}.`);
-                }
+        // async
+        this._on('kad-challenge-response', async (request) => {
+            try {
+                const message = transport.extractMessage(request);
+                logger.info(`Challenge response arrived for challenge ${message.challenge_id}.`);
+
+                const challenge = await Models.offers.findOne({
+                    where: { offer_id: message.challenge_id },
+                });
+
+                challenge.answer = message.answer;
+                await challenge.save({ fields: ['answer'] });
+            } catch (error) {
+                logger.error(`Failed to get data. ${error}.`);
+                notifyError(error);
             }
         });
 
