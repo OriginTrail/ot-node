@@ -2,7 +2,7 @@
 FROM ubuntu:16.04
 MAINTAINER OriginTrail
 LABEL maintainer="OriginTrail"
-ARG targetEnvironment=production
+ARG targetEnvironment=development
 
 ENV NODE_ENV=$targetEnvironment
 ENV GRANAX_USE_SYSTEM_TOR=1
