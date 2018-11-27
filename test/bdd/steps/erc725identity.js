@@ -12,6 +12,35 @@ const BN = require('bn.js');
 const utilities = require('./lib/utilities');
 const erc725ProfileAbi = require('../../../modules/Blockchain/Ethereum/abi/erc725');
 
+Given(/^I manually create ERC725 identity for (\d+)[st|nd|rd|th]+ node$/, async function (nodeIndex) {
+    expect(this.state.localBlockchain, 'No blockchain.').to.not.be.undefined;
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+    const nodeWallet = node.options.nodeConfiguration.node_wallet;
+    const nodeWalletKey = node.options.nodeConfiguration.node_private_key;
+
+    const identityContractInstance =
+        await this.state.localBlockchain.createIdentity(nodeWallet, nodeWalletKey);
+    expect(identityContractInstance._address).to.not.be.undefined;
+    this.state.manualStuff.erc725Identity = identityContractInstance._address;
+});
+
+When(/^I use the created ERC725 identity in (\d+)[st|nd|rd|th]+ node$/, async function (nodeIndex) {
+    expect(this.state.localBlockchain, 'No blockchain.').to.not.be.undefined;
+    expect(this.state.manualStuff.erc725Identity, 'No ERC725 identity.').to.not.be.undefined;
+    expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);
+    expect(nodeIndex, 'Invalid index.').to.be.within(0, this.state.nodes.length);
+
+    const node = this.state.nodes[nodeIndex - 1];
+
+    fs.writeFileSync(
+        path.join(node.options.configDir, 'erc725_identity.json'),
+        JSON.stringify({ identity: this.state.manualStuff.erc725Identity }),
+    );
+});
+
 Then(/^the (\d+)[st|nd|rd|th]+ node should have a valid ERC725 identity/, async function (nodeIndex) {
     expect(this.state.nodes.length, 'No started nodes.').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes.').to.be.greaterThan(0);

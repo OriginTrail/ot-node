@@ -186,6 +186,10 @@ class LocalBlockchain {
         this.holdingContractData = `0x${compileResult.contracts['Holding.sol:Holding'].bytecode}`;
         this.holdingContractAbi = JSON.parse(compileResult.contracts['Holding.sol:Holding'].interface);
         this.holdingContract = new this.web3.eth.Contract(this.holdingContractAbi);
+
+        this.identityContractData = `0x${compileResult.contracts['Identity.sol:Identity'].bytecode}`;
+        this.identityContractAbi = JSON.parse(compileResult.contracts['Identity.sol:Identity'].interface);
+        this.identityContract = new this.web3.eth.Contract(this.identityContractAbi);
     }
 
     async deployContracts() {
@@ -356,6 +360,14 @@ class LocalBlockchain {
 
     async getBalanceInEthers(wallet) {
         return this.web3.eth.getBalance(wallet);
+    }
+
+    async createIdentity(wallet, walletKey) {
+        const [, identityInstance] = await this.deployContract(
+            this.web3, this.identityContract, this.identityContractData,
+            [wallet], wallet,
+        );
+        return identityInstance;
     }
 }
 
