@@ -85,12 +85,12 @@ class Utilities {
             updater.on('message', (msg) => {
                 console.log('Update complete, restarting node...');
 
-                process.argv.shift();
-                spawn('/ot-node/current/ot-node.js', process.argv, {
-                    // cwd: process.cwd(),
-                    detached: true,
-                    stdio: 'inherit',
-                });
+                // process.argv.shift();
+                // spawn('/ot-node/current/ot-node.js', process.argv, {
+                //     // cwd: process.cwd(),
+                //     detached: true,
+                //     stdio: 'inherit',
+                // });
 
                 execSync('shutdown -r now');
             });
