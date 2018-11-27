@@ -24,7 +24,7 @@ before_script:
 script:
   - npm run lint
   - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then
-       npm run test:bdd -- --world-parameters "{\"appDataBaseDir\":\"$CUCUMBER_ARTIFACTS_DIR\", \"keepFailedArtifacts\": true}";
+      npm run test:bdd -- --world-parameters '{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR","keepFailedArtifacts":true}';
     fi
   # checks for arangodb based solution
   - npm test 2> $ARTIFACTS_DIR/mocha-logs.log
