@@ -55,6 +55,9 @@ process.once('message', async ([options]) => {
                     execSync(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
 
+                    const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
+                    process.env.SEQUELIZEDB = `/ot-node/${options.version}/`;
+
                     // eslint-disable-next-line
                     const Models = require(`../${options.version}/models`);
 
@@ -85,6 +88,7 @@ process.once('message', async ([options]) => {
                         process.exit(0);
                     }).catch((err) => {
                         console.log('Update failed');
+                        process.env.SEQUELIZEDB = SEQUELIZEDB_OLD;
                         console.log(err);
                     });
 
