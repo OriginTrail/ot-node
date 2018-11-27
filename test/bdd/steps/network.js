@@ -12,6 +12,7 @@ const deepExtend = require('deep-extend');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
+const ImportUtilities = require('../../../modules/ImportUtilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
@@ -233,47 +234,111 @@ Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, 
     this.state.lastImport = importResponse;
 });
 
-Then(/^the last import's hash should be the same as one manually calculated$/, function () {
+Then(/^the last import's hash should be the same as one manually calculated$/, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
 
     const { dc } = this.state;
-    return new Promise((accept, reject) => {
-        request(
-            `${dc.state.node_rpc_url}/api/import_info?data_set_id=${this.state.lastImport.data_set_id}`,
-            { json: true },
-            (err, res, body) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }
 
-                // TODO: Avoid asserting in promise. Manually check.
-                // expect(body).to.have.keys([
-                //     'import_hash', 'root_hash', 'import',
-                //     'transaction', 'data_provider_wallet',
-                // ]);
-                if (!body.import || !body.import.vertices || !body.import.edges) {
-                    reject(Error(`Response should contain import: { vertices: ..., edges: ... }\n${JSON.stringify(body)}`));
-                    return;
-                }
+    const response = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
 
-                const calculatedImportHash = utilities.calculateImportHash(body.import);
-                if (calculatedImportHash !== this.state.lastImport.data_set_id) {
-                    reject(Error(`Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`));
-                    return;
-                }
+    expect(response, 'response should contain root_hash, import, transaction and data_provider_wallet keys').to.have.keys([
+        'root_hash', 'import',
+        'transaction', 'data_provider_wallet',
+    ]);
 
-                // TODO: Calculate root hash here and test it against body.root_hash.
-                accept();
-            },
-        );
-    });
+    expect(response.import, 'response.import should contain vertices and edges').to.have.keys(['vertices', 'edges']);
+
+    const calculatedImportHash = utilities.calculateImportHash(response.import);
+    expect(calculatedImportHash, `Calculated hash differs: ${calculatedImportHash} !== ${this.state.lastImport.data_set_id}.`).to.be.equal(this.state.lastImport.data_set_id);
 });
 
-Given(/^DC initiates the replication$/, async function () {
+Then(/^the last root hash should be the same as one manually calculated$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+
+    const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    expect(myFingerprint).to.have.keys(['root_hash']);
+    expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+
+
+    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    // vertices and edges are already sorted from the response
+    const myMerkle = await ImportUtilities.merkleStructure(myApiImportInfo.import.vertices.filter(vertex =>
+        vertex.vertex_type !== 'CLASS'), myApiImportInfo.import.edges);
+
+    expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
+});
+
+Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
+
+    const { dc } = this.state;
+    let data;
+    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+
+    expect(
+        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00').length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+    data = {
+        parent_id: 'urn:epc:id:sgln:Building_Green',
+    };
+    expect(
+        utilities.findVertexUid(myApiImportInfo.import.vertices, 'LOCATION', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgln:Building_Green_V2', data).length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+    data = {
+        category: 'Company',
+        name: 'Green',
+        object_class_id: 'Actor',
+        wallet: '0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0',
+    };
+    expect(
+        utilities.findVertexUid(myApiImportInfo.import.vertices, 'ACTOR', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:actor:id:Company_Green', data).length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+    data = {
+        category: 'Beverage',
+        description: 'Wine Bottle',
+        object_class_id: 'Product',
+    };
+    expect(
+        utilities.findVertexUid(myApiImportInfo.import.vertices, 'PRODUCT', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:product:id:Product_1', data).length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+    data = {
+        expirationDate: '2020-31-12T00:01:54Z',
+        parent_id: 'urn:ot:object:product:id:Product_1',
+        productId: 'urn:ot:object:product:id:Product_1',
+        productionDate: '2017-31-12T00:01:54Z',
+        quantities: {
+            'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00': {
+                PCS: '5d3381241af6b16260f680059e9042',
+            },
+        },
+    };
+    expect(
+        utilities.findVertexUid(myApiImportInfo.import.vertices, 'BATCH', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgtin:Batch_1', data).length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+    expect(
+        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:epc:id:sgln:Building_Green').length,
+        'There should be at least one such vertex',
+    ).to.be.above(0);
+});
+
+Given(/^DC initiates the replication$/, { timeout: 60000 }, async function () {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
