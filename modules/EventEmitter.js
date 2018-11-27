@@ -871,7 +871,7 @@ class EventEmitter {
         this._on('kad-challenge-request', async (request) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.data_set_id}`);
+                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Data set ID ${message.payload.data_set_id}`);
                 const challenge = message.payload;
 
                 const vertices = await this.graphStorage
@@ -879,12 +879,12 @@ class EventEmitter {
                 ImportUtilities.unpackKeys(vertices, []);
                 const answer =
                     challengeService.answerChallengeQuestion(challenge.block_id, vertices);
-                logger.trace(`Sending answer to question for data set ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
+                logger.trace(`Sending answer to question for data set ID ${challenge.data_set_id}, block ID ${challenge.block_id}. Block ${answer}`);
 
                 await transport.challengeResponse({
                     answer,
-                    challenge_id: message.challenge_id,
-                }, challenge.dh_id);
+                    challenge_id: challenge.challenge_id,
+                }, challenge.litigator);
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);
