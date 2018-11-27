@@ -29,6 +29,7 @@ Before(function (testCase, done) {
     this.state.localBlockchain = null;
     this.state.nodes = [];
     this.state.bootstraps = [];
+    this.state.manualStuff = {};
     done();
 });
 
