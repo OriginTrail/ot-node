@@ -57,6 +57,9 @@ class DHService {
         }), { concurrent: 1 });
     }
 
+    /**
+     * Throttle offer using internal queue
+     */
     handleOffer(
         offerId, dcNodeId,
         dataSetSizeInBytes, holdingTimeInMinutes, litigationIntervalInMinutes,
@@ -79,7 +82,7 @@ class DHService {
     }
 
     /**
-     * Handle one offer
+     * Handles one offer
      * @returns {Promise<void>}
      */
     async _handleOffer(
@@ -271,6 +274,26 @@ class DHService {
         );
         const walletBalanceBN = new BN(this.web3.utils.toWei(parseFloat(walletBalance).toString(), 'ether'), 10);
         return amount.lt(walletBalanceBN);
+    }
+
+    /**
+     * Handles one challenge
+     * @param datasetId - Data set ID
+     * @param blockId - Challenge block ID
+     * @param challengeId - Challenge ID used for reply
+     * @return {Promise<void>}
+     */
+    async handleChallenge(datasetId, blockId, challengeId) {
+        this.logger.info(`Challenge arrived: Block ID ${blockId}, Data set ID ${datasetId}`);
+
+        await this.commandExecutor.add({
+            name: 'dhChallengeCommand',
+            data: {
+                blockId,
+                datasetId,
+                challengeId,
+            },
+        });
     }
 
     /**

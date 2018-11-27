@@ -871,20 +871,16 @@ class EventEmitter {
         this._on('kad-challenge-request', async (request) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge arrived: Block ID ${message.payload.block_id}, Import ID ${message.payload.data_set_id}`);
-                const challenge = message.payload;
-
-                const vertices = await this.graphStorage
-                    .findVerticesByImportId(challenge.data_set_id, true);
-                ImportUtilities.unpackKeys(vertices, []);
-                const answer =
-                    challengeService.answerChallengeQuestion(challenge.block_id, vertices);
-                logger.trace(`Sending answer to question for data set ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
-
-                await transport.challengeResponse({
-                    answer,
-                    challenge_id: message.challenge_id,
-                }, challenge.dh_id);
+                const error = ObjectValidator.validateChallengeRequest(message);
+                if (error) {
+                    logger.trace(`Challenge request message is invalid. ${error.message}`);
+                    return;
+                }
+                await dhService.handleChallenge(
+                    message.payload.data_set_id,
+                    message.payload.block_id,
+                    message.payload.challenge_id,
+                );
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);
@@ -895,19 +891,16 @@ class EventEmitter {
         this._on('kad-challenge-response', async (request) => {
             try {
                 const message = transport.extractMessage(request);
-                logger.info(`Challenge response arrived for challenge ${message.challenge_id}.`);
-
-                const challenge = await Models.challenges.findOne({
-                    where: { id: message.challenge_id },
-                });
-
-                if (challenge == null) {
-                    logger.info(`Failed to find challenge ${message.challenge_id}.`);
+                const error = ObjectValidator.validateChallengeResponse(message);
+                if (error) {
+                    logger.trace(`Challenge response message is invalid. ${error.message}`);
                     return;
                 }
 
-                challenge.answer = message.answer;
-                await challenge.save({ fields: ['answer'] });
+                await dcService.handleChallengeResponse(
+                    message.payload.challenge_id,
+                    message.payload.answer,
+                );
             } catch (error) {
                 logger.error(`Failed to get data. ${error}.`);
                 notifyError(error);

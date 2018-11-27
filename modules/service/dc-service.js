@@ -4,7 +4,7 @@ const Encryption = require('../Encryption');
 
 const models = require('../../models');
 
-const DEFAILT_NUMBER_OF_HOLDERS = 3;
+const DEFAULT_NUMBER_OF_HOLDERS = 3;
 
 class DCService {
     constructor(ctx) {
@@ -130,7 +130,7 @@ class DCService {
         const profileStakeReserved = new BN(profile.stakeReserved, 10);
 
         const offerStake = new BN(tokenAmountPerHolder, 10)
-            .mul(new BN(DEFAILT_NUMBER_OF_HOLDERS, 10));
+            .mul(new BN(DEFAULT_NUMBER_OF_HOLDERS, 10));
 
         let remainder = null;
         if (profileStake.sub(profileStakeReserved).lt(offerStake)) {
@@ -323,6 +323,28 @@ class DCService {
             },
             transactional: false,
         });
+    }
+
+    /**
+     * Handles challenge response
+     * @param answer - Challenge block ID
+     * @param challengeId - Challenge ID used for reply
+     * @return {Promise<void>}
+     */
+    async handleChallengeResponse(challengeId, answer) {
+        this.logger.info(`Challenge response arrived for challenge ${challengeId}.`);
+
+        const challenge = await models.challenges.findOne({
+            where: { id: challengeId },
+        });
+
+        if (challenge == null) {
+            this.logger.info(`Failed to find challenge ${challengeId}.`);
+            return;
+        }
+
+        challenge.answer = answer;
+        await challenge.save({ fields: ['answer'] });
     }
 }
 
