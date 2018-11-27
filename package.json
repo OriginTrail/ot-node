@@ -22,7 +22,7 @@
     "start": "node node_version_check.js && node ot-node.js",
     "debug:start": "node --nolazy --inspect-brk ot-node.js",
     "bootstrap": "npm run setup:hard",
-    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js isStartHealthy.js node_version_check.js add_db_backup.js check-updates.js",
+    "lint": "./node_modules/.bin/eslint --quiet migrations/ models/ modules/ seeders/ test/ testnet/ ot-node.js .eslintrc.js node_version_check.js add_db_backup.js check-updates.js",
     "arango": "/usr/local/opt/arangodb/sbin/arangod &",
     "db_backup": "node add_db_backup.js",
     "generate-identity": "node ./scripts/identity-cli.js",
