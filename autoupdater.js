@@ -10,7 +10,6 @@ process.once('message', async ([options]) => {
     const response = await request(filename);
     const filestream = fs.createWriteStream('update.zip');
     response.pipe(filestream);
-    console.log(options.appDataPath);
 
     filestream.on('finish', () => {
         console.log('Download complete');
@@ -51,12 +50,12 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    console.log(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
-                    execSync(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
+                    console.log(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
+                    execSync(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
 
                     const SEQUELIZEDB_OLD = process.env.SEQUELIZEDB;
-                    process.env.SEQUELIZEDB = `/ot-node/${options.version}/`;
+                    process.env.SEQUELIZEDB = `/ot-node/${options.version}/data/system.db`;
 
                     // eslint-disable-next-line
                     const Models = require(`../${options.version}/models`);
