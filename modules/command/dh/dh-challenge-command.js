@@ -7,11 +7,11 @@ const importUtilities = require('../../ImportUtilities');
 class DHChallengeCommand extends Command {
     constructor(ctx) {
         super(ctx);
-        this.web3 = ctx.web3;
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.blockchain = ctx.blockchain;
-        this.remoteControl = ctx.remoteControl;
+        this.transport = ctx.transport;
+        this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
     }
 
     /**
