@@ -8,11 +8,11 @@ Feature: Test basic importer features
     And I start the node
     And I use 1st node as DC
     And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
-    Given DC initiates the replication
+    Given DC initiates the replication for last imported dataset
     And I wait for 10 seconds
     And I remember previous import's fingerprint value
     And DC imports "importers/json_examples/WOT_Example_2.json" as WOT
-    Then the last import's hash should be the same as one manually calculated
+    Then DC's last import's hash should be the same as one manually calculated
     Then checking again first import's root hash should point to remembered value
 
   Scenario: Check that WOT import is connecting to the same batch from GS1 import
