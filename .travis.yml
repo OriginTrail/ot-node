@@ -23,7 +23,9 @@ before_script:
   - npm install -g truffle@5.0.0-beta.1 &> /dev/null
 script:
   - npm run lint
-  - 'if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then npm run test:bdd -- --world-parameters \'{"appDataBaseDir":"$CUCUMBER_ARTIFACTS_DIR", "keepFailedArtifacts": true}\'; fi'
+  - if [ "$TRAVIS_EVENT_TYPE" != "push" ]; then
+       npm run test:bdd -- --world-parameters "{\"appDataBaseDir\":\"$CUCUMBER_ARTIFACTS_DIR\", \"keepFailedArtifacts\": true}";
+    fi
   # checks for arangodb based solution
   - npm test 2> $ARTIFACTS_DIR/mocha-logs.log
   - npm start &> $ARTIFACTS_DIR/app-start.log &
