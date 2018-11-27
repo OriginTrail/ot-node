@@ -63,7 +63,7 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    execSync(`cp -r ${options.appDataPath} ../${options.version} && cp .env ../../${options.version}`);
+                    execSync(`cp -r ${options.appDataPath} ../${options.version}`);
                     console.log('Configuration migration complete');
 
                     console.log('Processing database migrations');
