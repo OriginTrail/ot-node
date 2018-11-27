@@ -10,6 +10,7 @@ const importUtilities = require('../../ImportUtilities');
 class DCChallengeCommand extends Command {
     constructor(ctx) {
         super(ctx);
+        this.config = ctx.config;
         this.logger = ctx.logger;
         this.transport = ctx.transport;
         this.graphStorage = ctx.graphStorage;
@@ -50,7 +51,7 @@ class DCChallengeCommand extends Command {
         const currentTime = new Date().getTime();
         const challengeRecord = await models.challenges.create({
             dh_id: dhId,
-            data_set_id: dataSetId,
+            data_set_id: offer.data_set_id,
             block_id: challenge.block_id,
             expected_answer: challenge.answer,
             start_time: currentTime,
@@ -62,6 +63,7 @@ class DCChallengeCommand extends Command {
                 data_set_id: offer.data_set_id,
                 block_id: challenge.block_id,
                 challenge_id: challengeRecord.id,
+                litigator: this.config.identity,
             },
         }, dhId);
 
