@@ -87,7 +87,7 @@ function main() {
     fs.writeFileSync(`.${pjson.name}rc`, JSON.stringify(externalConfig, null, 4));
 
     // eslint-disable-next-line
-    require('/ot-node/current');
+    require('../ot-node');
 }
 
 main();
