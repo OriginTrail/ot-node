@@ -64,7 +64,7 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    execSync(`cp -r /ot-node/current/${options.appDataPath} /ot-node/${options.version}/`);
+                    execSync(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
 
                     console.log('Processing database migrations');
