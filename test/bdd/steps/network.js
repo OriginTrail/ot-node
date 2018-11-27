@@ -546,6 +546,7 @@ Given(/^I additionally setup (\d+) node[s]*$/, { timeout: 60000 }, function (nod
                 },
                 local_network_only: true,
             },
+            appDataBaseDir: this.parameters.appDataBaseDir,
         });
         this.state.nodes.push(newNode);
         newNode.initialize();
