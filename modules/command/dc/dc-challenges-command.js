@@ -23,7 +23,6 @@ class DCChallengesCommand extends Command {
                 dhId: candidate.dh_id,
                 offerId: candidate.offer_id,
                 litigationPrivateKey: candidate.litigation_private_key,
-                dataSetId: candidate.data_set_id,
             },
             transactional: false,
         }));

@@ -1,6 +1,12 @@
+const uuidv4 = require('uuid/v4');
 
 module.exports = (sequelize, DataTypes) => {
     const challenges = sequelize.define('challenges', {
+        id: {
+            type: DataTypes.UUID,
+            primaryKey: true,
+            defaultValue: () => uuidv4(),
+        },
         dh_id: DataTypes.STRING,
         block_id: DataTypes.INTEGER,
         answer: DataTypes.STRING,

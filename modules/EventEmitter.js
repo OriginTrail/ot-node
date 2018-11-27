@@ -897,9 +897,14 @@ class EventEmitter {
                 const message = transport.extractMessage(request);
                 logger.info(`Challenge response arrived for challenge ${message.challenge_id}.`);
 
-                const challenge = await Models.offers.findOne({
-                    where: { offer_id: message.challenge_id },
+                const challenge = await Models.challenges.findOne({
+                    where: { id: message.challenge_id },
                 });
+
+                if (challenge == null) {
+                    logger.info(`Failed to find challenge ${message.challenge_id}.`);
+                    return;
+                }
 
                 challenge.answer = message.answer;
                 await challenge.save({ fields: ['answer'] });
