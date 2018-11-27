@@ -6,9 +6,7 @@ const {
 const { expect } = require('chai');
 const uuidv4 = require('uuid/v4');
 const request = require('request');
-const sleep = require('sleep-async')().Promise;
 const { deepEqual } = require('jsprim');
-const deepExtend = require('deep-extend');
 
 const OtNode = require('./lib/otnode');
 const Utilities = require('../../../modules/Utilities');
@@ -218,31 +216,16 @@ Given(/^I use (\d+)[st|nd|rd|th]+ node as ([DC|DH|DV|DV2]+)$/, function (nodeInd
     this.state[nodeType.toLowerCase()] = this.state.nodes[nodeIndex - 1];
 });
 
-Given(/^DC imports "([^"]*)" as ([GS1|WOT]+)$/, async function (importFilePath, importType) {
-    expect(importType, 'importType can only be GS1 or WOT.').to.satisfy(val => (val === 'GS1' || val === 'WOT'));
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-
-    const importResponse = await httpApiHelper.apiImport(host, importFilePath, importType);
-
-    expect(importResponse).to.have.keys(['data_set_id', 'message', 'wallet']);
-    this.state.lastImport = importResponse;
-});
-
-Then(/^the last import's hash should be the same as one manually calculated$/, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+Then(/^([DC|DV]+)'s last [import|purchase]+'s hash should be the same as one manually calculated$/, async function (nodeType) {
+    expect(nodeType, 'Node type can only be DC or DV.').to.satisfy(val => (val === 'DC' || val === 'DV'));
+    expect(!!this.state[nodeType.toLowerCase()], 'DC/DV node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
     expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
 
-    const { dc } = this.state;
+    const myNode = this.state[nodeType.toLowerCase()];
 
-    const response = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
+    const response = await httpApiHelper.apiImportInfo(myNode.state.node_rpc_url, this.state.lastImport.data_set_id);
 
     expect(response, 'response should contain root_hash, import, transaction and data_provider_wallet keys').to.have.keys([
         'root_hash', 'import',
@@ -275,87 +258,6 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
         vertex.vertex_type !== 'CLASS'), myApiImportInfo.import.edges);
 
     expect(myFingerprint.root_hash, 'Fingerprint from API endpoint and manually calculated should match').to.be.equal(myMerkle.tree.getRoot());
-});
-
-Then(/^imported data is compliant with 01_Green_to_pink_shipment.xml file$/, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-    expect(!!this.state.lastImport, 'Last import didn\'t happen. Use other step to do it.').to.be.equal(true);
-
-    const { dc } = this.state;
-    let data;
-    const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
-
-    expect(
-        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00').length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-    data = {
-        parent_id: 'urn:epc:id:sgln:Building_Green',
-    };
-    expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'LOCATION', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgln:Building_Green_V2', data).length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-    data = {
-        category: 'Company',
-        name: 'Green',
-        object_class_id: 'Actor',
-        wallet: '0xBbAaAd7BD40602B78C0649032D2532dEFa23A4C0',
-    };
-    expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'ACTOR', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:actor:id:Company_Green', data).length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-    data = {
-        category: 'Beverage',
-        description: 'Wine Bottle',
-        object_class_id: 'Product',
-    };
-    expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'PRODUCT', 'urn:ot:object:actor:id:Company_Green', 'urn:ot:object:product:id:Product_1', data).length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-    data = {
-        expirationDate: '2020-31-12T00:01:54Z',
-        parent_id: 'urn:ot:object:product:id:Product_1',
-        productId: 'urn:ot:object:product:id:Product_1',
-        productionDate: '2017-31-12T00:01:54Z',
-        quantities: {
-            'urn:ot:object:actor:id:Company_Green:2018-01-01T01:00:00.000-04:00Z-04:00': {
-                PCS: '5d3381241af6b16260f680059e9042',
-            },
-        },
-    };
-    expect(
-        utilities.findVertexUid(myApiImportInfo.import.vertices, 'BATCH', 'urn:ot:object:actor:id:Company_Green', 'urn:epc:id:sgtin:Batch_1', data).length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-    expect(
-        utilities.findVertexIdValue(myApiImportInfo.import.vertices, 'IDENTIFIER', 'urn:ot:object:actor:id:Company_Green', 'uid', 'urn:epc:id:sgln:Building_Green').length,
-        'There should be at least one such vertex',
-    ).to.be.above(0);
-});
-
-Given(/^DC initiates the replication$/, { timeout: 60000 }, async function () {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
-    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
-
-    const { dc } = this.state;
-    const response =
-        await httpApiHelper.apiReplication(
-            dc.state.node_rpc_url,
-            this.state.lastImport.data_set_id,
-        );
-
-    if (!response.replication_id) {
-        throw Error(`Failed to replicate. Got reply: ${JSON.stringify(response)}`);
-    }
-
-    this.state.lastReplication = response;
 });
 
 Given(/^I wait for replication[s] to finish$/, { timeout: 1200000 }, function () {
@@ -533,41 +435,6 @@ Then(/^checking again first import's root hash should point to remembered value$
     ).to.be.equal(true);
 });
 
-Given(/^I query ([DC|DH|DV]+) node locally with path: "(\S+)", value: "(\S+)" and opcode: "(\S+)"$/, async function (targetNode, path, value, opcode) {
-    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
-    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
-    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
-
-
-    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
-
-    const jsonQuery = {
-        query:
-            [
-                {
-                    path,
-                    value,
-                    opcode,
-                },
-            ],
-    };
-    const response = await httpApiHelper.apiQueryLocal(host, jsonQuery);
-    this.state.apiQueryLocalResponse = response;
-});
-
-Given(/^I query ([DC|DH|DV]+) node locally for last imported data set id$/, async function (targetNode) {
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(!!this.state.lastImport.data_set_id, 'Last imports data set id seems not defined').to.be.equal(true);
-    expect(targetNode, 'Node type can only be DC, DH or DV.').to.satisfy(val => (val === 'DC' || val === 'DH' || val === 'DV'));
-    expect(!!this.state[targetNode.toLowerCase()], 'Target node not defined. Use other step to define it.').to.be.equal(true);
-
-    const host = this.state[targetNode.toLowerCase()].state.node_rpc_url;
-    const lastDataSetId = this.state.lastImport.data_set_id;
-
-    const response = await httpApiHelper.apiQueryLocalImportByDataSetId(host, lastDataSetId);
-    this.state.apiQueryLocalImportByDataSetIdResponse = response;
-});
-
 Then(/^response should contain only last imported data set id$/, function () {
     expect(!!this.state.apiQueryLocalResponse, 'apiQueryLocal should have given some result').to.be.equal(true);
 
@@ -638,30 +505,6 @@ Given(/^I start additional node[s]*$/, { timeout: 60000 }, function () {
     return Promise.all(additionalNodesStarts);
 });
 
-Given(/^([DV|DV2]+) publishes query consisting of path: "(\S+)", value: "(\S+)" and opcode: "(\S+)" to the network$/, { timeout: 90000 }, async function (whichDV, path, value, opcode) {
-    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(opcode, 'Opcode should only be EQ or IN.').to.satisfy(val => (val === 'EQ' || val === 'IN'));
-    const dv = this.state[whichDV.toLowerCase()];
-
-    // TODO find way to pass jsonQuery directly to step definition
-    const jsonQuery = {
-        query:
-            [
-                {
-                    path,
-                    value,
-                    opcode,
-                },
-            ],
-    };
-    const queryNetworkResponse =
-        await httpApiHelper.apiQueryNetwork(dv.state.node_rpc_url, jsonQuery);
-    expect(Object.keys(queryNetworkResponse), 'Reponse should have message and query_id').to.have.members(['message', 'query_id']);
-    expect(queryNetworkResponse.message, 'Message should inform about successful sending of the query').to.be.equal('Query sent successfully.');
-    this.state.lastQueryNetworkId = queryNetworkResponse.query_id;
-    return new Promise((accept, reject) => dv.once('dv-network-query-processed', () => accept()));
-});
-
 Then(/^all nodes with last import should answer to last network query by ([DV|DV2]+)$/, { timeout: 90000 }, async function (whichDV) {
     expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
     expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
@@ -714,78 +557,6 @@ Then(/^all nodes with last import should answer to last network query by ([DV|DV
     });
 });
 
-Given(/^the ([DV|DV2]+) purchases import from the last query from (a DH|the DC|a DV)$/, function (whichDV, fromWhom, done) {
-    expect(whichDV, 'Query can be made either by DV or DV2.').to.satisfy(val => (val === 'DV' || val === 'DV2'));
-    expect(!!this.state[whichDV.toLowerCase()], 'DV/DV2 node not defined. Use other step to define it.').to.be.equal(true);
-    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
-    expect(this.state.lastQueryNetworkId, 'Query not published yet.').to.not.be.undefined;
-
-    const { dc } = this.state;
-    const dv = this.state[whichDV.toLowerCase()];
-    const queryId = this.state.lastQueryNetworkId;
-    const dataSetId = this.state.lastImport.data_set_id;
-    let sellerNode;
-
-    const confirmationsSoFar =
-        dv.nodeConfirmsForDataSetId(queryId, dataSetId);
-
-    expect(confirmationsSoFar).to.have.length.greaterThan(0);
-
-    if (fromWhom === 'a DH') {
-        // Find first DH that replicated last import.
-        sellerNode = this.state.nodes.find(node => (node !== dc && node !== dv));
-    } else if (fromWhom === 'the DC') {
-        sellerNode = dc;
-    } else if (fromWhom === 'a DV') {
-        if (whichDV === 'DV') {
-            console.log('DV cant buy from DV');
-            process.exit(-1);
-        }
-        sellerNode = this.state.dv;
-    }
-
-    expect(sellerNode, 'Didn\'t find seller node.').to.not.be.undefined;
-    const { replyId } =
-        dv.state.dataLocationQueriesConfirmations[queryId][sellerNode.state.identity];
-
-    expect(replyId).to.not.be.undefined;
-
-    // Wait for purchase to happened and then exit.
-    dv.once('dataset-purchase', (purchase) => {
-        if (purchase.queryId === queryId &&
-            purchase.replyId === replyId &&
-            purchase.dataSetId === dataSetId) {
-            this.logger.info(`${dv.state.identity} finished purchase for data-set ID ${dataSetId} from sellerNode ${sellerNode.state.identity}`);
-            done();
-        }
-    });
-
-    // Initiate actual purchase.
-    httpApiHelper.apiReadNetwork(dv.state.node_rpc_url, queryId, replyId, dataSetId)
-        .catch(error => done(error));
-});
-
-Given(/^I attempt to withdraw (\d+) tokens from DC profile[s]*$/, { timeout: 420000 }, async function (tokenCount) {
-    // TODO expect tokenCount < profileBalance
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-    const promises = [];
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-initiated', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-completed', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('withdraw-command-completed', () => accept());
-    }));
-    await httpApiHelper.apiWithdraw(host, tokenCount);
-    return Promise.all(promises);
-});
-
 Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding error of (\d+.\d{1,2})$/, function (tokenDiff, roundingError) {
     expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
     const { dc } = this.state;
@@ -799,33 +570,6 @@ Then(/^DC wallet and DC profile balances should diff by (\d+) with rounding erro
     const upperLimit = tokenDiff + roundingError;
     expect(Math.abs(dc.state.oldProfileBalance - dc.state.newProfileBalance) < upperLimit, 'Profile diff should be approx equal to withdrawal amount').to.be.true;
     expect(Math.abs(dc.state.newWalletBalance - dc.state.oldWalletBalance) > lowerLimit, 'Wallet diff should be approx equal to withdrawal amount').to.be.true;
-});
-
-Given(/^I attempt to deposit (\d+) tokens from DC wallet[s]*$/, { timeout: 120000 }, async function (tokenCount) {
-    // TODO expect tokenCount < walletBalance
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-    const promises = [];
-    promises.push(new Promise((accept, reject) => {
-        dc.once('deposit-approved', () => accept());
-    }));
-    promises.push(new Promise((accept, reject) => {
-        dc.once('deposit-command-completed', () => accept());
-    }));
-    await httpApiHelper.apiDeposit(host, tokenCount);
-    return Promise.all(promises);
-});
-
-Given(/^DC calls consensus endpoint for sender: "(\S+)"$/, async function (senderId) {
-    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
-    const { dc } = this.state;
-    const host = dc.state.node_rpc_url;
-
-    const consensusResponse = await httpApiHelper.apiConsensus(host, senderId);
-    expect(consensusResponse, 'Should have key called events').to.have.all.keys('events');
-    this.state.lastConsensusResponse = consensusResponse;
 });
 
 Then(/^last consensus response should have (\d+) event with (\d+) match[es]*$/, function (eventsCount, matchesCount) {
