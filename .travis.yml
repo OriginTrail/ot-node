@@ -39,7 +39,7 @@ script:
   - rm -rf build && truffle migrate --reset --compile-all --network ganache > $ARTIFACTS_DIR/truffle-migrate.log
   - cd $TRAVIS_BUILD_DIR
   - jobs
-  - kill %1
+  - kill -9 %1
 after_script:
   - s3cmd --acl-public put --recursive $ARTIFACTS_DIR/* s3://ot-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/
   - echo "Uploaded to s3://ot-travis-ci/${TRAVIS_REPO_SLUG}/${TRAVIS_BUILD_NUMBER}/${TRAVIS_JOB_NUMBER}/"
