@@ -61,6 +61,7 @@ class CommandExecutor {
      */
     async init() {
         await this.startCleaner();
+        await this.startChallenger();
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -182,6 +183,16 @@ class CommandExecutor {
     async startCleaner() {
         await CommandExecutor._delete('cleanerCommand');
         const handler = this.commandResolver.resolve('cleanerCommand');
+        await this.add(handler.default(), 0, true);
+    }
+
+    /**
+     * Start challenger command
+     * @return {Promise<void>}
+     */
+    async startChallenger() {
+        await CommandExecutor._delete('dcChallengesCommand');
+        const handler = this.commandResolver.resolve('dcChallengesCommand');
         await this.add(handler.default(), 0, true);
     }
 

@@ -54,7 +54,7 @@ class ReplicationService {
                 );
 
                 ImportUtilities.sort(litEncVertices);
-                const litigationBlocks = this.challengeService.getBlocks(litEncVertices, 32);
+                const litigationBlocks = this.challengeService.getBlocks(litEncVertices);
                 const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
                 const litRootHash = litigationBlocksMerkleTree.getRoot();
 

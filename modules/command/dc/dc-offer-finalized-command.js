@@ -68,8 +68,6 @@ class DcOfferFinalizedCommand extends Command {
                         },
                     },
                 );
-
-                await this.challengeService.sendOfferChallenges(offerId);
                 return Command.empty();
             }
         }

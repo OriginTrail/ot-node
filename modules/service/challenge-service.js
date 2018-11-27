@@ -1,9 +1,5 @@
-const utilities = require('../Utilities');
-const models = require('../../models/index');
+const constants = require('../utility/constants');
 const importUtilities = require('../ImportUtilities');
-
-const DEFAULT_NUMBER_OF_TESTS = 10;
-const DEFAULT_BLOCK_SIZE_IN_BYTES = 32;
 
 class ChallengeService {
     constructor(ctx) {
@@ -15,79 +11,17 @@ class ChallengeService {
     }
 
     /**
-     * Send challenges for specified offer
-     * @return {Promise<void>}
-     */
-    async sendOfferChallenges(offerId) {
-        const litigationCandidates = await this._getLitigationCandidates(offerId);
-        if (litigationCandidates.length === 0) {
-            return;
-        }
-
-        const offer = await models.offers.findOne({ where: { offer_id: offerId } });
-        const vertices = await this.graphStorage.findVerticesByImportId(offer.data_set_id, false);
-
-        const challenges = litigationCandidates.map(async (candidate) => {
-            const numberOfTests = DEFAULT_NUMBER_OF_TESTS;
-
-            const encryptedVertices = importUtilities
-                .immutableEncryptVertices(vertices, candidate.litigation_private_key);
-            const tests = this
-                .generateTests(numberOfTests, DEFAULT_BLOCK_SIZE_IN_BYTES, encryptedVertices);
-            const challenge = tests[utilities.getRandomInt(numberOfTests)];
-
-            this.logger.trace(`Sending challenge to ${candidate.dh_id}. Import ID ${candidate.data_set_id}, block ID ${challenge.block_id}.`);
-
-            const response = await this.transport.challengeRequest({
-                payload: {
-                    data_set_id: offer.data_set_id,
-                    block_id: challenge.block_id,
-                },
-            }, candidate.dh_id);
-
-            const status = this.transport.extractResponseStatus(response);
-            if (typeof status === 'undefined') {
-                this.logger.warn('challenge-request: Missing status');
-                return;
-            }
-
-            if (status !== 'success') {
-                this.logger.trace('challenge-request: Response not successful.');
-                return;
-            }
-
-            if (response.answer === challenge.answer) {
-                this.logger.trace('Successfully answered to challenge.');
-            } else {
-                this.logger.info(`Wrong answer to challenge '${response.answer} for DH ID ${challenge.dh_id}.'`);
-            }
-        });
-        await Promise.all(challenges);
-    }
-
-    /**
-     * Get holders that can be litigated
-     * @param offerId - Offer ID
-     * @return {Promise<Array<Model>>}
-     * @private
-     */
-    async _getLitigationCandidates(offerId) {
-        return models.replicated_data.findAll({
-            where: {
-                offer_id: offerId,
-                status: 'HOLDING',
-            },
-        });
-    }
-
-    /**
      * Generate test challenges for Data Holder
      * @param numberOfTests Number of challenges to generate.
      * @param blockSizeBytes Desired block size.
      * @param vertexData Input vertex data.
      * @returns {Array}
      */
-    generateTests(numberOfTests, blockSizeBytes, vertexData) {
+    generateChallenges(
+        numberOfTests = constants.DEFAULT_CHALLENGE_NUMBER_OF_TESTS,
+        blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+        vertexData,
+    ) {
         if (numberOfTests <= 0) {
             throw new Error('Number of tests cannot be nonpositive');
         }
@@ -116,7 +50,10 @@ class ChallengeService {
      * @param blockSize Desired size of
      * @returns {String}
      */
-    answerTestQuestion(blockId, vertexData, blockSize) {
+    answerChallengeQuestion(
+        blockId, vertexData,
+        blockSize = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES,
+    ) {
         const blocks = this.getBlocks(vertexData, blockSize);
         return blocks[blockId];
     }
@@ -128,7 +65,7 @@ class ChallengeService {
      * @param blockSizeBytes Desired size of each block.
      * @returns {Array} of blocks.
      */
-    getBlocks(vertices, blockSizeBytes) {
+    getBlocks(vertices, blockSizeBytes = constants.DEFAULT_CHALLENGE_BLOCK_SIZE_BYTES) {
         importUtilities.sort(vertices);
 
         const blocks = [];

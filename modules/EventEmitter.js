@@ -881,7 +881,7 @@ class EventEmitter {
                     .findVerticesByImportId(challenge.data_set_id, true);
                 ImportUtilities.unpackKeys(vertices, []);
                 const answer =
-                    challengeService.answerTestQuestion(challenge.block_id, vertices, 32);
+                    challengeService.answerChallengeQuestion(challenge.block_id, vertices);
                 logger.trace(`Sending answer to question for data set ID ${challenge.import_id}, block ID ${challenge.block_id}. Block ${answer}`);
 
                 try {

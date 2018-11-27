@@ -57,7 +57,7 @@ class DhReplicationImportCommand extends Command {
         }
 
         ImportUtilities.sort(litigationVertices);
-        const litigationBlocks = this.challengeService.getBlocks(litigationVertices, 32);
+        const litigationBlocks = this.challengeService.getBlocks(litigationVertices);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const calculatedLitigationRootHash = litigationBlocksMerkleTree.getRoot();
 
