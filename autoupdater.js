@@ -68,7 +68,7 @@ process.once('message', async ([options]) => {
 
                     console.log('Processing database migrations');
                     execSync(`cd ../${options.version}`);
-                    execSync(`sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
+                    execSync(`./node_modules/.bin/sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
                     console.log(`Running seeders for '${options.appDataPath}'...`);
                     execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
                     console.log('Switching node version');
