@@ -19,6 +19,8 @@ const mkdirp = require('mkdirp');
 const path = require('path');
 const rimraf = require('rimraf');
 const { fork, spawn, execSync } = require('child_process');
+const packageJSON = require('../package');
+const semver = require('semver');
 
 const logger = require('./logger');
 
@@ -69,39 +71,68 @@ class Utilities {
     }
 
     /**
+     * @param branch
+     * @returns {Promise<any>}
+     */
+    static async getVersion(branch) {
+        return new Promise((resolve, reject) => {
+            request.get(`https://raw.githubusercontent.com/OriginTrail/ot-node/${branch}/package.json`).then((res, err) => {
+                const response = res.res.text;
+                const package_json = JSON.parse(response);
+                const { version } = package_json;
+                resolve(version);
+            }).catch((err) => {
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Check if there is a new version of ot-node
      * @param {String} [options.repo] - Github repo name i.e. OriginTrail/ot-node.
      * @param {String} [options.branch] - Github repo's branch.
      * @returns {Promise<any>}
      */
-
     static checkForUpdates(config) {
         return new Promise(async (resolve, reject) => {
-            const updater = fork(path.join(__dirname, '..', 'autoupdater.js'), [], {
-                stdio: [0, 1, 2, 'ipc'],
-                env: process.env,
+            const currentVersion = packageJSON.version;
+            this.getVersion(config.autoUpdater.branch).then((gitVersion) => {
+                if (semver.lt(currentVersion, gitVersion)) {
+                    const updater = fork(path.join(__dirname, '..', 'autoupdater.js'), [], {
+                        stdio: [0, 1, 2, 'ipc'],
+                        env: process.env,
+                    });
+
+                    console.log('New version found');
+
+                    updater.on('message', (msg) => {
+                        console.log('Update complete, restarting node...');
+
+                        process.argv.shift();
+                        spawn('/ot-node/current/ot-node.js', process.argv, {
+                        // cwd: process.cwd(),
+                            detached: true,
+                            stdio: 'inherit',
+                        });
+
+                        execSync('shutdown -r now');
+                    });
+
+                    const options = {};
+                    options.appDataPath = config.appDataPath;
+                    options.version = gitVersion;
+                    options.autoUpdater = config.autoUpdater;
+
+                    resolve('updater');
+                    updater.send([options]);
+                } else {
+                    console.log('No new version found');
+                    resolve('updater');
+                }
+            }).catch((err) => {
+                logger.error('Failed to load version data');
+                console.log(err);
             });
-
-            updater.on('message', (msg) => {
-                console.log('Update complete, restarting node...');
-
-                // process.argv.shift();
-                // spawn('/ot-node/current/ot-node.js', process.argv, {
-                //     // cwd: process.cwd(),
-                //     detached: true,
-                //     stdio: 'inherit',
-                // });
-
-                execSync('shutdown -r now');
-            });
-
-            const options = {};
-            options.appDataPath = config.appDataPath;
-            options.version = 'v1.2.3';
-            options.autoUpdater = config.autoUpdater
-
-            updater.send([options]);
-            resolve('updater');
         });
     }
 

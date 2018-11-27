@@ -136,6 +136,7 @@
     "rimraf": "^2.6.2",
     "scrypt": "^6.0.3",
     "semaphore-async-await": "^1.5.1",
+    "semver": "^5.6.0",
     "sequelize": "^4.38.0",
     "sequelize-cli": "^4.0.0",
     "sleep-async": "^1.0.5",
