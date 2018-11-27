@@ -51,9 +51,12 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    console.log(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
-                    execSync(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
+                    console.log(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
+                    execSync(`cp -r ${options.appDataPath} /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
+
+                    // const dbPath = path.join(configPath, sqliteDbName);
+                    process.env.SEQUELIZEDB = '/ot-node/v1.2.3/data/system.db'; // Tell Sequelize to which db to generate.
 
                     // eslint-disable-next-line
                     const Models = require(`../${options.version}/models`);
