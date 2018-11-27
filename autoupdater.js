@@ -2,23 +2,7 @@ const { execSync } = require('child_process');
 const request = require('request');
 const fs = require('fs');
 const Zip = require('machinepack-zip');
-
-// function execSync(command, verbose = false) {
-//     return new Promise((resolve, reject) => {
-//         exec(command, (err, stdout, stderr) => {
-//             if (err) {
-//                 console.log(err);
-//                 reject(err);
-//             }
-//
-//             if (verbose) {
-//                 resolve({ stdout, stderr });
-//             } else {
-//                 resolve();
-//             }
-//         });
-//     });
-// }
+const Umzug = require('umzug');
 
 process.once('message', async ([options]) => {
     const filename = `https://github.com/${options.autoUpdater.repo}/archive/${options.autoUpdater.branch}.zip`;
@@ -71,17 +55,44 @@ process.once('message', async ([options]) => {
                     execSync(`cp -r ${options.appDataPath}/ /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
 
-                    console.log('Processing database migrations');
-                    console.log(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:migrate`);
-                    execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:migrate`);
-                    console.log(`Running seeders for '${options.appDataPath}'...`);
-                    console.log(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:seed:all`);
-                    execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:seed:all`);
-                    console.log('Switching node version');
-                    process.send('complete');
-                    console.log(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
-                    execSync(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
-                    process.exit(0);
+                    // eslint-disable-next-line
+                    const Models = require(`../${options.version}/models`);
+
+                    const umzug_migrations = new Umzug({
+
+                        storage: 'sequelize',
+
+                        storageOptions: {
+                            sequelize: Models.sequelize,
+                        },
+
+                        migrations: {
+                            params: [Models.sequelize.getQueryInterface(),
+                                Models.sequelize.constructor, () => {
+                                    throw new Error('Migration tried to use old style "done" callback. Please upgrade to "umzug" and return a promise instead.');
+                                }],
+                            path: `../${options.version}/migrations`,
+                            pattern: /\.js$/,
+                        },
+                    });
+
+                    umzug_migrations.up().then((migrations) => {
+                        console.log('Database migrated.');
+                        console.log('Switching node version');
+                        process.send('complete');
+                        console.log(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
+                        execSync(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
+                        process.exit(0);
+                    }).catch((err) => {
+                        console.log('Update failed');
+                        console.log(err);
+                    });
+
+                    // console.log(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:migrate`);
+                    // execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:migrate`);
+                    // console.log(`Running seeders for '${options.appDataPath}'...`);
+                    // console.log(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:seed:all`);
+                    // execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:seed:all`);
                 } catch (err) {
                     // TODO: Rollback
                     console.log(err);
