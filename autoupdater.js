@@ -26,6 +26,7 @@ process.once('message', async ([options]) => {
     const response = await request(filename);
     const filestream = fs.createWriteStream('update.zip');
     response.pipe(filestream);
+    console.log(options.appDataPath);
 
     filestream.on('finish', () => {
         console.log('Download complete');
@@ -55,7 +56,7 @@ process.once('message', async ([options]) => {
                     console.log(`Update has been moved to directory ${options.version}`);
                     console.log('Migrating node modules...');
 
-                    execSync(`cp -r ./node_modules ../${options.version}`);
+                    execSync(`cp -r ./node_modules ../${options.version}/`);
                     console.log('Node modules migrated');
                     console.log('Installing new node modules');
 
@@ -63,18 +64,17 @@ process.once('message', async ([options]) => {
                     console.log('npm modules have been installed');
                     console.log('Migrating node configuration');
 
-                    execSync(`cp -r ${options.appDataPath} ../${options.version}`);
+                    execSync(`cp -r /ot-node/current/${options.appDataPath} /ot-node/${options.version}/`);
                     console.log('Configuration migration complete');
 
                     console.log('Processing database migrations');
-                    execSync(`cd ../${options.version}`);
-                    execSync(`./node_modules/.bin/sequelize --config=../${options.version}/config/sequelizeConfig.js db:migrate`);
+                    execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:migrate`);
                     console.log(`Running seeders for '${options.appDataPath}'...`);
-                    execSync('./node_modules/.bin/sequelize --config=./config/sequelizeConfig.js db:seed:all');
+                    execSync(`/ot-node/${options.version}/node_modules/.bin/sequelize --config=/ot-node/${options.version}/config/sequelizeConfig.js db:seed:all`);
                     console.log('Switching node version');
                     process.send('complete');
                     process.exit(0);
-                    execSync(`ln -sfn ${__dirname}/../${options.version} /ot-node/current`);
+                    execSync(`ln -sfn /ot-node/${options.version}/ /ot-node/current`);
                 } catch (err) {
                     // TODO: Rollback
                     console.log(err);
