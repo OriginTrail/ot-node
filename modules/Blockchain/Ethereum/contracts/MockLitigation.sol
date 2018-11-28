@@ -73,6 +73,9 @@ contract MockLitigation {
 		return true;
 	}
 
+	event ReplacementStarted(bytes32 offerId, address challengerIdentity, bytes32 litigationRootHash);
+	event ReplacementCompleted(bytes32 offerId, address challengerIdentity, address chosenHolder);
+
 	function completeLitigation(bytes32 offerId, address holderIdentity, address challengerIdentity, bytes32 proof_data)
 	public returns (bool DH_was_penalized){
 
@@ -148,6 +151,7 @@ contract MockLitigation {
 			litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
 			emit LitigationCompleted(offerId, holderIdentity, true);
+			emit ReplacementStarted(offerId, challengerIdentity, bytesParameters[3]);
 			return true;
 		}
 	}
@@ -175,6 +179,7 @@ contract MockLitigation {
 		holdingStorage.setHolderPaymentTimestamp(offerId, litigatorIdentity, block.timestamp);
 
 		litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.replaced);
+		emit ReplacementCompleted(offerId, litigatorIdentity, replacementHolderIdentity[0]);
 	}
 
 	function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
