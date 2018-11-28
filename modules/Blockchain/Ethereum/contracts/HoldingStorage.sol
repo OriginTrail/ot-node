@@ -9,6 +9,11 @@ contract HoldingStorage {
         hub = Hub(hubAddress);
     }
 
+    function setHubAddress(address newHubAddress)
+    public onlyContracts {
+        hub = Hub(newHubAddress);
+    }
+
     modifier onlyContracts() {
         require(hub.isContract(msg.sender),
         "Function can only be called by contracts!");
@@ -148,11 +153,12 @@ contract HoldingStorage {
         offer[offerId].blueLitigationHash = blueLitigationHash;
     }
 
-
     struct HolderDefinition {
         uint256 stakedAmount;
         uint256 paidAmount;
         uint256 litigationEncryptionType;
+
+        uint256 paymentTimestamp;
     }
     mapping(bytes32 => mapping(address => HolderDefinition)) public holder; // holder[offerId][address];
 
@@ -174,6 +180,10 @@ contract HoldingStorage {
         holder[offerId][identities[2]].stakedAmount = offer[offerId].tokenAmountPerHolder;
         if(holder[offerId][identities[2]].litigationEncryptionType != litigationEncryptionTypes[2])
             holder[offerId][identities[2]].litigationEncryptionType = litigationEncryptionTypes[2];
+
+        holder[offerId][identities[0]].paymentTimestamp = block.timestamp;
+        holder[offerId][identities[1]].paymentTimestamp = block.timestamp;
+        holder[offerId][identities[2]].paymentTimestamp = block.timestamp;
     }
     function setHolderStakedAmount (bytes32 offerId, address identity, uint256 stakedAmount)
     public onlyContracts {
@@ -186,6 +196,10 @@ contract HoldingStorage {
     function setHolderLitigationEncryptionType(bytes32 offerId, address identity, uint256 litigationEncryptionType)
     public onlyContracts {
         holder[offerId][identity].litigationEncryptionType = litigationEncryptionType;
+    }
+    function setHolderPaymentTimestamp(bytes32 offerId, address identity, uint256 paymentTimestamp)
+    public onlyContracts {
+        holder[offerId][identity].paymentTimestamp = paymentTimestamp;
     }
 
     function getHolderStakedAmount (bytes32 offerId, address identity)
@@ -200,8 +214,8 @@ contract HoldingStorage {
     public view returns(uint256 litigationEncryptionType) {
         return holder[offerId][identity].litigationEncryptionType;
     }
-    function setHubAddress(address newHubAddress)
-    public onlyContracts {
-        hub = Hub(newHubAddress);
+    function getHolderPaymentTimestamp(bytes32 offerId, address identity)
+    public view returns(uint256 paymentTimestamp) {
+        return holder[offerId][identity].paymentTimestamp;
     }
 }

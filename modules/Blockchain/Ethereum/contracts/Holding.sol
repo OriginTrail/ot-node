@@ -4,6 +4,7 @@ import './Hub.sol';
 import {ERC725} from './ERC725.sol';
 import {HoldingStorage} from './HoldingStorage.sol';
 import {ProfileStorage} from './ProfileStorage.sol';
+import {LitigationStorage} from './LitigationStorage.sol';
 import {Profile} from './Profile.sol';
 import {Approval} from './Approval.sol';
 import {SafeMath} from './SafeMath.sol';
@@ -14,18 +15,33 @@ contract Holding is Ownable {
     Hub public hub;
     HoldingStorage public holdingStorage;
     ProfileStorage public profileStorage;
+    LitigationStorage public litigationStorage;
     Profile public profile;
 
     uint256 public difficultyOverride;
     
     constructor(address hubAddress) public{
         hub = Hub(hubAddress);
+
         holdingStorage = HoldingStorage(hub.holdingStorageAddress());
         profileStorage = ProfileStorage(hub.profileStorageAddress());
+        litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+        
         profile = Profile(hub.profileAddress());
         difficultyOverride = 0;
     }
 
+    function setHubAddress(address newHubAddress) public{
+        require(hub.isContract(msg.sender), "This function can only be called by contracts or their creator!");
+
+        hub = Hub(newHubAddress);
+
+        holdingStorage = HoldingStorage(hub.holdingStorageAddress());
+        profileStorage = ProfileStorage(hub.profileStorageAddress());
+        litigationStorage = LitigationStorage(hub.litigationStorageAddress());
+
+        profile = Profile(hub.profileAddress());
+    }
 
     event OfferTask(bytes32 dataSetId, bytes32 dcNodeId, bytes32 offerId, bytes32 task);
     event OfferCreated(bytes32 offerId, bytes32 dataSetId, bytes32 dcNodeId, uint256 holdingTimeInMinutes, uint256 dataSetSizeInBytes, uint256 tokenAmountPerHolder, uint256 litigationIntervalInMinutes);
@@ -144,7 +160,7 @@ contract Holding is Ownable {
         Profile(hub.profileAddress()).releaseTokens(identity, amountToTransfer);
         Profile(hub.profileAddress()).transferTokens(holdingStorage.getOfferCreator(bytes32(offerId)), identity, amountToTransfer);
     }
-    
+
     function ecrecovery(bytes32 hash, bytes sig) internal pure returns (address) {
         bytes32 r;
         bytes32 s;
