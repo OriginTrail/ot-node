@@ -83,7 +83,7 @@ module.exports = async (deployer, network, accounts) => {
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
-        await hub.setLitigationAddress(holding.address);
+        await hub.setLitigationAddress(litigation.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);
@@ -139,7 +139,7 @@ module.exports = async (deployer, network, accounts) => {
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
-        await hub.setLitigationAddress(holding.address);
+        await hub.setLitigationAddress(litigation.address);
 
         reading = await deployer.deploy(Reading, hub.address, { gas: 6000000, from: accounts[0] });
         await hub.setReadingAddress(reading.address);

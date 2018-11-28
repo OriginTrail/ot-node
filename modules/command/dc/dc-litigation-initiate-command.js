@@ -13,6 +13,7 @@ class DCLitigationInitiateCommand extends Command {
         this.config = ctx.config;
         this.logger = ctx.logger;
         this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
         this.challengeService = ctx.challengeService;
     }
 
@@ -40,7 +41,7 @@ class DCLitigationInitiateCommand extends Command {
         );
 
         importUtilities.sort(encryptedVertices);
-        const litigationBlocks = this.challengeService.getBlocks(vertices);
+        const litigationBlocks = this.challengeService.getBlocks(encryptedVertices);
         const litigationBlocksMerkleTree = new MerkleTree(litigationBlocks);
         const merkleProof = litigationBlocksMerkleTree.createProof(blockId);
 

@@ -56,6 +56,7 @@ class DCChallengeCommand extends Command {
             block_id: challenge.block_id,
             expected_answer: challenge.answer,
             start_time: currentTime,
+            offer_id: offerId,
             end_time: currentTime + constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
         });
 
@@ -85,6 +86,64 @@ class DCChallengeCommand extends Command {
                 },
             ],
         };
+    }
+
+    /**
+     * Recover system from failure
+     * @param command
+     * @param err
+     */
+    async recover(command, err) {
+        const {
+            dhId,
+            dhIdentity,
+            offerId,
+            litigationPrivateKey,
+        } = command.data;
+
+        const challenge = await models.challenges.findOne({
+            where: {
+                dh_id: dhId,
+                offer_id: offerId,
+            },
+        });
+
+        if (challenge == null) {
+            this.logger.warn(`Failed to create challenge for DH ${dhId} and offer ${offerId}`);
+            return Command.empty();
+        }
+
+        this.logger.info(`Failed to send challenge '${challenge.answer} to DH ${challenge.dh_id}.'`);
+        return {
+            commands: [
+                {
+                    name: 'dcLitigationInitiateCommand',
+                    period: 5000,
+                    data: {
+                        offerId,
+                        blockId: challenge.block_id,
+                        dhIdentity,
+                        litigationPrivateKey,
+                    },
+                },
+            ],
+        };
+    }
+
+    /**
+     * Builds default command
+     * @param map
+     * @returns {{add, data: *, delay: *, deadline: *}}
+     */
+    default(map) {
+        const command = {
+            data: {
+            },
+            name: 'dcChallengeCommand',
+            transactional: false,
+        };
+        Object.assign(command, map);
+        return command;
     }
 }
 

@@ -1088,7 +1088,7 @@ class Ethereum {
             to: this.litigationContractAddress,
         };
 
-        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatiorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
+        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
         return this.transactions.queueTransaction(
             this.litigationContractAbi, 'initiateLitigation',
             [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,

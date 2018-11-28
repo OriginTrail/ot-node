@@ -20,6 +20,7 @@ class DCChallengeCommand extends Command {
      */
     async execute(command, transaction) {
         const {
+            dhId,
             challengeId,
             offerId,
             dhIdentity,
@@ -29,8 +30,18 @@ class DCChallengeCommand extends Command {
 
         const challenge = await models.challenges.findOne({ where: { id: challengeId } });
 
+        const replicatedData = await models.replicated_data.findOne({
+            where:
+                {
+                    offer_id: offerId, dh_id: dhId,
+                },
+        });
+
         if (challenge.answer === challenge.expected_answer) {
             this.logger.trace('Successfully answered to challenge.');
+
+            replicatedData.status = 'HOLDING';
+            await replicatedData.save({ fields: ['status'] });
             return Command.empty();
         }
 

@@ -14,6 +14,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        offer_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         block_id: {
             allowNull: false,
             type: Sequelize.INTEGER,
