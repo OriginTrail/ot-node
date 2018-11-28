@@ -109,15 +109,22 @@ class Blockchain {
     }
 
     /**
-     * DC initiates litigation on DH wrong challenge answer
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @param merkleProof
+     * Initiate litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param litigatorIdentity - Litigator identity
+     * @param requestedDataIndex - Block ID
+     * @param hashArray - Merkle proof
      * @return {Promise<any>}
      */
-    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
-        return this.blockchain.initiateLitigation(importId, dhWallet, blockId, merkleProof);
+    async initiateLitigation(
+        offerId, holderIdentity, litigatorIdentity,
+        requestedDataIndex, hashArray,
+    ) {
+        return this.blockchain.initiateLitigation(
+            offerId,
+            holderIdentity, litigatorIdentity, requestedDataIndex, hashArray,
+        );
     }
 
     /**

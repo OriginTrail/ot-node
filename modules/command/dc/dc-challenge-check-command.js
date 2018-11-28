@@ -21,6 +21,10 @@ class DCChallengeCommand extends Command {
     async execute(command, transaction) {
         const {
             challengeId,
+            offerId,
+            dhIdentity,
+            blockId,
+            litigationPrivateKey,
         } = command.data;
 
         const challenge = await models.challenges.findOne({ where: { id: challengeId } });
@@ -30,9 +34,21 @@ class DCChallengeCommand extends Command {
             return Command.empty();
         }
 
-        // TODO start litigation
         this.logger.info(`Wrong answer to challenge '${challenge.answer} for DH ID ${challenge.dh_id}.'`);
-        return Command.empty();
+        return {
+            commands: [
+                {
+                    name: 'dcLitigationInitiateCommand',
+                    period: 5000,
+                    data: {
+                        offerId,
+                        blockId,
+                        dhIdentity,
+                        litigationPrivateKey,
+                    },
+                },
+            ],
+        };
     }
 }
 

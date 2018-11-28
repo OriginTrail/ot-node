@@ -111,10 +111,29 @@ class Ethereum {
             this.holdingStorageContractAddress,
         );
 
+        // Litigation contract data
+        const litigationAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/litigation.json');
+        this.litigationContractAddress = await this._getLitigationContractAddress();
+        this.litigationContractAbi = JSON.parse(litigationAbiFile);
+        this.litigationContract = new this.web3.eth.Contract(
+            this.litigationContractAbi,
+            this.litigationContractAddress,
+        );
+
+        // Litigation storage contract data
+        const litigationStorageAbiFile = fs.readFileSync('./modules/Blockchain/Ethereum/abi/litigation-storage.json');
+        this.litigationStorageContractAddress = await this._getLitigationStorageContractAddress();
+        this.litigationStorageContractAbi = JSON.parse(litigationStorageAbiFile);
+        this.litigationStorageContract = new this.web3.eth.Contract(
+            this.litigationStorageContractAbi,
+            this.litigationStorageContractAddress,
+        );
+
         this.contractsByName = {
             HOLDING_CONTRACT: this.holdingContract,
             PROFILE_CONTRACT: this.profileContract,
             APPROVAL_CONTRACT: this.approvalContract,
+            LITIGATION_CONTRACT: this.litigationContract,
         };
     }
 
@@ -213,6 +232,34 @@ class Ethereum {
             from: this.config.wallet_address,
         });
         this.log.trace(`HoldingStorage contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Litigation contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getLitigationContractAddress() {
+        this.log.trace('Asking Hub for Litigation contract address...');
+        const address = await this.hubContract.methods.litigationAddress().call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`Litigation contract address is ${address}`);
+        return address;
+    }
+
+    /**
+     * Gets Litigation storage contract address from Hub
+     * @returns {Promise<any>}
+     * @private
+     */
+    async _getLitigationStorageContractAddress() {
+        this.log.trace('Asking Hub for LitigationStorage contract address...');
+        const address = await this.hubContract.methods.litigationStorageAddress().call({
+            from: this.config.wallet_address,
+        });
+        this.log.trace(`LitigationStorage contract address is ${address}`);
         return address;
     }
 
@@ -326,34 +373,6 @@ class Ethereum {
         };
         this.log.notify('Increasing bidding approval');
         return this.transactions.queueTransaction(this.tokenContractAbi, 'increaseApproval', [this.biddingContractAddress, tokenAmountIncrease], options);
-    }
-
-    /**
-     * DC initiates litigation on DH wrong challenge answer
-     * @param importId
-     * @param dhWallet
-     * @param blockId
-     * @param merkleProof
-     * @return {Promise<any>}
-     */
-    initiateLitigation(importId, dhWallet, blockId, merkleProof) {
-        const options = {
-            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
-            gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
-        };
-        this.log.important(`Initiates litigation for import ${importId} and DH ${dhWallet}`);
-        return this.transactions.queueTransaction(
-            this.escrowContractAbi,
-            'initiateLitigation',
-            [
-                importId,
-                dhWallet,
-                blockId,
-                merkleProof,
-            ],
-            options,
-        );
     }
 
     /**
@@ -1048,6 +1067,32 @@ class Ethereum {
         return this.holdingStorageContract.methods.holder(offerId, holderIdentity).call({
             from: this.config.wallet_address,
         });
+    }
+
+    /**
+     * Initiate litigation for the particular DH
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param litigatorIdentity - Litigator identity
+     * @param requestedDataIndex - Block ID
+     * @param hashArray - Merkle proof
+     * @return {Promise<any>}
+     */
+    async initiateLitigation(
+        offerId, holderIdentity, litigatorIdentity,
+        requestedDataIndex, hashArray,
+    ) {
+        const options = {
+            gasLimit: this.web3.utils.toHex(this.config.gas_limit),
+            gasPrice: this.web3.utils.toHex(this.config.gas_price),
+            to: this.litigationContractAddress,
+        };
+
+        this.log.trace(`initiateLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, litigatorIdentity=${litigatiorIdentity}, requestedDataIndex=${requestedDataIndex}, hashArray=${hashArray})`);
+        return this.transactions.queueTransaction(
+            this.litigationContractAbi, 'initiateLitigation',
+            [offerId, holderIdentity, litigatorIdentity, requestedDataIndex, hashArray], options,
+        );
     }
 }
 

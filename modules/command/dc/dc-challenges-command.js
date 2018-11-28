@@ -21,6 +21,7 @@ class DCChallengesCommand extends Command {
             delay: 0,
             data: {
                 dhId: candidate.dh_id,
+                dhIdentity: candidate.dh_identity,
                 offerId: candidate.offer_id,
                 litigationPrivateKey: candidate.litigation_private_key,
             },

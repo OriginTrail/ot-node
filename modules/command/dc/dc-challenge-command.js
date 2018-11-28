@@ -25,6 +25,7 @@ class DCChallengeCommand extends Command {
     async execute(command, transaction) {
         const {
             dhId,
+            dhIdentity,
             offerId,
             dataSetId,
             litigationPrivateKey,
@@ -73,6 +74,11 @@ class DCChallengeCommand extends Command {
                     name: 'dcChallengeCheckCommand',
                     delay: constants.DEFAULT_CHALLENGE_RESPONSE_TIME_MILLS,
                     data: {
+                        dhId,
+                        dhIdentity,
+                        offerId,
+                        dataSetId,
+                        litigationPrivateKey,
                         challengeId: challengeRecord.id,
                     },
                     transactional: false,
