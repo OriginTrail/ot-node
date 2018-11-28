@@ -144,6 +144,7 @@ class DHService {
 
         bid = await Models.bids.create({
             offer_id: offerId,
+            data_set_id: dataSetId,
             dc_node_id: dcNodeId,
             data_size_in_bytes: dataSetSizeInBytes,
             litigation_interval_in_minutes: litigationIntervalInMinutes,
@@ -294,6 +295,33 @@ class DHService {
                 datasetId,
                 challengeId,
                 litigatorNodeId,
+            },
+        });
+    }
+
+    /**
+     * Handle started litigated
+     * @param offerId - Offer ID
+     * @param blockId - Block ID
+     * @return {Promise<void>}
+     */
+    async handleLitigation(offerId, blockId) {
+        this.logger.warn(`Litigation initiated for offer ${offerId} and block ID ${blockId}.`);
+
+        const bid = await Models.bids.findOne({
+            where: { offer_id: offerId },
+        });
+        if (bid == null) {
+            this.logger.info(`I am not a holder for offer ${offerId}. Ignoring litigation.`);
+            return;
+        }
+
+        await this.commandExecutor.add({
+            name: 'dhLitigationAnswerCommand',
+            data: {
+                offerId,
+                blockId,
+                dataSetId: bid.data_set_id,
             },
         });
     }

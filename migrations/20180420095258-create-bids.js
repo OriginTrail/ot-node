@@ -10,6 +10,10 @@ module.exports = {
             allowNull: false,
             type: Sequelize.STRING,
         },
+        data_set_id: {
+            allowNull: false,
+            type: Sequelize.STRING,
+        },
         dc_node_id: {
             allowNull: false,
             type: Sequelize.STRING,

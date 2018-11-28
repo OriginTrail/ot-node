@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
             primaryKey: true,
         },
         offer_id: DataTypes.STRING,
+        data_set_id: DataTypes.STRING,
         dc_node_id: DataTypes.STRING,
         data_size_in_bytes: DataTypes.STRING,
         holding_time_in_minutes: DataTypes.INTEGER,

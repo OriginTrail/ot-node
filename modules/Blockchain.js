@@ -129,12 +129,13 @@ class Blockchain {
 
     /**
      * Answers litigation from DH side
-     * @param importId
-     * @param requestedData
+     * @param offerId
+     * @param holderIdentity
+     * @param answer
      * @return {Promise<any>}
      */
-    answerLitigation(importId, requestedData) {
-        return this.blockchain.answerLitigation(importId, requestedData);
+    answerLitigation(offerId, holderIdentity, answer) {
+        return this.blockchain.answerLitigation(offerId, holderIdentity, answer);
     }
 
     /**

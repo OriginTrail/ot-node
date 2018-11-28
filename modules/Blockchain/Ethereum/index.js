@@ -377,23 +377,25 @@ class Ethereum {
 
     /**
      * Answers litigation from DH side
-     * @param importId
-     * @param requestedData
+     * @param offerId - Offer ID
+     * @param holderIdentity - DH identity
+     * @param answer - Litigation answer
      * @return {Promise<any>}
      */
-    answerLitigation(importId, requestedData) {
+    answerLitigation(offerId, holderIdentity, answer) {
         const options = {
             gasLimit: this.web3.utils.toHex(this.config.gas_limit),
             gasPrice: this.web3.utils.toHex(this.config.gas_price),
-            to: this.escrowContractAddress,
+            to: this.litigationContractAddress,
         };
-        this.log.important(`Answer litigation for import ${importId}`);
+        this.log.trace(`answerLitigation (offerId=${offerId}, holderIdentity=${holderIdentity}, answer=${answer})`);
         return this.transactions.queueTransaction(
-            this.escrowContractAbi,
+            this.litigationContractAbi,
             'answerLitigation',
             [
-                importId,
-                requestedData,
+                offerId,
+                holderIdentity,
+                answer,
             ],
             options,
         );
