@@ -5,7 +5,7 @@ const utilities = require('../../Utilities');
 /**
  * Repeatable command that checks whether litigation is successfully initiated
  */
-class DHLitigationInitiatedCommand extends Command {
+class DHLitigationAnswerCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -64,4 +64,4 @@ class DHLitigationInitiatedCommand extends Command {
     }
 }
 
-module.exports = DHLitigationInitiatedCommand;
+module.exports = DHLitigationAnswerCommand;

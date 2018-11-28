@@ -5,7 +5,7 @@ const Models = require('../../../models/index');
 /**
  * Repeatable command that checks whether litigation is successfully initiated
  */
-class DcLitigationInitiatedCommand extends Command {
+class DHLitigationInitiatedCommand extends Command {
     constructor(ctx) {
         super(ctx);
         this.config = ctx.config;
@@ -53,7 +53,7 @@ class DcLitigationInitiatedCommand extends Command {
      */
     default(map) {
         const command = {
-            name: 'dcLitigationInitiatedCommand',
+            name: 'dhLitigationInitiatedCommand',
             data: {
             },
             delay: 0,
@@ -65,4 +65,4 @@ class DcLitigationInitiatedCommand extends Command {
     }
 }
 
-module.exports = DcLitigationInitiatedCommand;
+module.exports = DHLitigationInitiatedCommand;

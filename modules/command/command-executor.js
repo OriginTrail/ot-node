@@ -62,6 +62,7 @@ class CommandExecutor {
     async init() {
         await this.startCleaner();
         await this.startChallenger();
+        await this.startLitigationListener();
         this.logger.trace('Command executor has been initialized...');
     }
 
@@ -193,6 +194,16 @@ class CommandExecutor {
     async startChallenger() {
         await CommandExecutor._delete('dcChallengesCommand');
         const handler = this.commandResolver.resolve('dcChallengesCommand');
+        await this.add(handler.default(), 0, true);
+    }
+
+    /**
+     * Start litigation listener command
+     * @return {Promise<void>}
+     */
+    async startLitigationListener() {
+        await CommandExecutor._delete('dhLitigationInitiatedCommand');
+        const handler = this.commandResolver.resolve('dhLitigationInitiatedCommand');
         await this.add(handler.default(), 0, true);
     }
 
