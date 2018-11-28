@@ -64,7 +64,7 @@ module.exports = async (deployer, network, accounts) => {
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
-        await hub.setLitigationStorageAddress(holdingStorage.address);
+        await hub.setLitigationStorageAddress(litigationStorage.address);
 
         approval = await deployer.deploy(MockApproval);
         await hub.setApprovalAddress(approval.address);
@@ -120,7 +120,7 @@ module.exports = async (deployer, network, accounts) => {
             hub.address,
             { gas: 6000000, from: accounts[0] },
         );
-        await hub.setLitigationStorageAddress(holdingStorage.address);
+        await hub.setLitigationStorageAddress(litigationStorage.address);
 
         approval = await deployer.deploy(Approval);
         await hub.setApprovalAddress(approval.address);

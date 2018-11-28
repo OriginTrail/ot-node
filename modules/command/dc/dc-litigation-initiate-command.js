@@ -49,6 +49,7 @@ class DCLitigationInitiateCommand extends Command {
             offerId, dhIdentity, dcIdentity, blockId,
             merkleProof,
         );
+        return Command.empty();
     }
 
     /**
