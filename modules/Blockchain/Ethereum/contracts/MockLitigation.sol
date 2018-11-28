@@ -69,7 +69,7 @@ contract MockLitigation {
 		litigationStorage.setLitigationStatus(offerId, holderIdentity, LitigationStorage.LitigationStatus.answered);
 		litigationStorage.setLitigationTimestamp(offerId, holderIdentity, block.timestamp);
 
-		emit LitigationAnswered(offerId, msg.sender);
+		emit LitigationAnswered(offerId, holderIdentity);
 		return true;
 	}
 

@@ -10,8 +10,9 @@ class DHLitigationAnswerCommand extends Command {
         super(ctx);
         this.config = ctx.config;
         this.logger = ctx.logger;
-        this.commandExecutor = ctx.commandExecutor;
-        this.replicationService = ctx.replicationService;
+        this.blockchain = ctx.blockchain;
+        this.graphStorage = ctx.graphStorage;
+        this.challengeService = ctx.challengeService;
     }
 
     /**
@@ -40,6 +41,7 @@ class DHLitigationAnswerCommand extends Command {
                         offerId,
                         dhIdentity,
                     },
+                    period: 5000,
                     transactional: false,
                 },
             ],

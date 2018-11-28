@@ -845,8 +845,6 @@ class DHService {
         this.blockchain.subscribeToEventPermanent([
             'AddedPredeterminedBid',
             'OfferCreated',
-            'LitigationInitiated',
-            'LitigationCompleted',
             'EscrowVerified',
             'NodeApproved',
             'NodeRemoved',
