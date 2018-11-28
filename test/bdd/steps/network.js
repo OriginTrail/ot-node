@@ -155,6 +155,23 @@ Given(/^I start the node[s]*$/, { timeout: 3000000 }, function (done) {
     Promise.all(nodesStarts).then(() => done());
 });
 
+Given(/^I stop the nodes[s]*$/, { timeout: 3000000 }, function () {
+    expect(this.state.bootstraps.length).to.be.greaterThan(0);
+    expect(this.state.nodes.length).to.be.greaterThan(0);
+
+    const nodesStops = [];
+
+    this.state.nodes.forEach((node) => {
+        nodesStops.push(new Promise((accept, reject) => {
+            node.once('finished', () => accept());
+            node.once('error', reject);
+        }));
+        node.stop();
+    });
+
+    return Promise.all(nodesStops);
+});
+
 Then(/^all nodes should be aware of each other$/, function (done) {
     expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
     expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);

@@ -7,6 +7,8 @@ const path = require('path');
 const EthWallet = require('ethereumjs-wallet');
 const assert = require('assert');
 
+const utilities = require('./utilities');
+
 const accountPrivateKeys = [
     '3cf97be6177acdd12796b387f58f84f177d0fe20d8558004e8db9a41cf90392a',
     '1e60c8e9aa35064cd2eaa4c005bda2b76ef1a858feebb6c8e131c472d16f9740',
@@ -350,6 +352,10 @@ class LocalBlockchain {
 
     static wallets() {
         return wallets;
+    }
+
+    async getBalanceInEthers(wallet) {
+        return this.web3.eth.getBalance(wallet);
     }
 }
 

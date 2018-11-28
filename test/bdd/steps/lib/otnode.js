@@ -88,9 +88,6 @@ class OtNode extends EventEmitter {
         // DV side. datasetId = { queryId, replyId }
         this.state.purchasedDatasets = {};
 
-        // Temp solution until node.log is moved to the configDir.
-        this.logStream = fs.createWriteStream(path.join(this.options.configDir, 'node-cucumber.log'));
-
         this.logger.log(`Node initialized at: '${this.options.configDir}'.`);
         this.initialized = true;
     }
@@ -116,6 +113,13 @@ class OtNode extends EventEmitter {
         assert(this.initialized);
         assert(!this.stared);
         this.logger.log(`Starting node ${this.id}.`);
+
+        // Temp solution until node.log is moved to the configDir.
+        this.logStream = fs.createWriteStream(
+            path.join(this.options.configDir, 'node-cucumber.log'),
+            { flags: 'a+' },
+        );
+
         // Starting node should be done with following code:
         // this.process = spawn('npm', ['start', '--', `--configDir=${this.options.configDir}`]);
         // The problem is with it spawns two child process thus creating the problem when

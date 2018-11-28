@@ -538,6 +538,18 @@ describe('GS1 Importer tests', () => {
         it('and throw an error releted to missing SenderContactInformation', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlWithoutSenderContactinfo))).to.be.rejectedWith(Error, "Cannot read property 'EmailAddress' of undefined"));
     });
 
+    describe('Double event identifiers should fail', () => {
+        const xmlDoubleIds = path.join(__dirname, 'test_xml/DoubleEventId.xml');
+
+        it('Should fail to import double event identifiers', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlDoubleIds))).to.rejectedWith(Error, 'Double event identifiers'));
+    });
+
+    describe('Multiple same identifiers for different vertices should import correctly', () => {
+        const xmlDoubleIds = path.join(__dirname, 'test_xml/MultipleIdentifiers.xml');
+
+        it('Should import without error', async () => expect(gs1.parseGS1(await Utilities.fileContents(xmlDoubleIds))).to.be.fulfilled);
+    });
+
     afterEach('Drop DB', async () => {
         if (systemDb) {
             const listOfDatabases = await systemDb.listDatabases();

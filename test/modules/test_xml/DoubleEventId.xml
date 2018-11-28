@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<epcis:EPCISDocument xmlns:epcis="urn:epcglobal:epcis:xsd:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:sbdh="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" schemaVersion="0" creationDate="2001-12-17T09:30:47Z" xsi:schemaLocation="urn:epcglobal:epcis:xsd:1  http://www.gs1si.org/BMS/epcis/1_2/EPCglobal-epcis-1_2.xsd">
+    <EPCISHeader>
+        <sbdh:StandardBusinessDocumentHeader>
+            <sbdh:HeaderVersion>1.0</sbdh:HeaderVersion>
+            <sbdh:Sender>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:Company_1</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Abraham Smith</sbdh:Contact>
+                    <sbdh:EmailAddress>abraham_Smith@comp1.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Sender>
+            <sbdh:Receiver>
+                <sbdh:Identifier Authority="OriginTrail">urn:ot:object:actor:id:OT</sbdh:Identifier>
+                <sbdh:ContactInformation>
+                    <sbdh:Contact>Betty Johnson</sbdh:Contact>
+                    <sbdh:EmailAddress>betty@pink.com</sbdh:EmailAddress>
+                </sbdh:ContactInformation>
+            </sbdh:Receiver>
+            <sbdh:DocumentIdentification>
+                <sbdh:Standard>GS1</sbdh:Standard>
+                <sbdh:TypeVersion>V1.3</sbdh:TypeVersion>
+                <sbdh:InstanceIdentifier>100001</sbdh:InstanceIdentifier>
+                <sbdh:Type>Shipment</sbdh:Type>
+                <sbdh:CreationDateAndTime>2018-01-01T00:31:52Z</sbdh:CreationDateAndTime>
+            </sbdh:DocumentIdentification>
+            <sbdh:BusinessScope>
+                <sbdh:Scope>
+                    <sbdh:Type>BusinessProcess</sbdh:Type>
+                    <sbdh:InstanceIdentifier>Shipment/version2-251</sbdh:InstanceIdentifier>
+                    <sbdh:Identifier>EDI-Shipment</sbdh:Identifier>
+                </sbdh:Scope>
+            </sbdh:BusinessScope>
+        </sbdh:StandardBusinessDocumentHeader>
+        <extension>
+            <EPCISMasterData>
+                <VocabularyList>
+                    <Vocabulary type="urn:ot:object:actor">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:actor:id:Company_1">
+                                <attribute id="urn:ot:object:actor:name">Company_1</attribute>
+                                <attribute id="urn:ot:object:actor:category">Company_1</attribute>
+                                <attribute id="urn:ot:object:actor:wallet">0xe1e9c5379c5df627a8de3a951fa493028394a050</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="urn:ot:object:location">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgln:Company_1">
+                                <attribute id="urn:ot:object:location:category">Building</attribute>
+                                <attribute id="urn:ot:object:location:description">Labeling area</attribute>
+                                <attribute id="urn:ot:object:location:actorId">urn:ot:object:actor:id:Company_1</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="urn:ot:object:product">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:ot:object:product:id:P1">
+                                <attribute id="urn:ot:object:product:name">P1</attribute>
+                                <attribute id="urn:ot:object:product:category">CAT1</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                    <Vocabulary type="urn:ot:object:batch">
+                        <VocabularyElementList>
+                            <VocabularyElement id="urn:epc:id:sgtin:B1">
+                                <attribute id="urn:ot:object:product:batch:productId">urn:ot:object:product:id:P1</attribute>
+                            </VocabularyElement>
+                        </VocabularyElementList>
+                    </Vocabulary>
+                </VocabularyList>
+                </EPCISMasterData>
+            </extension>
+        </EPCISHeader>
+        <EPCISBody>
+        <EventList>
+            <ObjectEvent>
+                <eventTime>2018-01-20T00:00:01</eventTime> <!-- Mandatory-->
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset> <!-- Mandatory-->
+                <epcList>
+                    <epc>urn:epc:id:sgtin:B1</epc>
+                </epcList>
+                <action>OBSERVE</action> <!-- Mandatory-->
+                <bizStep>urn:epcglobal:cbv:bizstep:labeling</bizStep> <!-- Optional -->
+                <disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+                <readPoint> <!-- Optional -->
+                    <id>urn:epc:id:sgln:Company_1</id>
+                </readPoint>
+                <bizLocation> <!-- Optional -->
+                    <id>urn:epc:id:sgln:Company_1</id>
+                </bizLocation>
+                <extension>
+                    <quantityList> <!-- Optional -->
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:B1</epcClass>
+                            <quantity>1</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </quantityList>
+                    <extension>
+                        <documentId>E1</documentId>
+                        <OTEventClass>urn:ot:event:Observation</OTEventClass>
+                        <OTEventType>Labeling</OTEventType>
+                    </extension>
+                </extension>
+            </ObjectEvent>
+            <ObjectEvent>
+                <eventTime>2018-01-20T00:00:01</eventTime> <!-- Mandatory-->
+                <eventTimeZoneOffset>-00:00</eventTimeZoneOffset> <!-- Mandatory-->
+                <epcList>
+                    <epc>urn:epc:id:sgtin:B1</epc>
+                </epcList>
+                <action>OBSERVE</action> <!-- Mandatory-->
+                <bizStep>urn:epcglobal:cbv:bizstep:labeling</bizStep> <!-- Optional -->
+                <disposition>urn:epcglobal:cbv:disp:active</disposition> <!-- Optional -->
+                <readPoint> <!-- Optional -->
+                    <id>urn:epc:id:sgln:Company_1</id>
+                </readPoint>
+                <bizLocation> <!-- Optional -->
+                    <id>urn:epc:id:sgln:Company_1</id>
+                </bizLocation>
+                <extension>
+                    <quantityList> <!-- Optional -->
+                        <quantityElement>
+                            <epcClass>urn:epc:id:sgtin:B1</epcClass>
+                            <quantity>1</quantity>
+                            <uom>PCS</uom>
+                        </quantityElement>
+                    </quantityList>
+                    <extension>
+                        <documentId>E1</documentId>
+                        <OTEventClass>urn:ot:event:Observation</OTEventClass>
+                        <OTEventType>Labeling</OTEventType>
+                    </extension>
+                </extension>
+            </ObjectEvent>
+        </EventList>
+    </EPCISBody>
+</epcis:EPCISDocument>

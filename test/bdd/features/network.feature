@@ -3,13 +3,11 @@ Feature: Test basic network features
     Given the blockchain is set up
     And 1 bootstrap is running
 
-  @itworks
   Scenario: Start network with 5 nodes and check do they see each other
     Given I setup 5 nodes
     And I start the nodes
     Then all nodes should be aware of each other
 
-  @itworks
   Scenario: Test replication DC -> DH
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -21,7 +19,6 @@ Feature: Test basic network features
     And I wait for replications to finish
     Then the last import should be the same on all nodes that replicated data
 
-  @itworks
   Scenario: Check that second gs1 import does not mess up first import's hash value
     Given I setup 4 nodes
     And I start the nodes
@@ -35,7 +32,6 @@ Feature: Test basic network features
     And I wait for 10 seconds
     Then checking again first import's root hash should point to remembered value
 
-  @itworks
   Scenario: Smoke check data-layer basic endpoints
     Given I setup 2 nodes
     And I start the nodes
@@ -46,7 +42,6 @@ Feature: Test basic network features
     Given I query DC node locally for last imported data set id
     Then response hash should match last imported data set id
 
-  @itworks
   Scenario: DC->DH->DV replication + DV network read + DV purchase
     Given the replication difficulty is 0
     And I setup 5 nodes
@@ -65,7 +60,6 @@ Feature: Test basic network features
     Given the DV purchases import from the last query from a DH
     Then the last import should be the same on DC and DV nodes
 
-  @itworks
   Scenario: Smoke check /api/withdraw endpoint
     Given I setup 1 node
     And I start the node
@@ -73,7 +67,6 @@ Feature: Test basic network features
     Given I attempt to withdraw 5 tokens from DC profile
     Then DC wallet and DC profile balances should diff by 5 with rounding error of 0.1
 
-  @itworks
   Scenario: Smoke check /api/deposit endpoint
     Given I setup 1 node
     And I start the node
@@ -81,7 +74,6 @@ Feature: Test basic network features
     Given I attempt to deposit 50 tokens from DC wallet
     Then DC wallet and DC profile balances should diff by 50 with rounding error of 0.1
 
-  @itworks
   Scenario: Smoke check /api/consensus endpoint
     Given I setup 1 node
     And I start the node
@@ -93,7 +85,6 @@ Feature: Test basic network features
     Given DC calls consensus endpoint for sender: "urn:ot:object:actor:id:Company_Pink"
     Then last consensus response should have 1 event with 1 match
 
-  @itworks
   Scenario: DV purchases data directly from DC, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -111,7 +102,6 @@ Feature: Test basic network features
     Given the DV purchases import from the last query from the DC
     Then the last import should be the same on DC and DV nodes
 
-  @itworks
   Scenario: 2nd DV purchases data from 1st DV, no DHes
     Given the replication difficulty is 0
     And I setup 1 node
@@ -137,7 +127,6 @@ Feature: Test basic network features
     Then the last import should be the same on DC and DV nodes
     Then the last import should be the same on DC and DV2 nodes
 
-  @itworks
   Scenario: API calls should be forbidden
     Given I setup 1 node
     And I override configuration for all nodes
@@ -146,7 +135,6 @@ Feature: Test basic network features
     And I use 1st node as DC
     Then API calls will be forbidden
 
-  @itworks
   Scenario: API calls should not be authorized
     Given I setup 1 node
     And I override configuration for all nodes
