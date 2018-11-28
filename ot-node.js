@@ -552,6 +552,7 @@ class OTNode {
                 blockchain.getAllPastEvents('HOLDING_CONTRACT');
                 blockchain.getAllPastEvents('PROFILE_CONTRACT');
                 blockchain.getAllPastEvents('APPROVAL_CONTRACT');
+                blockchain.getAllPastEvents('LITIGATION_CONTRACT');
                 deadline = Date.now() + delay;
                 working = false;
             }

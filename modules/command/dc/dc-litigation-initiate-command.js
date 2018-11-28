@@ -49,7 +49,19 @@ class DCLitigationInitiateCommand extends Command {
             offerId, dhIdentity, dcIdentity, blockId,
             merkleProof,
         );
-        return Command.empty();
+        return {
+            commands: [{
+                name: 'dcLitigationInitiatedCommand',
+                data: {
+                    blockId,
+                    offerId,
+                    dhIdentity,
+                },
+                period: 5000,
+                deadline_at: Date.now() + (5 * 60 * 1000),
+                transactional: false,
+            }],
+        };
     }
 
     /**
