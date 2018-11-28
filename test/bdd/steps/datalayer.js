@@ -82,6 +82,7 @@ Then(/^DC manually calculated datasets data and root hashes matches ones from bl
         const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, myDataSetId);
         expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
+
         const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(dc.state.node_rpc_url, myDataSetId);
         expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
 

@@ -1,0 +1,17 @@
+{
+    "node_wallet": "0x0556b6d87f011424c7b099040f03ad23774fe7fe",
+    "node_private_key": "47a0308ed7e5c8d70f72bc9a34bcfa4fa17f9e7c255f820bd57fc068fe4406f6",
+    "database": {
+        "password": "root",
+        "username": "root"
+    },
+    "network": {
+        "hostname": "95.91.215.192",
+        "remoteWhitelist": [
+            "127.0.0.1",
+            "0.0.0.0",
+            "localhost",
+            "95.91.215.192"
+        ]
+    }
+}
