@@ -421,8 +421,8 @@ class Blockchain {
         return this.blockchain.nodeHasApproval(nodeId);
     }
 
-    async getBalances() {
-        return this.blockchain.getBalances();
+    async hasEnoughFunds() {
+        return this.blockchain.hasEnoughFunds();
     }
 
     /**

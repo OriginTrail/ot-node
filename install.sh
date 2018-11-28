@@ -66,9 +66,6 @@ sudo pip3 install python-dotenv
 sudo apt-get install git
 
 git clone -b master https://github.com/OriginTrail/ot-node.git
-cd ot-node
-mkdir keys data &> /dev/null
-cp .env.example .env
+cd ot-node && npm install
 
-npm install
-echo "Installation complete. Please configure .env file."
+echo "Installation complete. Please configure .origintrail_noderc file."

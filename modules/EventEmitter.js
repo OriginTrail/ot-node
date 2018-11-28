@@ -449,7 +449,10 @@ class EventEmitter {
                     message: error.message,
                 });
                 remoteControl.importFailed(error);
-                notifyError(error);
+
+                if (error.type !== 'ImporterError') {
+                    notifyError(error);
+                }
                 return;
             }
 
