@@ -124,7 +124,9 @@ contract Hub is Ownable{
            sender == approvalAddress ||
            sender == profileStorageAddress ||
            sender == holdingStorageAddress ||
-           sender == readingStorageAddress) {
+           sender == readingStorageAddress ||
+           sender == litigationAddress ||
+           sender == litigationStorageAddress) {
             return true;
         }
         return false;
