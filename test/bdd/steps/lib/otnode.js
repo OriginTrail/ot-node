@@ -26,12 +26,12 @@ const walletAmountRegex = /\b\d+\b/g;
  * One instance of OtNode class handles one running node.
  */
 class OtNode extends EventEmitter {
-    constructor({ logger, nodeConfiguration }) {
+    constructor({ logger, nodeConfiguration, appDataBaseDir }) {
         super();
 
         this.id = uuidv4();
         this.options = {};
-        this.options.configDir = path.join(tmpdir, this.id);
+        this.options.configDir = path.join(appDataBaseDir || tmpdir, this.id);
         this.options.nodeConfiguration = nodeConfiguration || {};
         this.options.nodeConfiguration = deepExtend(
             Object.assign({}, defaultConfiguration), // deepExtend changes original object.

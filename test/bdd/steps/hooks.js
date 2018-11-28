@@ -2,6 +2,7 @@
 require('dotenv').config();
 const { Database } = require('arangojs');
 const rc = require('rc');
+const rimraf = require('rimraf');
 const defaultConfig = require('../../../config/config.json').development;
 const pjson = require('../../../package.json');
 
@@ -38,7 +39,7 @@ After(function (testCase, done) {
     this.logger.log('with status: ', testCase.result.status, ' and duration: ', testCase.result.duration, ' miliseconds.');
 
     if (testCase.result.status === 'failed') {
-        this.logger.log('Oops, exception occured:');
+        this.logger.log('Oops, exception occurred:');
         this.logger.log(testCase.result.exception);
     }
 
@@ -48,7 +49,12 @@ After(function (testCase, done) {
             .map(node => new Promise((accept, reject) => {
                 node.on('finished', (code) => {
                     if (code === 0) {
-                        accept();
+                        if (this.parameters.keepFailedArtifacts &&
+                            testCase.result.status === 'passed') {
+                            rimraf(node.options.configDir, () => accept());
+                        } else {
+                            accept();
+                        }
                     } else {
                         reject();
                     }
@@ -60,13 +66,17 @@ After(function (testCase, done) {
         this.state.localBlockchain.server.close();
     }
 
-    Promise.all(nodesWaits);
-
-    this.state.localBlockchain = null;
-    this.state.nodes = [];
-    this.state.bootstraps = [];
-
-    done();
+    Promise.all(nodesWaits).then(() => {
+        this.state.localBlockchain = null;
+        this.state.nodes = [];
+        this.state.bootstraps = [];
+        done();
+    }).catch((error) => {
+        this.logger.error(error);
+        this.state.localBlockchain = null;
+        this.state.nodes = [];
+        this.state.bootstraps = [];
+    });
 });
 
 AfterAll(async function () {
