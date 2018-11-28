@@ -9,7 +9,6 @@ const request = require('request');
 const { deepEqual } = require('jsprim');
 
 const OtNode = require('./lib/otnode');
-const Utilities = require('../../../modules/Utilities');
 const ImportUtilities = require('../../../modules/ImportUtilities');
 const LocalBlockchain = require('./lib/local-blockchain');
 const httpApiHelper = require('./lib/http-api-helper');
@@ -249,7 +248,7 @@ Then(/^the last root hash should be the same as one manually calculated$/, async
 
     const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
     expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
 
     const myApiImportInfo = await httpApiHelper.apiImportInfo(dc.state.node_rpc_url, this.state.lastImport.data_set_id);
@@ -405,7 +404,7 @@ Given(/^I remember previous import's fingerprint value$/, async function () {
             this.state.lastImport.data_set_id,
         );
     expect(myFingerprint).to.have.keys(['root_hash']);
-    expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
     // TODO need better namings
     this.state.lastMinusOneImportFingerprint = myFingerprint;
@@ -425,7 +424,7 @@ Then(/^checking again first import's root hash should point to remembered value$
             this.state.lastMinusOneImport.data_set_id,
         );
     expect(firstImportFingerprint).to.have.keys(['root_hash']);
-    expect(Utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+    expect(utilities.isZeroHash(firstImportFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
     expect(firstImportFingerprint.root_hash)
         .to.be.equal(this.state.lastMinusOneImportFingerprint.root_hash);
@@ -600,6 +599,20 @@ Given(/^DC waits for replication window to close$/, { timeout: 180000 }, functio
     const { dc } = this.state;
 
     dc.once('replication-window-closed', () => {
+        done();
+    });
+});
+
+Given(/^DC waits for last offer to get written to blockchain$/, { timeout: 180000 }, function (done) {
+    expect(!!this.state.dc, 'DC node not defined. Use other step to define it.').to.be.equal(true);
+    expect(!!this.state.lastImport, 'Nothing was imported. Use other step to do it.').to.be.equal(true);
+    expect(!!this.state.lastReplication, 'Nothing was replicated. Use other step to do it.').to.be.equal(true);
+    expect(this.state.nodes.length, 'No started nodes').to.be.greaterThan(0);
+    expect(this.state.bootstraps.length, 'No bootstrap nodes').to.be.greaterThan(0);
+
+    const { dc } = this.state;
+
+    dc.once('offer-written-blockchain', () => {
         done();
     });
 });

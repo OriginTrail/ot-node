@@ -9,7 +9,7 @@ Feature: Test basic importer features
     And I use 1st node as DC
     And DC imports "importers/json_examples/WOT_Example_1.json" as WOT
     Given DC initiates the replication for last imported dataset
-    And I wait for 10 seconds
+    And DC waits for last offer to get written to blockchain
     And I remember previous import's fingerprint value
     And DC imports "importers/json_examples/WOT_Example_2.json" as WOT
     Then DC's last import's hash should be the same as one manually calculated

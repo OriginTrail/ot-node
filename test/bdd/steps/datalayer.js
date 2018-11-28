@@ -7,7 +7,6 @@ const { expect } = require('chai');
 
 const httpApiHelper = require('./lib/http-api-helper');
 const utilities = require('./lib/utilities');
-const Utilities = require('../../../modules/Utilities');
 const ImportUtilities = require('../../../modules/ImportUtilities');
 
 
@@ -81,7 +80,7 @@ Then(/^DC manually calculated datasets data and root hashes matches ones from bl
     for (const i in Array.from({ length: myApiImportsInfo.length })) {
         const myDataSetId = myApiImportsInfo[i].data_set_id;
         const myFingerprint = await httpApiHelper.apiFingerprint(dc.state.node_rpc_url, myDataSetId);
-        expect(Utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
+        expect(utilities.isZeroHash(myFingerprint.root_hash), 'root hash value should not be zero hash').to.be.equal(false);
 
         const myEdgesVertices = await httpApiHelper.apiQueryLocalImportByDataSetId(dc.state.node_rpc_url, myDataSetId);
         expect(myEdgesVertices, 'Should have corresponding keys').to.have.keys(['edges', 'vertices']);
